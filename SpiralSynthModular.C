@@ -41,7 +41,6 @@
 #include "GUI/save.xpm"
 #include "GUI/new.xpm"
 #include "GUI/options.xpm"
-#include "GUI/edit.xpm"
 #include "GUI/comment.xpm"
 #include "GUI/Widgets/PawfalYesNo.h"
 

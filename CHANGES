@@ -1,6 +1,29 @@
+Release 0.2.2
+
+New GUI - less cluttered and more "traditional" toolbars.
+Improved LADSPA GUI, and librdf support.
+Improved Jack functionality.
+New ALSA midi support.
+New configure script - makes most dependancies optional.
+Libsndfile support for Sampler, SpiralLoops, Streamer, etc.
+Time display on DiskWriter.
+Overload light on Mono-Mixer.
+Numeric parameter input on lots of plugins.
+Improved DistributorPlugin.
+More controls on ScopePlugin and MeterPlugin.
+Variable number of inputs and/or outputs on MixerPlugin and LoginPlugin.
+Improved PluginGUI resizing.
+Misc fixes.
+
+New Plugins:
+TransposePlugin
+
+
+
 Release 0.2.1
 
-New GUI - one window with minisable/maximisable modules, no more losing track of which module window is which.
+New GUI - one window with minimisable/maximisable modules,
+          no more losing track of which module window is which.
 NotesnapPlugin can now filter midi notes.
 Preliminary OSX support
 Plugin Groups (new Maths/Logic group)
@@ -12,7 +35,6 @@ Matrix pattern sequencer
 Misc fixes
 
 New Plugins:
-
 FormantFilterPlugin
 AnotherFilterPlugin
 NoisePlugin
@@ -28,7 +50,7 @@ MeterPlugin (ported)
 WaveShaperPlugin (ported)
 TrigPlugin
 SpiralLoopPlugin (new code)
-MasherPlugin 
+MasherPlugin
 
 Release 0.2.0
 
@@ -49,7 +71,7 @@ Echo/Delay crash bug fix
 Less C code in SpiralSynthModular.C (Andy Preston)
 Ability to load ssm files from command line (Dan Bethell)
 gcc3.1 fixes + dynamic linking bugfix (Takashi Iwai)
-configure + make fixes (Takashi Iwai) 
+configure + make fixes (Takashi Iwai)
 configure option --with-plugindir=xxx added (Takashi Iwai)
 
 Plugin changes:
@@ -64,14 +86,14 @@ Matrix can be controlled by an external clock pulse
 Matrix copy/paste and transpose functionality (Andy Preston)
 JackPlugin fixed for recent versions of jack (Takashi Iwai)
 
-Release 0.1.0 
+Release 0.1.0
 
 Main app changes:
 
-New GUI code, main app window has now become the editor window, with a new 
+New GUI code, main app window has now become the editor window, with a new
 window for plugin dialogues. (build fltk with ./configure --enable-shared)
 New default theme.
-New load/save system for external files like samples. (external files stored 
+New load/save system for external files like samples. (external files stored
 in a directory)
 configure fixes (Takashi Iwai)
 ppc fix (Takashi Iwai)

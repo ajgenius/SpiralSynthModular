@@ -36,12 +36,12 @@ else
 fi
 
 dnl build plugin list - plugins that do not require an optional component
-dnl (e.g. Jack)
+dnl (i.e. Jack, and LADSPA)
 
 PLUGINLIST="AmpPlugin AnotherFilterPlugin BeatMatchPlugin ControllerPlugin \
 CounterPlugin DelayPlugin DiskWriterPlugin DistributorPlugin EchoPlugin \
 EnvFollowerPlugin EnvelopePlugin FilterPlugin FlipflopPlugin FormantFilterPlugin \
-KeyboardPlugin LADSPAPlugin LFOPlugin LogicPlugin MasherPlugin MatrixPlugin \
+KeyboardPlugin LFOPlugin LogicPlugin MasherPlugin MatrixPlugin \
 MeterPlugin MidiPlugin MixSwitchPlugin MixerPlugin MoogFilterPlugin NoisePlugin \
 NoteSnapPlugin OperatorPlugin OscillatorPlugin OutputPlugin PoshSamplerPlugin \
 RingModPlugin SVFilterPlugin SampleHoldPlugin ScopePlugin SeqSelectorPlugin \
@@ -63,35 +63,27 @@ fi
 if test "$build_jack" = "y"; then
    AC_CHECK_LIB(jack, jack_client_new, [build_jack="y"], [build_jack="n" ; jack_message="No libjack found"])
 fi
-if test $build_jack = "y" ; then
+if test "$build_jack" = "y" ; then
    PLUGINLIST="JackPlugin $PLUGINLIST"
+fi
+
+dnl Check whether LADSPA is present or has been disabled
+ladspa_message=""
+AC_ARG_ENABLE(
+    ladspa,
+    [  --disable-ladspa        Do not build LADSPAPlugin],
+    [build_ladspa="n" ; ladspa_message="manually disabled"],
+    [build_ladspa="y"]
+)
+if test "$build_ladspa" = "y"; then
+   AC_CHECK_HEADER(ladspa.h, [build_ladspa="y"], [build_ladspa="n" ; ladspa_message="No ladspa.h found"])
+fi
+if test "$build_ladspa" = "y" ; then
+   PLUGINLIST="LADSPAPlugin $PLUGINLIST"
 fi
 
 dnl build plugin list
 echo "$PLUGINLIST" > SpiralSound/PluginList.txt
-
-dnl Check whether alsa-midi is present or has been disabled
-
-amidi_message=""
-AC_ARG_ENABLE(
-    alsa_midi,
-    [  --disable-alsa-midi     Disable alsa midi (use OSS)],
-    [use_alsa_midi="n"; amidi_message="manually disabled"],
-    [use_alsa_midi="y"]
-)
-if test "$use_alsa_midi" = "y"; then
-   AC_CHECK_HEADER(alsa/asoundlib.h, [use_alsa_midi="y"], [use_alsa_midi="n" ; amidi_message="No alsa/asoundlib.h found"])
-fi
-if test "$use_alsa_midi" = "y"; then
-   AC_CHECK_LIB(asound, snd_seq_open, [use_alsa_midi="y"], [use_alsa_midi="n" ; amidi_message="No libasound found"])
-fi
-if test "$use_alsa_midi" = "y"; then
-   AC_DEFINE(USE_ALSA_MIDI, , [Use ALSA MIDI not OSS])
-   AMIDILIBS="-lasound"
-   AC_SUBST(AMIDILIBS)
-else
-   AC_DEFINE(USE_OSS_MIDI, , [Use OSS MIDI not ALSA])
-fi
 
 dnl Check whether liblrdf is present or has been disabled
 lrdf_message=""
@@ -101,6 +93,10 @@ AC_ARG_ENABLE(
     [use_liblrdf="n" ; lrdf_message="manually disabled"],
     [use_liblrdf="y"]
 )
+if test "$build_ladspa" = "n" ; then
+   use_liblrdf="n"
+   lrdf_message="LADSPAPlugin not used"
+fi
 if test "$use_liblrdf" = "y"; then
    AC_CHECK_HEADER(lrdf.h, [use_liblrdf="y"], [use_liblrdf="n" ; lrdf_message="No lrdf.h found"])
 fi
@@ -121,6 +117,13 @@ AC_ARG_ENABLE(
     [use_posix_shm="n" ; shm_message="manually disabled"],
     [use_posix_shm="y"]
 )
+if test "$build_ladspa" = "n" ; then
+   use_posix_shm="n"
+   shm_message="LADSPAPlugin not used"
+elif test "$use_liblrdf" = "n" ; then
+   use_posix_shm="n"
+   shm_message="liblrdf not used"
+fi
 if test "$use_posix_shm" = "y"; then
    AC_MSG_CHECKING([POSIX SHM support ])
    if test -d /dev/shm -a -w /dev/shm ; then
@@ -133,6 +136,28 @@ if test "$use_posix_shm" = "y"; then
        use_posix_shm="n"
        shm_message="/dev/shm not found";
     fi
+fi
+
+dnl Check whether alsa-midi is present or has been disabled
+amidi_message=""
+AC_ARG_ENABLE(
+    alsa_midi,
+    [  --disable-alsa-midi     Disable alsa midi (use OSS)],
+    [use_alsa_midi="n"; amidi_message="manually disabled"],
+    [use_alsa_midi="y"]
+)
+if test "$use_alsa_midi" = "y"; then
+   AC_CHECK_HEADER(alsa/asoundlib.h, [use_alsa_midi="y"], [use_alsa_midi="n" ; amidi_message="No alsa/asoundlib.h found"])
+fi
+if test "$use_alsa_midi" = "y"; then
+   AC_CHECK_LIB(asound, snd_seq_open, [use_alsa_midi="y"], [use_alsa_midi="n" ; amidi_message="No libasound found"])
+fi
+if test "$use_alsa_midi" = "y"; then
+   AC_DEFINE(USE_ALSA_MIDI, , [Use ALSA MIDI not OSS])
+   AMIDILIBS="-lasound"
+   AC_SUBST(AMIDILIBS)
+else
+   AC_DEFINE(USE_OSS_MIDI, , [Use OSS MIDI not ALSA])
 fi
 
 dnl Check whether libsndfile is present or has been disabled
@@ -288,6 +313,12 @@ if test "$build_jack" = "y"; then
    echo "Enabled"
 else
    echo "Disabled - $jack_message"
+fi
+echo -n "  LADSPA support (via LADSPAPlugin) - "
+if test "$build_ladspa" = "y"; then
+   echo "Enabled"
+else
+   echo "Disabled - $ladspa_message"
 fi
 echo -n "   liblrdf support for LADSPAPlugin - "
 if test "$use_liblrdf" = "y"; then

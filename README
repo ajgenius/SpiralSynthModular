@@ -1,6 +1,6 @@
-** SpiralSynthModular **
+****** SpiralSynthModular ******
 
-Last changed Saturday 20-December-2003.
+Last changed Tuesday 6-January-2004.
 
 SpiralSynthModular is open source software, distributed under the General
 Public License (GPL). See the file COPYING.
@@ -8,17 +8,26 @@ Public License (GPL). See the file COPYING.
 See www.pawfal.org or sourceforge.net/projects/spiralmodular for more details.
 
 
-** Dependancies **
+*** Warning ***
+
+If you are using GCC version 3, you should note that the libstdc++ included with
+the compiler uses code from the system C library (glibc) version 2.2.5. That
+version of glibc is over a year old and contains necessary bugfixes. Some people
+have reported that their distro. contains an older version, which leads to SSM
+crashing with a segfault almost immediately.
+
+
+*** Dependancies ***
 
 FLTK (www.fltk.org)
-If you build FLTK from source use "./configure --enable-shared"
+If you build FLTK from source make sure you use "./configure --enable-shared"
 
 LADSPA plugins  (www.ladspa.org)
 
 Sound output can be provided by either OSS or JACK (and therefore alsa).
 
 
-** Installing **
+*** Installing ***
 
 To build the SpiralSynthModular application, and all the plugins:
 
@@ -58,7 +67,7 @@ Having a tempfs file system mounted on /dev/shm allows a single LADSPA
 plugin database to be shared between instances.
 
 To disable detection of this, use the configure option:
-./configure --disable-posiz-shm
+./configure --disable-posix-shm
 
 
 *** Jack support ***
@@ -83,11 +92,11 @@ If you have libsndfile installed on you system; PoshSampler, Streamer,
 and SpiralLoops load any audio format/file that libsndfile can, though
 the Open Dialog Filter currently doesn't reflect this.
 
-To disable detection of jack, use the configure option:
+To disable detection of this, use the configure option:
 ./configure --disable-sndfile
 
 
-*** Setting up your .SpiralSynthModular file ***
+*** Setting up your .spiralmodular file ***
 
 This file contains all the setup variables for the program. Thes values can be
 edited with the options window whilst running SSM.
@@ -102,6 +111,17 @@ FragmentSize      = 256         - Subbuffer size sent to the soundcard
 FragmentCount     = 8           - Subbuffer count, -1 computes a suitable size,
                                   setting to 4 or 8 gets better latencies.
 Samplerate        = 44100       - Sets the samplerate
+
+
+*** Trying it out without installing ***
+
+You can try SpiralSynthModular out by following the following steps.
+
+1. Run the script ./createlinks to create a dummy plugin directory in your source
+   directory
+
+2. To run use the command:
+   ./spiralsynthmodular --PluginPath /path/to/your/ssm/source/links
 
 
 Disclaimer:
