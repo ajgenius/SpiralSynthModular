@@ -56,7 +56,7 @@ m_Mode(STOPM)
 	m_PluginInfo.Width = 245;
 	m_PluginInfo.Height = 160;
 	m_PluginInfo.NumInputs = 3;
-	m_PluginInfo.NumOutputs = 4;
+	m_PluginInfo.NumOutputs = 5;
 	m_PluginInfo.PortTips.push_back ("Pitch CV");
 	m_PluginInfo.PortTips.push_back ("Play Trigger");
 	m_PluginInfo.PortTips.push_back ("Stop Trigger");
@@ -64,6 +64,7 @@ m_Mode(STOPM)
 	m_PluginInfo.PortTips.push_back ("Right Out");
 	m_PluginInfo.PortTips.push_back ("Finish Trigger");
 	m_PluginInfo.PortTips.push_back ("Playing Trigger");
+	m_PluginInfo.PortTips.push_back ("Position CV");
 	m_GUIArgs.Volume = 1.0f;
 	m_GUIArgs.PitchMod = 1.0f;
         m_GUIArgs.PlayOut = false;
@@ -162,11 +163,13 @@ void StreamPlugin::Execute() {
               SetOutput (3, n, 1);
               m_Pos += m_GUIArgs.PitchMod + CVPitch;
               m_GlobalPos += m_GUIArgs.PitchMod + CVPitch;
+              SetOutput (4, n, m_GlobalPos / m_File.GetSize());
             }
             else {
               SetOutput (0, n, 0);
               SetOutput (1, n, 0);
               SetOutput (3, n, 0);
+              SetOutput (4, n, 0);
             }
         }
         m_GUIArgs.TimeOut = m_GlobalPos / (float)m_SampleRate;
