@@ -460,7 +460,6 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_TopWindow->resizable(m_CanvasScroll);
 
 	m_Canvas = new Fl_Canvas(-5000, -5000, 10000, 10000, "");
-        m_Canvas->user_data ((void*)(this));
         m_Canvas->type(1);
 	m_Canvas->box(FL_FLAT_BOX);
         m_Canvas->labeltype(FL_ENGRAVED_LABEL);
@@ -596,39 +595,43 @@ void SynthModular::LoadPlugins (string pluginPath) {
             //NewButton->color(SpiralInfo::GUICOL_Button);
             //NewButton->selection_color(SpiralInfo::GUICOL_Button);
             the_group->add (NewButton);
-            string PluginName=*i;
+
+            // we need to keep tooltips stored outside their widgets - widgets just have a pointer
+            // I haven't done anything about cleaning up these strings - which may cause memory leaks?
+            // But m_DeviceVec - which, I assume, would be used to keep track of / clean up the dynamicly
+            //     created NewButton widgets isn't cleaned up either, so we might have 2 memory leaks
+            //     involved? - but then again, they might be automatically deallocated because they're
+            //     in another widget, in which case there's just one memory leak to deal with. (andy)
+            string* PluginName = new string (*i);
             // find the first slash, if there is one, and get rid of everything before and including it
-            unsigned int p = PluginName.find ('/');
-            if (p < PluginName.length()) PluginName.erase (0, p);
+            unsigned int p = PluginName->find ('/');
+            if (p < PluginName->length()) PluginName->erase (0, p);
             // find last . and get rid of everything after and including it
-            p = PluginName.rfind ('.');
-            unsigned int l = PluginName.length ();
-            if (p < l) PluginName.erase (p, l);
-            NewButton->tooltip (PluginName.c_str());
+            p = PluginName->rfind ('.');
+            unsigned int l = PluginName->length ();
+            if (p < l) PluginName->erase (p, l);
+            NewButton->tooltip (PluginName->c_str());
             // Slashes have significance to the menu widgets, remove them from the GroupName
-            while ((p = GroupName.find ('/')) < PluginName.length())
+            while ((p = GroupName.find ('/')) < PluginName->length())
                   GroupName = GroupName.replace (p, 1, " and ");
-            string MenuEntry = "Plugins/" + GroupName + "/" + PluginName;
+            string MenuEntry = "Plugins/" + GroupName + "/" + *PluginName;
             m_MainMenu->add (MenuEntry.c_str(), 0, cb_NewDeviceFromMenu, &Numbers[ID], 0);
-            //MenuEntry = "Help/" + MenuEntry;
-            //m_MainMenu->add (MenuEntry.c_str(), 0, NULL, &Numbers[ID], 0);
+            // when help is working better - this will put the plugins into the help menu
+            // MenuEntry = "Help/" + MenuEntry;
+            // m_MainMenu->add (MenuEntry.c_str(), 0, NULL, &Numbers[ID], 0);
 
-            // andy preston
-            // my next step would be to add the plugins to Andrew's right-click menu
-            // to free up the middle button
-
-            m_Canvas->AddPluginName (PluginName, PluginManager::Get()->GetPlugin(ID)->ID);
-
-
+            // Add the plugins to the canvas menu
+            m_Canvas->AddPluginName (MenuEntry, PluginManager::Get()->GetPlugin(ID)->ID);
             // this overwrites the widget's user_data with that specified for the callback
             // so we can't use it for other purposes
             NewButton->callback ((Fl_Callback*)cb_NewDevice, &Numbers[ID]);
             NewButton->show();
+            // Nothing else ever touches m_DeviceVec - is this right??? (andy)
             m_DeviceVec.push_back (NewButton);
             the_group->redraw();
             // m_NextPluginButton++;
             Fl::check();
-            splashtext->label (PluginName.c_str());
+            splashtext->label (PluginName->c_str());
             Splash->redraw();
          }
      }
@@ -1415,12 +1418,13 @@ void SynthModular::cb_NewDevice (Fl_Button *o, void *v) {
 
 // (Plugin Canvas Menu)
 
-inline void SynthModular::cb_NewDeviceFromCanvasMenu_i(Fl_Canvas* o, void* v)
-{
-	AddDevice(*((int*)v),*((int*)v+1),*((int*)v+2));
+inline void SynthModular::cb_NewDeviceFromCanvasMenu_i (Fl_Canvas* o, void* v) {
+       AddDevice(*((int*)v),*((int*)v+1),*((int*)v+2));
 }
-void SynthModular::cb_NewDeviceFromCanvasMenu(Fl_Canvas* o, void* v)
-{((SynthModular*)(o->user_data()))->cb_NewDeviceFromCanvasMenu_i(o,v);}
+
+void SynthModular::cb_NewDeviceFromCanvasMenu(Fl_Canvas* o, void* v) {
+     ((SynthModular*)(o->user_data()))->cb_NewDeviceFromCanvasMenu_i(o,v);
+}
 
 
 /////////////////////////////////

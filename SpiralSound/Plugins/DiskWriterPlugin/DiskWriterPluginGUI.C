@@ -132,9 +132,9 @@ void DiskWriterPluginGUI::UpdateValues (SpiralPlugin *o)
 			m_32bits->value(0);
 			m_24bits->value(0);
 			m_16bits->value(1);
-		}	
+		}
 	}
-	
+
 	m_Stereo->value(Plugin->GetStereo());
 
 	redraw();
@@ -143,13 +143,28 @@ void DiskWriterPluginGUI::UpdateValues (SpiralPlugin *o)
 //// Callbacks ////
 
 inline void DiskWriterPluginGUI::cb_Open_i(Fl_Button* o)
-{	
+{
 	if (o->value())
 	{
 		char *fn=fl_file_chooser("Pick a Wav file to save to", "*.wav", NULL);
-		char t[256];
-		sprintf(t,"%s",fn);
-		
+
+                // On Mon, 2004-05-17 at 20:53, Bernd Breitenbach wrote:
+                // When you click the open button and click cancel right afterwards it crashes.
+                // Attached you find a patch for it.
+                // I would call it a work around not a solution, because you can't have filenames that exceeds
+                // 256 chars.
+                // A real solution requires a more flexible implementation of ChannelHandler::RegisterData
+
+                // On Mon, 17 May 2004 13:59:23 Dave Griffiths wrote:
+                // That's a difficult one. We can't use new/malloc as it's for use on the realtime thread
+                // (although in practice, ssm breaks this rule quite a lot :/ )
+                // A solution would be to use a custom allocator, with constant timing
+                // - or a ringbuffer mechanism I think...
+
+                char t[256];
+                strcpy (t, fn);
+		//sprintf(t,"%s",fn);
+
 		if (fn && fn!="")
 		{
 			m_GUICH->SetData("Filename",(void*)t);
@@ -168,34 +183,34 @@ inline void DiskWriterPluginGUI::cb_Open_i(Fl_Button* o)
 }
 
 inline void DiskWriterPluginGUI::cb_Record_i(Fl_Button* o)
-{ 
-	if (o->value()) 
+{
+	if (o->value())
 	{
 		m_GUICH->SetCommand(DiskWriterPlugin::RECORD);
-	}	
-	else 
+	}
+	else
 	{
 		m_GUICH->SetCommand(DiskWriterPlugin::STOP);
-	}	
+	}
 }
 
 inline void DiskWriterPluginGUI::cb_16bits_i(Fl_Button* o)
-{	
+{
 	m_GUICH->Set("BitsPerSample",16);
 }
 
 inline void DiskWriterPluginGUI::cb_24bits_i(Fl_Button* o)
-{	
+{
 	m_GUICH->Set("BitsPerSample",24);
 }
 
 inline void DiskWriterPluginGUI::cb_32bits_i(Fl_Button* o)
-{	
+{
 	m_GUICH->Set("BitsPerSample",32);
 }
 
 inline void DiskWriterPluginGUI::cb_Stereo_i(Fl_Button* o)
-{	
+{
 	m_GUICH->Set("Stereo",o->value());
 }
 

@@ -63,7 +63,7 @@ public:
 class Fl_ToolButton : public Fl_Button
 {
 public:
-	Fl_ToolButton(int x, int y, int w, int h, const char *n=NULL) : 
+	Fl_ToolButton(int x, int y, int w, int h, const char *n=NULL) :
 		Fl_Button(x,y,w,h,n) {}
 	virtual void draw() { draw_label(); }
 };
@@ -72,7 +72,7 @@ class DeviceGroup
 {
 public:
 	DeviceGroup() { devicecount = 0; }
-	
+
 	int devicecount;
 	fstream devices;
 	map<int,int> m_DeviceIds;//old ID, new ID
@@ -98,13 +98,13 @@ public:
 
 	void FreezeAll()
 	{
-		m_CH.Set("Frozen",true);	
+		m_CH.Set("Frozen",true);
 		m_CH.Wait();
 	}
-	
+
 	void ThawAll()
 	{
-		m_CH.Set("Frozen",false);		
+		m_CH.Set("Frozen",false);
 	}
 
 	void PauseAudio()
@@ -121,7 +121,7 @@ public:
 	{
 		if (! m_ResetingAudioThread)
 		{
-			FreezeAll();			
+			FreezeAll();
 
 			m_ResetingAudioThread = true;
 
@@ -175,7 +175,6 @@ private:
 
 	inline void cb_NewComment_i(Fl_Button* o, void* v);
 	static void cb_NewComment(Fl_Button* o, void* v);
-
         // File menu - and associated buttons, etc.
         inline void cb_New_i (Fl_Widget *o, void *v);
 	static void cb_New (Fl_Widget *o, void *v);

@@ -14,7 +14,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*/ 
+*/
 
 #include <FL/Fl_Group.h>
 #include <FL/Fl_Output.h>
@@ -36,8 +36,8 @@ class CanvasWire
 {
 public:
 	CanvasWire() { Clear(); }
-	
-	void Clear() 
+
+	void Clear()
 	{
 		OutputPort=-1;
 		OutputID=-1;
@@ -97,9 +97,9 @@ public:
 	void ClearConnections(Fl_DeviceGUI* Device);
 	void RemoveDevice(Fl_DeviceGUI* Device);
 	void Clear();
-	void AddPluginName(const string &s, int ID)
-		{ m_PluginNameList.push_back(pair<string,int>(s,ID)); }
-	GraphSort* GetGraph() { return &m_Graph; }
+        void AddPluginName(const string &s, int ID);
+
+        GraphSort* GetGraph() { return &m_Graph; }
 
 	void Poll();
 
@@ -131,10 +131,7 @@ public:
 		data->redraw();
 	}
 
-	static void EnablePaste(Fl_Canvas *data)
-	{
-		data->m_CanPaste=true;
-	}
+	static void EnablePaste(Fl_Canvas *data) { data->m_CanPaste=true; }
 
 	bool HaveSelection() {return m_HaveSelection; }
 	CanvasGroup Selection() { return m_Selection; }
@@ -146,102 +143,43 @@ public:
 	}
 
 private:
+	void PopupEditMenu (Fl_Group *group);
 	void DrawSelection();
 	void CalculateSelection();
-
 	void DrawWires();
 	void ClearIncompleteWire();
 	void DrawIncompleteWire();
 	bool UserMakingConnection();
 	Fl_DeviceGUI *FindDevice(int ID);
-
-	Fl_Image  *m_BG;
-	char      *m_BGData;
-
+	Fl_Image *m_BG;
+	char *m_BGData;
 	void (*cb_Connection)(Fl_Widget*, void*);
 	void (*cb_Unconnect)(Fl_Widget*, void*);
 	void (*cb_AddDevice)(Fl_Widget*, void*);
 	void (*cb_Rename)(Fl_Widget*, void*);
-
 	void (*cb_CutDeviceGroup)(Fl_Widget*, void*);
 	void (*cb_CopyDeviceGroup)(Fl_Widget*, void*);
 	void (*cb_PasteDeviceGroup)(Fl_Widget*, void*);
 	void (*cb_MergePatch)(Fl_Widget*, void*);
-
-	map<int,int> MapNewDeviceIds;
-
+        map<int,int> MapNewDeviceIds;
 	vector<CanvasWire> m_WireVec;
-	CanvasWire         m_IncompleteWire;
-
-	bool m_ToolMenu, m_ButtonDown;
-	int  m_x,m_y,m_Selected;
-	vector< pair<string,int> > m_PluginNameList;
-
+	CanvasWire m_IncompleteWire;
 	GraphSort m_Graph;
-	int m_UpdateTimer;
-	int m_DragX,m_DragY;
-
-	bool m_HaveSelection, m_Selecting;
-	int m_StartSelectX,m_StartSelectY;
-	int m_EndSelectX,m_EndSelectY;
-
-	CanvasGroup	m_Selection;
-
-	bool m_CanPaste;
-
+	CanvasGroup m_Selection;
+	bool m_CanPaste, m_HaveSelection, m_Selecting;
+	int m_x, m_y, m_UpdateTimer, m_DragX, m_DragY;
+	int m_StartSelectX, m_StartSelectY, m_EndSelectX,m_EndSelectY;
 	friend istream &operator>>(istream &s, Fl_Canvas &o);
 	friend ostream &operator<<(ostream &s, Fl_Canvas &o);
-
-	void PopupEditMenu(Fl_Group *group);
-
-	///Inline Callbacks///
-        inline void cb_OnDrag_i(Fl_Widget* widget, int x,int y);
-        inline void cb_OnDragClick_i(Fl_Widget* widget, int button,int shift_state)
-	{
-		if ((button==3) && ((shift_state & FL_CTRL) != 0))
-		{
-			PopupEditMenu(widget->parent());
-		}
-
-		if ((widget) && (button==1))
-		{
-			int ID = ((Fl_DeviceGUI*)(widget->parent()))->GetID();
-			std::vector<int>::iterator device_iter = std::find(m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), ID);
-
-			if (((shift_state & FL_SHIFT) != 0) || ((shift_state & FL_CTRL) != 0))
-			{
-				if (m_HaveSelection)
-				{
-					if (device_iter != m_Selection.m_DeviceIds.end())
-						m_Selection.m_DeviceIds.erase(device_iter);
-					else
-						m_Selection.m_DeviceIds.push_back(ID);
-				}
-				else
-				{
-					m_Selection.Clear();
-					m_HaveSelection = true;
-					m_Selection.m_DeviceIds.push_back(ID);
-				}
-			}
-			else
-			{
-				m_Selection.Clear();
-				m_HaveSelection = true;
-				m_Selection.m_DeviceIds.push_back(ID);
-			}
-			redraw();
-		}
-	}
-
-       	inline void cb_DeleteDeviceGroup_i();
-
-	///Static Callbacks///
-        static void cb_OnDrag_s(Fl_Widget* widget, int x,int y, void* data) { ((Fl_Canvas *)data)->cb_OnDrag_i(widget, x, y); }
-        static void cb_OnDragClick_s(Fl_Widget* widget, int button,int shift_state, void* data) { ((Fl_Canvas *)data)->cb_OnDragClick_i(widget, button, shift_state); }
-
-       	static void cb_DeleteDeviceGroup(Fl_Widget* widget, void* data) { ((Fl_Canvas *)data)->cb_DeleteDeviceGroup_i(); }
-
+	// Callbacks
+        static void cb_OnDrag_s (Fl_Widget* widget, int x, int y, void* data);
+        inline void cb_OnDrag_i (Fl_Widget* widget, int x,int y);
+        static void cb_OnDragClick_s (Fl_Widget* widget, int button, int shift_state, void* data);
+        inline void cb_OnDragClick_i(Fl_Widget* widget, int button,int shift_state);
+        static void cb_DeleteDeviceGroup (Fl_Widget* widget, void* data);
+        inline void cb_DeleteDeviceGroup_i();
+        static void cb_AddDeviceFromMenu (Fl_Widget* widget, void* data);
+        inline void cb_AddDeviceFromMenu_i (Fl_Widget* widget, void* data);
 };
 
 istream &operator>>(istream &s, Fl_Canvas &o);

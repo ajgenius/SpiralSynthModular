@@ -1,3 +1,16 @@
+CVS 0.2.3
+
+New plugin menu on canvas
+New mouse clicks Button 1 = Box select devices, Move devices
+                 Button 2 (Shift Button 1) = Drag Canvas, Multi select
+                 Button 3 (Ctrl  Button 1) = Edit and Plugin menu, Multi Select
+Updated streamer - Now shows file name.
+                   New output CV that rises from 0 to 1 as stream plays
+Envelope update - Added a filter to smooth out clicks on very fast attack levels
+Scope and Meter have moved to the Input/Output group
+PoshSampler now has a button - ReTrigger, when this button is OFF, a sample cannot
+                  be retriggered until it has finished playing.
+
 Release 0.2.2
 
 New GUI - less cluttered and more "traditional" toolbars.
