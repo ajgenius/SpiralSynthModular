@@ -603,7 +603,7 @@ int Fl_Canvas::handle(int event)
 				m_HaveSelection = false;
 			}   
 
-			if ((Fl::event_state() & FL_CTRL) != 0)
+			if (((Fl::event_state() & FL_CTRL) != 0) || ((Fl::event_state() & FL_SHIFT) != 0))
 			{
 				m_Selecting = true;
 				m_StartSelectX=Fl::event_x();
@@ -700,7 +700,7 @@ int Fl_Canvas::handle(int event)
 		}	
 	}
 
-	if ((Fl::event_button()==3) && (event==FL_PUSH)  && ((Fl::event_state() & FL_CTRL) != 0))
+	if ((Fl::event_button()==3) && (event==FL_PUSH))
 	{
 		PopupEditMenu(this);
 	}			

@@ -204,27 +204,35 @@ private:
 			PopupEditMenu(widget->parent());
 		}
 		
-		if ((widget) && (button==1) && ((shift_state & FL_CTRL) != 0))
-		{	
+		if ((widget) && (button==1))
+		{
 			int ID = ((Fl_DeviceGUI*)(widget->parent()))->GetID();
 			std::vector<int>::iterator device_iter = std::find(m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), ID);
 
-			if (m_HaveSelection)
-			{
-				if (device_iter != m_Selection.m_DeviceIds.end())
-					m_Selection.m_DeviceIds.erase(device_iter);				
+			if (((shift_state & FL_SHIFT) != 0) || ((shift_state & FL_CTRL) != 0))
+			{		
+				if (m_HaveSelection)
+				{
+					if (device_iter != m_Selection.m_DeviceIds.end())
+						m_Selection.m_DeviceIds.erase(device_iter);				
+					else
+						m_Selection.m_DeviceIds.push_back(ID);				
+				} 
 				else
-					m_Selection.m_DeviceIds.push_back(ID);				
-			} 
+				{
+					m_Selection.Clear();
+					m_HaveSelection = true;
+					m_Selection.m_DeviceIds.push_back(ID);
+				}
+			}
 			else
 			{
 				m_Selection.Clear();
 				m_HaveSelection = true;
 				m_Selection.m_DeviceIds.push_back(ID);
 			}
-			
-			redraw();		
-		}
+			redraw();
+		}	
 	}
 
        	inline void cb_DeleteDeviceGroup_i();
