@@ -45,7 +45,7 @@ SpiralPluginGUI(w,h,o,ch)
         m_Thresh->box (FL_PLASTIC_DOWN_BOX);
         m_Thresh->labelsize (10);
 	m_Thresh->maximum (1.0);
-        m_Thresh->step (0.01);
+        m_Thresh->step (0.0001);
         m_Thresh->value (0.99f);
         m_Thresh->callback ((Fl_Callback*)cb_Thresh);
 	m_CtlGroup->add (m_Thresh);
@@ -57,7 +57,7 @@ SpiralPluginGUI(w,h,o,ch)
         m_Attack->box (FL_PLASTIC_DOWN_BOX);
         m_Attack->labelsize (10);
 	m_Attack->maximum (TIMED_SLIDER_MAX);
-        m_Attack->step (0.01);
+        m_Attack->step (0.0001);
         m_Attack->value (3.0f);
         m_Attack->callback ((Fl_Callback*)cb_Attack);
 	m_CtlGroup->add (m_Attack);
@@ -69,7 +69,7 @@ SpiralPluginGUI(w,h,o,ch)
 	m_Decay->box (FL_PLASTIC_DOWN_BOX);
         m_Decay->labelsize (10);
 	m_Decay->maximum (TIMED_SLIDER_MAX);
-        m_Decay->step (0.01);
+        m_Decay->step (0.0001);
         m_Decay->value (2.29);
         m_Decay->callback ((Fl_Callback*)cb_Decay);
 	m_CtlGroup->add (m_Decay);
@@ -81,7 +81,7 @@ SpiralPluginGUI(w,h,o,ch)
 	m_Sustain->box (FL_PLASTIC_DOWN_BOX);
         m_Sustain->labelsize (10);
 	m_Sustain->maximum (1);
-        m_Sustain->step (0.01);
+        m_Sustain->step (0.0001);
         m_Sustain->value (0.0);
         m_Sustain->callback ((Fl_Callback*)cb_Sustain);
 	m_CtlGroup->add (m_Sustain);
@@ -93,7 +93,7 @@ SpiralPluginGUI(w,h,o,ch)
 	m_Release->box (FL_PLASTIC_DOWN_BOX);
         m_Release->labelsize (10);
 	m_Release->maximum (TIMED_SLIDER_MAX);
-        m_Release->step (0.01);
+        m_Release->step (0.0001);
         m_Release->value (2.0);
         m_Release->callback ((Fl_Callback*)cb_Release);
 	m_CtlGroup->add (m_Release);
@@ -105,7 +105,7 @@ SpiralPluginGUI(w,h,o,ch)
 	m_Volume->box (FL_PLASTIC_DOWN_BOX);
         m_Volume->labelsize (10);
 	m_Volume->maximum (1);
-        m_Volume->step (0.01);
+        m_Volume->step (0.0001);
         m_Volume->value (0.5f);
         m_Volume->callback ((Fl_Callback*)cb_Volume);
 	m_CtlGroup->add (m_Volume);
@@ -135,7 +135,7 @@ SpiralPluginGUI(w,h,o,ch)
         m_NumAttack->labelsize (8);
         m_NumAttack->maximum (TIMED_SLIDER_MAX * TIMED_SLIDER_MAX);
         m_NumAttack->minimum (0);
-        m_NumAttack->step (0.1);
+        m_NumAttack->step (0.001);
         m_NumAttack->value (0);
         m_NumAttack->callback ((Fl_Callback*)cb_NumAttack);
 	m_NumGroup->add (m_NumAttack);
@@ -148,7 +148,7 @@ SpiralPluginGUI(w,h,o,ch)
         m_NumDecay->labelsize (8);
 	m_NumDecay->maximum (TIMED_SLIDER_MAX * TIMED_SLIDER_MAX);
         m_NumDecay->minimum (0);
-        m_NumDecay->step (0.1);
+        m_NumDecay->step (0.001);
         m_NumDecay->value (0.5);
         m_NumDecay->callback ((Fl_Callback*)cb_NumDecay);
 	m_NumGroup->add (m_NumDecay);
@@ -174,7 +174,7 @@ SpiralPluginGUI(w,h,o,ch)
         m_NumRelease->labelsize (8);
 	m_NumRelease->maximum (TIMED_SLIDER_MAX * TIMED_SLIDER_MAX);
         m_NumRelease->minimum (0);
-        m_NumRelease->step (0.1);
+        m_NumRelease->step (0.001);
         m_NumRelease->value (1.0);
         m_NumRelease->callback ((Fl_Callback*)cb_NumRelease);
 	m_NumGroup->add (m_NumRelease);

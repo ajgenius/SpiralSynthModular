@@ -22,6 +22,10 @@
 
 using namespace std;
 
+// a bit of a crap filter to smooth clicks
+static float SMOOTH = 0.99;
+static float ONEMINUS_SMOOTH = 1-SMOOTH;
+
 extern "C" {
 SpiralPlugin* SpiralPlugin_CreateInstance()
 {
@@ -54,7 +58,8 @@ m_Decay(0.5f),
 m_Sustain(1.0f),
 m_Release(1.0f),
 m_Volume(0.5f),
-m_TrigThresh(0.01)
+m_TrigThresh(0.01),
+m_Current(0)
 {
 	m_PluginInfo.Name="Envelope";
 	m_PluginInfo.Width=142;
@@ -105,14 +110,6 @@ void EnvelopePlugin::Execute()
 	float temp=0;
 	bool Freeze=false;
 	
-	// Early out?	
-	/*if (m_t<0 && (!m_Input[0] || m_Input[0]->IsEmpty()))
-	{
-		m_Output[0]->Zero();
-		m_Output[1]->Zero();				
-		return;
-	}*/
-		
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 	{	
 		// Check the trigger CV values
@@ -171,22 +168,33 @@ void EnvelopePlugin::Execute()
 			
 			temp*=m_Volume;
 			
+			if (!feq(temp,m_Current,0.01)) 
+			{
+				// only filter if necc
+				temp=(temp*ONEMINUS_SMOOTH+m_Current*SMOOTH);
+			}
+			
 			SetOutput(0,n,temp);
 			SetOutput(1,n,GetInput(1,n)*temp); 
+			m_Current=temp;
 				
 			if (!Freeze) m_t+=m_SampleTime;
 		}
 		else
 		{
-			SetOutput(0,n,0);
-			SetOutput(1,n,0); 
+			if (!feq(temp,m_Current,0.01)) 
+			{
+				temp=m_Current*SMOOTH;
+			}
+			
+			SetOutput(0,n,temp);
+			SetOutput(1,n,GetInput(1,n)*temp); 
+			m_Current=temp;
 			
 			// if we've run off the end
 			if (m_t>m_Attack+m_Decay+m_Release)
 			{
 				m_t=-1;
-				//m_Output[0]->Zero();
-				//m_Output[1]->Zero();
 				return;
 			}
 

@@ -59,6 +59,8 @@ private:
 	float m_TrigThresh;
 	float m_SampleTime;
 	
+	float m_Current;
+	
 	friend std::istream &operator>>(std::istream &s, EnvelopePlugin &o);
 	friend std::ostream &operator<<(std::ostream &s, EnvelopePlugin &o);
 };
