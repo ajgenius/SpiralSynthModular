@@ -16,27 +16,24 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "../SpiralPlugin.h"
-#include <FL/Fl_Pixmap.H>
-
 #ifndef SCOPEPLUGIN
 #define SCOPEPLUGIN
 
-class ScopePlugin : public SpiralPlugin
-{
-public:
- 	ScopePlugin();
-	virtual ~ScopePlugin();
-	
-	virtual PluginInfo& Initialise(const HostInfo *Host);
-	virtual SpiralGUIType* CreateGUI();
-	virtual void  		Execute();
-	virtual void	    StreamOut(std::ostream &s) {}
-	virtual void	    StreamIn(std::istream &s) {}
-	
-private:
+#include "../SpiralPlugin.h"
+#include <FL/Fl_Pixmap.H>
 
-	float *m_Data;
+class ScopePlugin : public SpiralPlugin {
+   public:
+      ScopePlugin();
+      virtual ~ScopePlugin();
+      virtual PluginInfo& Initialise(const HostInfo *Host);
+      virtual SpiralGUIType* CreateGUI();
+      virtual void Execute();
+      virtual void StreamOut(std::ostream &s) {}
+      virtual void StreamIn(std::istream &s) {}
+   private:
+      float *m_Data;
+      bool m_DataReady;
 };
 
 #endif

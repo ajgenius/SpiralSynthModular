@@ -16,14 +16,14 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
+#ifndef SCOPEGUI
+#define SCOPEGUI
+
 #include <FL/Fl.H>
 #include <FL/Fl_Button.H>
 #include "../Widgets/Fl_Knob.H"
 #include "ScopePlugin.h"
 #include "../SpiralPluginGUI.h"
-
-#ifndef SCOPEGUI
-#define SCOPEGUI
 
 class ScopeWidget : public Fl_Widget
 {
@@ -32,14 +32,14 @@ class ScopeWidget : public Fl_Widget
       ~ScopeWidget();
       void draw();
       //void SetNumChannels (int s) { m_Channels=s; }
-      void SetWaveColour (unsigned c) { m_WaveColour=(Fl_Color)c; }
+      void SetColours (unsigned m, unsigned f) { m_MarkColour=(Fl_Color)m; m_WaveColour=(Fl_Color)f; }
       void SetAttenuation (float c) { m_Attenuation=c; }
       void SetTimeBase (float c) { m_TimeBase=c; }
       const float *m_Data;
       //int m_Channels;
    private:
       //int m_GUIColour, m_GUIBGColour;
-      Fl_Color m_WaveColour;
+      Fl_Color m_MarkColour, m_WaveColour;
       float m_Attenuation, m_TimeBase;
       int m_Bufsize;
 };
@@ -52,11 +52,11 @@ class ScopePluginGUI : public SpiralPluginGUI
       virtual void UpdateValues (SpiralPlugin* o);
       virtual void Update();
       virtual void draw();
-      void Display (const float *data);
    protected:
       const std::string GetHelpText (const std::string &loc);
    private:
       bool m_Bypass;
+      int m_BufSize;
       // Fl_Button *Bypass;
       ScopeWidget *m_Scope;
       Fl_Knob *m_Attenuation, *m_TimeBase;

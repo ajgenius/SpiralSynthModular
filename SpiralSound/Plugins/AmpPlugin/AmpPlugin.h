@@ -14,13 +14,13 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*/ 
-
-#include "../SpiralPlugin.h"
-#include <FL/Fl.h>
+*/
 
 #ifndef AMPPLUGIN
 #define AMPPLUGIN
+
+#include "../SpiralPlugin.h"
+#include <FL/Fl.h>
 
 class AmpPlugin : public SpiralPlugin
 {
@@ -37,15 +37,13 @@ public:
 	// has to be defined in the plugin
 	virtual void UpdateGUI() { Fl::check(); }
 
-				float GetGain()       { return m_Gain; }
-	float GetDC()        { return m_DC;  }
+	float GetGain() { return m_Gain; }
+	float GetDC() { return m_DC;  }
 
 	void Randomise();
 
 private:
-	float m_Gain;
-	float m_DC;
-
+	float m_Gain, m_DC;
 	friend std::istream &operator>>(std::istream &s, AmpPlugin &o);
 	friend std::ostream &operator<<(std::ostream &s, AmpPlugin &o);
 };

@@ -94,7 +94,8 @@ void MeterPluginGUI::draw() {
   SpiralGUIType::draw ();
   if (! m_Bypass) {
     float datum = 0.0;
-    m_GUICH->GetData ("AudioData", m_Data);
+    if (m_GUICH->GetBool ("DataReady")) m_GUICH->GetData ("AudioData", m_Data);
+    else memset (m_Data, 0, m_BufSize * sizeof (float));
     // The min and max values are based on the whole buffer
     for (int c=0; c<m_BufSize; c++) {
       datum = m_Data[c];

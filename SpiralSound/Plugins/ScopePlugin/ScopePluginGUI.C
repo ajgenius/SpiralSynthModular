@@ -43,6 +43,8 @@ void ScopeWidget::draw() {
      int ho=h()/2;
      fl_color (color());
      fl_rectf (x(), y(), w(), h());
+     fl_color (m_MarkColour);
+     fl_line (x(), y()+ho, x()+w(), y()+ho);
      if (!m_Data) return;
      fl_push_clip (x(), y(), w(), h());
      float Value=0, NextValue=0;
@@ -63,9 +65,10 @@ ScopePluginGUI::ScopePluginGUI(int w, int h, SpiralPlugin *o, ChannelHandler *ch
 SpiralPluginGUI(w,h,o,ch),
 m_Bypass(false)
 {
-        m_Scope = new ScopeWidget(5, 20, 210, 85, "Scope", Info->BUFSIZE);
+        m_BufSize = Info->BUFSIZE;
+        m_Scope = new ScopeWidget(5, 20, 210, 85, "Scope", m_BufSize);
         m_Scope->color (Info->SCOPE_BG_COLOUR);
-        m_Scope->SetWaveColour (Info->SCOPE_FG_COLOUR);
+        m_Scope->SetColours (Info->SCOPE_MRK_COLOUR, Info->SCOPE_FG_COLOUR);
         m_Attenuation = new Fl_Knob (220, 10, 40, 40, "Attenuation");
         m_Attenuation->color(Info->GUI_COLOUR);
         m_Attenuation->type(Fl_Knob::LINELIN);
@@ -91,12 +94,6 @@ m_Bypass(false)
 	end();
 }
 
-void ScopePluginGUI::Display(const float *data)
-{
-	//m_Scope->m_Data=data;
-	if (!m_Bypass) m_Scope->redraw();
-}
-
 void ScopePluginGUI::Update()
 {
 	redraw();
@@ -104,11 +101,12 @@ void ScopePluginGUI::Update()
 
 void ScopePluginGUI::draw()
 {
-	SpiralGUIType::draw();
-	const float *data;
-	//cerr<<"getting and drawing..."<<endl;
-	m_GUICH->GetData("AudioData",(void*)m_Scope->m_Data);
-	Display(data);
+    SpiralGUIType::draw();
+    const float *data;
+    //cerr<<"getting and drawing..."<<endl;
+    if (m_GUICH->GetBool ("DataReady")) m_GUICH->GetData ("AudioData", (void*)m_Scope->m_Data);
+    else memset ((void*)m_Scope->m_Data, 0, m_BufSize * sizeof (float));
+    if (!m_Bypass) m_Scope->redraw();
 }
 
 void ScopePluginGUI::UpdateValues(SpiralPlugin* o)

@@ -62,7 +62,6 @@ m_DC(0.0f)
 	m_PluginInfo.PortTips.push_back("Gain CV");
 	m_PluginInfo.PortTips.push_back("DC Offset CV");
 	m_PluginInfo.PortTips.push_back("Output");
-
 	m_AudioCH->Register("Gain",&m_Gain);
 	m_AudioCH->Register("DC",&m_DC);
 }
@@ -92,7 +91,8 @@ void AmpPlugin::Execute()
 		in = GetInput(0,n);
 		in *= m_Gain+GetInput(1,n);
 		in += (-m_DC)+GetInput(2,n);
-		SetOutput(0,n,in);	 
+		SetOutput(0,n,in);
+                //cerr << m_Gain << " ";	 
 	}		
 }
 	

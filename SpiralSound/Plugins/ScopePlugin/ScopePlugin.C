@@ -35,15 +35,17 @@ string SpiralPlugin_GetGroupName() { return "Control"; }
 
 ///////////////////////////////////////////////////////
 
-ScopePlugin::ScopePlugin()
+ScopePlugin::ScopePlugin():
+m_DataReady(false)
 {
-	m_PluginInfo.Name="Scope";
-	m_PluginInfo.Width=260;
-	m_PluginInfo.Height=115;
-	m_PluginInfo.NumInputs=1;
-	m_PluginInfo.NumOutputs=1;
-	m_PluginInfo.PortTips.push_back("Input");
-	m_PluginInfo.PortTips.push_back("Output");
+     m_PluginInfo.Name = "Scope";
+     m_PluginInfo.Width = 260;
+     m_PluginInfo.Height = 115;
+     m_PluginInfo.NumInputs = 1;
+     m_PluginInfo.NumOutputs = 1;
+     m_PluginInfo.PortTips.push_back("Input");
+     m_PluginInfo.PortTips.push_back("Output");
+     m_AudioCH->Register ("DataReady", &m_DataReady, ChannelHandler::OUTPUT);
 }
 
 ScopePlugin::~ScopePlugin()
@@ -65,10 +67,10 @@ SpiralGUIType *ScopePlugin::CreateGUI()
 
 void ScopePlugin::Execute() {
      // Just copy the data through.
+     m_DataReady = InputExists (0);
      if (GetOutputBuf (0)) GetOutputBuf (0)->Zero();
-     if (GetInput (0)) {
+     if (m_DataReady) {
         GetOutputBuf (0)->Mix (*GetInput(0), 0);
         memcpy (m_Data, GetInput (0)->GetBuffer (), m_HostInfo->BUFSIZE * sizeof (float));
      }
 }
-

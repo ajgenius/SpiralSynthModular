@@ -166,7 +166,7 @@ void AmpPluginGUI::cb_NumDC (Fl_Counter* o, void* v) {
 inline void AmpPluginGUI::cb_Reset_i (Fl_Button* o, void* v) {
         m_NumGain->value (1.0);
         m_Gain->value (1.0);
-        m_GUICH->Set ("Gain", 0);
+        m_GUICH->Set ("Gain", 1.0f);
         m_NumDC->value (0.0);
 	m_DC->value (2.0);
 	m_GUICH->Set ("DC", 0);

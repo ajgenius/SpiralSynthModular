@@ -36,6 +36,7 @@ string SpiralPlugin_GetGroupName() { return "Control"; }
 
 MeterPlugin::MeterPlugin():
 m_Data (NULL),
+m_DataReady (false),
 m_VUMode (true)
 {
   m_PluginInfo.Name = "Meter";
@@ -45,6 +46,7 @@ m_VUMode (true)
   m_PluginInfo.NumOutputs = 1;
   m_PluginInfo.PortTips.push_back ("Input");
   m_PluginInfo.PortTips.push_back ("Output");
+  m_AudioCH->Register ("DataReady", &m_DataReady, ChannelHandler::OUTPUT);
   m_Version = 1;
 }
 
@@ -64,12 +66,13 @@ SpiralGUIType *MeterPlugin::CreateGUI() {
 }
 
 void MeterPlugin::Execute() {
-  // Just copy the data through.
-  if (GetOutputBuf (0)) GetOutputBuf (0)->Zero();
-  if (GetInput (0)) {
-     GetOutputBuf (0)->Mix (*GetInput(0), 0);
-     memcpy (m_Data, GetInput (0)->GetBuffer (), m_HostInfo->BUFSIZE * sizeof (float));
-  }
+     // Just copy the data through.
+     m_DataReady = InputExists (0);
+     if (GetOutputBuf (0)) GetOutputBuf (0)->Zero();
+     if (m_DataReady) {
+        GetOutputBuf (0)->Mix (*GetInput(0), 0);
+        memcpy (m_Data, GetInput (0)->GetBuffer (), m_HostInfo->BUFSIZE * sizeof (float));
+     }
 }
 
 void MeterPlugin::ExecuteCommands () {
