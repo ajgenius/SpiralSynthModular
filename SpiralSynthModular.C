@@ -1004,7 +1004,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 
 				if (paste || merge)
 					Fl_Canvas::AppendSelection(ID, m_Canvas);
-				else				
+				else
 					if (m_NextID<=ID) m_NextID=ID+1;
 
 			}
@@ -1018,7 +1018,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 				if (paste || merge)
 				{
 					m_Copied.m_DeviceIds[ID] = m_NextID++;
-	
+
 					ID = m_Copied.m_DeviceIds[ID];
 				}
 

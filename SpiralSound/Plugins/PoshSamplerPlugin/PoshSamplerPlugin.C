@@ -20,18 +20,16 @@
 #include <FL/Fl_Button.h>
 #include "SpiralIcon.xpm"
 #include "../../NoteTable.h"
-#include <stdio.h>
-
 #include "../../RiffWav.h"
+#include <stdio.h>
 
 using namespace std;
 
-static const int   NOTETRIG    = NUM_SAMPLES*2+1;
-static const int   REC_INPUT   = 16;
-
-static const int   S1_INPUT   = 18;
-static const int   S2_INPUT   = 19;
-static const int   S3_INPUT   = 20;
+static const int NOTETRIG = NUM_SAMPLES * 2 + 1;
+static const int REC_INPUT = 16;
+static const int S1_INPUT = 18;
+static const int S2_INPUT = 19;
+static const int S3_INPUT = 20;
 
 extern "C" {
    SpiralPlugin* SpiralPlugin_CreateInstance() { return new PoshSamplerPlugin; }
@@ -42,89 +40,67 @@ extern "C" {
 
 ///////////////////////////////////////////////////////
 
-static void InitializeSampleDescription (SampleDesc* NewDesc, const string &Pathname, int Note) {
-       if (NewDesc) {
-          NewDesc->Pathname = Pathname;
-          NewDesc->Volume = 1.0f;
-          NewDesc->Velocity = 1.0f;
-          NewDesc->Pitch = 1.0f;
-          NewDesc->PitchMod = 1.0f;
-          NewDesc->SamplePos = -1;
-          NewDesc->Loop = false;
-          NewDesc->PingPong = false;
-          NewDesc->Note = Note;
-          NewDesc->Octave = 0;
-          NewDesc->TriggerUp = true;
-          NewDesc->SamplePos = -1;
-          NewDesc->SampleRate = 44100;
-          NewDesc->Stereo = false;
-          NewDesc->PlayStart = 0;
-          NewDesc->LoopStart = 0;
-          NewDesc->LoopEnd = INT_MAX;
-          NewDesc->ReTrig = true;
-       }
-}
-
 PoshSamplerPlugin::PoshSamplerPlugin() :
 m_Recording(false)
 {
-	m_PluginInfo.Name="PoshSampler";
-	m_PluginInfo.Width=400;
-	m_PluginInfo.Height=215;
-	m_PluginInfo.NumInputs=21;
-	m_PluginInfo.NumOutputs=9;
-	m_PluginInfo.PortTips.push_back("Sample 1 Pitch");
-	m_PluginInfo.PortTips.push_back("Sample 1 Trigger");
-	m_PluginInfo.PortTips.push_back("Sample 2 Pitch");
-	m_PluginInfo.PortTips.push_back("Sample 2 Trigger");
-	m_PluginInfo.PortTips.push_back("Sample 3 Pitch");
-	m_PluginInfo.PortTips.push_back("Sample 3 Trigger");
-	m_PluginInfo.PortTips.push_back("Sample 4 Pitch");
-	m_PluginInfo.PortTips.push_back("Sample 4 Trigger");
-	m_PluginInfo.PortTips.push_back("Sample 5 Pitch");
-	m_PluginInfo.PortTips.push_back("Sample 5 Trigger");
-	m_PluginInfo.PortTips.push_back("Sample 6 Pitch");
-	m_PluginInfo.PortTips.push_back("Sample 6 Trigger");
-	m_PluginInfo.PortTips.push_back("Sample 7 Pitch");
-	m_PluginInfo.PortTips.push_back("Sample 7 Trigger");
-	m_PluginInfo.PortTips.push_back("Sample 8 Pitch");
-	m_PluginInfo.PortTips.push_back("Sample 8 Trigger");
-	m_PluginInfo.PortTips.push_back("Input");
-	m_PluginInfo.PortTips.push_back("Sample trigger pitch");
-	m_PluginInfo.PortTips.push_back("Sample 1 Start Pos");
-	m_PluginInfo.PortTips.push_back("Sample 2 Start Pos");
-	m_PluginInfo.PortTips.push_back("Sample 3 Start Pos");
-	m_PluginInfo.PortTips.push_back("Mixed Output");
-	m_PluginInfo.PortTips.push_back("Sample 1 Output");
-	m_PluginInfo.PortTips.push_back("Sample 2 Output");
-	m_PluginInfo.PortTips.push_back("Sample 3 Output");
-	m_PluginInfo.PortTips.push_back("Sample 4 Output");
-	m_PluginInfo.PortTips.push_back("Sample 5 Output");
-	m_PluginInfo.PortTips.push_back("Sample 6 Output");
-	m_PluginInfo.PortTips.push_back("Sample 7 Output");
-	m_PluginInfo.PortTips.push_back("Sample 8 Output");
-	for (int n=0; n<NUM_SAMPLES; n++) {
-		Sample* NewSample = new Sample;
-		m_SampleVec.push_back(NewSample);
-		SampleDesc* NewDesc = new SampleDesc;
-		char temp[256];
-		sprintf (temp, "PoshSampler%d_%d", GetID(), n);
- 		InitializeSampleDescription(NewDesc, temp, n);
-		m_SampleDescVec.push_back(NewDesc);
-	}
-	m_Version = 4;
-	m_Current = 0;
-	m_AudioCH->Register("Num",&m_GUIArgs.Num);
-	m_AudioCH->Register("Value",&m_GUIArgs.Value);
-	m_AudioCH->Register("Bool",&m_GUIArgs.Boole);
-	m_AudioCH->Register("Int",&m_GUIArgs.Int);
-	m_AudioCH->Register("Start",&m_GUIArgs.Start);
-	m_AudioCH->Register("End",&m_GUIArgs.End);
-	m_AudioCH->Register("LoopStart",&m_GUIArgs.LoopStart);
-	m_AudioCH->RegisterData("Name",ChannelHandler::INPUT,&m_GUIArgs.Name,sizeof(m_GUIArgs.Name));
-	m_AudioCH->Register("PlayPos",&m_CurrentPlayPos,ChannelHandler::OUTPUT);
-	m_AudioCH->RegisterData("SampleBuffer",ChannelHandler::OUTPUT_REQUEST,&m_SampleBuffer,TRANSBUF_SIZE);
-	m_AudioCH->Register("SampleSize",&m_SampleSize,ChannelHandler::OUTPUT_REQUEST);
+        m_PluginInfo.Name = "PoshSampler";
+        m_PluginInfo.Width = 400;
+        m_PluginInfo.Height = 215;
+        m_PluginInfo.NumInputs = 21;
+        m_PluginInfo.NumOutputs = 9;
+        m_PluginInfo.PortTips.push_back ("Sample 1 Pitch");
+	m_PluginInfo.PortTips.push_back ("Sample 1 Trigger");
+        m_PluginInfo.PortTips.push_back ("Sample 2 Pitch");
+        m_PluginInfo.PortTips.push_back ("Sample 2 Trigger");
+        m_PluginInfo.PortTips.push_back ("Sample 3 Pitch");
+        m_PluginInfo.PortTips.push_back ("Sample 3 Trigger");
+        m_PluginInfo.PortTips.push_back ("Sample 4 Pitch");
+        m_PluginInfo.PortTips.push_back ("Sample 4 Trigger");
+        m_PluginInfo.PortTips.push_back ("Sample 5 Pitch");
+        m_PluginInfo.PortTips.push_back ("Sample 5 Trigger");
+        m_PluginInfo.PortTips.push_back ("Sample 6 Pitch");
+        m_PluginInfo.PortTips.push_back ("Sample 6 Trigger");
+        m_PluginInfo.PortTips.push_back ("Sample 7 Pitch");
+        m_PluginInfo.PortTips.push_back ("Sample 7 Trigger");
+        m_PluginInfo.PortTips.push_back ("Sample 8 Pitch");
+        m_PluginInfo.PortTips.push_back ("Sample 8 Trigger");
+        m_PluginInfo.PortTips.push_back ("Input");
+        m_PluginInfo.PortTips.push_back ("Sample trigger pitch");
+        m_PluginInfo.PortTips.push_back ("Sample 1 Start Pos");
+        m_PluginInfo.PortTips.push_back ("Sample 2 Start Pos");
+        m_PluginInfo.PortTips.push_back ("Sample 3 Start Pos");
+        m_PluginInfo.PortTips.push_back ("Mixed Output");
+        m_PluginInfo.PortTips.push_back ("Sample 1 Output");
+        m_PluginInfo.PortTips.push_back ("Sample 2 Output");
+        m_PluginInfo.PortTips.push_back ("Sample 3 Output");
+        m_PluginInfo.PortTips.push_back ("Sample 4 Output");
+        m_PluginInfo.PortTips.push_back ("Sample 5 Output");
+        m_PluginInfo.PortTips.push_back ("Sample 6 Output");
+        m_PluginInfo.PortTips.push_back ("Sample 7 Output");
+        m_PluginInfo.PortTips.push_back ("Sample 8 Output");
+        for (int n=0; n<NUM_SAMPLES; n++) {
+            Sample* NewSample = new Sample;
+            m_SampleVec.push_back (NewSample);
+            SampleDesc* NewDesc = new SampleDesc;
+            InitializeSampleDescription (NewDesc, n, n);
+            m_SampleDescVec.push_back (NewDesc);
+        }
+        m_Version = 4;
+        m_Current = 0;
+        m_AudioCH->Register ("Num", &m_GUIArgs.Num);
+        m_AudioCH->Register ("Value", &m_GUIArgs.Value);
+        m_AudioCH->Register ("Bool", &m_GUIArgs.Boole);
+        m_AudioCH->Register ("Int", &m_GUIArgs.Int);
+        m_AudioCH->Register ("Start", &m_GUIArgs.Start);
+        m_AudioCH->Register ("End", &m_GUIArgs.End);
+        m_AudioCH->Register ("LoopStart", &m_GUIArgs.LoopStart);
+        m_AudioCH->RegisterData ("Name", ChannelHandler::INPUT, &m_GUIArgs.Name, sizeof (m_GUIArgs.Name));
+        m_AudioCH->Register ("PlayPos", &m_CurrentPlayPos, ChannelHandler::OUTPUT);
+        m_AudioCH->RegisterData ("SampleBuffer", ChannelHandler::OUTPUT_REQUEST, &m_SampleBuffer, TRANSBUF_SIZE);
+        m_AudioCH->Register ("SampleSize", &m_SampleSize, ChannelHandler::OUTPUT_REQUEST);
+        m_AudioCH->Register ("BoolEcho", &m_GUIArgs.BoolEcho, ChannelHandler::OUTPUT);
+        m_AudioCH->Register ("ValEcho", &m_GUIArgs.ValEcho, ChannelHandler::OUTPUT);
+        m_AudioCH->Register ("IntEcho", &m_GUIArgs.IntEcho, ChannelHandler::OUTPUT);
 }
 
 PoshSamplerPlugin::~PoshSamplerPlugin() {
@@ -246,10 +222,10 @@ void PoshSamplerPlugin::ExecuteCommands() {
      if (m_AudioCH->IsCommandWaiting()) {
         switch (m_AudioCH->GetCommand()) {
           case LOAD:
-             LoadSample(m_GUIArgs.Num,m_GUIArgs.Name);
+             LoadSample (m_GUIArgs.Num, m_GUIArgs.Name);
              break;
           case SAVE:
-             SaveSample(m_GUIArgs.Num,m_GUIArgs.Name);
+             SaveSample (m_GUIArgs.Num, m_GUIArgs.Name);
              break;
           case SETVOL:
              m_SampleDescVec[m_GUIArgs.Num]->Volume=m_GUIArgs.Value;
@@ -306,10 +282,53 @@ void PoshSamplerPlugin::ExecuteCommands() {
              m_SampleSize = m_SampleVec[m_Current]->GetLengthInBytes();
              break;
           case SETRETRIG:
-             m_SampleDescVec[m_GUIArgs.Num]->ReTrig=m_GUIArgs.Boole;
+             m_SampleDescVec[m_GUIArgs.Num]->ReTrig = m_GUIArgs.Boole;
+             break;
+          case GETLOOP:
+             m_GUIArgs.BoolEcho = m_SampleDescVec[m_Current]->Loop;
+             break;
+          case GETPING:
+             m_GUIArgs.BoolEcho = m_SampleDescVec[m_Current]->PingPong;
+             break;
+          case GETRETRIG:
+             m_GUIArgs.BoolEcho = m_SampleDescVec[m_Current]->ReTrig;
+             break;
+          case GETVOL:
+             m_GUIArgs.ValEcho = m_SampleDescVec[m_Current]->Volume;
+             break;
+          case GETPITCH:
+             m_GUIArgs.ValEcho = m_SampleDescVec[m_Current]->PitchMod;
+             break;
+          case GETOCT:
+             m_GUIArgs.IntEcho = m_SampleDescVec[m_Current]->Octave + 6;
+             break;
+          case GETNOTE:
+             m_GUIArgs.IntEcho = m_SampleDescVec[m_Current]->Note;
              break;
         };
      }
+}
+
+void PoshSamplerPlugin::InitializeSampleDescription (SampleDesc* NewDesc, int num, int Note) {
+       if (NewDesc) {
+          NewDesc->Volume = 1.0f;
+          NewDesc->Velocity = 1.0f;
+          NewDesc->Pitch = 1.0f;
+          NewDesc->PitchMod = 1.0f;
+          NewDesc->SamplePos = -1;
+          NewDesc->Loop = false;
+          NewDesc->PingPong = false;
+          NewDesc->Note = Note;
+          NewDesc->Octave = 0;
+          NewDesc->TriggerUp = true;
+          NewDesc->SamplePos = -1;
+          NewDesc->SampleRate = 44100;
+          NewDesc->Stereo = false;
+          NewDesc->PlayStart = 0;
+          NewDesc->LoopStart = 0;
+          NewDesc->LoopEnd = INT_MAX;
+          NewDesc->ReTrig = true;
+       }
 }
 
 void PoshSamplerPlugin::StreamOut (ostream &s) {
@@ -345,32 +364,32 @@ void PoshSamplerPlugin::StreamIn (istream &s) {
               m_SampleDescVec[n]->LoopStart >>
               m_SampleDescVec[n]->LoopEnd >>
               m_SampleDescVec[n]->Note;
-              if (version < 3) {
-                 int size;
-                 s >> size;
-                 s.ignore (1);
-                 char Buf[4096];
-                 s.get (Buf, size+1);
-              }
-              if (version > 3) s >> m_SampleDescVec[n]->ReTrig;
-              else m_SampleDescVec[n]->ReTrig = true;
+         if (version < 3) {
+            int size;
+            s >> size;
+            s.ignore (1);
+            char Buf[4096];
+            s.get (Buf, size+1);
+         }
+         if (version > 3) s >> m_SampleDescVec[n]->ReTrig;
+         else m_SampleDescVec[n]->ReTrig = true;
      }
 }
 
-void PoshSamplerPlugin::LoadSample(int n, const string &Name)
-{
-	WavFile Wav;
-	if (Wav.Open(Name,WavFile::READ))
-	{
-		m_SampleVec[n]->Allocate(Wav.GetSize());
-		Wav.Load(*m_SampleVec[n]);
-		InitializeSampleDescription(m_SampleDescVec[n], Name, n);
-		m_SampleDescVec[n]->SampleRate=Wav.GetSamplerate();
-		m_SampleDescVec[n]->Stereo=Wav.IsStereo();
-		m_InitialPitch[n] = m_SampleDescVec[n]->Pitch;
-		m_SampleDescVec[n]->Pitch = m_InitialPitch[n] * m_SampleDescVec[n]->SampleRate/(float)m_HostInfo->SAMPLERATE;
-		m_SampleDescVec[n]->LoopEnd=m_SampleVec[n]->GetLength()-1;
-	}
+void PoshSamplerPlugin::LoadSample (int n, const string &Name) {
+     WavFile Wav;
+     if (Wav.Open (Name, WavFile::READ)) {
+        m_SampleVec[n]->Allocate (Wav.GetSize());
+        Wav.Load (*m_SampleVec[n]);
+        // andy preston - if this is not commented out, when we load a patch this overwrites the
+        //                loaded data with the defaults
+        // InitializeSampleDescription (m_SampleDescVec[n], n, n);
+        m_SampleDescVec[n]->SampleRate = Wav.GetSamplerate();
+        m_SampleDescVec[n]->Stereo = Wav.IsStereo();
+        m_InitialPitch[n] = m_SampleDescVec[n]->Pitch;
+        m_SampleDescVec[n]->Pitch = m_InitialPitch[n] * m_SampleDescVec[n]->SampleRate / (float)m_HostInfo->SAMPLERATE;
+        m_SampleDescVec[n]->LoopEnd = m_SampleVec[n]->GetLength()-1;
+     }
 }
 
 void PoshSamplerPlugin::SaveSample(int n, const string &Name)
@@ -429,42 +448,25 @@ void PoshSamplerPlugin::Amp(int n, long s, long e)
 	}
 }
 
+// The sprintf's in here should use strstream, but the current implementation (GCC 2.95.3) is buggy
 
-bool PoshSamplerPlugin::SaveExternalFiles(const string &Dir)
-{
-	for (int n=0; n<NUM_SAMPLES; n++)
-	{
-		char temp[256];
-                // Andy's fix for bug 766594
-                // sprintf (temp, "PoshSampler%d_%d.wav", SpiralPlugin_GetID(), n);
-		sprintf (temp, "PoshSampler%d_%d.wav", GetID(), n);
-		m_SampleDescVec[n]->Pathname   = temp;
-	}
-
-	for (int n=0; n<NUM_SAMPLES; n++)
-	{
-		// if it's not empty
-		if (m_SampleVec[n]->GetLength()!=0)
-		{
-			SaveSample(n,Dir+m_SampleDescVec[n]->Pathname);
-		}
-	}
-	return true;
+bool PoshSamplerPlugin::SaveExternalFiles (const string &Dir) {
+     char temp[256];
+     for (int n=0; n<NUM_SAMPLES; n++) {
+         // if it's not empty
+         if (m_SampleVec[n]->GetLength() != 0) {
+            sprintf (temp, "%sPoshSampler%d_%d.wav", Dir.c_str(), GetID(), n);
+            SaveSample (n, temp);
+         }
+     }
+     return true;
 }
 
-void PoshSamplerPlugin::LoadExternalFiles(const string &Dir, int withID)
-{
-	for (int n=0; n<NUM_SAMPLES; n++)
-	{
-		char temp[256];
-                // Andy's fix for bug 766594
-		// sprintf (temp, "PoshSampler%d_%d.wav", SpiralPlugin_GetID(), n);
-		sprintf (temp, "PoshSampler%d_%d.wav", ((withID==-1)?GetID():withID), n);
-		m_SampleDescVec[n]->Pathname   = temp;
-	}
-
-	for (int n=0; n<NUM_SAMPLES; n++)
-	{
-		LoadSample(n,Dir+m_SampleDescVec[n]->Pathname);
-	}
+void PoshSamplerPlugin::LoadExternalFiles(const string &Dir, int withID) {
+     int UseID = (withID==-1) ? GetID() : withID;
+     char temp[256];
+     for (int n=0; n<NUM_SAMPLES;  n++) {
+         sprintf (temp, "%sPoshSampler%d_%d.wav", Dir.c_str(), UseID, n);
+         LoadSample (n, temp);
+     }
 }

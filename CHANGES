@@ -10,6 +10,10 @@ Envelope update - Added a filter to smooth out clicks on very fast attack levels
 Scope and Meter have moved to the Input/Output group
 PoshSampler now has a button - ReTrigger, when this button is OFF, a sample cannot
                   be retriggered until it has finished playing.
+PoshSampler bug fixes, now displays correct settings for Loop, PingPong, ReTrigger,
+                  Volume, Pitch, Octave, and TrigNote when you change the sample
+                  being displayed
+New pause and Reset button on GUI to pause audio and reset all plugins.
 
 Release 0.2.2
 

@@ -45,10 +45,14 @@ Fl_WaveDisplay::~Fl_WaveDisplay()
 {
 }
 
-void Fl_WaveDisplay::SetSample(const float* s, long len)
-{
-	if (m_Sample) delete m_Sample;
-	m_Sample = new Sample(s,len);
+void Fl_WaveDisplay::SetSample (const float *s, long len) {
+     if (m_Sample) delete m_Sample;
+     m_Sample = new Sample (s, len);
+}
+
+void Fl_WaveDisplay::ClearSample (void) {
+     if (m_Sample) delete m_Sample;
+     m_Sample = NULL;
 }
 
 void Fl_WaveDisplay::draw()
@@ -178,20 +182,20 @@ int Fl_WaveDisplay::handle(int event)
 					if (MousePos>m_EndPos) m_EndPos=MousePos;
 					else m_StartPos=MousePos;					
 				} break;
-					
+
 				case 1:
 				{
 					m_StartPos=MousePos;
 					if (m_StartPos>m_EndPos) Holding=2; // swap
 				} break;
 				
-			
+
 				case 2:
 				{
 					m_EndPos=MousePos;
 					if (m_StartPos>m_EndPos) Holding=1; // swap
 				} break;
-			
+
 				case 3: m_PlayStart=MousePos; break;
 				case 4: m_LoopStart=MousePos; break;
 				case 5: m_LoopEnd=MousePos; break;
@@ -202,41 +206,41 @@ int Fl_WaveDisplay::handle(int event)
 		{
 			int Dist=(DragX-xx)*((m_ViewEnd-m_ViewStart)/w());
 			if (m_ViewStart>0 && m_ViewEnd<m_Sample->GetLength()-1)
-			{			
-				m_ViewStart+=Dist; 				
+			{
+				m_ViewStart+=Dist;
 				m_ViewEnd+=Dist;
 			}
 			else // stop it sticking when at end/beginning
 			{
 				if ((Dist>0 && m_ViewStart<=0) ||
-				    (Dist<0 && m_ViewEnd>=m_Sample->GetLength()-1)) 
+				    (Dist<0 && m_ViewEnd>=m_Sample->GetLength()-1))
 				{
-					m_ViewStart+=Dist; 				
+					m_ViewStart+=Dist;
 					m_ViewEnd+=Dist;
 				}
 			}
 			DragX=xx;
 			DragY=yy;
-		}	
-		
+		}
+
 		if (Mousebutton==3)
 		{
 			// only draw wave at 1 pixel = 1 sample
 			if ((m_ViewEnd-m_ViewStart)/w()==1)
 			{
-				int MousePos=(xx-x())*((m_ViewEnd-m_ViewStart)/w())+m_ViewStart;				
-				float Value=-(yy-y())/((float)h()/2.0f)+1.0f;			
+				int MousePos=(xx-x())*((m_ViewEnd-m_ViewStart)/w())+m_ViewStart;
+				float Value=-(yy-y())/((float)h()/2.0f)+1.0f;
 				m_Sample->Set(MousePos,Value);
 				redraw();
 			}
 		}
-		
+
 		do_callback();
-		redraw();		
+		redraw();
 	}
-	
+
 	if (m_EndPos>=m_Sample->GetLength()) m_EndPos=m_Sample->GetLength()-1;
-	
+
 	return 1;
 }
 
@@ -245,10 +249,10 @@ void Fl_WaveDisplay::ZoomIn()
 	int Zoom=(int)((m_ViewEnd-m_ViewStart)*0.03f);
 	if ((m_ViewEnd-m_ViewStart)/w()>1)
 	{
-		m_ViewStart+=Zoom; 
+		m_ViewStart+=Zoom;
 		m_ViewEnd-=Zoom;
 	}
-	
+
 	redraw();
 }
 
@@ -389,7 +393,7 @@ m_UpdateMe(false)
                                Info->SCOPE_SEL_COLOUR, Info->SCOPE_IND_COLOUR, Info->SCOPE_MRK_COLOUR);
 	m_Display->callback((Fl_Callback*)cb_WaveDisplay);
 
-	int bx=5,by=190,bw=w/9-2,bh=20,bs=w/9-2;
+	int bx=5, by=190, bw=w/9-2, bh=20, bs=w/9-2;
 	n=0;
 
 	m_Cut = new Fl_Button(bx+(n++*bs),by,bw,bh,"Cut");
@@ -456,55 +460,47 @@ m_UpdateMe(false)
 	//m_ZoomOut->callback((Fl_Callback*)cb_ZoomOut);
 
 	end();
-
 	redraw();
 }
 
-void PoshSamplerPluginGUI::UpdateSampleDisplay(int num)
-{
-	m_GUICH->SetCommand(PoshSamplerPlugin::GETSAMPLE);
-	m_GUICH->Wait();
-	m_GUICH->RequestChannelAndWait("SampleSize");
-	long SampleSize=m_GUICH->GetLong("SampleSize");
-
-	if (SampleSize)
-	{
-		char *TempBuf = new char[SampleSize];
-		m_GUICH->BulkTransfer("SampleBuffer",(void*)TempBuf,SampleSize);		
-		m_Display->SetSample((float*)TempBuf,SampleSize/sizeof(float));
-		delete[] TempBuf;
-	}
+void PoshSamplerPluginGUI::UpdateSampleDisplay(int num) {
+     m_GUICH->SetCommand (PoshSamplerPlugin::GETSAMPLE);
+     m_GUICH->Wait();
+     m_GUICH->RequestChannelAndWait ("SampleSize");
+     long SampleSize = m_GUICH->GetLong ("SampleSize");
+     if (!SampleSize) m_Display->ClearSample();
+     else {
+        char *TempBuf = new char[SampleSize];
+        m_GUICH->BulkTransfer ("SampleBuffer", (void*)TempBuf, SampleSize);
+        m_Display->SetSample ((float*)TempBuf, SampleSize / sizeof(float));
+        delete[] TempBuf;
+     }
 }
 
-void PoshSamplerPluginGUI::Update()
-{
-	SetPlayPos(m_GUICH->GetLong("PlayPos"));
-	
-	if (m_ZoomIn->value()) m_Display->ZoomIn();	
-	if (m_ZoomOut->value()) m_Display->ZoomOut();
-	
-	if (m_UpdateMe)
-	{
-		UpdateSampleDisplay((int)m_SampleNum->value());
-		m_Display->redraw();
-		m_UpdateMe=false;
-	}
-	//redraw();
+void PoshSamplerPluginGUI::Update() {
+     SetPlayPos (m_GUICH->GetLong ("PlayPos"));
+     if (m_ZoomIn->value()) m_Display->ZoomIn();
+     if (m_ZoomOut->value()) m_Display->ZoomOut();
+     if (m_UpdateMe) {
+        UpdateSampleDisplay ((int)m_SampleNum->value());
+        m_Display->redraw();
+        m_UpdateMe=false;
+     }
+     // redraw();
 }
 
-void PoshSamplerPluginGUI::UpdateValues(SpiralPlugin *o)
-{
-	PoshSamplerPlugin *Plugin = (PoshSamplerPlugin*)o;
-	m_Volume->value(Plugin->GetVolume((int)m_SampleNum->value()));
-	m_Pitch->value(Plugin->GetPitch((int)m_SampleNum->value()));
-	m_Note->value(Plugin->GetNote((int)m_SampleNum->value()));
-	m_Loop->value(Plugin->GetLoop((int)m_SampleNum->value()));
-        m_Retrig->value(Plugin->GetReTrig((int)m_SampleNum->value()));
-	m_UpdateMe=true;
-	m_Display->SetPlayStart(Plugin->GetPlayStart((int)m_SampleNum->value()));
-	m_Display->SetLoopStart(Plugin->GetLoopStart((int)m_SampleNum->value()));
-	m_Display->SetLoopEnd(Plugin->GetLoopEnd((int)m_SampleNum->value()));
-	m_Display->redraw();
+void PoshSamplerPluginGUI::UpdateValues (SpiralPlugin *o) {
+     PoshSamplerPlugin *Plugin = (PoshSamplerPlugin*)o;
+     m_Volume->value (Plugin->GetVolume ((int)m_SampleNum->value()));
+     m_Pitch->value (Plugin->GetPitch ((int)m_SampleNum->value()));
+     m_Note->value (Plugin->GetNote ((int)m_SampleNum->value()));
+     m_Loop->value (Plugin->GetLoop ((int)m_SampleNum->value()));
+     m_Retrig->value (Plugin->GetReTrig ((int)m_SampleNum->value()));
+     m_UpdateMe = true;
+     m_Display->SetPlayStart (Plugin->GetPlayStart ((int)m_SampleNum->value()));
+     m_Display->SetLoopStart (Plugin->GetLoopStart ((int)m_SampleNum->value()));
+     m_Display->SetLoopEnd (Plugin->GetLoopEnd ((int)m_SampleNum->value()));
+     m_Display->redraw();
 }
 
 inline void PoshSamplerPluginGUI::cb_Load_i(Fl_Button* o, void* v)
@@ -542,14 +538,15 @@ inline void PoshSamplerPluginGUI::cb_Save_i(Fl_Button* o, void* v)
 void PoshSamplerPluginGUI::cb_Save(Fl_Button* o, void* v)
 { ((PoshSamplerPluginGUI*)(o->parent()))->cb_Save_i(o,v);}
 
-inline void PoshSamplerPluginGUI::cb_Volume_i(Fl_Knob* o, void* v)
-{
-	m_GUICH->Set("Value",(float)o->value());
-	m_GUICH->Set("Num",(int)m_SampleNum->value());
-	m_GUICH->SetCommand(PoshSamplerPlugin::SETVOL);
+inline void PoshSamplerPluginGUI::cb_Volume_i (Fl_Knob *o, void *v) {
+       m_GUICH->Set ("Value", (float)o->value());
+       m_GUICH->Set ("Num", (int)m_SampleNum->value());
+       m_GUICH->SetCommand (PoshSamplerPlugin::SETVOL);
 }
-void PoshSamplerPluginGUI::cb_Volume(Fl_Knob* o, void* v)
-{ ((PoshSamplerPluginGUI*)(o->parent()))->cb_Volume_i(o,v);}
+
+void PoshSamplerPluginGUI::cb_Volume (Fl_Knob *o, void *v) {
+     ((PoshSamplerPluginGUI*)(o->parent()))->cb_Volume_i (o, v);
+}
 
 inline void PoshSamplerPluginGUI::cb_Pitch_i(Fl_Knob* o, void* v)
 {
@@ -611,7 +608,7 @@ void PoshSamplerPluginGUI::cb_PosMarker(Fl_Button* o, void* v)
 { ((PoshSamplerPluginGUI*)(o->parent()))->cb_PosMarker_i(o,v);}
 
 inline void PoshSamplerPluginGUI::cb_Note_i(Fl_Counter* o, void* v)
-{ 
+{
 	m_GUICH->Set("Int",(int)o->value());
 	m_GUICH->Set("Num",(int)m_SampleNum->value());
 	m_GUICH->SetCommand(PoshSamplerPlugin::SETNOTE);
@@ -619,34 +616,55 @@ inline void PoshSamplerPluginGUI::cb_Note_i(Fl_Counter* o, void* v)
 void PoshSamplerPluginGUI::cb_Note(Fl_Counter* o, void* v)
 { ((PoshSamplerPluginGUI*)(o->parent()))->cb_Note_i(o,v);}
 
-inline void PoshSamplerPluginGUI::cb_SampleNum_i(Fl_Counter* o, void* v)
-{ 
-	if (m_SampleNum->value()<0) m_SampleNum->value(0);
-	if (m_SampleNum->value()>7) m_SampleNum->value(7);
-	m_GUICH->Set("Num",(int)m_SampleNum->value());
-	m_GUICH->SetCommand(PoshSamplerPlugin::SETCURRENT);
-	m_GUICH->Wait(); 
-	UpdateSampleDisplay((int)m_SampleNum->value());
+inline void PoshSamplerPluginGUI::cb_SampleNum_i (Fl_Counter *o, void *v) {
+       if (m_SampleNum->value() < 0) m_SampleNum->value (0);
+       if (m_SampleNum->value() > 7) m_SampleNum->value (7);
+       m_GUICH->Set ("Num", (int)m_SampleNum->value());
+       m_GUICH->SetCommand (PoshSamplerPlugin::SETCURRENT);
+       m_GUICH->Wait();
+       m_GUICH->SetCommand (PoshSamplerPlugin::GETLOOP);
+       m_GUICH->Wait();
+       m_Loop->value (m_GUICH->GetBool ("BoolEcho"));
+       m_GUICH->SetCommand (PoshSamplerPlugin::GETPING);
+       m_GUICH->Wait();
+       m_PingPong->value (m_GUICH->GetBool ("BoolEcho"));
+       m_GUICH->SetCommand (PoshSamplerPlugin::GETRETRIG);
+       m_GUICH->Wait();
+       m_Retrig->value (m_GUICH->GetBool ("BoolEcho"));
+       m_GUICH->SetCommand (PoshSamplerPlugin::GETVOL);
+       m_GUICH->Wait();
+       m_Volume->value (m_GUICH->GetFloat ("ValEcho"));
+       m_GUICH->SetCommand (PoshSamplerPlugin::GETPITCH);
+       m_GUICH->Wait();
+       m_Pitch->value (m_GUICH->GetFloat ("ValEcho"));
+       m_GUICH->SetCommand (PoshSamplerPlugin::GETOCT);
+       m_GUICH->Wait();
+       m_Octave->value (m_GUICH->GetInt ("IntEcho"));
+       m_GUICH->SetCommand (PoshSamplerPlugin::GETNOTE);
+       m_GUICH->Wait();
+       m_Note->value (m_GUICH->GetInt ("IntEcho"));
+       UpdateSampleDisplay ((int)m_SampleNum->value());
 }
-void PoshSamplerPluginGUI::cb_SampleNum(Fl_Counter* o, void* v)
-{ ((PoshSamplerPluginGUI*)(o->parent()))->cb_SampleNum_i(o,v);}
 
+void PoshSamplerPluginGUI::cb_SampleNum (Fl_Counter *o, void *v) {
+     ((PoshSamplerPluginGUI*)(o->parent()))->cb_SampleNum_i (o, v);
+}
 
 inline void PoshSamplerPluginGUI::cb_Cut_i(Fl_Button* o, void* v)
-{	
+{
 	m_GUICH->Set("Start",(long)m_Display->GetRangeStart());
 	m_GUICH->Set("End",(long)m_Display->GetRangeEnd());
 	m_GUICH->Set("Num",(int)m_SampleNum->value());
 	m_GUICH->SetCommand(PoshSamplerPlugin::CUT);
-	m_GUICH->Wait(); 
+	m_GUICH->Wait();
 	UpdateSampleDisplay((int)m_SampleNum->value());
 	m_Display->redraw();
 }
 void PoshSamplerPluginGUI::cb_Cut(Fl_Button* o, void* v)
 { ((PoshSamplerPluginGUI*)(o->parent()))->cb_Cut_i(o,v);}
-	
+
 inline void PoshSamplerPluginGUI::cb_Copy_i(Fl_Button* o, void* v)
-{	
+{
 	m_GUICH->Set("Start",(long)m_Display->GetRangeStart());
 	m_GUICH->Set("End",(long)m_Display->GetRangeEnd());
 	m_GUICH->Set("Num",(int)m_SampleNum->value());
@@ -654,27 +672,27 @@ inline void PoshSamplerPluginGUI::cb_Copy_i(Fl_Button* o, void* v)
 }
 void PoshSamplerPluginGUI::cb_Copy(Fl_Button* o, void* v)
 { ((PoshSamplerPluginGUI*)(o->parent()))->cb_Copy_i(o,v);}
-	
+
 inline void PoshSamplerPluginGUI::cb_Paste_i(Fl_Button* o, void* v)
 {
 	m_GUICH->Set("Start",(long)m_Display->GetRangeStart());
 	m_GUICH->Set("End",(long)m_Display->GetRangeEnd());
 	m_GUICH->Set("Num",(int)m_SampleNum->value());
 	m_GUICH->SetCommand(PoshSamplerPlugin::PASTE);
-	m_GUICH->Wait(); 
+	m_GUICH->Wait();
 	UpdateSampleDisplay((int)m_SampleNum->value());
 	m_Display->redraw();
 }
 void PoshSamplerPluginGUI::cb_Paste(Fl_Button* o, void* v)
 { ((PoshSamplerPluginGUI*)(o->parent()))->cb_Paste_i(o,v);}
-	
+
 inline void PoshSamplerPluginGUI::cb_Mix_i(Fl_Button* o, void* v)
 {
 	m_GUICH->Set("Start",(long)m_Display->GetRangeStart());
 	m_GUICH->Set("End",(long)m_Display->GetRangeEnd());
 	m_GUICH->Set("Num",(int)m_SampleNum->value());
 	m_GUICH->SetCommand(PoshSamplerPlugin::MIX);
-	m_GUICH->Wait(); 
+	m_GUICH->Wait();
 	UpdateSampleDisplay((int)m_SampleNum->value());
 	m_Display->redraw();
 }
@@ -687,7 +705,7 @@ inline void PoshSamplerPluginGUI::cb_Crop_i(Fl_Button* o, void* v)
 	m_GUICH->Set("End",(long)m_Display->GetRangeEnd());
 	m_GUICH->Set("Num",(int)m_SampleNum->value());
 	m_GUICH->SetCommand(PoshSamplerPlugin::CROP);
-	m_GUICH->Wait(); 
+	m_GUICH->Wait();
 	UpdateSampleDisplay((int)m_SampleNum->value());
 	m_Display->redraw();
 }
@@ -695,12 +713,12 @@ void PoshSamplerPluginGUI::cb_Crop(Fl_Button* o, void* v)
 { ((PoshSamplerPluginGUI*)(o->parent()))->cb_Crop_i(o,v);}
 
 inline void PoshSamplerPluginGUI::cb_Reverse_i(Fl_Button* o, void* v)
-{	
+{
 	m_GUICH->Set("Start",(long)m_Display->GetRangeStart());
 	m_GUICH->Set("End",(long)m_Display->GetRangeEnd());
 	m_GUICH->Set("Num",(int)m_SampleNum->value());
 	m_GUICH->SetCommand(PoshSamplerPlugin::REV);
-	m_GUICH->Wait(); 
+	m_GUICH->Wait();
 	UpdateSampleDisplay((int)m_SampleNum->value());
 	m_Display->redraw();
 }
@@ -713,7 +731,7 @@ inline void PoshSamplerPluginGUI::cb_Amp_i(Fl_Button* o, void* v)
 	m_GUICH->Set("End",(long)m_Display->GetRangeEnd());
 	m_GUICH->Set("Num",(int)m_SampleNum->value());
 	m_GUICH->SetCommand(PoshSamplerPlugin::AMP);
-	m_GUICH->Wait(); 
+	m_GUICH->Wait();
 	UpdateSampleDisplay((int)m_SampleNum->value());
 	m_Display->redraw();
 }
@@ -724,7 +742,7 @@ inline void PoshSamplerPluginGUI::cb_WaveDisplay_i(Fl_WaveDisplay* o, void* v)
 {
 	m_GUICH->Set("Start",(long)o->GetPlayStart());
 	m_GUICH->Set("End",(long)o->GetLoopEnd());
-	m_GUICH->Set("LoopStart",(long)o->GetLoopStart());	
+	m_GUICH->Set("LoopStart",(long)o->GetLoopStart());
 	m_GUICH->Set("Num",(int)m_SampleNum->value());
 	m_GUICH->SetCommand(PoshSamplerPlugin::SETPLAYPOINTS);
 }
@@ -745,12 +763,13 @@ inline void PoshSamplerPluginGUI::cb_ZoomOut_i(Fl_Button* o, void* v)
 void PoshSamplerPluginGUI::cb_ZoomOut(Fl_Button* o, void* v)
 { ((PoshSamplerPluginGUI*)(o->parent()))->cb_ZoomOut_i(o,v);}
 
+
 const string PoshSamplerPluginGUI::GetHelpText(const string &loc){
-    return string("") 
+    return string("")
 	+ "A sampler that allows simple sample editing (cut copy paste etc),\n"
-	+ "dirty time stretching (by modulating the start pos + retriggering +\n" 
+	+ "dirty time stretching (by modulating the start pos + retriggering +\n"
 	+ "modulating pitch) and loop start/end points with ping pong loop mode.\n"
-	+ "Also implementations of controls, such as continuous pitch changing,\n" 
+	+ "Also implementations of controls, such as continuous pitch changing,\n"
 	+ "so you can add portmento to samples, trigger velocity sets sample\n"
 	+ "volume.\n\n"
 	+ "Can records input data too.\n\n"
@@ -758,7 +777,7 @@ const string PoshSamplerPluginGUI::GetHelpText(const string &loc){
 	+ "lmb: Select region\n"
 	+ "mmb: Move view\n"
 	+ "rmb: Draws samples at full zoom.\n\n"
-	+ "Left mouse also drags loop points. The Loop end marker defaults to the\n" 
+	+ "Left mouse also drags loop points. The Loop end marker defaults to the\n"
 	+ "end of the sample.\n\n"
 	+ "Note: The loading and saving of samples is not yet realtime safe";
 }

@@ -26,7 +26,6 @@ static const int NUM_SAMPLES = 8;
 static const int TRANSBUF_SIZE = 0x10000;
 
 struct SampleDesc {
-       std::string Pathname;
        float Volume, Velocity, Pitch, PitchMod;
        bool Loop, PingPong;
        int Note, Octave;
@@ -53,12 +52,12 @@ class PoshSamplerPlugin : public SpiralPlugin {
       virtual void LoadExternalFiles (const std::string &Dir, int withID=-1);
       enum GUICommands {NONE, LOAD, SAVE, SETVOL, SETPITCH, SETLOOP, SETPING, SETNOTE, SETOCT,
                         SETPLAYPOINTS, SETREC, CUT, COPY, PASTE, CROP, MIX, REV, AMP, SETCURRENT,
-	                GETSAMPLE, SETRETRIG};
+	                GETSAMPLE, SETRETRIG, GETLOOP, GETPING, GETRETRIG, GETVOL, GETPITCH, GETOCT,
+                        GETNOTE};
       struct GUIArgs {
-         int Num;
-         float Value;
-         bool Boole;
-         int Int;
+         int Num, Int, IntEcho;
+         float Value, ValEcho;
+         bool Boole, BoolEcho;
          long Start, End, LoopStart;
          char Name[256];
       };
@@ -78,6 +77,7 @@ class PoshSamplerPlugin : public SpiralPlugin {
       std::vector<Sample*> m_SampleVec;
       std::vector<SampleDesc*> m_SampleDescVec;
    private:
+      void InitializeSampleDescription (SampleDesc* NewDesc, int num, int Note);
       void Cut (int n, long s, long e);
       void Copy (int n, long s, long e);
       void Paste (int n, long s, long e);

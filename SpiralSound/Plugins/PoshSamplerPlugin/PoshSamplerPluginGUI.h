@@ -16,6 +16,9 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
+#ifndef POSH_SAMP_GUI_H
+#define POSH_SAMP_GUI_H
+
 #include <FL/Fl.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Counter.H>
@@ -23,51 +26,40 @@
 #include "../SpiralPluginGUI.h"
 #include "../Widgets/Fl_Knob.H"
 
-#ifndef POSH_SAMP_GUI_H
-#define POSH_SAMP_GUI_H
-
-class Fl_WaveDisplay : public Fl_Widget
-{
-	public:
-		Fl_WaveDisplay(int x,int y,int w,int h, char* Name);
-		~Fl_WaveDisplay();
-		virtual void draw();
-		virtual int handle(int event);
-		void SetSample(const float* s, long len);
-		long GetRangeStart()      { return m_StartPos; }
-		long GetRangeEnd()        { return m_EndPos; }
-		long GetViewStart()       { return m_ViewStart; }
-		void SetViewStart(long s) { m_ViewStart=s; }
-		long GetViewEnd()         { return m_ViewEnd; }
-		void SetViewEnd(long s)   { m_ViewEnd=s; }
-		void SetPlayPos(long s)   { m_PlayPos=s; if(m_PosMarker) redraw(); }
-		void SetPlayStart(long s) { m_PlayStart=s; }
-		long GetPlayStart()       { return m_PlayStart; }
-		void SetLoopStart(long s) { m_LoopStart=s; }
-		long GetLoopStart()       { return m_LoopStart; }
-		void SetLoopEnd(long s)   { m_LoopEnd=s; }
-		long GetLoopEnd()         { return m_LoopEnd; }
-		void SetPosMarker(bool s) { m_PosMarker=s; }
-		void ZoomIn();
-		void ZoomOut();
-                void SetColours (unsigned b, unsigned f, unsigned s, unsigned i, unsigned m) {
-  		     m_BGColour=(Fl_Color)b;  m_FGColour=(Fl_Color)f;  m_SelColour=(Fl_Color)s;
-                     m_IndColour=(Fl_Color)i; m_MrkColour=(Fl_Color)m;
-                }
-	private:
-		Fl_Color m_BGColour, m_FGColour, m_SelColour, m_IndColour, m_MrkColour;
-		Sample *m_Sample;
-		long m_StartPos;
-		long m_EndPos;
-
-		long m_ViewStart;
-		long m_ViewEnd;
-		long m_PlayPos;
-
-		long m_PlayStart;
-		long m_LoopStart;
-		long m_LoopEnd;
-		bool m_PosMarker;
+class Fl_WaveDisplay : public Fl_Widget {
+   public:
+      Fl_WaveDisplay (int x,int y,int w,int h, char* Name);
+      ~Fl_WaveDisplay();
+      virtual void draw();
+      virtual int handle (int event);
+      void SetSample (const float* s, long len);
+      void ClearSample (void);
+      long GetRangeStart()      { return m_StartPos; }
+      long GetRangeEnd()        { return m_EndPos; }
+      long GetViewStart()       { return m_ViewStart; }
+      void SetViewStart(long s) { m_ViewStart=s; }
+      long GetViewEnd()         { return m_ViewEnd; }
+      void SetViewEnd(long s)   { m_ViewEnd=s; }
+      void SetPlayPos(long s)   { m_PlayPos=s; if(m_PosMarker) redraw(); }
+      void SetPlayStart(long s) { m_PlayStart=s; }
+      long GetPlayStart()       { return m_PlayStart; }
+      void SetLoopStart(long s) { m_LoopStart=s; }
+      long GetLoopStart()       { return m_LoopStart; }
+      void SetLoopEnd(long s)   { m_LoopEnd=s; }
+      long GetLoopEnd()         { return m_LoopEnd; }
+      void SetPosMarker(bool s) { m_PosMarker=s; }
+      void ZoomIn();
+      void ZoomOut();
+      void SetColours (unsigned b, unsigned f, unsigned s, unsigned i, unsigned m) {
+           m_BGColour=(Fl_Color)b;  m_FGColour=(Fl_Color)f;  m_SelColour=(Fl_Color)s;
+           m_IndColour=(Fl_Color)i; m_MrkColour=(Fl_Color)m;
+      }
+   private:
+      Fl_Color m_BGColour, m_FGColour, m_SelColour, m_IndColour, m_MrkColour;
+      Sample *m_Sample;
+      long m_StartPos, m_EndPos, m_ViewStart, m_ViewEnd;
+      long m_PlayPos, m_PlayStart, m_LoopStart, m_LoopEnd;
+      bool m_PosMarker;
 };
 
 
