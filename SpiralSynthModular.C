@@ -1459,7 +1459,7 @@ void SynthModular::LoadPatch(const char *fn)
 	if (in) 
 	{	
 		fstream	inf;
-		inf.open(fn);
+		inf.open(fn, std::ios::in);
 		
 		m_FilePath=fn;	
 
