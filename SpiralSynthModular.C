@@ -876,6 +876,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 	//need it, but we do have other things we might need to load
 
 	bool has_file_path;
+	char file_path[1024];
 	string m_FromFilePath;
 
 	string dummy,dummy2;		
@@ -886,7 +887,12 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 		m_Copied.devices>>has_file_path;
 
 		if (has_file_path)
-		  m_Copied.devices>>m_FromFilePath;
+		{
+   		  m_Copied.devices.getline(file_path, 1024);
+   		  m_FromFilePath = file_path;
+   		  cerr << file_path << endl;
+   		}  
+   		  
 	}
 	else
 	{
@@ -1308,7 +1314,9 @@ inline void SynthModular::cb_Copy_i (Fl_Widget *o, void *v) {
        m_Copied.devices.open ("___temp.ssmcopytmp", ios::out);
        m_Copied.devicecount = 0;
        m_Copied.m_DeviceIds.clear();
-       if (m_FilePath != "") m_Copied.devices << true << " " << m_FilePath << endl;
+       if (m_FilePath != "") {
+           m_Copied.devices << true << " "  << m_FilePath << endl;
+       }    
        else m_Copied.devices << false << endl;
        for (unsigned int i=0; i<m_Canvas->Selection().m_DeviceIds.size(); i++) {
            int ID = m_Canvas->Selection().m_DeviceIds[i];
