@@ -458,7 +458,14 @@ void Fl_Canvas::PortClicked(Fl_DeviceGUI* Device, int Type, int Port, bool Value
 void Fl_Canvas::ClearConnections(Fl_DeviceGUI* Device)
 {
 	bool removedall=false;
-		
+	
+	//make sure we don't leave a dangling incomplete wire this will cause errors/seg-faults
+	if (UserMakingConnection() && Device && ((Device->GetID() == m_IncompleteWire.OutputID) || 
+		(Device->GetID() == m_IncompleteWire.InputID)))
+	{
+		ClearIncompleteWire();
+	}	
+	
 	while (!removedall)
 	{
 		removedall=true;

@@ -44,6 +44,12 @@ SpiralPlugin::~SpiralPlugin()
 	delete m_AudioCH;
 }
 
+bool SpiralPlugin::Kill() 
+{
+	m_IsDead = true; 
+	return true;
+}
+
 PluginInfo &SpiralPlugin::Initialise(const HostInfo *Host)
 {	
 	m_HostInfo=Host;

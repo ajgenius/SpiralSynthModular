@@ -77,7 +77,7 @@ public:
 
 	// execute the audio
 	virtual void        Execute()=0;
-	virtual bool         Kill() {m_IsDead = true; return true;}
+	virtual bool         Kill();
 
 	// run the commands from the GUI
 	virtual void        ExecuteCommands() {}
