@@ -95,34 +95,43 @@ public:
 	void UpdatePluginGUIs();
 	void LoadPatch(const char *fn);
 
+	void FreezeAll()
+	{
+		m_CH.Set("Frozen",true);	
+		m_CH.Wait();
+	}
+	
+	void ThawAll()
+	{
+		m_CH.Set("Frozen",false);		
+	}
+
 	void PauseAudio()
 	{
-		m_CH.Set("PauseAudio",true);
-		m_CH.Wait();
+		m_PauseAudio = true;
 	}
 
 	void ResumeAudio()
 	{
-		m_CH.Set("PauseAudio",false);
+		m_PauseAudio = false;
 	}
 
 	void ResetAudio()
 	{
 		if (! m_ResetingAudioThread)
 		{
-			if (! IsPaused())
-				PauseAudio();
+			if (! IsFrozen())
+				FreezeAll();
 				
 			m_ResetingAudioThread = true;
 
-			if (IsPaused())
-				ResumeAudio();
+			if (IsFrozen())
+				ThawAll();
 		}	
 	}
 
 	// only for audio thread
-	bool IsPaused() { return m_PauseAudio; }
-
+	bool IsFrozen() { return m_Frozen; }
 
 	iostream &StreamPatchIn(iostream &s, bool paste, bool merge);
 private:
@@ -135,6 +144,7 @@ private:
 	HostInfo m_Info;
 	bool m_ResetingAudioThread;
 	bool m_HostNeedsUpdate;
+	bool m_PauseAudio;
 
 	static DeviceGUIInfo BuildDeviceGUIInfo(PluginInfo &PInfo);
 
@@ -174,7 +184,7 @@ private:
 	vector<Fl_Button*> m_DeviceVec;
 
 	ChannelHandler m_CH; // used for threadsafe communication
-	bool m_PauseAudio;
+	bool m_Frozen;
 
 	inline void cb_NewDevice_i(Fl_Button* o, void* v);
 	static void cb_NewDevice(Fl_Button* o, void* v);

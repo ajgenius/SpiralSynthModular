@@ -83,7 +83,7 @@ void audioloop(void* o)
 
 			// put the brakes on if there is no blocking output running
 			if (!synth->IsBlockingOutputPluginReady()||
-				 synth->IsPaused())
+				 synth->IsFrozen())
 			{
 				usleep(10000);
 			}

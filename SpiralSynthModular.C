@@ -75,7 +75,7 @@ DeviceWin::~DeviceWin()
 
 SynthModular::SynthModular():
 m_NextID(0),
-m_PauseAudio(false)
+m_Frozen(false)
 {
 	/* Shared Audio State Information  */
 	m_Info.BUFSIZE = SpiralInfo::BUFSIZE;
@@ -100,7 +100,7 @@ m_PauseAudio(false)
 
         for (int n=0; n<512; n++) Numbers[n]=n;
 
-	m_CH.Register("PauseAudio",&m_PauseAudio);
+	m_CH.Register("Frozen",&m_Frozen);
 }
 
 //////////////////////////////////////////////////////////
@@ -116,7 +116,7 @@ SynthModular::~SynthModular()
 
 void SynthModular::ClearUp()
 {
-	PauseAudio();
+	FreezeAll();
 
 	for(map<int,DeviceWin*>::iterator i=m_DeviceWinMap.begin();
 		i!=m_DeviceWinMap.end(); i++)
@@ -142,7 +142,7 @@ void SynthModular::ClearUp()
 	m_DeviceWinMap.clear();
 	m_NextID=0;
 
-	ResumeAudio();
+	ThawAll();
 }
 
 //////////////////////////////////////////////////////////
@@ -150,6 +150,8 @@ void SynthModular::Update()
 {
 	m_CH.UpdateDataNow();
 
+	if (m_Frozen) return;
+	
 	// for all the plugins
 	for(map<int,DeviceWin*>::iterator i=m_DeviceWinMap.begin();
 		i!=m_DeviceWinMap.end(); i++)
@@ -165,19 +167,19 @@ void SynthModular::Update()
 		}
 		else if (i->second->m_Device) // if it's not a comment
 		{
+			#ifdef DEBUG_PLUGINS
+			cerr<<"Updating channelhandler of plugin "<<i->second->m_PluginID<<endl;
+			#endif
+
+			// updates the data from the gui thread, if it's not blocking
+ 			i->second->m_Device->UpdateChannelHandler();
+
+			#ifdef DEBUG_PLUGINS
+			cerr<<"Finished updating"<<endl;
+			#endif
+
 			if ((!m_ResetingAudioThread) && (!m_PauseAudio))
 			{
-				#ifdef DEBUG_PLUGINS
-				cerr<<"Updating channelhandler of plugin "<<i->second->m_PluginID<<endl;
-				#endif
-
-				// updates the data from the gui thread, if it's not blocking
-	 			i->second->m_Device->UpdateChannelHandler();
-
-				#ifdef DEBUG_PLUGINS
-				cerr<<"Finished updating"<<endl;
-				#endif
-
 				// run any commands we've received from the GUI's
 				i->second->m_Device->ExecuteCommands();
 			}
@@ -311,13 +313,13 @@ SpiralWindowType *SynthModular::CreateWindow()
 		m_Topbar->color(SpiralInfo::GUICOL_Button);
         m_TopWindow->add(m_Topbar);
 
-        m_ToolbarPanel = new Fl_Pack (0, 0, but*5, ToolbarHeight, "");
+        m_ToolbarPanel = new Fl_Pack (0, 0, but*6, ToolbarHeight, "");
         m_ToolbarPanel->user_data((void*)(this));
        	m_ToolbarPanel->type(FL_VERTICAL);
 		m_ToolbarPanel->color(SpiralInfo::GUICOL_Button);
         m_Topbar->add(m_ToolbarPanel);
 
-        m_Toolbar = new Fl_Pack (0, 0, but*5, but, "");
+        m_Toolbar = new Fl_Pack (0, 0, but*6, but, "");
         m_Toolbar->user_data((void*)(this));
        	m_Toolbar->type(FL_HORIZONTAL);
 		m_Toolbar->color(SpiralInfo::GUICOL_Button);
@@ -388,7 +390,7 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_NewComment->callback((Fl_Callback*)cb_NewComment);
 	m_Toolbar->add(m_NewComment);
 
-	m_PlayPause = new Fl_Button(0, 0, but, but, "Play/Pause");
+	m_PlayPause = new Fl_Button(0, 0, but, but, "Pause ||");
         m_PlayPause->type(0);
 	m_PlayPause->box(FL_PLASTIC_UP_BOX);
 	m_PlayPause->color(SpiralInfo::GUICOL_Button);
@@ -402,7 +404,7 @@ SpiralWindowType *SynthModular::CreateWindow()
 		m_GroupFiller->color(SpiralInfo::GUICOL_Button);
 	m_Topbar->add (m_GroupFiller);
 
-       	m_GroupTab = new Fl_Tabs (0, 0, MAIN_WIDTH-m_GroupFiller->w()-but*5, ToolbarHeight, "");
+       	m_GroupTab = new Fl_Tabs (0, 0, MAIN_WIDTH-m_GroupFiller->w()-but*6, ToolbarHeight, "");
         m_GroupTab->user_data ((void*)(this));
 		m_GroupTab->box(FL_PLASTIC_DOWN_BOX);
 		m_GroupTab->color(SpiralInfo::GUICOL_Button);
@@ -967,7 +969,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 	//if we are merging as opposed to loading a new patch
 	//we have no need to pause audio
 	if (!merge && !paste)
-		PauseAudio();
+		FreezeAll();
 
 	//if we are pasting we don't have any of the file version
 	//or saving information. since its internal we didn't
@@ -1170,7 +1172,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 	if (!paste && !merge)
 	{
 		s>>*m_Canvas;
-		ResumeAudio();
+		ThawAll();
 	}
 	
         return s;
@@ -1186,7 +1188,7 @@ iostream &operator>>(iostream &s, SynthModular &o)
 
 ostream &operator<<(ostream &s, SynthModular &o)
 {
-	o.PauseAudio();
+	o.FreezeAll();
 
 	s<<"SpiralSynthModular File Ver "<<FILE_VERSION<<endl;
 
@@ -1266,7 +1268,7 @@ ostream &operator<<(ostream &s, SynthModular &o)
 		system(command.c_str());
 	}
 
-	o.ResumeAudio();
+	o.ThawAll();
 
 	return s;
 }
@@ -1405,12 +1407,16 @@ void SynthModular::cb_NewComment(Fl_Button* o, void* v)
 
 inline void SynthModular::cb_PlayPause_i(Fl_Button* o, void* v)
 {
-	if (m_ResetingAudioThread) return;
-	
-	if (IsPaused())
+	if (m_PauseAudio)
+	{
+		m_PlayPause->label("Pause ||");
 		ResumeAudio();
+	}	
 	else
+	{
+		m_PlayPause->label("Play >");
 		PauseAudio();
+	}	
 }
 
 void SynthModular::cb_PlayPause(Fl_Button* o, void* v)
@@ -1486,7 +1492,7 @@ inline void SynthModular::cb_Connection_i(Fl_Canvas* o, void* v)
 	}
 	
 	if (!di->second->m_Device->SetInput(Wire->InputPort,(const Sample*)sample))
-	{
+	{ 
 		char num[32]; 
 		sprintf(num,"%d,%d",Wire->InputID,Wire->InputPort);
 		SpiralInfo::Alert("Warning: Connection problem - can't find source input "+string(num));
@@ -1539,12 +1545,12 @@ void SynthModular::LoadPatch(const char *fn)
 {
 	ifstream in(fn);
 
-	if (in)
-	{
+	if (in) 
+	{	
 		fstream	inf;
 		inf.open(fn, std::ios::in);
-
-		m_FilePath=fn;
+		
+		m_FilePath=fn;	
 
 		ClearUp();
 		inf>>*this;
