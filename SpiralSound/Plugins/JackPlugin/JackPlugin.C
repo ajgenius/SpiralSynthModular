@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <limits.h>
+#include <math.h>
 
 #include "JackPlugin.h"
 #include "JackPluginGUI.h"
@@ -99,8 +100,8 @@ JackClient::JackClient()
   m_Attached = false;
   m_SampleRate = 0;
   m_BufferSize = 0;
-  m_JackInputCount = 8;
-  m_JackOutputCount = 8;        
+  m_JackInputCount = 4;
+  m_JackOutputCount = 4;        
   m_Client=NULL;
 }
 
@@ -406,6 +407,8 @@ m_Connected(false)
 	// we are an output
 	m_IsTerminal = true;
 	
+	m_Version = 2;
+	
 	m_PluginInfo.Name="Jack";
 	m_PluginInfo.Width=225;
 	m_PluginInfo.Height=230;
@@ -415,6 +418,7 @@ m_Connected(false)
      	m_PluginInfo.PortTips.clear();
 
      	m_PluginInfo.NumInputs = m_JackClient->GetJackOutputCount();
+	m_GUIArgs.NumInputs = m_PluginInfo.NumInputs;
 
      	for (int n=0; n<m_JackClient->GetJackInputCount(); n++)
      	{
@@ -424,6 +428,7 @@ m_Connected(false)
      	}
 	
      	m_PluginInfo.NumOutputs = m_JackClient->GetJackOutputCount();
+	m_GUIArgs.NumOutputs = m_PluginInfo.NumOutputs;
 
 	for (int n=0; n<m_JackClient->GetJackOutputCount(); n++)
 	{
@@ -605,4 +610,52 @@ void JackPlugin::ExecuteCommands()
 		}
 	}
 	m_Connected=m_JackClient->IsAttached();
+}
+
+void JackPlugin::StreamOut (ostream &s) 
+{
+	s << m_Version << " " << m_GUIArgs.NumInputs << " " << m_GUIArgs.NumOutputs << " ";
+}
+
+void JackPlugin::StreamIn (istream &s) 
+{
+	char Test;
+	int Version, NumInputs, NumOutputs;
+
+	s.seekg (2, ios_base::cur );//skip to next line
+	Test = s.peek();//peek first char
+	s.seekg (-2, ios_base::cur );//jump back to prior line 
+	
+	if ( (Test >= '0') && (Test <= '9') )
+	{
+		s >> Version;
+	}
+	else
+	{
+		//No Version, so use Version 1
+		Version = 1;
+	}
+	
+	switch (Version)
+	{
+		case 2:
+		{
+			s >> NumInputs >> NumOutputs;
+			m_GUIArgs.NumOutputs = min(max(NumOutputs, MIN_PORTS), MAX_PORTS);
+			m_GUIArgs.NumInputs = min(max(NumInputs, MIN_PORTS), MAX_PORTS);
+			
+			SetNumberPorts (m_GUIArgs.NumInputs, m_GUIArgs.NumOutputs);				
+		}
+		break;
+		
+		case 1:
+		{
+			//use original fixed defaults
+			m_GUIArgs.NumInputs = 16;
+			m_GUIArgs.NumOutputs = 16;
+
+			SetNumberPorts (m_GUIArgs.NumInputs, m_GUIArgs.NumOutputs);				
+		}
+		break;
+	}	
 }

@@ -123,10 +123,12 @@ public:
 
 	virtual PluginInfo& Initialise(const HostInfo *Host);
 	virtual SpiralGUIType*  CreateGUI();
+	
 	virtual void 		Execute();
 	virtual void 		ExecuteCommands();
-	virtual void	    StreamOut(std::ostream &s) {}
-	virtual void	    StreamIn(std::istream &s)  {}
+	
+	virtual void	    StreamOut(std::ostream &s);
+	virtual void	    StreamIn(std::istream &s);
 	
 	JackClient *GetJackClient()           { return m_JackClient; }
 	
@@ -137,7 +139,6 @@ public:
 	{
 		int NumInputs;
 		int NumOutputs;
-		int Num;
 		char Port[256];
 	};
 
@@ -147,6 +148,8 @@ private:
 	const HostInfo* host;
 
 	GUIArgs m_GUIArgs;	
+	
+	int m_Version;
 	
 	// slightly clumsy, but we have to share this data with the gui
 	int  m_NumInputPortNames;

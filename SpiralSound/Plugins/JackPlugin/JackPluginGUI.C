@@ -144,6 +144,29 @@ SpiralPluginGUI(w,h,o,ch)
 
 void JackPluginGUI::UpdateValues(SpiralPlugin *o)
 {
+	//To make sure buttons match ports on loading a patch
+	if (! m_GUICH->GetBool("Connected"))
+	{
+		int i, numbuttons = (int) m_InputName.size(), numports = m_JackClient->GetJackInputCount();
+		
+		if (numbuttons > numports)
+		{
+			for (int i=numbuttons-numports; i > 0; i--)
+			{
+		        	RemoveOutput() ;		
+		        	RemoveInput() ;	
+		        }	
+		} 
+		
+		if (numbuttons < numports)
+		{
+			for (int i=0; i < numports-numbuttons; i++)
+			{
+		        	AddOutput() ;		
+		        	AddInput() ;	
+		        }	
+		} 
+	}	
 }
 
 void JackPluginGUI::Update()
@@ -501,16 +524,17 @@ inline void JackPluginGUI::cb_InputConnect_i(Fl_Button* o)
 	}
 }
 
-const string JackPluginGUI::GetHelpText(const string &loc){
-    return string("") 
-	+ "JACK is the Jack Audio Connection Kit, and allows multiple Linux audio\n"
-	+ "apps to be connected together and run simultaneously in a low latency.\n"
-	+ "environment.\n\n"	
-	+ "This plugin allows you to connect up to 64 inputs and outputs to other\n"
-	+ "JACK apps (providing a server is running and your system can handle it)\n"
-	+ "You can use the JackPlugin to connect the ports, or an external program\n"
-	+ "such as the excellent qjackconnect app.\n\n"
-	+ "When using JACK, make sure the buffer size and samplerate are set to\n"
-	+ "match the JACK server, otherwise glitchy playback, and/or crashes may\n"
-	+ "result";
+const string JackPluginGUI::GetHelpText(const string &loc)
+{
+	return string("") 
+		+ "JACK is the Jack Audio Connection Kit, and allows multiple Linux audio\n"
+		+ "apps to be connected together and run simultaneously in a low latency.\n"
+		+ "environment.\n\n"	
+		+ "This plugin allows you to connect up to 64 inputs and outputs to other\n"
+		+ "JACK apps (providing a server is running and your system can handle it)\n"
+		+ "You can use the JackPlugin to connect the ports, or an external program\n"
+		+ "such as the excellent qjackconnect app.\n\n"
+		+ "When using JACK, make sure the buffer size and samplerate are set to\n"
+		+ "match the JACK server, otherwise glitchy playback, and/or crashes may\n"
+		+ "result";
 }
