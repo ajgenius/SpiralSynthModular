@@ -104,6 +104,7 @@ SynthModular::~SynthModular()
 {
 	ClearUp();
 	PluginManager::Get()->PackUpAndGoHome();
+	system("rm -f ___temp.ssmcopytmp");
 }
 
 //////////////////////////////////////////////////////////
@@ -371,6 +372,13 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_Canvas->SetConnectionCallback((Fl_Callback*)cb_Connection);
 	m_Canvas->SetUnconnectCallback((Fl_Callback*)cb_Unconnect);
 	m_Canvas->SetAddDeviceCallback((Fl_Callback*)cb_NewDeviceFromMenu);
+
+	m_Canvas->SetCutDeviceGroupCallback((Fl_Callback*)cb_CutDeviceGroup);
+	m_Canvas->SetCopyDeviceGroupCallback((Fl_Callback*)cb_CopyDeviceGroup);
+	m_Canvas->SetPasteDeviceGroupCallback((Fl_Callback*)cb_PasteDeviceGroup);
+
+	m_Canvas->SetMergePatchCallback((Fl_Callback*)cb_MergePatch);
+
 	m_CanvasScroll->add(m_Canvas);
 
 	m_SettingsWindow = new SettingsWindow;
@@ -629,6 +637,7 @@ DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 	Info.YPos       = y; //rand()%400;
 
 	nlw->m_DeviceGUI = new Fl_DeviceGUI(Info, temp, Pix, nlw->m_Device->IsTerminal());
+	Fl_Canvas::SetDeviceCallbacks(nlw->m_DeviceGUI, m_Canvas);
 	m_Canvas->add(nlw->m_DeviceGUI);
 	m_Canvas->redraw();
 
@@ -685,6 +694,7 @@ DeviceWin* SynthModular::NewComment(int n, int x=-1, int y=-1)
 
 	nlw->m_DeviceGUI = new Fl_CommentGUI(Info, NULL, NULL);
 
+	Fl_Canvas::SetDeviceCallbacks(nlw->m_DeviceGUI, m_Canvas);
 	m_Canvas->add(nlw->m_DeviceGUI);
 	m_Canvas->redraw();
 
@@ -755,35 +765,201 @@ void SynthModular::cb_Blocking(void* o, bool mode)
 
 //////////////////////////////////////////////////////////
 
-istream &operator>>(istream &s, SynthModular &o)
+inline void SynthModular::cb_CutDeviceGroup_i()
 {
-	o.PauseAudio();
+	if (! m_Canvas->HaveSelection())
+		return;
 
-	string dummy,dummy2;
+	//show some warning here	
+
+	cb_CopyDeviceGroup_i();
+
+	for (unsigned int i=0; i<m_Canvas->Selection().m_DeviceIds.size(); i++) 
+	{
+		int ID = m_Canvas->Selection().m_DeviceIds[i];
+		Fl_DeviceGUI::Kill(m_DeviceWinMap[ID]->m_DeviceGUI);
+
+	}	
+	Fl_Canvas::ClearSelection(m_Canvas);
+}
+
+//////////////////////////////////////////////////////////
+
+inline void SynthModular::cb_MergePatch_i()
+{
+	char *fn=fl_file_chooser("Merge a patch", "*.ssm", NULL);
+
+	if (fn && fn!='\0')
+	{
+		ifstream in(fn);
+
+		if (in)
+		{
+			fstream inf;
+
+			inf.open(fn,ios::in);
+
+			m_MergeFilePath=fn;
+
+			StreamPatchIn(inf, false, true);
+			m_Canvas->StreamSelectionWiresIn(inf, m_Copied.m_DeviceIds, true, false);
+	
+			inf.close();
+		}	
+	}
+}
+
+//////////////////////////////////////////////////////////
+
+inline void SynthModular::cb_CopyDeviceGroup_i()
+{
+	if (! m_Canvas->HaveSelection())
+		return;
+
+	m_Copied.devices.open("___temp.ssmcopytmp",ios::out);
+
+	m_Copied.devicecount = 0;
+	m_Copied.m_DeviceIds.clear();
+	if (m_FilePath != "") 
+	{
+		m_Copied.devices<<true<<" ";
+		m_Copied.devices<<m_FilePath<<endl;
+	}	
+	else
+		m_Copied.devices<<false<<endl;
+
+	for (unsigned int i=0; i<m_Canvas->Selection().m_DeviceIds.size(); i++) 
+	{
+		int ID = m_Canvas->Selection().m_DeviceIds[i];
+		std::map<int,DeviceWin*>::iterator i = m_DeviceWinMap.find(ID);
+
+		m_Copied.m_DeviceIds[ID] = ID;
+
+		m_Copied.devicecount += 1;
+			
+		m_Copied.devices<<"Device ";
+		m_Copied.devices<<i->first<<" "; // save the id
+		m_Copied.devices<<"Plugin ";
+		m_Copied.devices<<i->second->m_PluginID<<endl;
+		m_Copied.devices<<i->second->m_DeviceGUI->x()<<" ";
+		m_Copied.devices<<i->second->m_DeviceGUI->y()<<" ";
+		m_Copied.devices<<i->second->m_DeviceGUI->GetName().size()<<" ";
+		m_Copied.devices<<i->second->m_DeviceGUI->GetName()<<" ";
+	
+		if (i->second->m_DeviceGUI->GetPluginWindow())
+		{
+			m_Copied.devices<<i->second->m_DeviceGUI->GetPluginWindow()->visible()<<" ";
+			m_Copied.devices<<i->second->m_DeviceGUI->GetPluginWindow()->x()<<" ";
+			m_Copied.devices<<i->second->m_DeviceGUI->GetPluginWindow()->y()<<" ";
+		}
+		else
+		{
+			m_Copied.devices<<0<<" "<<0<<" "<<0;
+		}
+		m_Copied.devices<<endl;
+
+		if (i->second->m_PluginID==COMMENT_ID)
+		{
+			// save the comment gui
+			((Fl_CommentGUI*)(i->second->m_DeviceGUI))->StreamOut(m_Copied.devices);
+		}
+		else
+		{
+			// save the plugin
+			i->second->m_Device->StreamOut(m_Copied.devices);
+		}
+		m_Copied.devices<<endl;
+	}
+	m_Canvas->StreamSelectionWiresOut(m_Copied.devices);
+	m_Copied.devices.close();
+
+	Fl_Canvas::EnablePaste(m_Canvas);
+};
+
+//////////////////////////////////////////////////////////
+
+inline void SynthModular::cb_PasteDeviceGroup_i()
+{
+	if (m_Copied.devicecount <= 0)
+		return;
+
+	m_Copied.devices.open("___temp.ssmcopytmp",ios::in);
+
+	StreamPatchIn(m_Copied.devices, true, false);
+
+	m_Canvas->StreamSelectionWiresIn(m_Copied.devices, m_Copied.m_DeviceIds, false, true);
+
+	m_Copied.devices.close();
+};
+
+//////////////////////////////////////////////////////////
+
+iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
+{
+	//if we are merging as opposed to loading a new patch
+	//we have no need to pause audio
+	if (!merge && !paste)
+		PauseAudio();
+
+	//if we are pasting we don't have any of the file version
+	//or saving information. since its internal we didn't
+	//need it, but we do have other things we might need to load
+
+	bool has_file_path;
+	string m_FromFilePath;
+	
+	string dummy,dummy2;		
 	int ver;
-	s>>dummy>>dummy>>dummy>>ver;
 
-	if (ver>FILE_VERSION)
+	if (paste)
 	{
-		SpiralInfo::Alert("Bad file, or more recent version.");
-		return s;
+		m_Copied.devices>>has_file_path;
+
+		if (has_file_path)
+		  m_Copied.devices>>m_FromFilePath;
+	}
+	else
+	{
+		s>>dummy>>dummy>>dummy>>ver;
+
+		if (ver>FILE_VERSION)
+		{
+			SpiralInfo::Alert("Bad file, or more recent version.");
+			return s;
+		}
+	
+		if (ver>2)
+		{
+			int MainWinX,MainWinY,MainWinW,MainWinH;
+			int EditWinX,EditWinY,EditWinW,EditWinH;
+
+			s>>MainWinX>>MainWinY>>MainWinW>>MainWinH;
+			s>>EditWinX>>EditWinY>>EditWinW>>EditWinH;
+
+			//o.m_MainWindow->resize(MainWinX,MainWinY,MainWinW,MainWinH);
+			//o.m_EditorWindow->resize(EditWinX,EditWinY,EditWinW,EditWinH);
+		}
+		
+		if (merge)
+			m_FromFilePath = m_MergeFilePath;
 	}
 
-	if (ver>2)
-	{
-		int MainWinX,MainWinY,MainWinW,MainWinH;
-		int EditWinX,EditWinY,EditWinW,EditWinH;
-
-		s>>MainWinX>>MainWinY>>MainWinW>>MainWinH;
-		s>>EditWinX>>EditWinY>>EditWinW>>EditWinH;
-
-		//o.m_MainWindow->resize(MainWinX,MainWinY,MainWinW,MainWinH);
-		//o.m_EditorWindow->resize(EditWinX,EditWinY,EditWinW,EditWinH);
-	}
-
+	//wether pasting or merging we need to clear the current 
+	//selection so we can replace it with the new devices
+	if (paste || merge)
+		Fl_Canvas::ClearSelection(m_Canvas);
+	
 	int Num, ID, PluginID, x,y,ps,px,py;
-	s>>dummy>>Num;
-
+	
+	if (paste)
+	{
+		Num = m_Copied.devicecount;
+	}
+	else
+	{
+		s>>dummy>>Num;
+	}
+	
 	for(int n=0; n<Num; n++)
 	{
 		#ifdef DEBUG_STREAM
@@ -798,7 +974,7 @@ istream &operator>>(istream &s, SynthModular &o)
 
 		string Name;
 
-		if (ver>3)
+		if (paste || ver>3)
 		{
 			// load the device name
 			int size;
@@ -811,75 +987,107 @@ istream &operator>>(istream &s, SynthModular &o)
 			} else {
 				Name = "";
 			}
-        }
+		}
 
 		#ifdef DEBUG_STREAM
 		cerr<<dummy<<" "<<ID<<" "<<dummy2<<" "<<PluginID<<" "<<x<<" "<<y<<endl;
 		#endif
 
-		if (ver>1) s>>ps>>px>>py;
-
-		// Check we're not duplicating an ID
-		if (o.m_DeviceWinMap.find(ID)!=o.m_DeviceWinMap.end())
+		if (paste || ver>1) s>>ps>>px>>py;
+		
+		//if we are merging a patch or pasting we will change duplicate ID's
+		if (!paste && !merge)
 		{
-			SpiralInfo::Alert("Duplicate device ID found in file - aborting load");
-			return s;
+			// Check we're not duplicating an ID
+			if (m_DeviceWinMap.find(ID)!=m_DeviceWinMap.end())
+			{
+				SpiralInfo::Alert("Duplicate device ID found in file - aborting load");
+				return s;
+			}
 		}
-
+		
 		if (PluginID==COMMENT_ID)
 		{
-			DeviceWin* temp = o.NewComment(PluginID, x, y);
+			DeviceWin* temp = NewComment(PluginID, x, y);
 			if (temp)
 			{
+				if (paste || merge)
+				{
+					m_Copied.m_DeviceIds[ID] = m_NextID++;
+					ID = m_Copied.m_DeviceIds[ID];
+				}	
+
 				temp->m_DeviceGUI->SetID(ID);
-				o.m_DeviceWinMap[ID]=temp;
-				((Fl_CommentGUI*)(o.m_DeviceWinMap[ID]->m_DeviceGUI))->StreamIn(s); // load the plugin
-				if (o.m_NextID<=ID) o.m_NextID=ID+1;
+				m_DeviceWinMap[ID]=temp;
+				((Fl_CommentGUI*)(m_DeviceWinMap[ID]->m_DeviceGUI))->StreamIn(s); // load the plugin
+
+				if (paste || merge)
+					Fl_Canvas::AppendSelection(ID, m_Canvas);
+				else				
+					if (m_NextID<=ID) m_NextID=ID+1;
+
 			}
 		}
 		else
 		{
-			DeviceWin* temp = o.NewDeviceWin(PluginID, x, y);
+			DeviceWin* temp = NewDeviceWin(PluginID, x, y);
 			if (temp)
 			{
+				int oldID=ID;
+				if (paste || merge)
+				{
+					m_Copied.m_DeviceIds[ID] = m_NextID++;
+	
+					ID = m_Copied.m_DeviceIds[ID];
+				}
+				
 				temp->m_DeviceGUI->SetID(ID);
-				if (ver>3)
+				
+				if (paste || ver>3)
 				{
 					// set the titlebars
 					temp->m_DeviceGUI->SetName(Name);
 				}
 
-				temp->m_Device->SetUpdateInfoCallback(ID,o.cb_UpdatePluginInfo);
-				o.m_DeviceWinMap[ID]=temp;
-				o.m_DeviceWinMap[ID]->m_Device->StreamIn(s); // load the plugin
-				// load external files
-				o.m_DeviceWinMap[ID]->m_Device->LoadExternalFiles(o.m_FilePath+"_files/");
+				temp->m_Device->SetUpdateInfoCallback(ID,cb_UpdatePluginInfo);
+				m_DeviceWinMap[ID]=temp;
+				m_DeviceWinMap[ID]->m_Device->StreamIn(s); // load the plugin
 
-				if (ver>1 && o.m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow())
+				// load external files
+				if (paste || merge)
+					m_DeviceWinMap[ID]->m_Device->LoadExternalFiles(m_FromFilePath+"_files/", oldID);
+				else
+					m_DeviceWinMap[ID]->m_Device->LoadExternalFiles(m_FilePath+"_files/");
+
+				if ((paste || ver>1) && m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow())
 				{
 					// set the GUI up with the loaded values
 					// looks messy, but if we do it here, the plugin and it's gui can remain
 					// totally seperated.
-					((SpiralPluginGUI*)(o.m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow()))->
-						UpdateValues(o.m_DeviceWinMap[ID]->m_Device);
+					((SpiralPluginGUI*)(m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow()))->
+						UpdateValues(m_DeviceWinMap[ID]->m_Device);
 
 					// updates the data in the channel buffers, so the values don't
 					// get overwritten in the next tick. (should maybe be somewhere else)
-					o.m_DeviceWinMap[ID]->m_Device->GetChannelHandler()->FlushChannels();
+					m_DeviceWinMap[ID]->m_Device->GetChannelHandler()->FlushChannels();
 
 					// position the plugin window in the main window
-					//o.m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow()->position(px,py);
+					//m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow()->position(px,py);
 
 					if (ps)
 					{
-						o.m_DeviceWinMap[ID]->m_DeviceGUI->Maximise();
+						m_DeviceWinMap[ID]->m_DeviceGUI->Maximise();
 						// reposition after maximise
-						o.m_DeviceWinMap[ID]->m_DeviceGUI->position(x,y);
+						m_DeviceWinMap[ID]->m_DeviceGUI->position(x,y);
 					}
-					else o.m_DeviceWinMap[ID]->m_DeviceGUI->Minimise();
+					else m_DeviceWinMap[ID]->m_DeviceGUI->Minimise();
+					
+					if (paste || merge)
+						Fl_Canvas::AppendSelection(ID, m_Canvas);
 				}
 
-				if (o.m_NextID<=ID) o.m_NextID=ID+1;
+				if (!paste && !merge)
+					if (m_NextID<=ID) m_NextID=ID+1;
 			}
 			else
 			{
@@ -891,10 +1099,19 @@ istream &operator>>(istream &s, SynthModular &o)
 		}
 	}
 
-	s>>*o.m_Canvas;
-
-	o.ResumeAudio();
+	if (!paste && !merge)
+	{
+		s>>*m_Canvas;
+		ResumeAudio();
+	}
+	
         return s;
+}
+
+iostream &operator>>(iostream &s, SynthModular &o)
+{
+	return o.StreamPatchIn(s, false, false);
+	
 }
 
 //////////////////////////////////////////////////////////
@@ -1013,14 +1230,19 @@ inline void SynthModular::cb_Load_i(Fl_Button* o, void* v)
 
 	if (fn && fn!='\0')
 	{
-		ifstream inf(fn);
+		ifstream in(fn);
 
-		if (inf)
+		if (in)
 		{
+			fstream inf;
+
+			inf.open(fn,ios::in);
 			m_FilePath=fn;
 
 			ClearUp();
 			inf>>*this;
+
+			inf.close();
 
 			TITLEBAR=LABEL+" "+fn;
 			m_TopWindow->label(TITLEBAR.c_str());
@@ -1232,18 +1454,23 @@ void SynthModular::cb_UpdatePluginInfo(int ID, void *PInfo)
 
 void SynthModular::LoadPatch(const char *fn)
 {
-    ifstream inf(fn);
+	ifstream in(fn);
 
-    if (inf) 
+	if (in) 
 	{	
-	    m_FilePath=fn;	
+		fstream	inf;
+		inf.open(fn);
+		
+		m_FilePath=fn;	
 
 		ClearUp();
-	    inf>>*this;
+		inf>>*this;
 
-	    TITLEBAR=LABEL+" "+fn;
-	    m_TopWindow->label(TITLEBAR.c_str());
-    }
+		inf.close();
+		
+		TITLEBAR=LABEL+" "+fn;
+		m_TopWindow->label(TITLEBAR.c_str());
+	}
 }
 
 //////////////////////////////////////////////////////////

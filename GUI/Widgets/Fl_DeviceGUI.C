@@ -141,6 +141,7 @@ int Fl_DeviceGUI::handle (int event) {
        Minimise();
        if (m_IconButton) m_IconButton->show();
     }
+
     return 1;
 }
 

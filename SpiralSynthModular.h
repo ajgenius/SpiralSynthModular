@@ -32,6 +32,7 @@
 #include <FL/Fl_Tabs.H>
 #include <sstream>
 #include <iostream>
+#include <fstream>
 #include <map>
 #include "GUI/Widgets/Fl_DeviceGUI.h"
 #include "GUI/Widgets/Fl_CommentGUI.h"
@@ -66,6 +67,16 @@ public:
 	virtual void draw() { draw_label(); }
 };
 
+class DeviceGroup
+{
+public:
+	DeviceGroup() { devicecount = 0; }
+	
+	int devicecount;
+	fstream devices;
+	map<int,int> m_DeviceIds;//old ID, new ID
+};
+
 class SynthModular
 {
 public:
@@ -98,6 +109,8 @@ public:
 	// only for audio thread
 	bool IsPaused() { return m_PauseAudio; }
 
+
+	iostream &StreamPatchIn(iostream &s, bool paste, bool merge);
 private:
 
 	vector<string> BuildPluginList(const string &Path);
@@ -118,7 +131,8 @@ private:
 	static bool m_CallbackUpdateMode;
 	static bool m_BlockingOutputPluginIsReady;
 	string m_FilePath;
-
+	string m_MergeFilePath;
+	
 	// Main GUI stuff
 	void CreateGUI(int xoff=0, int yoff=0, char *name="");
 
@@ -146,17 +160,22 @@ private:
 	bool m_PauseAudio;
 
 	inline void cb_NewDevice_i(Fl_Button* o, void* v);
-    static void cb_NewDevice(Fl_Button* o, void* v);
+	static void cb_NewDevice(Fl_Button* o, void* v);
 	inline void cb_NewDeviceFromMenu_i(Fl_Canvas* o, void* v);
 	static void cb_NewDeviceFromMenu(Fl_Canvas* o, void* v);
 	inline void cb_NewComment_i(Fl_Button* o, void* v);
-    static void cb_NewComment(Fl_Button* o, void* v);
+	static void cb_NewComment(Fl_Button* o, void* v);
+	
 	inline void cb_Load_i(Fl_Button* o, void* v);
-    static void cb_Load(Fl_Button* o, void* v);
+	static void cb_Load(Fl_Button* o, void* v);
 	inline void cb_Save_i(Fl_Button* o, void* v);
-    static void cb_Save(Fl_Button* o, void* v);
+	static void cb_Save(Fl_Button* o, void* v);
 	inline void cb_New_i(Fl_Button* o, void* v);
-    static void cb_New(Fl_Button* o, void* v);
+	static void cb_New(Fl_Button* o, void* v);
+
+	inline void cb_MergePatch_i();
+	static void cb_MergePatch(Fl_Canvas* o, SynthModular*v) { v->cb_MergePatch_i(); };
+
 	inline void cb_Connection_i(Fl_Canvas* o, void* v);
 	static void cb_Connection(Fl_Canvas* o, void* v);
 	inline void cb_Unconnect_i(Fl_Canvas* o, void* v);
@@ -168,18 +187,27 @@ private:
 	static void cb_GroupTab(Fl_Tabs* o, void* v);
 
 	inline void cb_Rload_i(Fl_Button* o, void* v);
-    static void cb_Rload(Fl_Button* o, void* v);
+	static void cb_Rload(Fl_Button* o, void* v);
 
-    static void cb_Update(void* o, bool Mode);
-    static void cb_Blocking(void* o, bool Mode);
+	static void cb_Update(void* o, bool Mode);
+	static void cb_Blocking(void* o, bool Mode);
 	static void cb_UpdatePluginInfo(int ID, void *PluginInfo);
 
+	DeviceGroup	m_Copied;
+
+	inline void cb_CutDeviceGroup_i();
+	inline void cb_CopyDeviceGroup_i();
+	inline void cb_PasteDeviceGroup_i();
+
+	static void cb_CutDeviceGroup(Fl_Canvas* o, SynthModular*v) { v->cb_CutDeviceGroup_i(); };
+	static void cb_CopyDeviceGroup(Fl_Canvas* o, SynthModular*v) { v->cb_CopyDeviceGroup_i(); };
+	static void cb_PasteDeviceGroup(Fl_Canvas* o, SynthModular*v) { v->cb_PasteDeviceGroup_i(); };
 
 	friend istream &operator>>(istream &s, SynthModular &o);
 	friend ostream &operator<<(ostream &s, SynthModular &o);
 };
 
-istream &operator>>(istream &s, SynthModular &o);
+iostream &operator>>(iostream &s, SynthModular &o);
 ostream &operator<<(ostream &s, SynthModular &o);
 
 #endif

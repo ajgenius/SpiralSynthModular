@@ -11,9 +11,16 @@ class Fl_DragBar : public Fl_Widget {
   int old_rx,old_ry;
   int _type;
 public:
-  enum DragType {WINDRAG=0,NICEWINDRAG,FLDRAG,NICEFLDRAG};
   Fl_DragBar(int x,int y,int w,int h,const char *l=0);
   ~Fl_DragBar();
+
+  enum DragType {WINDRAG=0,NICEWINDRAG,FLDRAG,NICEFLDRAG};
+
+  void (*cb_OnClick)(Fl_Widget*, int button, int shift_state, void*);
+  void *cb_OnClick_Data;
+
+  void (*cb_OnDrag)(Fl_Widget*, int xoffset,int yoffset, void*);
+  void *cb_OnDrag_Data;
 private:
   void draw();
   int handle(int event);

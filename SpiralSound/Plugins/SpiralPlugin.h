@@ -91,7 +91,7 @@ public:
 	// stuff here gets saved in filename_files directory
 	// you must return true if this feature is used.
 	virtual bool	    SaveExternalFiles(const std::string &Dir) { return false; }
-	virtual void	    LoadExternalFiles(const std::string &Dir) {}
+	virtual void	    LoadExternalFiles(const std::string &Dir, int withID=-1) {}
 
 	const HostInfo*     GetHostInfo() { return m_HostInfo; }
 	bool                GetOutput(unsigned int n, Sample **s);

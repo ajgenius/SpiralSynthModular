@@ -59,7 +59,7 @@ public:
 	virtual void StreamIn(std::istream &s);
 	
 	virtual bool	    SaveExternalFiles(const std::string &Dir);
-	virtual void	    LoadExternalFiles(const std::string &Dir);
+	virtual void	    LoadExternalFiles(const std::string &Dir, int withID=-1);
 	
 	enum GUICommands{NONE,LOAD,SAVE,SETVOL,SETPITCH,SETLOOP,SETPING,SETNOTE,SETOCT,
 					SETPLAYPOINTS,SETREC,CUT,COPY,PASTE,CROP,MIX,REV,AMP,SETCURRENT,

@@ -104,6 +104,10 @@ class Fl_DeviceGUI : public Fl_Group {
       int GetPortType (int n) { return m_Info.PortTypes[n]; }
       // do we belong to a plugin that is an output?
       bool IsTerminal() { return m_IsTerminal; }
+      
+      void SetOnDragCallback(void (*cb)(Fl_Widget*, int x,int y, void*), void* data) { m_DragBar->cb_OnDrag = cb; m_DragBar->cb_OnDrag_Data = data; }
+      void SetOnClickCallback(void (*cb)(Fl_Widget*, int button, int shift_state, void*), void* data) { m_DragBar->cb_OnClick = cb; m_DragBar->cb_OnClick_Data = data; }
+      static void Kill(Fl_DeviceGUI *device) { if (device) device->m_DelMe = true; }
    protected:
       DeviceGUIInfo m_Info;
       Fl_DragBar* m_DragBar;

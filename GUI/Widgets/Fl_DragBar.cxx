@@ -3,7 +3,11 @@
 #include "Fl_DragBar.H"
 #include <string.h>
 
-Fl_DragBar::Fl_DragBar(int x,int y,int w,int h,const char *l): Fl_Widget(x,y,w,h,l) {
+Fl_DragBar::Fl_DragBar(int x,int y,int w,int h,const char *l): 
+Fl_Widget(x,y,w,h,l),
+cb_OnDrag(NULL),
+cb_OnDrag_Data(NULL)
+{
   _type = Fl_DragBar::NICEFLDRAG;
 }
 
@@ -119,6 +123,12 @@ int mx,my;
 		{
 			fl_cursor(FL_CURSOR_DEFAULT);
 			do_callback();
+
+			if ((Fl::event_is_click()) && (cb_OnClick))
+			{
+				cb_OnClick(this, Fl::event_button(), Fl::event_state(), cb_OnClick_Data);
+			}
+
 			return 1;
 		}
 		case FL_DRAG:
@@ -129,11 +139,30 @@ int mx,my;
 				yy =  ry - old_ry;
 				if (_type <  (int)Fl_DragBar::FLDRAG) 
 				{
+					if (cb_OnDrag) {
+						int xoffset, yoffset;
+						
+						xoffset = (rx - window()->x()) - old_rx;
+						yoffset = (ry - window()->y()) - old_ry;
+	
+						cb_OnDrag(this, xoffset, yoffset, cb_OnDrag_Data);		
+					}
+
 					window()->position(xx,yy);
 				}
 				else
 				{
+					if (cb_OnDrag) {
+						int xoffset, yoffset;
+						
+						xoffset = (rx - parent()->x()) - old_rx;
+						yoffset = (ry - parent()->y()) - old_ry;
+	
+						cb_OnDrag(this, xoffset, yoffset, cb_OnDrag_Data);		
+					}
+
 					parent()->position(xx,yy);
+
 					if (parent()->parent()) 
 						parent()->parent()->redraw();
 					else

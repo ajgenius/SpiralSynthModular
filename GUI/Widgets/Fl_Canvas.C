@@ -17,6 +17,7 @@
 */ 
 
 #include "FL/fl_draw.H"
+#include <FL/Fl_Scroll.H>
 #include "Fl_Canvas.h"
 #include "Fl_DeviceGUI.h"
 #include <iostream>
@@ -34,7 +35,8 @@ cb_Connection(NULL),
 cb_Unconnect(NULL),
 cb_AddDevice(NULL),
 m_ToolMenu(false),
-m_UpdateTimer(0)
+m_UpdateTimer(0),
+m_Selecting(false)
 {
 	m_IncompleteWire.OutputID=-1;
 	m_IncompleteWire.OutputPort=-1;
@@ -45,12 +47,15 @@ m_UpdateTimer(0)
 	
 	m_BG=NULL;
 	m_BGData=NULL;
+	m_Menu=NULL;
+	m_CanPaste=false;
 }
 
 ////////////////////////////////////////////////////////////////////////
 
 Fl_Canvas::~Fl_Canvas()
 {
+	if (m_Menu) delete m_Menu;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -58,7 +63,7 @@ Fl_Canvas::~Fl_Canvas()
 void Fl_Canvas::draw()
 {			
 	Fl_Widget*const* a = array();
-	
+
   	if (damage() & ~FL_DAMAGE_CHILD) // redraw the entire thing:
 	{ 	    
 		if (m_BG)
@@ -96,6 +101,14 @@ void Fl_Canvas::draw()
 			{
    	 			draw_child(o);
    				draw_outside_label(o);
+
+				std::vector<int>::iterator sel = std::find( m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), ((Fl_DeviceGUI*)&o)->GetID() );
+
+				if (sel != m_Selection.m_DeviceIds.end())
+				{
+					fl_color(FL_YELLOW);
+					fl_rect(o.x(), o.y(), o.w(), o.h());
+				}				
 			}
 		}
 		
@@ -110,6 +123,14 @@ void Fl_Canvas::draw()
 			{
    	 			draw_child(o);
    				draw_outside_label(o);
+
+				std::vector<int>::iterator sel = std::find( m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), ((Fl_DeviceGUI*)&o)->GetID() );
+
+				if (sel != m_Selection.m_DeviceIds.end())
+				{
+					fl_color(FL_YELLOW);
+					fl_rect(o.x(), o.y(), o.w(), o.h());
+				}				
 			}
 		}
 	}
@@ -161,6 +182,7 @@ void Fl_Canvas::draw()
 			Pos+=1;	
 		}
 	}
+	DrawSelection();
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -175,6 +197,264 @@ void Fl_Canvas::Poll()
 		m_UpdateTimer=0;
 		redraw();
 	}
+}
+
+////////////////////////////////////////////////////////////////////////
+
+void Fl_Canvas::DrawSelection()
+{
+	if (m_Selecting)
+	{
+		int X, Y, W, H;
+				
+		fl_color(FL_YELLOW);
+
+		X = min(m_StartSelectX, m_EndSelectX);
+		Y = min(m_StartSelectY, m_EndSelectY);
+		W = max(m_StartSelectX, m_EndSelectX) - X;
+		H = max(m_StartSelectY, m_EndSelectY) - Y;
+
+		fl_rect(X-1, Y-1, W+2, H+2);
+	}
+}
+
+bool widget_intersects_rectangle (Fl_Widget* o, int X, int Y, int W, int H)
+{
+	int src1_x1=o->x(), src1_y1=o->y();
+	int src1_x2=o->x()+o->w(), src1_y2=o->y()+o->h();
+
+	int src2_x1=X, src2_y1=Y;
+	int src2_x2=X+W, src2_y2=Y+H;
+
+	int width=0, height=0;
+	
+	if (X < o->x())
+	{
+		src1_x1=X;
+		src1_y1=Y;
+		src1_x2=X+W;
+		src1_y2=Y+H;
+
+		src2_x1=o->x();
+		src2_y1=o->y();
+		src2_x2=o->w();
+		src2_y2=o->h();
+	}
+
+	if (src2_x1 < src1_x2)
+	{
+		if (src1_x2 < src2_x2)
+			width = src1_x2 - src2_x1;
+		else
+			width = src2_x2 - src2_x1;
+
+		if (width == 0)
+			return false;
+		
+		if (src2_y1 < src1_y1)
+		{
+			int tmp;
+
+			tmp = src2_x1;
+			src2_x1=src1_x1;
+			src1_x1=tmp;
+			
+			tmp = src2_y1;
+			src2_y1=src1_y1;
+			src1_y1=tmp;
+
+			tmp = src2_x2;
+			src2_x2=src1_x2;
+			src1_x2=tmp;
+			
+			tmp = src2_y2;
+			src2_y2=src1_y2;
+			src1_y2=tmp;
+
+		}
+
+		if (src2_y1 < src1_y2)
+		{
+			if (src1_y2 < src2_y2)
+				height = src1_y2 - src2_y1;
+			else
+				height = src2_y2 - src2_y1;
+
+			if ((height == 0))
+				return false;
+			else
+				return true;	
+		}
+	}
+
+	return false;
+}
+
+void Fl_Canvas::CalculateSelection()
+{
+	Fl_Widget*const* a = array();
+	int X, Y, W, H;
+				
+	X = min(m_StartSelectX, m_EndSelectX);
+	Y = min(m_StartSelectY, m_EndSelectY);
+	W = max(m_StartSelectX, m_EndSelectX) - X;
+	H = max(m_StartSelectY, m_EndSelectY) - Y;
+
+	m_HaveSelection = false;
+	m_Selection.Clear();
+	
+ 	for (int i=0; i<children(); i++) 
+	{
+		Fl_Widget& o = **a++;
+		if (widget_intersects_rectangle(&o, X, Y, W, H))
+		{
+			m_HaveSelection = true;
+			m_Selection.m_DeviceIds.push_back(((Fl_DeviceGUI*)&o)->GetID());
+			((Fl_DeviceGUI*)&o)->SetOnDragCallback(cb_OnDrag_s, this);
+		}
+	}
+}
+
+inline void Fl_Canvas::cb_OnDrag_i(Fl_Widget* widget, int xoffset,int yoffset)
+{
+	if ((widget) && (widget->parent()))
+	{
+		int moved_device_id = ((Fl_DeviceGUI*)(widget->parent()))->GetID();
+
+		if (m_HaveSelection)
+		{
+			if (m_Selection.m_DeviceIds.size() <= 0)
+				m_HaveSelection = false;
+
+			for (unsigned int i=0; i<m_Selection.m_DeviceIds.size(); i++) 
+			{
+				int ID = Selection().m_DeviceIds[i];
+				Fl_Widget *o = FindDevice(ID);
+
+				if ((o) && (m_Selection.m_DeviceIds[i] != moved_device_id))
+				{
+					o->position(o->x() + xoffset, o->y() + yoffset);
+				}
+			}
+		}		
+	}
+	return;
+}
+
+inline void Fl_Canvas::cb_DeleteDeviceGroup_i()
+{
+	if (! m_HaveSelection)
+		return;
+
+	//show some warning here	
+
+	for (unsigned int i=0; i<m_Selection.m_DeviceIds.size(); i++) 
+	{
+		int ID = m_Selection.m_DeviceIds[i];
+		Fl_DeviceGUI* o = FindDevice(ID);
+		if (o)
+		{
+			Fl_DeviceGUI::Kill(o);
+		}	
+
+	}	
+
+	m_HaveSelection=false;  
+	m_Selection.Clear(); 
+	redraw();
+}
+
+
+void Fl_Canvas::PopupEditMenu(Fl_Group *group)
+{
+	if (! (m_Menu)) 
+	{
+		m_Menu = new Fl_Menu_Button(Fl::event_x(),Fl::event_x(),4,4,"Edit");
+		m_Menu->type(Fl_Menu_Button::POPUP123);
+		m_Menu->textsize(10);
+
+		m_Menu->add("Cut Currently Selected Devices", 0, (Fl_Callback*)cb_CutDeviceGroup,user_data());
+		m_Menu->add("Copy Currently Selected Devices", 0, (Fl_Callback*)cb_CopyDeviceGroup,user_data());
+		m_Menu->add("Paste Previously Copied Devices", 0, (Fl_Callback*)cb_PasteDeviceGroup,user_data(), FL_MENU_DIVIDER);
+		m_Menu->add("Merge Existing Patch", 0, (Fl_Callback*)cb_MergePatch,user_data(), FL_MENU_DIVIDER);
+		m_Menu->add("Delete Currently Selected Devices", 0, (Fl_Callback*)cb_DeleteDeviceGroup, this);
+	}	
+
+	m_Menu->value(0);
+	group->add(m_Menu);
+	Fl_Menu_Item *cut=(Fl_Menu_Item*)&(m_Menu->menu()[0]);
+	Fl_Menu_Item *copy=(Fl_Menu_Item*)&(m_Menu->menu()[1]);
+	Fl_Menu_Item *paste=(Fl_Menu_Item*)&(m_Menu->menu()[2]);
+	Fl_Menu_Item *merge=(Fl_Menu_Item*)&(m_Menu->menu()[3]);
+	Fl_Menu_Item *deleteitems=(Fl_Menu_Item*)&(m_Menu->menu()[4]);
+		
+	if ((cb_CopyDeviceGroup) && (m_HaveSelection))
+		copy->activate();
+	else	
+		copy->deactivate();
+			
+	if ((cb_CutDeviceGroup) && (m_HaveSelection))
+		cut->activate();
+	else	
+		cut->deactivate();
+
+	if ((cb_PasteDeviceGroup) && (m_CanPaste))
+		paste->activate();
+	else	
+		paste->deactivate();
+
+		
+	if (m_HaveSelection)
+		deleteitems->activate();
+	else	
+		deleteitems->deactivate();
+
+	m_Menu->popup();
+	group->remove(m_Menu);
+}
+
+void Fl_Canvas::StreamSelectionWiresIn(istream &s, std::map<int,int> NewDeviceIds, bool merge, bool paste)
+{
+	MapNewDeviceIds = NewDeviceIds;
+	StreamWiresIn(s, merge, paste);
+}
+	
+void Fl_Canvas::StreamSelectionWiresOut(ostream &s)
+{	
+	int total_wires = 0, curpos=0;
+
+	curpos = s.tellp();
+	
+	s<<-1<<endl;
+
+	if (m_WireVec.size()>0)
+		for(vector<CanvasWire>::iterator i=m_WireVec.begin();
+			i!=m_WireVec.end(); i++)
+		{
+			std::vector<int>::iterator output = std::find( m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), i->OutputID );
+			std::vector<int>::iterator input = std::find( m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), i->InputID );
+	
+			if ((input != m_Selection.m_DeviceIds.end()) && (output != m_Selection.m_DeviceIds.end()))
+			{
+				s<<i->OutputID<<" ";
+				s<<0<<" ";
+				s<<i->OutputPort<<" ";
+				s<<i->OutputTerminal<<" ";
+				s<<i->InputID<<" ";
+				s<<0<<" ";
+				s<<i->InputPort<<" ";	
+					s<<i->InputTerminal<<endl;
+		
+				total_wires += 1;
+			}
+		}
+
+	if (total_wires >= 1)
+	{	
+		s.seekp(curpos, ios::beg);
+		s<<total_wires<<endl;
+		s.seekp(0, ios::end);
+	}	
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -304,7 +584,7 @@ void Fl_Canvas::ClearIncompleteWire()
 int Fl_Canvas::handle(int event)
 {
 	if (Fl_Group::handle(event)) return 1;
-				
+		
 	if (event==FL_PUSH) 
 	{
 		ClearIncompleteWire();
@@ -313,12 +593,84 @@ int Fl_Canvas::handle(int event)
 		m_DragY=Fl::event_y();
 	}
 	
-	if (Fl::event_button()==1 && event==FL_DRAG)
+	if (Fl::event_button()==1)
 	{
-		position(x()+(Fl::event_x()-m_DragX),y()+(Fl::event_y()-m_DragY));	
-		m_DragX=Fl::event_x();
-		m_DragY=Fl::event_y();	
-		redraw();
+		if (event==FL_PUSH) 
+		{	
+			if (m_HaveSelection) 
+			{
+				m_Selection.Clear();
+				m_HaveSelection = false;
+			}   
+
+			if ((Fl::event_state() & FL_CTRL) != 0)
+			{
+				m_Selecting = true;
+				m_StartSelectX=Fl::event_x();
+				m_StartSelectY=Fl::event_y();	
+				m_EndSelectX=Fl::event_x();
+				m_EndSelectY=Fl::event_y();	
+			}			
+
+			ClearIncompleteWire();
+			redraw();
+			m_DragX=Fl::event_x();
+			m_DragY=Fl::event_y();
+			
+		}
+
+		if (event==FL_DRAG)
+		{
+			if (m_Selecting)
+			{
+				m_EndSelectX=Fl::event_x();
+				m_EndSelectY=Fl::event_y();					
+
+				int newx=0, newy=0, xp=((Fl_Scroll *)parent())->xposition(), yp=((Fl_Scroll *)parent())->yposition();
+
+				if ((m_EndSelectX < m_StartSelectX) && ((m_EndSelectX - x() - xp) <= 15))
+					newx=10;
+			
+				if ((m_EndSelectY < m_StartSelectY) && ((m_EndSelectY - y() - yp) <= 15))
+					newy=10;	
+
+				if ((m_EndSelectX > m_StartSelectX) && ((((Fl_Scroll *)parent())->x() + ((Fl_Scroll *)parent())->w() - m_EndSelectX - 15) <= 15))
+					newx=-10;	
+					
+				if ((m_EndSelectY > m_StartSelectY) && ((((Fl_Scroll *)parent())->y() + ((Fl_Scroll *)parent())->h() - m_EndSelectY - 15) <= 5))
+					newy=-10;	
+
+				if ((newx!=0) || (newy!=0)) {
+					position(x()+newx,y()+newy);	
+
+					m_StartSelectX += newx;
+					m_StartSelectY += newy;					
+					
+				}	
+			}
+			else
+			{
+				position(x()+(Fl::event_x()-m_DragX),y()+(Fl::event_y()-m_DragY));	
+			}	
+
+			m_DragX=Fl::event_x();
+			m_DragY=Fl::event_y();	
+			redraw();
+		}
+
+		if (event==FL_RELEASE) 
+		{	
+			if (m_Selecting) 
+			{
+				m_Selecting = false;
+
+				if ((m_EndSelectX != m_StartSelectX) && (m_EndSelectY != m_StartSelectY))
+					CalculateSelection();
+
+				redraw();
+			}   
+
+		}
 	}
 	
 	if (Fl::event_button()==2)
@@ -348,6 +700,11 @@ int Fl_Canvas::handle(int event)
 		}	
 	}
 
+	if ((Fl::event_button()==3) && (event==FL_PUSH)  && ((Fl::event_state() & FL_CTRL) != 0))
+	{
+		PopupEditMenu(this);
+	}			
+	
 	return 1;
 }
 
@@ -448,7 +805,7 @@ void Fl_Canvas::PortClicked(Fl_DeviceGUI* Device, int Type, int Port, bool Value
 		
 		redraw();
 		
-		// Clear the current selection
+		// Clear the current m_Selection
 		m_IncompleteWire.Clear();
 	}
 }
@@ -603,24 +960,29 @@ void Fl_Canvas::ToBot(Fl_DeviceGUI *o)
 }
 
 /////////////////////////////////////////////////////////////////////////
-	
-istream &operator>>(istream &s, Fl_Canvas &o)
+
+void Fl_Canvas::StreamWiresIn(istream &s, bool merge, bool paste)
 {
 	int NumWires;
+
 	s>>NumWires;
-	
+		
 	// my bad, didn't version this stream - remove one day...
-	if (NumWires==-1)
+	if (paste || NumWires==-1)
 	{
 		int version;
-		s>>version;
-		s>>NumWires;
+
+		if (!paste)
+		{
+			s>>version;
+			s>>NumWires;
+		}
 		
 		for(int n=0; n<NumWires; n++)
 		{
 			CanvasWire NewWire;
 			int dummy;
-			
+		
 			s>>NewWire.OutputID;
 			s>>dummy;
 			s>>NewWire.OutputPort;
@@ -629,21 +991,30 @@ istream &operator>>(istream &s, Fl_Canvas &o)
 			s>>dummy;
 			s>>NewWire.InputPort;	
 			s>>NewWire.InputTerminal;
-			
-			// if we can turn on both ports
-			if (o.FindDevice(NewWire.OutputID)->AddConnection(NewWire.OutputPort+
-					o.FindDevice(NewWire.OutputID)->GetInfo()->NumInputs) &&
-				o.FindDevice(NewWire.InputID)->AddConnection(NewWire.InputPort))
-			{
-				o.m_WireVec.push_back(NewWire);	
 
-				// Notify connection by callback
-				o.cb_Connection(&o,(void*)&NewWire);
-				o.m_Graph.AddConnection(NewWire.OutputID,NewWire.OutputTerminal,NewWire.InputID,NewWire.InputTerminal);
+			if (paste || merge)		
+			{
+				std::map<int, int>::iterator inputID = MapNewDeviceIds.find( NewWire.InputID);
+				std::map<int, int>::iterator outputID = MapNewDeviceIds.find(NewWire.OutputID);
+
+				if ((inputID != MapNewDeviceIds.end()) && (outputID != MapNewDeviceIds.end()))
+				{
+					NewWire.InputID = inputID->second;
+					NewWire.OutputID = outputID->second;
+				}
+			}		
+			// if we can turn on both ports
+			if (FindDevice(NewWire.OutputID)->AddConnection(NewWire.OutputPort+
+					FindDevice(NewWire.OutputID)->GetInfo()->NumInputs) &&
+				FindDevice(NewWire.InputID)->AddConnection(NewWire.InputPort))
+			{
+				m_WireVec.push_back(NewWire);	
+					// Notify connection by callback
+				cb_Connection(this,(void*)&NewWire);
+				m_Graph.AddConnection(NewWire.OutputID,NewWire.OutputTerminal,NewWire.InputID,NewWire.InputTerminal);
 			}				
 		}
-		
-	}
+	}	
 	else
 	{		
 		for(int n=0; n<NumWires; n++)
@@ -658,19 +1029,36 @@ istream &operator>>(istream &s, Fl_Canvas &o)
 			s>>dummy;
 			s>>NewWire.InputPort;	
 		
-			// if we can turn on both ports
-			if (o.FindDevice(NewWire.OutputID)->AddConnection(NewWire.OutputPort+
-					o.FindDevice(NewWire.OutputID)->GetInfo()->NumInputs) &&
-				o.FindDevice(NewWire.InputID)->AddConnection(NewWire.InputPort))
+			if (paste || merge)		
 			{
-				o.m_WireVec.push_back(NewWire);	
+				std::map<int, int>::iterator inputID = MapNewDeviceIds.find( NewWire.InputID);
+				std::map<int, int>::iterator outputID = MapNewDeviceIds.find(NewWire.OutputID);
+
+				if ((inputID != MapNewDeviceIds.end()) && (outputID != MapNewDeviceIds.end()))
+				{
+					NewWire.InputID = inputID->second;
+					NewWire.OutputID = outputID->second;
+				}
+			}		
+
+			// if we can turn on both ports
+			if (FindDevice(NewWire.OutputID)->AddConnection(NewWire.OutputPort+
+					FindDevice(NewWire.OutputID)->GetInfo()->NumInputs) &&
+				FindDevice(NewWire.InputID)->AddConnection(NewWire.InputPort))
+			{
+				m_WireVec.push_back(NewWire);	
 
 				// Notify connection by callback
-				o.cb_Connection(&o,(void*)&NewWire);
-				o.m_Graph.AddConnection(NewWire.OutputID,false,NewWire.InputID,false);
+				cb_Connection(this,(void*)&NewWire);
+				m_Graph.AddConnection(NewWire.OutputID,false,NewWire.InputID,false);
 			}					
 		}
 	}	
+}
+
+istream &operator>>(istream &s, Fl_Canvas &o)
+{
+	o.StreamWiresIn(s, false, false);
 	return s;
 }
 

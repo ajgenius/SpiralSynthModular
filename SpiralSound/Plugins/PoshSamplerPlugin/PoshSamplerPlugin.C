@@ -491,14 +491,14 @@ bool PoshSamplerPlugin::SaveExternalFiles(const string &Dir)
 	return true;
 }
 
-void PoshSamplerPlugin::LoadExternalFiles(const string &Dir)
+void PoshSamplerPlugin::LoadExternalFiles(const string &Dir, int withID)
 {
 	for (int n=0; n<NUM_SAMPLES; n++)
 	{
 		char temp[256];
                 // Andy's fix for bug 766594
 		// sprintf (temp, "PoshSampler%d_%d.wav", SpiralPlugin_GetID(), n);
-		sprintf (temp, "PoshSampler%d_%d.wav", GetID(), n);
+		sprintf (temp, "PoshSampler%d_%d.wav", ((withID==-1)?GetID():withID), n);
 		m_SampleDescVec[n]->Pathname   = temp;
 	}
 
