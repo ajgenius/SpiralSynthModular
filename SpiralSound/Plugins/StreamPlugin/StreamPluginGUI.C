@@ -19,7 +19,7 @@
 #include "StreamPluginGUI.h"
 #include <FL/fl_draw.h>
 #include <FL/fl_draw.H>
-#include <FL/fl_file_chooser.h>
+#include "../GUI/WaveChooser.h"
 
 using namespace std;
 
@@ -30,9 +30,10 @@ SpiralPluginGUI(w,h,o,ch),
 m_Playing (false),
 m_PitchValue (1.0f)
 {
+        strcpy (m_TextBuf, "");
         // 7 seg displays
         for (int dis=0; dis<6; dis++) {
-            m_Display[dis] = new Fl_SevenSeg (5 + 28*dis, 20, 28, 60);
+            m_Display[dis] = new Fl_SevenSeg (5 + 28*dis, 15, 28, 38);
             m_Display[dis] -> bar_width (4);
             m_Display[dis] -> color (Info->SCOPE_FG_COLOUR);
 	    m_Display[dis] -> color2 (Info->SCOPE_BG_COLOUR);
@@ -40,7 +41,7 @@ m_PitchValue (1.0f)
             add (m_Display[dis]);
         }
         // volume control
-        m_Volume = new Fl_Knob (180, 15, 50, 50, "Volume");
+        m_Volume = new Fl_Knob (180, 10, 50, 50, "Volume");
         m_Volume->color (Info->GUI_COLOUR);
 	m_Volume->type (Fl_Knob::LINELIN);
         m_Volume->labelsize (10);
@@ -49,8 +50,15 @@ m_PitchValue (1.0f)
         m_Volume->value (1);
 	m_Volume->callback ((Fl_Callback*)cb_Volume);
 	add (m_Volume);
+        // filename display
+        m_FileName = new Fl_Input (5, 55, 170, 20, "");
+        m_FileName->type (FL_NORMAL_OUTPUT);
+        m_FileName->textsize (8);
+        m_FileName->box (FL_PLASTIC_UP_BOX);
+        m_FileName->value ("Nothing Loaded");
+        m_FileName->tooltip (m_TextBuf);
         // pitch indicator
-	m_Pitch = new Fl_Slider (5, 85, 235, 20, "");
+	m_Pitch = new Fl_Slider (5, 78, 235, 20, "");
         m_Pitch->type (FL_HORIZONTAL);
         m_Pitch->labelsize (10);
 	m_Pitch->labelcolor (Info->GUI_COLOUR);
@@ -62,7 +70,7 @@ m_PitchValue (1.0f)
         m_Pitch->callback ((Fl_Callback*)cb_Pitch);
         add (m_Pitch);
         // position indicator
-	m_Pos = new Fl_Slider (5, 108, 235, 20, "");
+	m_Pos = new Fl_Slider (5, 100, 235, 20, "");
 	m_Pos->type (FL_HORIZONTAL);
         m_Pos->box (FL_PLASTIC_DOWN_BOX);
 	m_Pos->labelcolor (Info->GUI_COLOUR);
@@ -71,7 +79,7 @@ m_PitchValue (1.0f)
 	m_Pos->callback ((Fl_Callback*)cb_Pos);
 	add (m_Pos);
         // load btn
-        m_Load = new Fl_Button (2, 130, 30, 30, "Load");
+        m_Load = new Fl_Button (2, 124, 30, 30, "Load");
         m_Load->labelsize (9);
         m_Load->box (FL_PLASTIC_UP_BOX);
 	m_Load->color (Info->GUI_COLOUR);
@@ -79,7 +87,7 @@ m_PitchValue (1.0f)
 	m_Load->callback ((Fl_Callback*)cb_Load);
 	add (m_Load);
         // reset btn
-	m_ToStart = new Fl_Button (32, 130, 30, 30, "@|<");
+	m_ToStart = new Fl_Button (32, 124, 30, 30, "@|<");
         m_ToStart->labelsize (10);
 	m_ToStart->labeltype (FL_SYMBOL_LABEL);
         m_ToStart->box (FL_PLASTIC_UP_BOX);
@@ -88,7 +96,7 @@ m_PitchValue (1.0f)
 	m_ToStart->callback ((Fl_Callback*)cb_ToStart);
 	add (m_ToStart);
         // play btn
-	m_Play = new Fl_Button (62, 130, 30, 30, "@>");
+	m_Play = new Fl_Button (62, 124, 30, 30, "@>");
         m_Play->labelsize (10);
 	m_Play->labeltype (FL_SYMBOL_LABEL);
         m_Play->box (FL_PLASTIC_UP_BOX);
@@ -97,7 +105,7 @@ m_PitchValue (1.0f)
 	m_Play->callback ((Fl_Callback*)cb_Play);
 	add (m_Play);
         // normal speed btn
-	m_Reset = new Fl_Button (92, 130, 30, 30, "Reset");
+	m_Reset = new Fl_Button (92, 124, 30, 30, "Reset");
         m_Reset->labelsize (9);
         m_Reset->box (FL_PLASTIC_UP_BOX);
 	m_Reset->color (Info->GUI_COLOUR);
@@ -105,7 +113,7 @@ m_PitchValue (1.0f)
 	m_Reset->callback ((Fl_Callback*)cb_Reset);
 	add (m_Reset);
         // Reverse Button
-        m_Rev = new  Fl_Button (122, 130, 30, 30, "@<-");
+        m_Rev = new  Fl_Button (122, 124, 30, 30, "@<-");
         m_Rev->labelsize (10);
 	m_Rev->labeltype (FL_SYMBOL_LABEL);
         m_Rev->box (FL_PLASTIC_UP_BOX);
@@ -114,7 +122,7 @@ m_PitchValue (1.0f)
 	m_Rev->callback ((Fl_Callback*)cb_Rev);
 	add (m_Rev);
         // 1/2 speed btn
-	m_Div = new Fl_Button (152, 130, 30, 30, "/2");
+	m_Div = new Fl_Button (152, 124, 30, 30, "/2");
         m_Div->labelsize (9);
         m_Div->box (FL_PLASTIC_UP_BOX);
 	m_Div->color (Info->GUI_COLOUR);
@@ -122,7 +130,7 @@ m_PitchValue (1.0f)
 	m_Div->callback ((Fl_Callback*)cb_Div);
 	add (m_Div);
         // dbl speed btn
-	m_Dbl = new Fl_Button (182, 130, 30, 30, "X2");
+	m_Dbl = new Fl_Button (182, 124, 30, 30, "X2");
         m_Dbl->labelsize (9);
         m_Dbl->box (FL_PLASTIC_UP_BOX);
 	m_Dbl->color (Info->GUI_COLOUR);
@@ -130,7 +138,7 @@ m_PitchValue (1.0f)
 	m_Dbl->callback ((Fl_Callback*)cb_Dbl);
 	add (m_Dbl);
         // nudge btn
-	m_Nudge = new Fl_Repeat_Button (212, 130, 30, 30, "Nudge");
+	m_Nudge = new Fl_Repeat_Button (212, 124, 30, 30, "Nudge");
         m_Nudge->labelsize (9);
         m_Nudge->box (FL_PLASTIC_UP_BOX);
        	m_Nudge->color (Info->GUI_COLOUR);
@@ -158,6 +166,15 @@ void StreamPluginGUI::Update() {
      redraw();
      SetMaxTime (m_GUICH->GetFloat ("MaxTime"));
      if (m_Playing != m_GUICH->GetBool ("Playing")) UpdatePlayStatus ();
+     m_GUICH->GetData ("EchoFileName", (void*)m_TextBuf);
+     if (*m_TextBuf == 0) {
+        m_FileName->value ("Nothing Loaded");
+        m_FileName->position (0);
+     }
+     else {
+        m_FileName->value (m_TextBuf);
+        m_FileName->position (strlen (m_TextBuf)-1);
+     }
 }
 
 // Update GUI on load
@@ -219,7 +236,7 @@ void StreamPluginGUI::cb_Pos (Fl_Slider* o, void* v) {
 // load
 
 inline void StreamPluginGUI::cb_Load_i (Fl_Button* o, void* v) {
-       char *fn=fl_file_chooser("Load a sample", "{*.wav,*.WAV}", NULL);
+       char *fn=WaveFileName ();
        if (fn && fn!='\0') {
           strcpy (m_TextBuf, fn);
 	  m_GUICH->SetData ("FileName", (void*)m_TextBuf);

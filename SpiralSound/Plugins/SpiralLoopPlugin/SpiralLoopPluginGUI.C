@@ -20,6 +20,7 @@
 #include <FL/fl_draw.h>
 #include <FL/fl_draw.H>
 #include <FL/fl_file_chooser.h>
+#include "../GUI/WaveChooser.h"
 
 using namespace std;
 
@@ -348,8 +349,7 @@ void SpiralLoopPluginGUI::cb_OverDub(Fl_Button* o, void* v)
 
 inline void SpiralLoopPluginGUI::cb_Load_i(Fl_Button* o, void* v)
 {
-	char *fn=fl_file_chooser("Load a sample", "{*.wav,*.WAV}", NULL);
-	
+        char *fn=WaveFileName ();
 	if (fn && fn!='\0')
 	{
 		strcpy(m_TextBuf,fn);
@@ -367,13 +367,12 @@ void SpiralLoopPluginGUI::cb_Load(Fl_Button* o, void* v)
 inline void SpiralLoopPluginGUI::cb_Save_i(Fl_Button* o, void* v)
 {	
 	char *fn=fl_file_chooser("Load a sample", "{*.wav,*.WAV}", NULL);
-	
 	if (fn && fn!='\0')
 	{
 		strcpy(m_TextBuf,fn);
 		m_GUICH->SetData("Name",m_TextBuf);
 		m_GUICH->SetCommand(SpiralLoopPlugin::SAVE);
-	} 
+	}
 }
 void SpiralLoopPluginGUI::cb_Save(Fl_Button* o, void* v)
 { ((SpiralLoopPluginGUI*)(o->parent()->parent()))->cb_Save_i(o,v); }

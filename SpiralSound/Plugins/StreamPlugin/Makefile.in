@@ -47,6 +47,7 @@ HEADERS =	StreamPlugin.h \
 		../../RiffWav.h \
 		../Widgets/Fl_Knob.H \
 		../Widgets/Fl_SevenSeg.H \
+                ../GUI/WaveChooser.h \
 		../../../GUI/Widgets/SpiralGUI.H
 SOURCES =	StreamPlugin.C \
 		StreamPluginGUI.C \
@@ -57,6 +58,7 @@ SOURCES =	StreamPlugin.C \
 		../../RiffWav.C \
                 ../Widgets/Fl_Knob.cxx \
 		../Widgets/Fl_SevenSeg.cxx \
+                ../GUI/WaveChooser.C \
 		../../../GUI/Widgets/SpiralGUI.C
 OBJECTS =	StreamPlugin.o \
 		StreamPluginGUI.o \
@@ -67,6 +69,7 @@ OBJECTS =	StreamPlugin.o \
 		../../RiffWav.o \
 		../Widgets/Fl_Knob.o \
 		../Widgets/Fl_SevenSeg.o \
+                ../GUI/WaveChooser.o \
 		../../../GUI/Widgets/SpiralGUI.o
 INTERFACES =
 UICDECLS =
@@ -136,6 +139,9 @@ install:
 		../SpiralPlugin.h \
 		../../ChannelHandler.h \
 		../../../GUI/Widgets/SpiralGUI.H
+
+../GUI/WaveChooser.o: ../GUI/WaveChooser.C \
+                ../GUI/WaveChooser.h
 
 ../Widgets/Fl_Knob.o: ../Widgets/Fl_Knob.cxx \
 		../Widgets/Fl_Knob.H

@@ -89,16 +89,16 @@ SpiralPluginGUI(w,h,o,ch)
         m_Remove->box (FL_PLASTIC_UP_BOX);
         m_Remove->color (m_GUIColour);
 	m_Remove->type(0);
-	m_Remove->labelsize(2);
+	m_Remove->labelsize (10);
         m_Remove->selection_color (m_GUIColour);
 	m_Remove->callback((Fl_Callback*)cb_Remove, this);
         add(m_Remove);
-	
+
 	m_Add = new Fl_Button(30,15,25,25,"+");
         m_Add->box (FL_PLASTIC_UP_BOX);
         m_Add->color (m_GUIColour);
 	m_Add->type(0);
-	m_Add->labelsize(2);
+	m_Add->labelsize (10);
         m_Add->selection_color (m_GUIColour);
 	m_Add->callback((Fl_Callback*)cb_Add, this);
         add(m_Add);

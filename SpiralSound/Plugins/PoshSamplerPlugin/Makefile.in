@@ -45,6 +45,7 @@ HEADERS =	PoshSamplerPlugin.h \
 		../../ChannelHandler.h \
 		../../Sample.h \
 		../../RiffWav.h \
+                ../GUI/WaveChooser.h \
 		../Widgets/Fl_Knob.H \
 		../../../GUI/Widgets/SpiralGUI.H
 SOURCES =	PoshSamplerPlugin.C \
@@ -54,6 +55,7 @@ SOURCES =	PoshSamplerPlugin.C \
 		../../ChannelHandler.C \
 		../../Sample.C \
 		../../RiffWav.C \
+                ../GUI/WaveChooser.C \
 		../Widgets/Fl_Knob.cxx \
 		../../../GUI/Widgets/SpiralGUI.C
 OBJECTS =	PoshSamplerPlugin.o \
@@ -63,6 +65,7 @@ OBJECTS =	PoshSamplerPlugin.o \
 		../../ChannelHandler.o \
 		../../Sample.o \
 		../../RiffWav.o \
+                ../GUI/WaveChooser.o \
 		../Widgets/Fl_Knob.o \
 		../../../GUI/Widgets/SpiralGUI.o
 INTERFACES =
@@ -147,6 +150,9 @@ install:
 ../../RiffWav.o: ../../RiffWav.C \
 		../../RiffWav.h \
 		../../Sample.h
+
+../GUI/WaveChooser.o: ../GUI/WaveChooser.C \
+                ../GUI/WaveChooser.h
 
 PoshSamplerPlugin.o: PoshSamplerPlugin.C \
 		PoshSamplerPlugin.h \

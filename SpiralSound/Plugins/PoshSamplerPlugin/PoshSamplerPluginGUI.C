@@ -19,6 +19,7 @@
 #include "PoshSamplerPluginGUI.h"
 #include <FL/fl_draw.h>
 #include <FL/fl_draw.H>
+#include "../GUI/WaveChooser.h"
 #include <FL/fl_file_chooser.h>
 
 using namespace std;
@@ -196,7 +197,7 @@ int Fl_WaveDisplay::handle(int event)
 				case 5: m_LoopEnd=MousePos; break;
 			}
 		}
-		
+
 		if (Mousebutton==2)
 		{
 			int Dist=(DragX-xx)*((m_ViewEnd-m_ViewStart)/w());
@@ -489,28 +490,27 @@ void PoshSamplerPluginGUI::UpdateValues(SpiralPlugin *o)
 
 	m_Volume->value(Plugin->GetVolume((int)m_SampleNum->value()));
 	m_Pitch->value(Plugin->GetPitch((int)m_SampleNum->value()));
-	m_Note->value(Plugin->GetNote((int)m_SampleNum->value()));	
-	m_Loop->value(Plugin->GetLoop((int)m_SampleNum->value()));	
+	m_Note->value(Plugin->GetNote((int)m_SampleNum->value()));
+	m_Loop->value(Plugin->GetLoop((int)m_SampleNum->value()));
 	m_UpdateMe=true;
-	m_Display->SetPlayStart(Plugin->GetPlayStart((int)m_SampleNum->value()));	
-	m_Display->SetLoopStart(Plugin->GetLoopStart((int)m_SampleNum->value()));	
-	m_Display->SetLoopEnd(Plugin->GetLoopEnd((int)m_SampleNum->value()));	
+	m_Display->SetPlayStart(Plugin->GetPlayStart((int)m_SampleNum->value()));
+	m_Display->SetLoopStart(Plugin->GetLoopStart((int)m_SampleNum->value()));
+	m_Display->SetLoopEnd(Plugin->GetLoopEnd((int)m_SampleNum->value()));
 	m_Display->redraw();
 }
-	
+
 inline void PoshSamplerPluginGUI::cb_Load_i(Fl_Button* o, void* v)
-{ 
-	char *fn=fl_file_chooser("Load a sample", "{*.wav,*.WAV}", NULL);
-		
+{
+        char *fn=WaveFileName ();
 	if (fn && fn!='\0')
 	{
 		strcpy(m_TextBuf,fn);
 		m_GUICH->SetData("Name",m_TextBuf);
 		m_GUICH->Set("Num",(int)m_SampleNum->value());
 		m_GUICH->SetCommand(PoshSamplerPlugin::LOAD);
-		
+
 		m_GUICH->Wait(); // wait for the sample to load
-				
+
 		UpdateSampleDisplay((int)m_SampleNum->value());
 		m_Display->redraw();
 		redraw();
@@ -524,7 +524,7 @@ inline void PoshSamplerPluginGUI::cb_Save_i(Fl_Button* o, void* v)
 	char *fn=fl_file_chooser("Save sample", "{*.wav,*.WAV}", NULL);
 		
 	if (fn && fn!='\0')
-	{		
+	{
 		strcpy(m_TextBuf,fn);
 		m_GUICH->Set("Name",m_TextBuf);
 		m_GUICH->Set("Num",(int)m_SampleNum->value());

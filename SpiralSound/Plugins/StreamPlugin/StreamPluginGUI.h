@@ -21,6 +21,7 @@
 
 #include <FL/Fl.H>
 #include <FL/Fl_Slider.H>
+#include <FL/Fl_Input.H>
 #include <FL/Fl_Repeat_Button.H>
 #include <FL/Fl_Button.H>
 #include "StreamPlugin.h"
@@ -46,6 +47,7 @@ class StreamPluginGUI : public SpiralPluginGUI {
       // Widgets
       Fl_SevenSeg *m_Display[6];
       Fl_Knob *m_Volume;
+      Fl_Input *m_FileName;
       Fl_Slider *m_Pitch, *m_Pos;
       Fl_Button *m_Load, *m_ToStart, *m_Play, *m_Reset, *m_Rev, *m_Div, *m_Dbl;
       Fl_Repeat_Button* m_Nudge;

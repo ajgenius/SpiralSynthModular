@@ -47,13 +47,9 @@ class StreamPlugin : public SpiralPlugin {
       float m_GlobalPos, m_Pitch, m_SamplePos, m_Pos;
       enum Mode { PLAYM, STOPM } m_Mode;
       struct GUIArgs {
-	float  Volume;
-	float  PitchMod;
-	char FileName[256];
-	float Time;
-	float TimeOut;
-        bool PlayOut;
-	float MaxTime;
+	     float  Volume, PitchMod, Time, TimeOut, MaxTime;
+	     char FileName[256];
+             bool PlayOut;
       } m_GUIArgs;
       float GetLength (void);
       // Commands

@@ -21,37 +21,26 @@
 #include "SpiralIcon.xpm"
 #include "../../NoteTable.h"
 #include <stdio.h>
-
 #include "../../RiffWav.h"
 
 using namespace std;
 
-static const float TRIG_THRESH = 0.1;
-static const float BUFSECONDS = 1.0f;
-
 extern "C" {
-SpiralPlugin* SpiralPlugin_CreateInstance()
-{
-	return new StreamPlugin;
-}
 
-char** SpiralPlugin_GetIcon()
-{
-	return SpiralIcon_xpm;
-}
+SpiralPlugin* SpiralPlugin_CreateInstance() { return new StreamPlugin; }
 
-int SpiralPlugin_GetID()
-{
-	return 0x0119;
-}
+char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
 
-string SpiralPlugin_GetGroupName()
-{
-	return "Delay/Sampling";
-}
+int SpiralPlugin_GetID() { return 0x0119; }
+
+string SpiralPlugin_GetGroupName() { return "Delay/Sampling"; }
+
 }
 
 ///////////////////////////////////////////////////////
+
+static const float TRIG_THRESH = 0.1;
+static const float BUFSECONDS = 1.0f;
 
 StreamPlugin::StreamPlugin() :
 m_SampleRate (44100),
@@ -65,21 +54,25 @@ m_Mode(STOPM)
 {
 	m_PluginInfo.Name = "Stream";
 	m_PluginInfo.Width = 245;
-	m_PluginInfo.Height = 165;
+	m_PluginInfo.Height = 160;
 	m_PluginInfo.NumInputs = 3;
-	m_PluginInfo.NumOutputs = 3;
+	m_PluginInfo.NumOutputs = 4;
 	m_PluginInfo.PortTips.push_back ("Pitch CV");
 	m_PluginInfo.PortTips.push_back ("Play Trigger");
 	m_PluginInfo.PortTips.push_back ("Stop Trigger");
 	m_PluginInfo.PortTips.push_back ("Left Out");
 	m_PluginInfo.PortTips.push_back ("Right Out");
 	m_PluginInfo.PortTips.push_back ("Finish Trigger");
+	m_PluginInfo.PortTips.push_back ("Playing Trigger");
 	m_GUIArgs.Volume = 1.0f;
 	m_GUIArgs.PitchMod = 1.0f;
         m_GUIArgs.PlayOut = false;
+        strcpy (m_GUIArgs.FileName, "");
 	m_AudioCH->Register ("Volume", &m_GUIArgs.Volume);
 	m_AudioCH->Register ("Pitch", &m_GUIArgs.PitchMod, ChannelHandler::INPUT);
 	m_AudioCH->RegisterData ("FileName", ChannelHandler::INPUT,
+                                             &m_GUIArgs.FileName, sizeof (m_GUIArgs.FileName));
+	m_AudioCH->RegisterData ("EchoFileName", ChannelHandler::OUTPUT,
                                              &m_GUIArgs.FileName, sizeof (m_GUIArgs.FileName));
 	m_AudioCH->Register ("Time", &m_GUIArgs.Time);
 	m_AudioCH->Register ("TimeOut", &m_GUIArgs.TimeOut, ChannelHandler::OUTPUT);
@@ -123,7 +116,7 @@ void StreamPlugin::Execute() {
                m_StreamPos = 0;
             }
 
-            if (m_Pos<0) {	
+            if (m_Pos<0) {
                m_Pos = m_SampleSize - 1;
                m_StreamPos -= m_SampleSize;
                FinTrig = m_StreamPos < 0;
@@ -136,7 +129,7 @@ void StreamPlugin::Execute() {
                if ((m_File.GetSize() - m_StreamPos) < 256)
 		 m_SampleSize = m_File.GetSize() - m_StreamPos;
  	       else
-		 m_SampleSize = 256;	
+		 m_SampleSize = 256;
 
                m_File.LoadChunk (m_SampleSize, m_SampleL, m_SampleR);
             }
@@ -153,22 +146,27 @@ void StreamPlugin::Execute() {
                if ((m_File.GetSize() - m_StreamPos) < 256)
 		 m_SampleSize = m_File.GetSize() - m_StreamPos;
  	       else
-		 m_SampleSize = 256;	
+		 m_SampleSize = 256;
 
                m_File.LoadChunk (m_SampleSize, m_SampleL, m_SampleR);
             }
 
+            // finished trigger
             if (FinTrig) SetOutput (2, n, 1);
             else SetOutput (2, n, 0);
             if (m_Mode==PLAYM) {
+              // left and right outputs
               SetOutput (0, n, m_SampleL[m_Pos] * m_GUIArgs.Volume);
               SetOutput (1, n, m_SampleR[m_Pos] * m_GUIArgs.Volume);
+              // play trigger
+              SetOutput (3, n, 1);
               m_Pos += m_GUIArgs.PitchMod + CVPitch;
               m_GlobalPos += m_GUIArgs.PitchMod + CVPitch;
             }
             else {
               SetOutput (0, n, 0);
               SetOutput (1, n, 0);
+              SetOutput (3, n, 0);
             }
         }
         m_GUIArgs.TimeOut = m_GlobalPos / (float)m_SampleRate;

@@ -47,7 +47,8 @@ HEADERS =	SpiralLoopPlugin.h \
 		../../RiffWav.h \
 		Fl_Loop.h \
 		Fl_Trigger.h \
-		../Widgets/Fl_Knob.H \
+                ../GUI/WaveChooser.h \
+                ../Widgets/Fl_Knob.H \
 		../Widgets/Fl_LED_Button.H \
 		../../../GUI/Widgets/SpiralGUI.H
 SOURCES =	SpiralLoopPlugin.C \
@@ -59,6 +60,7 @@ SOURCES =	SpiralLoopPlugin.C \
 		../../RiffWav.C \
 		Fl_Loop.C \
 		Fl_Trigger.C \
+                ../GUI/WaveChooser.C \
 		../Widgets/Fl_Knob.cxx \
 		../Widgets/Fl_LED_Button.cxx \
 		../../../GUI/Widgets/SpiralGUI.C
@@ -71,6 +73,7 @@ OBJECTS =	SpiralLoopPlugin.o \
 		../../RiffWav.o \
 		Fl_Loop.o \
 		Fl_Trigger.o \
+                ../GUI/WaveChooser.o \
 		../Widgets/Fl_Knob.o \
 		../Widgets/Fl_LED_Button.o \
 		../../../GUI/Widgets/SpiralGUI.o
@@ -162,6 +165,9 @@ Fl_Loop.o:	Fl_Loop.C \
 Fl_Trigger.o:	Fl_Trigger.C \
 		Fl_Trigger.h \
 		Fl_Loop.h
+
+../GUI/WaveChooser.o: ../GUI/WaveChooser.C \
+                ../GUI/WaveChooser.h
 
 SpiralLoopPlugin.o: SpiralLoopPlugin.C \
 		SpiralLoopPlugin.h \
