@@ -1096,7 +1096,7 @@ ostream &operator<<(ostream &s, SynthModular &o)
 
 	// make external files dir
 	bool ExternalDirUsed=false;
-	string command("mkdir "+o.m_FilePath+"_files");
+	string command("mkdir '"+o.m_FilePath+"_files'");
 	system(command.c_str());
 
 	if (FILE_VERSION>2)

@@ -21,29 +21,48 @@
 #include <FL/fl_file_chooser.h>
 #include "../../../config.h"
 
+using namespace std;
 #ifdef USE_LIBSNDFILE
 #include <sndfile.h>
 #endif
 
-char *WaveFileName (void) {
-     string AvailFmt;
+char *WaveFileName (void) 
+{
+	string AvailFmt;
+
 #ifdef USE_LIBSNDFILE
-     string FmtName;
-     SF_FORMAT_INFO  info;
-     int major_count, m, p;
-     sf_command (NULL, SFC_GET_FORMAT_MAJOR_COUNT, &major_count, sizeof (int));
-     for (m = 0 ; m < major_count ; m++) {
-         info.format = m;
-         sf_command (NULL, SFC_GET_FORMAT_MAJOR, &info, sizeof (info));
-         FmtName = info.name;
-         while ((p=FmtName.find ('(')) >= 0 ) FmtName.replace (p, 1, '[');
-         while ((p=FmtName.find (')')) >= 0 ) FmtName.replace (p, 1, ']');
-         if (!AvailFmt.empty()) AvailFmt += '\t';
-         AvailFmt += (string)FmtName + (string)" (*." + (string)info.extension + ')';
-     }
+	string FmtName;
+	SF_FORMAT_INFO  info;
+	int major_count, m, p;
+
+	sf_command (NULL, SFC_GET_FORMAT_MAJOR_COUNT, &major_count, sizeof (int));
+
+	for (m = 0 ; m < major_count ; m++) 
+	{
+		info.format = m;
+		sf_command (NULL, SFC_GET_FORMAT_MAJOR, &info, sizeof (info));
+		FmtName = info.name;
+		while ((p=FmtName.find ('(')) >= 0 ) 
+		{
+			FmtName.replace (p, 1, "[");
+		}
+	
+		while ((p=FmtName.find (')')) >= 0 ) 
+		{
+			FmtName.replace (p, 1, "]");
+		}
+	
+		if (!AvailFmt.empty()) 
+		{
+			AvailFmt += '\t';
+		}	
+		
+		AvailFmt += (string)FmtName + (string)" (*." + (string)info.extension + ')';
+	}
 #else
-      AvailFmt = "{*.wav,*.WAV}";
+	AvailFmt = "{*.wav,*.WAV}";
 #endif
-      char *fn=fl_file_chooser("Load a sample", AvailFmt.c_str(), NULL);
-      return fn;
+
+	char *fn=fl_file_chooser("Load a sample", AvailFmt.c_str(), NULL);
+	return fn;
 }

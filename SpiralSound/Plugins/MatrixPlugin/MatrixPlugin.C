@@ -157,7 +157,7 @@ SpiralGUIType *MatrixPlugin::CreateGUI()
 void MatrixPlugin::Reset()
 {
 	ResetPorts();
-	m_Current = 0;
+	m_Current = GetPatSeq(0);
 	m_GUICurrent = 0;
 	m_Time = 0.0f;
 	m_Step = 0;

@@ -128,8 +128,9 @@ private:
 	
 	char  m_SampleBuffer[TRANSBUF_SIZE];
 	long  m_SampleSize;
-	
 	long  m_CurrentPlayPos;
+
+	float m_InitialPitch[NUM_SAMPLES];
 };
 
 #endif

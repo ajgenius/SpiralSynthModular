@@ -183,7 +183,7 @@ void PoshSamplerPlugin::Reset()
 
 	for (int s=0; s<NUM_SAMPLES; s++)
 	{
-		m_SampleDescVec[s]->Pitch *= m_SampleDescVec[s]->SampleRate/(float)m_HostInfo->SAMPLERATE;
+		m_SampleDescVec[s]->Pitch = m_InitialPitch[s] * m_SampleDescVec[s]->SampleRate/(float)m_HostInfo->SAMPLERATE;
 		m_SampleDescVec[s]->LoopEnd=m_SampleVec[s]->GetLength()-1;
 	}	
 }
@@ -305,6 +305,7 @@ void PoshSamplerPlugin::Execute()
 			m_SampleDescVec[s]->SampleRate=m_HostInfo->SAMPLERATE;
 			m_SampleDescVec[s]->Stereo=false;
 			m_SampleDescVec[s]->Pitch *= 1.0f;
+			m_InitialPitch[s] = m_SampleDescVec[s]->Pitch;
 			m_SampleDescVec[s]->LoopEnd=m_SampleVec[s]->GetLength();
 
 		}
@@ -419,7 +420,8 @@ void PoshSamplerPlugin::LoadSample(int n, const string &Name)
 		InitializeSampleDescription(m_SampleDescVec[n], Name, n);
 		m_SampleDescVec[n]->SampleRate=Wav.GetSamplerate();
 		m_SampleDescVec[n]->Stereo=Wav.IsStereo();
-		m_SampleDescVec[n]->Pitch *= m_SampleDescVec[n]->SampleRate/(float)m_HostInfo->SAMPLERATE;
+		m_InitialPitch[n] = m_SampleDescVec[n]->Pitch;
+		m_SampleDescVec[n]->Pitch = m_InitialPitch[n] * m_SampleDescVec[n]->SampleRate/(float)m_HostInfo->SAMPLERATE;
 		m_SampleDescVec[n]->LoopEnd=m_SampleVec[n]->GetLength()-1;
 	}
 }
