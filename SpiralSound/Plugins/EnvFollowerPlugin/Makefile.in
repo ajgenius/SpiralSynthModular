@@ -6,8 +6,8 @@
 
 CC	=	gcc
 CXX	=	g++
-CFLAGS	=	@CFLAGS@
-CXXFLAGS=	@CXXFLAGS@
+CFLAGS	=       @CFLAGS@ @FLTK_CFLAGS@
+CXXFLAGS=       @CXXFLAGS@ @FLTK_CXXFLAGS@
 INCPATH	=	-I/usr/X11R6/include
 LINK	=	g++ -shared
 LFLAGS	=
