@@ -52,11 +52,6 @@ class LFOPlugin : public SpiralPlugin {
       float m_Freq;
       Sample m_Table[NUM_TABLES];
       int m_TableLength;
-      friend std::istream &operator>> (std::istream &s, LFOPlugin &o);
-      friend std::ostream &operator<< (std::ostream &s, LFOPlugin &o);
 };
-
-std::istream &operator>> (std::istream &s, LFOPlugin &o);
-std::ostream &operator<< (std::ostream &s, LFOPlugin &o);
 
 #endif

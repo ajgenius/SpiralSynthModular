@@ -46,7 +46,7 @@ MeterPlugin MidiPlugin MixSwitchPlugin MixerPlugin MoogFilterPlugin MousePlugin 
 NoteSnapPlugin OperatorPlugin OscillatorPlugin OutputPlugin PoshSamplerPlugin \
 RingModPlugin SVFilterPlugin SampleHoldPlugin ScopePlugin SeqSelectorPlugin \
 SmoothPlugin SpiralLoopPlugin SplitSwitchPlugin SplitterPlugin StereoMixerPlugin \
-StreamPlugin SwitchPlugin TransposePlugin TrigPlugin WaveShaperPlugin \
+StreamPlugin SwitchPlugin TranslatePlugin TransposePlugin TrigPlugin WaveShaperPlugin \
 WaveTablePlugin XFadePlugin"
 
 dnl Check whether jack is present or has been disabled
@@ -258,6 +258,7 @@ SpiralSound/Plugins/SplitterPlugin/Makefile
 SpiralSound/Plugins/StereoMixerPlugin/Makefile
 SpiralSound/Plugins/StreamPlugin/Makefile
 SpiralSound/Plugins/SwitchPlugin/Makefile
+SpiralSound/Plugins/TranslatePlugin/Makefile
 SpiralSound/Plugins/TransposePlugin/Makefile
 SpiralSound/Plugins/TrigPlugin/Makefile
 SpiralSound/Plugins/WaveShaperPlugin/Makefile

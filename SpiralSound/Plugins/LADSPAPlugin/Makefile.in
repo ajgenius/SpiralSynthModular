@@ -105,15 +105,6 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 
 moc: $(SRCMOC)
 
-tmake: Makefile
-
-Makefile: LADSPAPlugin.pro
-	tmake LADSPAPlugin.pro -o Makefile
-
-dist:
-	$(TAR) LADSPAPlugin.tar LADSPAPlugin.pro $(SOURCES) $(HEADERS) $(INTERFACES) $(DIST)
-	$(GZIP) LADSPAPlugin.tar
-
 clean:
 	-rm -f $(OBJECTS) $(OBJMOC) $(SRCMOC) $(UICIMPLS) $(UICDECLS) $(TARGET)
 	-rm -f *~ core

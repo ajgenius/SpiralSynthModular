@@ -136,15 +136,6 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 
 moc: $(SRCMOC)
 
-tmake: Makefile
-
-Makefile: SpiralSynthModular.pro
-	tmake SpiralSynthModular.pro -o Makefile
-
-dist:
-	$(TAR) SpiralSynthModular.tar SpiralSynthModular.pro $(SOURCES) $(HEADERS) $(INTERFACES) $(DIST)
-	$(GZIP) SpiralSynthModular.tar
-
 clean:
 	-rm -f $(OBJECTS) $(OBJMOC) $(SRCMOC) $(UICIMPLS) $(UICDECLS) $(TARGET)
 	-rm -f *~ core

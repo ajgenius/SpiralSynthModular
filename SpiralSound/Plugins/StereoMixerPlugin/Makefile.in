@@ -99,15 +99,6 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 
 moc: $(SRCMOC)
 
-tmake: Makefile
-
-Makefile: StereoMixerPlugin.pro
-	tmake StereoMixerPlugin.pro -o Makefile
-
-dist:
-	$(TAR) StereoMixerPlugin.tar StereoMixerPlugin.pro $(SOURCES) $(HEADERS) $(INTERFACES) $(DIST)
-	$(GZIP) StereoMixerPlugin.tar
-
 clean:
 	-rm -f $(OBJECTS) $(OBJMOC) $(SRCMOC) $(UICIMPLS) $(UICDECLS) $(TARGET)
 	-rm -f *~ core

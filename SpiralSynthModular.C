@@ -126,7 +126,7 @@ void SynthModular::ClearUp()
 		if (i->second->m_Device)
 		{
 			if (i->second->m_Device->Kill());
-		}			
+		}
 		i->second->m_DeviceGUI->Clear();
 
 		if (i->second->m_DeviceGUI->GetPluginWindow())

@@ -102,7 +102,7 @@ void MeterPluginGUI::draw() {
 	m_BufSize = m_GUICH->GetInt("DataSize");
 	delete[] m_Data;
 	m_Data = new float[m_BufSize];
-    }	
+    }
 
     if (m_GUICH->GetBool ("DataReady")) m_GUICH->GetData ("AudioData", m_Data);
     else memset (m_Data, 0, m_BufSize * sizeof (float));
@@ -118,7 +118,7 @@ void MeterPluginGUI::draw() {
     Meter->value (datum);
     Meter->redraw();
     // Yeuck - have I REALLY used stdio for that - this is supposed to be C++
-    //snprintf (label_buf, 64, "%1.5f", *m_Data);
+    snprintf (label_buf, 64, "%1.5f", datum);
     char* c = label_buf;
     for (int display=0; display<8; display++) {
       Digits[display] -> dp (off);

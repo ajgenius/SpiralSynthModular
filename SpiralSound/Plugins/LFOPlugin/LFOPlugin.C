@@ -129,20 +129,12 @@ void LFOPlugin::Execute() {
 }
 
 void LFOPlugin::StreamOut(ostream &s) {
-     s << m_Version << " " << *this;
+     s << m_Version << " " << (int)m_Type << " " << m_Freq << " ";
 }
 
 void LFOPlugin::StreamIn(istream &s) {
      int version;
-     s >> version >> *this;
+     s >> version;
+     s >> (int&)m_Type >> m_Freq;
 }
 
-istream &operator>> (istream &s, LFOPlugin &o) {
-        s >> (int&)o.m_Type >> o.m_Freq;
-	return s;
-}
-
-ostream &operator<< (ostream &s, LFOPlugin &o) {
-	s << (int)o.m_Type << " " << o.m_Freq << " ";
-	return s;
-}
