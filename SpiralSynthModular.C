@@ -202,7 +202,7 @@ void SynthModular::Update()
 	{
 		// use the graphsort order to remove internal latency
 		map<int,DeviceWin*>::iterator di=m_DeviceWinMap.find(*i);
-		if (di!=m_DeviceWinMap.end() && di->second->m_Device  && (! di->second->m_Device->IsDead()) && (!m_Info.PAUSED))
+		if (di!=m_DeviceWinMap.end() && di->second->m_Device  && (! di->second->m_Device->IsDead()) && (!m_Info.PAUSED || m_ResetingAudioThread))
 		{
 			#ifdef DEBUG_PLUGINS
 			cerr<<"Executing plugin "<<di->second->m_PluginID<<endl;

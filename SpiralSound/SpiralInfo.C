@@ -24,6 +24,9 @@
 #include "SpiralInfo.h"
 #include "../SpiralSynthPluginLocation.h"
 
+
+//#define DEBUG_CONFIG
+
 float RandFloat (float s, float e) {
       return s+((rand()%10000/10000.0)*(e-s));
 }
@@ -342,20 +345,27 @@ void SpiralInfo::StreamInPrefs (istream &s)
 						s >> temp;//skip "="
 
 						/* Check to see if this a Audio Settings section */
-						if (StreamInAudioSettingsPrefs(s, section, ident)) { cout << "successfully read " + section + ", " + ident << endl; }
-
-						else 
-							/* Check next to see if this a Main Colour section */
-							if (StreamInMainColourPrefs(s, section, ident)) { cout << "successfully read " + section + ", " + ident << endl;  }
-						
-						else 
-							/* Check next to see if this a Device Colour section */
-							if (StreamInDeviceColourPrefs(s, section, ident)) { cout << "successfully read " + section + ", " + ident << endl;  }
-						
-						
-						else
-							/* lastly just ignore idents for sections that are invalid or we don't know about */
+						if (StreamInAudioSettingsPrefs(s, section, ident)) { 
+#ifdef DEBUG_CONFIG
+							cout << "successfully read " + section + ", " + ident << endl; 
+#endif
+						/* Check next to see if this a Main Colour section */
+						} else if (StreamInMainColourPrefs(s, section, ident)) { 
+#ifdef DEBUG_CONFIG
+								cout << "successfully read " + section + ", " + ident << endl;  
+#endif
+						/* Check next to see if this a Device Colour section */
+						} else if (StreamInDeviceColourPrefs(s, section, ident)) { 
+#ifdef DEBUG_CONFIG
+								cout << "successfully read " + section + ", " + ident << endl;  
+#endif
+						/* Ignore idents for sections that are invalid or we don't know about */
+						} else {
 							s >> temp;
+#ifdef DEBUG_CONFIG
+							cout << "ignoring. don't know how to handle, " + section + ", " + ident << endl;  
+#endif
+						}	
 
 						s.seekg (1, ios::cur );  //move to next line
 					}
