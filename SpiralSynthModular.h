@@ -120,13 +120,18 @@ public:
 	{
 		if (! m_ResetingAudioThread)
 		{
-			if (! IsFrozen())
-				FreezeAll();
-				
+			bool donotresume = false;
+			
+			if (m_PauseAudio)
+			{	
+				PauseAudio();
+				donotresume = true;
+			}	
+			
 			m_ResetingAudioThread = true;
 
-			if (IsFrozen())
-				ThawAll();
+			if (!donotresume)
+				ResumeAudio();
 		}	
 	}
 
@@ -169,7 +174,11 @@ private:
 	Fl_Button       *m_New;
 	Fl_Button       *m_Options;
 	Fl_Button       *m_NewComment;
+
+	Fl_Pack       	*m_PlayResetGroup;
 	Fl_Button       *m_PlayPause;
+	Fl_Button       *m_Reset;
+
         Fl_Tabs         *m_GroupTab;
 
 	Fl_Canvas 	*m_Canvas;
@@ -201,6 +210,8 @@ private:
 	static void cb_New(Fl_Button* o, void* v);
 	inline void cb_PlayPause_i(Fl_Button* o, void* v);
 	static void cb_PlayPause(Fl_Button* o, void* v);
+	inline void cb_Reset_i(Fl_Button* o, void* v);
+	static void cb_Reset(Fl_Button* o, void* v);
 	
 	inline void cb_MergePatch_i();
 	static void cb_MergePatch(Fl_Canvas* o, SynthModular*v) { v->cb_MergePatch_i(); };

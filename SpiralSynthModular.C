@@ -178,12 +178,6 @@ void SynthModular::Update()
 			cerr<<"Finished updating"<<endl;
 			#endif
 
-			if ((!m_ResetingAudioThread) && (!m_PauseAudio))
-			{
-				// run any commands we've received from the GUI's
-				i->second->m_Device->ExecuteCommands();
-			}
-			
 			// If this is an audio device see if we always need to ProcessAudio here
 			if (i->second->m_Device->IsAudioDriver())
 			{
@@ -193,6 +187,12 @@ void SynthModular::Update()
 				{
 					driver->ProcessAudio();
 				}	
+			}
+
+			if ((!m_ResetingAudioThread))
+			{
+				// run any commands we've received from the GUI's
+				i->second->m_Device->ExecuteCommands();
 			}
 		}
 	}
@@ -390,7 +390,12 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_NewComment->callback((Fl_Callback*)cb_NewComment);
 	m_Toolbar->add(m_NewComment);
 
-	m_PlayPause = new Fl_Button(0, 0, but, but, "Pause ||");
+        m_PlayResetGroup = new Fl_Pack (0, 0, but, but, "");
+        m_PlayResetGroup->user_data((void*)(this));
+	m_PlayResetGroup->color(SpiralInfo::GUICOL_Button);
+        m_Toolbar->add(m_PlayResetGroup);
+
+	m_PlayPause = new Fl_Button(0, 0, but, but/2, "Pause ||");
         m_PlayPause->type(0);
 	m_PlayPause->box(FL_PLASTIC_UP_BOX);
 	m_PlayPause->color(SpiralInfo::GUICOL_Button);
@@ -398,7 +403,16 @@ SpiralWindowType *SynthModular::CreateWindow()
         m_PlayPause->labelsize (1);
         m_PlayPause->tooltip("Play/Pause");
 	m_PlayPause->callback((Fl_Callback*)cb_PlayPause);
-	m_Toolbar->add(m_PlayPause);
+	m_PlayResetGroup->add(m_PlayPause);
+
+	m_Reset = new Fl_Button(0, 0, but, but/2, "Reset");
+	m_Reset->box(FL_PLASTIC_UP_BOX);
+	m_Reset->color(SpiralInfo::GUICOL_Button);
+	m_Reset->selection_color(SpiralInfo::GUICOL_Tool);
+        m_Reset->labelsize (1);
+        m_Reset->tooltip("Reset Audio State of all Plugins");
+	m_Reset->callback((Fl_Callback*)cb_Reset);
+	m_PlayResetGroup->add(m_Reset);
 
         m_GroupFiller = new Fl_Group (0, 0, 0, ToolbarHeight, "");
 		m_GroupFiller->color(SpiralInfo::GUICOL_Button);
@@ -681,8 +695,9 @@ DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 	nlw->m_Device->SetUpdateCallback(cb_Update);
 	nlw->m_Device->SetParent((void*)this);
 
-	if ( AudioDriver *driver = dynamic_cast<AudioDriver*>(nlw->m_Device) )
+	if ( nlw->m_Device->IsAudioDriver() )
 	{ 
+		AudioDriver *driver = ((AudioDriver*)nlw->m_Device);
 		driver->SetChangeBufferAndSampleRateCallback(cb_ChangeBufferAndSampleRate);
 	}	
 
@@ -995,6 +1010,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 		if (ver>FILE_VERSION)
 		{
 			SpiralInfo::Alert("Bad file, or more recent version.");
+			ThawAll();
 			return s;
 		}
 	
@@ -1072,6 +1088,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 			if (m_DeviceWinMap.find(ID)!=m_DeviceWinMap.end())
 			{
 				SpiralInfo::Alert("Duplicate device ID found in file - aborting load");
+				ThawAll();
 				return s;
 			}
 		}
@@ -1212,7 +1229,7 @@ ostream &operator<<(ostream &s, SynthModular &o)
 	for(map<int,DeviceWin*>::iterator i=o.m_DeviceWinMap.begin();
 		i!=o.m_DeviceWinMap.end(); i++)
 	{	
-		if (i->second->m_DeviceGUI && i->second->m_Device)	
+		if (i->second->m_DeviceGUI && ((i->second->m_Device) || (i->second->m_PluginID==COMMENT_ID)))	
 		{
 			s<<endl;
 			s<<"Device ";
@@ -1421,6 +1438,16 @@ inline void SynthModular::cb_PlayPause_i(Fl_Button* o, void* v)
 
 void SynthModular::cb_PlayPause(Fl_Button* o, void* v)
 {((SynthModular*)(o->parent()->user_data()))->cb_PlayPause_i(o,v);}
+
+//////////////////////////////////////////////////////////
+
+inline void SynthModular::cb_Reset_i(Fl_Button* o, void* v)
+{
+	ResetAudio();
+}
+
+void SynthModular::cb_Reset(Fl_Button* o, void* v)
+{((SynthModular*)(o->parent()->user_data()))->cb_Reset_i(o,v);}
 
 //////////////////////////////////////////////////////////
 
