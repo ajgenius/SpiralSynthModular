@@ -126,6 +126,8 @@ public:
 	
 	virtual void 		Execute();
 	virtual void 		ExecuteCommands();
+
+	virtual bool         	Kill();
 	
 	virtual void	    StreamOut(std::ostream &s);
 	virtual void	    StreamIn(std::istream &s);

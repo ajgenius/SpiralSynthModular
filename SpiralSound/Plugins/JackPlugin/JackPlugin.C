@@ -450,9 +450,27 @@ m_Connected(false)
 
 JackPlugin::~JackPlugin()
 {
+	if (m_JackClient)
+	{
+		m_JackClient->Detach();
+		delete m_JackClient; 
+		m_JackClient=NULL;
+	}	
+}
+
+bool JackPlugin::Kill()
+{
+	m_IsDead=true;
+
+	UpdatePluginInfoWithHost();
+	RemoveAllInputs ();
+	RemoveAllOutputs ();
+	UpdatePluginInfoWithHost();
+
 	m_JackClient->Detach();
 	delete m_JackClient; 
 	m_JackClient=NULL;
+	return true;
 }
 
 PluginInfo &JackPlugin::Initialise(const HostInfo *Host)
@@ -519,6 +537,8 @@ void JackPlugin::Execute()
 
 void JackPlugin::ExecuteCommands()
 {
+	if (m_IsDead) return;
+	
         bool commandwaiting = m_AudioCH->IsCommandWaiting();
         int command = (commandwaiting)?(int)m_AudioCH->GetCommand():0;
 

@@ -115,7 +115,11 @@ void SynthModular::ClearUp()
 	for(map<int,DeviceWin*>::iterator i=m_DeviceWinMap.begin();
 		i!=m_DeviceWinMap.end(); i++)
 	{
-		if (i->second->m_Device->Kill());
+		//Stop processing of audio if any
+		if (i->second->m_Device)
+		{
+			if (i->second->m_Device->Kill());
+		}			
 		i->second->m_DeviceGUI->Clear();
 
 		if (i->second->m_DeviceGUI->GetPluginWindow())
