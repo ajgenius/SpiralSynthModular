@@ -98,9 +98,18 @@ private:
 #ifdef USE_ALSA_MIDI
 	static void *MidiReaderCallback (void *o) { ((MidiDevice*)o)->AlsaCollectEvents(); return NULL; }
 	void AlsaCollectEvents();
+	void AlsaSendEvent(int Device, const MidiEvent &Event);
+
         void AlsaClose ();
-	snd_seq_t *seq_handle;
-	snd_seq_t *AlsaOpen(Type t);
+
+	//snd_seq_t *seq_handle;
+
+	//I appears that ALsa does not support both a read and write handle
+	//so we must have two handle one for each mode
+	snd_seq_t *seq_rhandle;
+	snd_seq_t *seq_whandle;
+
+	void AlsaOpen();
 #endif
 #ifdef USE_OSS_MIDI
         static void *MidiReaderCallback (void *o) { ((MidiDevice*)o)->OssCollectEvents(); return NULL; }

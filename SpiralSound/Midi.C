@@ -70,7 +70,7 @@ m_ClockCount (0)
      AppleOpen();
 #endif
 #ifdef USE_ALSA_MIDI
-     seq_handle=AlsaOpen(t);
+     AlsaOpen();
 #endif
 #ifdef USE_OSS_MIDI
      if (!OssOpen()) return;
@@ -122,30 +122,7 @@ MidiEvent MidiDevice::GetEvent(int Device)
 
 void MidiDevice::SendEvent (int Device, const MidiEvent &Event) {
 #ifdef USE_ALSA_MIDI
-	snd_seq_event_t ev;
-	snd_seq_ev_clear      (&ev);
-  	snd_seq_ev_set_direct (&ev);
-	snd_seq_ev_set_subs   (&ev);
-    snd_seq_ev_set_source (&ev, 0);
-
-	switch (Event.GetType())
-	{
-		case MidiEvent::ON:
-                     ev.type = SND_SEQ_EVENT_NOTEON;
-                     break;
-		case MidiEvent::OFF:
-                     ev.type = SND_SEQ_EVENT_NOTEOFF;
-                     break;
-                default:
-                     break;
-	}
-
-	ev.data.note.velocity = (char)Event.GetVolume()*127;
-	ev.data.control.channel = Device;
-	ev.data.note.note=Event.GetNote();
-
-	int ret=snd_seq_event_output(seq_handle, &ev);
-	snd_seq_drain_output(seq_handle);
+	AlsaSendEvent (Device, Event);
 #else
 	if (Device<0 || Device>15)
 	{
@@ -367,17 +344,28 @@ void MidiDevice::OssAddEvent(unsigned char* midi)
 // code taken and modified from jack_miniFMsynth
 
 void MidiDevice::AlsaClose () {
-     snd_seq_close (seq_handle);
+
+	//Alsa requires two handles - one for read and one for write, 
+	//so we make sure too close both here
+	
+	snd_seq_close (seq_rhandle);
+	snd_seq_close (seq_whandle);
 }
 
 void MidiDevice::AlsaCollectEvents () {
+     //As Alsa only supports a read or write, we use the read handle here to poll our input
+     //for MIDI events
+	
      int seq_nfds, l1;
      struct pollfd *pfds;
-     seq_nfds = snd_seq_poll_descriptors_count(seq_handle, POLLIN);
-     // Andy Preston
-     // pfds = (struct pollfd *)alloca (sizeof(struct pollfd) * seq_nfds);
+
+     //get descriptors count to find out how many events are 
+     //waiting to be processed
+     seq_nfds = snd_seq_poll_descriptors_count(seq_rhandle, POLLIN);
+     
+     //poll the descriptors to be proccessed and loop through them
      pfds = new struct pollfd[seq_nfds];
-     snd_seq_poll_descriptors(seq_handle, pfds, seq_nfds, POLLIN);
+     snd_seq_poll_descriptors(seq_rhandle, pfds, seq_nfds, POLLIN);
      for (;;) {
          if (poll (pfds, seq_nfds, 1000) > 0) {
             for (l1 = 0; l1 < seq_nfds; l1++) {
@@ -388,7 +376,7 @@ void MidiDevice::AlsaCollectEvents () {
                    MidiEvent::type MessageType=MidiEvent::NONE;
                    int Volume=0, Note=0, EventDevice=0;
                    do {
-                      snd_seq_event_input (seq_handle, &ev);
+                      snd_seq_event_input (seq_rhandle, &ev);
                       if ((ev->type == SND_SEQ_EVENT_NOTEON) && (ev->data.note.velocity == 0)) {
                          ev->type = SND_SEQ_EVENT_NOTEOFF;
                       }
@@ -419,7 +407,7 @@ void MidiDevice::AlsaCollectEvents () {
                       m_EventVec[EventDevice].push (MidiEvent (MessageType, Note, Volume));
                       pthread_mutex_unlock (m_Mutex);
                       snd_seq_free_event (ev);
-                   } while (snd_seq_event_input_pending(seq_handle, 0) > 0);
+                   } while (snd_seq_event_input_pending(seq_rhandle, 0) > 0);
                 }
             }
          }
@@ -427,40 +415,91 @@ void MidiDevice::AlsaCollectEvents () {
      delete [] pfds;
 }
 
-snd_seq_t *MidiDevice::AlsaOpen(Type t)
-{
-    snd_seq_t *seq_handle;
-    int client_id, port_id;
+void MidiDevice::AlsaSendEvent (int Device, const MidiEvent &Event) {
+	//As Alsa only supports a read or write, we use the write handle here to send
+	//our MIDI events
 
-    if (t==WRITE)
+	snd_seq_event_t ev;
+	
+	snd_seq_ev_clear      (&ev);
+  	snd_seq_ev_set_direct (&ev);
+	snd_seq_ev_set_subs   (&ev);
+	snd_seq_ev_set_source (&ev, 0);
+
+	switch (Event.GetType())
 	{
-    	if (snd_seq_open(&seq_handle, "default", SND_SEQ_OPEN_OUTPUT, 0) < 0) {
-    	    fprintf(stderr, "Error opening ALSA sequencer.\n");
-    	    exit(1);
-    	}
-    	snd_seq_set_client_name(seq_handle, m_AppName.c_str());
-    	client_id = snd_seq_client_id(seq_handle);
-    	if ((port_id = snd_seq_create_simple_port(seq_handle, m_AppName.c_str(),
-    	    SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ,
-    	    SND_SEQ_PORT_TYPE_APPLICATION) < 0)) {
-    	    fprintf(stderr, "Error creating sequencer port.\n");
-    	}
+		case MidiEvent::ON:
+                     ev.type = SND_SEQ_EVENT_NOTEON;
+                     break;
+		case MidiEvent::OFF:
+                     ev.type = SND_SEQ_EVENT_NOTEOFF;
+                     break;
+/*		case MidiEvent::PARAMETER:
+                     ev.type = SND_SEQ_EVENT_CONTROLLER;
+                     ev.data.control.param = Event.GetNote();
+                     ev.data.control.value = 
+                     break;
+		case MidiEvent::PITCHBEND:
+                     ev.type = SND_SEQ_EVENT_PITCHBEND;
+                     ev.data.control.param = Event.GetNote();
+                     ev.data.control.value = 
+                     break;*/
+                default:
+                     break;
 	}
-	else
+
+	ev.data.note.velocity = (char)Event.GetVolume()*127;
+	ev.data.control.channel = Device;
+	ev.data.note.note=Event.GetNote();
+
+	snd_seq_event_output(seq_whandle, &ev);
+	snd_seq_drain_output(seq_whandle);
+}
+
+void MidiDevice::AlsaOpen()
+{
+	int client_id, port_id;
+	
+	//Alsa apears to require two handles, one for read and one for write
+	//so we try to open one first for input and then one for output
+	
+	//open input handle
+	if (snd_seq_open(&seq_rhandle, "default", SND_SEQ_OPEN_INPUT, 0) < 0)
 	{
-		if (snd_seq_open(&seq_handle, "default", SND_SEQ_OPEN_INPUT, 0) < 0) {
-    	    fprintf(stderr, "Error opening ALSA sequencer.\n");
-    	    exit(1);
-    	}
-    	snd_seq_set_client_name(seq_handle, m_AppName.c_str());
-    	client_id = snd_seq_client_id(seq_handle);
-    	if ((port_id = snd_seq_create_simple_port(seq_handle, m_AppName.c_str(),
-    	    SND_SEQ_PORT_CAP_WRITE|SND_SEQ_PORT_CAP_SUBS_WRITE,
-    	    SND_SEQ_PORT_TYPE_APPLICATION) < 0)) {
-    	    fprintf(stderr, "Error creating sequencer port.\n");
-    	}
+		fprintf(stderr, "Error opening ALSA input sequencer.\n");
+		exit(1);
 	}
-    return(seq_handle);
+
+	//setup our input name as seen by other apps, and get corresponding client id
+	snd_seq_set_client_name(seq_rhandle, m_AppName.c_str());
+	client_id = snd_seq_client_id(seq_rhandle);
+
+	//try and create our actual input port capable of being written to by MIDI outputs
+	if ((port_id = snd_seq_create_simple_port(seq_rhandle, m_AppName.c_str(),
+		SND_SEQ_PORT_CAP_WRITE|SND_SEQ_PORT_CAP_SUBS_WRITE,
+		SND_SEQ_PORT_TYPE_APPLICATION) < 0)) 
+	{
+		fprintf(stderr, "Error creating input sequencer port.\n");
+	}
+
+	//open output handle
+	if (snd_seq_open(&seq_whandle, "default", SND_SEQ_OPEN_OUTPUT, 0) < 0) 
+	{
+		fprintf(stderr, "Error opening ALSA ouput sequencer.\n");
+		exit(1);
+	}
+
+	//setup our output name as seen by other apps, and get corresponding client id
+	snd_seq_set_client_name(seq_whandle, m_AppName.c_str());
+	client_id = snd_seq_client_id(seq_whandle);
+
+	//try and create our actual output port capable of being read from by MIDI inputs
+	if ((port_id = snd_seq_create_simple_port(seq_whandle, m_AppName.c_str(),
+		SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ,
+		SND_SEQ_PORT_TYPE_APPLICATION) < 0)) 
+	{
+		fprintf(stderr, "Error creating output sequencer port.\n");
+	}
 }
 
 #endif
