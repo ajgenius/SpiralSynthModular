@@ -5,14 +5,17 @@ Improved LADSPA GUI, and librdf support.
 Improved Jack functionality.
 New ALSA midi support.
 New configure script - makes most dependancies optional.
-Libsndfile support for Sampler, SpiralLoops, Streamer, etc.
-Time display on DiskWriter.
+Makefile / .configure fixes.
 Overload light on Mono-Mixer.
 Numeric parameter input on lots of plugins.
 Improved DistributorPlugin.
 More controls on ScopePlugin and MeterPlugin.
 Variable number of inputs and/or outputs on MixerPlugin and LoginPlugin.
 Improved PluginGUI resizing.
+Vanishing comment bugfix.
+Fixed bug that caused a segfault when the last MIDI plugin is deleted.
+Time display and 16bit, 24bit packed PCM, or 32bit float IEEE output in DiskWriter.
+Libsndfile support for Sampler, SpiralLoops, Streamer, etc.
 Misc fixes.
 
 New Plugins:
