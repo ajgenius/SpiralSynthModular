@@ -38,6 +38,7 @@ class ScopePlugin : public SpiralPlugin {
    private:
       float *m_Data;
       bool m_DataReady;
+      int m_DataSize;
       bool m_DataSizeChanged;
 };
 

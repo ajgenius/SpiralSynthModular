@@ -98,7 +98,12 @@ void MeterPluginGUI::draw() {
     {
 	m_GUICH->SetCommand (MeterPlugin::UPDATEDATASIZE);
 	m_GUICH->Wait();
+
+	m_BufSize = m_GUICH->GetInt("DataSize");
+	delete[] m_Data;
+	m_Data = new float[m_BufSize];
     }	
+
     if (m_GUICH->GetBool ("DataReady")) m_GUICH->GetData ("AudioData", m_Data);
     else memset (m_Data, 0, m_BufSize * sizeof (float));
     // The min and max values are based on the whole buffer

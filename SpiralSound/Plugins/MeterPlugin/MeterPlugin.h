@@ -36,6 +36,7 @@ class MeterPlugin : public SpiralPlugin {
     enum GUICommands {NONE, SETVU, SETMM, UPDATEDATASIZE};
   private:
     float *m_Data;
+    int m_DataSize;
     // m_VUMode isn't USED for anything, it's here so we can save/load it
     bool m_DataReady, m_VUMode, m_DataSizeChanged;
 };

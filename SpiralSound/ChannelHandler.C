@@ -214,7 +214,7 @@ void ChannelHandler::GetData(const string &ID, void *data)
     pthread_mutex_unlock(m_Mutex);
 }
 
-void ChannelHandler::UpdateDataSize(const std::string &ID, int size)
+void ChannelHandler::ReplaceData(const std::string &ID, void *pData, int size)
 {
     map<string,Channel*>::iterator i=m_ChannelMap.find(ID);
     if (i==m_ChannelMap.end())
@@ -224,6 +224,7 @@ void ChannelHandler::UpdateDataSize(const std::string &ID, int size)
     }
 
     pthread_mutex_lock(m_Mutex);
+    i->second->data = pData;
     i->second->size = size;
     free(i->second->data_buf);
     i->second->data_buf = malloc(size);

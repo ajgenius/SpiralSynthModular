@@ -36,7 +36,8 @@ string SpiralPlugin_GetGroupName() { return "InputOutput"; }
 ///////////////////////////////////////////////////////
 
 ScopePlugin::ScopePlugin():
-m_DataReady(false)
+m_DataReady(false),
+m_DataSize(0)
 {
      m_PluginInfo.Name = "Scope";
      m_PluginInfo.Width = 260;
@@ -47,6 +48,7 @@ m_DataReady(false)
      m_PluginInfo.PortTips.push_back("Output");
      m_AudioCH->Register ("DataReady", &m_DataReady, ChannelHandler::OUTPUT);
      m_AudioCH->Register ("DataSizeChanged", &m_DataSizeChanged, ChannelHandler::OUTPUT);
+     m_AudioCH->Register ("DataSize", &m_DataSize, ChannelHandler::OUTPUT);
 }
 
 ScopePlugin::~ScopePlugin()
@@ -56,8 +58,9 @@ ScopePlugin::~ScopePlugin()
 PluginInfo &ScopePlugin::Initialise(const HostInfo *Host)
 {
 	PluginInfo& Info = SpiralPlugin::Initialise(Host);
-	m_Data = new float[Host->BUFSIZE];
-	m_AudioCH->RegisterData("AudioData",ChannelHandler::OUTPUT,m_Data,Host->BUFSIZE*sizeof(float));
+	m_DataSize = m_HostInfo->BUFSIZE;
+	m_Data = new float[m_DataSize];
+	m_AudioCH->RegisterData("AudioData",ChannelHandler::OUTPUT,m_Data,m_DataSize*sizeof(float));
 	return Info;
 }
 
@@ -71,7 +74,8 @@ void ScopePlugin::Reset()
 	ResetPorts();
 	m_DataReady = false;
 	delete m_Data;
-	m_Data = new float[m_HostInfo->BUFSIZE];
+	m_DataSize = m_HostInfo->BUFSIZE;
+	m_Data = new float[m_DataSize];
 	m_DataSizeChanged = true;
 }
 
@@ -81,7 +85,7 @@ void ScopePlugin::Execute() {
      if (GetOutputBuf (0)) GetOutputBuf (0)->Zero();
      if (m_DataReady) {
         GetOutputBuf (0)->Mix (*GetInput(0), 0);
-        memcpy (m_Data, GetInput (0)->GetBuffer (), m_HostInfo->BUFSIZE * sizeof (float));
+        memcpy (m_Data, GetInput (0)->GetBuffer (), m_DataSize * sizeof (float));
      }
 }
 
@@ -92,7 +96,7 @@ void ScopePlugin::ExecuteCommands()
 		switch (m_AudioCH->GetCommand()) {
 			case UPDATEDATASIZE :
 			{
-				m_AudioCH->UpdateDataSize("AudioData",m_HostInfo->BUFSIZE*sizeof(float));
+				m_AudioCH->ReplaceData("AudioData", m_Data, m_DataSize*sizeof(float));
 				m_DataSizeChanged = false;			
 			}	
 			break;

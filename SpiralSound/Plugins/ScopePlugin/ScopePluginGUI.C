@@ -106,9 +106,14 @@ void ScopePluginGUI::draw()
     //cerr<<"getting and drawing..."<<endl;
     if (m_GUICH->GetBool ("DataSizeChanged")) 
     {
-	m_GUICH->SetCommand (ScopePlugin::UPDATEDATASIZE);
+	m_GUICH->SetCommand(ScopePlugin::UPDATEDATASIZE);
 	m_GUICH->Wait();
+
+	m_BufSize = m_GUICH->GetInt("DataSize");
+	delete[] m_Scope->m_Data;
+	m_Scope->m_Data = new float[m_BufSize];
     }	
+    
     if (m_GUICH->GetBool ("DataReady")) m_GUICH->GetData ("AudioData", (void*)m_Scope->m_Data);
     else memset ((void*)m_Scope->m_Data, 0, m_BufSize * sizeof (float));
     if (!m_Bypass) m_Scope->redraw();
