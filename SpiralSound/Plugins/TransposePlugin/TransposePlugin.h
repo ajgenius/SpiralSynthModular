@@ -23,19 +23,22 @@
 #define TransposePLUGIN
 
 class TransposePlugin : public SpiralPlugin {
-   public:
-      TransposePlugin();
-      virtual ~TransposePlugin ();
-      virtual PluginInfo& Initialise (const HostInfo *Host);
-      virtual SpiralGUIType* CreateGUI ();
-      virtual void Execute ();
-      //virtual void ExecuteCommands ();
-      virtual void StreamOut (std::ostream &s);
-      virtual void StreamIn (std::istream &s);
-      int GetAmount () { return m_Amount; }
-   private:
-      int m_Amount;
-      float m_Out;
+public:
+	TransposePlugin();
+	virtual ~TransposePlugin ();
+	virtual PluginInfo& Initialise (const HostInfo *Host);
+	virtual SpiralGUIType* CreateGUI ();
+	virtual void Execute ();
+	//virtual void ExecuteCommands ();
+	virtual void StreamOut (std::ostream &s);
+	virtual void StreamIn (std::istream &s);
+	int GetAmount () { return m_Amount; }
+private:
+	int m_Amount;
+	float m_Out;
+
+      	float m_Buffer[2][2];
+	bool m_BufferInitialized;
 };
 
 #endif

@@ -47,7 +47,8 @@ string SpiralPlugin_GetGroupName() {
 
 TransposePlugin::TransposePlugin () :
 m_Amount(0),
-m_Out(0.0)
+m_Out(0.0),
+m_BufferInitialized(false)
 {
     m_PluginInfo.Name = "Transpose";
     m_PluginInfo.Width = 80;
@@ -72,24 +73,55 @@ SpiralGUIType *TransposePlugin::CreateGUI() {
 }
 
 void TransposePlugin::Execute () {
-     int Match [2];
-     for (int n=0; n<m_HostInfo->BUFSIZE; n++) {
-         Match[0]=0;
-         Match[1]=0;
-         for (int i=0; i<2 && InputExists(i); i++) {
-             float Freq, Dif, MinDif = 30000;
-             Freq = GetInputPitch (i, n);
-             for (int c=0; c<131; c++) {
-                 Dif = fabs (NoteTable[c] - Freq);
-                 if (Dif > MinDif) break;
-                 MinDif=Dif;
-                 Match[i]=c;
-             }
-         }
-         if (! InputExists (1)) Match[1] = m_Amount;
-         m_Out = NoteTable [(Match[0] + Match[1]) % 132];
-         SetOutputPitch (0, n, m_Out);
-     }
+	float base=110, transpose=m_Amount;
+	float alpha = 17.312340490667;
+		
+	for (int n=0; n<m_HostInfo->BUFSIZE; n++) 
+	{
+		float input0 = GetInputPitch(0, n);
+		float input1  = GetInputPitch(1, n);
+		
+		if (input0 > 0)
+		{
+			// input's half steps from base of 110 = round(alpha*logf(GetInputPitch(0, n)/110));
+			// cv's half steps from base of 110 = round(alpha*logf(GetInputPitch(1, n)/110));
+
+			if ((!m_BufferInitialized)  || (input0 != m_Buffer[0][0]) || (input1 != m_Buffer[1][0]))
+			{
+				if ((m_BufferInitialized) && (input0 == m_Buffer[0][0]))
+				{
+					base = m_Buffer[0][1];
+				}
+				else if (input0 != base)
+				{
+					base = round(alpha*logf(input0/110));
+				}
+				m_Buffer[0][0] = input0;
+				m_Buffer[0][1] = base;
+
+				if ((m_BufferInitialized) && (input1 == m_Buffer[1][0]))
+				{
+					transpose = m_Buffer[1][1];
+				}
+				else if (InputExists(1)) 
+				{
+					transpose = (input1 > 0)?round(alpha*logf(input1/110)):0;
+				}
+
+				m_Buffer[1][0] = input1;
+				m_Buffer[1][1] = transpose;
+
+				m_BufferInitialized = true;		
+			
+				m_Out = 110*exp2f((base + transpose)/12);
+			}	
+		}
+		else
+		{
+			m_Out = 8.176;	
+		}	
+		SetOutputPitch (0, n, m_Out);
+	}
 }
 
 void TransposePlugin::StreamOut (ostream &s) {
