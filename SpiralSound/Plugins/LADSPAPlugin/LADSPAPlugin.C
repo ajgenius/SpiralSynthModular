@@ -24,14 +24,6 @@
 #include <cstring>
 #include <cmath>
 
-#ifdef USE_POSIX_SHM
-// All this, just for SHM
-#include <sys/types.h>
-#include <sys/mman.h>        // shm_*
-#include <unistd.h>          // For ftruncate
-#include <fcntl.h>           // For O_CREAT, O_RDONLY etc
-#endif
-
 #include "SpiralIcon.xpm"
 #include "LADSPAPlugin.h"
 #include "LADSPAPluginGUI.h"
@@ -39,6 +31,8 @@
 
 using namespace std;
 
+LADSPAInfo * LADSPAPlugin::m_LADSPAInfo= NULL;
+int LADSPAPlugin::InstanceCount=0;
 ////////////////////////////////////////////////////
 
 extern "C" {
@@ -67,99 +61,11 @@ string SpiralPlugin_GetGroupName()
 
 LADSPAPlugin::LADSPAPlugin()
 {
-#ifdef USE_POSIX_SHM
-// Share the LADSPA Database via SHM
-// We keep two things:
-//  1. A reference counter, counting LADSPAPlugin instances
-//  2. A pointer to the database. We can get away with just a pointer as
-//     all instances are in the same address space (SSM audio thread)
-
-	unsigned long pid;
-	int len;
-	char pidstr[21]; // Enough to store 64 bit number as text
-	int bplen;
-	int rplen;
-	int dplen;
-
-// Get our process id
-	pid = (unsigned long)getpid();
-	len = snprintf(pidstr,21,"%ld",pid);
-	bplen = strlen(m_SHMPath);
-	rplen = strlen(m_SHMPathRC);
-	dplen = strlen(m_SHMPathDB);
-
-	m_SHMRefCountPath = (char *)malloc(bplen+len+rplen+1);
-	m_SHMDatabasePath = (char *)malloc(bplen+len+dplen+1);
-
-	if (m_SHMRefCountPath && m_SHMDatabasePath) {
-	// Got paths - concatenate to form full paths
-		strncpy(m_SHMRefCountPath, m_SHMPath, bplen);
-		strncpy(m_SHMRefCountPath + bplen, pidstr, len);
-		strncpy(m_SHMRefCountPath + bplen + len, m_SHMPathRC, rplen);
-		m_SHMRefCountPath[bplen + len + rplen] = '\0';
-
-		strncpy(m_SHMDatabasePath, m_SHMPath, bplen);
-		strncpy(m_SHMDatabasePath + bplen, pidstr, len);
-		strncpy(m_SHMDatabasePath + bplen + len, m_SHMPathDB, dplen);
-		m_SHMDatabasePath[bplen + len + dplen] = '\0';
-
-		int shm_rc_fd = shm_open((const char *)m_SHMRefCountPath, O_RDWR, 0644);
-		if (shm_rc_fd > 0) {
-		// Got an existing refcount
-			m_SHMRefCount = (unsigned long *)mmap(0, sizeof(unsigned long), PROT_READ | PROT_WRITE, MAP_SHARED,
-			                                      shm_rc_fd, 0);
-
-			(*m_SHMRefCount)++;
-
-			int shm_db_fd = shm_open((const char *)m_SHMDatabasePath, O_RDONLY, 0644);
-			if (shm_db_fd > 0) {
-			// Got LADSPA Database
-				m_SHMDatabase = (LADSPAInfo **)mmap(0, sizeof(LADSPAInfo *), PROT_READ, MAP_SHARED,
-				                                    shm_db_fd, 0);
-
-				m_LADSPAInfo = *m_SHMDatabase;
-			} else {
-				std::cerr << "LADSPAPlugin: ERROR: Could not open SHM file '" << m_SHMDatabasePath << std::cerr;
-				m_LADSPAInfo = new LADSPAInfo(false, "");
-			}
-		} else {
-		// Create LADSPA Plugin Database
-			m_LADSPAInfo = new LADSPAInfo(false, "");
-
-		// Need to create a new SHM file for ref counter
-			shm_rc_fd = shm_open((const char *)m_SHMRefCountPath, O_CREAT | O_RDWR, 0644);
-			if (shm_rc_fd > 0) {
-				ftruncate(shm_rc_fd, sizeof(unsigned long));
-				m_SHMRefCount = (unsigned long *)mmap(0, sizeof(unsigned long), PROT_READ | PROT_WRITE, MAP_SHARED,
-				                                      shm_rc_fd, 0);
-
-			// Initilise to 1 (this instance)
-				*m_SHMRefCount = 1;
-
-				int shm_db_fd = shm_open((const char *)m_SHMDatabasePath, O_CREAT | O_RDWR, 0644);
-				if (shm_db_fd > 0) {
-				// Share database via pointer
-					ftruncate(shm_db_fd, sizeof(LADSPAInfo *));
-					m_SHMDatabase = (LADSPAInfo **)mmap(0, sizeof(LADSPAInfo *), PROT_READ | PROT_WRITE, MAP_SHARED,
-					                                    shm_db_fd, 0);
-
-					*m_SHMDatabase = m_LADSPAInfo;
-				} else {
-					std::cerr << "LADSPAPlugin: ERROR: Could not create SHM file '" << m_SHMDatabasePath << "'" << std::endl;
-				}
-			} else {
-				std::cerr << "LADSPAPlugin: ERROR: Could not create SHM file '" << m_SHMRefCountPath << "'" << std::endl;
-			}
-		}
-	} else {
-	// Dang. Just create new database
+	InstanceCount++;
+	if (!m_LADSPAInfo)
+	{
 		m_LADSPAInfo = new LADSPAInfo(false, "");
-	}
-
-#else
-// No POSIX SHM, just create a new database
-	m_LADSPAInfo = new LADSPAInfo(false, "");
-#endif
+	}	
 
 	m_PlugDesc = NULL;
 
@@ -222,25 +128,12 @@ LADSPAPlugin::~LADSPAPlugin()
 	if (m_OutData.InputPortValues) free(m_OutData.InputPortValues);
 	if (m_OutData.InputPortDefaults) free(m_OutData.InputPortDefaults);
 
-#ifdef USE_POSIX_SHM
-// Clean up SHM things
-	(*m_SHMRefCount)--;
-	if ((*m_SHMRefCount) == 0) {
-	// Last instance, so unmap and unlink
-		munmap(m_SHMRefCount, sizeof(unsigned long));
-		shm_unlink(m_SHMRefCountPath);
-		munmap(m_SHMDatabase, sizeof(LADSPAInfo *));
-		shm_unlink(m_SHMDatabasePath);
-	// Delete the database itself
+	InstanceCount--;
+	if (m_LADSPAInfo && InstanceCount<=0)
+	{
 		delete m_LADSPAInfo;
-	} else {
-	// Other instances still out there, so just unmap
-		munmap(m_SHMRefCount, sizeof(unsigned long));
-		munmap(m_SHMDatabase, sizeof(LADSPAInfo *));
-	}
-#else
-	delete m_LADSPAInfo;
-#endif
+		m_LADSPAInfo = NULL;
+	}	
 }
 
 PluginInfo &LADSPAPlugin::Initialise(const HostInfo *Host)

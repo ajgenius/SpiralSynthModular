@@ -29,11 +29,6 @@
 #include "../SpiralPlugin.h"
 #include "LADSPAInfo.h"
 
-#ifdef USE_POSIX_SHM
-#include <sys/types.h> // For pid_t data member
-#include <unistd.h>
-#endif
-
 struct PortSetting
 {
 	float Min;
@@ -117,9 +112,9 @@ private:
 
 	int             m_Version;
 
-	// our database of ladspa plugins
-	LADSPAInfo     *m_LADSPAInfo;
-
+	static LADSPAInfo	*m_LADSPAInfo;
+	static int		InstanceCount;
+	
 	unsigned long   m_PluginIndex;
 	unsigned long   m_UniqueID;
 	int             m_Page;
@@ -159,23 +154,6 @@ private:
 
 	OutputChannelData     m_OutData;
 	InputChannelData      m_InData;
-
-#ifdef USE_POSIX_SHM
-// SHM stuff - for sharing the LADSPA Plugin database
-// The actual paths are combined with the Process ID for the current SSM audio thread
-// to allow multiple instances of SSM to run, and to avoid picking up stale SHMs
-// from crashed instances.
-	static const char * const m_SHMPath = "/SSM-LADSPAPlugin-";
-	static const char * const m_SHMPathRC = "-RefCount";
-	static const char * const m_SHMPathDB = "-Database";
-
-	char *m_SHMRefCountPath;
-	char *m_SHMDatabasePath;
-
-	pid_t         *m_SHMPID;
-	unsigned long *m_SHMRefCount;
-	LADSPAInfo   **m_SHMDatabase;
-#endif
 };
 
 #endif // __ladspa_plugin_h__

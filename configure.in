@@ -109,35 +109,6 @@ if test "$use_liblrdf" = "y"; then
    AC_SUBST(LRDFLIBS)
 fi
 
-dnl Check if POSIX SHM is present or has been disabled
-shm_message=""
-AC_ARG_ENABLE(
-    posix-shm,
-    [  --disable-posix-shm     Disable POSIX SHM for LADSPA Plugin],
-    [use_posix_shm="n" ; shm_message="manually disabled"],
-    [use_posix_shm="y"]
-)
-if test "$build_ladspa" = "n" ; then
-   use_posix_shm="n"
-   shm_message="LADSPAPlugin not used"
-elif test "$use_liblrdf" = "n" ; then
-   use_posix_shm="n"
-   shm_message="liblrdf not used"
-fi
-if test "$use_posix_shm" = "y"; then
-   AC_MSG_CHECKING([POSIX SHM support ])
-   if test -d /dev/shm -a -w /dev/shm ; then
-       AC_DEFINE(USE_POSIX_SHM, ,[Enable POSIX SHM support for LADSPA Plugin])
-       AC_MSG_RESULT(found.)
-       SHMLIBS="-lrt"
-       AC_SUBST(SHMLIBS)
-    else
-       AC_MSG_RESULT(not found.)
-       use_posix_shm="n"
-       shm_message="/dev/shm not found";
-    fi
-fi
-
 dnl Check whether alsa-midi is present or has been disabled
 amidi_message=""
 AC_ARG_ENABLE(
@@ -325,11 +296,5 @@ if test "$use_liblrdf" = "y"; then
    echo "Enabled"
 else
    echo "Disabled - $lrdf_message"
-fi
-echo -n " POSIX SHM support for LADSPAPlugin - "
-if test "$use_posix_shm" = "y"; then
-   echo "Enabled"
-else
-   echo "Disabled - $shm_message"
 fi
 echo ""
