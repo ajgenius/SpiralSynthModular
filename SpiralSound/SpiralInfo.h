@@ -72,6 +72,16 @@ class SpiralInfo {
       string m_ResFileName;
       int m_Version;
       static SpiralInfo *m_SpiralInfo;
+
+      void SpiralInfo::StreamOutMainColourPrefs (ostream &s);
+      bool SpiralInfo::StreamInMainColourPrefs (istream &s, string &section, string &ident);
+      
+      void SpiralInfo::StreamOutDeviceColourPrefs (ostream &s);
+      bool SpiralInfo::StreamInDeviceColourPrefs (istream &s, string &section, string &ident);
+      
+      void SpiralInfo::StreamOutAudioSettingsPrefs (ostream &s);
+      bool SpiralInfo::StreamInAudioSettingsPrefs (istream &s, string &section, string &ident);
+
       void StreamInPrefs (istream &s);
       void StreamOutPrefs (ostream &s);
 };
