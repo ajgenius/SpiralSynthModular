@@ -104,6 +104,7 @@ void StreamPlugin::Reset()
 	m_Pos = 0;
 }
 
+
 void StreamPlugin::Execute() {
      if (m_File.IsOpen()) {
         for (int n=0; n<m_HostInfo->BUFSIZE; n++) {
@@ -151,7 +152,6 @@ void StreamPlugin::Execute() {
 
                m_File.LoadChunk (m_SampleSize, m_SampleL, m_SampleR);
             }
-
             // finished trigger
             if (FinTrig) SetOutput (2, n, 1);
             else SetOutput (2, n, 0);
@@ -163,7 +163,8 @@ void StreamPlugin::Execute() {
               SetOutput (3, n, 1);
               m_Pos += m_GUIArgs.PitchMod + CVPitch;
               m_GlobalPos += m_GUIArgs.PitchMod + CVPitch;
-              SetOutput (4, n, m_GlobalPos / m_File.GetSize());
+              float  plop = m_GlobalPos / (float)m_File.GetSize();
+              SetOutput (4, n, plop);
             }
             else {
               SetOutput (0, n, 0);
@@ -216,7 +217,7 @@ void StreamPlugin::OpenStream (void) {
      if (m_File.GetSize() < 256)
        m_SampleSize = m_File.GetSize();
      else
-       m_SampleSize = 256;	
+       m_SampleSize = 256;
 
      m_SampleL.Allocate (m_SampleSize);
      m_SampleR.Allocate (m_SampleSize);

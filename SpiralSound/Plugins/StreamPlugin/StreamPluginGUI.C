@@ -40,6 +40,7 @@ m_PitchValue (1.0f)
             if (dis > 0 && dis % 2 == 0) m_Display[dis] -> dp (colon);
             add (m_Display[dis]);
         }
+        UpdateTime (0.0);
         // volume control
         m_Volume = new Fl_Knob (180, 10, 50, 50, "Volume");
         m_Volume->color (Info->GUI_COLOUR);
@@ -149,14 +150,10 @@ m_PitchValue (1.0f)
         UpdatePitch (true, false, false);
 }
 
-StreamPluginGUI::~StreamPluginGUI () {
+StreamPluginGUI::~StreamPluginGUI() {
 }
 
-// Update signalled from plugin
-
-void StreamPluginGUI::Update() {
-     float t=m_GUICH->GetFloat ("TimeOut");
-     m_Pos->value (t);
+void StreamPluginGUI::UpdateTime (float t) {
      m_Display[5]->value ((int)(t*100) % 10);
      m_Display[4]->value ((int)(t*10) % 10);
      m_Display[3]->value ((int)t % 10);
@@ -164,6 +161,16 @@ void StreamPluginGUI::Update() {
      m_Display[1]->value ((int)(t/60) % 10);
      m_Display[0]->value ((int)(t/600) % 10);
      redraw();
+}
+
+// Update signalled from plugin
+
+void StreamPluginGUI::Update() {
+     float t=m_GUICH->GetFloat ("TimeOut");
+     if (t != m_Pos->value()) {
+        m_Pos->value (t);
+        UpdateTime(t);
+     }
      SetMaxTime (m_GUICH->GetFloat ("MaxTime"));
      if (m_Playing != m_GUICH->GetBool ("Playing")) UpdatePlayStatus ();
      m_GUICH->GetData ("EchoFileName", (void*)m_TextBuf);
@@ -183,6 +190,7 @@ void StreamPluginGUI::UpdateValues (SpiralPlugin *o) {
      StreamPlugin *Plugin = (StreamPlugin*)o;
      m_Volume->value (Plugin->GetVolume());
      m_PitchValue = Plugin->GetPitch();
+     UpdateTime (0.0);
      UpdatePitch (true, true, false);
 }
 

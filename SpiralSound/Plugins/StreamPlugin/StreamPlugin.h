@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
+#ifndef StreamPLUGIN
+#define StreamPLUGIN
+
 #include "../SpiralPlugin.h"
 #include "../../RiffWav.h"
 #include <FL/Fl_Pixmap.H>
-
-#ifndef StreamPLUGIN
-#define StreamPLUGIN
 
 class StreamPlugin : public SpiralPlugin {
    public:
@@ -31,7 +31,7 @@ class StreamPlugin : public SpiralPlugin {
       virtual SpiralGUIType *CreateGUI();
       virtual void Execute();
       virtual void Reset();
-      
+
       virtual void ExecuteCommands();
       virtual void StreamOut (std::ostream &s);
       virtual void StreamIn (std::istream &s);

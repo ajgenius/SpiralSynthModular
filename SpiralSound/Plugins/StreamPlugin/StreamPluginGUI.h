@@ -44,6 +44,7 @@ class StreamPluginGUI : public SpiralPluginGUI {
       void SetMaxTime (float t) { m_Pos->maximum(t); }
       void UpdatePitch (bool UpdateIt = true, bool DrawIt = true, bool SendIt = true);
       void UpdatePlayStatus (void);
+      void UpdateTime (float t);
       // Widgets
       Fl_SevenSeg *m_Display[6];
       Fl_Knob *m_Volume;
