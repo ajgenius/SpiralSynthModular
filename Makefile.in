@@ -17,9 +17,6 @@ LIBS	=   @FLTK_LIBS@ -lm -ldl -lpthread
 MOC     = moc
 UIC	=
 
-TAR	=	tar -cf
-GZIP	=	gzip -9f
-
 INSTALL = @INSTALL@
 
 ###### Autoconf variables

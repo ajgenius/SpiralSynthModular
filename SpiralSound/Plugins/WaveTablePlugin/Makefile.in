@@ -13,10 +13,7 @@ LINK	=	g++ -shared
 LFLAGS	=
 LIBS	=	@FLTK_LIBS@
 MOC     = moc
-UIC	=	
-
-TAR	=	tar -cf
-GZIP	=	gzip -9f
+UIC	=
 
 INSTALL	= @INSTALL@
 
@@ -109,13 +106,6 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 	$(LINK) $(LFLAGS) -o $(TARGET) $(OBJECTS) $(OBJMOC) $(LIBS)
 
 moc: $(SRCMOC)
-
-tmake:
-	tmake WaveTablePlugin.pro
-
-dist:
-	$(TAR) WaveTablePlugin.tar WaveTablePlugin.pro $(SOURCES) $(HEADERS) $(INTERFACES) $(DIST)
-	$(GZIP) WaveTablePlugin.tar
 
 clean:
 	-rm -f $(OBJECTS) $(OBJMOC) $(SRCMOC) $(UICIMPLS) $(UICDECLS) $(TARGET)

@@ -13,10 +13,7 @@ LINK	=	g++ -shared
 LFLAGS	=
 LIBS	=   @FLTK_LIBS@
 MOC     = moc
-UIC	=	
-
-TAR	=	tar -cf
-GZIP	=	gzip -9f
+UIC	=
 
 INSTALL	= @INSTALL@
 
@@ -98,13 +95,6 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 	$(LINK) $(LFLAGS) -o $(TARGET) $(OBJECTS) $(OBJMOC) $(LIBS)
 
 moc: $(SRCMOC)
-
-tmake:
-	tmake SVFilterPlugin.pro
-
-dist:
-	$(TAR) SVFilterPlugin.tar SVFilterPlugin.pro $(SOURCES) $(HEADERS) $(INTERFACES) $(DIST)
-	$(GZIP) SVFilterPlugin.tar
 
 clean:
 	-rm -f $(OBJECTS) $(OBJMOC) $(SRCMOC) $(UICIMPLS) $(UICDECLS) $(TARGET)

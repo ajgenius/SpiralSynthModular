@@ -10,13 +10,10 @@ CFLAGS	=       @CFLAGS@ @FLTK_CFLAGS@
 CXXFLAGS=       @CXXFLAGS@ @FLTK_CXXFLAGS@
 INCPATH	=	-I/usr/X11R6/include
 LINK	=	g++ -shared
-LFLAGS	=	
+LFLAGS	=
 LIBS	=	@FLTK_LIBS@ @SFLIBS@
 MOC     = moc
-UIC	=	
-
-TAR	=	tar -cf
-GZIP	=	gzip -9f
+UIC	=
 
 INSTALL	= @INSTALL@
 
@@ -104,13 +101,6 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 	$(LINK) $(LFLAGS) -o $(TARGET) $(OBJECTS) $(OBJMOC) $(LIBS)
 
 moc: $(SRCMOC)
-
-tmake:
-	tmake DiskWriterPlugin.pro
-
-dist:
-	$(TAR) DiskWriterPlugin.tar DiskWriterPlugin.pro $(SOURCES) $(HEADERS) $(INTERFACES) $(DIST)
-	$(GZIP) DiskWriterPlugin.tar
 
 clean:
 	-rm -f $(OBJECTS) $(OBJMOC) $(SRCMOC) $(UICIMPLS) $(UICDECLS) $(TARGET)

@@ -15,9 +15,6 @@ LIBS	=   @FLTK_LIBS@
 MOC     = moc
 UIC	=
 
-TAR	=	tar -cf
-GZIP	=	gzip -9f
-
 INSTALL	= @INSTALL@
 
 ###### Autoconf variables
@@ -104,13 +101,6 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 	$(LINK) $(LFLAGS) -o $(TARGET) $(OBJECTS) $(OBJMOC) $(LIBS)
 
 moc: $(SRCMOC)
-
-tmake:
-	tmake OscillatorPlugin.pro
-
-dist:
-	$(TAR) OscillatorPlugin.tar OscillatorPlugin.pro $(SOURCES) $(HEADERS) $(INTERFACES) $(DIST)
-	$(GZIP) OscillatorPlugin.tar
 
 clean:
 	-rm -f $(OBJECTS) $(OBJMOC) $(SRCMOC) $(UICIMPLS) $(UICDECLS) $(TARGET)

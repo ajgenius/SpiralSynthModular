@@ -15,9 +15,6 @@ LIBS	=   @FLTK_LIBS@
 MOC     = moc
 UIC	=
 
-TAR	=	tar -cf
-GZIP	=	gzip -9f
-
 INSTALL	= @INSTALL@
 
 ###### Autoconf variables
@@ -100,10 +97,6 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 	$(LINK) $(LFLAGS) -o $(TARGET) $(OBJECTS) $(OBJMOC) $(LIBS)
 
 moc: $(SRCMOC)
-
-dist:
-	$(TAR) MousePlugin.tar $(SOURCES) $(HEADERS) $(INTERFACES) $(DIST)
-	$(GZIP) MousePlugin.tar
 
 clean:
 	-rm -f $(OBJECTS) $(OBJMOC) $(SRCMOC) $(UICIMPLS) $(UICDECLS) $(TARGET)

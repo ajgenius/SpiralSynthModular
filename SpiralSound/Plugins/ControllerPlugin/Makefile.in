@@ -15,9 +15,6 @@ LIBS	=   @FLTK_LIBS@
 MOC     = moc
 UIC	=
 
-TAR	=	tar -cf
-GZIP	=	gzip -9f
-
 INSTALL	= @INSTALL@
 
 ###### Autoconf variables
@@ -95,13 +92,6 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 	$(LINK) $(LFLAGS) -o $(TARGET) $(OBJECTS) $(OBJMOC) $(LIBS)
 
 moc: $(SRCMOC)
-
-tmake:
-	tmake ControllerPlugin.pro
-
-dist:
-	$(TAR) ControllerPlugin.tar ControllerPlugin.pro $(SOURCES) $(HEADERS) $(INTERFACES) $(DIST)
-	$(GZIP) ControllerPlugin.tar
 
 clean:
 	-rm -f $(OBJECTS) $(OBJMOC) $(SRCMOC) $(UICIMPLS) $(UICDECLS) $(TARGET)

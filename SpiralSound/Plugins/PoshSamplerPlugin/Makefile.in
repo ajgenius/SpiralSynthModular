@@ -15,9 +15,6 @@ LIBS	=   @FLTK_LIBS@ @SFLIBS@
 MOC     = moc
 UIC	=
 
-TAR	=	tar -cf
-GZIP	=	gzip -9f
-
 INSTALL	= @INSTALL@
 
 ###### Autoconf variables
@@ -104,13 +101,6 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 	$(LINK) $(LFLAGS) -o $(TARGET) $(OBJECTS) $(OBJMOC) $(LIBS)
 
 moc: $(SRCMOC)
-
-tmake:
-	tmake PoshSamplerPlugin.pro
-
-dist:
-	$(TAR) PoshSamplerPlugin.tar PoshSamplerPlugin.pro $(SOURCES) $(HEADERS) $(INTERFACES) $(DIST)
-	$(GZIP) PoshSamplerPlugin.tar
 
 clean:
 	-rm -f $(OBJECTS) $(OBJMOC) $(SRCMOC) $(UICIMPLS) $(UICDECLS) $(TARGET)

@@ -13,10 +13,7 @@ LINK	=	g++ -shared
 LFLAGS	=
 LIBS	=   @FLTK_LIBS@ @LRDFLIBS@
 MOC     = moc
-UIC	=	
-
-TAR	=	tar -cf
-GZIP	=	gzip -9f
+UIC	=
 
 INSTALL	= @INSTALL@
 

@@ -15,9 +15,6 @@ LIBS	=   @FLTK_LIBS@ @SFLIBS@
 MOC     = moc
 UIC	=
 
-TAR	=	tar -cf
-GZIP	=	gzip -9f
-
 INSTALL	= @INSTALL@
 
 ###### Autoconf variables
@@ -112,13 +109,6 @@ $(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
 	$(LINK) $(LFLAGS) -o $(TARGET) $(OBJECTS) $(OBJMOC) $(LIBS)
 
 moc: $(SRCMOC)
-
-tmake:
-	tmake SpiralLoopPlugin.pro
-
-dist:
-	$(TAR) SpiralLoopPlugin.tar SpiralLoopPlugin.pro $(SOURCES) $(HEADERS) $(INTERFACES) $(DIST)
-	$(GZIP) SpiralLoopPlugin.tar
 
 clean:
 	-rm -f $(OBJECTS) $(OBJMOC) $(SRCMOC) $(UICIMPLS) $(UICDECLS) $(TARGET)
