@@ -77,6 +77,8 @@ public:
 
 	// execute the audio
 	virtual void        Execute()=0;
+	virtual bool         Kill() {m_IsDead = true; return true;}
+
 	// run the commands from the GUI
 	virtual void        ExecuteCommands() {}
 	// create the GUI, do not store the pointer - it wont be threadsafe to use it
@@ -110,6 +112,7 @@ public:
 	void UpdateChannelHandler();
 	// is the plugin connected to an external device (oss/alsa/jack)
 	bool IsTerminal() { return m_IsTerminal; }
+	bool IsDead() { return m_IsDead; }
 	 
     ChannelHandler *GetChannelHandler() { return m_AudioCH; }
 		
@@ -161,6 +164,7 @@ protected:
 	void (*cb_Blocking)(void*o ,bool m);
 
 	bool   m_IsTerminal;
+	bool   m_IsDead;
 	
 private:
 

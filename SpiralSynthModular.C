@@ -115,13 +115,15 @@ void SynthModular::ClearUp()
 	for(map<int,DeviceWin*>::iterator i=m_DeviceWinMap.begin();
 		i!=m_DeviceWinMap.end(); i++)
 	{
+		if (i->second->m_Device->Kill());
+		i->second->m_DeviceGUI->Clear();
+
 		if (i->second->m_DeviceGUI->GetPluginWindow())
 		{
 			i->second->m_DeviceGUI->GetPluginWindow()->hide();
-			//m_MainWindow->remove(i->second->m_DeviceGUI->GetPluginWindow());
 		}
-		// deleted by Canvas::Remove()? seems to cause random crashes
-		//delete i->second->m_DeviceGUI;
+
+		//Delete Device
 		delete i->second->m_Device;
 		i->second->m_Device=NULL;
 	}
@@ -134,7 +136,6 @@ void SynthModular::ClearUp()
 }
 
 //////////////////////////////////////////////////////////
-
 void SynthModular::Update()
 {
 	m_CH.UpdateDataNow();
@@ -145,7 +146,16 @@ void SynthModular::Update()
 	for(map<int,DeviceWin*>::iterator i=m_DeviceWinMap.begin();
 		i!=m_DeviceWinMap.end(); i++)
 	{
-		if (i->second->m_Device) // if it's not a comment
+		if (i->second->m_Device && i->second->m_Device->IsDead())			
+		{
+			//Delete Device
+			delete i->second->m_Device;
+			i->second->m_Device=NULL;
+
+			//Erase Device from DeviceWinMap
+			m_DeviceWinMap.erase(i);
+		}
+		else if (i->second->m_Device) // if it's not a comment
 		{
 			#ifdef DEBUG_PLUGINS
 			cerr<<"Updating channelhandler of plugin "<<i->second->m_PluginID<<endl;
@@ -170,7 +180,7 @@ void SynthModular::Update()
 	{
 		// use the graphsort order to remove internal latency
 		map<int,DeviceWin*>::iterator di=m_DeviceWinMap.find(*i);
-		if (di!=m_DeviceWinMap.end() && di->second->m_Device)
+		if (di!=m_DeviceWinMap.end() && di->second->m_Device  && (! di->second->m_Device->IsDead()))
 		{
 			#ifdef DEBUG_PLUGINS
 			cerr<<"Executing plugin "<<di->second->m_PluginID<<endl;
@@ -193,15 +203,25 @@ void SynthModular::UpdatePluginGUIs()
 	for (map<int,DeviceWin*>::iterator i=m_DeviceWinMap.begin();
 		 i!=m_DeviceWinMap.end(); i++)
 	{
-		if (i->second->m_DeviceGUI->GetPluginWindow())
+		if (i->second->m_DeviceGUI && i->second->m_DeviceGUI->GetPluginWindow())
 		{
 			SpiralPluginGUI *GUI=(SpiralPluginGUI *)i->second->m_DeviceGUI->GetPluginWindow();
 			GUI->Update();
 		}
 
-		if (i->second->m_DeviceGUI->Killed())
+		if (i->second->m_DeviceGUI && i->second->m_DeviceGUI->Killed())
 		{
-                        PauseAudio();
+			bool erase = true;
+			
+			//Stop processing of audio if any
+			if (i->second->m_Device)
+			{
+				if (i->second->m_Device->Kill());
+				erase = false;
+			}			
+	
+			//Clear GUI Device
+			i->second->m_DeviceGUI->Clear();
 
 			// Hide Device GUI FIRST
 			if (i->second->m_DeviceGUI->GetPluginWindow())
@@ -209,28 +229,16 @@ void SynthModular::UpdatePluginGUIs()
 				i->second->m_DeviceGUI->GetPluginWindow()->hide();
 			}
 
-			// Clear and remove Device GUI from canvas
-			i->second->m_DeviceGUI->Clear();
+			//Remove Device GUI from canvas
 			m_Canvas->RemoveDevice(i->second->m_DeviceGUI);
 
-			// Delete Device GUI - must delete here or sometimes plugin will randomly crash
-                        // SOMETIMES AT THIS POINT THE WHOLE THING JUST LOCKS UP
-                        // In the previous version of this code this next line was commented out
-                        //    with the comment "deleted by Canvas::Remove()? seems to cause random crashes"
+			//Delete Device GUI - must delete here or sometimes plugin will randomly crash
 			delete i->second->m_DeviceGUI;
+			i->second->m_DeviceGUI = NULL;
 
-			// Delete Device Sometimes deleting audio before GUI causes an odd crash, so do it afterword
-			if (i->second->m_Device)
-			{
-				delete i->second->m_Device;
-				i->second->m_Device=NULL;
-			}
-
-			// Erase Device from DeviceWinMap
-			m_DeviceWinMap.erase(i);
-
-			ResumeAudio();
-			break;
+			//Erase from winmap if no audio to do it
+			if (erase)
+				m_DeviceWinMap.erase(i);
 		}
 	}
 
@@ -912,49 +920,52 @@ ostream &operator<<(ostream &s, SynthModular &o)
 
 	for(map<int,DeviceWin*>::iterator i=o.m_DeviceWinMap.begin();
 		i!=o.m_DeviceWinMap.end(); i++)
-	{
-		s<<endl;
-		s<<"Device ";
-		s<<i->first<<" "; // save the id
-		s<<"Plugin ";
-		s<<i->second->m_PluginID<<endl;
-		s<<i->second->m_DeviceGUI->x()<<" ";
-		s<<i->second->m_DeviceGUI->y()<<" ";
-		s<<i->second->m_DeviceGUI->GetName().size()<<" ";
-		s<<i->second->m_DeviceGUI->GetName()<<" ";
-
-		if (i->second->m_DeviceGUI->GetPluginWindow())
+	{	
+		if (i->second->m_DeviceGUI && i->second->m_Device)	
 		{
-			s<<i->second->m_DeviceGUI->GetPluginWindow()->visible()<<" ";
-			s<<i->second->m_DeviceGUI->GetPluginWindow()->x()<<" ";
-			s<<i->second->m_DeviceGUI->GetPluginWindow()->y()<<" ";
-		}
-		else
-		{
-			s<<0<<" "<<0<<" "<<0;
-		}
-
-		s<<endl;
-
-		if (i->second->m_PluginID==COMMENT_ID)
-		{
-			// save the comment gui
-			((Fl_CommentGUI*)(i->second->m_DeviceGUI))->StreamOut(s);
-		}
-		else
-		{
-			// save the plugin
-			i->second->m_Device->StreamOut(s);
-		}
-		s<<endl;
-
-		// save external files
-		if (i->second->m_Device && i->second->m_Device->SaveExternalFiles(o.m_FilePath+"_files/"))
-		{
-			ExternalDirUsed=true;
+			s<<endl;
+			s<<"Device ";
+			s<<i->first<<" "; // save the id
+			s<<"Plugin ";
+			s<<i->second->m_PluginID<<endl;
+			s<<i->second->m_DeviceGUI->x()<<" ";
+			s<<i->second->m_DeviceGUI->y()<<" ";
+			s<<i->second->m_DeviceGUI->GetName().size()<<" ";
+			s<<i->second->m_DeviceGUI->GetName()<<" ";
+	
+			if (i->second->m_DeviceGUI->GetPluginWindow())
+			{
+				s<<i->second->m_DeviceGUI->GetPluginWindow()->visible()<<" ";
+				s<<i->second->m_DeviceGUI->GetPluginWindow()->x()<<" ";
+				s<<i->second->m_DeviceGUI->GetPluginWindow()->y()<<" ";
+			}
+			else
+			{
+				s<<0<<" "<<0<<" "<<0;
+			}
+	
+			s<<endl;
+	
+			if (i->second->m_PluginID==COMMENT_ID)
+			{
+				// save the comment gui
+				((Fl_CommentGUI*)(i->second->m_DeviceGUI))->StreamOut(s);
+			}
+			else
+			{
+				// save the plugin
+				i->second->m_Device->StreamOut(s);
+			}
+			s<<endl;
+	
+			// save external files
+			if (i->second->m_Device && i->second->m_Device->SaveExternalFiles(o.m_FilePath+"_files/"))
+			{
+				ExternalDirUsed=true;
+			}
 		}
 	}
-
+	
 	s<<endl<<*o.m_Canvas<<endl;
 
 	// remove it if it wasn't used

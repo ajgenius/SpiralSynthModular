@@ -31,6 +31,7 @@ public:
 	~OSSOutput();
 
 	void    AllocateBuffer();
+	void    DeallocateBuffer();
 	void    SendStereo(const Sample *ldata,const Sample *rdata);
 	void    GetStereo(Sample *ldata,Sample *rdata);
 	void    SetVolume(float s) {m_Amp=s;}
@@ -46,7 +47,7 @@ public:
 	bool    OpenWrite();
 	bool    OpenRead();
 	bool    Close();
-
+	void    Kill() { m_IsDead = true; m_OutputOk=false; PackUpAndGoHome(); }
 private:
 	static OSSOutput* m_Singleton;
 
@@ -62,6 +63,7 @@ private:
 	int    	m_ReadBufferNum;
 	int     m_WriteBufferNum;
 	bool    m_OutputOk;
+	bool	m_IsDead;
 };
 
 
@@ -76,6 +78,7 @@ public:
 	virtual PluginInfo& Initialise(const HostInfo *Host);
 	virtual SpiralGUIType*  CreateGUI();
 	virtual void 		Execute();
+	virtual bool         	Kill();
 	virtual void 		ExecuteCommands();
 	virtual void	    StreamOut(std::ostream &s) {}
 	virtual void	    StreamIn(std::istream &s)  {}

@@ -205,19 +205,19 @@ void Fl_DeviceGUI::Setup(const DeviceGUIInfo& Info, bool FirstTime)
 	int PortDist=10;
 	int PortNum=0;
 
-	m_MiniHeight=Info.Height+TitleBarHeight;
+	m_MiniHeight=m_Info.Height+TitleBarHeight;
 	bool Maximised = (m_PluginWindow && m_PluginWindow->visible());
 	if (!Maximised)
 	{
 		h(m_MiniHeight);
-		OutputX=x()+PortGroupWidth+Info.Width+4;
+		OutputX=x()+PortGroupWidth+m_Info.Width+4;
 	}
 	else
 	{
 		OutputX=x()+w()-8;
 	}
 
-	for (int n=0; n<Info.NumInputs; n++)
+	for (int n=0; n<m_Info.NumInputs; n++)
 	{
 		Fl_PortButton* NewInput = new Fl_PortButton(InputX,StartY+PortDist*n,PortSize,PortSize,"");
 		NewInput->type(1);
@@ -226,7 +226,7 @@ void Fl_DeviceGUI::Setup(const DeviceGUIInfo& Info, bool FirstTime)
 		NewInput->box(FL_ROUNDED_BOX);
 
         Fl_Color col = (Fl_Color) WIRE_COL0;
-         switch (Info.PortTypes[n]) {
+         switch (m_Info.PortTypes[n]) {
              case 0:     col = (Fl_Color) WIRE_COL0;
                          break;
              case 1:     col = (Fl_Color) WIRE_COL1;
@@ -242,14 +242,14 @@ void Fl_DeviceGUI::Setup(const DeviceGUIInfo& Info, bool FirstTime)
  		NewInput->selection_color(col);
 
 		NewInput->down_box(FL_ROUNDED_BOX);
-		NewInput->tooltip(Info.PortTips[n].c_str());
+		NewInput->tooltip(m_Info.PortTips[n].c_str());
 		NewInput->callback((Fl_Callback*)cb_Port,(void*)&Numbers[PortNum]);
 		m_PortVec.push_back(NewInput);
 		add(NewInput);
 		PortNum++;
 	}
 
-	for (int n=0; n<Info.NumOutputs; n++)
+	for (int n=0; n<m_Info.NumOutputs; n++)
 	{
 		Fl_PortButton* NewOutput= NewOutput = new Fl_PortButton(OutputX,StartY+PortDist*n,PortSize,PortSize,"");
 		NewOutput->type(1);
@@ -258,7 +258,7 @@ void Fl_DeviceGUI::Setup(const DeviceGUIInfo& Info, bool FirstTime)
 		NewOutput->box(FL_ROUNDED_BOX);
 
         Fl_Color col = (Fl_Color) WIRE_COL0;
-         switch (Info.PortTypes[n+Info.NumInputs]) {
+         switch (m_Info.PortTypes[n+m_Info.NumInputs]) {
              case 0:     col = (Fl_Color) WIRE_COL0;
                          break;
              case 1:     col = (Fl_Color) WIRE_COL1;
@@ -274,7 +274,7 @@ void Fl_DeviceGUI::Setup(const DeviceGUIInfo& Info, bool FirstTime)
  		NewOutput->selection_color(col);
 
 		NewOutput->down_box(FL_ROUNDED_BOX);
-		NewOutput->tooltip(Info.PortTips[n+Info.NumInputs].c_str());
+		NewOutput->tooltip(m_Info.PortTips[n+m_Info.NumInputs].c_str());
 		NewOutput->callback((Fl_Callback*)cb_Port,(void*)&Numbers[PortNum]);
 		m_PortVec.push_back(NewOutput);
 		add(NewOutput);

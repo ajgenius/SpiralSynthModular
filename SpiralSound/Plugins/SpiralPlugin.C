@@ -33,7 +33,7 @@ SpiralPlugin::SpiralPlugin()
 	m_Parent=NULL;
 	m_HostID=-1;
 	m_IsTerminal=false;
-	
+	m_IsDead=false;
 	m_AudioCH = new ChannelHandler;
 }
 

@@ -136,8 +136,21 @@ SpiralGUIType *OutputPlugin::CreateGUI()
 	return new OutputPluginGUI(m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
 }
 
+
+bool OutputPlugin::Kill()
+{
+	m_IsDead=true;
+	OSSOutput::Get()->Kill();
+	m_Mode=CLOSED;
+	cb_Blocking(m_Parent,false);
+	return true;
+}
+
 void OutputPlugin::Execute()
 {
+	if (m_IsDead) 
+		return;
+	
         if (m_Mode==NO_MODE && m_RefCount==1)
 	{
 		if (OSSOutput::Get()->OpenWrite())
@@ -148,44 +161,9 @@ void OutputPlugin::Execute()
 		}
 	}
 
-	//if (m_Mode==NO_MODE || m_Mode==CLOSED) cb_Blocking(m_Parent,false);
-	//else cb_Blocking(m_Parent,true);
-
 	if (m_Mode==OUTPUT || m_Mode==DUPLEX)
 	{
 		OSSOutput::Get()->SendStereo(GetInput(0),GetInput(1));
-
-		// can't open GUI stuff here
-	/*	for (int n=0; n<m_HostInfo->BUFSIZE;n++)
-		{
-			// can't open GUI stuff here
-			if (GetInput(2,n)!=0)
-			{
-				if (! m_CheckedAlready)
-				{
-				m_CheckedAlready=true;
-//				an experimental line, should *theoretically* cut down on CPU time.
-				n=m_HostInfo->BUFSIZE;
-					if (! m_Recmode)
-					{
-						char *fn=fl_file_chooser("Pick a Wav file to save to", "*.wav", NULL);
-						if (fn && fn!="")
-						{
-							OSSOutput::Get()->WavOpen(fn);
-						}
-						m_Recmode=true;
-					}
-					else
-					{
-						OSSOutput::Get()->WavClose();
-						m_Recmode=false;
-					}
-
-				}
-			}
-			else
-			m_CheckedAlready=false;
-		}*/
 	}
 
 	if (m_Mode==INPUT || m_Mode==DUPLEX)
@@ -194,8 +172,10 @@ void OutputPlugin::Execute()
 
 void OutputPlugin::ExecuteCommands()
 {
-	// Only Play() once per set of plugins
+	if (m_IsDead) 
+		return;
 
+	// Only Play() once per set of plugins
 	m_NoExecuted--;
 	if (m_NoExecuted<=0)
 	{
@@ -254,7 +234,9 @@ m_Amp(0.5),
 m_Channels(2),
 m_ReadBufferNum(0),
 m_WriteBufferNum(0),
-m_OutputOk(false)
+m_OutputOk(false),
+m_IsDead(false)
+
 {
 	m_Buffer[0]=NULL;
 	m_Buffer[1]=NULL;
@@ -267,6 +249,7 @@ m_OutputOk(false)
 OSSOutput::~OSSOutput()
 {
 	Close();
+	DeallocateBuffer();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -287,6 +270,20 @@ void OSSOutput::AllocateBuffer()
 	m_Wav.SetSamplerate(host->SAMPLERATE);
 }
 
+void OSSOutput::DeallocateBuffer()
+{
+	if (m_Buffer[0]!=NULL)
+	{
+		m_BufSizeBytes=0;
+		
+		// initialise for stereo
+		free(m_Buffer[0]);
+		free(m_Buffer[1]);
+		free(m_InBuffer[0]);
+		free(m_InBuffer[1]);
+	}
+}
+
 //////////////////////////////////////////////////////////////////////
 
 void OSSOutput::SendStereo(const Sample *ldata,const Sample *rdata) 
@@ -297,6 +294,8 @@ void OSSOutput::SendStereo(const Sample *ldata,const Sample *rdata)
 	float t;
 	for (int n=0; n<host->BUFSIZE; n++)
 	{
+		if (m_IsDead) return;
+
 		// stereo channels - interleave	
 		if (ldata) 
 		{
@@ -354,6 +353,8 @@ void OSSOutput::GetStereo(Sample *ldata,Sample *rdata)
 	int on=0;
 	for (int n=0; n<host->BUFSIZE; n++)
 	{
+		if (m_IsDead) return;
+
 		// stereo channels - interleave	
 		if (ldata) ldata->Set(n,(m_InBuffer[m_ReadBufferNum][on]*m_Amp)/(float)SHRT_MAX);
 		on++;
