@@ -140,6 +140,13 @@ void FormantFilterPlugin::Execute()
 		{
 			in = GetInput(0,n);
 			
+			// work around denormal calculation CPU spikes where in --> 0
+			if ((in >= 0) && (in < 0.000000001))
+				in += 0.000000001;
+			else
+				if ((in <= 0) && (in > -0.000000001))
+					in -= 0.000000001;
+  
 			for (int v=0; v<5; v++)
 			{
 				res= (float) (coeff[v][0]*(in*0.1f) +
@@ -174,11 +181,30 @@ void FormantFilterPlugin::Execute()
 			}
 		
 			// mix between vowel sounds
-			if (m_Vowel<1) out=Linear(0,1,m_Vowel,o[1],o[0]); 
-			else if (m_Vowel>1 && m_Vowel<2) out=Linear(0,1,m_Vowel-1.0f,o[2],o[1]);
-			else if (m_Vowel>2 && m_Vowel<3) out=Linear(0,1,m_Vowel-2.0f,o[3],o[2]);
-			else if (m_Vowel>3 && m_Vowel<4) out=Linear(0,1,m_Vowel-3.0f,o[4],o[3]);
-			else if (m_Vowel==4) out=o[4];
+			if (m_Vowel<1) 
+			{
+				out=Linear(0,1,m_Vowel,o[1],o[0]); 
+			}	
+			else 
+				if (m_Vowel>1 && m_Vowel<2) 
+				{
+					out=Linear(0,1,m_Vowel-1.0f,o[2],o[1]);
+				}	
+			else 
+				if (m_Vowel>2 && m_Vowel<3) 
+				{
+					out=Linear(0,1,m_Vowel-2.0f,o[3],o[2]);
+				}	
+			else 
+				if (m_Vowel>3 && m_Vowel<4) 
+				{
+					out=Linear(0,1,m_Vowel-3.0f,o[4],o[3]);
+				}	
+			else 
+				if (m_Vowel==4) 
+				{
+					out=o[4];
+				}	
 		}		
 		SetOutput(0,n,out);	 
 	}

@@ -113,58 +113,70 @@ SpiralGUIType *FilterPlugin::CreateGUI()
 void FilterPlugin::Execute()
 {
 	float Cutoff;
-    float Resonance;
+	float Resonance;
+	float out, in;
 
-    if (fc<0) return;
+	if (fc<0) return;
    
-    for (int n=0; n<m_HostInfo->BUFSIZE; n++)
+	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 	{
-  	 	coef = iir.coef + 1;     /* Skip k, or gain */ 
-   	 	k=0.25;
-	
-	 	Cutoff = fc + (GetInput(1,n) * 1000);
-	 	Resonance = Q + GetInput(2,n);  
-	 	
-	 	Cutoff/=2;
-	 
-	 	if (Resonance>MAX_RES) Resonance=MAX_RES; 
-	 	if (Cutoff>MAX_CUTOFF) Cutoff=MAX_CUTOFF; 
-	 	if (Resonance<MIN_RES) Resonance=MIN_RES; 
-	 	if (Cutoff<MIN_CUTOFF) Cutoff=MIN_CUTOFF; 
-	 
-	 	if (n%FILTERGRAN==0)
-	 	{
-	 		for (nInd = 0; nInd < iir.length; nInd++) 
-    		{
-			    a2 = ProtoCoef[nInd].a2; 
-		
-	            a0 = ProtoCoef[nInd].a0; 
-	            a1 = ProtoCoef[nInd].a1; 
-	          
-	            b0 = ProtoCoef[nInd].b0; 
-	            b1 = ProtoCoef[nInd].b1 / Resonance;      
-	            b2 = ProtoCoef[nInd].b2; 	
-	            szxform(&a0, &a1, &a2, &b0, &b1, &b2, Cutoff*(Cutoff/1000.0f), fs, &k, coef); 
-   		        coef += 4;                       
 
-	        	iir.coef[0] = k; 
-				
-				m_LastQ=Q;
-				m_LastFC=fc;			
-			}
-		 }		  
-		 		 
-		 float in = GetInput(0,n);
-		 //if (in!=0)
-		 //{
-		 	SetOutput(0,n,iir_filter(in/0.5f,&iir));	 
-		 //}
-		 //else
-		 //{
-		 //	m_Output[0]->Set(n,0);
-		 //}
-	}
+		//reset memory if disconnected, and skip out (prevents CPU spike)
+		if (! InputExists(0)) 
+		{	
+			out = 0;	 
+		}
+		else
+		{
+			in = GetInput(0,n);
+			
+			// work around denormal calculation CPU spikes where in --> 0
+			if ((in >= 0) && (in < 0.000000001))
+				in += 0.000000001;
+			else
+				if ((in <= 0) && (in > -0.000000001))
+					in -= 0.000000001;
+
+			coef = iir.coef + 1;     /* Skip k, or gain */ 
+			k=0.25;
+	
+			Cutoff = fc + (GetInput(1,n) * 1000);
+			Resonance = Q + GetInput(2,n);  
+	 	
+			Cutoff/=2;
+	 
+			if (Resonance>MAX_RES) Resonance=MAX_RES; 
+			if (Cutoff>MAX_CUTOFF) Cutoff=MAX_CUTOFF; 
+			if (Resonance<MIN_RES) Resonance=MIN_RES; 
+			if (Cutoff<MIN_CUTOFF) Cutoff=MIN_CUTOFF; 
+	 
+			if (n%FILTERGRAN==0)
+			{
+				for (nInd = 0; nInd < iir.length; nInd++) 
+				{
+					a2 = ProtoCoef[nInd].a2; 
 		
+					a0 = ProtoCoef[nInd].a0; 
+					a1 = ProtoCoef[nInd].a1; 
+	          
+					b0 = ProtoCoef[nInd].b0; 
+					b1 = ProtoCoef[nInd].b1 / Resonance;      
+					b2 = ProtoCoef[nInd].b2; 	
+					szxform(&a0, &a1, &a2, &b0, &b1, &b2, Cutoff*(Cutoff/1000.0f), fs, &k, coef); 
+					coef += 4;                       
+
+					iir.coef[0] = k; 
+				
+					m_LastQ=Q;
+					m_LastFC=fc;			
+				}
+			}		  
+		 		 
+		 	out = iir_filter(in/0.5f,&iir);
+		}	 
+
+	 	SetOutput(0,n,out);
+	}		
 }
 	
 void FilterPlugin::StreamOut(ostream &s)
@@ -182,16 +194,16 @@ void FilterPlugin::StreamIn(istream &s)
 void FilterPlugin::SetupCoeffs()
 {
 	ProtoCoef[0].a0 = 1.0; 
-    ProtoCoef[0].a1 = 0; 
-    ProtoCoef[0].a2 = 0; 
-    ProtoCoef[0].b0 = 1.0; 
-    ProtoCoef[0].b1 = 0.765367; 
-    ProtoCoef[0].b2 = 1.0; 
+	ProtoCoef[0].a1 = 0; 
+	ProtoCoef[0].a2 = 0; 
+	ProtoCoef[0].b0 = 1.0; 
+	ProtoCoef[0].b1 = 0.765367; 
+	ProtoCoef[0].b2 = 1.0; 
 
-    ProtoCoef[1].a0 = 1.0; 
-    ProtoCoef[1].a1 = 0; 
-    ProtoCoef[1].a2 = 0; 
-    ProtoCoef[1].b0 = 1.0; 
-    ProtoCoef[1].b1 = 1.847759; 
-    ProtoCoef[1].b2 = 1.0; 
+	ProtoCoef[1].a0 = 1.0; 
+	ProtoCoef[1].a1 = 0; 
+	ProtoCoef[1].a2 = 0; 
+	ProtoCoef[1].b0 = 1.0; 
+	ProtoCoef[1].b1 = 1.847759; 
+	ProtoCoef[1].b2 = 1.0; 
 } 
