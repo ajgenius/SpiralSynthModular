@@ -23,17 +23,35 @@
 #include <FL/Fl_Pixmap.H>
 
 class DistributorPlugin : public SpiralPlugin {
-   public:
-      DistributorPlugin();
-      virtual ~DistributorPlugin();
-      virtual PluginInfo& Initialise (const HostInfo *Host);
-      virtual SpiralGUIType* CreateGUI();
-      virtual void Execute();
-      virtual void StreamOut (std::ostream &s) { }
-      virtual void StreamIn (std::istream &s) { }
-   private:
-      bool m_Triggered;
-      int m_ChannelSelect, m_TrigDelay;
+public:
+	DistributorPlugin();
+	virtual ~DistributorPlugin();
+
+	virtual PluginInfo& Initialise(const HostInfo *Host);
+	virtual SpiralGUIType* CreateGUI ();
+	
+	virtual void 		Execute();
+	virtual void 		ExecuteCommands();
+	
+	virtual void	    StreamOut(std::ostream &s);
+	virtual void	    StreamIn(std::istream &s);
+	
+	int GetChannelCount (void) { return m_GUIArgs.ChannelCount; }
+	void SetChannelCount (int count);
+
+	enum GUICommands { NONE, SETCHANNELCOUNT };
+	struct GUIArgs {
+		int ChannelCount;
+	};
+private:
+	GUIArgs m_GUIArgs;
+
+	int m_Version;
+
+	bool m_Triggered;
+	int m_ChannelSelect, m_TrigDelay;
+
+	void CreatePorts (int n = 2, bool AddPorts = false);
 };
 
 #endif

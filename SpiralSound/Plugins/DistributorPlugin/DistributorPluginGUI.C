@@ -27,13 +27,48 @@ using namespace std;
 DistributorPluginGUI::DistributorPluginGUI(int w, int h,DistributorPlugin *o,ChannelHandler *ch,const HostInfo *Info) :
 SpiralPluginGUI(w,h,o,ch)
 {	
+	m_Chans = new Fl_Counter (15, 20, 50, 15, "Channels");
+	m_Chans->labelsize (8);
+	m_Chans->textsize (8);
+	m_Chans->type (FL_SIMPLE_COUNTER);
+	m_Chans->box (FL_PLASTIC_UP_BOX);
+	m_Chans->color (Info->GUI_COLOUR);
+	m_Chans->selection_color (Info->GUI_COLOUR);
+	m_Chans->step (1);
+	m_Chans->value (2);
+	m_Chans->callback ((Fl_Callback*) cb_Chans, this);
+	add (m_Chans);
+
 	end();
 }
 
 
+void DistributorPluginGUI::Update()
+{
+}
 
 void DistributorPluginGUI::UpdateValues(SpiralPlugin *o)
 {
+	DistributorPlugin* Plugin = (DistributorPlugin*)o;
+	m_Chans->value (Plugin->GetChannelCount());
 }
 	
+inline void DistributorPluginGUI::cb_Chans_i (Fl_Counter* o) 
+{
+	if (o->value() < 2) 
+	{
+		o->value(2);
+	}	
+	else {
+		m_GUICH->Set ("ChannelCount", int (o->value ()));
+		m_GUICH->SetCommand (DistributorPlugin::SETCHANNELCOUNT);
+		m_GUICH->Wait ();
+		Resize (w(), h());
+	}
+}
 
+const string DistributorPluginGUI::GetHelpText(const string &loc)
+{
+	return string("")
+	+ "The Distributor plugin is for polyphony. NEED MORE INFO HERE.\n";
+}

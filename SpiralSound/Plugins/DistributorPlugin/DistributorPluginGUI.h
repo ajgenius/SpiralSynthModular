@@ -17,6 +17,7 @@
 */
 
 #include <FL/Fl.H>
+#include <FL/Fl_Counter.H>
 #include "DistributorPlugin.h"
 #include "../SpiralPluginGUI.h"
 
@@ -27,11 +28,18 @@ class DistributorPluginGUI : public SpiralPluginGUI
 {
 public:
 	DistributorPluginGUI(int w, int h, DistributorPlugin *o,ChannelHandler *ch,const HostInfo *Info);
+	
 	virtual void UpdateValues(SpiralPlugin *o);
+	virtual void Update ();
+
+protected:
+	const std::string GetHelpText(const std::string &loc);	
 
 private:
+	Fl_Counter *m_Chans;
 
-	//// Callbacks ////
+	inline void cb_Chans_i (Fl_Counter* o);
+	static void cb_Chans(Fl_Counter* o, DistributorPluginGUI* v)  {v->cb_Chans_i(o);}
 };
 
 #endif
