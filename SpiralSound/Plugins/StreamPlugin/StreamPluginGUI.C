@@ -345,9 +345,13 @@ const string StreamPluginGUI::GetHelpText (const string &loc){
 	+ "If you want to mix whole tracks and add effects etc, then this is the\n"
 	+ "way to do it. The StreamPlugin loads a wav in bit by bit, so it doesn't\n"
 	+ "use much memory. The track can be pitched for mixing.\n"
-	+ "Operates pretty much like a media player such as XMMS (only wav\n"
-	+ "format though).\n\n"
-        + "Connect the finish trigger to the stop trigger to play the wav only\nonce.\n\n"
+	+ "Operates pretty much like a media player such as XMMS.\n\n"
+        + "Connect the finish trigger to the stop trigger to play the wav only\n"
+        + "once.\n\n"
+        + "The playing trigger is 'on' whilst the wave is actually playing\n"
+        + "and 'off' when it's not.\n\n"
+        + "The Position CV outputs 0 when not playing or at the start of the\n"
+        + "wave, and slowly increments up to 1 as the wave plays.\n\n"
 	+ "Note: Not realtime safe, if you're using JACK, use a client such as\n"
 	+ "alsaplayer.";
 }
