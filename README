@@ -63,12 +63,6 @@ the LADSPAPlugin will automatically use it.
 To disable detection of this this, use the configure option:
 ./configure --disable-liblrdf
 
-Having a tempfs file system mounted on /dev/shm allows a single LADSPA
-plugin database to be shared between instances.
-
-To disable detection of this, use the configure option:
-./configure --disable-posix-shm
-
 
 *** Jack support ***
 

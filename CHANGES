@@ -10,7 +10,7 @@ Overload light on Mono-Mixer.
 Numeric parameter input on lots of plugins.
 Improved DistributorPlugin.
 More controls on ScopePlugin and MeterPlugin.
-Variable number of inputs and/or outputs on MixerPlugin and LoginPlugin.
+Variable number of inputs and/or outputs on MixerPlugin and LogicPlugin.
 Improved PluginGUI resizing.
 Vanishing comment bugfix.
 Multiple FormantFilter bug-fix.
@@ -21,7 +21,6 @@ Misc fixes.
 
 New Plugins:
 TransposePlugin
-
 
 
 Release 0.2.1
