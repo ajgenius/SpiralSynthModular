@@ -29,17 +29,17 @@ SpiralPluginGUI(w,h,o,ch)
         m_16bits->type (FL_RADIO_BUTTON);
         m_16bits->labelsize(10);
 	m_16bits->set();
-        m_16bits->callback((Fl_Callback*)cb_16bits);
+        m_16bits->callback((Fl_Callback*)cb_16bits, this);
 
         m_24bits = new Fl_LED_Button (0, 38, 23, 23, "24bit");
         m_24bits->type (FL_RADIO_BUTTON);
         m_24bits->labelsize(10);
-        m_24bits->callback((Fl_Callback*)cb_24bits);
+        m_24bits->callback((Fl_Callback*)cb_24bits, this);
 
         m_32bits = new Fl_LED_Button (0, 61, 23, 23, "32bit");
         m_32bits->type (FL_RADIO_BUTTON);
         m_32bits->labelsize(10);
-        m_32bits->callback((Fl_Callback*)cb_32bits);
+        m_32bits->callback((Fl_Callback*)cb_32bits, this);
 
         // 7 seg displays
         for (int dis=0; dis<4; dis++) {
@@ -55,7 +55,7 @@ SpiralPluginGUI(w,h,o,ch)
         m_Stereo->type (1);
         m_Stereo->value (1);
         m_Stereo->labelsize(12);
-        m_Stereo->callback((Fl_Callback*)cb_Stereo);
+        m_Stereo->callback((Fl_Callback*)cb_Stereo, this);
 
         Open = new Fl_Button(0, 85, 75, 20, "Open");
         Open->type(1);
@@ -63,7 +63,7 @@ SpiralPluginGUI(w,h,o,ch)
         Open->color (Info->GUI_COLOUR);
         Open->selection_color (Info->GUI_COLOUR);
         Open->labelsize(10);
-        Open->callback((Fl_Callback*)cb_Open);
+        Open->callback((Fl_Callback*)cb_Open, this);
 
 	Record = new Fl_Button(85, 85, 75, 20, "Record");
         Record->type(1);
@@ -71,7 +71,7 @@ SpiralPluginGUI(w,h,o,ch)
         Record->color (Info->GUI_COLOUR);
         Record->selection_color (Info->GUI_COLOUR);
         Record->labelsize(10);
-        Record->callback((Fl_Callback*)cb_Record);
+        Record->callback((Fl_Callback*)cb_Record, this);
 	       
 	end();
 }
@@ -104,12 +104,45 @@ void DiskWriterPluginGUI::Update()
      redraw();
 }
 
-void DiskWriterPluginGUI::UpdateValues (SpiralPlugin *o) {
-}
+void DiskWriterPluginGUI::UpdateValues (SpiralPlugin *o) 
+{
+	DiskWriterPlugin* Plugin = (DiskWriterPlugin*)o;
+
+	switch (Plugin->GetBitsPerSample())
+	{
+		case 32 :
+		{
+			m_32bits->value(1);
+			m_24bits->value(0);
+			m_16bits->value(0);
+		}	
+		break;	
+
+		case 24 :
+		{
+			m_32bits->value(0);
+			m_24bits->value(1);
+			m_16bits->value(0);
+		}	
+		break;
+		
+		case 16 :
+		default:
+		{
+			m_32bits->value(0);
+			m_24bits->value(0);
+			m_16bits->value(1);
+		}	
+	}
 	
+	m_Stereo->value(Plugin->GetStereo());
+
+	redraw();
+}
+
 //// Callbacks ////
 
-inline void DiskWriterPluginGUI::cb_Open_i(Fl_Button* o, void* v)
+inline void DiskWriterPluginGUI::cb_Open_i(Fl_Button* o)
 {	
 	if (o->value())
 	{
@@ -134,50 +167,44 @@ inline void DiskWriterPluginGUI::cb_Open_i(Fl_Button* o, void* v)
 	}
 }
 
-void DiskWriterPluginGUI::cb_Open(Fl_Button* o, void* v)
-{ ((DiskWriterPluginGUI*)(o->parent()))->cb_Open_i(o,v); }
-
-inline void DiskWriterPluginGUI::cb_Record_i(Fl_Button* o, void* v)
+inline void DiskWriterPluginGUI::cb_Record_i(Fl_Button* o)
 { 
-	if (o->value()) m_GUICH->SetCommand(DiskWriterPlugin::RECORD);
-	else m_GUICH->SetCommand(DiskWriterPlugin::STOP);
+	if (o->value()) 
+	{
+		m_GUICH->SetCommand(DiskWriterPlugin::RECORD);
+	}	
+	else 
+	{
+		m_GUICH->SetCommand(DiskWriterPlugin::STOP);
+	}	
 }
-void DiskWriterPluginGUI::cb_Record(Fl_Button* o, void* v)
-{ ((DiskWriterPluginGUI*)(o->parent()))->cb_Record_i(o,v); }
 
-inline void DiskWriterPluginGUI::cb_16bits_i(Fl_Button* o, void* v)
+inline void DiskWriterPluginGUI::cb_16bits_i(Fl_Button* o)
 {	
-  m_GUICH->Set("BitsPerSample",16);
+	m_GUICH->Set("BitsPerSample",16);
 }
-void DiskWriterPluginGUI::cb_16bits(Fl_Button* o, void* v)
-{ ((DiskWriterPluginGUI*)(o->parent()))->cb_16bits_i(o,v); }
 
-inline void DiskWriterPluginGUI::cb_24bits_i(Fl_Button* o, void* v)
+inline void DiskWriterPluginGUI::cb_24bits_i(Fl_Button* o)
 {	
-  m_GUICH->Set("BitsPerSample",24);
+	m_GUICH->Set("BitsPerSample",24);
 }
-void DiskWriterPluginGUI::cb_24bits(Fl_Button* o, void* v)
-{ ((DiskWriterPluginGUI*)(o->parent()))->cb_24bits_i(o,v); }
 
-inline void DiskWriterPluginGUI::cb_32bits_i(Fl_Button* o, void* v)
+inline void DiskWriterPluginGUI::cb_32bits_i(Fl_Button* o)
 {	
-  m_GUICH->Set("BitsPerSample",32);
+	m_GUICH->Set("BitsPerSample",32);
 }
-void DiskWriterPluginGUI::cb_32bits(Fl_Button* o, void* v)
-{ ((DiskWriterPluginGUI*)(o->parent()))->cb_32bits_i(o,v); }
 
-inline void DiskWriterPluginGUI::cb_Stereo_i(Fl_Button* o, void* v)
+inline void DiskWriterPluginGUI::cb_Stereo_i(Fl_Button* o)
 {	
-  m_GUICH->Set("Stereo",o->value());
+	m_GUICH->Set("Stereo",o->value());
 }
-void DiskWriterPluginGUI::cb_Stereo(Fl_Button* o, void* v)
-{ ((DiskWriterPluginGUI*)(o->parent()))->cb_Stereo_i(o,v); }
 
-const string DiskWriterPluginGUI::GetHelpText(const string &loc){
-    return string("")
-    + "One way of recording your creations to disk. First open a file\n"
-    + "you wish to save to, then hit record to start recording.\n"
-    + "You are able to stop and restart recording without closing the\n"
-    + "file, which should make life a little easier if you are doing\n"
-    + "things like recording lots of little samples.";
+const string DiskWriterPluginGUI::GetHelpText(const string &loc)
+{
+	return string("")
+	+ "One way of recording your creations to disk. First open a file\n"
+	+ "you wish to save to, then hit record to start recording.\n"
+	+ "You are able to stop and restart recording without closing the\n"
+	+ "file, which should make life a little easier if you are doing\n"
+	+ "things like recording lots of little samples.";
 }

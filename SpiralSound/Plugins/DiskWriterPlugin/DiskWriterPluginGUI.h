@@ -52,22 +52,28 @@ private:
 
         Fl_SevenSeg *m_Display[4];
 
-	//// Callbacks ////
 
-	inline void cb_Record_i(Fl_Button* o, void* v);
-	static void cb_Record(Fl_Button* o, void* v);
-	inline void cb_Open_i(Fl_Button* o, void* v);
-	static void cb_Open(Fl_Button* o, void* v);
+	//// Inline Callbacks ////
 
-	inline void cb_16bits_i(Fl_Button* o, void* v);
-	static void cb_16bits(Fl_Button* o, void* v);
-	inline void cb_24bits_i(Fl_Button* o, void* v);
-	static void cb_24bits(Fl_Button* o, void* v);
-	inline void cb_32bits_i(Fl_Button* o, void* v);
-	static void cb_32bits(Fl_Button* o, void* v);
+	inline void cb_Record_i(Fl_Button* o);	
+	inline void cb_Open_i(Fl_Button* o);
 
-	inline void cb_Stereo_i(Fl_Button* o, void* v);
-	static void cb_Stereo(Fl_Button* o, void* v);
+	inline void cb_16bits_i(Fl_Button* o);	
+	inline void cb_24bits_i(Fl_Button* o);	
+	inline void cb_32bits_i(Fl_Button* o);
+
+	inline void cb_Stereo_i(Fl_Button* o);
+
+
+	//// Static Callbacks ////
+	static void cb_Record(Fl_Button* o, DiskWriterPluginGUI* plugin) { plugin->cb_Record_i(o); }
+	static void cb_Open  (Fl_Button* o, DiskWriterPluginGUI* plugin) { plugin->cb_Open_i(o);   }
+
+	static void cb_16bits(Fl_Button* o, DiskWriterPluginGUI* plugin) { plugin->cb_16bits_i(o); }
+	static void cb_24bits(Fl_Button* o, DiskWriterPluginGUI* plugin) { plugin->cb_24bits_i(o); }
+	static void cb_32bits(Fl_Button* o, DiskWriterPluginGUI* plugin) { plugin->cb_32bits_i(o); }
+
+	static void cb_Stereo(Fl_Button* o, DiskWriterPluginGUI* plugin) { plugin->cb_Stereo_i(o); }
 };
 
 #endif

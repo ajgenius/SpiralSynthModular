@@ -33,8 +33,12 @@ public:
 	virtual SpiralGUIType*  CreateGUI();
 	virtual void 		Execute();
 	virtual void 		ExecuteCommands();
-	virtual void	    StreamOut(std::ostream &s) {}
-	virtual void	    StreamIn(std::istream &s)  {}
+
+	virtual void	    StreamOut(std::ostream &s);
+	virtual void	    StreamIn(std::istream &s);
+	
+	int GetBitsPerSample() { return m_GUIArgs.BitsPerSample; }
+	bool GetStereo() { return m_GUIArgs.Stereo; }
 
 	enum GUICommands {NONE,OPENWAV,CLOSEWAV,RECORD,STOP};
 	struct GUIArgs
@@ -48,6 +52,7 @@ public:
 
 private:
 	GUIArgs m_GUIArgs;
+	int m_Version;
 	WavFile m_Wav;
 };
 

@@ -85,6 +85,8 @@ DiskWriterPlugin::DiskWriterPlugin()
 	m_GUIArgs.Recording = false;
 	m_GUIArgs.TimeRecorded = 0;
 
+	m_Version = 2;
+
 	m_AudioCH->RegisterData("Filename",ChannelHandler::INPUT,m_GUIArgs.Name,256);
 	m_AudioCH->Register("BitsPerSample",&m_GUIArgs.BitsPerSample,ChannelHandler::INPUT);
 	m_AudioCH->Register("Stereo",&m_GUIArgs.Stereo,ChannelHandler::INPUT);
@@ -153,4 +155,56 @@ void DiskWriterPlugin::ExecuteCommands()
 			default : break;
 		}
 	}
+}
+
+void DiskWriterPlugin::StreamOut (ostream &s) 
+{
+	s << m_Version << " " << m_GUIArgs.BitsPerSample << " " << m_GUIArgs.Stereo << " ";
+}
+
+void DiskWriterPlugin::StreamIn (istream &s) 
+{
+	char Test;
+	int Version, BitsPerSample, Stereo;
+	
+	//originally DiskWriter had NO streaming code whatsover
+	// so to test if this is an old patch we must
+	// read ahead and find out what the first char
+	// of the next line is
+	
+	s.seekg (2, ios_base::cur );//skip to next line
+	Test = s.peek();//peek first char
+	s.seekg (-2, ios_base::cur );//jump back to prior line 
+	
+	//This test works because if the char
+	// of the next line isn't a version number
+	// it will only be 'D', ' ', #13, or '-'
+	if ( (Test >= '0') && (Test <= '9') )
+	{
+		s >> Version;
+	}
+	else
+	{
+		//No Version, so use Version 1
+		Version = 1;
+	}
+	
+	switch (Version)
+	{
+		case 2:
+		{
+			s >> BitsPerSample >> Stereo;
+			m_GUIArgs.BitsPerSample = BitsPerSample;
+			m_GUIArgs.Stereo = Stereo;
+		}
+		break;
+		
+		case 1:
+		{
+			//use original fixed defaults
+			m_GUIArgs.BitsPerSample = 16;
+			m_GUIArgs.Stereo = true;
+		}
+		break;
+	}	
 }
