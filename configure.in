@@ -172,7 +172,7 @@ if test "$use_sndfile" = "y"; then
    AC_CHECK_HEADER(sndfile.h, [use_sndfile="y"], [use_sndfile="n" ; sndfile_message="No sndfile.h found"])
 fi
 if test "$use_sndfile" = "y"; then
-   AC_CHECK_LIB(sndfile, sf_open, [use_sndfile="y"], [use_sndfile="n" ; sndfile_message="No libXXXX found"])
+   AC_CHECK_LIB(sndfile, sf_open, [use_sndfile="y"], [use_sndfile="n" ; sndfile_message="No libsndfile found"])
 fi
 if test "$use_sndfile" = "y"; then
    AC_DEFINE(USE_LIBSNDFILE, , [Enable libsndfile for waveform loading])
