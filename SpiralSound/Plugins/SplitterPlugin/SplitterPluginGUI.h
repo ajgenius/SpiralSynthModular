@@ -17,6 +17,7 @@
 */
 
 #include <FL/Fl.H>
+#include <FL/Fl_Counter.H>
 #include "SplitterPlugin.h"
 #include "../SpiralPluginGUI.h"
 
@@ -29,13 +30,16 @@ public:
 	SplitterPluginGUI(int w, int h, SplitterPlugin *o, ChannelHandler *ch, const HostInfo *Info);
 	
 	virtual void UpdateValues(SpiralPlugin *o);
+	virtual void Update ();
 
 protected:
-    const std::string GetHelpText(const std::string &loc);	
+	const std::string GetHelpText(const std::string &loc);	
 
 private:
+	Fl_Counter *m_Channels;
 
-	//// Callbacks ////
+	inline void cb_Channels_i (Fl_Counter* o);
+	static void cb_Channels(Fl_Counter* o, SplitterPluginGUI* v)  {v->cb_Channels_i(o);}
 };
 
 #endif

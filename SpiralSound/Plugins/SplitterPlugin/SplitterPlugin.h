@@ -29,12 +29,27 @@ public:
 	virtual ~SplitterPlugin();
 	
 	virtual PluginInfo& Initialise(const HostInfo *Host);
-	virtual SpiralGUIType*  CreateGUI();
-	virtual void 		Execute();
-	virtual void	    StreamOut(std::ostream &s) {}
-	virtual void	    StreamIn(std::istream &s) {}
+	virtual SpiralGUIType* CreateGUI ();
 	
+	virtual void 		Execute();
+	virtual void 		ExecuteCommands();
+	
+	virtual void	    StreamOut(std::ostream &s);
+	virtual void	    StreamIn(std::istream &s);
+	
+	int GetChannelCount (void) { return m_GUIArgs.ChannelCount; }
+	void SetChannelCount (int count);
+
+	enum GUICommands { NONE, SETCHANNELCOUNT };
+	struct GUIArgs {
+		int ChannelCount;
+	};
 private:
+	GUIArgs m_GUIArgs;
+
+	int m_Version;
+
+	void CreatePorts (int n = 4, bool AddPorts = false);
 };
 
 #endif

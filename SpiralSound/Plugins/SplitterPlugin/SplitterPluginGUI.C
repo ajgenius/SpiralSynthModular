@@ -27,18 +27,50 @@ using namespace std;
 SplitterPluginGUI::SplitterPluginGUI(int w, int h,SplitterPlugin *o,ChannelHandler *ch,const HostInfo *Info) :
 SpiralPluginGUI(w,h,o,ch)
 {	
+	m_Channels = new Fl_Counter (15, 20, 50, 15, "Channels");
+	m_Channels->labelsize (8);
+	m_Channels->textsize (8);
+	m_Channels->type (FL_SIMPLE_COUNTER);
+	m_Channels->box (FL_PLASTIC_UP_BOX);
+	m_Channels->color (Info->GUI_COLOUR);
+	m_Channels->selection_color (Info->GUI_COLOUR);
+	m_Channels->step (1);
+	m_Channels->value (4);
+	m_Channels->callback ((Fl_Callback*) cb_Channels, this);
+	add (m_Channels);
+
 	end();
 }
 
 
+void SplitterPluginGUI::Update()
+{
+}
 
 void SplitterPluginGUI::UpdateValues(SpiralPlugin *o)
 {
+	SplitterPlugin* Plugin = (SplitterPlugin*)o;
+	m_Channels->value (Plugin->GetChannelCount());
 }
 	
-const string SplitterPluginGUI::GetHelpText(const string &loc){
-    return string("")
-    + "The simplest plugin - the splitter simply takes the input,\n"
-    + "and duplicates it into it's outputs. Simple, but difficult\n"
-    + "to do without.\n";
+inline void SplitterPluginGUI::cb_Channels_i (Fl_Counter* o) 
+{
+	if (o->value() < 2) 
+	{
+		o->value(2);
+	}	
+	else {
+		m_GUICH->Set ("ChannelCount", int (o->value ()));
+		m_GUICH->SetCommand (SplitterPlugin::SETCHANNELCOUNT);
+		m_GUICH->Wait ();
+		Resize (w(), h());
+	}
+}
+
+const string SplitterPluginGUI::GetHelpText(const string &loc)
+{
+	return string("")
+	+ "The simplest plugin - the splitter simply takes the input,\n"
+	+ "and duplicates it into it's outputs. Simple, but difficult\n"
+	+ "to do without.\n";
 }
