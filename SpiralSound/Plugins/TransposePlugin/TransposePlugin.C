@@ -93,35 +93,13 @@ void TransposePlugin::Execute () {
 			// input's half steps from base of 110 = round(alpha*logf(GetInputPitch(0, n)/110));
 			// cv's half steps from base of 110 = round(alpha*logf(GetInputPitch(1, n)/110));
 
-			if ((!m_BufferInitialized)  || (input0 != m_Buffer[0][0]) || (input1 != m_Buffer[1][0]))
+			base = floor((alpha*logf(input0/110.0)) + 0.5);
+			if (InputExists(1))
 			{
-				if ((m_BufferInitialized) && (input0 == m_Buffer[0][0]))
-				{
-					base = m_Buffer[0][1];
-				}
-				else if (input0 != base)
-				{
-					base = round(alpha*logf(input0/110.0));
-				}
-				m_Buffer[0][0] = input0;
-				m_Buffer[0][1] = base;
+				transpose = (input1 > 0)?floor((alpha*logf(input1/110)) + 0.5):8.176;
+			}
 
-				if ((m_BufferInitialized) && (input1 == m_Buffer[1][0]))
-				{
-					transpose = m_Buffer[1][1];
-				}
-				else if (InputExists(1))
-				{
-					transpose = (input1 > 0)?round(alpha*logf(input1/110)):0;
-				}
-
-				m_Buffer[1][0] = input1;
-				m_Buffer[1][1] = transpose;
-
-				m_BufferInitialized = true;
-
-				m_Out = 110 * pow ((base+transpose) / 12, 2);
-			}	
+			m_Out = 110 * powf(2, (base+transpose) / 12);
 		}
 		else
 		{
