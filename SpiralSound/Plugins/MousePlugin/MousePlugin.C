@@ -58,14 +58,14 @@ m_Data (0.0)
 {
 	m_RefCount++;
 	m_PluginInfo.Name = "Mouse";
-	m_PluginInfo.Width = 200;
-	m_PluginInfo.Height = 400;
+	m_PluginInfo.Width = 100;
+	m_PluginInfo.Height = 140;
 	m_PluginInfo.NumInputs = 1;
 	m_PluginInfo.NumOutputs = 1;
 	m_PluginInfo.PortTips.push_back ("Trigger");
 	m_PluginInfo.PortTips.push_back ("Output");
         m_AudioCH->Register ("Port", &m_Port);
-        m_Version = 1;
+        m_Version = 2;
 }
 
 MousePlugin::~MousePlugin() {
@@ -120,10 +120,11 @@ void MousePlugin::Execute() {
 }
 
 void MousePlugin::StreamOut (ostream &s) {
-  s << m_Version;
+  s << m_Version << " " << m_Port;
 }
 
 void MousePlugin::StreamIn (istream &s) {
   int Version;
   s >> Version;
+  if (Version > 1) s >> m_Port;
 }

@@ -50,6 +50,7 @@ class MousePlugin : public SpiralPlugin {
       virtual ~MousePlugin();
       virtual PluginInfo& Initialise (const HostInfo *Host);
       virtual SpiralGUIType* CreateGUI();
+      char GetPort (void) { return m_Port; }
       virtual void Execute();
       virtual void ExecuteCommands();
       virtual void StreamOut (ostream &s);

@@ -55,7 +55,7 @@ SpiralPluginGUI (w, h, o, ch)
     m_Port1->label ("ttyS1");
     m_Port1->callback ((Fl_Callback*)cb_Port1);
 
-    m_Scope = new ScratchWidget (5, 40, 60, 100, "Scratch");
+    m_Scope = new ScratchWidget (10, 32, 80, 100, "Scratch");
     m_Scope->color(Info->SCOPE_BG_COLOUR);
     m_Scope->selection_color(Info->SCOPE_FG_COLOUR);
 
@@ -67,8 +67,9 @@ void MousePluginGUI::Update () {
      m_Scope->redraw();
 }
 
-// Update GUI on Load
 void MousePluginGUI::UpdateValues (SpiralPlugin* o) {
+     MousePlugin *Plugin = (MousePlugin*)o;
+     if (Plugin->GetPort() == '1') m_Port1->setonly();
 }
 
 inline void MousePluginGUI::cb_Port0_i (Fl_LED_Button* o, void* v) {
@@ -77,7 +78,7 @@ inline void MousePluginGUI::cb_Port0_i (Fl_LED_Button* o, void* v) {
 }
 
 void MousePluginGUI::cb_Port0 (Fl_LED_Button* o, void* v) {
-     ((MousePluginGUI*)(o->parent ()))->cb_Port0 (o, v);
+     ((MousePluginGUI*)(o->parent ()))->cb_Port0_i (o, v);
 }
 
 inline void MousePluginGUI::cb_Port1_i (Fl_LED_Button* o, void* v) {
@@ -86,7 +87,7 @@ inline void MousePluginGUI::cb_Port1_i (Fl_LED_Button* o, void* v) {
 }
 
 void MousePluginGUI::cb_Port1 (Fl_LED_Button* o, void* v) {
-     ((MousePluginGUI*)(o->parent ()))->cb_Port1 (o, v);
+     ((MousePluginGUI*)(o->parent ()))->cb_Port1_i (o, v);
 }
 
 const string MousePluginGUI::GetHelpText (const string &loc) {
