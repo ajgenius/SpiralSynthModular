@@ -41,6 +41,8 @@ public:
 private:
 	float m_Vowel;
 		
+	double memory[5][10];
+	
 	friend std::istream &operator>>(std::istream &s, FormantFilterPlugin &o);
 	friend std::ostream &operator<<(std::ostream &s, FormantFilterPlugin &o);
 };

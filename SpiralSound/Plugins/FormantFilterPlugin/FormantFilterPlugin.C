@@ -54,12 +54,6 @@ const double coeff[5][11]= {
 }
 };
 //---------------------------------------------------------------------------------
-static double memory[5][10]={{0,0,0,0,0,0,0,0,0,0},
-							 {0,0,0,0,0,0,0,0,0,0},
-							 {0,0,0,0,0,0,0,0,0,0},
-							 {0,0,0,0,0,0,0,0,0,0},
-							 {0,0,0,0,0,0,0,0,0,0}};
-//---------------------------------------------------------------------------------
 
 extern "C" {
 SpiralPlugin* SpiralPlugin_CreateInstance()
@@ -88,6 +82,14 @@ string SpiralPlugin_GetGroupName()
 FormantFilterPlugin::FormantFilterPlugin() :
 m_Vowel(0)
 {
+	for (int i = 0; i < 5; i++)
+	{
+		for (int j = 0; j < 10; j++)
+		{
+			memory[i][j] = 0;
+		}
+	}
+
 	m_PluginInfo.Name="FormantFilter";
 	m_PluginInfo.Width=90;
 	m_PluginInfo.Height=110;
@@ -118,47 +120,66 @@ SpiralGUIType *FormantFilterPlugin::CreateGUI()
 
 void FormantFilterPlugin::Execute()
 {
-	float res,o[5],out=0;
+	float res,o[5],out=0, in=0;
 	
-    for (int n=0; n<m_HostInfo->BUFSIZE; n++)
+	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 	{		
-		for (int v=0; v<5; v++)
-		{
-			res= (float) (coeff[v][0]*(GetInput(0,n)*0.1f) +
-					  coeff[v][1]*memory[v][0] +  
-					  coeff[v][2]*memory[v][1] +
-					  coeff[v][3]*memory[v][2] +
-					  coeff[v][4]*memory[v][3] +
-					  coeff[v][5]*memory[v][4] +
-					  coeff[v][6]*memory[v][5] +
-					  coeff[v][7]*memory[v][6] +
-					  coeff[v][8]*memory[v][7] +
-					  coeff[v][9]*memory[v][8] +
-					  coeff[v][10]*memory[v][9] );
-
-			memory[v][9]=memory[v][8];
-			memory[v][8]=memory[v][7];
-			memory[v][7]=memory[v][6];
-			memory[v][6]=memory[v][5];
-			memory[v][5]=memory[v][4];
-			memory[v][4]=memory[v][3];
-			memory[v][3]=memory[v][2];
-			memory[v][2]=memory[v][1];
-			memory[v][1]=memory[v][0];
-			memory[v][0]=(double) res;
-			
-			o[v]=res;
+		//reset memory if disconnected, and skip out (prevents CPU spike)
+		if (! InputExists(0)) 
+		{	
+			for (int i = 0; i < 5; i++)
+			{
+				for (int j = 0; j < 10; j++)
+				{
+					memory[i][j] = 0;
+				}
+			}
+			out = 0;	 
 		}
+		else
+		{
+			in = GetInput(0,n);
+			
+			for (int v=0; v<5; v++)
+			{
+				res= (float) (coeff[v][0]*(in*0.1f) +
+						  coeff[v][1]*memory[v][0] +  
+						  coeff[v][2]*memory[v][1] +
+						  coeff[v][3]*memory[v][2] +
+						  coeff[v][4]*memory[v][3] +
+						  coeff[v][5]*memory[v][4] +
+						  coeff[v][6]*memory[v][5] +
+						  coeff[v][7]*memory[v][6] +
+						  coeff[v][8]*memory[v][7] +
+						  coeff[v][9]*memory[v][8] +
+						  coeff[v][10]*memory[v][9] );
+
+				memory[v][9]=memory[v][8];
+				memory[v][8]=memory[v][7];
+				memory[v][7]=memory[v][6];
+				memory[v][6]=memory[v][5];
+				memory[v][5]=memory[v][4];
+				memory[v][4]=memory[v][3];
+				memory[v][3]=memory[v][2];
+				memory[v][2]=memory[v][1];
+				memory[v][1]=memory[v][0];
+				memory[v][0]=(double) res;
+			
+				o[v]=res;
+			}
+			
+			if (InputExists(1)) 
+			{	
+				m_Vowel=fabs(GetInput(1,n))*4.0f;
+			}
 		
-		if (InputExists(1)) m_Vowel=fabs(GetInput(1,n))*4.0f;
-		
-		// mix between vowel sounds
-		if (m_Vowel<1) out=Linear(0,1,m_Vowel,o[1],o[0]); 
-		else if (m_Vowel>1 && m_Vowel<2) out=Linear(0,1,m_Vowel-1.0f,o[2],o[1]);
-		else if (m_Vowel>2 && m_Vowel<3) out=Linear(0,1,m_Vowel-2.0f,o[3],o[2]);
-		else if (m_Vowel>3 && m_Vowel<4) out=Linear(0,1,m_Vowel-3.0f,o[4],o[3]);
-		else if (m_Vowel==4) out=o[4];
-		
+			// mix between vowel sounds
+			if (m_Vowel<1) out=Linear(0,1,m_Vowel,o[1],o[0]); 
+			else if (m_Vowel>1 && m_Vowel<2) out=Linear(0,1,m_Vowel-1.0f,o[2],o[1]);
+			else if (m_Vowel>2 && m_Vowel<3) out=Linear(0,1,m_Vowel-2.0f,o[3],o[2]);
+			else if (m_Vowel>3 && m_Vowel<4) out=Linear(0,1,m_Vowel-3.0f,o[4],o[3]);
+			else if (m_Vowel==4) out=o[4];
+		}		
 		SetOutput(0,n,out);	 
 	}
 		
