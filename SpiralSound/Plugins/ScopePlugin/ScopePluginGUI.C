@@ -104,6 +104,11 @@ void ScopePluginGUI::draw()
     SpiralGUIType::draw();
     const float *data;
     //cerr<<"getting and drawing..."<<endl;
+    if (m_GUICH->GetBool ("DataSizeChanged")) 
+    {
+	m_GUICH->SetCommand (ScopePlugin::UPDATEDATASIZE);
+	m_GUICH->Wait();
+    }	
     if (m_GUICH->GetBool ("DataReady")) m_GUICH->GetData ("AudioData", (void*)m_Scope->m_Data);
     else memset ((void*)m_Scope->m_Data, 0, m_BufSize * sizeof (float));
     if (!m_Bypass) m_Scope->redraw();

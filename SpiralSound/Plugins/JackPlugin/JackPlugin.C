@@ -28,7 +28,7 @@ using namespace std;
 
 int JackClient::JackProcessInstanceID = -1;
 int JackPlugin::JackInstanceCount = 0;
-
+const HostInfo *host = NULL;
 /////////////////////////////////////////////////////////////////////////////////////////////
 inline void JackClient::JackProcess_i(jack_nframes_t nframes)
 {	
@@ -47,7 +47,7 @@ inline void JackClient::JackProcess_i(jack_nframes_t nframes)
 	{
 		if (jack_port_connected(m_OutputPortMap[n]->Port))
 		{
-			if (m_OutputPortMap[n]->Buf)
+			if ((m_OutputPortMap[n]->Buf) && (!host->PAUSED))
 			{ 
 				sample_t *out = (sample_t *) jack_port_get_buffer(m_OutputPortMap[n]->Port, nframes);
 				memcpy (out, m_OutputPortMap[n]->Buf, sizeof (sample_t) * GetBufferSize());
@@ -55,7 +55,7 @@ inline void JackClient::JackProcess_i(jack_nframes_t nframes)
 			else // no output availible, clear
 			{ 
 				sample_t *out = (sample_t *) jack_port_get_buffer(m_OutputPortMap[n]->Port, nframes);
-				memset (out, 0, sizeof (sample_t) * GetBufferSize());
+				memset(out, 0, sizeof (sample_t) * GetBufferSize());
 			}
 		}
 	}
@@ -469,7 +469,9 @@ JackPlugin::~JackPlugin()
 PluginInfo &JackPlugin::Initialise(const HostInfo *Host)
 {	
 	PluginInfo& Info= SpiralPlugin::Initialise(Host);
-	
+
+	host = Host;
+
 	m_JackClient->SetCallback(cb_Update,m_Parent);	
 	
 	return Info;
@@ -568,18 +570,15 @@ bool JackPlugin::Kill()
 
 void JackPlugin::Reset()
 {
-	// we want to process this whether we are connected to stuff or not
-	JackClient* pJack=m_JackClient;
-
 	// connect the buffers up if we are plugged into something		
-	for (int n=0; n<pJack->GetJackOutputCount(); n++)
+	for (int n=0; n<m_JackClient->GetJackOutputCount(); n++)
 	{
-		pJack->SetOutputBuf(n,NULL);
+		m_JackClient->SetOutputBuf(n,NULL);
 	}
 	
-	for (int n=0; n<pJack->GetJackInputCount(); n++)
+	for (int n=0; n<m_JackClient->GetJackInputCount(); n++)
 	{
-		pJack->SetInputBuf(n,NULL);
+		m_JackClient->SetInputBuf(n,NULL);
   	} 
 
 	ResetPorts();
@@ -598,7 +597,7 @@ void JackPlugin::ProcessAudio()
 	// connect the buffers up if we are plugged into something		
 	for (int n=0; n<m_JackClient->GetJackOutputCount(); n++)
 	{
-		if (InputExists(n)) 
+		if (InputExists(n) && !m_HostInfo->PAUSED) 
 		{			
 			m_JackClient->SetOutputBuf(n,(float*)GetInput(n)->GetBuffer());		
 		}
@@ -610,7 +609,7 @@ void JackPlugin::ProcessAudio()
 	
 	for (int n=0; n<m_JackClient->GetJackInputCount(); n++)
 	{
-		if (OutputExists(n)) 
+		if (OutputExists(n) && !m_HostInfo->PAUSED) 
 		{
 			m_JackClient->SetInputBuf(n,(float*)GetOutputBuf(n)->GetBuffer());		
 		} 

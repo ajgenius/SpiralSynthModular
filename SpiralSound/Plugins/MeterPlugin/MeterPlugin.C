@@ -47,6 +47,8 @@ m_VUMode (true)
   m_PluginInfo.PortTips.push_back ("Input");
   m_PluginInfo.PortTips.push_back ("Output");
   m_AudioCH->Register ("DataReady", &m_DataReady, ChannelHandler::OUTPUT);
+  m_AudioCH->Register ("DataSizeChanged", &m_DataSizeChanged, ChannelHandler::OUTPUT);  
+
   m_Version = 1;
 }
 
@@ -71,7 +73,7 @@ void MeterPlugin::Reset()
 	m_DataReady = false;
 	delete m_Data;
 	m_Data = new float[m_HostInfo->BUFSIZE];
-	m_AudioCH->UpdateDataSize ("AudioData", m_HostInfo->BUFSIZE * sizeof (float));
+	m_DataSizeChanged = true;
 }
 
 void MeterPlugin::Execute() {
@@ -87,6 +89,13 @@ void MeterPlugin::Execute() {
 void MeterPlugin::ExecuteCommands () {
   if (m_AudioCH->IsCommandWaiting ()) {
     switch (m_AudioCH->GetCommand()) {
+      case UPDATEDATASIZE :
+      {
+        m_AudioCH->UpdateDataSize("AudioData",m_HostInfo->BUFSIZE*sizeof(float));
+        m_DataSizeChanged = false;			
+      }	
+      break;
+
       case (SETVU) : m_VUMode = true;
                      break;
       case (SETMM) : m_VUMode = false;

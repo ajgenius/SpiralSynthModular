@@ -108,30 +108,23 @@ public:
 
 	void PauseAudio()
 	{
-		m_PauseAudio = true;
+		m_Info.PAUSED = true;
 	}
 
 	void ResumeAudio()
 	{
-		m_PauseAudio = false;
+		m_Info.PAUSED = false;
 	}
 
 	void ResetAudio()
 	{
 		if (! m_ResetingAudioThread)
 		{
-			bool donotresume = false;
-			
-			if (m_PauseAudio)
-			{	
-				PauseAudio();
-				donotresume = true;
-			}	
-			
+			FreezeAll();			
+
 			m_ResetingAudioThread = true;
 
-			if (!donotresume)
-				ResumeAudio();
+			ThawAll();			
 		}	
 	}
 
@@ -149,7 +142,6 @@ private:
 	HostInfo m_Info;
 	bool m_ResetingAudioThread;
 	bool m_HostNeedsUpdate;
-	bool m_PauseAudio;
 
 	static DeviceGUIInfo BuildDeviceGUIInfo(PluginInfo &PInfo);
 

@@ -80,7 +80,8 @@ m_Frozen(false)
 	/* Shared Audio State Information  */
 	m_Info.BUFSIZE = SpiralInfo::BUFSIZE;
 	m_Info.SAMPLERATE = SpiralInfo::SAMPLERATE;
-
+	m_Info.PAUSED = false;
+	
 	/* obsolete - REMOVE SOON  */
 	m_Info.FRAGSIZE = SpiralInfo::FRAGSIZE;
 	m_Info.FRAGCOUNT = SpiralInfo::FRAGCOUNT;
@@ -179,18 +180,18 @@ void SynthModular::Update()
 			#endif
 
 			// If this is an audio device see if we always need to ProcessAudio here
-			if (i->second->m_Device->IsAudioDriver())
-			{
-				AudioDriver *driver = ((AudioDriver *)i->second->m_Device);
-				
-				if (driver->ProcessType() == AudioDriver::ALWAYS)
-				{
-					driver->ProcessAudio();
-				}	
-			}
-
 			if ((!m_ResetingAudioThread))
 			{
+				if (i->second->m_Device->IsAudioDriver())
+				{
+					AudioDriver *driver = ((AudioDriver *)i->second->m_Device);
+					
+					if (driver->ProcessType() == AudioDriver::ALWAYS)
+					{
+						driver->ProcessAudio();
+					}	
+				}
+
 				// run any commands we've received from the GUI's
 				i->second->m_Device->ExecuteCommands();
 			}
@@ -204,7 +205,7 @@ void SynthModular::Update()
 	{
 		// use the graphsort order to remove internal latency
 		map<int,DeviceWin*>::iterator di=m_DeviceWinMap.find(*i);
-		if (di!=m_DeviceWinMap.end() && di->second->m_Device  && (! di->second->m_Device->IsDead()) && (!m_PauseAudio))
+		if (di!=m_DeviceWinMap.end() && di->second->m_Device  && (! di->second->m_Device->IsDead()) && (!m_Info.PAUSED))
 		{
 			#ifdef DEBUG_PLUGINS
 			cerr<<"Executing plugin "<<di->second->m_PluginID<<endl;
@@ -815,7 +816,7 @@ void SynthModular::cb_ChangeBufferAndSampleRate_i(long int NewBufferSize, long i
 void SynthModular::UpdateHostInfo()
 {
 	/* Pause Audio */
-	PauseAudio();
+	FreezeAll();
 
 	/* update the settings */
 	m_Info.BUFSIZE    = SpiralInfo::BUFSIZE;
@@ -1424,7 +1425,7 @@ void SynthModular::cb_NewComment(Fl_Button* o, void* v)
 
 inline void SynthModular::cb_PlayPause_i(Fl_Button* o, void* v)
 {
-	if (m_PauseAudio)
+	if (m_Info.PAUSED)
 	{
 		m_PlayPause->label("Pause ||");
 		ResumeAudio();

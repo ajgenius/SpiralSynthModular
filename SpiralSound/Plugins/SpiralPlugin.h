@@ -48,7 +48,7 @@ struct HostInfo
 {
 	int    BUFSIZE;
 	int    SAMPLERATE;
-
+	
 	/* obsolete - REMOVE SOON */
 	int    FRAGSIZE;
 	int    FRAGCOUNT;
@@ -64,6 +64,8 @@ struct HostInfo
         unsigned SCOPE_MRK_COLOUR;
         unsigned GUICOL_Device;
         unsigned GUIDEVICE_Box;
+
+	bool   PAUSED;
 };
 
 /////////////////////////////////////////////////////////////////////

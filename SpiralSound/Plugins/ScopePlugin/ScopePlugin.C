@@ -46,6 +46,7 @@ m_DataReady(false)
      m_PluginInfo.PortTips.push_back("Input");
      m_PluginInfo.PortTips.push_back("Output");
      m_AudioCH->Register ("DataReady", &m_DataReady, ChannelHandler::OUTPUT);
+     m_AudioCH->Register ("DataSizeChanged", &m_DataSizeChanged, ChannelHandler::OUTPUT);
 }
 
 ScopePlugin::~ScopePlugin()
@@ -71,7 +72,7 @@ void ScopePlugin::Reset()
 	m_DataReady = false;
 	delete m_Data;
 	m_Data = new float[m_HostInfo->BUFSIZE];
-	m_AudioCH->UpdateDataSize("AudioData",m_HostInfo->BUFSIZE*sizeof(float));
+	m_DataSizeChanged = true;
 }
 
 void ScopePlugin::Execute() {
@@ -82,4 +83,23 @@ void ScopePlugin::Execute() {
         GetOutputBuf (0)->Mix (*GetInput(0), 0);
         memcpy (m_Data, GetInput (0)->GetBuffer (), m_HostInfo->BUFSIZE * sizeof (float));
      }
+}
+
+void ScopePlugin::ExecuteCommands()
+{
+	if (m_AudioCH->IsCommandWaiting())
+	{
+		switch (m_AudioCH->GetCommand()) {
+			case UPDATEDATASIZE :
+			{
+				m_AudioCH->UpdateDataSize("AudioData",m_HostInfo->BUFSIZE*sizeof(float));
+				m_DataSizeChanged = false;			
+			}	
+			break;
+			
+			default:
+			{
+			}
+		}	
+	}		
 }

@@ -33,11 +33,11 @@ class MeterPlugin : public SpiralPlugin {
     virtual void StreamOut (std::ostream &s);
     virtual void StreamIn (std::istream &s);
     int GetVUMode (void) { return m_VUMode; }
-    enum GUICommands {NONE, SETVU, SETMM};
+    enum GUICommands {NONE, SETVU, SETMM, UPDATEDATASIZE};
   private:
     float *m_Data;
     // m_VUMode isn't USED for anything, it's here so we can save/load it
-    bool m_DataReady, m_VUMode;
+    bool m_DataReady, m_VUMode, m_DataSizeChanged;
 };
 
 #endif

@@ -225,6 +225,9 @@ void ChannelHandler::UpdateDataSize(const std::string &ID, int size)
 
     pthread_mutex_lock(m_Mutex);
     i->second->size = size;
+    free(i->second->data_buf);
+    i->second->data_buf = malloc(size);
+    memcpy(i->second->data_buf,i->second->data,size);
     pthread_mutex_unlock(m_Mutex);
 }
 

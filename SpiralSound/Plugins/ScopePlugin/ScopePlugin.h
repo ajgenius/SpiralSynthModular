@@ -29,12 +29,16 @@ class ScopePlugin : public SpiralPlugin {
       virtual PluginInfo& Initialise(const HostInfo *Host);
       virtual SpiralGUIType* CreateGUI();
       virtual void Execute();
+      virtual void ExecuteCommands();
       virtual void Reset();
       virtual void StreamOut(std::ostream &s) {}
       virtual void StreamIn(std::istream &s) {}
+
+	enum GUICommands{NONE,UPDATEDATASIZE};
    private:
       float *m_Data;
       bool m_DataReady;
+      bool m_DataSizeChanged;
 };
 
 #endif
