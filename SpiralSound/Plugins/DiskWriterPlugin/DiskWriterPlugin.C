@@ -36,14 +36,13 @@
 
 using namespace std;
 
-static const HostInfo* host;
-
+// what's this for - should it still be here?
 #define CHECK_AND_REPORT_ERROR	if (result<0)         \
-								{                     \
-									perror("Sound device did not accept settings"); \
-									m_OutputOk=false; \
-									return false;     \
-								}
+{                     \
+	perror("Sound device did not accept settings"); \
+	m_OutputOk=false; \
+	return false;     \
+}
 
 extern "C"
 {
@@ -53,7 +52,7 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 }
 
 char** SpiralPlugin_GetIcon()
-{	
+{
 	return SpiralIcon_xpm;
 }
 
@@ -71,7 +70,7 @@ string SpiralPlugin_GetGroupName()
 ///////////////////////////////////////////////////////
 
 DiskWriterPlugin::DiskWriterPlugin()
-{		
+{
 	m_PluginInfo.Name="DiskWriter";
 	m_PluginInfo.Width=160;
 	m_PluginInfo.Height=115;
@@ -85,7 +84,7 @@ DiskWriterPlugin::DiskWriterPlugin()
         m_GUIArgs.Stereo = true;
 	m_GUIArgs.Recording = false;
 	m_GUIArgs.TimeRecorded = 0;
-        
+
 	m_AudioCH->RegisterData("Filename",ChannelHandler::INPUT,m_GUIArgs.Name,256);
 	m_AudioCH->Register("BitsPerSample",&m_GUIArgs.BitsPerSample,ChannelHandler::INPUT);
 	m_AudioCH->Register("Stereo",&m_GUIArgs.Stereo,ChannelHandler::INPUT);
@@ -94,13 +93,13 @@ DiskWriterPlugin::DiskWriterPlugin()
 }
 
 DiskWriterPlugin::~DiskWriterPlugin()
-{	
+{
 }
 
 PluginInfo &DiskWriterPlugin::Initialise(const HostInfo *Host)
-{	
+{
 	PluginInfo& Info= SpiralPlugin::Initialise(Host);
-	host=Host;
+	//host=Host;
 	return Info;
 }
 
@@ -114,20 +113,20 @@ SpiralGUIType *DiskWriterPlugin::CreateGUI()
 }
 
 void DiskWriterPlugin::Execute()
-{  
-	if(m_GUIArgs.Recording && m_Wav.IsOpen()) 
-	{	
+{
+	if(m_GUIArgs.Recording && m_Wav.IsOpen())
+	{
 		int on=0;
-		float LeftBuffer[host->BUFSIZE], RightBuffer[host->BUFSIZE];
-		
-		for (int n=0; n<host->BUFSIZE; n++)
+		float LeftBuffer[GetHostInfo()->BUFSIZE], RightBuffer[GetHostInfo()->BUFSIZE];
+
+		for (int n=0; n<GetHostInfo()->BUFSIZE; n++)
 		{
-			// stereo channels - interleave	
+			// stereo channels - interleave
 			LeftBuffer[n]=GetInput(0,n);
 			RightBuffer[n]=GetInput(1,n);
 		}
-		
-		m_Wav.Save(LeftBuffer, RightBuffer, host->BUFSIZE);
+
+		m_Wav.Save(LeftBuffer, RightBuffer, GetHostInfo()->BUFSIZE);
 		m_GUIArgs.TimeRecorded = m_Wav.GetSize()/m_Wav.GetSamplerate();
 	}
 }

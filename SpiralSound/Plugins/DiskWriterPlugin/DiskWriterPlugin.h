@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
+#ifndef DiskWriterPLUGIN
+#define DiskWriterPLUGIN
+
 #include "../SpiralPlugin.h"
 #include "../../RiffWav.h"
 #include <FL/Fl_Pixmap.H>
-
-#ifndef OscillatorPLUGIN
-#define OscillatorPLUGIN
 
 class DiskWriterPlugin : public SpiralPlugin
 {
@@ -35,7 +35,7 @@ public:
 	virtual void 		ExecuteCommands();
 	virtual void	    StreamOut(std::ostream &s) {}
 	virtual void	    StreamIn(std::istream &s)  {}
-	
+
 	enum GUICommands {NONE,OPENWAV,CLOSEWAV,RECORD,STOP};
 	struct GUIArgs
 	{
@@ -43,10 +43,9 @@ public:
 		int BitsPerSample;
 		bool Stereo;
 		bool Recording;
-
-		float TimeRecorded;
+                float TimeRecorded;
 	};
-	
+
 private:
 	GUIArgs m_GUIArgs;
 	WavFile m_Wav;
