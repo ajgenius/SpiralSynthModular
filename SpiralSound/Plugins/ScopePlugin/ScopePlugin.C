@@ -65,6 +65,15 @@ SpiralGUIType *ScopePlugin::CreateGUI()
 	return new ScopePluginGUI(m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
 }
 
+void ScopePlugin::Reset()
+{
+	ResetPorts();
+	m_DataReady = false;
+	delete m_Data;
+	m_Data = new float[m_HostInfo->BUFSIZE];
+	m_AudioCH->UpdateDataSize("AudioData",m_HostInfo->BUFSIZE*sizeof(float));
+}
+
 void ScopePlugin::Execute() {
      // Just copy the data through.
      m_DataReady = InputExists (0);

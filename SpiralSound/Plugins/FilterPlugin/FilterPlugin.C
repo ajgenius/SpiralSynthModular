@@ -110,6 +110,14 @@ SpiralGUIType *FilterPlugin::CreateGUI()
 										this,m_AudioCH,m_HostInfo);
 }
 
+void FilterPlugin::Reset()
+{
+	ResetPorts();
+
+	fs=m_HostInfo->SAMPLERATE;
+	SetupCoeffs();
+}
+
 void FilterPlugin::Execute()
 {
 	float Cutoff;

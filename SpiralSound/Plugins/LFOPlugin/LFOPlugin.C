@@ -102,6 +102,16 @@ float LFOPlugin::AdjustPos (float pos) {
       return pos;
 }
 
+void LFOPlugin::Reset()
+{
+	ResetPorts();
+	for (int n=0; n<NUM_TABLES; n++)
+		m_Table[n].Allocate (m_TableLength);
+	WriteWaves();
+	m_CyclePos = 0;
+	m_Note = 0;
+}
+
 void LFOPlugin::Execute() {
      float Incr, Pos;
      for (int n=0; n<m_HostInfo->BUFSIZE; n++) {

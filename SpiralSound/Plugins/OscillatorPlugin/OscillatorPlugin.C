@@ -104,6 +104,15 @@ SpiralGUIType *OscillatorPlugin::CreateGUI()
 										  this,m_AudioCH,m_HostInfo);
 }
 
+void OscillatorPlugin::Reset()
+{
+	ResetPorts();
+
+	m_CyclePos=0;
+	m_Note=0;
+	m_LastFreq=0;
+}
+
 void OscillatorPlugin::Execute()
 {
 	short noisev=0;

@@ -79,6 +79,8 @@ public:
     void          Set(const std::string &ID, const float& s)    { SetData(ID,(void*)&s); }
     void          Set(const std::string &ID, const double& s)   { SetData(ID,(void*)&s); }
 
+    void          UpdateDataSize(const std::string &ID, int size);
+
 	void          SetCommand(char command);
 
 	// initialises the data from the audio side to the internal buffers

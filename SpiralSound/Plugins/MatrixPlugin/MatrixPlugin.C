@@ -154,6 +154,25 @@ SpiralGUIType *MatrixPlugin::CreateGUI()
 										this,m_AudioCH,m_HostInfo);
 }
 
+void MatrixPlugin::Reset()
+{
+	ResetPorts();
+	m_Current = 0;
+	m_GUICurrent = 0;
+	m_Time = 0.0f;
+	m_Step = 0;
+	m_TickTime = 1.0f/(float)m_HostInfo->SAMPLERATE;
+	m_StepTime = 1.0f;
+	m_CurPatSeq = 0;
+	m_CurrentNoteCV = 0;
+	m_CurrentTriggerCV = 0;
+	m_Triggered = false;
+	m_ClockHigh = false;
+	m_CopyPattern = 0;
+	m_PatAdvance = false;
+	m_PatReset = false;
+}
+
 void MatrixPlugin::Execute()
 {	
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)

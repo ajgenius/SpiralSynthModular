@@ -79,6 +79,8 @@ public:
 	virtual SpiralGUIType*  CreateGUI();
 	virtual void 		Execute();
 	virtual bool         	Kill();
+	virtual void		Reset();
+
 	virtual void 		ExecuteCommands();
 	virtual void	    StreamOut(std::ostream &s) {}
 	virtual void	    StreamIn(std::istream &s)  {}

@@ -84,6 +84,15 @@ SpiralGUIType *FlipflopPlugin::CreateGUI()
 							 this,m_AudioCH,m_HostInfo);
 }
 
+void FlipflopPlugin::Reset()
+{
+	ResetPorts();
+	m_Current = 0;
+	m_Triggered = false;
+	m_CurrentLevel = 1.0f;
+	m_TriggerSamples = 0;
+}
+
 void FlipflopPlugin::Execute()
 {	
 	bool Triggered;

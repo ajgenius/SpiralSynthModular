@@ -85,6 +85,15 @@ SpiralGUIType *DelayPlugin::CreateGUI()
 										this,m_AudioCH,m_HostInfo);
 }
 
+void DelayPlugin::Reset()
+{
+	ResetPorts();
+	m_Buffer.Clear();
+	m_Buffer.Allocate((int)(m_HostInfo->SAMPLERATE*MAX_DELAY));
+	m_ReadHeadPos = 0;
+	m_WriteHeadPos = 0;
+}
+
 void DelayPlugin::Execute () {
   int Delay;
   float max_pos = MAX_DELAY * m_HostInfo->SAMPLERATE;

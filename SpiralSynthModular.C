@@ -160,7 +160,7 @@ void SynthModular::Update()
 			//Erase Device from DeviceWinMap
 			m_DeviceWinMap.erase(i);
 		}
-		else if (i->second->m_Device) // if it's not a comment
+		else if (i->second->m_Device && !m_ResetingAudioThread) // if it's not a comment and we aren't reseting
 		{
 			#ifdef DEBUG_PLUGINS
 			cerr<<"Updating channelhandler of plugin "<<i->second->m_PluginID<<endl;
@@ -191,13 +191,23 @@ void SynthModular::Update()
 			cerr<<"Executing plugin "<<di->second->m_PluginID<<endl;
 			#endif
 
-			di->second->m_Device->Execute();
+			if (m_ResetingAudioThread)
+			{
+				di->second->m_Device->Reset();
+			}
+			else
+			{
+				di->second->m_Device->Execute();
+			}
 
 			#ifdef DEBUG_PLUGINS
 			cerr<<"Finished executing"<<endl;
 			#endif
 		}
 	}
+
+	//we can safely turn this off here
+	m_ResetingAudioThread = false;
 }
 
 //////////////////////////////////////////////////////////
@@ -720,15 +730,8 @@ void SynthModular::AddComment(int n)
 
 void SynthModular::UpdateHostInfo()
 {
-	// used to use string streams, but this seems to cause a compiler bug
-	// at the moment, so fall back to using a temporary file
-
-	//std::stringstream str;
-	fstream ofs("___temp.ssmtmp",ios::out);
-	//str<<*this;
-	ofs<<*this;
-
-	ClearUp();
+	/* Pause Audio */
+	PauseAudio();
 
 	// update the settings
 	m_Info.BUFSIZE    = SpiralInfo::BUFSIZE;
@@ -739,12 +742,8 @@ void SynthModular::UpdateHostInfo()
 	m_Info.MIDIFILE   = SpiralInfo::MIDIFILE;
 	m_Info.POLY       = SpiralInfo::POLY;
 
-	fstream ifs("___temp.ssmtmp",ios::in);
-	//str>>*this;
-	ifs>>*this;
-
-	system("rm -f ___temp.ssmtmp");
-
+	/* Reset all plugin ports/buffers befure Resuming */
+	ResetAudio();
 }
 
 //////////////////////////////////////////////////////////

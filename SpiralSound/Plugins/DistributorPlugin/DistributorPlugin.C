@@ -122,6 +122,15 @@ SpiralGUIType *DistributorPlugin::CreateGUI()
 	return new DistributorPluginGUI (m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
 }
 
+void DistributorPlugin::Reset()
+{
+	ResetPorts();
+	m_Triggered = false;
+	m_ChannelSelect = false;
+	m_TrigDelay = 0;			
+}
+
+
 void DistributorPlugin::Execute() {
 	const int Stream = 0;
 	const int Switch = 1;

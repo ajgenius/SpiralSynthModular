@@ -100,6 +100,13 @@ SpiralGUIType *SVFilterPlugin::CreateGUI()
 										this,m_AudioCH,m_HostInfo);
 }
 
+void SVFilterPlugin::Reset()
+{
+	ResetPorts();
+	fs = m_HostInfo->SAMPLERATE;
+	Clear();
+}
+
 void SVFilterPlugin::Execute()
 {
 	float in;

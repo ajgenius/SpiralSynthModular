@@ -122,6 +122,14 @@ SpiralGUIType *SpiralLoopPlugin::CreateGUI()
 										this,m_AudioCH,m_HostInfo);
 }
 
+void SpiralLoopPlugin::Reset()
+{
+	ResetPorts();
+	m_TickOutput=-m_TickOutput;
+	m_TickTime=m_StoreBuffer.GetLength()/m_TicksPerLoop;
+	m_TickCurrent=0;
+}
+
 void SpiralLoopPlugin::Execute()
 {
 	if (InputExists(0)) SetRecordingSource(GetInput(0)->GetBuffer());

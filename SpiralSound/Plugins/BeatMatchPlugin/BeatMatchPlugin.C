@@ -82,6 +82,16 @@ SpiralGUIType *BeatMatchPlugin::CreateGUI()
 							 this,m_AudioCH,m_HostInfo);
 }
 
+void BeatMatchPlugin::Reset()
+{
+	ResetPorts();
+	m_Triggered = false;
+	m_EstimatedDuration = 100;
+	m_BeatTime = 100;
+	m_NextBeat = 100;
+	m_OutputLevel = 1.0f;
+}
+
 void BeatMatchPlugin::Execute()
 {	
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)

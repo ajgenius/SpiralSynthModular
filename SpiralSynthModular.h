@@ -106,6 +106,20 @@ public:
 		m_CH.Set("PauseAudio",false);
 	}
 
+	void ResetAudio()
+	{
+		if (! m_ResetingAudioThread)
+		{
+			if (! IsPaused())
+				PauseAudio();
+				
+			m_ResetingAudioThread = true;
+
+			if (IsPaused())
+				ResumeAudio();
+		}	
+	}
+
 	// only for audio thread
 	bool IsPaused() { return m_PauseAudio; }
 
@@ -119,6 +133,7 @@ private:
 	DeviceWin* NewComment(int n, int x, int y);
 
 	HostInfo m_Info;
+	bool m_ResetingAudioThread;
 
 	static DeviceGUIInfo BuildDeviceGUIInfo(PluginInfo &PInfo);
 

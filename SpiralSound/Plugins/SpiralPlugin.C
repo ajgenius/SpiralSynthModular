@@ -50,6 +50,20 @@ bool SpiralPlugin::Kill()
 	return true;
 }
 
+void SpiralPlugin::ResetPorts() 
+{
+	for (int n=0; n<m_PluginInfo.NumOutputs; n++)
+	{
+		m_Output[n]->Clear();
+		m_Output[n]->Allocate(m_HostInfo->BUFSIZE);
+	}
+}
+
+void SpiralPlugin::Reset() 
+{
+	ResetPorts();
+}
+
 PluginInfo &SpiralPlugin::Initialise(const HostInfo *Host)
 {	
 	m_HostInfo=Host;

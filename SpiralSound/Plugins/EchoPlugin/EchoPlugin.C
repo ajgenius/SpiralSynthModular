@@ -89,6 +89,20 @@ SpiralGUIType *EchoPlugin::CreateGUI()
 	return new EchoPluginGUI (m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
 }
 
+void EchoPlugin::Reset()
+{
+	ResetPorts();
+	m_Buffer[0].Clear();
+	m_Buffer[0].Allocate ((int)(m_HostInfo->SAMPLERATE * MAX_DELAY));
+
+	m_Buffer[1].Clear();
+	m_Buffer[1].Allocate ((int)(m_HostInfo->SAMPLERATE * MAX_DELAY));
+
+	m_HeadPos = 0;
+	m_Buf0 = 0;
+	m_Buf1 = 1;
+}
+
 void EchoPlugin::Execute()
 {
      float Delay;

@@ -82,13 +82,7 @@ string SpiralPlugin_GetGroupName()
 FormantFilterPlugin::FormantFilterPlugin() :
 m_Vowel(0)
 {
-	for (int i = 0; i < 5; i++)
-	{
-		for (int j = 0; j < 10; j++)
-		{
-			memory[i][j] = 0;
-		}
-	}
+	Clear();
 
 	m_PluginInfo.Name="FormantFilter";
 	m_PluginInfo.Width=90;
@@ -118,6 +112,13 @@ SpiralGUIType *FormantFilterPlugin::CreateGUI()
 										this,m_AudioCH,m_HostInfo);
 }
 
+void FormantFilterPlugin::Reset()
+{
+	ResetPorts();
+	Clear();
+	
+}
+
 void FormantFilterPlugin::Execute()
 {
 	float res,o[5],out=0, in=0;
@@ -127,13 +128,7 @@ void FormantFilterPlugin::Execute()
 		//reset memory if disconnected, and skip out (prevents CPU spike)
 		if (! InputExists(0)) 
 		{	
-			for (int i = 0; i < 5; i++)
-			{
-				for (int j = 0; j < 10; j++)
-				{
-					memory[i][j] = 0;
-				}
-			}
+			Clear();
 			out = 0;	 
 		}
 		else
@@ -213,6 +208,18 @@ void FormantFilterPlugin::Execute()
 	
 void FormantFilterPlugin::Randomise()
 {
+}
+
+
+void FormantFilterPlugin::Clear()
+{
+	for (int i = 0; i < 5; i++)
+	{
+		for (int j = 0; j < 10; j++)
+		{
+			memory[i][j] = 0;
+		}
+	}
 }
 	
 void FormantFilterPlugin::StreamOut(ostream &s)

@@ -65,6 +65,15 @@ SpiralGUIType *MeterPlugin::CreateGUI() {
   return new MeterPluginGUI (m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
 }
 
+void MeterPlugin::Reset()
+{
+	ResetPorts();
+	m_DataReady = false;
+	delete m_Data;
+	m_Data = new float[m_HostInfo->BUFSIZE];
+	m_AudioCH->UpdateDataSize ("AudioData", m_HostInfo->BUFSIZE * sizeof (float));
+}
+
 void MeterPlugin::Execute() {
      // Just copy the data through.
      m_DataReady = InputExists (0);

@@ -101,6 +101,13 @@ SpiralGUIType *MoogFilterPlugin::CreateGUI()
 										this,m_AudioCH,m_HostInfo);
 }
 
+void MoogFilterPlugin::Reset()
+{
+	ResetPorts();
+	fs = m_HostInfo->SAMPLERATE;
+	Clear();
+}
+
 void MoogFilterPlugin::Execute()
 {
 	float in, Q;

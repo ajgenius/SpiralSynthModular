@@ -78,6 +78,7 @@ public:
 	// execute the audio
 	virtual void        Execute()=0;
 	virtual bool         Kill();
+	virtual void         Reset();
 
 	// run the commands from the GUI
 	virtual void        ExecuteCommands() {}
@@ -146,6 +147,8 @@ protected:
 	void RemoveInput();
 	void RemoveAllInputs();
 		
+	void ResetPorts();
+
 	// the ID number assigned to us by ssm
 	int GetID() { return m_HostID; }
 	

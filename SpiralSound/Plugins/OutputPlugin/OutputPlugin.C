@@ -146,6 +146,36 @@ bool OutputPlugin::Kill()
 	return true;
 }
 
+void OutputPlugin::Reset()
+{
+	if (m_IsDead) return;
+	m_IsDead=true;
+	OSSOutput::Get()->Kill();
+	cb_Blocking(m_Parent,false);
+	ResetPorts();
+	OSSOutput::Get()->AllocateBuffer();
+	
+	switch (m_Mode)
+	{
+		case INPUT :
+			OSSOutput::Get()->OpenRead();
+			cb_Blocking(m_Parent,true);
+		break;
+		case OUTPUT :
+			OSSOutput::Get()->OpenWrite();
+			cb_Blocking(m_Parent,true);
+		break;
+		case DUPLEX :
+			OSSOutput::Get()->OpenReadWrite();
+			cb_Blocking(m_Parent,true);
+		break;
+		
+		default:{}
+	}
+	
+	m_IsDead=false;
+}
+
 void OutputPlugin::Execute()
 {
 	if (m_IsDead) 

@@ -77,7 +77,6 @@ void MixSwitchPlugin::ExecuteCommands () {
     }
   }
 }
-
 void MixSwitchPlugin::CreatePorts (int n, bool AddPorts) {
   int c;
   m_PluginInfo.NumInputs = 2 + n;
@@ -112,6 +111,19 @@ void MixSwitchPlugin::SetChans (int n) {
   CreatePorts (n, true);
   // do the actual update
   UpdatePluginInfoWithHost ();
+}
+
+
+void MixSwitchPlugin::Reset()
+{
+	ResetPorts();
+	m_SwitchPos = 1;
+	m_Triggered = false;
+
+	m_GUIArgs.Chans = 2;
+	m_GUIArgs.Switch = 1;
+	m_GUIArgs.Echo = 1;
+	m_GUIArgs.Auto = false;
 }
 
 void MixSwitchPlugin::Execute() {

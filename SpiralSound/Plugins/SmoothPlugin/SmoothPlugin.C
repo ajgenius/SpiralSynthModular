@@ -79,6 +79,12 @@ SpiralGUIType *SmoothPlugin::CreateGUI()
 										this,m_AudioCH,m_HostInfo);
 }
 
+void SmoothPlugin::Reset()
+{
+	ResetPorts();
+	m_Value = 0;
+}
+
 void SmoothPlugin::Execute()
 {
 	float Value;

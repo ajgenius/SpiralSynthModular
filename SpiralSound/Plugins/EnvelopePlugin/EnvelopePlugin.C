@@ -85,6 +85,14 @@ PluginInfo &EnvelopePlugin::Initialise(const HostInfo *Host)
 	return Info;
 }
 
+void EnvelopePlugin::Reset()
+{
+	ResetPorts();
+	m_SampleTime=1.0/(float)(m_HostInfo->SAMPLERATE);
+	m_Trigger = false;
+	m_t = -1.0f;
+}
+
 SpiralGUIType *EnvelopePlugin::CreateGUI()
 {
 	return new EnvelopePluginGUI(m_PluginInfo.Width,

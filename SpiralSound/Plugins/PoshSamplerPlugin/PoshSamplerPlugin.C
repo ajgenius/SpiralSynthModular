@@ -176,6 +176,18 @@ SpiralGUIType *PoshSamplerPlugin::CreateGUI()
 										this,m_AudioCH,m_HostInfo);
 }
 
+void PoshSamplerPlugin::Reset()
+{
+	ResetPorts();
+	m_Current = 0;
+
+	for (int s=0; s<NUM_SAMPLES; s++)
+	{
+		m_SampleDescVec[s]->Pitch *= m_SampleDescVec[s]->SampleRate/(float)m_HostInfo->SAMPLERATE;
+		m_SampleDescVec[s]->LoopEnd=m_SampleVec[s]->GetLength()-1;
+	}	
+}
+
 void PoshSamplerPlugin::Execute()
 {
 	static bool Pong=false;

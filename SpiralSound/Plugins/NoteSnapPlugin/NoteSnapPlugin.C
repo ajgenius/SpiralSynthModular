@@ -83,6 +83,12 @@ SpiralGUIType *NoteSnapPlugin::CreateGUI()
 							 this,m_AudioCH,m_HostInfo);
 }
 
+void NoteSnapPlugin::Reset()
+{
+	ResetPorts();
+	m_Out = 0;
+}
+
 void NoteSnapPlugin::Execute()
 {	
 	float Freq=0;

@@ -106,6 +106,14 @@ void MixPitch(Sample &src, Sample &dst, int Pos, float Pitch)
 	}
 }
 
+void MasherPlugin::Reset()
+{
+	ResetPorts();
+	m_ReadGrain = 0;
+	m_WriteGrain = 0;
+}
+
+
 void MasherPlugin::Execute()
 {
 	GetOutputBuf(0)->Zero();

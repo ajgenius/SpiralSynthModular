@@ -104,6 +104,15 @@ void SplitSwitchPlugin::SetChans (int n) {
   UpdatePluginInfoWithHost ();
 }
 
+void SplitSwitchPlugin::Reset()
+{
+	ResetPorts();
+	m_Triggered=false;
+	m_GUIArgs.Chans = 2;
+	m_GUIArgs.Switch = 1;
+	m_GUIArgs.Echo = 1;
+}
+
 void SplitSwitchPlugin::Execute() {
   int n;
   int NumChans = m_PluginInfo.NumOutputs - 1;

@@ -214,6 +214,20 @@ void ChannelHandler::GetData(const string &ID, void *data)
     pthread_mutex_unlock(m_Mutex);
 }
 
+void ChannelHandler::UpdateDataSize(const std::string &ID, int size)
+{
+    map<string,Channel*>::iterator i=m_ChannelMap.find(ID);
+    if (i==m_ChannelMap.end())
+    {
+        cerr<<"ChannelHandler: Channel ["<<ID<<"] does not exist"<<endl;
+        return;
+    }
+
+    pthread_mutex_lock(m_Mutex);
+    i->second->size = size;
+    pthread_mutex_unlock(m_Mutex);
+}
+
 void ChannelHandler::SetData(const string &ID, void *s)
 {
     map<string,Channel*>::iterator i=m_ChannelMap.find(ID);

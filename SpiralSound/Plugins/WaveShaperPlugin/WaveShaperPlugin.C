@@ -96,6 +96,12 @@ void WaveShaperPlugin::ExecuteCommands () {
   }
 }
 
+void WaveShaperPlugin::Reset()
+{
+	ResetPorts();
+	calc();
+}
+
 void WaveShaperPlugin::Execute () {
   float k1, k2;
   if (!InputExists (0)) return;

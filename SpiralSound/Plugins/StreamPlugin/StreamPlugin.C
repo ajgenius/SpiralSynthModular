@@ -101,6 +101,15 @@ SpiralGUIType *StreamPlugin::CreateGUI() {
 	return new StreamPluginGUI(m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
 }
 
+void StreamPlugin::Reset()
+{
+	ResetPorts();
+	m_StreamPos = 0;
+	m_GlobalPos = 0;
+	m_SamplePos = -1;
+	m_Pos = 0;
+}
+
 void StreamPlugin::Execute() {
      if (m_File.IsOpen()) {
         for (int n=0; n<m_HostInfo->BUFSIZE; n++) {

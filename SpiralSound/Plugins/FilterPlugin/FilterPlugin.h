@@ -37,7 +37,7 @@ public:
 	virtual void StreamOut(std::ostream &s);
 	virtual void StreamIn(std::istream &s);
 		
-	void Reset();
+	virtual void Reset();
 	void SetupCoeffs();
 
 	double GetCutoff() {return fc;}

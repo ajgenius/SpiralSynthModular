@@ -52,6 +52,7 @@ public:
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual SpiralGUIType *CreateGUI();
 	virtual void Execute();
+	virtual void Reset();
 	virtual void ExecuteCommands();
 	virtual void StreamOut(std::ostream &s);
 	virtual void StreamIn(std::istream &s);
@@ -100,10 +101,12 @@ private:
 	void ResetPortSettings(void);
 	void SetGUIExports(void);
 
+	bool m_SSMPluginReset;
+
 	const LADSPA_Descriptor     *m_PlugDesc;
 	std::vector<LADSPA_Data*>    m_LADSPABufVec;
 	LADSPA_Handle                m_PlugInstHandle;
-
+	
 	std::vector<int>        m_PortID;
 	std::vector<float>      m_InputPortMin;
 	std::vector<float>      m_InputPortMax;

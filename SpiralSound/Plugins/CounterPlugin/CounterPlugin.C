@@ -80,6 +80,15 @@ SpiralGUIType *CounterPlugin::CreateGUI()
 							 this,m_AudioCH,m_HostInfo);
 }
 
+void CounterPlugin::Reset()
+{
+	ResetPorts();
+	m_Current = 0;
+	m_Triggered = false;
+	m_CurrentLevel = 1.0f;
+}
+
+
 void CounterPlugin::Execute()
 {	
 	bool Triggered;

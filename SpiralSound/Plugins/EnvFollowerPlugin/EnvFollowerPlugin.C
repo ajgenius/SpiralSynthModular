@@ -79,6 +79,12 @@ SpiralGUIType *EnvFollowerPlugin::CreateGUI()
 										this,m_AudioCH,m_HostInfo);
 }
 
+void EnvFollowerPlugin::Reset()
+{
+	ResetPorts();
+	m_Value = 0;
+}
+
 void EnvFollowerPlugin::Execute()
 {
 	float Value;

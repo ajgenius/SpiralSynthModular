@@ -160,6 +160,22 @@ void WaveTablePlugin::WriteWaves()
 	}
 }
 
+void WaveTablePlugin::Reset()
+{
+	ResetPorts();
+
+	for (int n=0; n<NUM_TABLES; n++)
+	{
+		m_Table[n].Clear();
+		m_Table[n].Allocate(m_TableLength);
+	}
+	
+	WriteWaves();
+	
+	m_CyclePos=0;	
+	m_Note=0;
+}
+
 void WaveTablePlugin::Execute()
 {
  	float Freq=0;

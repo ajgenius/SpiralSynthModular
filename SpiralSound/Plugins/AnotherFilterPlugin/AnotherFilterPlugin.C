@@ -87,6 +87,13 @@ SpiralGUIType *AnotherFilterPlugin::CreateGUI()
 										this,m_AudioCH,m_HostInfo);
 }
 
+void AnotherFilterPlugin::Reset()
+{
+	ResetPorts();
+	vibrapos = 0.0f;
+	vibraspeed = 0.0f;
+}
+
 void AnotherFilterPlugin::Execute()
 {
 	float in;

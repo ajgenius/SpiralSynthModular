@@ -90,6 +90,14 @@ SpiralGUIType *SeqSelectorPlugin::CreateGUI()
 										this,m_AudioCH,m_HostInfo);
 }
 
+void SeqSelectorPlugin::Reset()
+{
+	ResetPorts();
+	m_Pos=0;
+	m_Triggered=false;
+	m_UseRange=false;	
+}
+
 void SeqSelectorPlugin::Execute()
 {
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)

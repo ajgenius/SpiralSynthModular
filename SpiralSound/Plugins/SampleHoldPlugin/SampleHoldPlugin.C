@@ -75,6 +75,13 @@ SpiralGUIType *SampleHoldPlugin::CreateGUI()
 	return NULL;
 }
 
+void SampleHoldPlugin::Reset()
+{
+	ResetPorts();
+	m_val = 0;
+	m_flag = 0;
+}
+
 void SampleHoldPlugin::Execute()
 {
 	// Just copy the data through.
