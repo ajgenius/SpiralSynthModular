@@ -1,6 +1,6 @@
 ****** SpiralSynthModular ******
 
-Last changed Tuesday 6-January-2004.
+Last changed Tuesday 11-March-2004.
 
 SpiralSynthModular is open source software, distributed under the General
 Public License (GPL). See the file COPYING.
@@ -109,13 +109,9 @@ Samplerate        = 44100       - Sets the samplerate
 
 *** Trying it out without installing ***
 
-You can try SpiralSynthModular out by following the following steps.
-
-1. Run the script ./createlinks to create a dummy plugin directory in your source
-   directory
-
-2. To run use the command:
-   ./spiralsynthmodular --PluginPath /path/to/your/ssm/source/links
+You can try SpiralSynthModular by running the script ./test-run
+which creates a dummy plugin directory in your source directory
+and runs SpiralSynthModular using these uninstalled plugins.
 
 
 Disclaimer:

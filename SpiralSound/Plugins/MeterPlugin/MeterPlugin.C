@@ -30,7 +30,7 @@ char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
 
 int SpiralPlugin_GetID() { return 123; }
 
-string SpiralPlugin_GetGroupName() { return "Control"; }
+string SpiralPlugin_GetGroupName() { return "InputOutput"; }
 
 }
 

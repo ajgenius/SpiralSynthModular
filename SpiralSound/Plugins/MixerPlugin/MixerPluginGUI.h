@@ -28,7 +28,8 @@
 
 static int Numbers[MAX_CHANNELS];
 
-class MixerPluginGUI : public SpiralPluginGUI {
+class MixerPluginGUI : public SpiralPluginGUI
+{
    public:
       MixerPluginGUI (int w, int h, MixerPlugin *o, ChannelHandler *ch, const HostInfo *Info);
       virtual void UpdateValues(SpiralPlugin *o);
@@ -36,9 +37,18 @@ class MixerPluginGUI : public SpiralPluginGUI {
    protected:
       const std::string GetHelpText(const std::string &loc);
    private:
+      bool m_inPeak[MAX_CHANNELS];
+      class ChanGUI {
+         public:
+            ChanGUI (int ChanNum, MixerPluginGUI *p, Fl_Color SelColour);
+            Fl_Group *m_SliderGroup;
+            Fl_Slider *m_Chan;
+            Fl_LED_Button *m_PeakInd;
+      };
+      friend class ChanGUI;
       void AddChan (bool SendData = false, bool ResizeIt = false);
       void DeleteChan (bool SendData = true);
-      std::vector<Fl_Slider*> m_SlidVec;
+      std::vector<ChanGUI*> m_GUIVec;
       Fl_Pack *m_MainPack, *m_Buttons;
       Fl_Button *m_Add, *m_Delete;
       Fl_LED_Button *m_PeakInd;

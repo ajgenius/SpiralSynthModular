@@ -25,43 +25,44 @@
 using namespace std;
 
 extern "C" {
-
-    SpiralPlugin* SpiralPlugin_CreateInstance() {
-        return new MixerPlugin;
-    }
-
-    char** SpiralPlugin_GetIcon() {
-        return SpiralIcon_xpm;
-    }
-
-    int SpiralPlugin_GetID() {
-        return 0x0007;
-    }
-
-    string SpiralPlugin_GetGroupName() {
-        return "Amps/Mixers";
-    }
-
+    SpiralPlugin* SpiralPlugin_CreateInstance() { return new MixerPlugin; }
+    char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
+    int SpiralPlugin_GetID() { return 0x0007; }
+    string SpiralPlugin_GetGroupName() { return "Amps/Mixers"; }
 }
 
 ///////////////////////////////////////////////////////
 
 MixerPlugin::MixerPlugin() :
-m_NumChannels(0)
+m_NumChannels(4)
 {
+        int c;
         m_Version = 2;
         m_PluginInfo.Name = "Mixer";
 	m_PluginInfo.Width = 80;
-	m_PluginInfo.Height = 140;
+	m_PluginInfo.Height = 150;
+        for (c=0; c<MAX_CHANNELS; c++) {
+            m_ChannelVal[c] = 1.0f;
+            m_GUIArgs.inPeak[c] = false;
+        }
         m_GUIArgs.Peak = false;
-        CreatePorts ();
-	for (int n=0; n<MAX_CHANNELS; n++) m_ChannelVal[n] = 1.0f;
+        m_PluginInfo.NumInputs = m_NumChannels;
+        m_PluginInfo.NumOutputs = 1;
+        for (c=1; c<=m_NumChannels; c++) AddInputTip (c);
+        m_PluginInfo.PortTips.push_back ("Output");
 	m_AudioCH->Register ("Value", &m_GUIArgs.Value);
 	m_AudioCH->Register ("Num", &m_GUIArgs.Num);
 	m_AudioCH->Register ("Peak", &m_GUIArgs.Peak, ChannelHandler::OUTPUT);
+	m_AudioCH->RegisterData ("inPeak", ChannelHandler::OUTPUT, m_GUIArgs.inPeak, MAX_CHANNELS * sizeof (bool));
 }
 
 MixerPlugin::~MixerPlugin() {
+}
+
+void MixerPlugin::AddInputTip (int Channel) {
+     char t[256];
+     sprintf (t, "Input %d", Channel);
+     m_PluginInfo.PortTips.push_back (t);
 }
 
 PluginInfo &MixerPlugin::Initialise (const HostInfo *Host) {
@@ -75,9 +76,12 @@ SpiralGUIType *MixerPlugin::CreateGUI() {
 void MixerPlugin::Execute () {
      // Mix the inputs
      for (int n=0; n<m_HostInfo->BUFSIZE; n++) {
-         float out = 0.0;
-         for (int c=0; c<m_NumChannels; c++)
-             out += (GetInput (c, n) * m_ChannelVal[c]);
+         float in, out = 0.0;
+         for (int c=0; c<m_NumChannels; c++) {
+             in = GetInput (c, n) * m_ChannelVal[c];
+             m_GUIArgs.inPeak[c] = (in > 1.0);
+             out += in;
+         }
          SetOutput (0, n, out);
          m_GUIArgs.Peak = (out > 1.0);
      }
@@ -86,48 +90,56 @@ void MixerPlugin::Execute () {
 void MixerPlugin::ExecuteCommands() {
      if (m_AudioCH->IsCommandWaiting()) {
         switch (m_AudioCH->GetCommand()) {
-          case SETCH:
+          case SETMIX:
                m_ChannelVal[m_GUIArgs.Num] = m_GUIArgs.Value;
                break;
-          case SETNUM:
-               SetChannels (m_GUIArgs.Num);
+          case ADDCHAN:
+               AddChannel ();
+               break;
+          case REMOVECHAN:
+               RemoveChannel ();
                break;
         }
       }
 }
 
-void MixerPlugin::SetChannels (int n) {
-     // once to clear the connections with the current info
-     // do we need this????
-     UpdatePluginInfoWithHost();
-     // Things can get a bit confused deleting and adding inputs so we just chuck away all the ports...
-     RemoveAllInputs ();
-     RemoveAllOutputs ();
-     m_PluginInfo.NumInputs = 0;
-     m_PluginInfo.NumOutputs = 0;
+void MixerPlugin::SetChannels (int num) {
+     // This is only used on loading, so we don't care that it clears all the inputs first
+     UpdatePluginInfoWithHost(); // once to clear the connections with the current info
+     RemoveAllInputs();
      m_PluginInfo.PortTips.clear ();
-     // ... and then create some new ones
-     CreatePorts (n, true);
-     // do the actual update
-     UpdatePluginInfoWithHost ();
+     m_PluginInfo.NumInputs = num;
+     m_NumChannels = num;
+     for (int c=1; c<=m_NumChannels; c++) {
+         AddInput ();
+         AddInputTip (c);
+     }
+     m_PluginInfo.PortTips.push_back ("Output");
+     UpdatePluginInfoWithHost ();  // do the actual update
 }
 
-void MixerPlugin::CreatePorts (int n, bool AddPorts) {
-     // default values   n = 4    AddPorts = false
-     int c;
-     m_PluginInfo.NumInputs = n;
-     m_NumChannels = n;
-     char t[256];
-     for (c=1; c<=n; c++) {
-         sprintf (t, "Input %d", c);
-         m_PluginInfo.PortTips.push_back (t);
-     }
-     m_PluginInfo.NumOutputs = 1;
+void MixerPlugin::AddChannel (void) {
+     UpdatePluginInfoWithHost(); // once to clear the connections with the current info
+     m_PluginInfo.NumInputs++;
+     m_NumChannels++;
+     AddInput ();
+     vector<std::string>::iterator i = m_PluginInfo.PortTips.end();
+     m_PluginInfo.PortTips.erase (--i);
+     AddInputTip (m_NumChannels);
      m_PluginInfo.PortTips.push_back ("Output");
-     if (AddPorts) {
-        for (c=0; c<m_PluginInfo.NumInputs; c++) AddInput();
-        AddOutput();
-     }
+     UpdatePluginInfoWithHost ();  // do the actual update
+}
+
+void MixerPlugin::RemoveChannel (void) {
+     UpdatePluginInfoWithHost(); // once to clear the connections with the current info
+     m_PluginInfo.NumInputs--;
+     m_NumChannels--;
+     vector<std::string>::iterator i = m_PluginInfo.PortTips.end();
+     m_PluginInfo.PortTips.erase (--i);
+     m_PluginInfo.PortTips.erase (--i);
+     m_PluginInfo.PortTips.push_back ("Output");
+     RemoveInput();
+     UpdatePluginInfoWithHost ();  // do the actual update
 }
 
 void MixerPlugin::StreamOut (ostream &s) {
@@ -140,7 +152,7 @@ void MixerPlugin::StreamIn (istream &s) {
      int version, chans;
      s >> version;
      switch (version) {
-       case 1: SetChannels (4);
+       case 1: // needs default number of channels
                break;
        case 2: s >> chans;
                SetChannels (chans);

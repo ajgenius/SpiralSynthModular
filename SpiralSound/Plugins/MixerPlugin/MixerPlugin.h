@@ -35,19 +35,22 @@ class MixerPlugin : public SpiralPlugin {
       virtual void StreamIn(std::istream &s);
       // has to be defined in the plugin
       virtual void UpdateGUI() { Fl::check(); }
-      enum GUICommands { NONE, SETCH, SETNUM };
+      enum GUICommands { NONE, SETMIX, ADDCHAN, REMOVECHAN };
       struct GUIArgs {
 	     int Num;
 	     float Value;
+             bool inPeak[MAX_CHANNELS];
              bool Peak;
       };
       float GetChannel (int n) { return m_ChannelVal[n]; }
       int GetChannels (void) { return m_NumChannels; }
   private:
-      void CreatePorts (int n = 4, bool AddPorts = false);
+      void AddChannel (void);
+      void RemoveChannel (void);
+      void AddInputTip (int Channel);
       GUIArgs m_GUIArgs;
       int m_NumChannels;
-      void SetChannels (int n);
+      void SetChannels (int num);
       float m_ChannelVal[MAX_CHANNELS];
 };
 
