@@ -45,7 +45,6 @@ m_VUMode (true)
   m_PluginInfo.NumOutputs = 1;
   m_PluginInfo.PortTips.push_back ("Input");
   m_PluginInfo.PortTips.push_back ("Output");
-  
   m_Version = 1;
 }
 
@@ -68,8 +67,8 @@ void MeterPlugin::Execute() {
   // Just copy the data through.
   if (GetOutputBuf (0)) GetOutputBuf (0)->Zero();
   if (GetInput (0)) {
-    GetOutputBuf (0)->Mix (*GetInput(0), 0);
-    memcpy (m_Data, GetInput (0)->GetBuffer (), m_HostInfo->BUFSIZE * sizeof (float));
+     GetOutputBuf (0)->Mix (*GetInput(0), 0);
+     memcpy (m_Data, GetInput (0)->GetBuffer (), m_HostInfo->BUFSIZE * sizeof (float));
   }
 }
 

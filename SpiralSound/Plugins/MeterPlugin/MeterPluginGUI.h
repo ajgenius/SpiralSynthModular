@@ -19,6 +19,7 @@
 #ifndef METERGUI
 #define METERGUI
 
+#include <sstream>
 #include <FL/Fl.H>
 #include "../Widgets/Fl_VU_Meter.h"
 #include "../Widgets/Fl_SevenSeg.H"
@@ -30,6 +31,7 @@
 class MeterPluginGUI : public SpiralPluginGUI {
   public:
     MeterPluginGUI (int w, int h, MeterPlugin *o, ChannelHandler *ch, const HostInfo *Info);
+    ~MeterPluginGUI ();
     virtual void UpdateValues (SpiralPlugin* o);
     virtual void Update ();
     virtual void draw ();

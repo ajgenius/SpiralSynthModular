@@ -40,7 +40,7 @@
 #include "SpiralSound/ChannelHandler.h"
 #include "SettingsWindow.h"
 
-const static string VER_STRING = "0.2.2rc1";
+const static string VER_STRING = "0.2.2rc2";
 
 typedef Fl_Double_Window SpiralWindowType;
 // typedef Fl_Window SpiralWindowType;

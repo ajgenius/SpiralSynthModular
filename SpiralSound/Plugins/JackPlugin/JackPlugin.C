@@ -622,9 +622,9 @@ void JackPlugin::StreamIn (istream &s)
 	char Test;
 	int Version, NumInputs, NumOutputs;
 
-	s.seekg (2, ios_base::cur );//skip to next line
-	Test = s.peek();//peek first char
-	s.seekg (-2, ios_base::cur );//jump back to prior line 
+	s.seekg (2, ios::cur );  //skip to next line
+	Test = s.peek();         //peek first char
+	s.seekg (-2, ios::cur ); //jump back to prior line
 	
 	if ( (Test >= '0') && (Test <= '9') )
 	{

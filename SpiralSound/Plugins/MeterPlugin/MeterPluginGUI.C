@@ -21,13 +21,16 @@
 
 using namespace std;
 
-char label_buf[10];
+char label_buf[65];
+
+MeterPluginGUI::~MeterPluginGUI () {
+   delete m_Data;
+}
 
 MeterPluginGUI::MeterPluginGUI (int w, int h, MeterPlugin *o, ChannelHandler *ch, const HostInfo *Info) :
 SpiralPluginGUI (w, h, o, ch),
 m_Bypass (false)
 {
-  // If I'm only going to use the first value from this, is it worth doing all this
   m_BufSize = Info->BUFSIZE;
   m_Data = new float[m_BufSize];
   // Create the widgets and stuff!
@@ -90,18 +93,21 @@ m_Bypass (false)
 void MeterPluginGUI::draw() {
   SpiralGUIType::draw ();
   if (! m_Bypass) {
+    float datum = 0.0;
     m_GUICH->GetData ("AudioData", m_Data);
     // The min and max values are based on the whole buffer
     for (int c=0; c<m_BufSize; c++) {
-      if (VUMode->value ()) m_Data[c] = fabs (m_Data[c]);
-      if (m_Data[c] < m_Min) m_Min=m_Data[c];
-      if (m_Data[c] > m_Max) m_Max=m_Data[c];
+      datum = m_Data[c];
+      if (VUMode->value ()) datum = fabs (datum);
+      if (datum < m_Min) m_Min = datum;
+      if (datum > m_Max) m_Max = datum;
     }
     SetMinMax (m_Min, m_Max);
-    // The meter displays the first datum in the buffer (it's a quick average)
-    Meter->value (*m_Data);
+    // The meter displays the last datum we touched (it's a quick average)
+    Meter->value (datum);
     Meter->redraw();
-    snprintf (label_buf, 64, "%1.5f", *m_Data);
+    // Yeuck - have I REALLY used stdio for that - this is supposed to be C++
+    //snprintf (label_buf, 64, "%1.5f", *m_Data);
     char* c = label_buf;
     for (int display=0; display<8; display++) {
       Digits[display] -> dp (off);

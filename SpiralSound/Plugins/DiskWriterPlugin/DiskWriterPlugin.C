@@ -14,21 +14,18 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*/ 
+*/
 
+// is this still relevant
 // for lrintf()
 #define	_ISOC9X_SOURCE	1
 #define _ISOC99_SOURCE	1
-#include  <math.h>
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <limits.h>
-#include <sys/ioctl.h>
-#include <limits.h>
-
+//#include <math.h>
+//#include <sys/types.h>
+//#include <sys/ioctl.h>
+//#include <unistd.h>
+//#include <limits.h>
 #include "DiskWriterPlugin.h"
 #include "DiskWriterPluginGUI.h"
 #include <FL/fl_file_chooser.H>
@@ -46,25 +43,15 @@ using namespace std;
 
 extern "C"
 {
-SpiralPlugin* SpiralPlugin_CreateInstance()
-{
-	return new DiskWriterPlugin;
-}
 
-char** SpiralPlugin_GetIcon()
-{
-	return SpiralIcon_xpm;
-}
+SpiralPlugin* SpiralPlugin_CreateInstance() { return new DiskWriterPlugin; }
 
-int SpiralPlugin_GetID()
-{
-	return 41;
-}
+char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
 
-string SpiralPlugin_GetGroupName()
-{
-	return "InputOutput";
-}
+int SpiralPlugin_GetID() { return 41; }
+
+string SpiralPlugin_GetGroupName() { return "InputOutput"; }
+
 }
 
 ///////////////////////////////////////////////////////
@@ -101,17 +88,12 @@ DiskWriterPlugin::~DiskWriterPlugin()
 PluginInfo &DiskWriterPlugin::Initialise(const HostInfo *Host)
 {
 	PluginInfo& Info= SpiralPlugin::Initialise(Host);
-	//host=Host;
 	return Info;
 }
 
 SpiralGUIType *DiskWriterPlugin::CreateGUI()
 {
-	return new DiskWriterPluginGUI(m_PluginInfo.Width,
-										  m_PluginInfo.Height,
-										  this,
-										  m_AudioCH,
-										  m_HostInfo);
+	return new DiskWriterPluginGUI(m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
 }
 
 void DiskWriterPlugin::Execute()
@@ -157,26 +139,26 @@ void DiskWriterPlugin::ExecuteCommands()
 	}
 }
 
-void DiskWriterPlugin::StreamOut (ostream &s) 
+void DiskWriterPlugin::StreamOut (ostream &s)
 {
 	s << m_Version << " " << m_GUIArgs.BitsPerSample << " " << m_GUIArgs.Stereo << " ";
 }
 
-void DiskWriterPlugin::StreamIn (istream &s) 
+void DiskWriterPlugin::StreamIn (istream &s)
 {
 	char Test;
 	int Version, BitsPerSample, Stereo;
-	
-	//originally DiskWriter had NO streaming code whatsover
+
+	// originally DiskWriter had NO streaming code whatsover
 	// so to test if this is an old patch we must
 	// read ahead and find out what the first char
 	// of the next line is
-	
-	s.seekg (2, ios_base::cur );//skip to next line
-	Test = s.peek();//peek first char
-	s.seekg (-2, ios_base::cur );//jump back to prior line 
-	
-	//This test works because if the char
+
+	s.seekg (2, ios::cur );  //skip to next line
+	Test = s.peek();         //peek first char
+	s.seekg (-2, ios::cur ); //jump back to prior line
+
+	// This test works because if the char
 	// of the next line isn't a version number
 	// it will only be 'D', ' ', #13, or '-'
 	if ( (Test >= '0') && (Test <= '9') )
@@ -188,7 +170,7 @@ void DiskWriterPlugin::StreamIn (istream &s)
 		//No Version, so use Version 1
 		Version = 1;
 	}
-	
+
 	switch (Version)
 	{
 		case 2:
@@ -198,7 +180,7 @@ void DiskWriterPlugin::StreamIn (istream &s)
 			m_GUIArgs.Stereo = Stereo;
 		}
 		break;
-		
+
 		case 1:
 		{
 			//use original fixed defaults
@@ -206,5 +188,5 @@ void DiskWriterPlugin::StreamIn (istream &s)
 			m_GUIArgs.Stereo = true;
 		}
 		break;
-	}	
+	}
 }

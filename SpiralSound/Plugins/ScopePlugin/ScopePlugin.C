@@ -14,7 +14,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*/ 
+*/
 #include "ScopePlugin.h"
 #include "ScopePluginGUI.h"
 #include <FL/Fl_Button.h>
@@ -24,25 +24,13 @@ using namespace std;
 
 extern "C"
 {
-SpiralPlugin* SpiralPlugin_CreateInstance()
-{
-	return new ScopePlugin;
-}
+SpiralPlugin* SpiralPlugin_CreateInstance() { return new ScopePlugin; }
 
-char** SpiralPlugin_GetIcon()
-{
-	return SpiralIcon_xpm;
-}
+char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
 
-int SpiralPlugin_GetID()
-{
-	return 0x0001;
-}
+int SpiralPlugin_GetID() { return 0x0001; }
 
-string SpiralPlugin_GetGroupName()
-{
-	return "Control";
-}
+string SpiralPlugin_GetGroupName() { return "Control"; }
 }
 
 ///////////////////////////////////////////////////////
@@ -50,9 +38,7 @@ string SpiralPlugin_GetGroupName()
 ScopePlugin::ScopePlugin()
 {
 	m_PluginInfo.Name="Scope";
-	//m_PluginInfo.Width=220;
 	m_PluginInfo.Width=260;
-	//m_PluginInfo.Height=125;
 	m_PluginInfo.Height=115;
 	m_PluginInfo.NumInputs=1;
 	m_PluginInfo.NumOutputs=1;
@@ -65,8 +51,8 @@ ScopePlugin::~ScopePlugin()
 }
 
 PluginInfo &ScopePlugin::Initialise(const HostInfo *Host)
-{	
-	PluginInfo& Info = SpiralPlugin::Initialise(Host);	
+{
+	PluginInfo& Info = SpiralPlugin::Initialise(Host);
 	m_Data = new float[Host->BUFSIZE];
 	m_AudioCH->RegisterData("AudioData",ChannelHandler::OUTPUT,m_Data,Host->BUFSIZE*sizeof(float));
 	return Info;
@@ -74,22 +60,15 @@ PluginInfo &ScopePlugin::Initialise(const HostInfo *Host)
 
 SpiralGUIType *ScopePlugin::CreateGUI()
 {
-	return new ScopePluginGUI(m_PluginInfo.Width,
-	 						   m_PluginInfo.Height,
-							   this,
-							   m_AudioCH,
-							   m_HostInfo);
+	return new ScopePluginGUI(m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
 }
 
-void ScopePlugin::Execute()
-{
-	// Just copy the data through.
-	if (GetOutputBuf(0)) GetOutputBuf(0)->Zero();
-	if (GetInput(0)) GetOutputBuf(0)->Mix(*GetInput(0),0);
-	
-	if (GetInput(0)) 
-	{
-        //cerr<<1<<" "<<m_HostInfo->BUFSIZE<<endl;
-		memcpy(m_Data,GetInput(0)->GetBuffer(),m_HostInfo->BUFSIZE*sizeof(float));
-	}
+void ScopePlugin::Execute() {
+     // Just copy the data through.
+     if (GetOutputBuf (0)) GetOutputBuf (0)->Zero();
+     if (GetInput (0)) {
+        GetOutputBuf (0)->Mix (*GetInput(0), 0);
+        memcpy (m_Data, GetInput (0)->GetBuffer (), m_HostInfo->BUFSIZE * sizeof (float));
+     }
 }
+

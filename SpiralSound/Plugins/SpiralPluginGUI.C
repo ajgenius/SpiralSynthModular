@@ -60,7 +60,7 @@ SpiralGUIType(0,0,w,h,"")
 SpiralPluginGUI::~SpiralPluginGUI()
 {
 	// Needed to properly remove the window.
-	Fl::check();
+        Fl::check();
 }
 
 void SpiralPluginGUI::Resize (int neww, int newh) {
