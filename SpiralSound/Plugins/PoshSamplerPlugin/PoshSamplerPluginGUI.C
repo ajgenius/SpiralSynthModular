@@ -255,7 +255,7 @@ void Fl_WaveDisplay::ZoomIn()
 void Fl_WaveDisplay::ZoomOut()
 {
 	int Zoom=(int)((m_ViewEnd-m_ViewStart)*0.03f);
-	m_ViewStart-=Zoom; 
+	m_ViewStart-=Zoom;
 	m_ViewEnd+=Zoom;
 	redraw();
 }
@@ -265,10 +265,10 @@ void Fl_WaveDisplay::ZoomOut()
 PoshSamplerPluginGUI::PoshSamplerPluginGUI(int w, int h,PoshSamplerPlugin *o,ChannelHandler *ch,const HostInfo *Info) :
 SpiralPluginGUI(w,h,o,ch),
 m_UpdateMe(false)
-{	
-	int n=0; 
+{
+	int n=0;
 
-	m_Load = new Fl_Button(5, 20, 70, 20, "Load");
+	m_Load = new Fl_Button(5, 20, 50, 20, "Load");
         m_Load->labelsize(10);
         m_Load->box (FL_PLASTIC_UP_BOX);
 	m_Load->color (Info->GUI_COLOUR);
@@ -276,7 +276,7 @@ m_UpdateMe(false)
 	m_Load->callback((Fl_Callback*)cb_Load);
 	add(m_Load);
 
-	m_Save = new Fl_Button(5, 40, 70, 20, "Save");
+	m_Save = new Fl_Button(55, 20, 50, 20, "Save");
         m_Save->labelsize(10);
         m_Save->box (FL_PLASTIC_UP_BOX);
 	m_Save->color (Info->GUI_COLOUR);
@@ -284,7 +284,7 @@ m_UpdateMe(false)
 	m_Save->callback((Fl_Callback*)cb_Save);
 	add(m_Save);
 
-	m_Record = new Fl_Button(5, 60, 70, 20, "Record");
+	m_Record = new Fl_Button(105, 20, 50, 20, "Record");
         m_Record->type (FL_TOGGLE_BUTTON);
         m_Record->box (FL_PLASTIC_UP_BOX);
 	m_Record->color (FL_RED);
@@ -294,7 +294,7 @@ m_UpdateMe(false)
 	m_Record->callback((Fl_Callback*)cb_Record);
 	add(m_Record);
 
-	m_Loop = new Fl_Button(80, 20, 70, 20, "Loop");
+	m_Loop = new Fl_Button(5, 40, 75, 20, "Loop");
         m_Loop->type (FL_TOGGLE_BUTTON);
         m_Loop->labelsize(10);
         m_Loop->box (FL_PLASTIC_UP_BOX);
@@ -303,8 +303,7 @@ m_UpdateMe(false)
 	m_Loop->callback((Fl_Callback*)cb_Loop);
 	add(m_Loop);
 
-	m_PingPong = new Fl_Button(80, 40, 70, 20, "PingPong");
-        m_PingPong->labelsize(10);
+	m_PingPong = new Fl_Button(80, 40, 75, 20, "PingPong");
 	m_PingPong->type (FL_TOGGLE_BUTTON);
         m_PingPong->labelsize(10);
         m_PingPong->box (FL_PLASTIC_UP_BOX);
@@ -313,8 +312,7 @@ m_UpdateMe(false)
 	m_PingPong->callback((Fl_Callback*)cb_PingPong);
 	add(m_PingPong);
 
-	m_PosMarker = new Fl_Button(80, 60, 70, 20, "PosMarker");
-        m_PosMarker->labelsize(10);
+	m_PosMarker = new Fl_Button(5, 60, 75, 20, "PosMarker");
 	m_PosMarker->type (FL_TOGGLE_BUTTON);
         m_PosMarker->labelsize(10);
         m_PosMarker->box (FL_PLASTIC_UP_BOX);
@@ -323,6 +321,16 @@ m_UpdateMe(false)
 	m_PosMarker->value(1);
 	m_PosMarker->callback((Fl_Callback*)cb_PosMarker);
 	add(m_PosMarker);
+
+	m_Retrig = new Fl_Button (80, 60, 75, 20, "Re-Trigger");
+	m_Retrig->type (FL_TOGGLE_BUTTON);
+        m_Retrig->labelsize (10);
+        m_Retrig->box (FL_PLASTIC_UP_BOX);
+	m_Retrig->color (Info->GUI_COLOUR);
+	m_Retrig->selection_color (Info->GUI_COLOUR);
+	m_Retrig->value (1);
+	m_Retrig->callback ((Fl_Callback*)cb_Retrig);
+	add (m_Retrig);
 
 	m_Volume = new Fl_Knob(160, 20, 50, 50, "Volume");
         m_Volume->color(Info->GUI_COLOUR);
@@ -487,11 +495,11 @@ void PoshSamplerPluginGUI::Update()
 void PoshSamplerPluginGUI::UpdateValues(SpiralPlugin *o)
 {
 	PoshSamplerPlugin *Plugin = (PoshSamplerPlugin*)o;
-
 	m_Volume->value(Plugin->GetVolume((int)m_SampleNum->value()));
 	m_Pitch->value(Plugin->GetPitch((int)m_SampleNum->value()));
 	m_Note->value(Plugin->GetNote((int)m_SampleNum->value()));
 	m_Loop->value(Plugin->GetLoop((int)m_SampleNum->value()));
+        m_Retrig->value(Plugin->GetReTrig((int)m_SampleNum->value()));
 	m_UpdateMe=true;
 	m_Display->SetPlayStart(Plugin->GetPlayStart((int)m_SampleNum->value()));
 	m_Display->SetLoopStart(Plugin->GetLoopStart((int)m_SampleNum->value()));
@@ -522,7 +530,7 @@ void PoshSamplerPluginGUI::cb_Load(Fl_Button* o, void* v)
 inline void PoshSamplerPluginGUI::cb_Save_i(Fl_Button* o, void* v)
 {
 	char *fn=fl_file_chooser("Save sample", "{*.wav,*.WAV}", NULL);
-		
+
 	if (fn && fn!='\0')
 	{
 		strcpy(m_TextBuf,fn);
@@ -535,7 +543,7 @@ void PoshSamplerPluginGUI::cb_Save(Fl_Button* o, void* v)
 { ((PoshSamplerPluginGUI*)(o->parent()))->cb_Save_i(o,v);}
 
 inline void PoshSamplerPluginGUI::cb_Volume_i(Fl_Knob* o, void* v)
-{ 		
+{
 	m_GUICH->Set("Value",(float)o->value());
 	m_GUICH->Set("Num",(int)m_SampleNum->value());
 	m_GUICH->SetCommand(PoshSamplerPlugin::SETVOL);
@@ -544,7 +552,7 @@ void PoshSamplerPluginGUI::cb_Volume(Fl_Knob* o, void* v)
 { ((PoshSamplerPluginGUI*)(o->parent()))->cb_Volume_i(o,v);}
 
 inline void PoshSamplerPluginGUI::cb_Pitch_i(Fl_Knob* o, void* v)
-{ 	
+{
 	m_GUICH->Set("Value",(float)o->value());
 	m_GUICH->Set("Num",(int)m_SampleNum->value());
 	m_GUICH->SetCommand(PoshSamplerPlugin::SETPITCH);
@@ -553,7 +561,7 @@ void PoshSamplerPluginGUI::cb_Pitch(Fl_Knob* o, void* v)
 { ((PoshSamplerPluginGUI*)(o->parent()))->cb_Pitch_i(o,v);}
 
 inline void PoshSamplerPluginGUI::cb_Octave_i(Fl_Knob* o, void* v)
-{ 
+{
 	m_GUICH->Set("Int",(int)o->value());
 	m_GUICH->Set("Num",(int)m_SampleNum->value());
 	m_GUICH->SetCommand(PoshSamplerPlugin::SETOCT);
@@ -562,7 +570,7 @@ void PoshSamplerPluginGUI::cb_Octave(Fl_Knob* o, void* v)
 { ((PoshSamplerPluginGUI*)(o->parent()))->cb_Octave_i(o,v);}
 
 inline void PoshSamplerPluginGUI::cb_Loop_i(Fl_Button* o, void* v)
-{ 	
+{
 	m_GUICH->Set("Bool",(bool)o->value());
 	m_GUICH->Set("Num",(int)m_SampleNum->value());
 	m_GUICH->SetCommand(PoshSamplerPlugin::SETLOOP);
@@ -570,8 +578,17 @@ inline void PoshSamplerPluginGUI::cb_Loop_i(Fl_Button* o, void* v)
 void PoshSamplerPluginGUI::cb_Loop(Fl_Button* o, void* v)
 { ((PoshSamplerPluginGUI*)(o->parent()))->cb_Loop_i(o,v);}
 
+inline void PoshSamplerPluginGUI::cb_Retrig_i (Fl_Button *o, void *v) {
+	m_GUICH->Set("Bool",(bool)o->value());
+	m_GUICH->Set("Num",(int)m_SampleNum->value());
+	m_GUICH->SetCommand(PoshSamplerPlugin::SETRETRIG);
+}
+void PoshSamplerPluginGUI::cb_Retrig (Fl_Button *o, void *v) {
+     ((PoshSamplerPluginGUI*)(o->parent()))->cb_Retrig_i (o, v);
+}
+
 inline void PoshSamplerPluginGUI::cb_PingPong_i(Fl_Button* o, void* v)
-{ 	
+{
 	m_GUICH->Set("Bool",(bool)o->value());
 	m_GUICH->Set("Num",(int)m_SampleNum->value());
 	m_GUICH->SetCommand(PoshSamplerPlugin::SETPING);

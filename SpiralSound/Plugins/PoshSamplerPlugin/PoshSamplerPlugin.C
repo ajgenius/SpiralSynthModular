@@ -34,51 +34,35 @@ static const int   S2_INPUT   = 19;
 static const int   S3_INPUT   = 20;
 
 extern "C" {
-SpiralPlugin* SpiralPlugin_CreateInstance()
-{
-	return new PoshSamplerPlugin;
-}
-
-char** SpiralPlugin_GetIcon()
-{
-	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 32;
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Delay/Sampling";
-}
+   SpiralPlugin* SpiralPlugin_CreateInstance() { return new PoshSamplerPlugin; }
+   char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
+   int SpiralPlugin_GetID() { return 32; }
+   string SpiralPlugin_GetGroupName() { return "Delay/Sampling"; }
 }
 
 ///////////////////////////////////////////////////////
 
-static void 
-InitializeSampleDescription(SampleDesc* NewDesc, const string &Pathname, int Note)
-{
-	  if (NewDesc) {
-		NewDesc->Pathname   = Pathname; 
-		NewDesc->Volume     = 1.0f;
-		NewDesc->Velocity   = 1.0f;
-		NewDesc->Pitch      = 1.0f;
-		NewDesc->PitchMod   = 1.0f;
-		NewDesc->SamplePos  = -1;
-		NewDesc->Loop       = false;
-		NewDesc->PingPong   = false;
-		NewDesc->Note       = Note;	
-		NewDesc->Octave     = 0;
-		NewDesc->TriggerUp  = true;
-		NewDesc->SamplePos  = -1;
-		NewDesc->SampleRate = 44100;
-		NewDesc->Stereo     = false;
-		NewDesc->PlayStart  = 0;
-		NewDesc->LoopStart  = 0;
-		NewDesc->LoopEnd    = INT_MAX;
-	}
+static void InitializeSampleDescription (SampleDesc* NewDesc, const string &Pathname, int Note) {
+       if (NewDesc) {
+          NewDesc->Pathname = Pathname;
+          NewDesc->Volume = 1.0f;
+          NewDesc->Velocity = 1.0f;
+          NewDesc->Pitch = 1.0f;
+          NewDesc->PitchMod = 1.0f;
+          NewDesc->SamplePos = -1;
+          NewDesc->Loop = false;
+          NewDesc->PingPong = false;
+          NewDesc->Note = Note;
+          NewDesc->Octave = 0;
+          NewDesc->TriggerUp = true;
+          NewDesc->SamplePos = -1;
+          NewDesc->SampleRate = 44100;
+          NewDesc->Stereo = false;
+          NewDesc->PlayStart = 0;
+          NewDesc->LoopStart = 0;
+          NewDesc->LoopEnd = INT_MAX;
+          NewDesc->ReTrig = true;
+       }
 }
 
 PoshSamplerPlugin::PoshSamplerPlugin() :
@@ -119,22 +103,17 @@ m_Recording(false)
 	m_PluginInfo.PortTips.push_back("Sample 6 Output");
 	m_PluginInfo.PortTips.push_back("Sample 7 Output");
 	m_PluginInfo.PortTips.push_back("Sample 8 Output");
-
-	for (int n=0; n<NUM_SAMPLES; n++)
-	{
+	for (int n=0; n<NUM_SAMPLES; n++) {
 		Sample* NewSample = new Sample;
 		m_SampleVec.push_back(NewSample);
-
 		SampleDesc* NewDesc = new SampleDesc;
 		char temp[256];
 		sprintf (temp, "PoshSampler%d_%d", GetID(), n);
  		InitializeSampleDescription(NewDesc, temp, n);
 		m_SampleDescVec.push_back(NewDesc);
 	}
-
-	m_Version=3;
+	m_Version = 4;
 	m_Current = 0;
-
 	m_AudioCH->Register("Num",&m_GUIArgs.Num);
 	m_AudioCH->Register("Value",&m_GUIArgs.Value);
 	m_AudioCH->Register("Bool",&m_GUIArgs.Boole);
@@ -146,268 +125,236 @@ m_Recording(false)
 	m_AudioCH->Register("PlayPos",&m_CurrentPlayPos,ChannelHandler::OUTPUT);
 	m_AudioCH->RegisterData("SampleBuffer",ChannelHandler::OUTPUT_REQUEST,&m_SampleBuffer,TRANSBUF_SIZE);
 	m_AudioCH->Register("SampleSize",&m_SampleSize,ChannelHandler::OUTPUT_REQUEST);
-
 }
 
-PoshSamplerPlugin::~PoshSamplerPlugin()
-{
-	for (vector<Sample*>::iterator i=m_SampleVec.begin();
-		 i!=m_SampleVec.end(); i++)
-	{
-		delete(*i);
-	}
-
-	for (vector<SampleDesc*>::iterator i=m_SampleDescVec.begin();
-		 i!=m_SampleDescVec.end(); i++)
-	{
-		delete(*i);
-	}
+PoshSamplerPlugin::~PoshSamplerPlugin() {
+   for (vector<Sample*>::iterator i=m_SampleVec.begin(); i!=m_SampleVec.end(); i++)
+       delete(*i);
+   for (vector<SampleDesc*>::iterator i=m_SampleDescVec.begin(); i!=m_SampleDescVec.end(); i++)
+       delete(*i);
 }
 
-PluginInfo &PoshSamplerPlugin::Initialise(const HostInfo *Host)
-{
-	return SpiralPlugin::Initialise(Host);;
+PluginInfo &PoshSamplerPlugin::Initialise (const HostInfo *Host) {
+           return SpiralPlugin::Initialise (Host);
 }
 
-SpiralGUIType *PoshSamplerPlugin::CreateGUI()
-{
-	return new PoshSamplerPluginGUI(m_PluginInfo.Width,
-								  	    m_PluginInfo.Height,
-										this,m_AudioCH,m_HostInfo);
+SpiralGUIType *PoshSamplerPlugin::CreateGUI() {
+   return new PoshSamplerPluginGUI (m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
 }
 
-void PoshSamplerPlugin::Reset()
-{
-	ResetPorts();
-	m_Current = 0;
-
-	for (int s=0; s<NUM_SAMPLES; s++)
-	{
-		m_SampleDescVec[s]->Pitch = m_InitialPitch[s] * m_SampleDescVec[s]->SampleRate/(float)m_HostInfo->SAMPLERATE;
-		m_SampleDescVec[s]->LoopEnd=m_SampleVec[s]->GetLength()-1;
-	}	
+void PoshSamplerPlugin::Reset() {
+     ResetPorts();
+     m_Current = 0;
+     for (int s=0; s<NUM_SAMPLES; s++) {
+         m_SampleDescVec[s]->Pitch = m_InitialPitch[s] * m_SampleDescVec[s]->SampleRate / (float)m_HostInfo->SAMPLERATE;
+         m_SampleDescVec[s]->LoopEnd = m_SampleVec[s]->GetLength() - 1;
+     }
 }
 
-void PoshSamplerPlugin::Execute()
-{
-	static bool Pong=false;
-
-	for (int s=0; s<NUM_SAMPLES+1; s++)
-	{
-		GetOutputBuf(s)->Zero();
-	}
-
-	float Freq=0;
-
-	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
-	{
-		Freq=GetInputPitch(NOTETRIG,n);
-
-		for (int s=0; s<NUM_SAMPLES; s++)
-		{
-			SampleDesc* S=m_SampleDescVec[s];
-
-			// if we have a sample here
-			if (m_SampleVec[s]->GetLength())
-			{
-				// Convert the CV input into a useable trigger
-
-				if (GetInput(s*2+1,n)>0 || feq(Freq,NoteTable[S->Note],0.01f))
-				{
-					if (S->TriggerUp)
-					{
-						if (s==0 && InputExists(S1_INPUT))
-							S->PlayStart=(long int)((GetInput(S1_INPUT,n)*0.5+0.5f)*(S->LoopEnd-S->LoopStart))+S->LoopStart;
-						if (s==1 && InputExists(S2_INPUT))
-							S->PlayStart=(long int)((GetInput(S2_INPUT,n)*0.5+0.5f)*(S->LoopEnd-S->LoopStart))+S->LoopStart;
-						if (s==2 && InputExists(S3_INPUT))
-							S->PlayStart=(long int)((GetInput(S3_INPUT,n)*0.5+0.5f)*(S->LoopEnd-S->LoopStart))+S->LoopStart;
-
-						if (S->PlayStart<0) S->PlayStart=0;
-
-						S->SamplePos=S->PlayStart;
-						S->TriggerUp=false;
-						S->Velocity=GetInput(s*2+1,n);
-					}
-				}
-				else
-				{
-					S->TriggerUp=true;
-
-					// end it if it's looping
-					if (S->Loop)
-					{
-						S->SamplePos=-1;
-					}
-				}
-
-				// if the sample has ended
-				if (S->SamplePos>=S->LoopEnd || S->SamplePos>=m_SampleVec[s]->GetLength())
-				{
-					if (S->Loop)
-					{
-						if (S->PingPong) Pong=true;
-						else S->SamplePos=S->LoopStart;
-					}
-					else
-					{
-						S->SamplePos=-1;
-					}
-				}
-
-				// if the sample has ended ponging
-				if (Pong && S->SamplePos<=S->LoopStart)
-				{
-					Pong=false;
-				}
-
-				if (S->SamplePos!=-1)
-				{
-					if (InputExists(s*2))
-					{
-						// Get the pitch from the CV
-						float PlayFreq=GetInputPitch(s*2,n);
-
-						// assumtion: base frequency = 440 (middle A)
-						S->Pitch = PlayFreq/440;
-						S->Pitch *= S->SampleRate/(float)m_HostInfo->SAMPLERATE;
-					}
-
-					// mix the sample to the output.
-					MixOutput(0,n,(*m_SampleVec[s])[S->SamplePos]*S->Volume*S->Velocity);
-					// copy the sample to it's individual output.
-					SetOutput(s+1,n,((*m_SampleVec[s])[S->SamplePos]*S->Volume));
-
-					float Freq=S->Pitch;
-					if (S->Octave>0) Freq*=1<<(S->Octave);
-					if (S->Octave<0) Freq/=1<<(-S->Octave);
-
-					if (Pong) S->SamplePos-=Freq*S->PitchMod;
-					else S->SamplePos+=Freq*S->PitchMod;
-				}
-			}
-		}
-	}
-
-	// record
-	static int LastRecording=false;
-	if(m_Recording && InputExists(REC_INPUT))
-	{
-		int s=0;//GUI->GetCurrentSample();
-
-		if (!LastRecording) m_SampleVec[s]->Clear();
-
-		// new sample
-		if (m_SampleVec[s]->GetLength()==0)
-		{
-			*m_SampleVec[s]=*GetInput(REC_INPUT);
-
-			m_SampleDescVec[s]->SampleRate=m_HostInfo->SAMPLERATE;
-			m_SampleDescVec[s]->Stereo=false;
-			m_SampleDescVec[s]->Pitch *= 1.0f;
-			m_InitialPitch[s] = m_SampleDescVec[s]->Pitch;
-			m_SampleDescVec[s]->LoopEnd=m_SampleVec[s]->GetLength();
-
-		}
-		else
-		{
-			m_SampleVec[s]->Add(*GetInput(REC_INPUT));
-			m_SampleDescVec[s]->LoopEnd=m_SampleVec[s]->GetLength();
-		}
-	}
-	LastRecording=m_Recording;
-
-	if (m_SampleDescVec[m_Current]->SamplePos>0)
-	{
-		m_CurrentPlayPos=(long)m_SampleDescVec[m_Current]->SamplePos;
-	}
+void PoshSamplerPlugin::Execute() {
+     static bool Pong = false;
+     for (int s=0; s<NUM_SAMPLES+1; s++) GetOutputBuf (s)->Zero();
+     float Freq = 0;
+     for (int n=0; n<m_HostInfo->BUFSIZE; n++) {
+         Freq = GetInputPitch (NOTETRIG, n);
+         for (int s=0; s<NUM_SAMPLES; s++) {
+             SampleDesc *S = m_SampleDescVec[s];
+             // if we have a sample here
+             if (m_SampleVec[s]->GetLength()) {
+                // Convert the CV input into a useable trigger
+                if (S->ReTrig || (S->SamplePos == -1)) {
+                   if (GetInput (s*2 + 1, n) > 0 || feq (Freq, NoteTable[S->Note], 0.01f)) {
+                      if (S->TriggerUp) {
+                         if (s==0 && InputExists (S1_INPUT))
+                            S->PlayStart = (long int)((GetInput (S1_INPUT, n) * 0.5 + 0.5f) * (S->LoopEnd-S->LoopStart)) + S->LoopStart;
+                         if (s==1 && InputExists (S2_INPUT))
+                            S->PlayStart = (long int)((GetInput (S2_INPUT, n) * 0.5 + 0.5f) * (S->LoopEnd-S->LoopStart)) + S->LoopStart;
+                         if (s==2 && InputExists (S3_INPUT))
+                            S->PlayStart = (long int)((GetInput (S3_INPUT, n) * 0.5 + 0.5f) * (S->LoopEnd-S->LoopStart)) + S->LoopStart;
+                         if (S->PlayStart < 0) S->PlayStart = 0;
+                         S->SamplePos = S->PlayStart;
+                         S->TriggerUp = false;
+                         S->Velocity = GetInput (s * 2 + 1, n);
+                      }
+                   }
+                   else {
+                      S->TriggerUp = true;
+                      // end it if it's looping
+                      if (S->Loop) S->SamplePos = -1;
+                   }
+                }
+                // if the sample has ended
+                if (S->SamplePos >= S->LoopEnd || S->SamplePos >= m_SampleVec[s]->GetLength()) {
+                   if (S->Loop) {
+                      if (S->PingPong) Pong = true;
+                      else S->SamplePos = S->LoopStart;
+                   }
+                   else {
+                      S->SamplePos = -1;
+                   }
+                }
+                // if the sample has ended ponging
+                if (Pong && S->SamplePos <= S->LoopStart)
+                   Pong = false;
+                if (S->SamplePos != -1) {
+                   if (InputExists (s * 2)) {
+                      // Get the pitch from the CV
+                      float PlayFreq = GetInputPitch (s * 2, n);
+                      // assumtion: base frequency = 440 (middle A)
+                      S->Pitch = PlayFreq / 440;
+                      S->Pitch *= S->SampleRate / (float)m_HostInfo->SAMPLERATE;
+                   }
+                   // mix the sample to the output.
+                   MixOutput (0, n, (*m_SampleVec[s])[S->SamplePos] * S->Volume * S->Velocity);
+                   // copy the sample to it's individual output.
+                   SetOutput (s + 1, n, ((*m_SampleVec[s])[S->SamplePos] * S->Volume));
+                   float Freq = S->Pitch;
+                   if (S->Octave > 0) Freq *= 1 << (S->Octave);
+                   if (S->Octave < 0) Freq /= 1 << (-S->Octave);
+                   if (Pong) S->SamplePos -= Freq * S->PitchMod;
+                   else S->SamplePos += Freq * S->PitchMod;
+                }
+             }
+         }
+     }
+     // record
+     static int LastRecording = false;
+     if (m_Recording && InputExists (REC_INPUT)) {
+        int s = 0; //GUI->GetCurrentSample();
+        if (!LastRecording) m_SampleVec[s]->Clear();
+        // new sample
+        if (m_SampleVec[s]->GetLength() == 0) {
+           *m_SampleVec[s] =* GetInput (REC_INPUT);
+           m_SampleDescVec[s]->SampleRate = m_HostInfo->SAMPLERATE;
+           m_SampleDescVec[s]->Stereo = false;
+           m_SampleDescVec[s]->Pitch *= 1.0f;
+           m_InitialPitch[s] = m_SampleDescVec[s]->Pitch;
+           m_SampleDescVec[s]->LoopEnd = m_SampleVec[s]->GetLength();
+        }
+        else {
+           m_SampleVec[s]->Add (*GetInput (REC_INPUT));
+           m_SampleDescVec[s]->LoopEnd = m_SampleVec[s]->GetLength();
+        }
+     }
+     LastRecording = m_Recording;
+     if (m_SampleDescVec[m_Current]->SamplePos > 0) {
+        m_CurrentPlayPos = (long)m_SampleDescVec[m_Current]->SamplePos;
+     }
 }
 
-void PoshSamplerPlugin::ExecuteCommands()
-{
-	if (m_AudioCH->IsCommandWaiting())
-	{
-		switch(m_AudioCH->GetCommand())
-		{
-			case (LOAD)         : LoadSample(m_GUIArgs.Num,m_GUIArgs.Name); break;
-			case (SAVE)         : SaveSample(m_GUIArgs.Num,m_GUIArgs.Name); break;
-			case (SETVOL)       : SetVolume(m_GUIArgs.Num,m_GUIArgs.Value); break;
-			case (SETPITCH)     : SetPitch(m_GUIArgs.Num,m_GUIArgs.Value); break;
-			case (SETLOOP)      : SetLoop(m_GUIArgs.Num,m_GUIArgs.Boole); break;
-			case (SETPING)      : SetPingPong(m_GUIArgs.Num,m_GUIArgs.Boole); break;
-			case (SETNOTE)      : SetNote(m_GUIArgs.Num,m_GUIArgs.Int); break;
-			case (SETOCT)       : SetOctave(m_GUIArgs.Num,m_GUIArgs.Int); break;
-			case (SETPLAYPOINTS):
-			{
-				SetPlayStart(m_GUIArgs.Num,m_GUIArgs.Start);
-				SetLoopStart(m_GUIArgs.Num,m_GUIArgs.LoopStart);
-				SetLoopEnd(m_GUIArgs.Num,m_GUIArgs.End);
-			} break;
-			case (SETREC)       : SetRecord(m_GUIArgs.Boole); break;
-			case (CUT)          : Cut(m_GUIArgs.Num,m_GUIArgs.Start,m_GUIArgs.End); break;
-			case (COPY)         : Copy(m_GUIArgs.Num,m_GUIArgs.Start,m_GUIArgs.End); break;
-			case (PASTE)        : Paste(m_GUIArgs.Num,m_GUIArgs.Start,m_GUIArgs.End); break;
-			case (MIX)          : Mix(m_GUIArgs.Num,m_GUIArgs.Start,m_GUIArgs.End); break;
-			case (CROP)         : Crop(m_GUIArgs.Num,m_GUIArgs.Start,m_GUIArgs.End); break;
-			case (REV)          : Reverse(m_GUIArgs.Num,m_GUIArgs.Start,m_GUIArgs.End); break;
-			case (AMP)          : Amp(m_GUIArgs.Num,m_GUIArgs.Start,m_GUIArgs.End); break;
-			case (SETCURRENT)   : m_Current = m_GUIArgs.Num; break;
-			case (GETSAMPLE)    :
-			{
-				m_AudioCH->SetupBulkTransfer((void*)m_SampleVec[m_Current]->GetBuffer());
-				m_SampleSize=m_SampleVec[m_Current]->GetLengthInBytes();
-			} break;
-		};
-	}
+void PoshSamplerPlugin::ExecuteCommands() {
+     if (m_AudioCH->IsCommandWaiting()) {
+        switch (m_AudioCH->GetCommand()) {
+          case LOAD:
+             LoadSample(m_GUIArgs.Num,m_GUIArgs.Name);
+             break;
+          case SAVE:
+             SaveSample(m_GUIArgs.Num,m_GUIArgs.Name);
+             break;
+          case SETVOL:
+             m_SampleDescVec[m_GUIArgs.Num]->Volume=m_GUIArgs.Value;
+             break;
+          case SETPITCH:
+             m_SampleDescVec[m_GUIArgs.Num]->PitchMod=m_GUIArgs.Value;
+             break;
+          case SETLOOP:
+             m_SampleDescVec[m_GUIArgs.Num]->Loop=m_GUIArgs.Boole;
+             break;
+          case SETPING:
+             m_SampleDescVec[m_GUIArgs.Num]->PingPong=m_GUIArgs.Boole;
+             break;
+          case SETNOTE:
+             m_SampleDescVec[m_GUIArgs.Num]->Note=m_GUIArgs.Int;
+             break;
+          case SETOCT:
+             m_SampleDescVec[m_GUIArgs.Num]->Octave=m_GUIArgs.Int-6;
+             break;
+          case SETPLAYPOINTS:
+             m_SampleDescVec[m_GUIArgs.Num]->PlayStart=m_GUIArgs.Start;
+             m_SampleDescVec[m_GUIArgs.Num]->LoopStart=m_GUIArgs.LoopStart;
+             m_SampleDescVec[m_GUIArgs.Num]->LoopEnd=m_GUIArgs.End;
+             break;
+          case SETREC:
+             m_Recording=m_GUIArgs.Boole;
+             break;
+          case CUT:
+             Cut (m_GUIArgs.Num, m_GUIArgs.Start, m_GUIArgs.End);
+             break;
+          case COPY:
+             Copy (m_GUIArgs.Num, m_GUIArgs.Start, m_GUIArgs.End);
+             break;
+          case PASTE:
+             Paste (m_GUIArgs.Num, m_GUIArgs.Start, m_GUIArgs.End);
+             break;
+          case MIX:
+             Mix (m_GUIArgs.Num, m_GUIArgs.Start, m_GUIArgs.End);
+             break;
+          case CROP:
+             Crop (m_GUIArgs.Num, m_GUIArgs.Start, m_GUIArgs.End);
+             break;
+          case REV:
+             Reverse (m_GUIArgs.Num, m_GUIArgs.Start, m_GUIArgs.End);
+             break;
+          case AMP:
+             Amp (m_GUIArgs.Num, m_GUIArgs.Start, m_GUIArgs.End);
+             break;
+          case SETCURRENT:
+             m_Current = m_GUIArgs.Num;
+             break;
+          case GETSAMPLE:
+             m_AudioCH->SetupBulkTransfer ((void*)m_SampleVec[m_Current]->GetBuffer());
+             m_SampleSize = m_SampleVec[m_Current]->GetLengthInBytes();
+             break;
+          case SETRETRIG:
+             m_SampleDescVec[m_GUIArgs.Num]->ReTrig=m_GUIArgs.Boole;
+             break;
+        };
+     }
 }
 
-void PoshSamplerPlugin::StreamOut(ostream &s)
-{
-	s<<m_Version<<" ";
-	for (int n=0; n<NUM_SAMPLES; n++)
-	{
-		s<<m_SampleDescVec[n]->Volume<<" "<<
-		   m_SampleDescVec[n]->PitchMod<<" "<<
-		   m_SampleDescVec[n]->Loop<<" "<<
-		   m_SampleDescVec[n]->PingPong<<" "<<
-		   m_SampleDescVec[n]->Note<<" "<<
-		   m_SampleDescVec[n]->Octave<<" "<<
-		   m_SampleDescVec[n]->SamplePos<<" "<<
-		   m_SampleDescVec[n]->PlayStart<<" "<<
-		   m_SampleDescVec[n]->LoopStart<<" "<<
-		   m_SampleDescVec[n]->LoopEnd<<" "<<
-		   m_SampleDescVec[n]->Note<<" ";
-	}
+void PoshSamplerPlugin::StreamOut (ostream &s) {
+     s << m_Version << " ";
+     for (int n=0; n<NUM_SAMPLES; n++) {
+         s << m_SampleDescVec[n]->Volume << " " <<
+              m_SampleDescVec[n]->PitchMod << " " <<
+              m_SampleDescVec[n]->Loop << " " <<
+              m_SampleDescVec[n]->PingPong << " " <<
+              m_SampleDescVec[n]->Note << " " <<
+              m_SampleDescVec[n]->Octave << " " <<
+              m_SampleDescVec[n]->SamplePos << " " <<
+              m_SampleDescVec[n]->PlayStart << " " <<
+              m_SampleDescVec[n]->LoopStart << " " <<
+              m_SampleDescVec[n]->LoopEnd << " " <<
+              m_SampleDescVec[n]->Note << " " <<
+              m_SampleDescVec[n]->ReTrig << " ";
+     }
 }
 
-void PoshSamplerPlugin::StreamIn(istream &s)
-{
-	int version;
-	s>>version;
-
-	for (int n=0; n<NUM_SAMPLES; n++)
-	{
-		s>>m_SampleDescVec[n]->Volume>>
-		   m_SampleDescVec[n]->PitchMod>>
-		   m_SampleDescVec[n]->Loop>>
-		   m_SampleDescVec[n]->PingPong>>
-		   m_SampleDescVec[n]->Note>>
-		   m_SampleDescVec[n]->Octave>>
-		   m_SampleDescVec[n]->SamplePos>>
-		   m_SampleDescVec[n]->PlayStart>>
-		   m_SampleDescVec[n]->LoopStart>>
-		   m_SampleDescVec[n]->LoopEnd>>
-		   m_SampleDescVec[n]->Note;
-
-		if (version<3)
-		{
-			int size;
-			s>>size;
-			s.ignore(1);
-			char Buf[4096];
-			s.get(Buf,size+1);
-		}
-	}
+void PoshSamplerPlugin::StreamIn (istream &s) {
+     int version;
+     s >> version;
+     for (int n=0; n<NUM_SAMPLES; n++) {
+         s >> m_SampleDescVec[n]->Volume >>
+              m_SampleDescVec[n]->PitchMod >>
+              m_SampleDescVec[n]->Loop >>
+              m_SampleDescVec[n]->PingPong >>
+              m_SampleDescVec[n]->Note >>
+              m_SampleDescVec[n]->Octave >>
+              m_SampleDescVec[n]->SamplePos >>
+              m_SampleDescVec[n]->PlayStart >>
+              m_SampleDescVec[n]->LoopStart >>
+              m_SampleDescVec[n]->LoopEnd >>
+              m_SampleDescVec[n]->Note;
+              if (version < 3) {
+                 int size;
+                 s >> size;
+                 s.ignore (1);
+                 char Buf[4096];
+                 s.get (Buf, size+1);
+              }
+              if (version > 3) s >> m_SampleDescVec[n]->ReTrig;
+              else m_SampleDescVec[n]->ReTrig = true;
+     }
 }
 
 void PoshSamplerPlugin::LoadSample(int n, const string &Name)

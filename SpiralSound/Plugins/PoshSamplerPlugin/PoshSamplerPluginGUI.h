@@ -71,95 +71,70 @@ class Fl_WaveDisplay : public Fl_Widget
 };
 
 
-class PoshSamplerPluginGUI : public SpiralPluginGUI
-{
-public:
-	PoshSamplerPluginGUI(int w, int h, PoshSamplerPlugin *o,ChannelHandler *ch, const HostInfo *Info);
-
-	virtual void UpdateValues(SpiralPlugin *o);
-	virtual void Update();
-
-	void SetPlayPos(long s) { m_Display->SetPlayPos(s); }
-	int  GetCurrentSample() { return (int)m_SampleNum->value(); }
-
-protected:
-    const std::string GetHelpText(const std::string &loc);
-
-private:
-
-	void UpdateSampleDisplay(int num);
-
-	char m_TextBuf[256];
-	int Numbers[NUM_SAMPLES];
-	bool m_UpdateMe;
-
-	Fl_Button* m_Load;
-	Fl_Button* m_Save;
-	Fl_Button* m_PosMarker;
-	Fl_Knob* m_Volume;
-	Fl_Knob* m_Pitch;
-	Fl_Knob* m_Octave;
-	Fl_Button* m_Loop;
-	Fl_Button* m_PingPong;
-	Fl_Button* m_Record;
-	Fl_Counter* m_Note;
-	Fl_WaveDisplay* m_Display;
-	Fl_Counter* m_SampleNum;
-	Fl_Button*  m_ZoomIn;
-	Fl_Button*  m_ZoomOut;
-
-	Fl_Button* m_Cut;
-	Fl_Button* m_Copy;
-	Fl_Button* m_Paste;
-	Fl_Button* m_Mix;
-	Fl_Button* m_Crop;
-	Fl_Button* m_Reverse;
-	Fl_Button* m_Amp;
-
-	//// Callbacks ////
-	inline void cb_Load_i(Fl_Button* o, void* v);
-	static void cb_Load(Fl_Button* o, void* v);
-	inline void cb_Save_i(Fl_Button* o, void* v);
-	static void cb_Save(Fl_Button* o, void* v);
-	inline void cb_PosMarker_i(Fl_Button* o, void* v);
-	static void cb_PosMarker(Fl_Button* o, void* v);
-	inline void cb_Record_i(Fl_Button* o, void* v);
-	static void cb_Record(Fl_Button* o, void* v);
-	inline void cb_Volume_i(Fl_Knob* o, void* v);
-	static void cb_Volume(Fl_Knob* o, void* v);
-	inline void cb_Pitch_i(Fl_Knob* o, void* v);
-	static void cb_Pitch(Fl_Knob* o, void* v);
-	inline void cb_Octave_i(Fl_Knob* o, void* v);
-	static void cb_Octave(Fl_Knob* o, void* v);
-	inline void cb_Loop_i(Fl_Button* o, void* v);
-	static void cb_Loop(Fl_Button* o, void* v);
-	inline void cb_PingPong_i(Fl_Button* o, void* v);
-	static void cb_PingPong(Fl_Button* o, void* v);
-	inline void cb_Note_i(Fl_Counter* o, void* v);
-	static void cb_Note(Fl_Counter* o, void* v);
-	inline void cb_SampleNum_i(Fl_Counter* o, void* v);
-	static void cb_SampleNum(Fl_Counter* o, void* v); 
-
-	inline void cb_Cut_i(Fl_Button* o, void* v);
-	static void cb_Cut(Fl_Button* o, void* v); 
-	inline void cb_Copy_i(Fl_Button* o, void* v);
-	static void cb_Copy(Fl_Button* o, void* v); 
-	inline void cb_Paste_i(Fl_Button* o, void* v);
-	static void cb_Paste(Fl_Button* o, void* v); 
-	inline void cb_Mix_i(Fl_Button* o, void* v);
-	static void cb_Mix(Fl_Button* o, void* v); 
-	inline void cb_Crop_i(Fl_Button* o, void* v);
-	static void cb_Crop(Fl_Button* o, void* v); 
-	inline void cb_Reverse_i(Fl_Button* o, void* v);
-	static void cb_Reverse(Fl_Button* o, void* v); 
-	inline void cb_Amp_i(Fl_Button* o, void* v);
-	static void cb_Amp(Fl_Button* o, void* v); 
-	inline void cb_ZoomIn_i(Fl_Button* o, void* v);
-	static void cb_ZoomIn(Fl_Button* o, void* v); 
-	inline void cb_ZoomOut_i(Fl_Button* o, void* v);
-	static void cb_ZoomOut(Fl_Button* o, void* v); 
-	inline void cb_WaveDisplay_i(Fl_WaveDisplay* o, void* v);
-	static void cb_WaveDisplay(Fl_WaveDisplay* o, void* v); 
+class PoshSamplerPluginGUI : public SpiralPluginGUI {
+   public:
+      PoshSamplerPluginGUI (int w, int h, PoshSamplerPlugin *o, ChannelHandler *ch, const HostInfo *Info);
+      virtual void UpdateValues (SpiralPlugin *o);
+      virtual void Update();
+      void SetPlayPos (long s) { m_Display->SetPlayPos(s); }
+      int GetCurrentSample() { return (int)m_SampleNum->value(); }
+   protected:
+      const std::string GetHelpText(const std::string &loc);
+   private:
+      void UpdateSampleDisplay(int num);
+      char m_TextBuf[256];
+      int Numbers[NUM_SAMPLES];
+      bool m_UpdateMe;
+      Fl_Knob *m_Volume, *m_Pitch, *m_Octave;
+      Fl_Button *m_Load, *m_Save, *m_Record, *m_Loop, *m_PingPong, *m_PosMarker, *m_Retrig;
+      Fl_Button *m_ZoomIn, *m_ZoomOut, *m_Cut, *m_Copy, *m_Paste, *m_Mix, *m_Crop, *m_Reverse, *m_Amp;
+      Fl_Counter *m_Note, *m_SampleNum;
+      Fl_WaveDisplay *m_Display;
+      //// Callbacks ////
+      inline void cb_Load_i (Fl_Button *o, void *v);
+      static void cb_Load (Fl_Button *o, void *v);
+      inline void cb_Save_i (Fl_Button *o, void *v);
+      static void cb_Save (Fl_Button *o, void *v);
+      inline void cb_Record_i (Fl_Button *o, void *v);
+      static void cb_Record (Fl_Button *o, void *v);
+      inline void cb_Loop_i (Fl_Button *o, void *v);
+      static void cb_Loop (Fl_Button *o, void *v);
+      inline void cb_PingPong_i (Fl_Button *o, void *v);
+      static void cb_PingPong (Fl_Button *o, void *v);
+      inline void cb_PosMarker_i (Fl_Button *o, void *v);
+      static void cb_PosMarker (Fl_Button *o, void *v);
+      inline void cb_Retrig_i (Fl_Button *o, void *v);
+      static void cb_Retrig (Fl_Button *o, void *v);
+      inline void cb_Volume_i (Fl_Knob *o, void *v);
+      static void cb_Volume (Fl_Knob *o, void *v);
+      inline void cb_Pitch_i (Fl_Knob *o, void *v);
+      static void cb_Pitch (Fl_Knob *o, void *v);
+      inline void cb_Octave_i (Fl_Knob *o, void *v);
+      static void cb_Octave (Fl_Knob *o, void *v);
+      inline void cb_Note_i (Fl_Counter *o, void *v);
+      static void cb_Note (Fl_Counter *o, void *v);
+      inline void cb_SampleNum_i (Fl_Counter *o, void *v);
+      static void cb_SampleNum (Fl_Counter *o, void *v);
+      inline void cb_Cut_i (Fl_Button *o, void *v);
+      static void cb_Cut (Fl_Button *o, void *v);
+      inline void cb_Copy_i (Fl_Button *o, void *v);
+      static void cb_Copy (Fl_Button *o, void *v);
+      inline void cb_Paste_i (Fl_Button *o, void *v);
+      static void cb_Paste (Fl_Button *o, void *v);
+      inline void cb_Mix_i (Fl_Button *o, void *v);
+      static void cb_Mix (Fl_Button *o, void *v);
+      inline void cb_Crop_i (Fl_Button *o, void *v);
+      static void cb_Crop (Fl_Button *o, void *v);
+      inline void cb_Reverse_i (Fl_Button *o, void *v);
+      static void cb_Reverse (Fl_Button *o, void *v);
+      inline void cb_Amp_i (Fl_Button *o, void *v);
+      static void cb_Amp (Fl_Button *o, void *v);
+      inline void cb_ZoomIn_i (Fl_Button *o, void *v);
+      static void cb_ZoomIn (Fl_Button *o, void *v);
+      inline void cb_ZoomOut_i (Fl_Button *o, void *v);
+      static void cb_ZoomOut (Fl_Button *o, void *v);
+      inline void cb_WaveDisplay_i  (Fl_WaveDisplay *o, void *v);
+      static void cb_WaveDisplay  (Fl_WaveDisplay *o, void *v);
 };
 
 #endif
