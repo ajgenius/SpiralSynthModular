@@ -131,6 +131,6 @@ or implied warranty.
 (Damage to ears, speakers or buildings are not my fault :))
 
 Dave Griffiths (Headmaster) - dave@pawfal.org
-Andy Preston (Caretaker) - edgeeffect@sourceforge.net
+Andy Preston (Caretaker) - andy@clubunix.co.uk
 
 www.pawfal.org

@@ -117,7 +117,7 @@ m_PatReset(false)
 
 	for (int n=0; n<NUM_PATSEQ; n++)
 	{
-		m_PatSeq[n]=0;
+		if (n ==0) m_PatSeq[n]=0; else  m_PatSeq[n]=-1;
 	}
 
 	m_AudioCH->Register("NoteCut",&m_NoteCut,ChannelHandler::INPUT);
@@ -416,84 +416,46 @@ void MatrixPlugin::StreamOut(ostream &s)
 
 }
 
-void MatrixPlugin::StreamIn(istream &s)
-{
-	int version;
-	s>>version;
-
-	switch (version)
-	{
-		case 1:
-		{
-			s>>m_Current>>m_Time>>m_Step>>m_Loop>>m_NoteCut;
-
-			for (int n=0; n<NUM_PATTERNS; n++)
-			{	
-				s>>m_Matrix[n].Length>>m_Matrix[n].Speed>>m_Matrix[n].Octave;
-		
-				for (int y=0; y<MATY; y++)
-				for (int x=0; x<MATX; x++)
-				{
-					s>>m_Matrix[n].Matrix[x][y];
-				}
-			}
-		} break;
-	
-		case 2:
-		{
-			s>>m_Current>>m_Time>>m_Step>>m_Loop>>m_NoteCut;
-	
-			for (int n=0; n<NUM_PATTERNS; n++)	
-			{	
-				s>>m_Matrix[n].Length>>m_Matrix[n].Speed>>m_Matrix[n].Octave;
-		
-				int x=0,y=0;
-				while(x!=-1)
-				{
-					s>>x;
-					if (x!=-1)
-					{						
-						s>>y;
-						if (y!=-1) m_Matrix[n].Matrix[x][y]=true;
-					}
-				}
-			}
-		} break;
-		
-		case 3:
-		case 4:
-		{
-			s>>m_Current>>m_Time>>m_Step>>m_Loop>>m_NoteCut;
-	
-			for (int n=0; n<NUM_PATTERNS; n++)	
-			{	
-				s>>m_Matrix[n].Length>>m_Matrix[n].Speed>>m_Matrix[n].Octave;
-		
-				int x=0,y=0;
-				float v;
-				while(x!=-1)
-				{
-					s>>x;
-					if (x!=-1)
-					{						
-						s>>y>>v;
-						if (y!=-1) 
-						{
-							m_Matrix[n].Matrix[x][y]=true;
-							m_Matrix[n].Volume[x][y]=v;
-						}
-					}
-				}
-			}
-			
-			if (version>3)
-			{
-				for (int n=0; n<NUM_PATSEQ; n++)	
-				{
-					s>>m_PatSeq[n];
-				}
-			}
-			
-		} break;
-	}
+void MatrixPlugin::StreamIn (istream &s) {
+     int version;
+     s >> version;
+     s >> m_Current >> m_Time >> m_Step >> m_Loop >> m_NoteCut;
+     for (int n=0; n<NUM_PATTERNS; n++) {
+         s >> m_Matrix[n].Length >> m_Matrix[n].Speed >> m_Matrix[n].Octave;
+         if (version == 1) {
+            for (int y=0; y<MATY; y++)
+                for (int x=0; x<MATX; x++)
+                    s >> m_Matrix[n].Matrix[x][y];
+         }
+         else {
+            // version > 1
+            float vol;
+            int x=0, y=0;
+            while (x!=-1) {
+                  s >> x;
+                  if (x != -1) {
+                     if (version == 2) {
+                        s >> y;
+                        if (y != -1) m_Matrix[n].Matrix[x][y] = true;
+                     }
+                     else {
+                        // version > 2
+                        s >> y >> vol;
+                        if (y != -1) {
+                           m_Matrix[n].Matrix[x][y] = true;
+                           m_Matrix[n].Volume[x][y] = vol;
+                        }
+                     }
+                  }
+            }
+         }
+     }
+     if (version > 3) {
+        int ps;
+        for (int n=0; n<NUM_PATSEQ; n++) {
+            s >> ps;
+            if (n==0 && ps<0) ps = 0;
+            m_PatSeq[n] = ps;
+        }
+     }
 }

@@ -292,7 +292,9 @@ m_LastPatSeqLight(0)
 		m_PatSeq[y]->type(FL_SIMPLE_COUNTER);
 		m_PatSeq[y]->step(1);
 		m_PatSeq[y]->textsize(8);
-                m_PatSeq[y]->minimum (-1);
+                if (y==0) m_PatSeq[y]->minimum (0);
+                else m_PatSeq[y]->minimum (-1);
+                m_PatSeq[y]->value (m_PatSeq[y]->minimum ());
                 m_PatSeq[y]->maximum (NUM_PATTERNS-1);
 		m_PatSeq[y]->callback((Fl_Callback*)cb_PatSeq,(void*)&Numbers[y]);
 		add(m_PatSeq[y]);
