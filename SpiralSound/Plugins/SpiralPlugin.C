@@ -39,11 +39,8 @@ SpiralPlugin::SpiralPlugin()
 
 SpiralPlugin::~SpiralPlugin()
 {
-	for (int n=0; n<m_PluginInfo.NumOutputs; n++)
-	{
-		delete m_Output[n];
-	}	
-	
+	RemoveAllOutputs();	
+	RemoveAllInputs();	
 	delete m_AudioCH;
 }
 

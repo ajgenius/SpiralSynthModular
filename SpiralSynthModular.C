@@ -202,24 +202,30 @@ void SynthModular::UpdatePluginGUIs()
 		if (i->second->m_DeviceGUI->Killed())
 		{
 			PauseAudio();
+
+			//Hide Device GUI FIRST
+			if (i->second->m_DeviceGUI->GetPluginWindow())
+			{
+				i->second->m_DeviceGUI->GetPluginWindow()->hide();
+			}
+
+			//Clear and remove Device GUI from canvas
+			i->second->m_DeviceGUI->Clear();
+			m_Canvas->RemoveDevice(i->second->m_DeviceGUI);
+			
+			//Delete Device GUI - must delete here or sometimes plugin will randomly crash
+			delete i->second->m_DeviceGUI;
+
+			//Delete Device Sometimes deleting audio before GUI causes an odd crash, so do it afterword
 			if (i->second->m_Device)
 			{
 				delete i->second->m_Device;
 				i->second->m_Device=NULL;
 			}
 
-			if (i->second->m_DeviceGUI->GetPluginWindow())
-			{
-				i->second->m_DeviceGUI->GetPluginWindow()->hide();
-				//m_MainWindow->remove(i->second->m_DeviceGUI->GetPluginWindow());
-			}
-
-			i->second->m_DeviceGUI->Clear();
-			m_Canvas->RemoveDevice(i->second->m_DeviceGUI);
-			// deleted by Canvas::Remove()? seems to cause random crashes
-			//delete i->second->m_DeviceGUI;
-
+			//Erase Device from DeviceWinMap
 			m_DeviceWinMap.erase(i);
+			
 			ResumeAudio();
 			break;
 		}
