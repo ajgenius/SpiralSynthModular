@@ -14,7 +14,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*/ 
+*/
 
 #include <string>
 #include <iostream>
@@ -70,7 +70,7 @@ DistributorPlugin::~DistributorPlugin()
 {
 }
 
-void DistributorPlugin::CreatePorts (int n, bool AddPorts) 
+void DistributorPlugin::CreatePorts (int n, bool AddPorts)
 {
 	int c;
 	char t[256];
@@ -196,15 +196,15 @@ void DistributorPlugin::StreamOut (ostream &s)
 	s << m_Version << " " << GetChannelCount() << " ";
 }
 
-void DistributorPlugin::StreamIn (istream &s) 
+void DistributorPlugin::StreamIn (istream &s)
 {
 	char Test;
 	int Version, Channels;
 
-	s.seekg (2, ios_base::cur );//skip to next line
+	s.seekg (2, ios::cur );//skip to next line
 	Test = s.peek();//peek first char
-	s.seekg (-2, ios_base::cur );//jump back to prior line 
-	
+	s.seekg (-2, ios::cur );//jump back to prior line
+
 	if ( (Test >= '0') && (Test <= '9') )
 	{
 		s >> Version;
@@ -214,7 +214,7 @@ void DistributorPlugin::StreamIn (istream &s)
 		//No Version, so use Version 1
 		Version = 1;
 	}
-	
+
 	switch (Version)
 	{
 		case 2:

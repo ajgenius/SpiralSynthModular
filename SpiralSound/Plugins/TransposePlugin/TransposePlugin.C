@@ -77,15 +77,17 @@ SpiralGUIType *TransposePlugin::CreateGUI() {
     return new TransposePluginGUI (m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
 }
 
+
+
 void TransposePlugin::Execute () {
 	float base=110, transpose=m_Amount;
 	float alpha = 17.312340490667;
-		
-	for (int n=0; n<m_HostInfo->BUFSIZE; n++) 
+
+	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 	{
 		float input0 = GetInputPitch(0, n);
 		float input1  = GetInputPitch(1, n);
-		
+
 		if (input0 > 0)
 		{
 			// input's half steps from base of 110 = round(alpha*logf(GetInputPitch(0, n)/110));
@@ -99,7 +101,7 @@ void TransposePlugin::Execute () {
 				}
 				else if (input0 != base)
 				{
-					base = round(alpha*logf(input0/110));
+					base = round(alpha*logf(input0/110.0));
 				}
 				m_Buffer[0][0] = input0;
 				m_Buffer[0][1] = base;
@@ -108,7 +110,7 @@ void TransposePlugin::Execute () {
 				{
 					transpose = m_Buffer[1][1];
 				}
-				else if (InputExists(1)) 
+				else if (InputExists(1))
 				{
 					transpose = (input1 > 0)?round(alpha*logf(input1/110)):0;
 				}
@@ -116,9 +118,9 @@ void TransposePlugin::Execute () {
 				m_Buffer[1][0] = input1;
 				m_Buffer[1][1] = transpose;
 
-				m_BufferInitialized = true;		
-			
-				m_Out = 110*exp2f((base + transpose)/12);
+				m_BufferInitialized = true;
+
+				m_Out = 110 * pow ((base+transpose) / 12, 2);
 			}	
 		}
 		else
