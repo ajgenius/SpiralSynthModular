@@ -13,6 +13,7 @@ More controls on ScopePlugin and MeterPlugin.
 Variable number of inputs and/or outputs on MixerPlugin and LoginPlugin.
 Improved PluginGUI resizing.
 Vanishing comment bugfix.
+Multiple FormantFilter bug-fix.
 Fixed bug that caused a segfault when the last MIDI plugin is deleted.
 Time display and 16bit, 24bit packed PCM, or 32bit float IEEE output in DiskWriter.
 Libsndfile support for Sampler, SpiralLoops, Streamer, etc.

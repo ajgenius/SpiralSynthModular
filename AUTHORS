@@ -24,7 +24,7 @@ Mike Rawes maintains the LADSPA plugin, and wrote the auto generating GUI for
 it. Also lots of other fixes, and gcc3.x "porting".
 
 ajgenius added libsnd support and reworked the JackPlugin, and
-DiskWriterPlugin.
+DiskWriterPlugin, and fixed loads of bugs.
 
 Michel Pollet porting to OSX.
 
