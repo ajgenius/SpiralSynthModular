@@ -15,7 +15,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*/ 
+*/
 
 #ifndef MousePlugin_H
 #define MousePlugin_H
@@ -51,11 +51,13 @@ class MousePlugin : public SpiralPlugin {
       virtual PluginInfo& Initialise (const HostInfo *Host);
       virtual SpiralGUIType* CreateGUI();
       virtual void Execute();
+      virtual void ExecuteCommands();
       virtual void StreamOut (ostream &s);
       virtual void StreamIn (istream &s);
-      //float getData() { return data; }
+      enum GUICommands {NONE, SETPORT};
    private:
       static int m_RefCount;
+      char m_Port;
       float m_Data;
       friend istream &operator>> (istream &s, MousePlugin &o);
       friend ostream &operator<< (ostream &s, MousePlugin &o);

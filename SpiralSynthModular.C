@@ -1402,7 +1402,7 @@ inline void SynthModular::cb_Connection_i(Fl_Canvas* o, void* v)
 	}
 	
 	if (!di->second->m_Device->SetInput(Wire->InputPort,(const Sample*)sample))
-	{ 
+	{
 		char num[32]; 
 		sprintf(num,"%d,%d",Wire->InputID,Wire->InputPort);
 		SpiralInfo::Alert("Warning: Connection problem - can't find source input "+string(num));
@@ -1455,12 +1455,12 @@ void SynthModular::LoadPatch(const char *fn)
 {
 	ifstream in(fn);
 
-	if (in) 
-	{	
+	if (in)
+	{
 		fstream	inf;
 		inf.open(fn, std::ios::in);
-		
-		m_FilePath=fn;	
+
+		m_FilePath=fn;
 
 		ClearUp();
 		inf>>*this;

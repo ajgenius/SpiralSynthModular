@@ -15,7 +15,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*/ 
+*/
 #ifndef SCRATCH_H
 #define SCRATCH_H
 
@@ -29,26 +29,21 @@
 #include <iostream.h>
 #include <pthread.h>
 
-class scratch
-{
-    public:
-        scratch(char *dev);
-        ~scratch();
-        void setData(char c);
-        char getData();
-        void stop();
-        
-    private:
-        
-        pthread_t scratch_thread;
-        pthread_mutex_t mutex;
-        
-        char data;
+class scratch {
+   public:
+      scratch (char *dev);
+      ~scratch();
+      void setData(char c);
+      char getData();
+      void stop();
+   private:
+      pthread_t scratch_thread;
+      pthread_mutex_t mutex;
+      char data;
 };
 
- 
-void openSerialPort(char *dev);
+void openSerialPort (char *dev);
 void closeSerialPort();
-void listen(scratch *scr);
+void listen (scratch *scr);
 
 #endif

@@ -23,18 +23,13 @@
 #include <FL/Fl.H>
 #include "MousePlugin.h"
 #include "../SpiralPluginGUI.h"
+#include "../Widgets/Fl_LED_Button.H"
 
 class ScratchWidget : public Fl_Widget {
    public:
-      ScratchWidget (int x, int y, int w, int h, const char *l, int BUFSIZE);
+      ScratchWidget (int x, int y, int w, int h, const char *l);
       void draw();
-      void SetNumChannels (int s) { m_Channels = s; }
       float m_Data;
-      int m_Channels;
-   private:
-      int m_GUIColour;
-      int m_GUIBGColour;
-      int m_Bufsize;
 };
 
 class MousePluginGUI : public SpiralPluginGUI {
@@ -45,11 +40,12 @@ class MousePluginGUI : public SpiralPluginGUI {
    protected:
       const string GetHelpText (const string &loc);
    private:
-//      virtual void draw();
-//      void Display(float data);
-//      virtual SpiralPlugin* GetPlugin() { return m_Plugin; }
-//      MousePlugin *m_Plugin;
       ScratchWidget *m_Scope;
+      Fl_LED_Button *m_Port0, *m_Port1;
+      inline void cb_Port0_i (Fl_LED_Button *o, void *v);
+      static void cb_Port0 (Fl_LED_Button *o, void *v);
+      inline void cb_Port1_i (Fl_LED_Button *o, void *v);
+      static void cb_Port1 (Fl_LED_Button *o, void *v);
 };
 
 #endif

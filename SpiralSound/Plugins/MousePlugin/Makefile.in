@@ -45,6 +45,7 @@ HEADERS =	MousePlugin.h \
 		../../ChannelHandler.h \
 		../../Sample.h \
 		scratch.h \
+		../Widgets/Fl_LED_Button.H \
 		../../../GUI/Widgets/SpiralGUI.H
 SOURCES =	MousePlugin.C \
 		MousePluginGUI.C \
@@ -53,6 +54,7 @@ SOURCES =	MousePlugin.C \
 		../../ChannelHandler.C \
 		../../Sample.C \
 		scratch.C \
+		../Widgets/Fl_LED_Button.cxx \
 		../../../GUI/Widgets/SpiralGUI.C
 OBJECTS =	MousePlugin.o \
 		MousePluginGUI.o \
@@ -61,6 +63,7 @@ OBJECTS =	MousePlugin.o \
 		../../ChannelHandler.o \
 		../../Sample.o \
 		scratch.o \
+		../Widgets/Fl_LED_Button.o \
 		../../../GUI/Widgets/SpiralGUI.o
 INTERFACES =
 UICDECLS =
@@ -128,6 +131,9 @@ install:
 		../../ChannelHandler.h \
 		../../../GUI/Widgets/SpiralGUI.H
 
+../Widgets/Fl_LED_Button.o: ../Widgets/Fl_LED_Button.cxx \
+		../Widgets/Fl_LED_Button.H
+
 ../../../GUI/Widgets/SpiralGUI.o: ../../../GUI/Widgets/SpiralGUI.C \
 		../../../GUI/Widgets/SpiralGUI.H
 
@@ -148,6 +154,7 @@ MousePluginGUI.o: MousePluginGUI.C \
 		MousePlugin.h \
 		../SpiralPluginGUI.h \
 		../SpiralPlugin.h \
+		../Widgets/Fl_LED_Button.H \
 		../../../GUI/Widgets/SpiralGUI.H \
 		../../Sample.h \
 		scratch.h

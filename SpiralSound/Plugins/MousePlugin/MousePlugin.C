@@ -18,7 +18,7 @@
 */
 
 
-#define SCRATCH_DEVICE "/dev/ttyS1"
+#define SCRATCH_DEVICE "/dev/ttyS0"
 
 #include "MousePlugin.h"
 #include "MousePluginGUI.h"
@@ -38,37 +38,34 @@ string SpiralPlugin_GetGroupName() { return "InputOutput"; }
 
 ///////////////////////////////////////////////////////
 
-//static const HostInfo* host;
-
 MousePluginSingleton* MousePluginSingleton::m_Singleton = NULL;
 
 int MousePlugin::m_RefCount=0;
-
-///////////////////////////////////////////////////////
 
 MousePluginSingleton::MousePluginSingleton() {
      scr = new scratch(SCRATCH_DEVICE); // create scratch object
 }
 
 MousePluginSingleton::~MousePluginSingleton() {
-     if (scr!=NULL) {
-        delete scr;
-    }
+     if (scr!=NULL) delete scr;
 }
 
 ///////////////////////////////////////////////////////
 
 MousePlugin::MousePlugin():
+m_Port ('0'),
 m_Data (0.0)
 {
 	m_RefCount++;
 	m_PluginInfo.Name = "Mouse";
-	m_PluginInfo.Width = 70;
-	m_PluginInfo.Height = 125;
+	m_PluginInfo.Width = 200;
+	m_PluginInfo.Height = 400;
 	m_PluginInfo.NumInputs = 1;
 	m_PluginInfo.NumOutputs = 1;
 	m_PluginInfo.PortTips.push_back ("Trigger");
 	m_PluginInfo.PortTips.push_back ("Output");
+        m_AudioCH->Register ("Port", &m_Port);
+        m_Version = 1;
 }
 
 MousePlugin::~MousePlugin() {
@@ -86,6 +83,15 @@ PluginInfo &MousePlugin::Initialise (const HostInfo *Host) {
 
 SpiralGUIType *MousePlugin::CreateGUI() {
       return new MousePluginGUI (m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
+}
+
+void MousePlugin::ExecuteCommands () {
+  if (m_AudioCH->IsCommandWaiting ()) {
+    switch (m_AudioCH->GetCommand()) {
+      case (SETPORT) : // do something
+                     break;
+    }
+  }
 }
 
 void MousePlugin::Execute() {
