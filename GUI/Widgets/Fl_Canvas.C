@@ -336,38 +336,31 @@ inline void Fl_Canvas::cb_OnDrag_i(Fl_Widget* widget, int xoffset,int yoffset)
 					o->position(o->x() + xoffset, o->y() + yoffset);
 				}
 			}
-		}		
+		}
 	}
 	return;
 }
 
-inline void Fl_Canvas::cb_DeleteDeviceGroup_i()
-{
-	if (! m_HaveSelection)
-		return;
-
-	//show some warning here	
-
-	for (unsigned int i=0; i<m_Selection.m_DeviceIds.size(); i++) 
-	{
-		int ID = m_Selection.m_DeviceIds[i];
-		Fl_DeviceGUI* o = FindDevice(ID);
-		if (o)
-		{
-			Fl_DeviceGUI::Kill(o);
-		}	
-
-	}	
-
-	m_HaveSelection=false;  
-	m_Selection.Clear(); 
-	redraw();
+void Fl_Canvas::DeleteSelection (void) {
+     if (! m_HaveSelection) return;
+     // show some warning here
+     for (unsigned int i=0; i<m_Selection.m_DeviceIds.size(); i++) {
+         int ID = m_Selection.m_DeviceIds[i];
+         Fl_DeviceGUI* o = FindDevice(ID);
+         if (o) Fl_DeviceGUI::Kill(o);
+     }
+     m_HaveSelection = false;
+     m_Selection.Clear();
+     redraw();
 }
 
+inline void Fl_Canvas::cb_DeleteDeviceGroup_i() {
+       DeleteSelection ();
+}
 
 void Fl_Canvas::PopupEditMenu(Fl_Group *group)
 {
-	if (! (m_Menu)) 
+	if (! (m_Menu))
 	{
 		m_Menu = new Fl_Menu_Button(Fl::event_x(),Fl::event_x(),4,4,"Edit");
 		m_Menu->type(Fl_Menu_Button::POPUP123);

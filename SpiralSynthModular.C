@@ -24,18 +24,15 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <dlfcn.h>
-
 #include <FL/Fl.H>
 #include <FL/Enumerations.H>
 #include <FL/fl_file_chooser.h>
 #include <FL/Fl_Box.h>
 #include <FL/Fl_Tooltip.h>
-
 #include "SpiralSynthModular.h"
 #include "SpiralSound/PluginManager.h"
 #include "SpiralSound/SpiralInfo.h"
 #include "SpiralSound/Plugins/SpiralPluginGUI.h"
-
 #include "GUI/SSM.xpm"
 #include "GUI/load.xpm"
 #include "GUI/save.xpm"
@@ -74,14 +71,14 @@ DeviceWin::~DeviceWin()
 //////////////////////////////////////////////////////////
 
 SynthModular::SynthModular():
-m_NextID(0),
-m_Frozen(false)
+m_Frozen(false),
+m_NextID(0)
 {
 	/* Shared Audio State Information  */
 	m_Info.BUFSIZE = SpiralInfo::BUFSIZE;
 	m_Info.SAMPLERATE = SpiralInfo::SAMPLERATE;
 	m_Info.PAUSED = false;
-	
+
 	/* obsolete - REMOVE SOON  */
 	m_Info.FRAGSIZE = SpiralInfo::FRAGSIZE;
 	m_Info.FRAGCOUNT = SpiralInfo::FRAGCOUNT;
@@ -152,12 +149,12 @@ void SynthModular::Update()
 	m_CH.UpdateDataNow();
 
 	if (m_Frozen) return;
-	
+
 	// for all the plugins
 	for(map<int,DeviceWin*>::iterator i=m_DeviceWinMap.begin();
 		i!=m_DeviceWinMap.end(); i++)
 	{
-		if (i->second->m_Device && i->second->m_Device->IsDead())			
+		if (i->second->m_Device && i->second->m_Device->IsDead())
 		{
 			//Delete Device
 			delete i->second->m_Device;
@@ -185,11 +182,11 @@ void SynthModular::Update()
 				if (i->second->m_Device->IsAudioDriver())
 				{
 					AudioDriver *driver = ((AudioDriver *)i->second->m_Device);
-					
+
 					if (driver->ProcessType() == AudioDriver::ALWAYS)
 					{
 						driver->ProcessAudio();
-					}	
+					}
 				}
 
 				// run any commands we've received from the GUI's
@@ -218,16 +215,16 @@ void SynthModular::Update()
 			else
 			{
 				di->second->m_Device->Execute();
-				
+
 				// If this is an audio device see if we need to ProcessAudio here
 				if (di->second->m_Device->IsAudioDriver())
 				{
 					AudioDriver *driver = ((AudioDriver *)di->second->m_Device);
-				
+
 					if (driver->ProcessType() == AudioDriver::MANUAL)
 					{
 						driver->ProcessAudio();
-					}	
+					}
 				}
 			}
 
@@ -258,14 +255,14 @@ void SynthModular::UpdatePluginGUIs()
 		if (i->second->m_DeviceGUI && i->second->m_DeviceGUI->Killed())
 		{
 			bool erase = true;
-			
+
 			//Stop processing of audio if any
 			if (i->second->m_Device)
 			{
 				if (i->second->m_Device->Kill());
 				erase = false;
-			}			
-	
+			}
+
 			//Clear GUI Device
 			i->second->m_DeviceGUI->Clear();
 
@@ -295,7 +292,7 @@ void SynthModular::UpdatePluginGUIs()
 		cout << "Updating SampleRate to: " << SpiralInfo::SAMPLERATE << " and Buffer Size to: " << SpiralInfo::BUFSIZE << " to match current Audio Driver." << endl;
 		UpdateHostInfo();
 		m_HostNeedsUpdate = false;
-	}	
+	}
 }
 
 //////////////////////////////////////////////////////////
@@ -303,30 +300,53 @@ void SynthModular::UpdatePluginGUIs()
 SpiralWindowType *SynthModular::CreateWindow()
 {
 	m_TopWindow = new SpiralWindowType(MAIN_WIDTH, MAIN_HEIGHT, LABEL.c_str());
+        m_TopWindow->user_data((void*)(this));
 	//m_TopWindow->resizable(m_TopWindow);
-
-	int but=50;
-        int ToolbarHeight=but+0;
-
-        m_Topbar = new Fl_Pack (0, 0, MAIN_WIDTH, ToolbarHeight, "");
+        m_MainMenu = new Fl_Menu_Bar (0, 0, MAIN_WIDTH, 20, "");
+        m_MainMenu->user_data((void*)(this));
+        m_MainMenu->box(FL_PLASTIC_UP_BOX);
+        m_MainMenu->textsize (10);
+        m_MainMenu->add ("File/New", 0, cb_New, (void*)(this), FL_MENU_DIVIDER);
+        m_MainMenu->add ("File/Load", 0, cb_Load, (void*)(this), 0);
+        m_MainMenu->add ("File/Save As", 0, cb_Save, (void*)(this), 0);
+        m_MainMenu->add ("File/Merge", 0, cb_Merge, (void*)(this), FL_MENU_DIVIDER);
+        m_MainMenu->add ("File/Exit", 0, cb_Close, (void*)(this), 0);
+        m_MainMenu->add ("Edit/Cut", 0, cb_Cut, (void*)(this), 0);
+        m_MainMenu->add ("Edit/Copy", 0, cb_Copy, (void*)(this), 0);
+        m_MainMenu->add ("Edit/Paste", 0, cb_Paste, (void*)(this), 0);
+        m_MainMenu->add ("Edit/Delete", 0, cb_Delete, (void*)(this), FL_MENU_DIVIDER);
+        //m_MainMenu->add ("Edit/Toolbars/Plugins", 0, cb_Undefined, (void*)(this), 0);
+        //m_MainMenu->add ("Edit/Toolbars/Function", 0, cb_Undefined, (void*)(this), 0);
+        m_MainMenu->add ("Edit/Options", 0, cb_Options, (void*)(this), 0);
+        m_MainMenu->add ("Plugins/dummy", 0, NULL, NULL, 0);
+        m_MainMenu->add ("Audio/Pause", 0, cb_PlayPause, NULL, 0);
+        m_MainMenu->add ("Audio/Reset", 0, cb_Reset, NULL, 0);
+        //m_MainMenu->add ("Help/Plugins/dummy", 0, NULL, NULL, 0);
+        //m_MainMenu->add ("Help/Credits", 0, NULL, (void*)(this), 0);
+        //m_MainMenu->add ("Help/About", 0, NULL, (void*)(this), 0);
+        m_TopWindow->add (m_MainMenu);
+	int but = 50;
+        int ToolbarHeight = but + 0;
+        m_Topbar = new Fl_Pack (0, 20, MAIN_WIDTH, ToolbarHeight, "");
         m_Topbar->user_data((void*)(this));
        	m_Topbar->type(FL_HORIZONTAL);
-		m_Topbar->color(SpiralInfo::GUICOL_Button);
+	m_Topbar->color(SpiralInfo::GUICOL_Button);
         m_TopWindow->add(m_Topbar);
 
-        m_ToolbarPanel = new Fl_Pack (0, 0, but*6, ToolbarHeight, "");
+        m_ToolbarPanel = new Fl_Pack (0, 20, but*6, ToolbarHeight, "");
         m_ToolbarPanel->user_data((void*)(this));
        	m_ToolbarPanel->type(FL_VERTICAL);
-		m_ToolbarPanel->color(SpiralInfo::GUICOL_Button);
+	m_ToolbarPanel->color(SpiralInfo::GUICOL_Button);
         m_Topbar->add(m_ToolbarPanel);
 
-        m_Toolbar = new Fl_Pack (0, 0, but*6, but, "");
+        m_Toolbar = new Fl_Pack (0, 20, but*6, but, "");
         m_Toolbar->user_data((void*)(this));
        	m_Toolbar->type(FL_HORIZONTAL);
-		m_Toolbar->color(SpiralInfo::GUICOL_Button);
+	m_Toolbar->color(SpiralInfo::GUICOL_Button);
         m_ToolbarPanel->add(m_Toolbar);
 
-        m_Load = new Fl_Button(0, 0, but, but, "");
+        m_Load = new Fl_Button (0, 0, but, but, "");
+        m_Load->user_data ((void*)(this));
 	Fl_Pixmap *tPix = new Fl_Pixmap(load_xpm);
 	m_Load->image(tPix->copy());
 	delete tPix;
@@ -340,6 +360,7 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_Toolbar->add(m_Load);
 
 	m_Save = new Fl_Button(0, 0, but, but, "");
+        m_Save->user_data ((void*)(this));
 	tPix = new Fl_Pixmap(save_xpm);
 	m_Save->image(tPix->copy());
 	delete tPix;
@@ -353,6 +374,7 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_Toolbar->add(m_Save);
 
 	m_New = new Fl_Button(0, 0, but, but, "");
+        m_New->user_data ((void*)(this));
 	tPix = new Fl_Pixmap(new_xpm);
 	m_New->image(tPix->copy());
 	delete tPix;
@@ -366,6 +388,7 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_Toolbar->add(m_New);
 
 	m_Options = new Fl_Button(0, 0, but, but, "");
+        m_Options->user_data ((void*)(this));
 	tPix = new Fl_Pixmap(options_xpm);
 	m_Options->image(tPix->copy());
 	delete tPix;
@@ -375,7 +398,7 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_Options->selection_color(SpiralInfo::GUICOL_Tool);
  	m_Options->labelsize (1);
         m_Options->tooltip("Options");
-	m_Options->callback((Fl_Callback*)cb_Rload);
+	m_Options->callback((Fl_Callback*)cb_Options);
 	m_Toolbar->add(m_Options);
 
 	m_NewComment = new Fl_Button(0, 0, but, but, "");
@@ -392,37 +415,38 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_Toolbar->add(m_NewComment);
 
         m_PlayResetGroup = new Fl_Pack (0, 0, but, but, "");
-        m_PlayResetGroup->user_data((void*)(this));
 	m_PlayResetGroup->color(SpiralInfo::GUICOL_Button);
         m_Toolbar->add(m_PlayResetGroup);
 
-	m_PlayPause = new Fl_Button(0, 0, but, but/2, "Pause ||");
+	m_PlayPause = new Fl_Button(0, 0, but, but/2, "@||");
+        m_PlayPause->user_data((void*)(this));
         m_PlayPause->type(0);
 	m_PlayPause->box(FL_PLASTIC_UP_BOX);
 	m_PlayPause->color(SpiralInfo::GUICOL_Button);
 	m_PlayPause->selection_color(SpiralInfo::GUICOL_Tool);
-        m_PlayPause->labelsize (1);
-        m_PlayPause->tooltip("Play/Pause");
+        m_PlayPause->labelsize (10);
+        m_PlayPause->tooltip("Pause");
 	m_PlayPause->callback((Fl_Callback*)cb_PlayPause);
 	m_PlayResetGroup->add(m_PlayPause);
 
 	m_Reset = new Fl_Button(0, 0, but, but/2, "Reset");
 	m_Reset->box(FL_PLASTIC_UP_BOX);
 	m_Reset->color(SpiralInfo::GUICOL_Button);
+        m_Reset->user_data((void*)(this));
 	m_Reset->selection_color(SpiralInfo::GUICOL_Tool);
-        m_Reset->labelsize (1);
+        m_Reset->labelsize (10);
         m_Reset->tooltip("Reset Audio State of all Plugins");
 	m_Reset->callback((Fl_Callback*)cb_Reset);
 	m_PlayResetGroup->add(m_Reset);
 
         m_GroupFiller = new Fl_Group (0, 0, 0, ToolbarHeight, "");
-		m_GroupFiller->color(SpiralInfo::GUICOL_Button);
+	m_GroupFiller->color(SpiralInfo::GUICOL_Button);
 	m_Topbar->add (m_GroupFiller);
 
        	m_GroupTab = new Fl_Tabs (0, 0, MAIN_WIDTH-m_GroupFiller->w()-but*6, ToolbarHeight, "");
         m_GroupTab->user_data ((void*)(this));
-		m_GroupTab->box(FL_PLASTIC_DOWN_BOX);
-		m_GroupTab->color(SpiralInfo::GUICOL_Button);
+	m_GroupTab->box(FL_PLASTIC_DOWN_BOX);
+	m_GroupTab->color(SpiralInfo::GUICOL_Button);
         m_GroupTab->callback((Fl_Callback*)cb_GroupTab);
 	m_Topbar->add (m_GroupTab);
 
@@ -430,11 +454,13 @@ SpiralWindowType *SynthModular::CreateWindow()
 
         /////////////////
 
-	m_CanvasScroll = new Fl_Scroll(0, ToolbarHeight, MAIN_WIDTH, MAIN_HEIGHT-ToolbarHeight, "");
+        ToolbarHeight += 20; // Stretch this a bit to allow room for the menu-bar too.
+	m_CanvasScroll = new Fl_Scroll (0, ToolbarHeight, MAIN_WIDTH, MAIN_HEIGHT-ToolbarHeight, "");
         m_TopWindow->add(m_CanvasScroll);
 	m_TopWindow->resizable(m_CanvasScroll);
 
 	m_Canvas = new Fl_Canvas(-5000, -5000, 10000, 10000, "");
+        m_Canvas->user_data ((void*)(this));
         m_Canvas->type(1);
 	m_Canvas->box(FL_FLAT_BOX);
         m_Canvas->labeltype(FL_ENGRAVED_LABEL);
@@ -443,13 +469,11 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_Canvas->user_data((void*)(this));
 	m_Canvas->SetConnectionCallback((Fl_Callback*)cb_Connection);
 	m_Canvas->SetUnconnectCallback((Fl_Callback*)cb_Unconnect);
-	m_Canvas->SetAddDeviceCallback((Fl_Callback*)cb_NewDeviceFromMenu);
-
-	m_Canvas->SetCutDeviceGroupCallback((Fl_Callback*)cb_CutDeviceGroup);
-	m_Canvas->SetCopyDeviceGroupCallback((Fl_Callback*)cb_CopyDeviceGroup);
-	m_Canvas->SetPasteDeviceGroupCallback((Fl_Callback*)cb_PasteDeviceGroup);
-
-	m_Canvas->SetMergePatchCallback((Fl_Callback*)cb_MergePatch);
+	m_Canvas->SetAddDeviceCallback((Fl_Callback*)cb_NewDeviceFromCanvasMenu);
+	m_Canvas->SetCutDeviceGroupCallback((Fl_Callback*)cb_Cut);
+	m_Canvas->SetCopyDeviceGroupCallback((Fl_Callback*)cb_Copy);
+	m_Canvas->SetPasteDeviceGroupCallback((Fl_Callback*)cb_Paste);
+        m_Canvas->SetMergePatchCallback((Fl_Callback*)cb_Merge);
 
 	m_CanvasScroll->add(m_Canvas);
 
@@ -505,144 +529,133 @@ vector<string> SynthModular::BuildPluginList (const string &Path) {
         return ret;
 }
 
-void SynthModular::LoadPlugins(string pluginPath)
-{
+void SynthModular::LoadPlugins (string pluginPath) {
+     int Width  = 35;
+     int Height = 35;
+     int SWidth  = 256;
+     int SHeight = 256;
+     Fl_Pixmap pic (SSM_xpm);
+     Fl_Double_Window* Splash = new Fl_Double_Window ((Fl::w()/2) - (SWidth/2), (Fl::h()/2) - (SHeight/2),
+                                                       SWidth, SHeight, "SSM");
+     Splash->border(0);
+     Fl_Box* pbut = new Fl_Box (0, 8, SWidth, SHeight, "");
+     pbut->box (FL_NO_BOX);
+     pic.label (pbut);
+     Fl_Box *splashtext = new Fl_Box (5, SHeight-20, 200, 20, "Loading...");
+     splashtext->labelsize (10);
+     splashtext->box (FL_NO_BOX);
+     splashtext->align (FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
+     Splash->add (pbut);
+     Splash->add (splashtext);
+     Splash->show();
+     int ID=-1;
+     vector<string> PluginVector;
+     if (SpiralInfo::USEPLUGINLIST) PluginVector = SpiralInfo::PLUGINVEC;
+     else {
+        if (pluginPath.empty()) PluginVector = BuildPluginList (SpiralInfo::PLUGIN_PATH);
+        else {
+           string::iterator i = pluginPath.end() - 1;
+           if (*i != '/') pluginPath += '/';
+           PluginVector = BuildPluginList (pluginPath);
+        }
+     }
+     for (vector<string>::iterator i=PluginVector.begin(); i!=PluginVector.end(); i++) {
+         string Fullpath;
+         if (pluginPath=="") Fullpath=SpiralInfo::PLUGIN_PATH+*i;
+         else Fullpath = pluginPath + *"/" + *i;
+         ID = PluginManager::Get()->LoadPlugin (Fullpath.c_str());
+         if (ID!=PluginError) {
+            #ifdef DEBUG_PLUGINS
+            cerr << ID << " = Plugin [" << *i << "]" << endl;
+            #endif
+            Fl_ToolButton *NewButton = new Fl_ToolButton (0, 0, Width, Height, "");
+            // we can't set user data, because the callback uses it
+            // NewButton->user_data ((void*)(this));
+            NewButton->labelsize (1);
+            Fl_Pixmap *tPix = new Fl_Pixmap (PluginManager::Get()->GetPlugin(ID)->GetIcon());
+            NewButton->image(tPix->copy(tPix->w(),tPix->h()));
+            delete tPix;
+            string GroupName = PluginManager::Get()->GetPlugin(ID)->GetGroupName();
+            Fl_Pack* the_group=NULL;
+            // find or create this group, and add an icon
+            map<string,Fl_Pack*>::iterator gi = m_PluginGroupMap.find (GroupName);
+            if (gi == m_PluginGroupMap.end()) {
+               the_group = new Fl_Pack (m_GroupTab->x(), 16, m_GroupTab->w(), m_GroupTab->h() - 15, GroupName.c_str());
+               the_group->type(FL_HORIZONTAL);
+               the_group->labelsize(8);
+               the_group->color(SpiralInfo::GUICOL_Button);
+               the_group->user_data((void*)(this));
+               //m_GroupTab->add(the_group);
+               m_GroupTab->value(the_group);
+               m_PluginGroupMap[GroupName]=the_group;
+            }
+            else the_group = gi->second;
+            NewButton->type (0);
+            NewButton->box (FL_NO_BOX);
+            NewButton->down_box (FL_NO_BOX);
+            //NewButton->color(SpiralInfo::GUICOL_Button);
+            //NewButton->selection_color(SpiralInfo::GUICOL_Button);
+            the_group->add (NewButton);
+            string PluginName=*i;
+            // find the first slash, if there is one, and get rid of everything before and including it
+            unsigned int p = PluginName.find ('/');
+            if (p < PluginName.length()) PluginName.erase (0, p);
+            // find last . and get rid of everything after and including it
+            p = PluginName.rfind ('.');
+            unsigned int l = PluginName.length ();
+            if (p < l) PluginName.erase (p, l);
+            NewButton->tooltip (PluginName.c_str());
+            // Slashes have significance to the menu widgets, remove them from the GroupName
+            while ((p = GroupName.find ('/')) < PluginName.length())
+                  GroupName = GroupName.replace (p, 1, " and ");
+            string MenuEntry = "Plugins/" + GroupName + "/" + PluginName;
+            m_MainMenu->add (MenuEntry.c_str(), 0, cb_NewDeviceFromMenu, &Numbers[ID], 0);
+            //MenuEntry = "Help/" + MenuEntry;
+            //m_MainMenu->add (MenuEntry.c_str(), 0, NULL, &Numbers[ID], 0);
 
-	int Width  = 35;
-	int Height = 35;
+            // andy preston
+            // my next step would be to add the plugins to Andrew's right-click menu
+            // to free up the middle button
 
-	int SWidth  = 256;
-	int SHeight = 256;
+            m_Canvas->AddPluginName (PluginName, PluginManager::Get()->GetPlugin(ID)->ID);
 
-	Fl_Pixmap pic(SSM_xpm);
 
-	Fl_Double_Window* Splash = new Fl_Double_Window((Fl::w()/2)-(SWidth/2),
-									                (Fl::h()/2)-(SHeight/2),
-									                SWidth,SHeight,"SSM");
-	Splash->border(0);
-
-	Fl_Box* pbut = new Fl_Box(0,8,SWidth,SHeight,"");
-	pbut->box(FL_NO_BOX);
-	pic.label(pbut);
-	Fl_Box *splashtext = new Fl_Box(5,SHeight-20,200,20,"Loading...");
-	splashtext->labelsize(10);
-	splashtext->box(FL_NO_BOX);
-	splashtext->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
-	Splash->add(pbut);
-	Splash->add(splashtext);
-	Splash->show();
-
-        int ID=-1;
-
-	vector<string> PluginVector;
-
-	if (SpiralInfo::USEPLUGINLIST) {
-	   PluginVector=SpiralInfo::PLUGINVEC;
-	}
-	else {
-           if (pluginPath.empty()) {
-              PluginVector=BuildPluginList (SpiralInfo::PLUGIN_PATH);
-           }
-           else {
-              string::iterator i = pluginPath.end() - 1;
-              if (*i != '/') pluginPath += '/';
-              PluginVector=BuildPluginList(pluginPath);
-           }
-	}
-
-	for (vector<string>::iterator i=PluginVector.begin();
-		 i!=PluginVector.end(); i++)
-	{
-		string Fullpath;
-		if (pluginPath=="")
-		{
-			Fullpath=SpiralInfo::PLUGIN_PATH+*i;
-		}
-		else
-		{
-			Fullpath=pluginPath+*"/"+*i;
-		}
-
-		ID=PluginManager::Get()->LoadPlugin(Fullpath.c_str());
-		if (ID!=PluginError)
-		{
-			#ifdef DEBUG_PLUGINS
-			cerr << ID << " = Plugin [" << *i << "]" << endl;
-			#endif
-
-			Fl_ToolButton *NewButton = new Fl_ToolButton(0,0,Width,Height,"");
-                        NewButton->user_data((void*)(this));
-			NewButton->labelsize(1);
-			Fl_Pixmap *tPix = new Fl_Pixmap(PluginManager::Get()->GetPlugin(ID)->GetIcon());
-			NewButton->image(tPix->copy(tPix->w(),tPix->h()));
-			delete tPix;
-
-			string GroupName = PluginManager::Get()->GetPlugin(ID)->GetGroupName();
-                        Fl_Pack* the_group=NULL;
-
-                        // find or create this group, and add an icon
-			map<string,Fl_Pack*>::iterator gi=m_PluginGroupMap.find(GroupName);
-			if (gi==m_PluginGroupMap.end())
-			{
-                                the_group = new Fl_Pack (m_GroupTab->x(), 16, m_GroupTab->w(), m_GroupTab->h()-15, GroupName.c_str());
-	                        the_group->type(FL_HORIZONTAL);
-                                the_group->labelsize(8);
-								the_group->color(SpiralInfo::GUICOL_Button);
-                                the_group->user_data((void*)(this));
-	                        //m_GroupTab->add(the_group);
-                                m_GroupTab->value(the_group);
-				m_PluginGroupMap[GroupName]=the_group;
-			}
-			else
-			{
-				the_group=gi->second;
-			}
-                        NewButton->type(0);
-			NewButton->box(FL_NO_BOX);
-			NewButton->down_box(FL_NO_BOX);
-			//NewButton->color(SpiralInfo::GUICOL_Button);
-			//NewButton->selection_color(SpiralInfo::GUICOL_Button);
-			the_group->add(NewButton);
-
-			string tooltip=*i;
-            		// find the first / if there is one, and get rid of everything before and including it
-			unsigned int p = tooltip.find ('/');
-			if (p < tooltip.length()) tooltip.erase (0, p);
-			// find last . and get rid of everything after and including it
-			p = tooltip.rfind ('.');
-			unsigned int l = tooltip.length ();
-			if (p < l) tooltip.erase (p, l);
-			m_Canvas->AddPluginName (tooltip, PluginManager::Get()->GetPlugin(ID)->ID);
-			splashtext->label (tooltip.c_str());
-               		Splash->redraw();
-			NewButton->tooltip (tooltip.c_str());
-
-			NewButton->callback((Fl_Callback*)cb_NewDevice,&Numbers[ID]);
-			NewButton->show();
-			m_DeviceVec.push_back(NewButton);
-
-			the_group->redraw();
-
-//			m_NextPluginButton++;
-			Fl::check();
-		}
-	}
-        map<string,Fl_Pack*>::iterator PlugGrp;
-
-        for (PlugGrp = m_PluginGroupMap.begin(); PlugGrp!= m_PluginGroupMap.end(); ++PlugGrp)
-		{
-                m_GroupTab->add(PlugGrp->second);
-				PlugGrp->second->add(new Fl_Box(0,0,600,100,""));
-		}
-
-	// try to show the SpiralSound group
-        PlugGrp = m_PluginGroupMap.find("SpiralSound");
-	// can't find it - show the first plugin group
-	if (PlugGrp==m_PluginGroupMap.end()) PlugGrp=m_PluginGroupMap.begin();
-        m_GroupTab->value(PlugGrp->second);
-
-	Splash->hide();
-	delete Splash;
+            // this overwrites the widget's user_data with that specified for the callback
+            // so we can't use it for other purposes
+            NewButton->callback ((Fl_Callback*)cb_NewDevice, &Numbers[ID]);
+            NewButton->show();
+            m_DeviceVec.push_back (NewButton);
+            the_group->redraw();
+            // m_NextPluginButton++;
+            Fl::check();
+            splashtext->label (PluginName.c_str());
+            Splash->redraw();
+         }
+     }
+     map<string,Fl_Pack*>::iterator PlugGrp;
+     for (PlugGrp = m_PluginGroupMap.begin(); PlugGrp!= m_PluginGroupMap.end(); ++PlugGrp) {
+         m_GroupTab->add (PlugGrp->second);
+         PlugGrp->second->add (new Fl_Box (0, 0, 600, 100, ""));
+     }
+     // try to show the SpiralSound group
+     PlugGrp = m_PluginGroupMap.find("SpiralSound");
+     // can't find it - show the first plugin group
+     if (PlugGrp==m_PluginGroupMap.end()) PlugGrp=m_PluginGroupMap.begin();
+     m_GroupTab->value(PlugGrp->second);
+     bool found_dummy;
+     int i;
+     do {
+        found_dummy = false;
+        for (i=0; i<m_MainMenu->size(); i++) {
+            if (m_MainMenu->text (i) != NULL) {
+               found_dummy = (strcmp ("dummy", m_MainMenu->text (i)) == 0);
+               if (found_dummy) break;
+            }
+        }
+        if (found_dummy) m_MainMenu->remove (i);
+     } while (found_dummy);
+     Splash->hide();
+     delete Splash;
 }
 
 //////////////////////////////////////////////////////////
@@ -697,10 +710,10 @@ DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 	nlw->m_Device->SetParent((void*)this);
 
 	if ( nlw->m_Device->IsAudioDriver() )
-	{ 
+	{
 		AudioDriver *driver = ((AudioDriver*)nlw->m_Device);
 		driver->SetChangeBufferAndSampleRateCallback(cb_ChangeBufferAndSampleRate);
-	}	
+	}
 
 	PluginInfo PInfo    = nlw->m_Device->Initialise(&m_Info);
 	SpiralGUIType *temp = nlw->m_Device->CreateGUI();
@@ -803,15 +816,15 @@ void SynthModular::cb_ChangeBufferAndSampleRate_i(long int NewBufferSize, long i
 		// update the settings
 		SpiralInfo::BUFSIZE    = NewBufferSize;
 		m_HostNeedsUpdate = true;
-	}	
+	}
 
 	if (SpiralInfo::SAMPLERATE != NewSamplerate)
 	{
 		SpiralInfo::SAMPLERATE = NewSamplerate;
 		m_HostNeedsUpdate = true;
-	}	
+	}
 }
-	
+
 
 void SynthModular::UpdateHostInfo()
 {
@@ -851,135 +864,6 @@ void SynthModular::cb_Blocking(void* o, bool mode)
 
 //////////////////////////////////////////////////////////
 
-inline void SynthModular::cb_CutDeviceGroup_i()
-{
-	if (! m_Canvas->HaveSelection())
-		return;
-
-	//show some warning here	
-
-	cb_CopyDeviceGroup_i();
-
-	for (unsigned int i=0; i<m_Canvas->Selection().m_DeviceIds.size(); i++) 
-	{
-		int ID = m_Canvas->Selection().m_DeviceIds[i];
-		Fl_DeviceGUI::Kill(m_DeviceWinMap[ID]->m_DeviceGUI);
-
-	}	
-	Fl_Canvas::ClearSelection(m_Canvas);
-}
-
-//////////////////////////////////////////////////////////
-
-inline void SynthModular::cb_MergePatch_i()
-{
-	char *fn=fl_file_chooser("Merge a patch", "*.ssm", NULL);
-
-	if (fn && fn!='\0')
-	{
-		ifstream in(fn);
-
-		if (in)
-		{
-			fstream inf;
-
-			inf.open(fn,ios::in);
-
-			m_MergeFilePath=fn;
-
-			StreamPatchIn(inf, false, true);
-			m_Canvas->StreamSelectionWiresIn(inf, m_Copied.m_DeviceIds, true, false);
-	
-			inf.close();
-		}	
-	}
-}
-
-//////////////////////////////////////////////////////////
-
-inline void SynthModular::cb_CopyDeviceGroup_i()
-{
-	if (! m_Canvas->HaveSelection())
-		return;
-
-	m_Copied.devices.open("___temp.ssmcopytmp",ios::out);
-
-	m_Copied.devicecount = 0;
-	m_Copied.m_DeviceIds.clear();
-	if (m_FilePath != "") 
-	{
-		m_Copied.devices<<true<<" ";
-		m_Copied.devices<<m_FilePath<<endl;
-	}	
-	else
-		m_Copied.devices<<false<<endl;
-
-	for (unsigned int i=0; i<m_Canvas->Selection().m_DeviceIds.size(); i++) 
-	{
-		int ID = m_Canvas->Selection().m_DeviceIds[i];
-		std::map<int,DeviceWin*>::iterator i = m_DeviceWinMap.find(ID);
-
-		m_Copied.m_DeviceIds[ID] = ID;
-
-		m_Copied.devicecount += 1;
-			
-		m_Copied.devices<<"Device ";
-		m_Copied.devices<<i->first<<" "; // save the id
-		m_Copied.devices<<"Plugin ";
-		m_Copied.devices<<i->second->m_PluginID<<endl;
-		m_Copied.devices<<i->second->m_DeviceGUI->x()<<" ";
-		m_Copied.devices<<i->second->m_DeviceGUI->y()<<" ";
-		m_Copied.devices<<i->second->m_DeviceGUI->GetName().size()<<" ";
-		m_Copied.devices<<i->second->m_DeviceGUI->GetName()<<" ";
-	
-		if (i->second->m_DeviceGUI->GetPluginWindow())
-		{
-			m_Copied.devices<<i->second->m_DeviceGUI->GetPluginWindow()->visible()<<" ";
-			m_Copied.devices<<i->second->m_DeviceGUI->GetPluginWindow()->x()<<" ";
-			m_Copied.devices<<i->second->m_DeviceGUI->GetPluginWindow()->y()<<" ";
-		}
-		else
-		{
-			m_Copied.devices<<0<<" "<<0<<" "<<0;
-		}
-		m_Copied.devices<<endl;
-
-		if (i->second->m_PluginID==COMMENT_ID)
-		{
-			// save the comment gui
-			((Fl_CommentGUI*)(i->second->m_DeviceGUI))->StreamOut(m_Copied.devices);
-		}
-		else
-		{
-			// save the plugin
-			i->second->m_Device->StreamOut(m_Copied.devices);
-		}
-		m_Copied.devices<<endl;
-	}
-	m_Canvas->StreamSelectionWiresOut(m_Copied.devices);
-	m_Copied.devices.close();
-
-	Fl_Canvas::EnablePaste(m_Canvas);
-};
-
-//////////////////////////////////////////////////////////
-
-inline void SynthModular::cb_PasteDeviceGroup_i()
-{
-	if (m_Copied.devicecount <= 0)
-		return;
-
-	m_Copied.devices.open("___temp.ssmcopytmp",ios::in);
-
-	StreamPatchIn(m_Copied.devices, true, false);
-
-	m_Canvas->StreamSelectionWiresIn(m_Copied.devices, m_Copied.m_DeviceIds, false, true);
-
-	m_Copied.devices.close();
-};
-
-//////////////////////////////////////////////////////////
-
 iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 {
 	//if we are merging as opposed to loading a new patch
@@ -993,7 +877,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 
 	bool has_file_path;
 	string m_FromFilePath;
-	
+
 	string dummy,dummy2;		
 	int ver;
 
@@ -1014,7 +898,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 			ThawAll();
 			return s;
 		}
-	
+
 		if (ver>2)
 		{
 			int MainWinX,MainWinY,MainWinW,MainWinH;
@@ -1046,7 +930,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 	{
 		s>>dummy>>Num;
 	}
-	
+
 	for(int n=0; n<Num; n++)
 	{
 		#ifdef DEBUG_STREAM
@@ -1093,7 +977,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 				return s;
 			}
 		}
-		
+
 		if (PluginID==COMMENT_ID)
 		{
 			DeviceWin* temp = NewComment(PluginID, x, y);
@@ -1128,9 +1012,9 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 	
 					ID = m_Copied.m_DeviceIds[ID];
 				}
-				
+
 				temp->m_DeviceGUI->SetID(ID);
-				
+
 				if (paste || ver>3)
 				{
 					// set the titlebars
@@ -1199,7 +1083,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 iostream &operator>>(iostream &s, SynthModular &o)
 {
 	return o.StreamPatchIn(s, false, false);
-	
+
 }
 
 //////////////////////////////////////////////////////////
@@ -1229,8 +1113,8 @@ ostream &operator<<(ostream &s, SynthModular &o)
 
 	for(map<int,DeviceWin*>::iterator i=o.m_DeviceWinMap.begin();
 		i!=o.m_DeviceWinMap.end(); i++)
-	{	
-		if (i->second->m_DeviceGUI && ((i->second->m_Device) || (i->second->m_PluginID==COMMENT_ID)))	
+	{
+		if (i->second->m_DeviceGUI && ((i->second->m_Device) || (i->second->m_PluginID==COMMENT_ID)))
 		{
 			s<<endl;
 			s<<"Device ";
@@ -1241,7 +1125,7 @@ ostream &operator<<(ostream &s, SynthModular &o)
 			s<<i->second->m_DeviceGUI->y()<<" ";
 			s<<i->second->m_DeviceGUI->GetName().size()<<" ";
 			s<<i->second->m_DeviceGUI->GetName()<<" ";
-	
+
 			if (i->second->m_DeviceGUI->GetPluginWindow())
 			{
 				s<<i->second->m_DeviceGUI->GetPluginWindow()->visible()<<" ";
@@ -1252,9 +1136,9 @@ ostream &operator<<(ostream &s, SynthModular &o)
 			{
 				s<<0<<" "<<0<<" "<<0;
 			}
-	
+
 			s<<endl;
-	
+
 			if (i->second->m_PluginID==COMMENT_ID)
 			{
 				// save the comment gui
@@ -1266,7 +1150,7 @@ ostream &operator<<(ostream &s, SynthModular &o)
 				i->second->m_Device->StreamOut(s);
 			}
 			s<<endl;
-	
+
 			// save external files
 			if (i->second->m_Device && i->second->m_Device->SaveExternalFiles(o.m_FilePath+"_files/"))
 			{
@@ -1274,7 +1158,7 @@ ostream &operator<<(ostream &s, SynthModular &o)
 			}
 		}
 	}
-	
+
 	s<<endl<<*o.m_Canvas<<endl;
 
 	// remove it if it wasn't used
@@ -1291,126 +1175,287 @@ ostream &operator<<(ostream &s, SynthModular &o)
 	return s;
 }
 
-//////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
 
-inline void SynthModular::cb_Close_i(Fl_Window* o, void* v)
-{
-	m_SettingsWindow->hide();
-	delete m_SettingsWindow;
-	m_TopWindow->hide();
-	delete m_TopWindow;
-	o->hide();
+// Callbacks
+
+/////////////////////////////////
+// File Menu & associated buttons
+
+// New
+
+inline void SynthModular::cb_New_i (Fl_Widget *o, void *v) {
+       if (m_DeviceWinMap.size()>0 && !Pawfal_YesNo ("New - Lose changes to current patch?"))
+          return;
+       m_TopWindow->label (TITLEBAR.c_str());
+       ClearUp();
 }
 
-void SynthModular::cb_Close(Fl_Window* o, void* v)
-{((SynthModular*)(o->user_data()))->cb_Close_i(o,v);}
-
-//////////////////////////////////////////////////////////
-
-inline void SynthModular::cb_Load_i(Fl_Button* o, void* v)
-{
-	if (m_DeviceWinMap.size()>0 && !Pawfal_YesNo("Load - Lose changes to current patch?"))
-	{
-		return;
-	}
-
-	char *fn=fl_file_chooser("Load a patch", "*.ssm", NULL);
-
-	if (fn && fn!='\0')
-	{
-		ifstream in(fn);
-
-		if (in)
-		{
-			fstream inf;
-
-			inf.open(fn,ios::in);
-			m_FilePath=fn;
-
-			ClearUp();
-			inf>>*this;
-
-			inf.close();
-
-			TITLEBAR=LABEL+" "+fn;
-			m_TopWindow->label(TITLEBAR.c_str());
-		}
-	}
+void SynthModular::cb_New (Fl_Widget *o, void *v) {
+     ((SynthModular*)(o->user_data()))->cb_New_i (o, v);
 }
 
-void SynthModular::cb_Load(Fl_Button* o, void* v)
-{((SynthModular*)(o->parent()->user_data()))->cb_Load_i(o,v);}
+// Load
 
-//////////////////////////////////////////////////////////
-
-inline void SynthModular::cb_Save_i(Fl_Button* o, void* v)
-{
-	char *fn=fl_file_chooser("Save a patch", "*.ssm", NULL);
-
-	if (fn && fn!='\0')
-	{
-		ifstream ifl(fn);
-		if (ifl)
-		{
-			if (!Pawfal_YesNo("File [%s] exists, overwrite?",fn))
-			{
-				return;
-			}
-		}
-
-		ofstream of(fn);
-
-		if (of)
-		{
-			m_FilePath=fn;
-
-			of<<*this;
-
-			TITLEBAR=LABEL+" "+fn;
-			m_TopWindow->label(TITLEBAR.c_str());
-		}
-		else
-		{
-			fl_message(string("Error saving "+string(fn)).c_str());
-		}
-	}
+inline void SynthModular::cb_Load_i (Fl_Widget *o, void *v) {
+       if (m_DeviceWinMap.size()>0 && !Pawfal_YesNo ("Load - Lose changes to current patch?"))
+          return;
+       char *fn=fl_file_chooser ("Load a patch", "*.ssm", NULL);
+       if (fn && fn!='\0') {
+          ifstream in (fn);
+          if (in) {
+             fstream inf;
+             inf.open (fn, ios::in);
+             m_FilePath = fn;
+             ClearUp();
+             inf >> *this;
+             inf.close();
+             TITLEBAR = LABEL + " " + fn;
+             m_TopWindow->label (TITLEBAR.c_str());
+          }
+       }
 }
-void SynthModular::cb_Save(Fl_Button* o, void* v)
-{((SynthModular*)(o->parent()->user_data()))->cb_Save_i(o,v);}
 
-//////////////////////////////////////////////////////////
-
-inline void SynthModular::cb_New_i(Fl_Button* o, void* v)
-{
-	if (m_DeviceWinMap.size()>0 && !Pawfal_YesNo("New - Lose changes to current patch?"))
-	{
-		return;
-	}
-
-	m_TopWindow->label(TITLEBAR.c_str());
-
-	ClearUp();
+void SynthModular::cb_Load(Fl_Widget *o, void *v) {
+     ((SynthModular*)(o->user_data()))->cb_Load_i (o, v);
 }
-void SynthModular::cb_New(Fl_Button* o, void* v)
-{((SynthModular*)(o->parent()->user_data()))->cb_New_i(o,v);}
 
-//////////////////////////////////////////////////////////
+// Save
 
-inline void SynthModular::cb_NewDevice_i(Fl_Button* o, void* v)
-{
-        AddDevice(*((int*)v));
+inline void SynthModular::cb_Save_i (Fl_Widget *o, void *v) {
+       char *fn=fl_file_chooser("Save a patch", "*.ssm", NULL);
+       if (fn && fn!='\0') {
+          ifstream ifl (fn);
+          if (ifl) {
+             if (!Pawfal_YesNo ("File [%s] exists, overwrite?", fn))
+                return;
+          }
+          ofstream of (fn);
+          if (of) {
+             m_FilePath = fn;
+             of << *this;
+             TITLEBAR = LABEL + " " + fn;
+             m_TopWindow->label (TITLEBAR.c_str());
+          }
+          else {
+             fl_message (string ("Error saving " + string(fn)).c_str());
+          }
+       }
 }
-void SynthModular::cb_NewDevice(Fl_Button* o, void* v)
-{((SynthModular*)(o->parent()->user_data()))->cb_NewDevice_i(o,v);}
 
-//////////////////////////////////////////////////////////
+void SynthModular::cb_Save (Fl_Widget *o, void *v) {
+     ((SynthModular*)(o->user_data()))->cb_Save_i (o, v);
+}
 
-inline void SynthModular::cb_NewDeviceFromMenu_i(Fl_Canvas* o, void* v)
+// Merge
+
+inline void SynthModular::cb_Merge_i (Fl_Widget *o, void *v) {
+       char *fn = fl_file_chooser ("Merge a patch", "*.ssm", NULL);
+       if (fn && fn!='\0') {
+          ifstream in (fn);
+          if (in) {
+             fstream inf;
+             inf.open (fn, ios::in);
+             m_MergeFilePath = fn;
+             StreamPatchIn (inf, false, true);
+             m_Canvas->StreamSelectionWiresIn (inf, m_Copied.m_DeviceIds, true, false);
+             inf.close();
+          }
+       }
+}
+
+void SynthModular::cb_Merge (Fl_Widget *o, void *v) {
+     ((SynthModular*)(o->parent()->user_data()))->cb_Merge_i (o, v);
+}
+
+// Close
+
+inline void SynthModular::cb_Close_i (Fl_Widget *o, void *v) {
+       m_SettingsWindow->hide();
+       delete m_SettingsWindow;
+       m_TopWindow->hide();
+       delete m_TopWindow;
+}
+
+void SynthModular::cb_Close (Fl_Widget *o, void *v) {
+     ((SynthModular*)(o->user_data()))->cb_Close_i (o, v);
+}
+
+/////////////////////////////////
+// Edit Menu
+
+// Cut
+
+inline void SynthModular::cb_Cut_i(Fl_Widget *o, void *v) {
+       if (! m_Canvas->HaveSelection()) return;
+       // show some warning here
+       cb_Copy_i (o, v);  // should we be calling an inline function here??????
+       for (unsigned int i=0; i<m_Canvas->Selection().m_DeviceIds.size(); i++) {
+           int ID = m_Canvas->Selection().m_DeviceIds[i];
+           Fl_DeviceGUI::Kill(m_DeviceWinMap[ID]->m_DeviceGUI);
+       }
+       Fl_Canvas::ClearSelection(m_Canvas);
+}
+
+void SynthModular::cb_Cut (Fl_Widget *o, void *v) {
+     ((SynthModular*)(o->parent()->user_data()))->cb_Cut_i (o, v);
+}
+
+// Copy
+
+inline void SynthModular::cb_Copy_i (Fl_Widget *o, void *v) {
+       if (! m_Canvas->HaveSelection()) return;
+       m_Copied.devices.open ("___temp.ssmcopytmp", ios::out);
+       m_Copied.devicecount = 0;
+       m_Copied.m_DeviceIds.clear();
+       if (m_FilePath != "") m_Copied.devices << true << " " << m_FilePath << endl;
+       else m_Copied.devices << false << endl;
+       for (unsigned int i=0; i<m_Canvas->Selection().m_DeviceIds.size(); i++) {
+           int ID = m_Canvas->Selection().m_DeviceIds[i];
+           std::map<int,DeviceWin*>::iterator i = m_DeviceWinMap.find(ID);
+           m_Copied.m_DeviceIds[ID] = ID;
+           m_Copied.devicecount += 1;
+           m_Copied.devices << "Device " << i->first << " " ; // save the id
+           m_Copied.devices << "Plugin " <<i->second->m_PluginID << endl;
+           m_Copied.devices << i->second->m_DeviceGUI->x() << " ";
+           m_Copied.devices << i->second->m_DeviceGUI->y() << " ";
+           m_Copied.devices << i->second->m_DeviceGUI->GetName().size() << " ";
+           m_Copied.devices << i->second->m_DeviceGUI->GetName() << " ";
+           if (i->second->m_DeviceGUI->GetPluginWindow()) {
+              m_Copied.devices << i->second->m_DeviceGUI->GetPluginWindow()->visible() << " ";
+              m_Copied.devices << i->second->m_DeviceGUI->GetPluginWindow()->x() << " ";
+              m_Copied.devices << i->second->m_DeviceGUI->GetPluginWindow()->y() << " ";
+           }
+           else m_Copied.devices << 0 << " " << 0 << " " << 0;
+           m_Copied.devices << endl;
+           if (i->second->m_PluginID == COMMENT_ID) {
+              // save the comment gui
+              ((Fl_CommentGUI*)(i->second->m_DeviceGUI))->StreamOut (m_Copied.devices);
+           }
+           else {
+              // save the plugin
+              i->second->m_Device->StreamOut (m_Copied.devices);
+           }
+           m_Copied.devices<<endl;
+       }
+       m_Canvas->StreamSelectionWiresOut(m_Copied.devices);
+       m_Copied.devices.close();
+       Fl_Canvas::EnablePaste (m_Canvas);
+}
+
+void SynthModular::cb_Copy (Fl_Widget *o, void *v) {
+     ((SynthModular*)(o->parent()->user_data()))->cb_Copy_i (o, v);
+}
+
+// Paste
+
+inline void SynthModular::cb_Paste_i (Fl_Widget *o, void *v) {
+       if (m_Copied.devicecount <= 0) return;
+       m_Copied.devices.open ("___temp.ssmcopytmp", ios::in);
+       StreamPatchIn(m_Copied.devices, true, false);
+       m_Canvas->StreamSelectionWiresIn (m_Copied.devices, m_Copied.m_DeviceIds, false, true);
+       m_Copied.devices.close();
+}
+
+void SynthModular::cb_Paste (Fl_Widget *o, void *v) {
+     ((SynthModular*)(o->parent()->user_data()))->cb_Paste_i (o, v);
+}
+
+// Delete
+
+inline void SynthModular::cb_Delete_i (Fl_Widget *o, void *v) {
+       m_Canvas->DeleteSelection();
+}
+
+void SynthModular::cb_Delete (Fl_Widget *o, void *v) {
+     ((SynthModular*)(o->user_data()))->cb_Delete_i (o, v);
+}
+
+// Options
+
+inline void SynthModular::cb_Options_i (Fl_Widget *o, void *v) {
+       m_SettingsWindow->show();
+}
+
+void SynthModular::cb_Options (Fl_Widget* o, void* v) {
+     ((SynthModular*)(o->user_data()))->cb_Options_i (o, v);
+}
+
+/////////////////////////////////
+// Plugin Menu
+
+// This callback has the name that the callback for the canvas menu
+// used to have please note - that is now NewDeviceFromCanvasMenu
+
+inline void SynthModular::cb_NewDeviceFromMenu_i (Fl_Widget *o, void *v) {
+       AddDevice (*((int*)v));
+}
+
+void SynthModular::cb_NewDeviceFromMenu (Fl_Widget *o, void *v) {
+     ((SynthModular*)(o->user_data()))->cb_NewDeviceFromMenu_i (o, v);
+}
+
+// (Plugin Buttons)
+
+inline void SynthModular::cb_NewDevice_i (Fl_Button *o, void *v) {
+       AddDevice (*((int*)v));
+}
+
+void SynthModular::cb_NewDevice (Fl_Button *o, void *v) {
+     ((SynthModular*)(o->parent()->user_data()))->cb_NewDevice_i (o, v);
+}
+
+// (Plugin Canvas Menu)
+
+inline void SynthModular::cb_NewDeviceFromCanvasMenu_i(Fl_Canvas* o, void* v)
 {
 	AddDevice(*((int*)v),*((int*)v+1),*((int*)v+2));
 }
-void SynthModular::cb_NewDeviceFromMenu(Fl_Canvas* o, void* v)
-{((SynthModular*)(o->user_data()))->cb_NewDeviceFromMenu_i(o,v);}
+void SynthModular::cb_NewDeviceFromCanvasMenu(Fl_Canvas* o, void* v)
+{((SynthModular*)(o->user_data()))->cb_NewDeviceFromCanvasMenu_i(o,v);}
+
+
+/////////////////////////////////
+// Audio Menu
+
+// Play / Pause
+
+inline void SynthModular::cb_PlayPause_i (Fl_Widget *o, void *v) {
+       string oldname = m_PlayPause->tooltip ();
+       if (m_Info.PAUSED) {
+          m_PlayPause->label ("@||");
+          m_PlayPause->tooltip ("Pause");
+          ResumeAudio();
+       }
+       else {
+          m_PlayPause->label ("@>");
+          m_PlayPause->tooltip ("Play");
+          PauseAudio();
+       }
+       for (int i=0; i<m_MainMenu->size(); i++) {
+            if (m_MainMenu->text (i) != NULL) {
+               if (oldname == m_MainMenu->text (i)) {
+                  m_MainMenu->replace (i, m_PlayPause->tooltip());
+                  break;
+               }
+            }
+        }
+
+}
+
+void SynthModular::cb_PlayPause (Fl_Widget *o, void *v) {
+     ((SynthModular*)(o->user_data()))->cb_PlayPause_i (o, v);
+}
+
+// Reset
+
+inline void SynthModular::cb_Reset_i (Fl_Widget *o, void *v) {
+       ResetAudio();
+}
+
+void SynthModular::cb_Reset (Fl_Widget *o, void *v) {
+     ((SynthModular*)(o->user_data()))->cb_Reset_i (o, v);
+}
 
 //////////////////////////////////////////////////////////
 
@@ -1423,35 +1468,6 @@ void SynthModular::cb_NewComment(Fl_Button* o, void* v)
 
 //////////////////////////////////////////////////////////
 
-inline void SynthModular::cb_PlayPause_i(Fl_Button* o, void* v)
-{
-	if (m_Info.PAUSED)
-	{
-		m_PlayPause->label("Pause ||");
-		ResumeAudio();
-	}	
-	else
-	{
-		m_PlayPause->label("Play >");
-		PauseAudio();
-	}	
-}
-
-void SynthModular::cb_PlayPause(Fl_Button* o, void* v)
-{((SynthModular*)(o->parent()->user_data()))->cb_PlayPause_i(o,v);}
-
-//////////////////////////////////////////////////////////
-
-inline void SynthModular::cb_Reset_i(Fl_Button* o, void* v)
-{
-	ResetAudio();
-}
-
-void SynthModular::cb_Reset(Fl_Button* o, void* v)
-{((SynthModular*)(o->parent()->user_data()))->cb_Reset_i(o,v);}
-
-//////////////////////////////////////////////////////////
-
 inline void SynthModular::cb_GroupTab_i(Fl_Tabs* o, void* v)
 {
         m_GroupTab->redraw();
@@ -1459,30 +1475,6 @@ inline void SynthModular::cb_GroupTab_i(Fl_Tabs* o, void* v)
 
 void SynthModular::cb_GroupTab(Fl_Tabs* o, void* v)
 {((SynthModular*)(o->parent()->user_data()))->cb_GroupTab_i(o,v);}
-
-//////////////////////////////////////////////////////////
-
-inline void SynthModular::cb_Rload_i(Fl_Button* o, void* v)
-{
-	m_SettingsWindow->show();
-
-	/*PluginManager::Get()->UnloadAll();
-
-	m_ToolBox->remove(m_ToolPack);
-	delete m_ToolPack;
-
-	m_ToolPack = new Fl_Pack(5,20,TOOLBOX_WIDTH-10, TOOLBOX_HEIGHT-40,"");
-    m_ToolPack->type(FL_VERTICAL);
-	m_ToolPack->box(FL_NO_BOX);
-	m_ToolPack->color(SpiralInfo::GUICOL_Tool);
-    m_ToolPack->user_data((void*)(this));
-	m_ToolBox->add(m_ToolPack);
-	m_ToolBox->redraw();
-
-	LoadPlugins();*/
-}
-void SynthModular::cb_Rload(Fl_Button* o, void* v)
-{((SynthModular*)(o->parent()->user_data()))->cb_Rload_i(o,v);}
 
 //////////////////////////////////////////////////////////
 
@@ -1499,32 +1491,32 @@ inline void SynthModular::cb_Connection_i(Fl_Canvas* o, void* v)
 		SpiralInfo::Alert("Warning: Connection problem - can't find source "+string(num));
 		return;
 	}
-	
+
 	map<int,DeviceWin*>::iterator di=m_DeviceWinMap.find(Wire->InputID);
 	if (di==m_DeviceWinMap.end())
 	{
-		char num[32]; 
+		char num[32];
 		sprintf(num,"%d",Wire->InputID);
 		SpiralInfo::Alert("Warning: Connection problem - can't find destination "+string(num));
 		return;
 	}
 
 	Sample *sample=NULL;
-	
+
 	if (!si->second->m_Device->GetOutput(Wire->OutputPort,&sample))
-	{ 
-		char num[32]; 
+	{
+		char num[32];
 		sprintf(num,"%d,%d",Wire->OutputID,Wire->OutputPort);
 		SpiralInfo::Alert("Warning: Connection problem - can't find source output "+string(num));
-		return; 
+		return;
 	}
-	
+
 	if (!di->second->m_Device->SetInput(Wire->InputPort,(const Sample*)sample))
-	{ 
-		char num[32]; 
+	{
+		char num[32];
 		sprintf(num,"%d,%d",Wire->InputID,Wire->InputPort);
 		SpiralInfo::Alert("Warning: Connection problem - can't find source input "+string(num));
-		return;	
+		return;
 	}
 }
 void SynthModular::cb_Connection(Fl_Canvas* o, void* v)
@@ -1536,9 +1528,9 @@ inline void SynthModular::cb_Unconnect_i(Fl_Canvas* o, void* v)
 {
 	CanvasWire *Wire;
 	Wire=(CanvasWire*)v;
-	
+
 	//cerr<<Wire->InputID<<" "<<Wire->InputPort<<endl;
-	
+
 	map<int,DeviceWin*>::iterator di=m_DeviceWinMap.find(Wire->InputID);
 	if (di==m_DeviceWinMap.end())
 	{
@@ -1573,21 +1565,20 @@ void SynthModular::LoadPatch(const char *fn)
 {
 	ifstream in(fn);
 
-	if (in) 
-	{	
+	if (in)
+	{
 		fstream	inf;
 		inf.open(fn, std::ios::in);
-		
-		m_FilePath=fn;	
+
+		m_FilePath=fn;
 
 		ClearUp();
 		inf>>*this;
 
 		inf.close();
-		
+
 		TITLEBAR=LABEL+" "+fn;
 		m_TopWindow->label(TITLEBAR.c_str());
 	}
 }
 
-//////////////////////////////////////////////////////////

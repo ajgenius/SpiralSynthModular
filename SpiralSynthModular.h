@@ -30,6 +30,7 @@
 #include <FL/Fl_Pack.H>
 #include <FL/Fl_Tile.H>
 #include <FL/Fl_Tabs.H>
+#include <FL/Fl_Menu_Bar.H>
 #include <sstream>
 #include <iostream>
 #include <fstream>
@@ -124,8 +125,8 @@ public:
 
 			m_ResetingAudioThread = true;
 
-			ThawAll();			
-		}	
+			ThawAll();
+		}
 	}
 
 	// only for audio thread
@@ -140,8 +141,8 @@ private:
 	DeviceWin* NewComment(int n, int x, int y);
 
 	HostInfo m_Info;
-	bool m_ResetingAudioThread;
-	bool m_HostNeedsUpdate;
+	bool m_ResetingAudioThread, m_HostNeedsUpdate, m_Frozen;
+
 
 	static DeviceGUIInfo BuildDeviceGUIInfo(PluginInfo &PInfo);
 
@@ -150,98 +151,80 @@ private:
 	static map<int,DeviceWin*> m_DeviceWinMap;
 
         int m_NextID;
-
 	static bool m_CallbackUpdateMode;
 	static bool m_BlockingOutputPluginIsReady;
-	string m_FilePath;
-	string m_MergeFilePath;
-	
+	string m_FilePath, m_MergeFilePath;
+
 	// Main GUI stuff
-	void CreateGUI(int xoff=0, int yoff=0, char *name="");
-
-        Fl_Pack 	*m_Topbar, *m_ToolbarPanel, *m_Toolbar;
-        Fl_Group 	*m_GroupFiller;
-	Fl_Button       *m_Load;
-	Fl_Button       *m_Save;
-	Fl_Button       *m_New;
-	Fl_Button       *m_Options;
-	Fl_Button       *m_NewComment;
-
-	Fl_Pack       	*m_PlayResetGroup;
-	Fl_Button       *m_PlayPause;
-	Fl_Button       *m_Reset;
-
+	void CreateGUI (int xoff=0, int yoff=0, char *name="");
+        Fl_Menu_Bar *m_MainMenu;
+        Fl_Pack *m_Topbar, *m_ToolbarPanel, *m_Toolbar;
+        Fl_Group *m_GroupFiller;
+	Fl_Button *m_Load, *m_Save, *m_New, *m_Options, *m_NewComment;
+	Fl_Pack *m_PlayResetGroup;
+	Fl_Button *m_PlayPause, *m_Reset;
         Fl_Tabs         *m_GroupTab;
-
 	Fl_Canvas 	*m_Canvas;
 	Fl_Scroll	*m_CanvasScroll;
-
 	map<string,Fl_Pack*> m_PluginGroupMap;
-
 	SettingsWindow  *m_SettingsWindow;
-
 	SpiralWindowType* m_TopWindow;
-
 	vector<Fl_Button*> m_DeviceVec;
-
 	ChannelHandler m_CH; // used for threadsafe communication
-	bool m_Frozen;
+	DeviceGroup	m_Copied;
 
-	inline void cb_NewDevice_i(Fl_Button* o, void* v);
-	static void cb_NewDevice(Fl_Button* o, void* v);
-	inline void cb_NewDeviceFromMenu_i(Fl_Canvas* o, void* v);
-	static void cb_NewDeviceFromMenu(Fl_Canvas* o, void* v);
 	inline void cb_NewComment_i(Fl_Button* o, void* v);
 	static void cb_NewComment(Fl_Button* o, void* v);
-	
-	inline void cb_Load_i(Fl_Button* o, void* v);
-	static void cb_Load(Fl_Button* o, void* v);
-	inline void cb_Save_i(Fl_Button* o, void* v);
-	static void cb_Save(Fl_Button* o, void* v);
-	inline void cb_New_i(Fl_Button* o, void* v);
-	static void cb_New(Fl_Button* o, void* v);
-	inline void cb_PlayPause_i(Fl_Button* o, void* v);
-	static void cb_PlayPause(Fl_Button* o, void* v);
-	inline void cb_Reset_i(Fl_Button* o, void* v);
-	static void cb_Reset(Fl_Button* o, void* v);
-	
-	inline void cb_MergePatch_i();
-	static void cb_MergePatch(Fl_Canvas* o, SynthModular*v) { v->cb_MergePatch_i(); };
+
+        // File menu - and associated buttons, etc.
+        inline void cb_New_i (Fl_Widget *o, void *v);
+	static void cb_New (Fl_Widget *o, void *v);
+	inline void cb_Load_i (Fl_Widget *o, void *v);
+	static void cb_Load (Fl_Widget *o, void *v);
+	inline void cb_Save_i (Fl_Widget *o, void *v);
+	static void cb_Save (Fl_Widget *o, void *v);
+	inline void cb_Merge_i (Fl_Widget *o, void *v);
+	static void cb_Merge (Fl_Widget *o, void *v);
+	inline void cb_Close_i (Fl_Widget *o, void *v);
+	static void cb_Close (Fl_Widget *o, void *v);
+        // Edit menu
+	inline void cb_Cut_i (Fl_Widget *o, void *v);
+	static void cb_Cut (Fl_Widget *o, void *v);
+	inline void cb_Copy_i (Fl_Widget *o, void *v);
+	static void cb_Copy (Fl_Widget *o, void *v);
+	inline void cb_Paste_i (Fl_Widget *o, void *v);
+	static void cb_Paste (Fl_Widget *o, void *v);
+	inline void cb_Delete_i (Fl_Widget *o, void *v);
+	static void cb_Delete (Fl_Widget *o, void *v);
+        inline void cb_Options_i (Fl_Widget *o, void *v);
+	static void cb_Options (Fl_Widget *o, void *v);
+        // Plugin Menu
+        inline void cb_NewDevice_i (Fl_Button *o, void *v);
+	static void cb_NewDevice (Fl_Button *o, void *v);
+	inline void cb_NewDeviceFromMenu_i (Fl_Widget *o, void *v);
+	static void cb_NewDeviceFromMenu (Fl_Widget *o, void *v);
+	inline void cb_NewDeviceFromCanvasMenu_i (Fl_Canvas *o, void *v);
+	static void cb_NewDeviceFromCanvasMenu (Fl_Canvas *o, void *v);
+        // Audio Menu
+        inline void cb_PlayPause_i (Fl_Widget *o, void *v);
+	static void cb_PlayPause (Fl_Widget *o, void *v);
+        inline void cb_Reset_i (Fl_Widget *o, void *v);
+	static void cb_Reset (Fl_Widget *o, void *v);
 
 	inline void cb_Connection_i(Fl_Canvas* o, void* v);
 	static void cb_Connection(Fl_Canvas* o, void* v);
 	inline void cb_Unconnect_i(Fl_Canvas* o, void* v);
 	static void cb_Unconnect(Fl_Canvas* o, void* v);
-	inline void cb_Close_i(Fl_Window* o, void* v);
-	static void cb_Close(Fl_Window* o, void* v);
-
 	inline void cb_GroupTab_i(Fl_Tabs* o, void* v);
 	static void cb_GroupTab(Fl_Tabs* o, void* v);
-
-	inline void cb_Rload_i(Fl_Button* o, void* v);
-	static void cb_Rload(Fl_Button* o, void* v);
-
 	static void cb_Update(void* o, bool Mode);
 	static void cb_Blocking(void* o, bool Mode);
 	static void cb_UpdatePluginInfo(int ID, void *PluginInfo);
-
-	inline void cb_ChangeBufferAndSampleRate_i(long int NewBufferSize, long int NewSamplerate);	
-
+        inline void cb_ChangeBufferAndSampleRate_i(long int NewBufferSize, long int NewSamplerate);
 	static void cb_ChangeBufferAndSampleRate(long unsigned int NewBufferSize, long unsigned int NewSamplerate, void *o)
 	{
 		((SynthModular*)o)->cb_ChangeBufferAndSampleRate_i(NewBufferSize, NewSamplerate);
 	}
-	
-	DeviceGroup	m_Copied;
-
-	inline void cb_CutDeviceGroup_i();
-	inline void cb_CopyDeviceGroup_i();
-	inline void cb_PasteDeviceGroup_i();
-
-	static void cb_CutDeviceGroup(Fl_Canvas* o, SynthModular*v) { v->cb_CutDeviceGroup_i(); };
-	static void cb_CopyDeviceGroup(Fl_Canvas* o, SynthModular*v) { v->cb_CopyDeviceGroup_i(); };
-	static void cb_PasteDeviceGroup(Fl_Canvas* o, SynthModular*v) { v->cb_PasteDeviceGroup_i(); };
-
 	friend istream &operator>>(istream &s, SynthModular &o);
 	friend ostream &operator<<(ostream &s, SynthModular &o);
 };
