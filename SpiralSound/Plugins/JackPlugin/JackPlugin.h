@@ -66,6 +66,8 @@ public:
 	void   SetJackInputCount(int JackInputCount)          { m_JackInputCount=JackInputCount; }
 	int    GetJackOutputCount()           { return m_JackOutputCount; }
 	void   SetJackOutputCount(int JackOutputCount)          { m_JackOutputCount=JackOutputCount; }
+	long int	JackSampleRate() { return m_JackSampleRate; }
+	long int 	JackBufferSize() { return m_JackBufferSize; }
 
 	class JackPort
 	{		
@@ -107,6 +109,9 @@ private:
         int             m_JackOutputCount;
 	int		m_JackInstanceID;
 
+	long int	m_JackSampleRate;
+	long int 	m_JackBufferSize;
+
 	static int JackProcessInstanceID;
 
 	void(*RunCallback)(void*, bool m);
@@ -115,7 +120,7 @@ private:
 
 ///////////////////////////////////////////////////
 
-class JackPlugin : public SpiralPlugin
+class JackPlugin : public AudioDriver
 {
 public:
  	JackPlugin();
@@ -124,16 +129,21 @@ public:
 	virtual PluginInfo& Initialise(const HostInfo *Host);
 	virtual SpiralGUIType*  CreateGUI();
 	
-	virtual void 		Execute();
-	virtual void 		ExecuteCommands();
+	/* General Plugin Function */
+	virtual void	Execute();
+	virtual void	ExecuteCommands();
 
-	virtual bool         	Kill();
+	virtual bool	Kill();
+	virtual void	Reset();
 	
-	virtual void	    StreamOut(std::ostream &s);
-	virtual void	    StreamIn(std::istream &s);
-	
+	/* Audio Driver Specific Functions */
+	virtual bool			IsAudioDriver() { return true; }
+	virtual AudioProcessType	ProcessType() { return AudioDriver::ALWAYS; }		
+	virtual void			ProcessAudio();
+
+	/* Jack Plugin Specific Functions */
 	JackClient *GetJackClient()           { return m_JackClient; }
-	
+
         void SetNumberPorts (int nInputs, int nOutputs);
 
 	enum GUICommands{NONE,UPDATE_NAMES,SET_PORT_COUNT,CHECK_PORT_CHANGES};
@@ -145,10 +155,12 @@ public:
 	};
 
 	void Attach() { m_JackClient->Attach(); }
-	void Detach() { m_JackClient->Detach(); }			
-private:
-	const HostInfo* host;
+	void Detach() { m_JackClient->Detach(); }
 
+	/* Jack Plugin Streaming - soon to be obsolete and for backward compatibility only*/
+	virtual void	StreamOut(std::ostream &s);
+	virtual void	StreamIn(std::istream &s);			
+private:
 	GUIArgs m_GUIArgs;	
 	
 	int m_Version;
@@ -169,7 +181,7 @@ private:
 	bool		m_Connected;	
 	JackClient 	*m_JackClient;
 	int		m_JackInstanceID;
-
+	
 	//clunky work-around for unique ID
 	static int JackInstanceCount;
 };

@@ -53,7 +53,7 @@ static const int IN_SHLEN = 2;
 static const int OUT_MAIN = 0;
 
 static const HostInfo* host;
-OSSOutput* OSSOutput::m_Singleton = NULL;
+OSSClient* OSSClient::m_Singleton = NULL;
 int OutputPlugin::m_RefCount=0;
 int OutputPlugin::m_NoExecuted=0;
 OutputPlugin::Mode OutputPlugin::m_Mode=NO_MODE;
@@ -117,7 +117,7 @@ OutputPlugin::~OutputPlugin()
 	if (m_RefCount==0)
 	{
 		cb_Blocking(m_Parent,false);
-		OSSOutput::PackUpAndGoHome();
+		OSSClient::PackUpAndGoHome();
 		m_Mode=NO_MODE;
 	}
 }
@@ -126,7 +126,7 @@ PluginInfo &OutputPlugin::Initialise(const HostInfo *Host)
 {
 	PluginInfo& Info= SpiralPlugin::Initialise(Host);
 	host=Host;
-	OSSOutput::Get()->AllocateBuffer();
+	OSSClient::Get()->AllocateBuffer();
 
 	return Info;
 }
@@ -140,7 +140,7 @@ SpiralGUIType *OutputPlugin::CreateGUI()
 bool OutputPlugin::Kill()
 {
 	m_IsDead=true;
-	OSSOutput::Get()->Kill();
+	OSSClient::Get()->Kill();
 	m_Mode=CLOSED;
 	cb_Blocking(m_Parent,false);
 	return true;
@@ -150,23 +150,23 @@ void OutputPlugin::Reset()
 {
 	if (m_IsDead) return;
 	m_IsDead=true;
-	OSSOutput::Get()->Kill();
+	OSSClient::Get()->Kill();
 	cb_Blocking(m_Parent,false);
 	ResetPorts();
-	OSSOutput::Get()->AllocateBuffer();
+	OSSClient::Get()->AllocateBuffer();
 	
 	switch (m_Mode)
 	{
 		case INPUT :
-			OSSOutput::Get()->OpenRead();
+			OSSClient::Get()->OpenRead();
 			cb_Blocking(m_Parent,true);
 		break;
 		case OUTPUT :
-			OSSOutput::Get()->OpenWrite();
+			OSSClient::Get()->OpenWrite();
 			cb_Blocking(m_Parent,true);
 		break;
 		case DUPLEX :
-			OSSOutput::Get()->OpenReadWrite();
+			OSSClient::Get()->OpenReadWrite();
 			cb_Blocking(m_Parent,true);
 		break;
 		
@@ -183,7 +183,7 @@ void OutputPlugin::Execute()
 	
         if (m_Mode==NO_MODE && m_RefCount==1)
 	{
-		if (OSSOutput::Get()->OpenWrite())
+		if (OSSClient::Get()->OpenWrite())
 		{
 			cb_Blocking(m_Parent,true);
 			m_Mode=OUTPUT;
@@ -193,11 +193,11 @@ void OutputPlugin::Execute()
 
 	if (m_Mode==OUTPUT || m_Mode==DUPLEX)
 	{
-		OSSOutput::Get()->SendStereo(GetInput(0),GetInput(1));
+		OSSClient::Get()->SendStereo(GetInput(0),GetInput(1));
 	}
 
 	if (m_Mode==INPUT || m_Mode==DUPLEX)
-           OSSOutput::Get()->GetStereo(GetOutputBuf(0),GetOutputBuf(1));
+           OSSClient::Get()->GetStereo(GetOutputBuf(0),GetOutputBuf(1));
 }
 
 void OutputPlugin::ExecuteCommands()
@@ -205,36 +205,26 @@ void OutputPlugin::ExecuteCommands()
 	if (m_IsDead) 
 		return;
 
-	// Only Play() once per set of plugins
-	m_NoExecuted--;
-	if (m_NoExecuted<=0)
-	{
-		if (m_Mode==INPUT || m_Mode==DUPLEX) OSSOutput::Get()->Read();
-		if (m_Mode==OUTPUT || m_Mode==DUPLEX) OSSOutput::Get()->Play();
-		m_NoExecuted=m_RefCount;
-	}
-
-
 	if (m_AudioCH->IsCommandWaiting())
 	{
 		switch(m_AudioCH->GetCommand())
 		{
 			case OPENREAD :
-				if (OSSOutput::Get()->OpenRead())
+				if (OSSClient::Get()->OpenRead())
 				{
 					m_Mode=INPUT;
 					//cb_Blocking(m_Parent,true);
 				}
 			break;
 			case OPENWRITE :
-				if (OSSOutput::Get()->OpenWrite())
+				if (OSSClient::Get()->OpenWrite())
 				{
 					m_Mode=OUTPUT;
 					cb_Blocking(m_Parent,true);
 				}
 			break;
 			case OPENDUPLEX :
-				if (OSSOutput::Get()->OpenReadWrite())
+				if (OSSClient::Get()->OpenReadWrite())
 				{
 					m_Mode=DUPLEX;
 					cb_Blocking(m_Parent,true);
@@ -243,10 +233,10 @@ void OutputPlugin::ExecuteCommands()
 			case CLOSE :
 				m_Mode=CLOSED;
 				cb_Blocking(m_Parent,false);
-				OSSOutput::Get()->Close();
+				OSSClient::Get()->Close();
 			break;
 			case SET_VOLUME :
-                                OSSOutput::Get()->SetVolume(m_Volume);
+                                OSSClient::Get()->SetVolume(m_Volume);
                                 break;
                         case CLEAR_NOTIFY:
                                 m_NotifyOpenOut=false;
@@ -256,10 +246,25 @@ void OutputPlugin::ExecuteCommands()
         }
 }
 
+void OutputPlugin::ProcessAudio()
+{
+	if (m_IsDead) 
+		return;
+
+	// Only Play() once per set of plugins
+	m_NoExecuted--;
+	if (m_NoExecuted<=0)
+	{
+		if (m_Mode==INPUT || m_Mode==DUPLEX) OSSClient::Get()->Read();
+		if (m_Mode==OUTPUT || m_Mode==DUPLEX) OSSClient::Get()->Play();
+		m_NoExecuted=m_RefCount;
+	}
+}
+
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 
-OSSOutput::OSSOutput() :
+OSSClient::OSSClient() :
 m_Amp(0.5),
 m_Channels(2),
 m_ReadBufferNum(0),
@@ -276,7 +281,7 @@ m_IsDead(false)
 
 //////////////////////////////////////////////////////////////////////
 
-OSSOutput::~OSSOutput()
+OSSClient::~OSSClient()
 {
 	Close();
 	DeallocateBuffer();
@@ -284,7 +289,7 @@ OSSOutput::~OSSOutput()
 
 //////////////////////////////////////////////////////////////////////
 
-void OSSOutput::AllocateBuffer()
+void OSSClient::AllocateBuffer()
 {
 	if (m_Buffer[0]==NULL)
 	{
@@ -296,11 +301,9 @@ void OSSOutput::AllocateBuffer()
 		m_InBuffer[0] = (short*) calloc(m_BufSizeBytes/2,m_BufSizeBytes);
 		m_InBuffer[1] = (short*) calloc(m_BufSizeBytes/2,m_BufSizeBytes);
 	}
-	
-	m_Wav.SetSamplerate(host->SAMPLERATE);
 }
 
-void OSSOutput::DeallocateBuffer()
+void OSSClient::DeallocateBuffer()
 {
 	if (m_Buffer[0]!=NULL)
 	{
@@ -316,7 +319,7 @@ void OSSOutput::DeallocateBuffer()
 
 //////////////////////////////////////////////////////////////////////
 
-void OSSOutput::SendStereo(const Sample *ldata,const Sample *rdata) 
+void OSSClient::SendStereo(const Sample *ldata,const Sample *rdata) 
 {
 	if (m_Channels!=2) return;
 	
@@ -349,7 +352,7 @@ void OSSOutput::SendStereo(const Sample *ldata,const Sample *rdata)
 
 //////////////////////////////////////////////////////////////////////
 
-void OSSOutput::Play()
+void OSSClient::Play()
 {
     int BufferToSend=!m_WriteBufferNum;
 	
@@ -365,18 +368,13 @@ void OSSOutput::Play()
 		write(m_Dspfd,m_Buffer[BufferToSend],m_BufSizeBytes);
 	}
 		
-    if(m_Wav.Recording()) 
-    {
-        m_Wav.Save(m_Buffer[BufferToSend],m_BufSizeBytes);
-    }
-
 	memset(m_Buffer[BufferToSend],0,m_BufSizeBytes);
 	m_WriteBufferNum=BufferToSend;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void OSSOutput::GetStereo(Sample *ldata,Sample *rdata) 
+void OSSClient::GetStereo(Sample *ldata,Sample *rdata) 
 {
 	if (m_Channels!=2) return;
 	
@@ -395,7 +393,7 @@ void OSSOutput::GetStereo(Sample *ldata,Sample *rdata)
 
 //////////////////////////////////////////////////////////////////////
 
-void OSSOutput::Read()
+void OSSClient::Read()
 {
     int BufferToRead=!m_ReadBufferNum;
 
@@ -415,7 +413,7 @@ void OSSOutput::Read()
 
 //////////////////////////////////////////////////////////////////////
 
-bool OSSOutput::Close()
+bool OSSClient::Close()
 { 	
 	cerr<<"Closing dsp output"<<endl;
 	close(m_Dspfd);
@@ -425,7 +423,7 @@ bool OSSOutput::Close()
 
 //////////////////////////////////////////////////////////////////////
 
-bool OSSOutput::OpenWrite()
+bool OSSClient::OpenWrite()
 { 	
 	int result,val;
 	cerr<<"Opening dsp output"<<endl;
@@ -489,7 +487,7 @@ bool OSSOutput::OpenWrite()
 
 //////////////////////////////////////////////////////////////////////
 
-bool OSSOutput::OpenRead()
+bool OSSClient::OpenRead()
 { 	
 	int result,val;
   
@@ -524,7 +522,7 @@ bool OSSOutput::OpenRead()
 
 //////////////////////////////////////////////////////////////////////
 
-bool OSSOutput::OpenReadWrite()
+bool OSSClient::OpenReadWrite()
 { 	
 	int result,val;
 	cerr<<"Opening dsp output (duplex)"<<endl;

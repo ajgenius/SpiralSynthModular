@@ -134,6 +134,7 @@ private:
 
 	HostInfo m_Info;
 	bool m_ResetingAudioThread;
+	bool m_HostNeedsUpdate;
 
 	static DeviceGUIInfo BuildDeviceGUIInfo(PluginInfo &PInfo);
 
@@ -158,6 +159,7 @@ private:
 	Fl_Button       *m_New;
 	Fl_Button       *m_Options;
 	Fl_Button       *m_NewComment;
+	Fl_Button       *m_PlayPause;
         Fl_Tabs         *m_GroupTab;
 
 	Fl_Canvas 	*m_Canvas;
@@ -187,7 +189,9 @@ private:
 	static void cb_Save(Fl_Button* o, void* v);
 	inline void cb_New_i(Fl_Button* o, void* v);
 	static void cb_New(Fl_Button* o, void* v);
-
+	inline void cb_PlayPause_i(Fl_Button* o, void* v);
+	static void cb_PlayPause(Fl_Button* o, void* v);
+	
 	inline void cb_MergePatch_i();
 	static void cb_MergePatch(Fl_Canvas* o, SynthModular*v) { v->cb_MergePatch_i(); };
 
@@ -208,6 +212,13 @@ private:
 	static void cb_Blocking(void* o, bool Mode);
 	static void cb_UpdatePluginInfo(int ID, void *PluginInfo);
 
+	inline void cb_ChangeBufferAndSampleRate_i(long int NewBufferSize, long int NewSamplerate);	
+
+	static void cb_ChangeBufferAndSampleRate(long unsigned int NewBufferSize, long unsigned int NewSamplerate, void *o)
+	{
+		((SynthModular*)o)->cb_ChangeBufferAndSampleRate_i(NewBufferSize, NewSamplerate);
+	}
+	
 	DeviceGroup	m_Copied;
 
 	inline void cb_CutDeviceGroup_i();

@@ -47,12 +47,15 @@ struct PluginInfo
 struct HostInfo
 {
 	int    BUFSIZE;
+	int    SAMPLERATE;
+
+	/* obsolete - REMOVE SOON */
 	int    FRAGSIZE;
 	int    FRAGCOUNT;
-	int    SAMPLERATE;
 	std::string OUTPUTFILE;
 	std::string MIDIFILE;
 	int    POLY;
+
         unsigned GUI_COLOUR;
         unsigned SCOPE_BG_COLOUR;
         unsigned SCOPE_FG_COLOUR;
@@ -102,7 +105,7 @@ public:
 
 	void UpdatePluginInfoWithHost();
 	void SetInPortType(PluginInfo &pinfo, int port, Sample::SampleType type);
-    void SetOutPortType(PluginInfo &pinfo, int port, Sample::SampleType type);
+	void SetOutPortType(PluginInfo &pinfo, int port, Sample::SampleType type);
 
 	// Callbacks to main engine. Should only called by plugin hosts.
 	void SetUpdateInfoCallback(int ID, void(*s)(int, void *));
@@ -115,8 +118,9 @@ public:
 	bool IsTerminal() { return m_IsTerminal; }
 	bool IsDead() { return m_IsDead; }
 	 
-    ChannelHandler *GetChannelHandler() { return m_AudioCH; }
-		
+	ChannelHandler *GetChannelHandler() { return m_AudioCH; }
+
+	virtual bool IsAudioDriver() { return false; }
 protected:
 	
     ChannelHandler *m_AudioCH;
@@ -176,6 +180,39 @@ private:
 
 	void (*UpdateInfo)(int n,void *);	
 	int    m_HostID;	
+};
+
+class AudioDriver : public SpiralPlugin
+{
+public:
+	/* if this is an ALWAYS process then ProcessAudio must
+	   always be called regardless whether it has something to 
+	   process or not, so it is run along side GUI commands,
+	   ala ExecuteCommands, and is run even if paused.
+	   
+	   If its MANUAL we are the ones doing the pushing of data
+	   so we don't have to worry about it if we aren't hooked up,
+	   and we do have to worry about synchronization with other 
+	   plugins, so ProcessAudio should be run along side of
+	   regular audio updates, ala Execute. This is eg. for
+	   a File Output driver.
+	   
+	   NEVER means we never need to run ProcessAudio, eg,
+	   a dummy audio driver.
+	 */  
+	enum AudioProcessType { ALWAYS, MANUAL, NEVER };
+	
+	virtual bool IsAudioDriver() { return true; }
+
+	virtual void ProcessAudio()=0;
+	
+	virtual AudioProcessType ProcessType() { return NEVER; }		
+
+	// Callbacks to main engine. Should only called by plugin hosts.
+	void SetChangeBufferAndSampleRateCallback(void(*s)(long unsigned int, long unsigned int, void *)) { ChangeBufferAndSampleRate = s; } ;
+
+protected:
+	void (*ChangeBufferAndSampleRate)(long unsigned int BufferSize, long unsigned int SampleRate, void *);	
 };
 
 #endif

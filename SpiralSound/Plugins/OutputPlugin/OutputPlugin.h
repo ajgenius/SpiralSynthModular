@@ -23,12 +23,12 @@
 #ifndef OutputPLUGIN
 #define OutputPLUGIN
 
-class OSSOutput
+class OSSClient
 {
 public:
-	static OSSOutput *Get()       { if(!m_Singleton) m_Singleton=new OSSOutput; return m_Singleton; }
+	static OSSClient *Get()       { if(!m_Singleton) m_Singleton=new OSSClient; return m_Singleton; }
 	static void PackUpAndGoHome() { if(m_Singleton)  { delete m_Singleton; m_Singleton=NULL; } }
-	~OSSOutput();
+	~OSSClient();
 
 	void    AllocateBuffer();
 	void    DeallocateBuffer();
@@ -39,8 +39,7 @@ public:
 	float   GetVolume() {return m_Amp;}
 	void    Play();
 	void    Read();
-	void    WavOpen(char* name) {m_Wav.Open(name,WavFile::WRITE, WavFile::STEREO);}
-	void    WavClose() {m_Wav.Close();}
+
 	short  *GetBuffer() {return m_Buffer[m_WriteBufferNum];}
 
 	bool 	OpenReadWrite();
@@ -49,9 +48,9 @@ public:
 	bool    Close();
 	void    Kill() { m_IsDead = true; m_OutputOk=false; PackUpAndGoHome(); }
 private:
-	static OSSOutput* m_Singleton;
+	static OSSClient* m_Singleton;
 
- 	OSSOutput();
+ 	OSSClient();
 
 	short  *m_Buffer[2];
 	short  *m_InBuffer[2];
@@ -59,7 +58,7 @@ private:
 	int     m_Dspfd;
 	float   m_Amp;
 	int     m_Channels;
-	WavFile m_Wav;
+
 	int    	m_ReadBufferNum;
 	int     m_WriteBufferNum;
 	bool    m_OutputOk;
@@ -67,7 +66,7 @@ private:
 };
 
 
-class OutputPlugin : public SpiralPlugin
+class OutputPlugin : public AudioDriver
 {
 public:
 	enum Mode {NO_MODE,INPUT,OUTPUT,DUPLEX,CLOSED};
@@ -77,26 +76,34 @@ public:
 
 	virtual PluginInfo& Initialise(const HostInfo *Host);
 	virtual SpiralGUIType*  CreateGUI();
-	virtual void 		Execute();
-	virtual bool         	Kill();
-	virtual void		Reset();
 
-	virtual void 		ExecuteCommands();
-	virtual void	    StreamOut(std::ostream &s) {}
-	virtual void	    StreamIn(std::istream &s)  {}
+	/* General Plugin Function */
+	virtual	void	Execute();
+	virtual void	ExecuteCommands();
 
+	virtual bool	Kill();
+	virtual void	Reset();
+	
+	/* Audio Driver Specific Functions */
+	virtual bool			IsAudioDriver() { return true; }
+	virtual AudioProcessType	ProcessType() { return AudioDriver::ALWAYS; }		
+	virtual void			ProcessAudio();
+
+	/* OSS Plugin Specific Functions */
 	enum GUICommands {NONE, OPENREAD, OPENWRITE, OPENDUPLEX, CLOSE, SET_VOLUME, CLEAR_NOTIFY};
 	float m_Volume;
 
 	Mode GetMode() { return m_Mode; }
 
+	/* OSS Plugin Streaming - soon to be obsolete and for backward compatibility only*/
+	virtual void	    StreamOut(std::ostream &s) {}
+	virtual void	    StreamIn(std::istream &s)  {}
 private:
 	static int m_RefCount;
 	static int m_NoExecuted;
 	static Mode m_Mode;
         bool m_NotifyOpenOut;
 	bool m_CheckedAlready;
-	bool m_Recmode;
 };
 
 #endif

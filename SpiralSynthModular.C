@@ -77,13 +77,18 @@ SynthModular::SynthModular():
 m_NextID(0),
 m_PauseAudio(false)
 {
+	/* Shared Audio State Information  */
 	m_Info.BUFSIZE = SpiralInfo::BUFSIZE;
+	m_Info.SAMPLERATE = SpiralInfo::SAMPLERATE;
+
+	/* obsolete - REMOVE SOON  */
 	m_Info.FRAGSIZE = SpiralInfo::FRAGSIZE;
 	m_Info.FRAGCOUNT = SpiralInfo::FRAGCOUNT;
-	m_Info.SAMPLERATE = SpiralInfo::SAMPLERATE;
 	m_Info.OUTPUTFILE = SpiralInfo::OUTPUTFILE;
 	m_Info.MIDIFILE = SpiralInfo::MIDIFILE;
 	m_Info.POLY = SpiralInfo::POLY;
+
+	/* Shared GUI Preferences Information  */
         m_Info.GUI_COLOUR = SpiralInfo::GUI_COLOUR;
         m_Info.SCOPE_BG_COLOUR = SpiralInfo::SCOPE_BG_COLOUR;
         m_Info.SCOPE_FG_COLOUR = SpiralInfo::SCOPE_FG_COLOUR;
@@ -145,8 +150,6 @@ void SynthModular::Update()
 {
 	m_CH.UpdateDataNow();
 
-	if (m_PauseAudio) return;
-
 	// for all the plugins
 	for(map<int,DeviceWin*>::iterator i=m_DeviceWinMap.begin();
 		i!=m_DeviceWinMap.end(); i++)
@@ -160,21 +163,35 @@ void SynthModular::Update()
 			//Erase Device from DeviceWinMap
 			m_DeviceWinMap.erase(i);
 		}
-		else if (i->second->m_Device && !m_ResetingAudioThread) // if it's not a comment and we aren't reseting
+		else if (i->second->m_Device) // if it's not a comment
 		{
-			#ifdef DEBUG_PLUGINS
-			cerr<<"Updating channelhandler of plugin "<<i->second->m_PluginID<<endl;
-			#endif
+			if ((!m_ResetingAudioThread) && (!m_PauseAudio))
+			{
+				#ifdef DEBUG_PLUGINS
+				cerr<<"Updating channelhandler of plugin "<<i->second->m_PluginID<<endl;
+				#endif
 
-			// updates the data from the gui thread, if it's not blocking
- 			i->second->m_Device->UpdateChannelHandler();
+				// updates the data from the gui thread, if it's not blocking
+	 			i->second->m_Device->UpdateChannelHandler();
 
-			#ifdef DEBUG_PLUGINS
-			cerr<<"Finished updating"<<endl;
-			#endif
+				#ifdef DEBUG_PLUGINS
+				cerr<<"Finished updating"<<endl;
+				#endif
 
-			// run any commands we've received from the GUI's
-			i->second->m_Device->ExecuteCommands();
+				// run any commands we've received from the GUI's
+				i->second->m_Device->ExecuteCommands();
+			}
+			
+			// If this is an audio device see if we always need to ProcessAudio here
+			if (i->second->m_Device->IsAudioDriver())
+			{
+				AudioDriver *driver = ((AudioDriver *)i->second->m_Device);
+				
+				if (driver->ProcessType() == AudioDriver::ALWAYS)
+				{
+					driver->ProcessAudio();
+				}	
+			}
 		}
 	}
 
@@ -185,7 +202,7 @@ void SynthModular::Update()
 	{
 		// use the graphsort order to remove internal latency
 		map<int,DeviceWin*>::iterator di=m_DeviceWinMap.find(*i);
-		if (di!=m_DeviceWinMap.end() && di->second->m_Device  && (! di->second->m_Device->IsDead()))
+		if (di!=m_DeviceWinMap.end() && di->second->m_Device  && (! di->second->m_Device->IsDead()) && (!m_PauseAudio))
 		{
 			#ifdef DEBUG_PLUGINS
 			cerr<<"Executing plugin "<<di->second->m_PluginID<<endl;
@@ -198,6 +215,17 @@ void SynthModular::Update()
 			else
 			{
 				di->second->m_Device->Execute();
+				
+				// If this is an audio device see if we need to ProcessAudio here
+				if (di->second->m_Device->IsAudioDriver())
+				{
+					AudioDriver *driver = ((AudioDriver *)di->second->m_Device);
+				
+					if (driver->ProcessType() == AudioDriver::MANUAL)
+					{
+						driver->ProcessAudio();
+					}	
+				}
 			}
 
 			#ifdef DEBUG_PLUGINS
@@ -258,6 +286,13 @@ void SynthModular::UpdatePluginGUIs()
 	}
 
 	m_Canvas->Poll();
+
+	if (m_HostNeedsUpdate)
+	{
+		cout << "Updating SampleRate to: " << SpiralInfo::SAMPLERATE << " and Buffer Size to: " << SpiralInfo::BUFSIZE << " to match current Audio Driver." << endl;
+		UpdateHostInfo();
+		m_HostNeedsUpdate = false;
+	}	
 }
 
 //////////////////////////////////////////////////////////
@@ -352,6 +387,16 @@ SpiralWindowType *SynthModular::CreateWindow()
         m_NewComment->tooltip("New comment");
 	m_NewComment->callback((Fl_Callback*)cb_NewComment);
 	m_Toolbar->add(m_NewComment);
+
+	m_PlayPause = new Fl_Button(0, 0, but, but, "Play/Pause");
+        m_PlayPause->type(0);
+	m_PlayPause->box(FL_PLASTIC_UP_BOX);
+	m_PlayPause->color(SpiralInfo::GUICOL_Button);
+	m_PlayPause->selection_color(SpiralInfo::GUICOL_Tool);
+        m_PlayPause->labelsize (1);
+        m_PlayPause->tooltip("Play/Pause");
+	m_PlayPause->callback((Fl_Callback*)cb_PlayPause);
+	m_Toolbar->add(m_PlayPause);
 
         m_GroupFiller = new Fl_Group (0, 0, 0, ToolbarHeight, "");
 		m_GroupFiller->color(SpiralInfo::GUICOL_Button);
@@ -634,6 +679,11 @@ DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 	nlw->m_Device->SetUpdateCallback(cb_Update);
 	nlw->m_Device->SetParent((void*)this);
 
+	if ( AudioDriver *driver = dynamic_cast<AudioDriver*>(nlw->m_Device) )
+	{ 
+		driver->SetChangeBufferAndSampleRateCallback(cb_ChangeBufferAndSampleRate);
+	}	
+
 	PluginInfo PInfo    = nlw->m_Device->Initialise(&m_Info);
 	SpiralGUIType *temp = nlw->m_Device->CreateGUI();
 	Fl_Pixmap *Pix      = new Fl_Pixmap(Plugin->GetIcon());
@@ -728,16 +778,35 @@ void SynthModular::AddComment(int n)
 
 //////////////////////////////////////////////////////////
 
+void SynthModular::cb_ChangeBufferAndSampleRate_i(long int NewBufferSize, long int NewSamplerate)
+{
+	if (SpiralInfo::BUFSIZE != NewBufferSize)
+	{
+		// update the settings
+		SpiralInfo::BUFSIZE    = NewBufferSize;
+		m_HostNeedsUpdate = true;
+	}	
+
+	if (SpiralInfo::SAMPLERATE != NewSamplerate)
+	{
+		SpiralInfo::SAMPLERATE = NewSamplerate;
+		m_HostNeedsUpdate = true;
+	}	
+}
+	
+
 void SynthModular::UpdateHostInfo()
 {
 	/* Pause Audio */
 	PauseAudio();
 
-	// update the settings
+	/* update the settings */
 	m_Info.BUFSIZE    = SpiralInfo::BUFSIZE;
+	m_Info.SAMPLERATE = SpiralInfo::SAMPLERATE;
+
+	/* obsolete - REMOVE SOON  */
 	m_Info.FRAGSIZE   = SpiralInfo::FRAGSIZE;
 	m_Info.FRAGCOUNT  = SpiralInfo::FRAGCOUNT;
-	m_Info.SAMPLERATE = SpiralInfo::SAMPLERATE;
 	m_Info.OUTPUTFILE = SpiralInfo::OUTPUTFILE;
 	m_Info.MIDIFILE   = SpiralInfo::MIDIFILE;
 	m_Info.POLY       = SpiralInfo::POLY;
@@ -1331,6 +1400,21 @@ inline void SynthModular::cb_NewComment_i(Fl_Button* o, void* v)
 }
 void SynthModular::cb_NewComment(Fl_Button* o, void* v)
 {((SynthModular*)(o->parent()->user_data()))->cb_NewComment_i(o,v);}
+
+//////////////////////////////////////////////////////////
+
+inline void SynthModular::cb_PlayPause_i(Fl_Button* o, void* v)
+{
+	if (m_ResetingAudioThread) return;
+	
+	if (IsPaused())
+		ResumeAudio();
+	else
+		PauseAudio();
+}
+
+void SynthModular::cb_PlayPause(Fl_Button* o, void* v)
+{((SynthModular*)(o->parent()->user_data()))->cb_PlayPause_i(o,v);}
 
 //////////////////////////////////////////////////////////
 

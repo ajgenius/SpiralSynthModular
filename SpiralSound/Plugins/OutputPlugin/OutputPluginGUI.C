@@ -73,7 +73,7 @@ void OutputPluginGUI::Update()
 
 void OutputPluginGUI::UpdateValues(SpiralPlugin *o)
 {
-	Volume->value(OSSOutput::Get()->GetVolume());
+	Volume->value(OSSClient::Get()->GetVolume());
 }
 
 //// Callbacks ////
