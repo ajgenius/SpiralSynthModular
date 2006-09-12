@@ -68,7 +68,7 @@ public:
 	void CropTo(int NewLength);
 	bool IsEmpty() const { return m_IsEmpty; }
 
-	inline float &Sample::operator[](int i) const
+	inline float &operator[](int i) const
 	{
 		#ifdef DEBUG
 			assert(i>=0 && i<m_Length);
@@ -77,7 +77,7 @@ public:
 	}
 
 	// Linear interpolated
-	inline float Sample::operator[](float i) const
+	inline float operator[](float i) const
 	{
 		int ii=(int)i;
 
@@ -91,7 +91,7 @@ public:
 	}
 
 
-	inline void Sample::Set(int i, float v)
+	inline void Set(int i, float v)
 	{
 		m_IsEmpty=false;
 		#ifdef DEBUG
@@ -100,7 +100,7 @@ public:
 		m_Data[i]=v;
 	}
 
-	inline Sample &Sample::operator=(const Sample &rhs)
+	inline Sample &operator=(const Sample &rhs)
 	{
 		Allocate(rhs.GetLength());
 		memcpy(m_Data,rhs.GetBuffer(),GetLengthInBytes());
