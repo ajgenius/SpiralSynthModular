@@ -9,9 +9,11 @@ EXTRA_DIST = SpiralIcon.xpm
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = MousePlugin.la
 MousePlugin_la_SOURCES =					\
+			scratch.h				\
+			scratch.C				\
 			MousePluginGUI.h			\
 			MousePluginGUI.C			\
-			MousePlugin.h			\
+			MousePlugin.h				\
 			MousePlugin.C
 			
 MousePlugin_la_LDFLAGS = -shared -module -avoid-version -no-undefined

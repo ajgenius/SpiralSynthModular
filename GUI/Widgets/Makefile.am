@@ -26,10 +26,14 @@ libSpiralWidgets_la_SOURCES =					\
 					Fl_Knob.cxx		\
 					Fl_LED_Button.H		\
 					Fl_LED_Button.cxx	\
+					Fl_Loop.h		\
+					Fl_Loop.C		\
 					Fl_SEvent.C		\
 					Fl_SEvent.h		\
 					Fl_SevenSeg.H		\
 					Fl_SevenSeg.cxx		\
+					Fl_Trigger.h		\
+					Fl_Trigger.C		\
 					Fl_VU_Meter.h		\
 					Fl_VU_Meter.cxx		\
 					PawfalInput.h		\
