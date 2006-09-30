@@ -9,9 +9,11 @@ EXTRA_DIST = SpiralIcon.xpm
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = LADSPAPlugin.la
 LADSPAPlugin_la_SOURCES =					\
+			LADSPAInfo.h				\
+			LADSPAInfo.C				\
 			LADSPAPluginGUI.h			\
 			LADSPAPluginGUI.C			\
-			LADSPAPlugin.h			\
+			LADSPAPlugin.h				\
 			LADSPAPlugin.C
 			
 LADSPAPlugin_la_LDFLAGS = -shared -module -avoid-version -no-undefined

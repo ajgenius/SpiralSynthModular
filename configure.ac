@@ -7,6 +7,9 @@ AM_INIT_AUTOMAKE
 dnl Automake (can't use AC_CONFIG_HEADER - get complaints!)
 AM_CONFIG_HEADER(config.h)
 
+dnl Initialize maintainer mode
+AM_MAINTAINER_MODE
+
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
@@ -86,9 +89,6 @@ fi
 if test "$build_ladspa" = "y" ; then
    PLUGINLIST="LADSPAPlugin $PLUGINLIST"
 fi
-
-dnl build plugin list
-echo "$PLUGINLIST" > SpiralSound/PluginList.txt
 
 dnl Check whether liblrdf is present or has been disabled
 lrdf_message=""

@@ -9,9 +9,11 @@ EXTRA_DIST = SpiralIcon.xpm
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = FilterPlugin.la
 FilterPlugin_la_SOURCES =					\
+			iir_filter.h				\
+			iir_filter.C				\
 			FilterPluginGUI.h			\
 			FilterPluginGUI.C			\
-			FilterPlugin.h			\
+			FilterPlugin.h				\
 			FilterPlugin.C
 			
 FilterPlugin_la_LDFLAGS = -shared -module -avoid-version -no-undefined

@@ -28,7 +28,7 @@ libSpiralWidgets_la_SOURCES =					\
 					Fl_LED_Button.cxx	\
 					Fl_SEvent.C		\
 					Fl_SEvent.h		\
-					Fl_SevenSeg.h		\
+					Fl_SevenSeg.H		\
 					Fl_SevenSeg.cxx		\
 					Fl_VU_Meter.h		\
 					Fl_VU_Meter.cxx		\
