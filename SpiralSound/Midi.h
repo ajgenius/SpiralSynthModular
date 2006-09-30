@@ -27,7 +27,7 @@
 #include <limits.h>
 #include <queue>
 #include <string>
-#include "../config.h"
+#include "config.h"
 
 using namespace std;
 

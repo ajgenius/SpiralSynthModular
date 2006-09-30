@@ -245,8 +245,6 @@ void Fl_EventMap::SetSnapGap(float s)
 
 void Fl_EventMap::SetTime(float Time)
 {	
-	assert(m_PixelsPerSec!=0);
-	
 	Time -= m_TimeOffset;
 	
 	m_Pos = (int)(Time*m_PixelsPerSec);

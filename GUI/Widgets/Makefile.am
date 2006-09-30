@@ -1,4 +1,8 @@
-INCLUDES = $(FLTK_CXXFLAGS) $(FLTK_CFLAGS)
+INCLUDES =                                              \
+                $(FLTK_CXXFLAGS)                        \
+                $(FLTK_CFLAGS)                          \
+                -I$(top_builddir)/GUI/Widgets           \
+                -I$(top_builddir)/SpiralSound
 
 EXTRA_DIST = 				\
 		Fl_DragBar.fld  	\
@@ -32,8 +36,14 @@ libSpiralWidgets_la_SOURCES =					\
 					PawfalInput.C		\
 					PawfalYesNo.h		\
 					PawfalYesNo.C		\
+					PluginManager.h		\
+					PluginManager.C		\
 			                SpiralGUI.H		\
 			                SpiralGUI.C		\
+					SpiralPlugin.h		\
+					SpiralPlugin.C		\
+					SpiralPluginGUI.h	\
+					SpiralPluginGUI.C	\
 					WS_Pulse1.h		\
 					WS_Pulse2.h		\
 					WS_RevSaw.h		\
@@ -47,4 +57,7 @@ libSpiralWidgets_la_SOURCES =					\
 					WS_Noise.h
 					
 libSpiralWidgets_la_LDFLAGS = -shared -no-undefined
-libSpiralWidgets_la_LIBADD = $(FLTK_LIBS) -lm -ldl -lpthread
+libSpiralWidgets_la_LIBADD = 				\
+				$(FLTK_LIBS)		\
+				 -lm -ldl -lpthread	\
+				$(top_builddir)/SpiralSound/libSpiralCommon.la

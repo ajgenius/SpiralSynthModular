@@ -22,7 +22,7 @@
 #include <FL/Fl_Menu_Button.h>
 #include <vector>
 #include <string>
-#include "../../GraphSort.h"
+#include "GraphSort.h"
 #include "Fl_DeviceGUI.h"
 
 #ifndef CANVAS_WIDGET

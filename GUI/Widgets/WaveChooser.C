@@ -19,7 +19,7 @@
 #include "WaveChooser.h"
 #include <string>
 #include <FL/Fl_File_Chooser.H>
-#include "../../../config.h"
+#include "config.h"
 
 using namespace std;
 

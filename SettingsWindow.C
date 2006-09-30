@@ -21,7 +21,7 @@
 #include <FL/Fl_Pixmap.H>
 
 #include "SettingsWindow.h"
-#include "SpiralSound/SpiralInfo.h"
+#include "SpiralInfo.h"
 #include "GUI/options.xpm"
 
 SettingsWindow::SettingsWindow() :

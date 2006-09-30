@@ -20,7 +20,7 @@
 #include "Fl_Canvas.h"
 #include "Fl_Canvas.h"
 #include "PawfalInput.h"
-#include "../../SpiralSound/SpiralInfo.h"
+#include "SpiralInfo.h"
 
 int Fl_DeviceGUI::Numbers[512];
 

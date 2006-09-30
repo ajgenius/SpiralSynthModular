@@ -17,9 +17,9 @@
 */ 
 #include <iostream>
 
-#include "Widgets/Fl_Loop.h"
+#include "Fl_Loop.h"
 #include "LoopGUI.h"
-#include "../Loop.h"
+#include "Loop.h"
 #include <FL/fl_file_chooser.h>
 
 static const int EFFECT_ADDITION = 130;

@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include "Sample.h"
 
-#include "../config.h"
+#include "config.h"
 
 #ifdef USE_LIBSNDFILE
 #include <sndfile.h>

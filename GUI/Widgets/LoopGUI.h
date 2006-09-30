@@ -23,15 +23,15 @@
 #include <FL/Fl_Slider.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Value_Output.H>
-#include "Widgets/Fl_Knob.H"
-#include "Widgets/Fl_Loop.h"
-#include "Widgets/Fl_LED_Button.H"
-#include "Widgets/Fl_Trigger.h"
+#include "Fl_Knob.H"
+#include "Fl_Loop.h"
+#include "Fl_LED_Button.H"
+#include "Fl_Trigger.h"
 
 #include "GUIBase.h"
-#include "../SpiralSound/Filter.h"
-#include "../SpiralSound/Delay.h"
-#include "../SpiralSound/Reverb.h"
+#include "Filter.h"
+#include "Delay.h"
+#include "Reverb.h"
 #include <vector>
 
 #ifndef LOOPGUI

@@ -30,16 +30,16 @@
 #include <FL/Fl_Box.h>
 #include <FL/Fl_Tooltip.h>
 #include "SpiralSynthModular.h"
-#include "SpiralSound/PluginManager.h"
-#include "SpiralSound/SpiralInfo.h"
-#include "SpiralSound/Plugins/SpiralPluginGUI.h"
+#include "PluginManager.h"
+#include "SpiralInfo.h"
+#include "SpiralPluginGUI.h"
 #include "GUI/SSM.xpm"
 #include "GUI/load.xpm"
 #include "GUI/save.xpm"
 #include "GUI/new.xpm"
 #include "GUI/options.xpm"
 #include "GUI/comment.xpm"
-#include "GUI/Widgets/PawfalYesNo.h"
+#include "PawfalYesNo.h"
 
 //#define DEBUG_PLUGINS
 //#define DEBUG_STREAM

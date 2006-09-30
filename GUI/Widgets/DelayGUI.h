@@ -20,10 +20,10 @@
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Group.H>
-#include "../../Widgets/Fl_Knob.H"
+#include "Fl_Knob.H"
 
 #include "GUIBase.h"
-#include "../SpiralSound/Delay.h"
+#include "Delay.h"
 
 #ifndef DELAYGUI
 #define DELAYGUI

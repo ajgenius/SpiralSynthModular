@@ -29,7 +29,7 @@
 #include <sys/resource.h>
 
 #include "SpiralSynthModular.h"
-#include "SpiralSound/SpiralInfo.h"
+#include "SpiralInfo.h"
 
 pthread_t loopthread,watchdogthread;
 SynthModular *synth;

@@ -20,7 +20,7 @@
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Check_Button.H>
-#include "Widgets/Fl_Knob.H"
+#include "Fl_Knob.H"
 
 #include "GUIBase.h"
 

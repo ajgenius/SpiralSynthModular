@@ -19,12 +19,12 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Group.H>
-#include "Widgets/Fl_Knob.H"
+#include "Fl_Knob.H"
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Slider.H>
 
 #include "GUIBase.h"
-#include "../SpiralSound/Filter.h"
+#include "Filter.h"
 
 #ifndef FILTERGUI
 #define FILTERGUI
