@@ -266,10 +266,66 @@ void SpiralInfo::StreamInPrefs (istream &s)
 {
      // These lines are from SpiralInfo
      char temp[256];
-     
-     s >> temp >> temp >> temp;
-     s >> temp >> temp >> m_Version;
-     s >> temp >> temp >> LOCALE;
+
+     /* Sanity Explanation -
+     		Historically the .spiralmodular was a loose ini
+     		without sections, it looked like
+     		
+     		SpiralSound resource file
+		Version		  = 1
+		Locale		  = EN
+     		BufferSize	  = 512
+		FragmentSize	  = 512
+		FragmentCount	  = -1
+		Samplerate	  = 44100
+		WantMidi	  = TRUE
+		FilterGranularity = 50
+		Output            = /dev/dsp
+		Midi              = /dev/midi
+		UsePluginList     = false
+		Polyphony         = 1
+		GUIColour         = 179
+		ScopeBGColour     = 339481600
+		ScopeFGColour     = 1690854400
+		ScopeSelColour    = 255
+		ScopeIndColour    = 3422486528
+		ScopeMrkColour    = 2610639360
+		ToolBoxColour     = 48
+		ButtonColour      = 42
+		CanvasColour      = 50
+		DeviceColour      = 52
+		DeviceBoxType     = 30
+		PluginPath        = /usr/lib/SpiralPlugins/
+		Plugins		  =
+		end
+		
+		Where ScopeBGColour through ScopeMrkColour
+		were new to Version 1
+		
+		It just presumed fixed order, and names.
+		
+		This was an unstable format, incapable of easy recovery
+		So I changed it to a more full Ini, which would allow
+		for missing lines, and missing sections, or for
+		sections in a different order.
+		
+		Properly It still needs a better backend still, to get away
+		from the >> temp, assumptions.
+		
+		It also needs a redone plugin section,
+		as another ini section, name=name, or the like.
+		
+		Then you want to be able to get rid of that first bit
+		SpiralSound resource file
+		Version = #
+		Locale = Locale
+		
+		Maybe, a simple XML file instead, peak first few values.
+		if they are SpiralSound, its an old format, otherwise, its new.
+	*/		
+	s >> temp >> temp >> temp;	//Eat "SpiralSound" "resource" "file"
+	s >> temp >> temp >> m_Version;	//Eat "Version" "=", Read Version#, eg "2"
+	s >> temp >> temp >> LOCALE;	//Eat "Locale" "=", Read Locale, eg "EN"
 
 	switch (m_Version)
 	{

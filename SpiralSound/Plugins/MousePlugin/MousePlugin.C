@@ -19,6 +19,7 @@
 
 
 #define SCRATCH_DEVICE "/dev/ttyS0"
+using namespace std;
 
 #include "MousePlugin.h"
 #include "MousePluginGUI.h"
@@ -32,7 +33,7 @@ char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
 
 int SpiralPlugin_GetID() { return 300; }
 
-string SpiralPlugin_GetGroupName() { return "InputOutput"; }
+std::string SpiralPlugin_GetGroupName() { return "InputOutput"; }
 
 }
 

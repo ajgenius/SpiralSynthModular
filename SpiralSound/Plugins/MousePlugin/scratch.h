@@ -26,7 +26,7 @@
 #include <string.h>
 #include <termios.h>
 #include <stdio.h>
-#include <iostream.h>
+#include <iostream>
 #include <pthread.h>
 
 class scratch {

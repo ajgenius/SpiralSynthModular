@@ -18,6 +18,8 @@
 */ 
 #include "scratch.h"
 
+using namespace std;
+
 #define BAUDRATE B1200
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0

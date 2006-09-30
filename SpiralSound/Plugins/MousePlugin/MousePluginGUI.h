@@ -38,7 +38,7 @@ class MousePluginGUI : public SpiralPluginGUI {
       virtual void UpdateValues (SpiralPlugin *o);
       virtual void Update ();
    protected:
-      const string GetHelpText (const string &loc);
+      const std::string GetHelpText (const std::string &loc);
    private:
       ScratchWidget *m_Scope;
       Fl_LED_Button *m_Port0, *m_Port1;
