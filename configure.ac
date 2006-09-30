@@ -1,13 +1,18 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(SpiralSynthModular.C)
+AC_INIT([SpiralSynthModular], [0.3])
+AC_CONFIG_SRCDIR([SpiralSynthModular.C])
+
+AM_INIT_AUTOMAKE
 
 dnl Automake (can't use AC_CONFIG_HEADER - get complaints!)
 AM_CONFIG_HEADER(config.h)
 
 dnl Checks for programs.
 AC_PROG_CC
-AC_PROG_CPP
+AC_PROG_CXX
 AC_PROG_INSTALL
+
+AM_PROG_LIBTOOL
 
 dnl Checks for header files.
 AC_HEADER_STDC
@@ -213,6 +218,12 @@ AC_SUBST(PLUGINLIST)
 
 dnl Modify the output files.
 AC_OUTPUT(
+SpiralSynthPluginLocation.h
+Makefile
+GUI/Makefile
+GUI/Widgets/Makefile
+SpiralSound/Makefile
+SpiralSound/Plugins/Makefile
 SpiralSound/Plugins/AmpPlugin/Makefile
 SpiralSound/Plugins/AnotherFilterPlugin/Makefile
 SpiralSound/Plugins/BeatMatchPlugin/Makefile
@@ -264,8 +275,6 @@ SpiralSound/Plugins/TrigPlugin/Makefile
 SpiralSound/Plugins/WaveShaperPlugin/Makefile
 SpiralSound/Plugins/WaveTablePlugin/Makefile
 SpiralSound/Plugins/XFadePlugin/Makefile
-SpiralSynthPluginLocation.h
-Makefile
 )
 
 echo -e "\nConfig options:"
