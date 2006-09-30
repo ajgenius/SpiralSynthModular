@@ -1,144 +1,30 @@
-#############################################################################
-# Makefile for building OperatorPlugin.so
-#############################################################################
+INCLUDES = 						\
+		$(FLTK_CXXFLAGS)			\
+		$(FLTK_CFLAGS)				\
+		-I$(top_builddir)/GUI/Widgets		\
+		-I$(top_builddir)/SpiralSound		\
+		-II$(top_builddir)/SpiralSound/Plugins
 
-####### Compiler, tools and options
-
-CC	=	gcc
-CXX	=	g++
-CFLAGS	=       @CFLAGS@ @FLTK_CFLAGS@
-CXXFLAGS=       @CXXFLAGS@ @FLTK_CXXFLAGS@
-INCPATH	=	-I/usr/X11R6/include
-LINK	=	g++ -shared
-LFLAGS	=
-LIBS	=   @FLTK_LIBS@
-MOC     = moc
-UIC	=
-
-INSTALL	= @INSTALL@
-
-###### Autoconf variables
-
-prefix = @prefix@
-exec_prefix = @exec_prefix@
-
-bindir = @bindir@
-sbindir = @sbindir@
-libexecdir = @libexecdir@
-datadir = @datadir@
-sysconfdir = @sysconfdir@
-sharedstatedir = @sharedstatedir@
-localstatedir = @localstatedir@
-libdir = @libdir@
-infodir = @infodir@
-mandir = @mandir@
-
-####### Files
-
-HEADERS =	OperatorPlugin.h \
-		OperatorPluginGUI.h \
-		../SpiralPlugin.h \
-		../SpiralPluginGUI.h \
-		../../ChannelHandler.h \
-		../../Sample.h \
-		../../../GUI/Widgets/SpiralGUI.H
-SOURCES =	OperatorPlugin.C \
-		OperatorPluginGUI.C \
-		../SpiralPlugin.C \
-		../SpiralPluginGUI.C \
-		../../ChannelHandler.C \
-		../../Sample.C \
-		../../../GUI/Widgets/SpiralGUI.C
-OBJECTS =	OperatorPlugin.o \
-		OperatorPluginGUI.o \
-		../SpiralPlugin.o \
-		../SpiralPluginGUI.o \
-		../../ChannelHandler.o \
-		../../Sample.o \
-		../../../GUI/Widgets/SpiralGUI.o
-INTERFACES =
-UICDECLS =
-UICIMPLS =
-SRCMOC	=
-OBJMOC	=
-DIST	=
-TARGET	=	OperatorPlugin.so
-
-####### Implicit rules
-
-.SUFFIXES: .cpp .cxx .cc .C .c
-
-.cpp.o:
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-.cxx.o:
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-.cc.o:
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-.C.o:
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-.c.o:
-	$(CC) -c $(CFLAGS) $(INCPATH) -o $@ $<
-
-####### Build rules
-
-
-all: $(TARGET)
-
-$(TARGET): $(UICDECLS) $(OBJECTS) $(OBJMOC)
-	$(LINK) $(LFLAGS) -o $(TARGET) $(OBJECTS) $(OBJMOC) $(LIBS)
-
-moc: $(SRCMOC)
-
-clean:
-	-rm -f $(OBJECTS) $(OBJMOC) $(SRCMOC) $(UICIMPLS) $(UICDECLS) $(TARGET)
-	-rm -f *~ core
-
-install:
-	$(INSTALL) $(TARGET) $(libdir)/SpiralPlugins
-
-####### Sub-libraries
-
-
-###### Combined headers
-
-
-####### Compile
-
-../SpiralPlugin.o: ../SpiralPlugin.C \
-		../SpiralPlugin.h \
-		../../ChannelHandler.h \
-		../../Sample.h
-
-../SpiralPluginGUI.o: ../SpiralPluginGUI.C \
-		../SpiralPluginGUI.h \
-		../SpiralPlugin.h \
-		../../ChannelHandler.h \
-		../../../GUI/Widgets/SpiralGUI.H
-
-../../../GUI/Widgets/SpiralGUI.o: ../../../GUI/Widgets/SpiralGUI.C \
-		../../../GUI/Widgets/SpiralGUI.H
-
-../../Sample.o: ../../Sample.C \
-		../../Sample.h
-
-OperatorPlugin.o: OperatorPlugin.C \
-		OperatorPlugin.h \
-		OperatorPluginGUI.h \
-		../../NoteTable.h \
-		../SpiralPlugin.h \
-		../SpiralPluginGUI.h \
-		SpiralIcon.xpm
-
-OperatorPluginGUI.o: OperatorPluginGUI.C \
-		OperatorPlugin.h \
-		OperatorPluginGUI.h \
-		../SpiralPlugin.h \
-		../SpiralPluginGUI.h \
-		../../../GUI/Widgets/SpiralGUI.H
-
-../../ChannelHandler.o: ../../ChannelHandler.C \
-		../../ChannelHandler.h
+EXTRA_DIST = SpiralIcon.xpm
+	
+plugindir = $(libdir)/SpiralPlugins
+plugin_LTLIBRARIES = OperatorPlugin.la
+OperatorPlugin_la_SOURCES =					\
+			../../ChannelHandler.h		\
+			../../ChannelHandler.C		\
+			../../Sample.h			\
+			../../Sample.C			\
+			../SpiralPlugin.h		\
+			../SpiralPlugin.C		\
+			../SpiralPluginGUI.h		\
+			../SpiralPluginGUI.C		\
+			OperatorPluginGUI.h			\
+			OperatorPluginGUI.C			\
+			OperatorPlugin.h			\
+			OperatorPlugin.C
+			
+OperatorPlugin_la_LDFLAGS = -shared -module -avoid-version -no-undefined
+OperatorPlugin_la_LIBADD = 					\
+			$(FLTK_LIBS)			\
+			-lm -ldl -lpthread		\
+			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la
