@@ -6,8 +6,10 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = LADSPAPlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = LADSPAPlugin.la
+
 LADSPAPlugin_la_SOURCES =					\
 			LADSPAInfo.h				\
 			LADSPAInfo.C				\
@@ -22,3 +24,6 @@ LADSPAPlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

@@ -6,8 +6,10 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = DistributorPlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = DistributorPlugin.la
+
 DistributorPlugin_la_SOURCES =					\
 			DistributorPluginGUI.h			\
 			DistributorPluginGUI.C			\
@@ -20,3 +22,6 @@ DistributorPlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

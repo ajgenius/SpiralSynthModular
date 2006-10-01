@@ -6,8 +6,10 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = DelayPlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = DelayPlugin.la
+
 DelayPlugin_la_SOURCES =					\
 			DelayPluginGUI.h			\
 			DelayPluginGUI.C			\
@@ -20,3 +22,6 @@ DelayPlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

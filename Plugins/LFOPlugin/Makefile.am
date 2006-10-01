@@ -6,8 +6,10 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = LFOPlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = LFOPlugin.la
+
 LFOPlugin_la_SOURCES =					\
 			LFOPluginGUI.h			\
 			LFOPluginGUI.C			\
@@ -20,3 +22,6 @@ LFOPlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

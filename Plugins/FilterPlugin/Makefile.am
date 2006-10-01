@@ -6,8 +6,10 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = FilterPlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = FilterPlugin.la
+
 FilterPlugin_la_SOURCES =					\
 			iir_filter.h				\
 			iir_filter.C				\
@@ -22,3 +24,6 @@ FilterPlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

@@ -11,5 +11,5 @@ libSpiralCommon_la_SOURCES =				\
 				Sample.h		\
 				Sample.C
 
-libSpiralCommon_la_LDFLAGS = -shared -no-undefined
+libSpiralCommon_la_LDFLAGS = -shared -no-undefined -version-info $(LT_VERSION_INFO)
 libSpiralCommon_la_LIBADD = $(SFLIBS) $(AMIDILIBS) $(LRDFLIBS) -lm -ldl -lpthread

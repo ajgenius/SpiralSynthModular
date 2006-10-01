@@ -6,8 +6,10 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = RingModPlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = RingModPlugin.la
+
 RingModPlugin_la_SOURCES =					\
 			RingModPluginGUI.h			\
 			RingModPluginGUI.C			\
@@ -20,3 +22,6 @@ RingModPlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

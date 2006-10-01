@@ -6,8 +6,10 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = EchoPlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = EchoPlugin.la
+
 EchoPlugin_la_SOURCES =					\
 			EchoPluginGUI.h			\
 			EchoPluginGUI.C			\
@@ -20,3 +22,6 @@ EchoPlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

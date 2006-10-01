@@ -6,8 +6,10 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = SampleHoldPlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = SampleHoldPlugin.la
+
 SampleHoldPlugin_la_SOURCES =					\
 			SampleHoldPluginGUI.h			\
 			SampleHoldPluginGUI.C			\
@@ -20,3 +22,6 @@ SampleHoldPlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

@@ -6,8 +6,10 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = ScopePlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = ScopePlugin.la
+
 ScopePlugin_la_SOURCES =					\
 			ScopePluginGUI.h			\
 			ScopePluginGUI.C			\
@@ -20,3 +22,6 @@ ScopePlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

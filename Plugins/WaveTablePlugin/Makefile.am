@@ -6,8 +6,10 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = WaveTablePlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = WaveTablePlugin.la
+
 WaveTablePlugin_la_SOURCES =					\
 			WaveTablePluginGUI.h			\
 			WaveTablePluginGUI.C			\
@@ -20,3 +22,6 @@ WaveTablePlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

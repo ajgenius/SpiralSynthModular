@@ -5,7 +5,8 @@ INCLUDES = 						\
 		-I$(top_builddir)/SpiralSound
 		
 EXTRA_DIST = SpiralIcon.xpm
-	
+
+plugin = KeyboardPlugin.so	
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = KeyboardPlugin.la
 KeyboardPlugin_la_SOURCES =					\
@@ -20,3 +21,6 @@ KeyboardPlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

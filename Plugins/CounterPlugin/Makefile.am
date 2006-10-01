@@ -6,8 +6,10 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = CounterPlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = CounterPlugin.la
+
 CounterPlugin_la_SOURCES =					\
 			CounterPluginGUI.h			\
 			CounterPluginGUI.C			\
@@ -20,3 +22,6 @@ CounterPlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

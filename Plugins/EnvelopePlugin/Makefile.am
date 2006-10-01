@@ -6,8 +6,10 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = EnvelopePlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = EnvelopePlugin.la
+
 EnvelopePlugin_la_SOURCES =					\
 			EnvelopePluginGUI.h			\
 			EnvelopePluginGUI.C			\
@@ -20,3 +22,6 @@ EnvelopePlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

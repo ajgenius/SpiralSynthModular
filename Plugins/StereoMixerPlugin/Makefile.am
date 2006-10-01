@@ -6,8 +6,10 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = StereoMixerPlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = StereoMixerPlugin.la
+
 StereoMixerPlugin_la_SOURCES =					\
 			StereoMixerPluginGUI.h			\
 			StereoMixerPluginGUI.C			\
@@ -20,3 +22,6 @@ StereoMixerPlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

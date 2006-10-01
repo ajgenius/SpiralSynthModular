@@ -6,6 +6,7 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = AmpPlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = AmpPlugin.la
 AmpPlugin_la_SOURCES =					\
@@ -14,9 +15,12 @@ AmpPlugin_la_SOURCES =					\
 			AmpPlugin.h			\
 			AmpPlugin.C
 			
-AmpPlugin_la_LDFLAGS = -shared -module -avoid-version -no-undefined
+AmpPlugin_la_LDFLAGS = -module -avoid-version -no-undefined
 AmpPlugin_la_LIBADD = 							\
 			$(FLTK_LIBS)					\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+			
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

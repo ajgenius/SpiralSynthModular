@@ -6,8 +6,10 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = DiskWriterPlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = DiskWriterPlugin.la
+
 DiskWriterPlugin_la_SOURCES =					\
 			DiskWriterPluginGUI.h			\
 			DiskWriterPluginGUI.C			\
@@ -20,3 +22,6 @@ DiskWriterPlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

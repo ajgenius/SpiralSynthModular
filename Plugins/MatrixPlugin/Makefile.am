@@ -6,11 +6,13 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = MatrixPlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = MatrixPlugin.la
-MatrixPlugin_la_SOURCES =					\
-			MatrixPluginGUI.h			\
-			MatrixPluginGUI.C			\
+
+MatrixPlugin_la_SOURCES =				\
+			MatrixPluginGUI.h		\
+			MatrixPluginGUI.C		\
 			MatrixPlugin.h			\
 			MatrixPlugin.C
 			
@@ -20,3 +22,6 @@ MatrixPlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

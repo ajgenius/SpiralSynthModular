@@ -6,8 +6,10 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = NoteSnapPlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = NoteSnapPlugin.la
+
 NoteSnapPlugin_la_SOURCES =					\
 			NoteSnapPluginGUI.h			\
 			NoteSnapPluginGUI.C			\
@@ -20,3 +22,6 @@ NoteSnapPlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

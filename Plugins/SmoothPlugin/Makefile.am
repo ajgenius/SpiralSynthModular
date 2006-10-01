@@ -6,8 +6,10 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = SmoothPlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = SmoothPlugin.la
+
 SmoothPlugin_la_SOURCES =					\
 			SmoothPluginGUI.h			\
 			SmoothPluginGUI.C			\
@@ -20,3 +22,6 @@ SmoothPlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

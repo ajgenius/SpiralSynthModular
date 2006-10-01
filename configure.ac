@@ -1,5 +1,11 @@
+dnl Library Revisions
+
+m4_define([lt_current], [0])
+m4_define([lt_revision], [1])
+m4_define([lt_age], [0])
+          
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT([SpiralSynthModular], [0.3])
+AC_INIT([SpiralSynthModular], [0.3.0])
 AC_CONFIG_SRCDIR([SpiralSynthModular.C])
 
 AM_INIT_AUTOMAKE
@@ -23,6 +29,9 @@ AC_HEADER_STDC
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_C_INLINE
+
+LT_VERSION_INFO="lt_current:lt_revision:lt_age"
+AC_SUBST(LT_VERSION_INFO)
 
 dnl Check plugin directory
 AC_ARG_WITH(plugindir,

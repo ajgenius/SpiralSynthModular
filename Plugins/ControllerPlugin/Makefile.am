@@ -5,9 +5,11 @@ INCLUDES = 						\
 		-I$(top_builddir)/SpiralSound
 		
 EXTRA_DIST = SpiralIcon.xpm
-	
+
+plugin = ControllerPlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = ControllerPlugin.la
+
 ControllerPlugin_la_SOURCES =					\
 			ControllerPluginGUI.h			\
 			ControllerPluginGUI.C			\
@@ -20,3 +22,6 @@ ControllerPlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

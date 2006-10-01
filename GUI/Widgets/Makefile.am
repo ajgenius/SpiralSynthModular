@@ -60,7 +60,7 @@ libSpiralWidgets_la_SOURCES =					\
 					WS_InvSine.h		\
 					WS_Noise.h
 					
-libSpiralWidgets_la_LDFLAGS = -shared -no-undefined
+libSpiralWidgets_la_LDFLAGS = -shared -no-undefined -version-info $(LT_VERSION_INFO)
 libSpiralWidgets_la_LIBADD = 				\
 				$(FLTK_LIBS)		\
 				 -lm -ldl -lpthread	\

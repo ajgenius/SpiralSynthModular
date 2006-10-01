@@ -6,8 +6,10 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = PoshSamplerPlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = PoshSamplerPlugin.la
+
 PoshSamplerPlugin_la_SOURCES =					\
 			PoshSamplerPluginGUI.h			\
 			PoshSamplerPluginGUI.C			\
@@ -20,3 +22,6 @@ PoshSamplerPlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

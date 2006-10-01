@@ -6,8 +6,10 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = SVFilterPlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = SVFilterPlugin.la
+
 SVFilterPlugin_la_SOURCES =					\
 			SVFilterPluginGUI.h			\
 			SVFilterPluginGUI.C			\
@@ -20,3 +22,6 @@ SVFilterPlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

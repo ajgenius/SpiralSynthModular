@@ -6,8 +6,10 @@ INCLUDES = 						\
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
+plugin = MidiPlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = MidiPlugin.la
+
 MidiPlugin_la_SOURCES =					\
 			MidiPluginGUI.h			\
 			MidiPluginGUI.C			\
@@ -20,3 +22,6 @@ MidiPlugin_la_LIBADD = 							\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la
+
+install:$(plugin_LTLIBRARIES)
+	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)
