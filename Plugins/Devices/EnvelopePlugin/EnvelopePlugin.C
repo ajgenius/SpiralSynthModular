@@ -82,15 +82,21 @@ m_Current(0)
 	m_PluginInfo.Name="Envelope";
 	m_PluginInfo.Width=142;
 	m_PluginInfo.Height=132;
-	m_PluginInfo.NumInputs=2;
+	m_PluginInfo.NumInputs=8;
 	m_PluginInfo.NumOutputs=2;
 	m_PluginInfo.PortTips.push_back("Trigger CV");	
 	m_PluginInfo.PortTips.push_back("Input");	
+	m_PluginInfo.PortTips.push_back("Trigger CV");
+	m_PluginInfo.PortTips.push_back("Attack CV");
+	m_PluginInfo.PortTips.push_back("Decay CV");
+	m_PluginInfo.PortTips.push_back("Sustain CV");
+	m_PluginInfo.PortTips.push_back("Release CV");
+	m_PluginInfo.PortTips.push_back("Volume CV");
 	m_PluginInfo.PortTips.push_back("CV");	
 	m_PluginInfo.PortTips.push_back("Output");
 	
 	SetString(DeviceName, SpiralPlugin_GetName());
-	SetUnsigned(DeviceVersion, 1);
+	SetUnsigned(DeviceVersion, 2);
 
 	m_Attack = FloatProperty(DefaultLinearFlags, 0.0, 0, TIMED_SLIDER_MAX, 0.0001, 0.001);
 	m_Decay = FloatProperty(DefaultLinearFlags, 0.5, 0, TIMED_SLIDER_MAX, 0.0001, 0.001);
@@ -141,6 +147,36 @@ void EnvelopePlugin::Execute()
 	
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 	{	
+		if (InputExists(2))
+		{
+			SetFloat(m_TrigThresh, GetInput(2,n));
+		}
+
+		if (InputExists(3))
+		{
+			SetFloat(m_Attack, GetInput(3,n));
+		}
+
+		if (InputExists(4))
+		{
+			SetFloat(m_Decay, GetInput(4,n));
+		}
+
+		if (InputExists(5))
+		{
+			SetFloat(m_Sustain, GetInput(5,n));
+		}
+
+		if (InputExists(6))
+		{
+			SetFloat(m_Release, GetInput(6,n));
+		}
+
+		if (InputExists(7))
+		{
+			SetFloat(m_Volume, GetInput(7,n));
+		}
+		
 		// Check the trigger CV values
 		if (GetInput(0,n)>AsFloat(m_TrigThresh))
 		{
