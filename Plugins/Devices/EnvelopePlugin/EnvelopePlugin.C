@@ -142,43 +142,29 @@ void EnvelopePlugin::Reset()
 
 void EnvelopePlugin::Execute()
 {
-	float temp=0;
+	float temp=0, trigthresh, attack, decay, sustain, release, volume;
 	bool Freeze=false;
 	
+	trigthresh = AsFloat(m_TrigThresh);
+	attack = AsFloat(m_Attack);
+	decay = AsFloat(m_Decay);
+	sustain = AsFloat(m_Sustain);
+	release = AsFloat(m_Release);
+	volume = AsFloat(m_Volume);
+
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 	{	
-		if (InputExists(2))
-		{
-			SetFloat(m_TrigThresh, GetInput(2,n));
-		}
+		float t=trigthresh, a=attack, d=decay, s=sustain, r=release, v=volume;
 
-		if (InputExists(3))
-		{
-			SetFloat(m_Attack, GetInput(3,n));
-		}
-
-		if (InputExists(4))
-		{
-			SetFloat(m_Decay, GetInput(4,n));
-		}
-
-		if (InputExists(5))
-		{
-			SetFloat(m_Sustain, GetInput(5,n));
-		}
-
-		if (InputExists(6))
-		{
-			SetFloat(m_Release, GetInput(6,n));
-		}
-
-		if (InputExists(7))
-		{
-			SetFloat(m_Volume, GetInput(7,n));
-		}
+		if (InputExists(2)) t += GetInput(2,n);
+		if (InputExists(3)) a += GetInput(3,n);
+		if (InputExists(4)) d += GetInput(4,n);
+		if (InputExists(5)) s += GetInput(5,n);
+		if (InputExists(6)) r += GetInput(6,n);
+		if (InputExists(7)) v += GetInput(7,n);
 		
 		// Check the trigger CV values
-		if (GetInput(0,n)>AsFloat(m_TrigThresh))
+		if (GetInput(0,n)>t)
 		{
 			if (m_Trigger==false) 
 			{
@@ -192,46 +178,46 @@ void EnvelopePlugin::Execute()
 		}
 		
 		// if we are in the envelope...
-		if (m_t>=0 && m_t<AsFloat(m_Attack)+AsFloat(m_Decay)+AsFloat(m_Release)) 
+		if (m_t>=0 && m_t<a+d+r) 
 		{				
 			// find out what part of the envelope we are in	
 			// in the attack
-			if (m_t<AsFloat(m_Attack))
+			if (m_t<a)
 			{			
 				// get normalised position to
 				// get the volume between 0 and 1
-				temp=m_t/AsFloat(m_Attack);
+				temp=m_t/a;
 			}
 			else
 			// in the decay
-			if (m_t<AsFloat(m_Attack)+AsFloat(m_Decay))
+			if (m_t<a+d)
 			{
 				//if (n==0) cerr<<"in decay"<<endl;
 				// normalised position in m_Attack->m_Decay range
-				float nt=(m_t-AsFloat(m_Attack))/AsFloat(m_Decay);
+				float nt=(m_t-a)/d;
 				
 				// volume between 1 and m_Sustain
-				temp=(1-nt)+(AsFloat(m_Sustain)*nt);
+				temp=(1-nt)+(s*nt);
 			}
 			else
 			// in the release
 			{
 				//if (n==0) cerr<<"in release"<<endl;
 				// normalised position in m_Decay->m_Release range
-				float nt=(m_t-(AsFloat(m_Attack)+AsFloat(m_Decay)))/AsFloat(m_Release);
+				float nt=(m_t-(a+d))/r;
 				
 				// volume between m_Sustain and 0			
-				temp=AsFloat(m_Sustain)*(1-nt);
+				temp=s*(1-nt);
 				
-				if (AsFloat(m_Release)<0.2f)
+				if (r<0.2f)
 				{
-					temp=AsFloat(m_Sustain);
+					temp=s;
 				}	
 				
 				if (m_Trigger) Freeze=true;
 			}
 			
-			temp*=AsFloat(m_Volume);
+			temp*=v;
 			
 			if (!feq(temp,m_Current,0.01)) 
 			{
@@ -257,7 +243,7 @@ void EnvelopePlugin::Execute()
 			m_Current=temp;
 			
 			// if we've run off the end
-			if (m_t>AsFloat(m_Attack)+AsFloat(m_Decay)+AsFloat(m_Release))
+			if (m_t>a+d+r)
 			{
 				m_t=-1;
 				return;
