@@ -86,7 +86,7 @@ m_Current(0)
 	m_PluginInfo.NumOutputs=2;
 	m_PluginInfo.PortTips.push_back("Trigger CV");	
 	m_PluginInfo.PortTips.push_back("Input");	
-	m_PluginInfo.PortTips.push_back("Trigger CV");
+	m_PluginInfo.PortTips.push_back("Threshold CV");
 	m_PluginInfo.PortTips.push_back("Attack CV");
 	m_PluginInfo.PortTips.push_back("Decay CV");
 	m_PluginInfo.PortTips.push_back("Sustain CV");
