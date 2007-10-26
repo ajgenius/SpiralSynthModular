@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef ECHOPLUGIN
 #define ECHOPLUGIN
 
-class EchoPlugin : public SpiralPlugin
+class EchoPlugin : public Spiral::Core::Device
 {
     public:
  	EchoPlugin();
@@ -32,13 +32,14 @@ class EchoPlugin : public SpiralPlugin
 
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
-	float GetDelay() { return m_Delay; }
-	float GetFeedback() { return m_Feedback; }
-        bool GetBounce () { return m_Bounce; }
+	float GetDelay() { return AsFloat(m_Delay); }
+	float GetFeedback() { return AsFloat(m_Feedback); }
+        bool GetBounce () { return AsBoolean(m_Bounce); }
 	//void Randomise();
     private:
-	float m_Delay, m_Feedback;
-        bool m_Bounce;
+	Spiral::Core::FloatProperty m_Delay;
+	Spiral::Core::FloatProperty m_Feedback;
+        Spiral::Core::ToggleProperty m_Bounce;
 	int m_HeadPos, m_Buf0, m_Buf1;
 	Sample m_Buffer[2];
 	friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, EchoPlugin &o);

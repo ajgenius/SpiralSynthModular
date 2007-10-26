@@ -19,6 +19,7 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 static const float MAX_DELAY=1.0f;
 
@@ -70,13 +71,20 @@ string SpiralPlugin_GetGroupName()
 ///////////////////////////////////////////////////////
 
 EchoPlugin::EchoPlugin() :
-m_Delay (0.75),
-m_Feedback (0.4),
-m_Bounce (false),
 m_HeadPos (0),
 m_Buf0 (0),
 m_Buf1 (1)
 {
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 2);
+
+	m_Delay = FloatProperty(DefaultLinearFlags, 0.75, 0.0, 1.0, 0.0001, 0.01);
+	m_Feedback = FloatProperty(DefaultLinearFlags, 0.4, 00, 1.0, 0.0001, 0.01);
+	m_Bounce = ToggleProperty(Property::WriteOnly, false);
+
+	RegisterSharedProperty(m_Delay, "Delay", "Delay");
+	RegisterSharedProperty(m_Feedback, "Feedback", "Feedback");
+	RegisterSharedProperty(m_Bounce, "Bounce", "Stereo Bounce");
         m_Version = 2;
         m_PluginInfo.Name = "Echo";
 	m_PluginInfo.Width = 120;
@@ -88,9 +96,6 @@ m_Buf1 (1)
 	m_PluginInfo.PortTips.push_back ("Feedback CV");
 	m_PluginInfo.PortTips.push_back ("Left/Mono Out");
 	m_PluginInfo.PortTips.push_back ("Right Out");
-	m_AudioCH->Register ("Delay", &m_Delay);
-	m_AudioCH->Register ("Feedback", &m_Feedback);
-	m_AudioCH->Register ("Bounce", &m_Bounce);
 }
 
 EchoPlugin::~EchoPlugin()
@@ -125,19 +130,19 @@ void EchoPlugin::Execute()
 {
      float Delay;
      for (int n=0; n<m_HostInfo->BUFSIZE; n++) {
-         Delay=( m_Delay+GetInput (1,n)*0.5 ) * (float)m_HostInfo->SAMPLERATE-1;
+         Delay=( AsFloat(m_Delay)+GetInput (1,n)*0.5 ) * (float)m_HostInfo->SAMPLERATE-1;
          if (Delay >= MAX_DELAY*m_HostInfo->SAMPLERATE)
             Delay = (MAX_DELAY*m_HostInfo->SAMPLERATE)-1;
          if (Delay<0) Delay=0;
          if (m_HeadPos>Delay) m_HeadPos=0;
-         if (m_Bounce && m_HeadPos==0) {
+         if (AsBoolean(m_Bounce) && m_HeadPos==0) {
             int c=m_Buf0;
             m_Buf0=m_Buf1;
             m_Buf1=c;
          }
          // Write to the buffer
-         m_Buffer[m_Buf0].Set (m_HeadPos, GetInput (0,n)+(m_Buffer[m_Buf0][m_HeadPos]*(m_Feedback+GetInput (2,n))));
-         if (!m_Bounce) m_Buffer[m_Buf1].Set (m_HeadPos, 0);
+         m_Buffer[m_Buf0].Set (m_HeadPos, GetInput (0,n)+(m_Buffer[m_Buf0][m_HeadPos]*(AsFloat(m_Feedback)+GetInput (2,n))));
+         if (!AsBoolean(m_Bounce)) m_Buffer[m_Buf1].Set (m_HeadPos, 0);
          // Read from the buffer
          SetOutput(0, n, m_Buffer[m_Buf0][m_HeadPos]);
          SetOutput(1, n, m_Buffer[m_Buf1][m_HeadPos]);
@@ -152,14 +157,14 @@ void EchoPlugin::Execute()
 
 void EchoPlugin::Describe(Spiral::Core::Description &d)
 {
-	d.Value(m_Version).Separator(" ").Value(m_Delay).Separator(" ").Value(m_Feedback).Separator(" ").Value(m_Bounce).Separator(" ");
+	d.Value(m_Version).Separator(" ").Value(AsFloat(m_Delay)).Separator(" ").Value(AsFloat(m_Feedback)).Separator(" ").Value(AsBoolean(m_Bounce)).Separator(" ");
 }
 
 void EchoPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int version;
 	r.Value(version);
-	r.Value(m_Delay).Value(m_Feedback);
-        if (version>1) r.Value(m_Bounce); else m_Bounce = false;
+	r.Value(AsFloat(m_Delay)).Value(AsFloat(m_Feedback));
+        if (version>1) r.Value(AsBoolean(m_Bounce)); else AsBoolean(m_Bounce) = false;
 }
 
