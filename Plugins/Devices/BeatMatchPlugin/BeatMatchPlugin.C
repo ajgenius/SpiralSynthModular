@@ -20,6 +20,7 @@
 #include "NoteTable.h"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -73,8 +74,7 @@ m_Triggered(false),
 m_EstimatedDuration(100),
 m_BeatTime(100),
 m_NextBeat(100),
-m_OutputLevel(1.0f),
-m_Sensitivity(0.5f)
+m_OutputLevel(1.0f)
 {
 	m_PluginInfo.Name="BeatMatch";
 	m_PluginInfo.Width=80;
@@ -84,7 +84,11 @@ m_Sensitivity(0.5f)
 	m_PluginInfo.PortTips.push_back("Input");	
 	m_PluginInfo.PortTips.push_back("Output");
 	
-	m_AudioCH->Register("Sensitivity",&m_Sensitivity);
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
+
+	m_Sensitivity = FloatProperty(DefaultLinearFlags, 0.5, 0.0, 1.0, 0.0001, 0.01);
+	RegisterSharedProperty(m_Sensitivity, "Sensitivity", "Sensitivity");
 }
 
 BeatMatchPlugin::~BeatMatchPlugin()
@@ -134,13 +138,13 @@ void BeatMatchPlugin::Execute()
 		{
 			// adjust estimated duration
 			// error = m_BeatTime
-			m_EstimatedDuration-=(int)(m_BeatTime*m_Sensitivity); 
+			m_EstimatedDuration-=(int)(m_BeatTime*AsFloat(m_Sensitivity)); 
 			m_BeatTime=m_EstimatedDuration;
 			
 			// push the sync closer
 			int HalfBeat = m_EstimatedDuration/2;
-			if (m_NextBeat<HalfBeat) m_NextBeat-=(int)(HalfBeat*m_Sensitivity);
-			else m_NextBeat+=(int)(HalfBeat*m_Sensitivity);
+			if (m_NextBeat<HalfBeat) m_NextBeat-=(int)(HalfBeat*AsFloat(m_Sensitivity));
+			else m_NextBeat+=(int)(HalfBeat*AsFloat(m_Sensitivity));
 		}
 		
 		if (m_NextBeat<=0)
@@ -163,12 +167,12 @@ void BeatMatchPlugin::ExecuteCommands()
 void BeatMatchPlugin::Describe(Spiral::Core::Description &d) 
 {
 	d.Value(m_Version).Line();
-	d.Value(m_Sensitivity).Separator(" ");
+	d.Value(AsFloat(m_Sensitivity)).Separator(" ");
 }
 
 void BeatMatchPlugin::Apply(Spiral::Core::Description::Reader &r) 
 {
 	int version;
 	r.Value(version);
-	r.Value(m_Sensitivity);
+	r.Value(AsFloat(m_Sensitivity));
 }

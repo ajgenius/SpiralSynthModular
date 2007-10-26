@@ -16,7 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "AudioDriver.h"
 #include "JackClient.h"
 #include "AudioStream.h"
 using Spiral::Core::JackClient;
@@ -69,9 +69,6 @@ public:
 	{
 		int PortIndex;
 
-		int NumInputs;
-
-		int NumOutputs;
 		char Port[256];
 	};
 
@@ -83,6 +80,8 @@ public:
 	virtual void	Apply(Spiral::Core::Description::Reader &r);			
 private:
 	GUIArgs m_GUIArgs;	
+
+	Spiral::Core::UnsignedProperty m_NumInputs, m_NumOutputs;
 	
 	int m_Version;
 	

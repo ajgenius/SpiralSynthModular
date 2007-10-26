@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef PLUGIN
 #define PLUGIN
 
-class CounterPlugin : public SpiralPlugin
+class CounterPlugin : public Spiral::Core::Device
 {
 public:
  	CounterPlugin();
@@ -35,10 +35,10 @@ public:
 	virtual void	    Describe(Spiral::Core::Description &d);
 	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 
-	int        GetCount() { return m_Count; }
+	int        GetCount() { return AsSigned(m_Count); }
 	
 private:
-	int        m_Count;
+	Spiral::Core::SignedProperty m_Count;
 	int        m_Current;
 	bool       m_Triggered;
 	float      m_CurrentLevel;

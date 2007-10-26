@@ -22,6 +22,7 @@
 #define PI 3.141592654
 
 using namespace std;
+using namespace Spiral::Core;
 
 static const int GRANULARITY = 10;
 
@@ -73,8 +74,6 @@ string SpiralPlugin_GetGroupName()
 ///////////////////////////////////////////////////////
 
 AnotherFilterPlugin::AnotherFilterPlugin() :
-Cutoff(0.0f),
-Resonance(0.0f),
 vibrapos(0.0f),
 vibraspeed(0.0f)
 {
@@ -88,8 +87,14 @@ vibraspeed(0.0f)
 	m_PluginInfo.PortTips.push_back("Emphasis CV");	
 	m_PluginInfo.PortTips.push_back("LowPass output");
 	
-	m_AudioCH->Register("Cutoff",&Cutoff);
-	m_AudioCH->Register("Resonance",&Resonance);
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
+
+	Cutoff = FloatProperty(DefaultLinearFlags,0.0, 0.0, 1.0, 0.0001, 0.0001);
+	Resonance = FloatProperty(DefaultLinearFlags,0.0, 0.0, 1.0, 0.00001, 0.00001);
+
+	RegisterSharedProperty(Cutoff, "Cutoff", "Cutoff");
+	RegisterSharedProperty(Resonance, "Resonance", "Resonance");
 }
 
 AnotherFilterPlugin::~AnotherFilterPlugin()
@@ -118,8 +123,8 @@ void AnotherFilterPlugin::Execute()
 	{
 		if (n%GRANULARITY==0)
 		{
-			w = 2.0*PI*((Cutoff+GetInput(1,n))*10000+1)/m_HostInfo->SAMPLERATE; // Pole angle
-			q = 1.0-w/(2.0*(((Resonance+GetInput(2,n))*10+1)+0.5/(1.0+w))+w-2.0); // Pole magnitude
+			w = 2.0*PI*((AsFloat(Cutoff)+GetInput(1,n))*10000+1)/m_HostInfo->SAMPLERATE; // Pole angle
+			q = 1.0-w/(2.0*(((AsFloat(Resonance)+GetInput(2,n))*10+1)+0.5/(1.0+w))+w-2.0); // Pole magnitude
 			r = q*q;
 			c = r+1.0-2.0*cos(w)*q;
 		}
@@ -148,13 +153,13 @@ void AnotherFilterPlugin::Randomise()
 	
 void AnotherFilterPlugin::Describe(Spiral::Core::Description &d)
 {
-	d.Value(m_Version).Separator(" ").Value(Cutoff).Separator(" ").Value(Resonance).Separator(" ");
+	d.Value(m_Version).Separator(" ").Value(AsFloat(Cutoff)).Separator(" ").Value(AsFloat(Resonance)).Separator(" ");
 }
 
 void AnotherFilterPlugin::Apply(Spiral::Core::Description::Reader &r)
 {	
 	int version;
 	r.Value(version);
-	r.Value(Cutoff).Value(Resonance);
+	r.Value(AsFloat(Cutoff)).Value(AsFloat(Resonance));
 }
 

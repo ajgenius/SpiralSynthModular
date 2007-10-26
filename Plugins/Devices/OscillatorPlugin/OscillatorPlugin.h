@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef OscillatorPLUGIN
 #define OscillatorPLUGIN
 
-class OscillatorPlugin : public SpiralPlugin
+class OscillatorPlugin : public Spiral::Core::Device
 {
 public:
  	OscillatorPlugin();
@@ -42,12 +42,12 @@ public:
 	void ModulateSHLen(Sample *data) {m_SHModBuf=data;}
 
 	void NoteTrigger(int V,int s,int v);
-	int   GetOctave() {return m_Octave;}
-	float GetFineFreq() {return m_FineFreq;}
-	float GetPulseWidth() {return m_PulseWidth;}
-	Type  GetType() {return m_Type;}
-	float GetSHLen() {return m_SHLen;}
-	float GetModAmount() {return m_ModAmount;}
+	int   GetOctave() {return AsUnsigned(m_Octave);}
+	float GetFineFreq() {return AsFloat(m_FineFreq);}
+	float GetPulseWidth() {return AsFloat(m_PulseWidth);}
+	Type  GetType() {return (Type)AsUnsigned(m_Type);}
+	float GetSHLen() {return AsFloat(m_SHLen);}
+	float GetModAmount() {return AsFloat(m_ModAmount);}
 
 private:
 
@@ -57,12 +57,12 @@ private:
 	float m_LastFreq;
 
         // Common voice parameters
-	Type   m_Type;
-	int    m_Octave;
-	float  m_FineFreq;
-	float  m_PulseWidth;
-	float  m_SHLen;
-	float  m_ModAmount;
+	Spiral::Core::SetProperty m_Type;
+	Spiral::Core::UnsignedProperty m_Octave;
+	Spiral::Core::FloatProperty m_FineFreq;
+	Spiral::Core::FloatProperty m_PulseWidth;
+	Spiral::Core::FloatProperty m_SHLen;
+	Spiral::Core::FloatProperty m_ModAmount;
 	short  m_Noisev;
 
 	Sample *m_FreqModBuf;

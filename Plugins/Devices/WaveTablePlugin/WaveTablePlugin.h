@@ -16,7 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef WaveTablePLUGIN
 #define WaveTablePLUGIN
@@ -24,7 +24,7 @@
 static const int NUM_TABLES = 8;
 static const int DEFAULT_TABLE_LEN = 1024;
 
-class WaveTablePlugin : public SpiralPlugin
+class WaveTablePlugin : public Spiral::Core::Device
 {
 public:
  	WaveTablePlugin();
@@ -45,10 +45,10 @@ public:
 	void WriteWaves();
 	void NoteTrigger(int V,int s,int v);
 	
-	Type GetType()      { return m_Type; }
-	int  GetOctave()    { return m_Octave; }
-	float GetFineFreq() { return m_FineFreq; } 
-	float GetModAmount(){ return m_ModAmount; }
+	Type GetType()      { return (Type)AsUnsigned(m_Type); }
+	int  GetOctave()    { return AsSigned(m_Octave); }
+	float GetFineFreq() { return AsFloat(m_FineFreq); } 
+	float GetModAmount(){ return AsFloat(m_ModAmount); }
 	
 private:
 
@@ -57,10 +57,10 @@ private:
 	float m_CyclePos;
 	
 	// Common voice parameters
-	Type   m_Type;
-	int    m_Octave;
-	float  m_FineFreq;
-	float  m_ModAmount;
+	Spiral::Core::SetProperty m_Type;
+	Spiral::Core::SignedProperty m_Octave;
+	Spiral::Core::FloatProperty m_FineFreq;
+	Spiral::Core::FloatProperty m_ModAmount;
 		
 	Sample m_Table[NUM_TABLES];
 	int    m_TableLength;

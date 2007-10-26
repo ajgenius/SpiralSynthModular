@@ -20,6 +20,7 @@
 #include "NoteTable.h"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -69,7 +70,6 @@ string SpiralPlugin_GetGroupName()
 ///////////////////////////////////////////////////////
 
 CounterPlugin::CounterPlugin() :
-m_Count(4),
 m_Current(0),
 m_Triggered(false),
 m_CurrentLevel(1.0f)
@@ -82,7 +82,11 @@ m_CurrentLevel(1.0f)
 	m_PluginInfo.PortTips.push_back("Input");	
 	m_PluginInfo.PortTips.push_back("Output");
 
-	m_AudioCH->Register("Count",&m_Count);
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
+
+	m_Count = SignedProperty(DefaultLinearFlags, 4, 0, 10000, 1, 1);
+	RegisterSharedProperty(m_Count, "Count", "Count");
 }
 
 CounterPlugin::~CounterPlugin()
@@ -128,7 +132,7 @@ void CounterPlugin::Execute()
 			}
 		}
 
-		if (m_Current>=m_Count)
+		if (m_Current>=AsSigned(m_Count))
 		{
 			m_CurrentLevel=-m_CurrentLevel;
 			m_Current=0;
@@ -145,12 +149,12 @@ void CounterPlugin::ExecuteCommands()
 void CounterPlugin::Describe(Spiral::Core::Description &d) 
 {
 	d.Value(m_Version).Line();
-	d.Value(m_Count).Separator(" ").Value(m_Current).Separator(" ");
+	d.Value(AsSigned(m_Count)).Separator(" ").Value(m_Current).Separator(" ");
 }
 
 void CounterPlugin::Apply(Spiral::Core::Description::Reader &r) 
 {
 	int version;
 	r.Value(version);
-	r.Value(m_Count).Value(m_Current);
+	r.Value(AsSigned(m_Count)).Value(m_Current);
 }

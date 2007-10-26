@@ -259,7 +259,7 @@ void OscillatorPluginGUI::UpdateFreq (void) {
 // Callbacks - Controls outside the tabs
 
 inline void OscillatorPluginGUI::cb_Square_i (Fl_LED_Button* o, void* v) {
-       m_GUICH->Set ("Type", (char)OscillatorPlugin::SQUARE);
+       m_GUICH->Set ("Wave Type", (int)OscillatorPlugin::SQUARE);
 }
 
 void OscillatorPluginGUI::cb_Square (Fl_LED_Button* o, void* v) {
@@ -267,7 +267,7 @@ void OscillatorPluginGUI::cb_Square (Fl_LED_Button* o, void* v) {
 }
 
 inline void OscillatorPluginGUI::cb_Saw_i (Fl_LED_Button* o, void* v) {
-       m_GUICH->Set ("Type", (char)OscillatorPlugin::SAW);
+       m_GUICH->Set ("Wave Type", (int)OscillatorPlugin::SAW);
 }
 
 void OscillatorPluginGUI::cb_Saw (Fl_LED_Button* o, void* v) {
@@ -275,7 +275,7 @@ void OscillatorPluginGUI::cb_Saw (Fl_LED_Button* o, void* v) {
 }
 
 inline void OscillatorPluginGUI::cb_Noise_i (Fl_LED_Button* o, void* v) {
-       m_GUICH->Set ("Type",(char)OscillatorPlugin::NOISE);
+       m_GUICH->Set ("Wave Type",(int)OscillatorPlugin::NOISE);
 }
 
 void OscillatorPluginGUI::cb_Noise (Fl_LED_Button* o, void* v) {
@@ -286,7 +286,7 @@ void OscillatorPluginGUI::cb_Noise (Fl_LED_Button* o, void* v) {
 
 inline void OscillatorPluginGUI::cb_PulseWidth_i (Fl_Slider* o, void* v)  {
        float val = o->value();
-       m_GUICH->Set ("PulseWidth", val);
+       m_GUICH->Set ("Pulse Width", val);
        m_NumPulseWidth->value (val * 100);
 }
 
@@ -296,7 +296,7 @@ void OscillatorPluginGUI::cb_PulseWidth (Fl_Slider* o, void* v) {
 
 inline void OscillatorPluginGUI::cb_SHLen_i (Fl_Slider* o, void* v) {
        float val = 0.2f - o->value();
-       m_GUICH->Set ("SHLen", val);
+       m_GUICH->Set ("Sample & Hold Length", val);
        m_NumSHLen->value (val);
 }
 
@@ -306,7 +306,7 @@ void OscillatorPluginGUI::cb_SHLen (Fl_Slider* o, void* v) {
 
 inline void OscillatorPluginGUI::cb_FineTune_i (Fl_Knob* o, void* v) {
        UpdateFreq();
-       m_GUICH->Set ("FineFreq", m_FineFreq);
+       m_GUICH->Set ("Fine Tune", m_FineFreq);
 }
 
 void OscillatorPluginGUI::cb_FineTune (Fl_Knob* o, void* v) {
@@ -316,7 +316,7 @@ void OscillatorPluginGUI::cb_FineTune (Fl_Knob* o, void* v) {
 inline void OscillatorPluginGUI::cb_Reset_i (Fl_Button* o, void* v) {
        m_FineTune->value (1);
        UpdateFreq();
-       m_GUICH->Set ("FineFreq", m_FineFreq);
+       m_GUICH->Set ("Fine Tune", m_FineFreq);
 }
 
 void OscillatorPluginGUI::cb_Reset (Fl_Button* o, void* v) {
@@ -347,7 +347,7 @@ void OscillatorPluginGUI::cb_ModAmount (Fl_Knob* o, void* v) {
 
 inline void OscillatorPluginGUI::cb_NumPulseWidth_i (Fl_Counter* o, void* v) {
        float val = o->value() / 100;
-       m_GUICH->Set ("PulseWidth", val);
+       m_GUICH->Set ("Pulse Width", val);
        m_PulseWidth->value (val);
 }
 
@@ -357,7 +357,7 @@ void OscillatorPluginGUI::cb_NumPulseWidth (Fl_Counter* o, void* v) {
 
 inline void OscillatorPluginGUI::cb_NumSHLen_i (Fl_Counter* o, void* v) {
        float val = o->value();
-       m_GUICH->Set ("SHLen", val);
+       m_GUICH->Set ("Sample & Hold Length", val);
        m_SHLen->value (0.2f - val);
 }
 
@@ -371,7 +371,7 @@ inline void OscillatorPluginGUI::cb_NumFreq_i (Fl_Counter* o, void* v) {
        if (oct > 0) fr /= 1 << oct;
        if (oct < 0) fr *= 1 << (-oct);
        m_FineFreq = fr / 110.0f;
-       m_GUICH->Set ("FineFreq", m_FineFreq);
+       m_GUICH->Set ("Fine Tune", m_FineFreq);
        m_FineTune->value (sqrt (m_FineFreq));
 }
 

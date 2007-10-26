@@ -22,6 +22,7 @@
 #define PI 3.141592654
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -70,9 +71,7 @@ string SpiralPlugin_GetGroupName()
 
 ///////////////////////////////////////////////////////
 
-AmpPlugin::AmpPlugin() :
-m_Gain(1.0f),
-m_DC(0.0f)
+AmpPlugin::AmpPlugin()
 {
 	m_PluginInfo.Name="Amp";
 	m_PluginInfo.Width = 120;
@@ -83,8 +82,14 @@ m_DC(0.0f)
 	m_PluginInfo.PortTips.push_back("Gain CV");
 	m_PluginInfo.PortTips.push_back("DC Offset CV");
 	m_PluginInfo.PortTips.push_back("Output");
-	m_AudioCH->Register("Gain",&m_Gain);
-	m_AudioCH->Register("DC",&m_DC);
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
+
+	m_Gain = FloatProperty(DefaultLinearFlags, 1.0, -2.0, 2.0, 0.001, 0.1);
+	m_DC = FloatProperty(DefaultLinearFlags, 0.0, -2.0, 2.0, 0.001, 0.1);
+
+	RegisterSharedProperty(m_Gain, "Gain", "Gain");
+	RegisterSharedProperty(m_DC, "DC", "DC");
 }
 
 AmpPlugin::~AmpPlugin()
@@ -105,8 +110,8 @@ void AmpPlugin::Execute()
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 	{
 		in = GetInput(0,n);
-		in *= m_Gain+GetInput(1,n);
-		in += (-m_DC)+GetInput(2,n);
+		in *= AsFloat(m_Gain)+GetInput(1,n);
+		in += (-AsFloat(m_DC))+GetInput(2,n);
 		SetOutput(0,n,in);
                 //cerr << m_Gain << " ";	 
 	}		
@@ -118,12 +123,12 @@ void AmpPlugin::Randomise()
 	
 void AmpPlugin::Describe(Spiral::Core::Description &d)
 {
-	d.Value(m_Version).Separator(" ").Value(m_Gain).Separator(" ").Value(m_DC).Separator(" ");
+	d.Value(m_Version).Separator(" ").Value(AsFloat(m_Gain)).Separator(" ").Value(AsFloat(m_DC)).Separator(" ");
 }
 
 void AmpPlugin::Apply(Spiral::Core::Description::Reader &r)
 {	
 	int version;
 	r.Value(version);
-	r.Value(m_Gain).Value(m_DC);
+	r.Value(AsFloat(m_Gain)).Value(AsFloat(m_DC));
 }

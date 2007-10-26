@@ -30,6 +30,7 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 // what's this for - should it still be here?
 #define CHECK_AND_REPORT_ERROR	if (result<0)         \
@@ -77,8 +78,30 @@ string SpiralPlugin_GetGroupName() { return "InputOutput"; }
 
 ///////////////////////////////////////////////////////
 
+const NumericPropertyValue BitRates[] = 
+{
+	DefaultUnsigned(16),
+	DefaultUnsigned(24),
+	DefaultUnsigned(32)
+};
+
 DiskWriterPlugin::DiskWriterPlugin()
 {
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 2);
+
+	m_Recording = ToggleProperty(Property::WriteOnly | Property::ForceUpdate, false);
+
+	m_BitsPerSample = SetProperty(Property::WriteOnly, 0, PropertySet(BitRates, sizeof(BitRates)/sizeof(BitRates[0])));
+	m_Stereo = ToggleProperty(Property::WriteOnly, true);
+
+	/* Just So The GUI Can Keep track of Current Time Recorded */
+	m_TimeRecorded = FloatProperty(Property::ReadOnly, 0, 0, 0, 0, 0);
+
+	RegisterSharedProperty(m_Recording, "Recording", "Recording");
+	RegisterSharedProperty(m_BitsPerSample, "Bits Per Sample", "Bits Per Sample");
+	RegisterSharedProperty(m_Stereo, "Stereo", "Stereo");
+	RegisterSharedProperty(m_TimeRecorded, "Time Recorded", "Time Recorded");
 	m_PluginInfo.Name="DiskWriter";
 	m_PluginInfo.Width=160;
 	m_PluginInfo.Height=115;
@@ -88,18 +111,14 @@ DiskWriterPlugin::DiskWriterPlugin()
 	m_PluginInfo.PortTips.push_back("Right Out");
 	m_PluginInfo.PortTips.push_back("Record Controller");
 
-        m_GUIArgs.BitsPerSample = 16;
-        m_GUIArgs.Stereo = true;
-	m_GUIArgs.Recording = false;
-	m_GUIArgs.TimeRecorded = 0;
+        AsUnsigned(m_BitsPerSample) = 16;
+        AsBoolean(m_Stereo) = true;
+	AsBoolean(m_Recording) = false;
+	AsFloat(m_TimeRecorded) = 0;
 
 	m_Version = 2;
 
 	m_AudioCH->RegisterData("Filename",ChannelHandler::INPUT,m_GUIArgs.Name,256);
-	m_AudioCH->Register("BitsPerSample",&m_GUIArgs.BitsPerSample,ChannelHandler::INPUT);
-	m_AudioCH->Register("Stereo",&m_GUIArgs.Stereo,ChannelHandler::INPUT);
-	m_AudioCH->Register("TimeRecorded",&m_GUIArgs.TimeRecorded,ChannelHandler::OUTPUT);
-	m_AudioCH->Register("Recording",&m_GUIArgs.Recording,ChannelHandler::OUTPUT);
 }
 
 DiskWriterPlugin::~DiskWriterPlugin()
@@ -116,7 +135,7 @@ PluginInfo &DiskWriterPlugin::Initialise(const HostInfo *Host)
 
 void DiskWriterPlugin::Execute()
 {
-	if(m_GUIArgs.Recording && m_Wav.IsOpen())
+	if(AsBoolean(m_Recording) && m_Wav.IsOpen())
 	{
 		int on=0;
 		float LeftBuffer[GetHostInfo()->BUFSIZE], RightBuffer[GetHostInfo()->BUFSIZE];
@@ -129,7 +148,7 @@ void DiskWriterPlugin::Execute()
 		}
 
 		m_Wav.Save(LeftBuffer, RightBuffer, GetHostInfo()->BUFSIZE);
-		m_GUIArgs.TimeRecorded = m_Wav.GetSize()/m_Wav.GetSamplerate();
+		AsFloat(m_TimeRecorded) = m_Wav.GetSize()/m_Wav.GetSamplerate();
 	}
 }
 
@@ -143,15 +162,15 @@ void DiskWriterPlugin::ExecuteCommands()
 				if (m_Wav.GetSamplerate() != GetHostInfo()->SAMPLERATE) {
 					m_Wav.SetSamplerate(GetHostInfo()->SAMPLERATE);
 				}
-				if (m_Wav.GetBitsPerSample() != m_GUIArgs.BitsPerSample) {
-					m_Wav.SetBitsPerSample(m_GUIArgs.BitsPerSample);
+				if (m_Wav.GetBitsPerSample() != AsUnsigned(m_BitsPerSample)) {
+					m_Wav.SetBitsPerSample(AsUnsigned(m_BitsPerSample));
 				}
-				m_Wav.Open(m_GUIArgs.Name,WavFile::WRITE, (m_GUIArgs.Stereo)?(WavFile::STEREO):(WavFile::MONO));
-				m_GUIArgs.TimeRecorded = 0;
+				m_Wav.Open(m_GUIArgs.Name,WavFile::WRITE, (AsBoolean(m_Stereo))?(WavFile::STEREO):(WavFile::MONO));
+				AsFloat(m_TimeRecorded) = 0;
 			break;
 			case CLOSEWAV : m_Wav.Close(); break;
-			case RECORD : m_GUIArgs.Recording=true; break;
-			case STOP : m_GUIArgs.Recording=false;	break;
+			case RECORD : AsBoolean(m_Recording)=true; break;
+			case STOP : AsBoolean(m_Recording)=false;	break;
 			default : break;
 		}
 	}
@@ -159,7 +178,7 @@ void DiskWriterPlugin::ExecuteCommands()
 
 void DiskWriterPlugin::Describe(Spiral::Core::Description &d)
 {
-	d.Value(m_Version).Separator(" ").Value(m_GUIArgs.BitsPerSample).Separator(" ").Value(m_GUIArgs.Stereo).Separator(" ");
+	d.Value(m_Version).Separator(" ").Value(AsUnsigned(m_BitsPerSample)).Separator(" ").Value(AsBoolean(m_Stereo)).Separator(" ");
 }
 
 void DiskWriterPlugin::Apply(Spiral::Core::Description::Reader &r)
@@ -183,16 +202,16 @@ void DiskWriterPlugin::Apply(Spiral::Core::Description::Reader &r)
 		case 2:
 		{
 			r.Value(BitsPerSample).Value(Stereo);
-			m_GUIArgs.BitsPerSample = BitsPerSample;
-			m_GUIArgs.Stereo = Stereo;
+			AsUnsigned(m_BitsPerSample) = BitsPerSample;
+			AsBoolean(m_Stereo) = Stereo;
 		}
 		break;
 
 		case 1:
 		{
 			//use original fixed defaults
-			m_GUIArgs.BitsPerSample = 16;
-			m_GUIArgs.Stereo = true;
+			AsUnsigned(m_BitsPerSample) = 16;
+			AsBoolean(m_Stereo) = true;
 		}
 		break;
 	}

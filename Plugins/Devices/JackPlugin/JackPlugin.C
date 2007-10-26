@@ -28,6 +28,7 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 int JackPlugin::JackInstanceCount = 0;
 
@@ -113,7 +114,7 @@ m_OutputCount(4)
      	m_PluginInfo.PortTips.clear();
 
 	m_PluginInfo.NumInputs = m_OutputCount;
-	m_GUIArgs.NumInputs = m_PluginInfo.NumInputs;
+	AsUnsigned(m_NumInputs) = m_PluginInfo.NumInputs;
 
 	for (int n=0; n<m_InputCount; n++)
      	{
@@ -123,7 +124,7 @@ m_OutputCount(4)
      	}
 	
 	m_PluginInfo.NumOutputs = m_InputCount;
-	m_GUIArgs.NumOutputs = m_PluginInfo.NumOutputs;
+	AsUnsigned(m_NumOutputs) = m_PluginInfo.NumOutputs;
 
 	for (int n=0; n<m_OutputCount; n++)
 	{
@@ -133,8 +134,16 @@ m_OutputCount(4)
 	}
      	
 	m_AudioCH->Register("PortIndex",&m_GUIArgs.PortIndex);
-	m_AudioCH->Register("NumInputs",&m_GUIArgs.NumInputs);
-	m_AudioCH->Register("NumOutputs",&m_GUIArgs.NumOutputs);
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 2);
+
+	int PortFlags = DefaultLinearFlags | Property::ForceUpdate;
+
+	m_NumInputs = UnsignedProperty(PortFlags, 4, MIN_PORTS, MAX_PORTS, 1, 1);
+	m_NumOutputs = UnsignedProperty(PortFlags, 4, MIN_PORTS, MAX_PORTS, 1, 1);
+
+	RegisterSharedProperty(m_NumInputs, "Inputs", "Number of Input Channels");
+	RegisterSharedProperty(m_NumOutputs, "Outputs", "Number of Output Channels");
 	m_AudioCH->RegisterData("Port",ChannelHandler::INPUT,&m_GUIArgs.Port,sizeof(m_GUIArgs.Port));
 	m_AudioCH->Register("NumInputPortNames",&m_NumInputPortNames,ChannelHandler::OUTPUT);
 	m_AudioCH->Register("NumOutputPortNames",&m_NumOutputPortNames,ChannelHandler::OUTPUT);
@@ -242,7 +251,7 @@ void JackPlugin::ExecuteCommands()
 			case DISCONNECT_INPUT: m_JackClient->DisconnectInput(m_GUIArgs.PortIndex); break;
 			case DISCONNECT_OUTPUT: m_JackClient->DisconnectOutput(m_GUIArgs.PortIndex); break;
 			case SET_PORT_COUNT :
-				SetNumberPorts (m_GUIArgs.NumInputs, m_GUIArgs.NumOutputs);				
+				SetNumberPorts (AsUnsigned(m_NumInputs), AsUnsigned(m_NumOutputs));				
 			break;	
 
 			case UPDATE_NAMES :
@@ -385,7 +394,7 @@ void  JackPlugin::CreatePorts (int nInputs, int nOutputs, bool AddPorts) {
 
 void JackPlugin::Describe(Spiral::Core::Description &d) 
 {
-	d.Value(m_Version).Separator(" ").Value(m_GUIArgs.NumInputs).Separator(" ").Value(m_GUIArgs.NumOutputs).Separator(" ");
+	d.Value(m_Version).Separator(" ").Value(AsUnsigned(m_NumInputs)).Separator(" ").Value(AsUnsigned(m_NumOutputs)).Separator(" ");
 }
 
 void JackPlugin::Apply(Spiral::Core::Description::Reader &r) 
@@ -408,20 +417,20 @@ void JackPlugin::Apply(Spiral::Core::Description::Reader &r)
 		case 2:
 		{
 			r.Value(NumInputs).Value(NumOutputs);
-			m_GUIArgs.NumOutputs = min(max(NumOutputs, MIN_PORTS), MAX_PORTS);
-			m_GUIArgs.NumInputs = min(max(NumInputs, MIN_PORTS), MAX_PORTS);
+			AsUnsigned(m_NumOutputs) = min(max(NumOutputs, MIN_PORTS), MAX_PORTS);
+			AsUnsigned(m_NumInputs) = min(max(NumInputs, MIN_PORTS), MAX_PORTS);
 			
-			SetNumberPorts (m_GUIArgs.NumInputs, m_GUIArgs.NumOutputs);				
+			SetNumberPorts (AsUnsigned(m_NumInputs), AsUnsigned(m_NumOutputs));				
 		}
 		break;
 		
 		case 1:
 		{
 			//use original fixed defaults
-			m_GUIArgs.NumInputs = 16;
-			m_GUIArgs.NumOutputs = 16;
+			AsUnsigned(m_NumInputs) = 16;
+			AsUnsigned(m_NumOutputs) = 16;
 
-			SetNumberPorts (m_GUIArgs.NumInputs, m_GUIArgs.NumOutputs);				
+			SetNumberPorts (AsUnsigned(m_NumInputs), AsUnsigned(m_NumOutputs));				
 		}
 		break;
 	}	

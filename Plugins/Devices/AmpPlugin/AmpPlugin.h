@@ -19,9 +19,9 @@
 #ifndef AMPPLUGIN
 #define AMPPLUGIN
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
-class AmpPlugin : public SpiralPlugin
+class AmpPlugin : public Spiral::Core::Device
 {
 public:
  	AmpPlugin();
@@ -34,13 +34,13 @@ public:
 
 	// has to be defined in the plugin
 
-	float GetGain() { return m_Gain; }
-	float GetDC() { return m_DC;  }
+	float GetGain() { return AsFloat(m_Gain); }
+	float GetDC() { return AsFloat(m_DC);  }
 
 	void Randomise();
 
 private:
-	float m_Gain, m_DC;
+	Spiral::Core::FloatProperty m_Gain, m_DC;
 	friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, AmpPlugin &o);
 	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, AmpPlugin &o);
 };

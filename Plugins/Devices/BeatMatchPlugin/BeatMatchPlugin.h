@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef PLUGIN
 #define PLUGIN
 
-class BeatMatchPlugin : public SpiralPlugin
+class BeatMatchPlugin : public Spiral::Core::Device
 {
 public:
  	BeatMatchPlugin();
@@ -35,7 +35,7 @@ public:
 	virtual void	    Describe(Spiral::Core::Description &d);
 	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 	
-	float GetSensitivity() { return m_Sensitivity; }
+	float GetSensitivity() { return AsFloat(m_Sensitivity); }
 	
 private:
 	bool  m_Triggered;
@@ -43,7 +43,7 @@ private:
 	int   m_BeatTime;
 	int   m_NextBeat;	
 	float m_OutputLevel;
-	float m_Sensitivity;
+	Spiral::Core::FloatProperty m_Sensitivity;
 };
 
 #endif

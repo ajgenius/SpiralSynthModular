@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef DelayPLUGIN
 #define DelayPLUGIN
 
-class DelayPlugin : public SpiralPlugin
+class DelayPlugin : public Spiral::Core::Device
 {
 public:
  	DelayPlugin();
@@ -33,14 +33,13 @@ public:
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
 	
-   	float GetDelay()    { return m_Delay;    }
-	float GetMix() { return m_Mix; }
+   	float GetDelay()    { return AsFloat(m_Delay);    }
+	float GetMix() { return AsFloat(m_Mix); }
 	
 	void Randomise();
 	
 private:
-	float m_Delay;
-	float m_Mix;
+	Spiral::Core::FloatProperty m_Delay, m_Mix;
 
 	float m_ReadHeadPos;
 	float m_WriteHeadPos;

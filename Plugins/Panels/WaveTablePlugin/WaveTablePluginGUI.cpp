@@ -247,7 +247,7 @@ void WaveTablePluginGUI::UpdateFreq (void) {
 // Callbacks - Controls outside the tabs
 
 inline void WaveTablePluginGUI::cb_Sine_i (Fl_LED_Button* o, void* v) {
-       m_GUICH->Set ("Type", (char)WaveTablePlugin::SINE);
+       m_GUICH->Set ("Wave Type", (int)WaveTablePlugin::SINE);
 }
 
 void WaveTablePluginGUI::cb_Sine (Fl_LED_Button* o, void* v) {
@@ -255,7 +255,7 @@ void WaveTablePluginGUI::cb_Sine (Fl_LED_Button* o, void* v) {
 }
 
 inline void WaveTablePluginGUI::cb_Square_i(Fl_LED_Button* o, void* v) {
-       m_GUICH->Set ("Type", (char)WaveTablePlugin::SQUARE);
+       m_GUICH->Set ("Wave Type", (int)WaveTablePlugin::SQUARE);
 }
 
 void WaveTablePluginGUI::cb_Square(Fl_LED_Button* o, void* v) {
@@ -263,7 +263,7 @@ void WaveTablePluginGUI::cb_Square(Fl_LED_Button* o, void* v) {
 }
 
 inline void WaveTablePluginGUI::cb_Saw_i (Fl_LED_Button* o, void* v) {
-       m_GUICH->Set ("Type", (char)WaveTablePlugin::SAW);
+       m_GUICH->Set ("Wave Type", (int)WaveTablePlugin::SAW);
 }
 
 void WaveTablePluginGUI::cb_Saw (Fl_LED_Button* o, void* v) {
@@ -271,7 +271,7 @@ void WaveTablePluginGUI::cb_Saw (Fl_LED_Button* o, void* v) {
 }
 
 inline void WaveTablePluginGUI::cb_RevSaw_i (Fl_LED_Button* o, void* v) {
-       m_GUICH->Set ("Type", (char)WaveTablePlugin::REVSAW);
+       m_GUICH->Set ("Wave Type", (int)WaveTablePlugin::REVSAW);
 }
 
 void WaveTablePluginGUI::cb_RevSaw (Fl_LED_Button* o, void* v) {
@@ -279,7 +279,7 @@ void WaveTablePluginGUI::cb_RevSaw (Fl_LED_Button* o, void* v) {
 }
 
 inline void WaveTablePluginGUI::cb_Tri_i (Fl_LED_Button* o, void* v) {
-       m_GUICH->Set ("Type", (char)WaveTablePlugin::TRIANGLE);
+       m_GUICH->Set ("Wave Type", (int)WaveTablePlugin::TRIANGLE);
 }
 
 void WaveTablePluginGUI::cb_Tri (Fl_LED_Button* o, void* v) {
@@ -287,7 +287,7 @@ void WaveTablePluginGUI::cb_Tri (Fl_LED_Button* o, void* v) {
 }
 
 inline void WaveTablePluginGUI::cb_Pulse1_i (Fl_LED_Button* o, void* v) {
-       m_GUICH->Set ("Type", (char)WaveTablePlugin::PULSE1);
+       m_GUICH->Set ("Wave Type", (int)WaveTablePlugin::PULSE1);
 }
 
 void WaveTablePluginGUI::cb_Pulse1 (Fl_LED_Button* o, void* v) {
@@ -295,7 +295,7 @@ void WaveTablePluginGUI::cb_Pulse1 (Fl_LED_Button* o, void* v) {
 }
 
 inline void WaveTablePluginGUI::cb_Pulse2_i(Fl_LED_Button* o, void* v) {
-       m_GUICH->Set ("Type", (char)WaveTablePlugin::PULSE2);
+       m_GUICH->Set ("Wave Type", (int)WaveTablePlugin::PULSE2);
 }
 
 void WaveTablePluginGUI::cb_Pulse2 (Fl_LED_Button* o, void* v) {
@@ -303,7 +303,7 @@ void WaveTablePluginGUI::cb_Pulse2 (Fl_LED_Button* o, void* v) {
 }
 
 inline void WaveTablePluginGUI::cb_InvSine_i (Fl_LED_Button* o, void* v) {
-       m_GUICH->Set ("Type", (char)WaveTablePlugin::INVSINE);
+       m_GUICH->Set ("Wave Type", (int)WaveTablePlugin::INVSINE);
 }
 
 void WaveTablePluginGUI::cb_InvSine (Fl_LED_Button* o, void* v) {

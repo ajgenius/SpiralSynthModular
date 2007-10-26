@@ -16,7 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef AnotherFilterPLUGIN
 #define AnotherFilterPLUGIN
@@ -24,7 +24,7 @@
 static const int NUM_CHANNELS = 4;
 
 // A State Variable Filter
-class AnotherFilterPlugin : public SpiralPlugin
+class AnotherFilterPlugin : public Spiral::Core::Device
 {
 public:
  	AnotherFilterPlugin();
@@ -37,12 +37,13 @@ public:
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
 	
-	float GetCutoff()    { return Cutoff; }
-	float GetResonance() { return Resonance;  } 
+	float GetCutoff()    { return AsFloat(Cutoff); }
+	float GetResonance() { return AsFloat(Resonance);  } 
 	
 	void Randomise();
 private:
-	float Cutoff, Resonance;
+	// Shared Property Values
+	Spiral::Core::FloatProperty Cutoff, Resonance;
 		
 	// Calculation
 	double w,q,r,c,vibrapos,vibraspeed;

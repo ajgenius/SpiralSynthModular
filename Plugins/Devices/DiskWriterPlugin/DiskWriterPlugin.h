@@ -19,10 +19,10 @@
 #ifndef DiskWriterPLUGIN
 #define DiskWriterPLUGIN
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 #include "RiffWav.h"
 
-class DiskWriterPlugin : public SpiralPlugin
+class DiskWriterPlugin : public Spiral::Core::Device
 {
 public:
  	DiskWriterPlugin();
@@ -35,21 +35,21 @@ public:
 	virtual void	    Describe(Spiral::Core::Description &d);
 	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 	
-	int GetBitsPerSample() { return m_GUIArgs.BitsPerSample; }
-	bool GetStereo() { return m_GUIArgs.Stereo; }
+	int GetBitsPerSample() { return AsSigned(m_BitsPerSample); }
+	bool GetStereo() { return AsBoolean(m_Stereo); }
 
 	enum GUICommands {NONE,OPENWAV,CLOSEWAV,RECORD,STOP};
 	struct GUIArgs
 	{
 		char Name[256];
-		int BitsPerSample;
-		bool Stereo;
-		bool Recording;
-                float TimeRecorded;
 	};
 
 private:
 	GUIArgs m_GUIArgs;
+	Spiral::Core::SetProperty m_BitsPerSample;
+	Spiral::Core::ToggleProperty m_Stereo;
+	Spiral::Core::ToggleProperty m_Recording;
+	Spiral::Core::FloatProperty m_TimeRecorded;
 	int m_Version;
 	WavFile m_Wav;
 };

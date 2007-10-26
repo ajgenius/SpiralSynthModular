@@ -19,6 +19,7 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 static const int IN_FREQ  = 0;
 static const int IN_PW    = 1;
@@ -75,12 +76,32 @@ string SpiralPlugin_GetGroupName()
 ///////////////////////////////////////////////////////
 
 WaveTablePlugin::WaveTablePlugin() :
-m_Type(SINE),
-m_Octave(0),
-m_FineFreq(1.0f),
-m_ModAmount(1.0f),
 m_TableLength(DEFAULT_TABLE_LEN)
 {
+	const NamedPropertyValue WaveTypes[] =
+	{
+		{"Sine", DefaultUnsigned(SINE)},
+		{"Square", DefaultUnsigned(SQUARE)},
+		{"Saw", DefaultUnsigned(SAW)},
+		{"Reverse Saw", DefaultUnsigned(REVSAW)},
+		{"Triangle", DefaultUnsigned(TRIANGLE)},
+		{"Pulse 1", DefaultUnsigned(PULSE1)},
+		{"Pulse 2", DefaultUnsigned(PULSE2)},
+		{"Inverse Sine", DefaultUnsigned(INVSINE)}
+	};
+
+	m_Type = SetProperty(Property::WriteOnly, 0, NamedPropertySet(WaveTypes, sizeof(WaveTypes)/sizeof(WaveTypes[0])));
+	m_Octave = SignedProperty(DefaultLinearFlags,0,-3,3,1,1);
+	m_FineFreq = FloatProperty(DefaultLinearFlags,1, 0, 1.414, 0.000001, 0.0001);
+	m_ModAmount = FloatProperty(DefaultLinearFlags, 1.0f, 0, 2.0f, 0.001, 0.01);
+
+	RegisterSharedProperty(m_Type, "Wave Type", "Wave Type");
+	RegisterSharedProperty(m_Octave, "Octave", "Octave");
+	RegisterSharedProperty(m_FineFreq, "FineFreq", "FineFreq");
+	RegisterSharedProperty(m_ModAmount, "ModAmount", "ModAmount");
+
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
 	m_CyclePos=0;	
 	m_Note=0;
 	
@@ -92,10 +113,6 @@ m_TableLength(DEFAULT_TABLE_LEN)
 	m_PluginInfo.PortTips.push_back("Frequency CV");
 	m_PluginInfo.PortTips.push_back("Output");
 	
-	m_AudioCH->Register("Octave",&m_Octave,ChannelHandler::INPUT);
-	m_AudioCH->Register("FineFreq",&m_FineFreq,ChannelHandler::INPUT);
-	m_AudioCH->Register("Type",(char*)&m_Type,ChannelHandler::INPUT);
-	m_AudioCH->Register("ModAmount",&m_ModAmount,ChannelHandler::INPUT);
 }
 
 WaveTablePlugin::~WaveTablePlugin()
@@ -206,16 +223,16 @@ void WaveTablePlugin::Execute()
 		if (InputExists(0)) 
 		{
 			Freq=GetInputPitch(0,n);
-			Freq*=m_ModAmount;
+			Freq*=AsFloat(m_ModAmount);
 		}
 		else 
 		{	
 			Freq=110;
 		}
 
-		Freq*=m_FineFreq;
-		if (m_Octave>0) Freq*=1<<(m_Octave);
-		if (m_Octave<0) Freq/=1<<(-m_Octave);
+		Freq*=AsFloat(m_FineFreq);
+		if (AsSigned(m_Octave)>0) Freq*=1<<(AsSigned(m_Octave));
+		if (AsSigned(m_Octave)<0) Freq/=1<<(-AsSigned(m_Octave));
 		
 		Incr = Freq*(m_TableLength/(float)m_HostInfo->SAMPLERATE);
 		m_CyclePos+=Incr;
@@ -227,7 +244,7 @@ void WaveTablePlugin::Execute()
 		
 		if (m_CyclePos<0 || m_CyclePos>=m_TableLength) m_CyclePos=0;
 		
-		SetOutput(OUT_MAIN,n,m_Table[static_cast<unsigned char>(m_Type)][m_CyclePos]);
+		SetOutput(OUT_MAIN,n,m_Table[static_cast<unsigned char>(AsUnsigned(m_Type))][m_CyclePos]);
 	}
 }
 
@@ -246,12 +263,12 @@ void WaveTablePlugin::Apply(Spiral::Core::Description::Reader &r)
 
 Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, WaveTablePlugin &o)
 {
-	r.Value((int&)o.m_Type).Value(o.m_Octave).Value(o.m_FineFreq).Value(o.m_ModAmount);
+	r.Value((int&)AsUnsigned(o.m_Type)).Value(AsSigned(o.m_Octave)).Value(AsFloat(o.m_FineFreq)).Value(AsFloat(o.m_ModAmount));
 	return r;
 }
 
 Spiral::Core::Description &Describe(Spiral::Core::Description &d, WaveTablePlugin &o)
 {
-	d.Value((int)o.m_Type).Separator(" ").Value(o.m_Octave).Separator(" ").Value(o.m_FineFreq).Separator(" ").Value(o.m_ModAmount).Separator(" ");
+	d.Value((int)AsUnsigned(o.m_Type)).Separator(" ").Value(AsSigned(o.m_Octave)).Separator(" ").Value(AsFloat(o.m_FineFreq)).Separator(" ").Value(AsFloat(o.m_ModAmount)).Separator(" ");
 	return d;
 }
