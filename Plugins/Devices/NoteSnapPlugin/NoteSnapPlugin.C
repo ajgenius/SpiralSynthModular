@@ -20,6 +20,7 @@
 #include "NoteTable.h"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -68,6 +69,8 @@ string SpiralPlugin_GetGroupName()
 
 ///////////////////////////////////////////////////////
 
+static const string notes[12]={"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+
 NoteSnapPlugin::NoteSnapPlugin() :
 m_Out(0)
 {
@@ -82,8 +85,12 @@ m_Out(0)
 	
 	for (int n=0; n<12; n++)
 	{
-		m_Filter[n]=true;
+		m_Filter[n] = ToggleProperty(Property::WriteOnly, true);
+		RegisterSharedProperty(m_Filter[n], notes[n], notes[n]);
 	}
+
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
 	
 	m_AudioCH->Register("Note",&m_Note);
 }
@@ -118,7 +125,7 @@ void NoteSnapPlugin::Execute()
 		{
 			for (int i=0; i<131; i++) // for every note
 			{			
-				if (m_Filter[(i+1)%12] && Freq>=NoteTable[i] && Freq<NoteTable[i+1])
+				if (AsBoolean(m_Filter[(i+1)%12]) && Freq>=NoteTable[i] && Freq<NoteTable[i+1])
 				{		
 					m_Out=NoteTable[i];
 					if (i!=m_LastNote) 
@@ -141,8 +148,8 @@ void NoteSnapPlugin::ExecuteCommands()
 	{
 		switch (m_AudioCH->GetCommand())
 		{
-			case NOTE_ON  : m_Filter[m_Note]=true; break;
-			case NOTE_OFF : m_Filter[m_Note]=false; break;
+			case NOTE_ON  : AsBoolean(m_Filter[m_Note])=true; break;
+			case NOTE_OFF : AsBoolean(m_Filter[m_Note])=false; break;
 		}
 	}
 }
@@ -152,7 +159,7 @@ void NoteSnapPlugin::Describe(Spiral::Core::Description &d)
 	d.Value(m_Version).Line();
 	for (int n=0; n<12; n++)
 	{
-		d.Value(m_Filter[n]).Separator(" ");
+		d.Value(AsBoolean(m_Filter[n])).Separator(" ");
 	}
 
 }
@@ -164,14 +171,14 @@ void NoteSnapPlugin::Apply(Spiral::Core::Description::Reader &r)
 		for (int n=0; n<12; n++)
 		{
 		// Use default (no notes filtered)
-			m_Filter[n] = 1;
+			AsBoolean(m_Filter[n]) = 1;
 		}
 	} else {
 		int version;
 		r.Value(version);
 		for (int n=0; n<12; n++)
 		{
-			r.Value(m_Filter[n]);
+			r.Value(AsBoolean(m_Filter[n]));
 		}
 	}
 }

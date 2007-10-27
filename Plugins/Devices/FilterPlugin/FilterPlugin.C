@@ -19,6 +19,7 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 static const float MAX_RES = 10;
 static const float MIN_RES = 1;
@@ -75,8 +76,6 @@ string SpiralPlugin_GetGroupName()
 
 FilterPlugin::FilterPlugin() :
 fs(0),     			// Sampling frequency
-fc(100),             // Filter cutoff
-Q(1),               // Resonance
 m_LastFC(0),
 m_LastQ(1),
 k(1.0),              // Set overall filter gain
@@ -93,8 +92,16 @@ m_RevResonanceMod(false)
 	m_PluginInfo.PortTips.push_back("Emphasis CV");	
 	m_PluginInfo.PortTips.push_back("Output");
 	
-	m_AudioCH->Register("Cutoff",&fc);
-	m_AudioCH->Register("Resonance",&Q);
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
+
+	fc = FloatProperty(DefaultLinearFlags, 100, 0, 100, 0.01,  1);
+	Q = FloatProperty(DefaultLinearFlags, 1, 0, 10, 0.01, 0.1);
+
+	RegisterSharedProperty(fc, "Cutoff", "Cutoff");
+	RegisterSharedProperty(Q, "Resonance", "Resonance");
+
+
 	m_AudioCH->Register("RevC",&m_RevCutoffMod);
 	m_AudioCH->Register("RevR",&m_RevResonanceMod);
 	
@@ -140,7 +147,7 @@ void FilterPlugin::Execute()
 	float Resonance;
 	float out, in;
 
-	if (fc<0) return;
+	if (AsFloat(fc)<0) return;
    
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 	{
@@ -164,8 +171,8 @@ void FilterPlugin::Execute()
 			coef = iir.coef + 1;     /* Skip k, or gain */ 
 			k=0.25;
 	
-			Cutoff = fc + (GetInput(1,n) * 1000);
-			Resonance = Q + GetInput(2,n);  
+			Cutoff = AsFloat(fc) + (GetInput(1,n) * 1000);
+			Resonance = AsFloat(Q) + GetInput(2,n);  
 	 	
 			Cutoff/=2;
 	 
@@ -191,8 +198,8 @@ void FilterPlugin::Execute()
 
 					iir.coef[0] = k; 
 				
-					m_LastQ=Q;
-					m_LastFC=fc;			
+					m_LastQ=AsFloat(Q);
+					m_LastFC=AsFloat(fc);			
 				}
 			}		  
 		 		 
@@ -205,14 +212,14 @@ void FilterPlugin::Execute()
 	
 void FilterPlugin::Describe(Spiral::Core::Description &d)
 {
-	d.Value(m_Version).Separator(" ").Value(fc).Separator(" ").Value(Q).Separator(" ").Value(m_RevCutoffMod).Separator(" ").Value(m_RevResonanceMod).Separator(" ");
+	d.Value(m_Version).Separator(" ").Value(AsFloat(fc)).Separator(" ").Value(AsFloat(Q)).Separator(" ").Value(m_RevCutoffMod).Separator(" ").Value(m_RevResonanceMod).Separator(" ");
 }
 
 void FilterPlugin::Apply(Spiral::Core::Description::Reader &r)
 {	
 	int version;
 	r.Value(version);
-	r.Value(fc).Value(Q).Value(m_RevCutoffMod).Value(m_RevResonanceMod);
+	r.Value(AsFloat(fc)).Value(AsFloat(Q)).Value(m_RevCutoffMod).Value(m_RevResonanceMod);
 }
 
 void FilterPlugin::SetupCoeffs()

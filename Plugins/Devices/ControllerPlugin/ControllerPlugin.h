@@ -16,14 +16,15 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
+#include <vector>
 
 #ifndef ControllerPLUGIN
 #define ControllerPLUGIN
 
 static const int MAX_CHANNELS = 99;
 
-class ControllerPlugin : public SpiralPlugin
+class ControllerPlugin : public Spiral::Core::Device
 {
 public:
  	ControllerPlugin();
@@ -35,11 +36,11 @@ public:
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
 
-	std::string GetName(int n) { return m_Names[n]; }
-	int    GetNum()       { return m_Num; }
-	float  GetVal(int n)  { return m_ChannelVal[n]; }
-	float  GetMin(int n)  { return m_MinVal[n]; }
-	float  GetMax(int n)  { return m_MaxVal[n]; }
+	std::string GetName(int n) { return m_Name[n]->Value; }
+	int    GetNum()       { return AsUnsigned(m_NumChannels); }
+	float  GetVal(int n)  { return m_Value[n]->Value.AsFloat; }
+	float  GetMin(int n)  { return m_Min[n]->Value.AsFloat; }
+	float  GetMax(int n)  { return m_Max[n]->Value.AsFloat; }
 
 	enum GUICommands{NONE,SETNUM,SETALL,SETNAME,SETMAX,SETCHANNEL,SETMIN};
 	struct GUIArgs
@@ -56,22 +57,21 @@ private:
 
 	void SetNum(int n);
 	void SetAll(int n, char *name, float max, float value, float min)
-		{ m_Names[n]      = name;
-		  m_MaxVal[n]     = max;
-		  m_ChannelVal[n] = value;
-		  m_MinVal[n]     = min;
+		{ m_Name[n]->Value         = name;
+		  m_Max[n]->Value.AsFloat   = max;
+		  m_Value[n]->Value.AsFloat = value;
+		  m_Min[n]->Value.AsFloat   = min;
 		};
-	void SetName(int n, char* name)     { m_Names[n]      = name;  };
-	void SetChannel(int n, float value) { m_ChannelVal[n] = value; };
-	void SetMax(int n, float max)       { m_MaxVal[n]     = max;   };
-	void SetMin(int n, float min)       { m_MinVal[n]     = min;   };
+	void SetName(int n, char* name)     { m_Name[n]->Value          = name;  };
+	void SetChannel(int n, float value) { m_Value[n]->Value.AsFloat = value; };
+	void SetMax(int n, float max)       { m_Max[n]->Value.AsFloat   = max;   };
+	void SetMin(int n, float min)       { m_Min[n]->Value.AsFloat   = min;   };
 	void Clear();
+	void EnsureChannelProperties();
 
-	int m_Num;
-	float  m_ChannelVal[MAX_CHANNELS];
-	std::string m_Names[MAX_CHANNELS];
-	float  m_MinVal[MAX_CHANNELS];
-	float  m_MaxVal[MAX_CHANNELS];
+	Spiral::Core::UnsignedProperty m_NumChannels;
+	std::vector<Spiral::Core::FloatProperty*> m_Value, m_Min, m_Max;
+	std::vector<Spiral::Core::StringProperty*> m_Name;
 };
 
 #endif

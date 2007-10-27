@@ -22,6 +22,7 @@
 #define PI 3.141592654
 
 using namespace std;
+using namespace Spiral::Core;
 
 static const int GRANULARITY = 10;
 
@@ -73,8 +74,6 @@ string SpiralPlugin_GetGroupName()
 ///////////////////////////////////////////////////////
 
 MoogFilterPlugin::MoogFilterPlugin() :
-Cutoff(0.5f),
-Resonance(0.0f),
 fs(44100.0f),
 fc(1000.0f),
 f(0.0f),
@@ -100,8 +99,16 @@ t2(0.0f)
 	m_PluginInfo.PortTips.push_back("BandPass output");
 	m_PluginInfo.PortTips.push_back("HighPass output");
 	
-	m_AudioCH->Register("Cutoff",&Cutoff);
-	m_AudioCH->Register("Resonance",&Resonance);
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
+
+	Cutoff = FloatProperty(DefaultLinearFlags,0.5f, 0, 1, 0.0001, 0.001);
+	Resonance = FloatProperty(DefaultLinearFlags,0.0f, 0, 1, 0.00001, 0.0001);
+
+	RegisterSharedProperty(Cutoff, "Cutoff", "Cutoff");
+	RegisterSharedProperty(Resonance, "Resonance", "Resonance");
+
+
 }
 
 MoogFilterPlugin::~MoogFilterPlugin()
@@ -149,13 +156,13 @@ void MoogFilterPlugin::Execute()
 	{
 		if (n%GRANULARITY==0)
 		{
-			fc = (Cutoff+GetInput(1,n))*0.25;
+			fc = (AsFloat(Cutoff)+GetInput(1,n))*0.25;
 			if (fc<0) fc=0;
 			
 			q = 1.0f - fc;
 			p = fc + 0.8f * fc * q;
 			f = p + p - 1.0f;
-			Q = ((Resonance+GetInput(2,n))*6)-3.0f;
+			Q = ((AsFloat(Resonance)+GetInput(2,n))*6)-3.0f;
 			q = Q + (1.0f + 0.5f * q * (1.0f - q + 5.6f * q * q));
 		}
 
@@ -205,12 +212,12 @@ void MoogFilterPlugin::Randomise()
 	
 void MoogFilterPlugin::Describe(Spiral::Core::Description &d)
 {
-	d.Value(m_Version).Separator(" ").Value(Cutoff).Separator(" ").Value(Resonance).Separator(" ");
+	d.Value(m_Version).Separator(" ").Value(AsFloat(Cutoff)).Separator(" ").Value(AsFloat(Resonance)).Separator(" ");
 }
 
 void MoogFilterPlugin::Apply(Spiral::Core::Description::Reader &r)
 {	
 	int version;
 	r.Value(version);
-	r.Value(Cutoff).Value(Resonance);
+	r.Value(AsFloat(Cutoff)).Value(AsFloat(Resonance));
 }

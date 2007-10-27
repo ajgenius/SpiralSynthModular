@@ -21,6 +21,7 @@
 #include "NoteTable.h"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -91,9 +92,13 @@ float TranslateVoltToNote::Translate (float i) {
 ///////////////////////////////////////////////////////
 
 TranslatePlugin::TranslatePlugin () :
-m_Method (tr_Pass),
 m_Translator (NULL)
 {
+	m_Method = UnsignedProperty(DefaultLinearFlags | Property::ForceUpdate, tr_Pass, tr_Pass, tr_VoltToNote, 1, 1);
+	RegisterSharedProperty(m_Method, "Method", "Method");
+
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
     m_PluginInfo.Name = "Translate";
     m_PluginInfo.Width = 150;
     m_PluginInfo.Height = 60;
@@ -101,7 +106,6 @@ m_Translator (NULL)
     m_PluginInfo.NumOutputs = 1;
     m_PluginInfo.PortTips.push_back ("Input");
     m_PluginInfo.PortTips.push_back ("Output");
-    m_AudioCH->Register ("Method", &m_Method);
     SetUpTranslatorClass ();
 }
 
@@ -120,7 +124,7 @@ void TranslatePlugin::SetUpTranslatorClass (void) {
         delete m_Translator;
         m_Translator = NULL;
      }
-     switch (m_Method) {
+     switch (AsUnsigned(m_Method)) {
        case tr_Pass:
             m_Translator = new TranslatePass;
             break;
@@ -157,12 +161,12 @@ void TranslatePlugin::Execute () {
 
 void TranslatePlugin::Describe(Spiral::Core::Description &d) {
      d.Value(m_Version).Line();
-     d.Value(m_Method);
+     d.Value(AsUnsigned(m_Method));
 }
 
 void TranslatePlugin::Apply(Spiral::Core::Description::Reader &r) {
      int version;
      r.Value(version);
-     r.Value(m_Method);
+     r.Value(AsUnsigned(m_Method));
      SetUpTranslatorClass ();
 }

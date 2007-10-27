@@ -20,6 +20,7 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -68,8 +69,7 @@ string SpiralPlugin_GetGroupName()
 
 ///////////////////////////////////////////////////////
 
-RingModPlugin::RingModPlugin() :
-m_Amount(1.0f)
+RingModPlugin::RingModPlugin()
 {
 	m_PluginInfo.Name="Ring Mod";
 	m_PluginInfo.Width=80;
@@ -80,7 +80,13 @@ m_Amount(1.0f)
 	m_PluginInfo.PortTips.push_back("Input 2");	
 	m_PluginInfo.PortTips.push_back("Output");	
 	
-	m_AudioCH->Register("Amount",&m_Amount);
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
+
+	m_Amount= FloatProperty(DefaultLinearFlags,1.0f, 0, 3, 0.0001, 0.001);
+
+	RegisterSharedProperty(m_Amount, "Amount", "Amount");
+
 }
 
 RingModPlugin::~RingModPlugin()
@@ -98,7 +104,7 @@ void RingModPlugin::Execute()
 {
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 	{
-		SetOutput(0,n,GetInput(0,n)*GetInput(1,n)*m_Amount);
+		SetOutput(0,n,GetInput(0,n)*GetInput(1,n)*AsFloat(m_Amount));
 	}		
 }
 	
@@ -108,13 +114,13 @@ void RingModPlugin::Randomise()
 	
 void RingModPlugin::Describe(Spiral::Core::Description &d)
 {
-	d.Value(m_Version).Separator(" ").Value(m_Amount).Separator(" ");
+	d.Value(m_Version).Separator(" ").Value(AsFloat(m_Amount)).Separator(" ");
 }
 
 void RingModPlugin::Apply(Spiral::Core::Description::Reader &r)
 {	
 	int version;
 	r.Value(version);
-	r.Value(m_Amount);
+	r.Value(AsFloat(m_Amount));
 }
 

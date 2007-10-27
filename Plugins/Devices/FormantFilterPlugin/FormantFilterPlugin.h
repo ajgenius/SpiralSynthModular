@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef FormantFilterPLUGIN
 #define FormantFilterPLUGIN
 
-class FormantFilterPlugin : public SpiralPlugin
+class FormantFilterPlugin : public Spiral::Core::Device
 {
 public:
  	FormantFilterPlugin();
@@ -36,10 +36,10 @@ public:
 	
 	void Randomise();
 	void Clear();
-	float GetVowel() { return m_Vowel; }
+	float GetVowel() { return AsFloat(m_Vowel); }
 
 private:
-	float m_Vowel;
+	Spiral::Core::FloatProperty m_Vowel;
 		
 	double memory[5][10];
 	

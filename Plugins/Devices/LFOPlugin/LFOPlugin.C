@@ -20,6 +20,7 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -59,9 +60,23 @@ string SpiralPlugin_GetGroupName() { return "Oscillators"; }
 ///////////////////////////////////////////////////////
 
 LFOPlugin::LFOPlugin() :
-m_Type (SINE),
-m_Freq (0.1),
 m_TableLength (DEFAULT_TABLE_LEN) {
+	const NamedPropertyValue WaveTypes[] = 
+	{
+		{"Sine", DefaultUnsigned(SINE)},
+		{"Triangle", DefaultUnsigned(TRIANGLE)},
+		{"Square", DefaultUnsigned(SQUARE)},
+		{"Saw", DefaultUnsigned(SAW)}
+	};
+
+	m_Type = SetProperty(Property::WriteOnly, 0, NamedPropertySet(WaveTypes, sizeof(WaveTypes)/sizeof(WaveTypes[0])));
+	m_Freq = FloatProperty(DefaultLinearFlags, 0.1, 0.0, 1.0, 0.001, 0.1);
+
+	RegisterSharedProperty(m_Type, "Wave Type", "Wave Type");
+	RegisterSharedProperty(m_Freq, "Frequency", "Frequency");
+
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
 	m_CyclePos = 0;
 	m_Note = 0;
 	m_PluginInfo.Name = "LFO";
@@ -72,8 +87,6 @@ m_TableLength (DEFAULT_TABLE_LEN) {
 	m_PluginInfo.PortTips.push_back ("Output");
 	m_PluginInfo.PortTips.push_back ("'Cosine' Output");
 	m_PluginInfo.PortTips.push_back ("Inverted Output");
-	m_AudioCH->Register("Freq", &m_Freq);
-	m_AudioCH->Register("Type", (char*)&m_Type);
 }
 
 LFOPlugin::~LFOPlugin() {
@@ -134,28 +147,28 @@ void LFOPlugin::Reset()
 void LFOPlugin::Execute() {
      float Incr, Pos;
      for (int n=0; n<m_HostInfo->BUFSIZE; n++) {
-         Incr = m_Freq * (m_TableLength / (float)m_HostInfo->SAMPLERATE);
+         Incr = AsFloat(m_Freq) * (m_TableLength / (float)m_HostInfo->SAMPLERATE);
          // Raw Output
          m_CyclePos = AdjustPos (m_CyclePos + Incr);
-         SetOutput (0, n, m_Table[m_Type][m_CyclePos]);
+         SetOutput (0, n, m_Table[AsUnsigned(m_Type)][m_CyclePos]);
          // 'Cosine' Output
          Pos = AdjustPos (m_CyclePos + (m_TableLength * 0.25));
-         SetOutput (1, n, m_Table[m_Type][Pos]);
+         SetOutput (1, n, m_Table[AsUnsigned(m_Type)][Pos]);
          // Inverted Output
          Pos = AdjustPos (m_TableLength - m_CyclePos);
-         SetOutput (2, n, m_Table[m_Type][Pos]);
+         SetOutput (2, n, m_Table[AsUnsigned(m_Type)][Pos]);
      }
 }
 
 void LFOPlugin::Describe(Spiral::Core::Description &d) {
-     d.Value(m_Version).Separator(" ").Value((int)m_Type).Separator(" ").Value(m_Freq).Separator(" ");
+     d.Value(m_Version).Separator(" ").Value((int)AsUnsigned(m_Type)).Separator(" ").Value(AsFloat(m_Freq)).Separator(" ");
 }
 
 void LFOPlugin::Apply(Spiral::Core::Description::Reader &r) {
      int version;
      r.Value(version);
-     int type = static_cast<int>(m_Type);
-     if (!r.Value(type).Failed()) m_Type = static_cast<Type>(type);
-     r.Value(m_Freq);
+     int type = static_cast<int>(AsUnsigned(m_Type));
+     if (!r.Value(type).Failed()) AsUnsigned(m_Type) = static_cast<Type>(type);
+     r.Value(AsFloat(m_Freq));
 }
 

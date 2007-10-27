@@ -61,7 +61,7 @@ void SplitterPluginGUI::cb_Channels_i (Fl_Counter* o)
 		o->value(2);
 	}	
 	else {
-		m_GUICH->Set ("ChannelCount", int (o->value ()));
+		m_GUICH->Set ("Channels", int (o->value ()));
 		m_GUICH->SetCommand (SplitterPlugin::SETCHANNELCOUNT);
 		m_GUICH->Wait ();
 		Resize (w(), h());

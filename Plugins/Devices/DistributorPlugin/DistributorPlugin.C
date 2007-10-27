@@ -24,6 +24,7 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -75,16 +76,20 @@ m_Triggered (false),
 m_ChannelSelect (0),
 m_TrigDelay (0)
 {
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 2);
+
+	m_ChannelCount = UnsignedProperty(DefaultLinearFlags | Property::ForceUpdate, 2, 0, 256, 1, 1);
+	RegisterSharedProperty(m_ChannelCount, "Channels", "Channels");
 
 	m_PluginInfo.Name = "Distributor";
 	m_PluginInfo.Width=80;
 	m_PluginInfo.Height=40;
 
 	m_Version = 2;
-	m_GUIArgs.ChannelCount = 2;
+	AsUnsigned(m_ChannelCount) = 2;
 	CreatePorts ();
 
-	m_AudioCH->Register("ChannelCount", &m_GUIArgs.ChannelCount);
 }
 
 DistributorPlugin::~DistributorPlugin() 
@@ -118,7 +123,7 @@ void DistributorPlugin::CreatePorts (int n, bool AddPorts)
 
 void DistributorPlugin::SetChannelCount (int count) 
 {
-	m_GUIArgs.ChannelCount = count;
+	AsUnsigned(m_ChannelCount) = count;
 
 	UpdatePluginInfoWithHost();
 

@@ -16,14 +16,14 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef SEQSELECTORPlugin
 #define SEQSELECTORPlugin
 
 static const int NUM_VALUES = 8;
 
-class SeqSelectorPlugin : public SpiralPlugin
+class SeqSelectorPlugin : public Spiral::Core::Device
 {
 public:
  	SeqSelectorPlugin();
@@ -36,8 +36,8 @@ public:
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
 		
-	int  GetBegin()      { return m_Begin; }
-	int  GetEnd()        { return m_End; }
+	int  GetBegin()      { return AsSigned(m_Begin); }
+	int  GetEnd()        { return AsSigned(m_End); }
 			
 	enum GUICommands{NONE,SET_BEGIN,SET_END,RANGE,ADD_LINE,REM_LINE,SET_VAL};
 	
@@ -50,19 +50,20 @@ public:
 	
 	struct Line
 	{
-		int Value[NUM_VALUES];
+		std::vector<Spiral::Core::SignedProperty*> Value;
 	};
 	
 	std::vector<Line> m_Lines;
 	
 private:
 
+	void UpdateLineCount(unsigned int num);
+
 	GUIArgs m_GUIArgs;
 	
-	unsigned int m_Pos;
-	unsigned int m_Begin;
-	unsigned int m_End;
-	bool m_UseRange;
+	Spiral::Core::UnsignedProperty m_NumLines, m_Position;
+	Spiral::Core::SignedProperty m_Begin, m_End;
+	Spiral::Core::ToggleProperty m_UseRange;
 	bool m_Triggered;
 };
 

@@ -19,6 +19,7 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -68,8 +69,6 @@ string SpiralPlugin_GetGroupName()
 ///////////////////////////////////////////////////////
 
 SmoothPlugin::SmoothPlugin() :
-m_Up(0.5),
-m_Down(0.5),
 m_Value(0)
 {
 	m_PluginInfo.Name="Smooth";
@@ -80,8 +79,16 @@ m_Value(0)
 	m_PluginInfo.PortTips.push_back("Input");	
 	m_PluginInfo.PortTips.push_back("Output");
 	
-	m_AudioCH->Register("Up",&m_Up);
-	m_AudioCH->Register("Down",&m_Down);
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
+
+	m_Up = FloatProperty(DefaultLinearFlags, 0.5, 0, 1, 0.001, 0.01);
+	m_Down = FloatProperty(DefaultLinearFlags, 0.5, 0, 1, 0.001, 0.01);
+
+	RegisterSharedProperty(m_Up, "Up", "Up");
+	RegisterSharedProperty(m_Down, "Down", "Down");
+
+
 }
 
 SmoothPlugin::~SmoothPlugin()
@@ -108,8 +115,8 @@ void SmoothPlugin::Execute()
 	{
 		Value = GetInput(0,n);
 		
-		if (Value>m_Value) m_Value+=m_Up*0.0001f;
-		else m_Value-=m_Down*0.0001f;
+		if (Value>m_Value) m_Value+=AsFloat(m_Up)*0.0001f;
+		else m_Value-=AsFloat(m_Down)*0.0001f;
 		
 		SetOutput(0,n,m_Value);
 	}
@@ -118,13 +125,13 @@ void SmoothPlugin::Execute()
 void SmoothPlugin::Describe(Spiral::Core::Description &d) 
 {
 	d.Value(m_Version).Separator(" ");
-	d.Value(m_Up).Separator(" ").Value(m_Down);
+	d.Value(AsFloat(m_Up)).Separator(" ").Value(AsFloat(m_Down));
 }
 
 void SmoothPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	r.Value(m_Version);
-	r.Value(m_Up).Value(m_Down);
+	r.Value(AsFloat(m_Up)).Value(AsFloat(m_Down));
 }
 
  

@@ -21,6 +21,7 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -69,9 +70,14 @@ string SpiralPlugin_GetGroupName()
 
 ///////////////////////////////////////////////////////
 
-ControllerPlugin::ControllerPlugin() :
-m_Num(4)
+ControllerPlugin::ControllerPlugin()
 {
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 5);
+
+	m_NumChannels = UnsignedProperty(DefaultLinearFlags | Property::ForceUpdate, 4, 2, 256, 1, 1);
+	RegisterSharedProperty(m_NumChannels, "Channels", "Channels");
+
 	m_Version=5;
 
 	m_PluginInfo.Name="CV";
@@ -84,13 +90,7 @@ m_Num(4)
 	m_PluginInfo.PortTips.push_back("CV 3");
 	m_PluginInfo.PortTips.push_back("CV 4");
 
-	for (int n=0; n<MAX_CHANNELS; n++)
-	{
-		m_ChannelVal[n]=0.0f;
-		m_MinVal[n]=-1.0f;
-		m_MaxVal[n]=1.0f;
-		m_Names[n]="Name";
-	}
+	EnsureChannelProperties();
 	
 	m_AudioCH->Register("Number",&m_GUIArgs.Number);
 	m_AudioCH->Register("Value",&m_GUIArgs.Value);
@@ -112,11 +112,11 @@ PluginInfo &ControllerPlugin::Initialise(const HostInfo *Host)
 
 void ControllerPlugin::Execute()
 {
-	for(int c=0; c<m_Num; c++)
+	for(int c=0; c<GetNum(); c++)
 	{
 		for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 		{			
-			SetOutput(c,n,m_ChannelVal[c]);
+			SetOutput(c,n,m_Value[c]->Value.AsFloat);
 		}
 	}
 }
@@ -154,7 +154,7 @@ void ControllerPlugin::SetNum(int n)
 	// once to clear the connections with the current info
 	UpdatePluginInfoWithHost();
 
-	if (m_Num<n)
+	if (AsUnsigned(m_NumChannels)<n)
 	{
 		char t[256];
 		sprintf(t,"CV %d",n);
@@ -170,14 +170,57 @@ void ControllerPlugin::SetNum(int n)
 		m_PluginInfo.NumOutputs--;
 	}
 	
-	m_Num=n;
+	AsUnsigned(m_NumChannels)=n;
 	m_PluginInfo.NumOutputs=n;
+	EnsureChannelProperties();
 
 	// do the actual update
 	UpdatePluginInfoWithHost();	
 }
 
 // use with caution
+void ControllerPlugin::EnsureChannelProperties()
+{
+	unsigned int c, count = AsUnsigned(m_NumChannels);
+	char name[256];
+
+	/* Remove Associated Value Properties */
+	while (m_Value.size() > count)
+	{
+		c = m_Value.size() - 1;
+		sprintf(name, "Min%d", c);   UnregisterSharedProperty(name); delete m_Min.back();   m_Min.pop_back();
+		sprintf(name, "Max%d", c);   UnregisterSharedProperty(name); delete m_Max.back();   m_Max.pop_back();
+		sprintf(name, "Value%d", c); UnregisterSharedProperty(name); delete m_Value.back(); m_Value.pop_back();
+		sprintf(name, "Name%d", c);  UnregisterSharedProperty(name); delete m_Name.back();  m_Name.pop_back();
+	}
+
+	/* Add Associated Value Properties */
+	while ((c = m_Value.size()) < count)
+	{
+		//Range Minimum
+		sprintf(name, "Min%d", c);
+		m_Min.push_back(new FloatProperty(DefaultLinearFlags | Property::ForceUpdate, -1.0, -0x7FFFFF, 0x7FFFFF, 0.0001, 0.01));
+		RegisterSharedProperty(*m_Min.back(), name, name);
+
+		//Range Maximum
+		sprintf(name, "Max%d", c);
+		m_Max.push_back(new FloatProperty(DefaultLinearFlags | Property::ForceUpdate, 1.0, -0x7FFFFF, 0x7FFFFF, 0.0001, 0.01));
+		RegisterSharedProperty(*m_Max.back(), name, name);
+
+		//Current Value
+		/* FIXME - Should be Logarithmic, but as taken as a percentage multiplier */
+		sprintf(name, "Value%d", c);
+		m_Value.push_back(new FloatProperty(DefaultLinearFlags | Property::ForceUpdate, 0, 0, 100, 0.01, 0.1));
+		RegisterSharedProperty(*m_Value.back(), name, name);
+
+		//GUI Specified Name
+		/* This Does Not Belong Here - It is a GUI Specific Property - Fix Eventually */
+		sprintf(name, "Name%d", c);
+		m_Name.push_back(new StringProperty(Property::WriteOnly, "Name"));
+		RegisterSharedProperty(*m_Name.back(), name, name);
+	}
+}
+
 void ControllerPlugin::Clear()
 {
 	m_PluginInfo.PortTips.clear();
@@ -193,43 +236,43 @@ void ControllerPlugin::Describe(Spiral::Core::Description &d)
 	{
 		case 5:
 		{
-			d.Value(m_Num).Line();
-			for (int n=0; n<m_Num; n++)
+			d.Value(AsUnsigned(m_NumChannels)).Line();
+			for (int n=0; n<GetNum(); n++)
 			{
-				d.Value(m_Names[n].size()).Separator(" ");
-				d.Value(m_Names[n]).Separator(" ");
-				d.Value(m_MinVal[n]).Separator(" ");
-				d.Value(m_MaxVal[n]).Separator(" ");
-				d.Value(m_ChannelVal[n]).Line();
+				d.Value(m_Name[n]->Value.size()).Separator(" ");
+				d.Value(m_Name[n]->Value).Separator(" ");
+				d.Value(m_Min[n]->Value.AsFloat).Separator(" ");
+				d.Value(m_Max[n]->Value.AsFloat).Separator(" ");
+				d.Value(m_Value[n]->Value.AsFloat).Line();
 			}
 		} break;
 		case 4:
 		{
-			d.Value(m_Num).Line();
-			for (int n=0; n<m_Num; n++)
+			d.Value(AsUnsigned(m_NumChannels)).Line();
+			for (int n=0; n<GetNum(); n++)
 			{
-				d.Value(m_Names[n]).Separator(" ");
-				d.Value(m_MinVal[n]).Separator(" ");
-				d.Value(m_MaxVal[n]).Separator(" ");
-				d.Value(m_ChannelVal[n]).Line();
+				d.Value(m_Name[n]->Value).Separator(" ");
+				d.Value(m_Min[n]->Value.AsFloat).Separator(" ");
+				d.Value(m_Max[n]->Value.AsFloat).Separator(" ");
+				d.Value(m_Value[n]->Value.AsFloat).Line();
 			}
 		} break;
 		case 3:
 		{
-			d.Value(m_Num).Separator(" ");
-			for (int n=0; n<m_Num; n++)
+			d.Value(AsUnsigned(m_NumChannels)).Separator(" ");
+			for (int n=0; n<GetNum(); n++)
 			{
-				d.Value(m_ChannelVal[n]).Separator(" ");
+				d.Value(m_Value[n]->Value.AsFloat).Separator(" ");
 			}
 			d.Value(1).Line();
-			d.Value(m_Num).Separator(" ");
-			for (int n=0; n<m_Num; n++)
+			d.Value(AsUnsigned(m_NumChannels)).Separator(" ");
+			for (int n=0; n<GetNum(); n++)
 			{
-				d.Value(m_Names[n].size()).Separator(" ");
-				d.Value(m_Names[n]).Separator(" ");
-				d.Value(m_MinVal[n]).Separator(" ");
-				d.Value(m_MaxVal[n]).Separator(" ");
-				d.Value(m_ChannelVal[n]).Line();
+				d.Value(m_Name[n]->Value.size()).Separator(" ");
+				d.Value(m_Name[n]->Value).Separator(" ");
+				d.Value(m_Min[n]->Value.AsFloat).Separator(" ");
+				d.Value(m_Max[n]->Value.AsFloat).Separator(" ");
+				d.Value(m_Value[n]->Value.AsFloat).Line();
 			}
 
 		} break;
@@ -250,20 +293,21 @@ void ControllerPlugin::Apply(Spiral::Core::Description::Reader &r)
 		{
 			Clear();
 
-			r.Value(m_Num);
+			r.Value(AsUnsigned(m_NumChannels));
+			EnsureChannelProperties();
 			string name;
-			for (int n=0; n<m_Num; n++)
+			for (int n=0; n<GetNum(); n++)
 			{
 				int size,dummy;
 				r.Value(size);
-				r.Value(m_Names[n]);   // the counted bytes, one value, "" for size 0
-				r.Value(m_MinVal[n]);
-				r.Value(m_MaxVal[n]);
-				r.Value(m_ChannelVal[n]);
+				r.Value(m_Name[n]->Value);   // the counted bytes, one value, "" for size 0
+				r.Value(m_Min[n]->Value.AsFloat);
+				r.Value(m_Max[n]->Value.AsFloat);
+				r.Value(m_Value[n]->Value.AsFloat);
 			}
 
 		// add the channels one by one
-			for (int n=0; n<m_Num; n++)
+			for (int n=0; n<GetNum(); n++)
 			{
 				char t[256];
 				sprintf(t,"CV %d",n);
@@ -271,25 +315,26 @@ void ControllerPlugin::Apply(Spiral::Core::Description::Reader &r)
 				AddOutput();
 			}
 
-			m_PluginInfo.NumOutputs=m_Num;
+			m_PluginInfo.NumOutputs=GetNum();
 			UpdatePluginInfoWithHost();
 		} break;
 		case 4:
 		{
 			Clear();
 
-			r.Value(m_Num);
+			r.Value(AsUnsigned(m_NumChannels));
+			EnsureChannelProperties();
 			string name;
-			for (int n=0; n<m_Num; n++)
+			for (int n=0; n<GetNum(); n++)
 			{
-				r.Value(m_Names[n]);
-				r.Value(m_MinVal[n]);
-				r.Value(m_MaxVal[n]);
-				r.Value(m_ChannelVal[n]);
+				r.Value(m_Name[n]->Value);
+				r.Value(m_Min[n]->Value.AsFloat);
+				r.Value(m_Max[n]->Value.AsFloat);
+				r.Value(m_Value[n]->Value.AsFloat);
 			}
 
 		// add the channels one by one
-			for (int n=0; n<m_Num; n++)
+			for (int n=0; n<GetNum(); n++)
 			{
 				char t[256];
 				sprintf(t,"CV %d",n);
@@ -297,35 +342,37 @@ void ControllerPlugin::Apply(Spiral::Core::Description::Reader &r)
 				AddOutput();
 			}
 
-			m_PluginInfo.NumOutputs=m_Num;
+			m_PluginInfo.NumOutputs=GetNum();
 			UpdatePluginInfoWithHost();
 		} break;
 		case 3:
 		{
 			Clear();
 
-			r.Value(m_Num);
+			r.Value(AsUnsigned(m_NumChannels));
+			EnsureChannelProperties();
 
-			for (int n=0; n<m_Num; n++)
+			for (int n=0; n<GetNum(); n++)
 			{
-				r.Value(m_ChannelVal[n]);
+				r.Value(m_Value[n]->Value.AsFloat);
 			}
 
 			char Buf[4096];
 			int size,dummy;
 			r.Value(dummy);
-			r.Value(m_Num);
-			for (int n=0; n<m_Num; n++)
+			r.Value(AsUnsigned(m_NumChannels));
+			EnsureChannelProperties();
+			for (int n=0; n<GetNum(); n++)
 			{
 				r.Value(size);
-				r.Value(m_Names[n]);
-				r.Value(m_MinVal[n]);
-				r.Value(m_MaxVal[n]);
-				r.Value(m_ChannelVal[n]);
+				r.Value(m_Name[n]->Value);
+				r.Value(m_Min[n]->Value.AsFloat);
+				r.Value(m_Max[n]->Value.AsFloat);
+				r.Value(m_Value[n]->Value.AsFloat);
 			}
 
 			// add the channels one by one
-			for (int n=0; n<m_Num; n++)
+			for (int n=0; n<GetNum(); n++)
 			{
 				char t[256];
 				sprintf(t,"CV %d",n);
@@ -333,7 +380,7 @@ void ControllerPlugin::Apply(Spiral::Core::Description::Reader &r)
 				AddOutput();
 			}
 
-			m_PluginInfo.NumOutputs=m_Num;
+			m_PluginInfo.NumOutputs=GetNum();
 			UpdatePluginInfoWithHost();
 		} break;
 

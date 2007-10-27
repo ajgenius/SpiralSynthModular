@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef SmoothPLUGIN
 #define SmoothPLUGIN
 
-class SmoothPlugin : public SpiralPlugin
+class SmoothPlugin : public Spiral::Core::Device
 {
 public:
  	SmoothPlugin();
@@ -33,13 +33,13 @@ public:
 	virtual void	    Describe(Spiral::Core::Description &d);
 	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 	
-	float GetUp()        { return m_Up; }
-	float GetDown()      { return m_Down; }
+	float GetUp()        { return AsFloat(m_Up); }
+	float GetDown()      { return AsFloat(m_Down); }
 
 private:
 
-	float m_Up;
-	float m_Down;
+	Spiral::Core::FloatProperty m_Up;
+	Spiral::Core::FloatProperty m_Down;
 	float m_Value;
 };
 

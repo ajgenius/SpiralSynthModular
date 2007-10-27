@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef SplitterPLUGIN
 #define SplitterPLUGIN
 
-class SplitterPlugin : public SpiralPlugin
+class SplitterPlugin : public Spiral::Core::Device
 {
 public:
  	SplitterPlugin();
@@ -35,15 +35,15 @@ public:
 	virtual void	    Describe(Spiral::Core::Description &d);
 	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 	
-	int GetChannelCount (void) { return m_GUIArgs.ChannelCount; }
+	int GetChannelCount (void) { return AsUnsigned(m_ChannelCount); }
 	void SetChannelCount (int count);
 
 	enum GUICommands { NONE, SETCHANNELCOUNT };
 	struct GUIArgs {
-		int ChannelCount;
 	};
 private:
 	GUIArgs m_GUIArgs;
+	Spiral::Core::UnsignedProperty m_ChannelCount;
 
 	int m_Version;
 

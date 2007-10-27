@@ -20,6 +20,7 @@
 #include "NoteTable.h"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -68,8 +69,7 @@ string SpiralPlugin_GetGroupName()
 
 ///////////////////////////////////////////////////////
 
-SwitchPlugin::SwitchPlugin() :
-m_Mix(false)
+SwitchPlugin::SwitchPlugin()
 {
 	m_PluginInfo.Name="Switch";
 	m_PluginInfo.Width=80;
@@ -81,7 +81,13 @@ m_Mix(false)
 	m_PluginInfo.PortTips.push_back("CV");
 	m_PluginInfo.PortTips.push_back("Output");
 
-	m_AudioCH->Register("Mix",&m_Mix);
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
+
+	m_Mix = ToggleProperty(Property::WriteOnly,false);
+
+	RegisterSharedProperty(m_Mix, "Mix", "Mix");
+
 }
 
 SwitchPlugin::~SwitchPlugin()
@@ -99,7 +105,7 @@ void SwitchPlugin::Execute()
 {	
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 	{
-		if (!m_Mix)
+		if (!AsBoolean(m_Mix))
 		{
 			if (GetInput(2,n)<=0)
 			{
@@ -124,12 +130,12 @@ void SwitchPlugin::ExecuteCommands()
 void SwitchPlugin::Describe(Spiral::Core::Description &d) 
 {
 	d.Value(m_Version).Line();
-	d.Value(m_Mix).Separator(" ");
+	d.Value(AsBoolean(m_Mix)).Separator(" ");
 }
 
 void SwitchPlugin::Apply(Spiral::Core::Description::Reader &r) 
 {
 	int version;
 	r.Value(version);
-	r.Value(m_Mix);
+	r.Value(AsBoolean(m_Mix));
 }

@@ -16,14 +16,14 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef EnvelopePLUGIN
 #define EnvelopePLUGIN
 
 static const int NUM_CHANNELS = 4;
 
-class EnvelopePlugin : public SpiralPlugin
+class EnvelopePlugin : public Spiral::Core::Device
 {
 public:
  	EnvelopePlugin();
@@ -36,12 +36,12 @@ public:
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
 		
-	float GetAttack()           { return m_Attack;     }
-	float GetDecay()            { return m_Decay;      }	
-	float GetSustain()          { return m_Sustain;    }	
-	float GetRelease()          { return m_Release;    }	
-	float GetVolume()           { return m_Volume;     }	
-	float GetTrigThresh()       { return m_TrigThresh; }
+	float GetAttack()           { return AsFloat(m_Attack);     }
+	float GetDecay()            { return AsFloat(m_Decay);      }	
+	float GetSustain()          { return AsFloat(m_Sustain);    }	
+	float GetRelease()          { return AsFloat(m_Release);    }	
+	float GetVolume()           { return AsFloat(m_Volume);     }	
+	float GetTrigThresh()       { return AsFloat(m_TrigThresh); }
 		
 private:
 	// Voice specific parameters
@@ -49,12 +49,12 @@ private:
 	float  m_t;
 	
 	// Common voice parameters
-	float m_Attack;
-	float m_Decay;
-	float m_Sustain;
-	float m_Release;
-	float m_Volume;
-	float m_TrigThresh;
+	Spiral::Core::FloatProperty m_Attack;
+	Spiral::Core::FloatProperty m_Decay;
+	Spiral::Core::FloatProperty m_Sustain;
+	Spiral::Core::FloatProperty m_Release;
+	Spiral::Core::FloatProperty m_Volume;
+	Spiral::Core::FloatProperty m_TrigThresh;
 	float m_SampleTime;
 	
 	float m_Current;

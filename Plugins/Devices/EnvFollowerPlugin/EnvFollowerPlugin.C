@@ -19,6 +19,7 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -68,8 +69,6 @@ string SpiralPlugin_GetGroupName()
 ///////////////////////////////////////////////////////
 
 EnvFollowerPlugin::EnvFollowerPlugin() :
-m_Attack(0.5),
-m_Decay(0.5),
 m_Value(0)
 {
 	m_PluginInfo.Name="EnvFollower";
@@ -80,8 +79,16 @@ m_Value(0)
 	m_PluginInfo.PortTips.push_back("Input");
 	m_PluginInfo.PortTips.push_back("Output");
 
-	m_AudioCH->Register("Attack",&m_Attack);
-	m_AudioCH->Register("Decay",&m_Decay);
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
+
+	m_Decay = FloatProperty(DefaultLinearFlags, 0.5, 0, 1, 0.001, 0.01);
+	m_Attack = FloatProperty(DefaultLinearFlags, 0.5, 0, 1, 0.001, 0.01);
+
+	RegisterSharedProperty(m_Decay, "Decay", "Decay");
+	RegisterSharedProperty(m_Attack, "Attach", "Attach");
+
+
 }
 
 EnvFollowerPlugin::~EnvFollowerPlugin()
@@ -108,8 +115,8 @@ void EnvFollowerPlugin::Execute()
 	{
 		Value = fabs(GetInput(0,n));
 		
-		if (Value>m_Value) m_Value+=(m_Attack*100);
-		else m_Value-=(m_Decay*100);
+		if (Value>m_Value) m_Value+=(AsFloat(m_Attack)*100);
+		else m_Value-=(AsFloat(m_Decay)*100);
 		
 		SetOutput(0,n,m_Value);
 	}
@@ -118,11 +125,11 @@ void EnvFollowerPlugin::Execute()
 void EnvFollowerPlugin::Describe(Spiral::Core::Description &d) 
 {
 	d.Value(m_Version).Separator(" ");
-	d.Value(m_Attack).Separator(" ").Value(m_Decay);
+	d.Value(AsFloat(m_Attack)).Separator(" ").Value(AsFloat(m_Decay));
 }
 
 void EnvFollowerPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	r.Value(m_Version);
-	r.Value(m_Attack).Value(m_Decay);
+	r.Value(AsFloat(m_Attack)).Value(AsFloat(m_Decay));
 }

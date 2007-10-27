@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef PLUGIN
 #define PLUGIN
 
-class OperatorPlugin : public SpiralPlugin
+class OperatorPlugin : public Spiral::Core::Device
 {
 public:
  	OperatorPlugin();
@@ -35,12 +35,12 @@ public:
 
 	enum OperatorType{NONE,ADD,SUB,DIV,MUL};
 
-	OperatorType GetOperator() { return m_Operator; }
-	float        GetConstant() { return m_Constant; }
+	OperatorType GetOperator() { return (OperatorType)AsSigned(m_Operator); }
+	float        GetConstant() { return AsFloat(m_Constant); }
 	
 private:
-	OperatorType m_Operator;
-	float        m_Constant;
+	Spiral::Core::SignedProperty m_Operator;
+	Spiral::Core::FloatProperty        m_Constant;
 };
 
 #endif

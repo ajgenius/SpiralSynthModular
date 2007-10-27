@@ -20,6 +20,7 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -61,9 +62,6 @@ SplitSwitchPlugin::SplitSwitchPlugin () :
 m_SwitchPos (0),
 m_Triggered (false)
 {
-  m_GUIArgs.Chans = 2;
-  m_GUIArgs.Switch = 1;
-  m_GUIArgs.Echo = 1;
   m_PluginInfo.Name = "SplitSwitch";
   m_PluginInfo.Width = 80;
   m_PluginInfo.Height = 80;
@@ -75,14 +73,24 @@ m_Triggered (false)
   m_PluginInfo.PortTips.push_back ("CV");
   m_PluginInfo.PortTips.push_back ("Out 1");
   m_PluginInfo.PortTips.push_back ("Out 2");
-  // Number of channels <- GUI
-  m_AudioCH->Register ("Chans", &m_GUIArgs.Chans);
-  // Switch Position <- GUI
-  m_AudioCH->Register ("Switch", &m_GUIArgs.Switch);
-  // Switch Position -> GUI
-  m_AudioCH->Register ("Echo", &m_GUIArgs.Echo, ChannelHandler::OUTPUT);
-  // Auto Mode (Switch position is controlled by CV or Clock = True, Switch Position controlled by GUI = False
-  m_AudioCH->Register ("Auto", &m_GUIArgs.Auto, ChannelHandler::OUTPUT);
+	// Number of channels <- GUI
+	Chans = UnsignedProperty(DefaultLinearFlags | Property::ForceUpdate, 2, 2, 100, 1, 1);
+	RegisterSharedProperty(Chans, "Chans", "Chans");
+
+	// Switch Position <- GUI
+	Switch = UnsignedProperty(DefaultLinearFlags, 1, 1, 100, 1, 1);
+	RegisterSharedProperty(Switch, "Switch", "Switch");
+
+	// Switch Position -> GUI
+	Echo = UnsignedProperty(Property::ReadOnly , 1, 0, 0, 0, 0);
+	RegisterSharedProperty(Echo, "Echo", "Echo");
+
+	// Auto Mode (Switch position is controlled by CV or Clock = True, Switch Position controlled by GUI = False
+	Auto = ToggleProperty(Property::ReadOnly, false);
+	RegisterSharedProperty(Auto, "Auto", "Auto");
+
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
 }
 
 SplitSwitchPlugin::~SplitSwitchPlugin () {
@@ -97,7 +105,7 @@ PluginInfo &SplitSwitchPlugin::Initialise (const HostInfo *Host) {
 void SplitSwitchPlugin::ExecuteCommands () {
   if (m_AudioCH->IsCommandWaiting ()) {
     switch (m_AudioCH->GetCommand()) {
-      case (SETCHANS)  : SetChans (m_GUIArgs.Chans);
+      case (SETCHANS)  : SetChans (AsUnsigned(Chans));
                          break;
     }
   }
@@ -127,9 +135,9 @@ void SplitSwitchPlugin::Reset()
 {
 	ResetPorts();
 	m_Triggered=false;
-	m_GUIArgs.Chans = 2;
-	m_GUIArgs.Switch = 1;
-	m_GUIArgs.Echo = 1;
+	AsUnsigned(Chans) = 2;
+	AsUnsigned(Switch) = 1;
+	AsUnsigned(Echo) = 1;
 }
 
 void SplitSwitchPlugin::Execute() {
@@ -139,12 +147,12 @@ void SplitSwitchPlugin::Execute() {
   if (InputExists (2)) {
     for (n=0; n<m_HostInfo->BUFSIZE; n++) {
       if (InputExists (0)) {
-        m_GUIArgs.Auto = true;
+        AsBoolean(Auto) = true;
         // Check the Switch Pos CV Value
         m_SwitchPos = int (GetInput (0, n));
       }
       else if (InputExists (1)) {
-        m_GUIArgs.Auto = true;
+        AsBoolean(Auto) = true;
         // Check the trigger CV value
         if (GetInput (1, n) < 0.01) {
           m_Triggered = false;
@@ -157,11 +165,11 @@ void SplitSwitchPlugin::Execute() {
         }
       }
       else {
-        m_GUIArgs.Auto = false;
-        m_SwitchPos=(m_GUIArgs.Switch);
+        AsBoolean(Auto) = false;
+        m_SwitchPos=(AsUnsigned(Switch));
       }
       if (m_SwitchPos > NumChans) m_SwitchPos = 1;
-      m_GUIArgs.Echo = m_SwitchPos;
+      AsUnsigned(Echo) = m_SwitchPos;
       SetOutput (0, n, m_SwitchPos);
       SetOutput (m_SwitchPos, n, GetInput (2, n));
     }

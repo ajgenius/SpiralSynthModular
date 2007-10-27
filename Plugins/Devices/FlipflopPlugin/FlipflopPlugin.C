@@ -20,6 +20,7 @@
 #include "NoteTable.h"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -69,8 +70,6 @@ string SpiralPlugin_GetGroupName()
 ///////////////////////////////////////////////////////
 
 FlipflopPlugin::FlipflopPlugin() :
-m_TriggerTime(0.01f),
-m_Monostable(false),
 m_Current(0),
 m_Triggered(false),
 m_CurrentLevel(1.0f),
@@ -85,8 +84,15 @@ m_TriggerSamples(0)
 	m_PluginInfo.PortTips.push_back("Input");	
 	m_PluginInfo.PortTips.push_back("Output");
 
-	m_AudioCH->Register("TriggerTime",&m_TriggerTime);
-	m_AudioCH->Register("Monostable",&m_Monostable);
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
+
+	m_TriggerTime = FloatProperty(DefaultLinearFlags, 0.01, 0, 1, 0.0001f, 0.001f);
+	RegisterSharedProperty(m_TriggerTime, "TriggerTime", "TriggerTime");
+	m_Monostable = ToggleProperty(Property::ReadOnly,false);
+	RegisterSharedProperty(m_Monostable, "Monostable", "Monostable");
+
+
 }
 
 FlipflopPlugin::~FlipflopPlugin()
@@ -113,7 +119,7 @@ void FlipflopPlugin::Execute()
 {	
 	bool Triggered;
 	
-	if (m_Monostable)
+	if (AsBoolean(m_Monostable))
 	{
 		for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 		{
@@ -123,7 +129,7 @@ void FlipflopPlugin::Execute()
 				{
 					m_Triggered=true;
 					m_CurrentLevel=1.0f;
-					m_TriggerSamples=(int)(m_TriggerTime*m_HostInfo->SAMPLERATE)+1;
+					m_TriggerSamples=(int)(AsFloat(m_TriggerTime)*m_HostInfo->SAMPLERATE)+1;
 				}
 			}
 			else
@@ -173,7 +179,7 @@ void FlipflopPlugin::ExecuteCommands()
 void FlipflopPlugin::Describe(Spiral::Core::Description &d) 
 {
 	d.Value(m_Version).Separator(" ");
-	d.Value(m_TriggerTime).Separator(" ").Value(m_Monostable).Separator(" ").Line();
+	d.Value(AsFloat(m_TriggerTime)).Separator(" ").Value(AsBoolean(m_Monostable)).Separator(" ").Line();
 }
 
 void FlipflopPlugin::Apply(Spiral::Core::Description::Reader &r) 
@@ -182,6 +188,6 @@ void FlipflopPlugin::Apply(Spiral::Core::Description::Reader &r)
 	r.Value(version);
 	if (version>1)
 	{
-		r.Value(m_TriggerTime).Value(m_Monostable);
+		r.Value(AsFloat(m_TriggerTime)).Value(AsBoolean(m_Monostable));
 	}
 }

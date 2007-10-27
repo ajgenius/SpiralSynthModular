@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef RINGMODPLUGIN
 #define RINGMODPLUGIN
 
-class RingModPlugin : public SpiralPlugin
+class RingModPlugin : public Spiral::Core::Device
 {
 public:
  	RingModPlugin();
@@ -32,12 +32,12 @@ public:
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
 			
-	float GetAmount()       { return m_Amount; }
+	float GetAmount()       { return AsFloat(m_Amount); }
 	
 	void Randomise();
 
 private:
-	float m_Amount;
+	Spiral::Core::FloatProperty m_Amount;
 	
 	friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, RingModPlugin &o);
 	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, RingModPlugin &o);

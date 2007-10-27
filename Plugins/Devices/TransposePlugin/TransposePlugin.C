@@ -26,6 +26,7 @@
 #include "NoteTable.h"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -73,10 +74,17 @@ string SpiralPlugin_GetGroupName() {
 ///////////////////////////////////////////////////////
 
 TransposePlugin::TransposePlugin () :
-m_Amount(0),
 m_Out(0.0),
 m_BufferInitialized(false)
 {
+	m_Amount = SignedProperty(DefaultLinearFlags, 0, -12, 12, 1, 1);
+	m_Aliasing = ToggleProperty(Property::WriteOnly, true);
+
+	RegisterSharedProperty(m_Amount, "Amount", "Amount");
+	RegisterSharedProperty(m_Aliasing, "Aliasing", "Aliasing");
+
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
     m_PluginInfo.Name = "Transpose";
     m_PluginInfo.Width = 80;
     m_PluginInfo.Height = 60;
@@ -85,7 +93,6 @@ m_BufferInitialized(false)
     m_PluginInfo.PortTips.push_back ("Input");
     m_PluginInfo.PortTips.push_back ("Transpose CV");
     m_PluginInfo.PortTips.push_back ("Output");
-    m_AudioCH->Register ("Amount", &m_Amount);
 }
 
 TransposePlugin::~TransposePlugin () {
@@ -100,7 +107,7 @@ PluginInfo &TransposePlugin::Initialise (const HostInfo *Host) {
 
 
 void TransposePlugin::Execute () {
-	float base=110, transpose=m_Amount;
+	float base=110, transpose=AsSigned(m_Amount);
 	float alpha = 17.312340490667;
 
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
@@ -131,11 +138,11 @@ void TransposePlugin::Execute () {
 
 void TransposePlugin::Describe(Spiral::Core::Description &d) {
      d.Value(m_Version).Line();
-     d.Value(m_Amount);
+     d.Value(AsSigned(m_Amount));
 }
 
 void TransposePlugin::Apply(Spiral::Core::Description::Reader &r) {
      int version;
      r.Value(version);
-     r.Value(m_Amount);
+     r.Value(AsSigned(m_Amount));
 }

@@ -23,6 +23,7 @@
 #define PI 3.141592654
 
 using namespace std;
+using namespace Spiral::Core;
 
 float RandRange(float L, float H)
 {
@@ -77,10 +78,6 @@ string SpiralPlugin_GetGroupName()
 ///////////////////////////////////////////////////////
 
 MasherPlugin::MasherPlugin() :
-m_GrainStoreSize(MAX_GRAINSTORE_SIZE),
-m_Density(10),
-m_Randomness(0),
-m_GrainPitch(1),
 m_ReadGrain(0),
 m_WriteGrain(0)
 {
@@ -94,10 +91,21 @@ m_WriteGrain(0)
 	m_PluginInfo.PortTips.push_back("Density");
 	m_PluginInfo.PortTips.push_back("Output");
 	
-	m_AudioCH->Register("GrainPitch",&m_GrainPitch);	
-	m_AudioCH->Register("GrainStoreSize",&m_GrainStoreSize);	
-	m_AudioCH->Register("Density",&m_Density);	
-	m_AudioCH->Register("Randomness",&m_Randomness);	
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
+
+	m_GrainPitch = FloatProperty(DefaultLinearFlags,1,0,5,0.001,0.01);
+	RegisterSharedProperty(m_GrainPitch, "GrainPitch", "GrainPitch");
+	m_GrainStoreSize = SignedProperty(DefaultLinearFlags,MAX_GRAINSTORE_SIZE - 1, 0, MAX_GRAINSTORE_SIZE - 2, 1, 1);
+	RegisterSharedProperty(m_GrainStoreSize, "GrainStoreSize", "GrainStoreSize");
+	m_Density = SignedProperty(DefaultLinearFlags,10, 0, MAX_GRAINSTORE_SIZE, 1, 1);
+	RegisterSharedProperty(m_Density, "Density", "Density");
+	m_Randomness = SignedProperty(DefaultLinearFlags,0,0,100,1,1);
+	RegisterSharedProperty(m_Randomness, "Randomness", "Randomness");
+	
+	
+	
+	
 }
 
 MasherPlugin::~MasherPlugin()
@@ -145,7 +153,7 @@ void MasherPlugin::Execute()
 	for (vector<GrainDesc>::iterator i = m_OverlapVec.begin();
 		 i!=m_OverlapVec.end(); i++)
 	{
-		MixPitch(m_GrainStore[i->Grain],*GetOutputBuf(0),i->Pos-m_HostInfo->BUFSIZE,m_GrainPitch);
+		MixPitch(m_GrainStore[i->Grain],*GetOutputBuf(0),i->Pos-m_HostInfo->BUFSIZE,AsFloat(m_GrainPitch));
 	}
 	
 	m_OverlapVec.clear();
@@ -158,7 +166,7 @@ void MasherPlugin::Execute()
 			// chop the bits between zero crossings
 			if (!First) 
 			{
-				GetInput(0)->GetRegion(m_GrainStore[m_WriteGrain%m_GrainStoreSize],last,n);
+				GetInput(0)->GetRegion(m_GrainStore[m_WriteGrain%AsSigned(m_GrainStoreSize)],last,n);
 				m_WriteGrain++;
 			}
 			else First=false;
@@ -171,13 +179,13 @@ void MasherPlugin::Execute()
 	int NextGrain=0;
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 	{
-		int Density = m_Density;
+		int Density = AsSigned(m_Density);
 		if (InputExists(2)) Density=(int)(Density*GetInput(2,n));
 		
 		if(n>=NextGrain || rand()%1000<Density)
 		{
-			int GrainNum = m_ReadGrain%m_GrainStoreSize;
-			float Pitch=m_GrainPitch;
+			int GrainNum = m_ReadGrain%AsSigned(m_GrainStoreSize);
+			float Pitch=AsFloat(m_GrainPitch);
 			if (InputExists(1)) Pitch*=fabs(GetInput(1,n));
 			MixPitch(m_GrainStore[GrainNum],*GetOutputBuf(0),n,Pitch);
 			int GrainLength = (int)(m_GrainStore[GrainNum].GetLength()*Pitch);
@@ -193,7 +201,7 @@ void MasherPlugin::Execute()
 				m_OverlapVec.push_back(new_grain);
 			}
 			
-			if (m_Randomness) m_ReadGrain+=1+rand()%m_Randomness;
+			if (AsSigned(m_Randomness)) m_ReadGrain+=1+rand()%AsSigned(m_Randomness);
 			else m_ReadGrain++;
 		}
 	}		
@@ -206,12 +214,12 @@ void MasherPlugin::Randomise()
 void MasherPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ");
-	d.Value(m_GrainStoreSize).Separator(" ").Value(m_Density).Separator(" ").Value(m_Randomness).Separator(" ").Value(m_GrainPitch).Separator(" ");
+	d.Value(AsSigned(m_GrainStoreSize)).Separator(" ").Value(AsSigned(m_Density)).Separator(" ").Value(AsSigned(m_Randomness)).Separator(" ").Value(AsFloat(m_GrainPitch)).Separator(" ");
 }
 
 void MasherPlugin::Apply(Spiral::Core::Description::Reader &r)
 {	
 	int version;
 	r.Value(version);
-	r.Value(m_GrainStoreSize).Value(m_Density).Value(m_Randomness).Value(m_GrainPitch);
+	r.Value(AsSigned(m_GrainStoreSize)).Value(AsSigned(m_Density)).Value(AsSigned(m_Randomness)).Value(AsFloat(m_GrainPitch));
 }

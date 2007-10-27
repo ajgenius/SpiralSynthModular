@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef SplitSwitchPLUGIN
 #define SplitSwitchPLUGIN
 
-class SplitSwitchPlugin : public SpiralPlugin {
+class SplitSwitchPlugin : public Spiral::Core::Device {
   public:
     SplitSwitchPlugin ();
     virtual ~SplitSwitchPlugin ();
@@ -35,11 +35,11 @@ class SplitSwitchPlugin : public SpiralPlugin {
     int GetChans (void) { return m_PluginInfo.NumOutputs - 1; }
     enum GUICommands { NONE, SETCHANS };
     struct GUIArgs {
-      int Chans, Switch, Echo;
-      bool Auto;
     };
   private:
     GUIArgs m_GUIArgs;
+    Spiral::Core::UnsignedProperty Chans, Switch, Echo;
+    Spiral::Core::ToggleProperty Auto;
     void SetChans (int n);
     void SetSwitch (int n);
     int m_SwitchPos;

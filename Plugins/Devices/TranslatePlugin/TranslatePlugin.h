@@ -16,7 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef TranslatePLUGIN
 #define TranslatePLUGIN
@@ -56,7 +56,7 @@ class TranslateVoltToNote : public TranslateClass {
 
 ////////////////////////////////////////////////////////////////////////
 
-class TranslatePlugin : public SpiralPlugin {
+class TranslatePlugin : public Spiral::Core::Device {
    public:
       TranslatePlugin();
       virtual ~TranslatePlugin ();
@@ -67,9 +67,9 @@ class TranslatePlugin : public SpiralPlugin {
       virtual void Describe(Spiral::Core::Description &d);
       virtual void Apply(Spiral::Core::Description::Reader &r);
       enum TranMethod { tr_Pass, tr_NoteToFreq, tr_FreqToNote, tr_NoteToVolt, tr_VoltToNote };
-      int GetMethod (void) { return m_Method; }
+      int GetMethod (void) { return AsUnsigned(m_Method); }
    private:
-      int m_Method;
+      Spiral::Core::UnsignedProperty m_Method;
       TranslateClass *m_Translator;
       void SetUpTranslatorClass (void);
 };

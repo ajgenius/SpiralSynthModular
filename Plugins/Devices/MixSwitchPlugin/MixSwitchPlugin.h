@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef MixSwitchPLUGIN
 #define MixSwitchPLUGIN
 
-class MixSwitchPlugin : public SpiralPlugin {
+class MixSwitchPlugin : public Spiral::Core::Device {
   public:
     MixSwitchPlugin ();
     virtual ~MixSwitchPlugin ();
@@ -35,11 +35,11 @@ class MixSwitchPlugin : public SpiralPlugin {
     int GetChans (void) { return m_PluginInfo.NumInputs - 2; }
     enum GUICommands { NONE, SETCHANS };
     struct GUIArgs {
-      int Chans, Switch, Echo;
-      bool Auto;
     };
   private:
     GUIArgs m_GUIArgs;
+    Spiral::Core::UnsignedProperty Chans, Switch, Echo;
+    Spiral::Core::ToggleProperty Auto;
     void SetChans (int n);
     int m_SwitchPos;
     bool m_Triggered;

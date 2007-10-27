@@ -23,6 +23,7 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -73,15 +74,19 @@ string SpiralPlugin_GetGroupName()
 
 SplitterPlugin::SplitterPlugin()
 {
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 2);
+
+	m_ChannelCount = UnsignedProperty(DefaultLinearFlags | Property::ForceUpdate, 4, 0, 256, 1, 1);
+	RegisterSharedProperty(m_ChannelCount, "Channels", "Channels");
 	m_PluginInfo.Name="Splitter";
 	m_PluginInfo.Width=80;
 	m_PluginInfo.Height=40;
 
 	m_Version = 2;
-	m_GUIArgs.ChannelCount = 4;
+	AsUnsigned(m_ChannelCount) = 4;
 	CreatePorts ();
 
-	m_AudioCH->Register ("ChannelCount", &m_GUIArgs.ChannelCount);
 }
 
 SplitterPlugin::~SplitterPlugin()
@@ -110,7 +115,7 @@ void SplitterPlugin::CreatePorts (int n, bool AddPorts)
 
 void SplitterPlugin::SetChannelCount (int count) 
 {
-	m_GUIArgs.ChannelCount = count;
+	AsUnsigned(m_ChannelCount) = count;
 
 	UpdatePluginInfoWithHost();
 
@@ -163,7 +168,7 @@ void SplitterPlugin::ExecuteCommands ()
 				m_PluginInfo.NumOutputs = 0;
 				m_PluginInfo.PortTips.clear ();
 
-				CreatePorts (m_GUIArgs.ChannelCount, true);
+				CreatePorts (AsUnsigned(m_ChannelCount), true);
 				UpdatePluginInfoWithHost ();
 			}
 			break;

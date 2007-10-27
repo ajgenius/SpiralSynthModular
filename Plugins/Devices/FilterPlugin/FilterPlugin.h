@@ -16,7 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 #include "iir_filter.h"
 
 #ifndef FilterPLUGIN
@@ -24,7 +24,7 @@
 
 static const int NUM_CHANNELS = 4;
 
-class FilterPlugin : public SpiralPlugin
+class FilterPlugin : public Spiral::Core::Device
 {
 public:
  	FilterPlugin();
@@ -38,8 +38,8 @@ public:
 	virtual void Reset();
 	void SetupCoeffs();
 
-	double GetCutoff() {return fc;}
-	double GetResonance() {return Q;}
+	double GetCutoff() {return AsFloat(fc);}
+	double GetResonance() {return AsFloat(Q);}
 	bool GetRevCutoffMod() {return m_RevCutoffMod;}
 	bool GetRevResonanceMod() {return m_RevResonanceMod;}
 	
@@ -49,8 +49,9 @@ private:
    	
 	// Voice independant
 	float    *coef; 
-    float   fs, fc;     // Sampling frequency, cutoff frequency  
-    float   Q;          // Resonance > 1.0 < 1000  
+    float   fs;
+    Spiral::Core::FloatProperty   fc;     // Sampling frequency, cutoff frequency  
+    Spiral::Core::FloatProperty   Q;          // Resonance > 1.0 < 1000  
 	float   m_LastFC;
 	float   m_LastQ;
     unsigned nInd; 

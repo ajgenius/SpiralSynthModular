@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef MOOGFILTERPLUGIN
 #define MOOGFILTERPLUGIN
 
-class MoogFilterPlugin : public SpiralPlugin
+class MoogFilterPlugin : public Spiral::Core::Device
 {
 public:
  	MoogFilterPlugin();
@@ -34,14 +34,14 @@ public:
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
 	
-	float GetCutoff()    { return Cutoff; }
-	float GetResonance() { return Resonance;  } 
+	Spiral::Core::FloatProperty GetCutoff()    { return Cutoff; }
+	Spiral::Core::FloatProperty GetResonance() { return Resonance;  } 
 	
 	void Clear();
 	void Randomise();
 
 private:
-	float Cutoff, Resonance;
+	Spiral::Core::FloatProperty Cutoff, Resonance;
 	
 	float fs, fc;
 	float f,p,q;

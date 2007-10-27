@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef PLUGIN
 #define PLUGIN
 
-class NoisePlugin : public SpiralPlugin
+class NoisePlugin : public Spiral::Core::Device
 {
 public:
  	NoisePlugin();
@@ -33,10 +33,10 @@ public:
 	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 
 	enum Type {WHITE,PINK};	
-	Type GetType() {return m_Type;}
+	Type GetType() {return (Type)AsUnsigned(m_Type);}
 	
 private:
 	float b0,b1,b2,b3,b4,b5,b6;
-	Type m_Type;
+	Spiral::Core::SetProperty m_Type;
 };
 #endif

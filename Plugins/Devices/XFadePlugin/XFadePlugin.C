@@ -20,6 +20,7 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -68,8 +69,7 @@ string SpiralPlugin_GetGroupName()
 
 ///////////////////////////////////////////////////////
 
-XFadePlugin::XFadePlugin() :
-m_Mix(0.5f)
+XFadePlugin::XFadePlugin()
 {
 	m_PluginInfo.Name="XFade";
 	m_PluginInfo.Width=210;
@@ -84,7 +84,13 @@ m_Mix(0.5f)
 	m_PluginInfo.PortTips.push_back("Left");
 	m_PluginInfo.PortTips.push_back("Right");
 
-	m_AudioCH->Register("Mix",&m_Mix);
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
+
+	m_Mix = FloatProperty(DefaultLinearFlags, 0.5, 0, 1, 0.0001, 0.001);
+
+	RegisterSharedProperty(m_Mix, "Mix", "Mix");
+
 }
 
 XFadePlugin::~XFadePlugin()
@@ -105,7 +111,7 @@ void XFadePlugin::Execute()
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 	{
 		if (InputExists(0)) x=(1+GetInput(0,n))/2.0f;		
-		else x=m_Mix;
+		else x=AsFloat(m_Mix);
 		
 		SetOutput(0,n,GetInput(1,n)*x + GetInput(3,n)*(1-x));	
 		SetOutput(1,n,GetInput(2,n)*x + GetInput(4,n)*(1-x));	 
@@ -118,12 +124,12 @@ void XFadePlugin::Randomise()
 	
 void XFadePlugin::Describe(Spiral::Core::Description &d)
 {
-	d.Value(m_Version).Separator(" ").Value(m_Mix).Separator(" ").Line();
+	d.Value(m_Version).Separator(" ").Value(AsFloat(m_Mix)).Separator(" ").Line();
 }
 
 void XFadePlugin::Apply(Spiral::Core::Description::Reader &r)
 {	
 	int version;
 	r.Value(version);
-	r.Value(m_Mix);
+	r.Value(AsFloat(m_Mix));
 }

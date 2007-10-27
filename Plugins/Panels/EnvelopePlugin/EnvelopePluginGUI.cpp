@@ -229,7 +229,7 @@ void EnvelopePluginGUI::UpdateValues (SpiralPlugin *o) {
 
 inline void EnvelopePluginGUI::cb_Thresh_i (Fl_Slider* o, void* v) {
        float val = (float)(1.0f - o->value());
-       m_GUICH->Set ("Trig", val);
+       m_GUICH->Set ("Threshold", val);
        m_NumThresh->value (100 * val);
 }
 
@@ -294,7 +294,7 @@ void EnvelopePluginGUI::cb_Volume (Fl_Slider* o, void* v) {
 
 inline void EnvelopePluginGUI::cb_NumThresh_i (Fl_Counter* o, void* v) {
        float val = o->value() / 100;
-       m_GUICH->Set ("Trig", val);
+       m_GUICH->Set ("Threshold", val);
        m_Thresh->value (1.0f - val);
 }
 

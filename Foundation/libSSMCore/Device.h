@@ -108,6 +108,16 @@ namespace Spiral
 
 		map<string,Property*> m_SharedProperties;
 
+		#define ValueAsInt(property) property.Value.AsSigned
+		#define ValueAsUInt(property) property.Value.AsUnsigned
+		#define ValueAsFloat(property) property.Value.AsFloat
+		#define ValueSetInt(property, new) property.Value.AsSigned = new
+		#define ValueSetUInt(property, new) property.Value.AsUnsigned = new
+		#define ValueSetFloat(property, new) property.Value.AsFloat = new
+		#define ValueAsBoolean(property) property.Value.AsBoolean
+		#define ValueSetBoolean(property, new) property.Value.AsBoolean = new
+
+
 		inline void RegisterSharedProperty(Property *Property, string Label, string Hint)
 		{
 			assert(m_SharedProperties[Label]==NULL);

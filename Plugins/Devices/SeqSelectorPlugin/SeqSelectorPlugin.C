@@ -20,6 +20,7 @@
 #include "NoteTable.h"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -85,14 +86,27 @@ SeqSelectorPlugin::SeqSelectorPlugin()
 	m_PluginInfo.PortTips.push_back("CV Seven");	
 	m_PluginInfo.PortTips.push_back("CV Eight");	
 	
-	m_Pos=0;
+	m_NumLines = UnsignedProperty(DefaultLinearFlags | Property::ForceUpdate, 0, 0, 255, 1, 1);
+	m_Begin = SignedProperty(DefaultLinearFlags, 0, 0, 255, 1, 1);
+	m_End = SignedProperty(DefaultLinearFlags, 0, 0, 255, 1, 1);
+	m_Position = UnsignedProperty(DefaultLinearFlags, 0, 0, 255, 1, 1);
+
+	m_UseRange = ToggleProperty(Property::WriteOnly, false);
+	RegisterSharedProperty(m_UseRange, "UseRange", "UseRange");
+
+	RegisterSharedProperty(m_NumLines, "Lines", "Lines");
+	RegisterSharedProperty(m_Begin, "Begin", "Begin");	
+	RegisterSharedProperty(m_End, "End", "End");
+	RegisterSharedProperty(m_Position, "Position", "Position");
+
 	m_Triggered=false;
-	m_UseRange=false;	
+
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
 	
 	m_AudioCH->Register("Num",&m_GUIArgs.Num);
 	m_AudioCH->Register("Line",&m_GUIArgs.Line);
 	m_AudioCH->Register("Val",&m_GUIArgs.Val);
-	m_AudioCH->Register("Pos",(int*)&m_Pos,ChannelHandler::OUTPUT);
 }
 
 SeqSelectorPlugin::~SeqSelectorPlugin()
@@ -109,9 +123,9 @@ PluginInfo &SeqSelectorPlugin::Initialise(const HostInfo *Host)
 void SeqSelectorPlugin::Reset()
 {
 	ResetPorts();
-	m_Pos=0;
+	AsUnsigned(m_Position)=0;
 	m_Triggered=false;
-	m_UseRange=false;	
+	AsBoolean(m_UseRange)=false;	
 }
 
 void SeqSelectorPlugin::Execute()
@@ -129,26 +143,26 @@ void SeqSelectorPlugin::Execute()
 		{			
 			if (m_Triggered==true && m_Lines.size()>0)			
 			{								
-				m_Pos++;
+				AsUnsigned(m_Position)++;
 				
-				if (m_UseRange)
+				if (AsBoolean(m_UseRange))
 				{
-					if (m_Pos>=m_End)
+					if (AsUnsigned(m_Position)>=(unsigned)AsSigned(m_End))
 					{
-						m_Pos=m_Begin;
+						AsUnsigned(m_Position)=AsSigned(m_Begin);
 					}
 				}
 				else
 				{
-					if (m_Pos>=m_Lines.size())
+					if (AsUnsigned(m_Position)>=m_Lines.size())
 					{
-						m_Pos=0;
+						AsUnsigned(m_Position)=0;
 					}
 				}
 								
 				for(int i=0; i<8; i++)
 				{			
-					SetOutputPitch(i,n,NoteTable[(int)m_Lines[m_Pos].Value[i]]);
+					SetOutputPitch(i,n,NoteTable[m_Lines[AsUnsigned(m_Position)].Value[i]->Value.AsSigned]);
 				}														
 			}					
 			else
@@ -171,25 +185,46 @@ void SeqSelectorPlugin::ExecuteCommands()
 	{
 		switch (m_AudioCH->GetCommand())
 		{
-			case SET_BEGIN : m_Begin=m_GUIArgs.Line; break;
-			case SET_END   : m_End=m_GUIArgs.Line; break;
-			case RANGE     : m_UseRange=m_GUIArgs.Val; break;
-			case ADD_LINE  : 
-				{
-					Line NewLine;
-					if (m_Lines.size()) 
-					{
-						for (int n=0; n<NUM_VALUES; n++) NewLine.Value[n]=m_Lines[m_Lines.size()-1].Value[n];
-					}
-					else 
-					{
-						for (int n=0; n<NUM_VALUES; n++) NewLine.Value[n]=0;
-					}
-					m_Lines.push_back(NewLine);
-				} break;
-			case REM_LINE  : m_Lines.pop_back(); break;
-			case SET_VAL   : m_Lines[m_GUIArgs.Line].Value[m_GUIArgs.Num]=m_GUIArgs.Val; break;
+			case SET_BEGIN : AsSigned(m_Begin)=m_GUIArgs.Line; break;
+			case SET_END   : AsSigned(m_End)=m_GUIArgs.Line; break;
+			case RANGE     : AsBoolean(m_UseRange)=m_GUIArgs.Val; break;
+			case ADD_LINE  : UpdateLineCount(m_Lines.size()+1); break;
+			case REM_LINE  : UpdateLineCount(m_Lines.size()-1); break;
+			case SET_VAL   : m_Lines[m_GUIArgs.Line].Value[m_GUIArgs.Num]->Value.AsSigned=m_GUIArgs.Val; break;
 			default: break;
+		}
+	}
+}
+
+void SeqSelectorPlugin::UpdateLineCount(unsigned int num)
+{
+	char name[256];
+	unsigned int c;
+	
+	AsUnsigned(m_NumLines) = num;
+
+	/* Remove Values */
+	while (m_Lines.size() > num)
+	{
+		c = m_Lines.size() - 1;
+		for (int n=0; n<NUM_VALUES; n++)
+		{
+			sprintf(name, "Line%uValue%u", c, n);
+			UnregisterSharedProperty(name);
+			delete m_Lines.back().Value[n];
+		}
+		m_Lines.pop_back();
+	}
+
+	/* Add Values */
+	while ((c = m_Lines.size()) < num)
+	{
+		m_Lines.push_back(Line());
+		for (int n=0; n<NUM_VALUES; n++)
+		{
+			m_Lines[c].Value.push_back(new SignedProperty(DefaultLinearFlags, (c<1)?0:m_Lines[c-1].Value[n]->Value.AsSigned, -1, 15, 1, 1));
+			sprintf(name, "Line%uValue%u", c, n);
+			RegisterSharedProperty(*m_Lines.back().Value.back(), name, name);
 		}
 	}
 }
@@ -206,7 +241,7 @@ void SeqSelectorPlugin::Describe(Spiral::Core::Description &d)
 		{
 			for (int n=0; n<NUM_VALUES; n++)
 			{
-				d.Value(i->Value[n]).Separator(" ");
+				d.Value(i->Value[n]->Value.AsSigned).Separator(" ");
 			}
 		}
 	}
@@ -220,13 +255,12 @@ void SeqSelectorPlugin::Apply(Spiral::Core::Description::Reader &r)
 	int Num;
 	r.Value(Num);
 	
+	UpdateLineCount(Num);
 	for (int i=0; i<Num; i++)
 	{
-		Line NewLine;
 		for (int n=0; n<NUM_VALUES; n++)
 		{
-			r.Value(NewLine.Value[n]);
+			r.Value(m_Lines[i].Value[n]->Value.AsSigned);
 		}
-		m_Lines.push_back(NewLine);
 	}	
 }

@@ -20,6 +20,7 @@
 #include "NoteTable.h"
 
 using namespace std;
+using namespace Spiral::Core;
 
 static const float PI=3.141592654;
 static const float RAD=(PI/180)*360;
@@ -71,8 +72,7 @@ string SpiralPlugin_GetGroupName()
 
 ///////////////////////////////////////////////////////
 
-TrigPlugin::TrigPlugin() :
-m_Operator(SIN)
+TrigPlugin::TrigPlugin()
 {
 	m_Version=1;
 
@@ -84,7 +84,12 @@ m_Operator(SIN)
 	m_PluginInfo.PortTips.push_back("Input");	
 	m_PluginInfo.PortTips.push_back("Output");
 		
-	m_AudioCH->Register("Operator",(int*)&m_Operator);
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
+
+	m_Operator = SignedProperty(DefaultLinearFlags,1,0,3, 1, 1);
+
+	RegisterSharedProperty(m_Operator, "Operator", "Operator");
 }
 
 TrigPlugin::~TrigPlugin()
@@ -102,7 +107,7 @@ void TrigPlugin::Execute()
 {	
 	float Freq=0, OldFreq=0;
 	
-	switch (m_Operator) 
+	switch (AsSigned(m_Operator)) 
 	{
 		case SIN : 
 			for (int n=0; n<m_HostInfo->BUFSIZE; n++)
@@ -134,7 +139,7 @@ void TrigPlugin::ExecuteCommands()
 void TrigPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Line();
-	d.Value((int)m_Operator).Separator(" ");
+	d.Value((int)AsSigned(m_Operator)).Separator(" ");
 }
 
 void TrigPlugin::Apply(Spiral::Core::Description::Reader &r)
@@ -143,5 +148,5 @@ void TrigPlugin::Apply(Spiral::Core::Description::Reader &r)
 	r.Value(version);
 	int t;
 	r.Value(t);
-	m_Operator=(OperatorType)t;
+	AsSigned(m_Operator)=(OperatorType)t;
 }

@@ -19,12 +19,12 @@
 #ifndef LFOPLUGIN
 #define LFOPLUGIN
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 static const int NUM_TABLES = 6;
 static const int DEFAULT_TABLE_LEN = 1024;
 
-class LFOPlugin : public SpiralPlugin {
+class LFOPlugin : public Spiral::Core::Device {
    public:
       LFOPlugin();
       virtual ~LFOPlugin();
@@ -38,16 +38,16 @@ class LFOPlugin : public SpiralPlugin {
       enum Type {SINE, TRIANGLE, SQUARE, SAW};
       void WriteWaves();
       void NoteTrigger (int V, int s, int v);
-      float GetFreq() { return m_Freq; }
-      Type GetType() { return m_Type; }
+      float GetFreq() { return AsFloat(m_Freq); }
+      Type GetType() { return (Type)AsUnsigned(m_Type); }
    private:
       float AdjustPos (float pos);
       // Voice specific parameter
       int m_Note;
       float m_CyclePos;
       // Common voice parameters
-      Type m_Type;
-      float m_Freq;
+      Spiral::Core::SetProperty m_Type;
+      Spiral::Core::FloatProperty m_Freq;
       Sample m_Table[NUM_TABLES];
       int m_TableLength;
 };

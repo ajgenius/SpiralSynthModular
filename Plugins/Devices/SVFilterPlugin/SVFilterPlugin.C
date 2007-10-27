@@ -20,6 +20,7 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 static const double PI = 3.141592654;
 static const int GRANULARITY = 10;
@@ -72,8 +73,6 @@ string SpiralPlugin_GetGroupName()
 ///////////////////////////////////////////////////////
 
 SVFilterPlugin::SVFilterPlugin() :
-Cutoff(0.0f),
-Resonance(0.0f),
 fs(44100.0f),
 fc(1000.0f),
 q(1.0f),
@@ -100,8 +99,16 @@ m_n(0.0f)
 	m_PluginInfo.PortTips.push_back("HighPass output");
 	m_PluginInfo.PortTips.push_back("Notch output");
 	m_PluginInfo.PortTips.push_back("Peaking output");
-	m_AudioCH->Register("Cutoff",&Cutoff);
-	m_AudioCH->Register("Resonance",&Resonance);
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
+
+	Cutoff = FloatProperty(DefaultLinearFlags, 0.0f, 0, 1, 0.0001, 0.001);
+	Resonance = FloatProperty(DefaultLinearFlags, 0.0f, 0, 1, 0.00001, 0.0001);
+
+	RegisterSharedProperty(Cutoff, "Cutoff", "Cutoff");
+	RegisterSharedProperty(Resonance, "Resonance", "Resonance");
+
+
 }
 
 SVFilterPlugin::~SVFilterPlugin()
@@ -132,8 +139,8 @@ void SVFilterPlugin::Execute()
 	{
 		if (n%GRANULARITY==0)
 		{
-			fc = 4000.0f*(Cutoff+GetInput(1,n));
-	 		q  = 1-Resonance+GetInput(2,n);
+			fc = 4000.0f*(AsFloat(Cutoff)+GetInput(1,n));
+	 		q  = 1-AsFloat(Resonance)+GetInput(2,n);
 			m_f = 2.0f*sin(PI*fc/fs);
 		}
 
@@ -166,7 +173,7 @@ void SVFilterPlugin::Randomise()
 }
 
 void SVFilterPlugin::Describe(Spiral::Core::Description &d) {
-     d.Value(m_Version).Separator(" ").Value(Cutoff).Separator(" ").Value(Resonance).Separator(" ");
+     d.Value(m_Version).Separator(" ").Value(AsFloat(Cutoff)).Separator(" ").Value(AsFloat(Resonance)).Separator(" ");
 }
 
 void SVFilterPlugin::Apply(Spiral::Core::Description::Reader &r) {
@@ -177,7 +184,7 @@ void SVFilterPlugin::Apply(Spiral::Core::Description::Reader &r) {
        case 1: // r.Value(fc).Value(q);
                r.Value(dummy).Value(dummy);
                break;
-       case 2: r.Value(Cutoff).Value(Resonance);
+       case 2: r.Value(AsFloat(Cutoff)).Value(AsFloat(Resonance));
                break;
      }
 }

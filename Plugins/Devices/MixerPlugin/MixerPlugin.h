@@ -19,11 +19,12 @@
 #ifndef MIXER_PLUGIN_H
 #define MIXER_PLUGIN_H
 
-#include "SpiralPlugin.h"
+#include "Device.h"
+#include <vector>
 
 static const int MAX_CHANNELS = 16;
 
-class MixerPlugin : public SpiralPlugin, public StablePortLayout {
+class MixerPlugin : public Spiral::Core::Device, public StablePortLayout {
   public:
       MixerPlugin();
       virtual ~MixerPlugin();
@@ -38,18 +39,20 @@ class MixerPlugin : public SpiralPlugin, public StablePortLayout {
 	     int Num;
 	     float Value;
              bool inPeak[MAX_CHANNELS];
-             bool Peak;
       };
-      float GetChannel (int n) { return m_ChannelVal[n]; }
-      int GetChannels (void) { return m_NumChannels; }
+      float GetChannel (int n) { return m_Volume[n]->Value.AsFloat; }
+      int GetChannels (void) { return AsUnsigned(m_NumChannels); }
   private:
       void AddChannel (void);
       void RemoveChannel (void);
       void AddInputTip (int Channel);
+      void EnsureChannelProperties();
       GUIArgs m_GUIArgs;
-      int m_NumChannels;
+      Spiral::Core::UnsignedProperty m_NumChannels;
+      Spiral::Core::ToggleProperty m_Peak;
       void SetChannels (int num);
-      float m_ChannelVal[MAX_CHANNELS];
+      std::vector<Spiral::Core::FloatProperty*> m_Volume;
+      std::vector<Spiral::Core::ToggleProperty*> m_VolumePeak;
 };
 
 #endif

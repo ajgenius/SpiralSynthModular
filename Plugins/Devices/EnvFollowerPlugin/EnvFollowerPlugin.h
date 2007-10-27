@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef EnvFollowerPLUGIN
 #define EnvFollowerPLUGIN
 
-class EnvFollowerPlugin : public SpiralPlugin
+class EnvFollowerPlugin : public Spiral::Core::Device
 {
 public:
  	EnvFollowerPlugin();
@@ -34,12 +34,12 @@ public:
 	virtual void	    Describe(Spiral::Core::Description &d);
 	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 	
-	float GetAttack()        { return m_Attack; }
-	float GetDecay()         { return m_Decay; }
+	float GetAttack()        { return AsFloat(m_Attack); }
+	float GetDecay()         { return AsFloat(m_Decay); }
 
 private:
-	float m_Attack;
-	float m_Decay;
+	Spiral::Core::FloatProperty m_Attack;
+	Spiral::Core::FloatProperty m_Decay;
 	float m_Value;
 };
 

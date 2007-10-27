@@ -19,9 +19,9 @@
 #ifndef DistributorPLUGIN
 #define DistributorPLUGIN
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
-class DistributorPlugin : public SpiralPlugin {
+class DistributorPlugin : public Spiral::Core::Device {
 public:
 	DistributorPlugin();
 	virtual ~DistributorPlugin();
@@ -35,15 +35,15 @@ public:
 	virtual void	    Describe(Spiral::Core::Description &d);
 	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 	
-	int GetChannelCount (void) { return m_GUIArgs.ChannelCount; }
+	int GetChannelCount (void) { return AsUnsigned(m_ChannelCount); }
 	void SetChannelCount (int count);
 
 	enum GUICommands { NONE, SETCHANNELCOUNT };
 	struct GUIArgs {
-		int ChannelCount;
 	};
 private:
 	GUIArgs m_GUIArgs;
+	Spiral::Core::UnsignedProperty m_ChannelCount;
 
 	int m_Version;
 

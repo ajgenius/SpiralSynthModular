@@ -57,13 +57,13 @@ void NoisePluginGUI::UpdateValues (SpiralPlugin *o) {
 //// Callbacks ////
 
 inline void NoisePluginGUI::cb_White_i(Fl_LED_Button* o, void* v)
-{ m_GUICH->Set("Type",(char)NoisePlugin::WHITE); }
+{ m_GUICH->Set("NoiseType",(int)NoisePlugin::WHITE); }
 
 void NoisePluginGUI::cb_White(Fl_LED_Button* o, void* v)
 { ((NoisePluginGUI*)(o->parent()))->cb_White_i(o,v); }
 
 inline void NoisePluginGUI::cb_Pink_i(Fl_LED_Button* o, void* v)
-{ m_GUICH->Set("Type",(char)NoisePlugin::PINK); }
+{ m_GUICH->Set("NoiseType",(int)NoisePlugin::PINK); }
 
 void NoisePluginGUI::cb_Pink(Fl_LED_Button* o, void* v)
 { ((NoisePluginGUI*)(o->parent()))->cb_Pink_i(o,v); }

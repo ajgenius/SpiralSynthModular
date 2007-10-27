@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef PLUGIN
 #define PLUGIN
 
-class TrigPlugin : public SpiralPlugin
+class TrigPlugin : public Spiral::Core::Device
 {
 public:
  	TrigPlugin();
@@ -35,10 +35,10 @@ public:
 
 	enum OperatorType{NONE,SIN,COS,TAN};
 
-	OperatorType GetOperator() { return m_Operator; }
+	OperatorType GetOperator() { return (OperatorType)AsSigned(m_Operator); }
 	
 private:
-	OperatorType m_Operator;
+	Spiral::Core::SignedProperty m_Operator;
 };
 
 #endif

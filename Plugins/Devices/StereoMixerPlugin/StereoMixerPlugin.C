@@ -20,6 +20,7 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -86,11 +87,13 @@ StereoMixerPlugin::StereoMixerPlugin()
 	m_PluginInfo.PortTips.push_back("Output left");
 	m_PluginInfo.PortTips.push_back("Output right");
 	
-	for (int n=0; n<NUM_CHANNELS; n++)
-	{
-		m_ChannelVal[n]=1.0f;
-		m_Pan[n]=0.5f;		
-	}
+	m_NumChannels = UnsignedProperty(DefaultLinearFlags | Property::ForceUpdate, NUM_CHANNELS, 2, 256, 1, 1);
+	RegisterSharedProperty(m_NumChannels, "Channels", "Channels");
+
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 2);
+
+	EnsureChannelProperties();
 	
 	m_AudioCH->Register("Num",&m_GUIArgs.Num);
 	m_AudioCH->Register("Value",&m_GUIArgs.Value);
@@ -107,6 +110,38 @@ PluginInfo &StereoMixerPlugin::Initialise(const HostInfo *Host)
 
 
 
+void StereoMixerPlugin::EnsureChannelProperties()
+{
+	unsigned int num = AsUnsigned(m_NumChannels);
+	char name[256];
+
+	/* Remove Associated Value Properties */
+	while (m_Volume.size() > num)
+	{
+		sprintf(name, "Volume%d", (int)m_Volume.size() - 1);
+		UnregisterSharedProperty(name);
+		delete m_Volume.back();
+		m_Volume.pop_back();
+
+		sprintf(name, "Pan%d", (int)m_Pan.size() - 1);
+		UnregisterSharedProperty(name);
+		delete m_Pan.back();
+		m_Pan.pop_back();
+	}
+
+	/* Add Associated Value Properties */
+	while (m_Volume.size() < num)
+	{
+		sprintf(name, "Volume%d", (int)m_Volume.size());
+		m_Volume.push_back(new FloatProperty(DefaultLinearFlags, 1.0, 0.0, 2.0, 0.001, 0.01));
+		RegisterSharedProperty(*m_Volume.back(), name, name);
+
+		sprintf(name, "Pan%d", (int)m_Pan.size());
+		m_Pan.push_back(new FloatProperty(DefaultLinearFlags, 0.5, 0.0, 1.0, 0.001, 0.01));
+		RegisterSharedProperty(*m_Pan.back(), name, name);
+	}
+}
+
 void StereoMixerPlugin::Execute()
 {
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
@@ -114,10 +149,10 @@ void StereoMixerPlugin::Execute()
 		float left = 0.0f, right = 0.0f;
 		for (int c=0; c<NUM_CHANNELS; c++)
 		{
-			const float volume = m_ChannelVal[c];
+			const float volume = m_Volume[c]->Value.AsFloat;
 			if (volume == 0.0f || !Spiral::Core::IsFinite(volume)) continue;
 			const float in = GetInput(c,n);
-			float pan = m_Pan[c];
+			float pan = m_Pan[c]->Value.AsFloat;
 			if (!Spiral::Core::IsFinite(in) || !Spiral::Core::IsFinite(pan)) continue;
 			if (InputExists(c))
 			{
@@ -159,7 +194,7 @@ void StereoMixerPlugin::Describe(Spiral::Core::Description &d)
 	d.Value(m_Version).Separator(" ");
 	for (int n=0; n<NUM_CHANNELS; n++)
 	{
-		d.Value(m_ChannelVal[n]).Separator(" ").Value(m_Pan[n]).Separator(" ");
+		d.Value(m_Volume[n]->Value.AsFloat).Separator(" ").Value(m_Pan[n]->Value.AsFloat).Separator(" ");
 	}
 }
 
@@ -169,7 +204,7 @@ void StereoMixerPlugin::Apply(Spiral::Core::Description::Reader &r)
 	r.Value(version);
 	for (int n=0; n<NUM_CHANNELS; n++)
 	{
-		r.Value(m_ChannelVal[n]).Value(m_Pan[n]);
+		r.Value(m_Volume[n]->Value.AsFloat).Value(m_Pan[n]->Value.AsFloat);
 	}
 }
 

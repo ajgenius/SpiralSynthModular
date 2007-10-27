@@ -19,6 +19,9 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
+
+static const FloatType TIMED_SLIDER_MAX = 3.0f;
 
 // a bit of a crap filter to smooth clicks
 static float SMOOTH = 0.99;
@@ -74,12 +77,6 @@ string SpiralPlugin_GetGroupName()
 EnvelopePlugin::EnvelopePlugin() :
 m_Trigger(false),
 m_t(-1.0f),
-m_Attack(0.0f),
-m_Decay(0.5f),
-m_Sustain(1.0f),
-m_Release(1.0f),
-m_Volume(0.5f),
-m_TrigThresh(0.01),
 m_Current(0)
 {
 	m_PluginInfo.Name="Envelope";
@@ -92,12 +89,28 @@ m_Current(0)
 	m_PluginInfo.PortTips.push_back("CV");	
 	m_PluginInfo.PortTips.push_back("Output");
 	
-	m_AudioCH->Register("Attack",&m_Attack);
-	m_AudioCH->Register("Decay",&m_Decay);
-	m_AudioCH->Register("Sustain",&m_Sustain);
-	m_AudioCH->Register("Release",&m_Release);
-	m_AudioCH->Register("Volume",&m_Volume);
-	m_AudioCH->Register("Trig",&m_TrigThresh);
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
+
+	m_Attack = FloatProperty(DefaultLinearFlags, 0.0, 0, TIMED_SLIDER_MAX, 0.0001, 0.001);
+	m_Decay = FloatProperty(DefaultLinearFlags, 0.5, 0, TIMED_SLIDER_MAX, 0.0001, 0.001);
+	m_Sustain = FloatProperty(DefaultLinearFlags, 1.0, 0, 1, 0.0001, 0.001);
+	m_Release = FloatProperty(DefaultLinearFlags, 1.0, 0, TIMED_SLIDER_MAX, 0.0001, 0.001);
+	m_TrigThresh = FloatProperty(DefaultLinearFlags, 0.01, 0, 1, 0.0001, 0.001);
+	m_Volume = FloatProperty(DefaultLinearFlags, 0.5, 0, 1, 0.0001, 0.001);
+
+	RegisterSharedProperty(m_Attack, "Attack", "Attack");
+	RegisterSharedProperty(m_Decay, "Decay", "Decay");
+	RegisterSharedProperty(m_Sustain, "Sustain", "Sustain");
+	RegisterSharedProperty(m_Release, "Release", "Release");
+	RegisterSharedProperty(m_TrigThresh, "Threshold", "Threshold");
+	RegisterSharedProperty(m_Volume, "Volume", "Volume");
+
+
+
+
+
+
 }
 
 EnvelopePlugin::~EnvelopePlugin()
@@ -129,7 +142,7 @@ void EnvelopePlugin::Execute()
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 	{	
 		// Check the trigger CV values
-		if (GetInput(0,n)>m_TrigThresh)
+		if (GetInput(0,n)>AsFloat(m_TrigThresh))
 		{
 			if (m_Trigger==false) 
 			{
@@ -143,46 +156,46 @@ void EnvelopePlugin::Execute()
 		}
 		
 		// if we are in the envelope...
-		if (m_t>=0 && m_t<m_Attack+m_Decay+m_Release) 
+		if (m_t>=0 && m_t<AsFloat(m_Attack)+AsFloat(m_Decay)+AsFloat(m_Release)) 
 		{				
 			// find out what part of the envelope we are in	
 			// in the attack
-			if (m_t<m_Attack)
+			if (m_t<AsFloat(m_Attack))
 			{			
 				// get normalised position to
 				// get the volume between 0 and 1
-				temp=m_t/m_Attack;
+				temp=m_t/AsFloat(m_Attack);
 			}
 			else
 			// in the decay
-			if (m_t<m_Attack+m_Decay)
+			if (m_t<AsFloat(m_Attack)+AsFloat(m_Decay))
 			{
 				//if (n==0) cerr<<"in decay"<<endl;
 				// normalised position in m_Attack->m_Decay range
-				float nt=(m_t-m_Attack)/m_Decay;
+				float nt=(m_t-AsFloat(m_Attack))/AsFloat(m_Decay);
 				
 				// volume between 1 and m_Sustain
-				temp=(1-nt)+(m_Sustain*nt);
+				temp=(1-nt)+(AsFloat(m_Sustain)*nt);
 			}
 			else
 			// in the release
 			{
 				//if (n==0) cerr<<"in release"<<endl;
 				// normalised position in m_Decay->m_Release range
-				float nt=(m_t-(m_Attack+m_Decay))/m_Release;
+				float nt=(m_t-(AsFloat(m_Attack)+AsFloat(m_Decay)))/AsFloat(m_Release);
 				
 				// volume between m_Sustain and 0			
-				temp=m_Sustain*(1-nt);
+				temp=AsFloat(m_Sustain)*(1-nt);
 				
-				if (m_Release<0.2f)
+				if (AsFloat(m_Release)<0.2f)
 				{
-					temp=m_Sustain;
+					temp=AsFloat(m_Sustain);
 				}	
 				
 				if (m_Trigger) Freeze=true;
 			}
 			
-			temp*=m_Volume;
+			temp*=AsFloat(m_Volume);
 			
 			if (!feq(temp,m_Current,0.01)) 
 			{
@@ -208,7 +221,7 @@ void EnvelopePlugin::Execute()
 			m_Current=temp;
 			
 			// if we've run off the end
-			if (m_t>m_Attack+m_Decay+m_Release)
+			if (m_t>AsFloat(m_Attack)+AsFloat(m_Decay)+AsFloat(m_Release))
 			{
 				m_t=-1;
 				return;
@@ -220,13 +233,13 @@ void EnvelopePlugin::Execute()
 
 void EnvelopePlugin::Describe(Spiral::Core::Description &d)
 {
-	d.Value(m_Version).Separator(" ").Value(m_Attack).Separator(" ").Value(m_Decay).Separator(" ").Value(m_Sustain).Separator(" ")
-	.Value(m_Release).Separator(" ").Value(m_Volume).Separator(" ").Value(m_TrigThresh);
+	d.Value(m_Version).Separator(" ").Value(AsFloat(m_Attack)).Separator(" ").Value(AsFloat(m_Decay)).Separator(" ").Value(AsFloat(m_Sustain)).Separator(" ")
+	.Value(AsFloat(m_Release)).Separator(" ").Value(AsFloat(m_Volume)).Separator(" ").Value(AsFloat(m_TrigThresh));
 }
 
 void EnvelopePlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int version;
 	r.Value(version);
-	r.Value(m_Attack).Value(m_Decay).Value(m_Sustain).Value(m_Release).Value(m_Volume).Value(m_TrigThresh);
+	r.Value(AsFloat(m_Attack)).Value(AsFloat(m_Decay)).Value(AsFloat(m_Sustain)).Value(AsFloat(m_Release)).Value(AsFloat(m_Volume)).Value(AsFloat(m_TrigThresh));
 }

@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef PLUGIN
 #define PLUGIN
 
-class FlipflopPlugin : public SpiralPlugin
+class FlipflopPlugin : public Spiral::Core::Device
 {
 public:
  	FlipflopPlugin();
@@ -34,12 +34,12 @@ public:
 	virtual void	    Describe(Spiral::Core::Description &d);
 	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 
-	float    GetTriggerTime() { return m_TriggerTime; }
-	bool     GetMonostable()  { return m_Monostable; }
+	float    GetTriggerTime() { return AsFloat(m_TriggerTime); }
+	bool     GetMonostable()  { return AsBoolean(m_Monostable); }
 	
 private:
-	float      m_TriggerTime;
-	bool       m_Monostable;
+	Spiral::Core::FloatProperty      m_TriggerTime;
+	Spiral::Core::ToggleProperty       m_Monostable;
 	int        m_Current;
 	bool       m_Triggered;
 	float      m_CurrentLevel;

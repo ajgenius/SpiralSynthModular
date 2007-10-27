@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef TransposePLUGIN
 #define TransposePLUGIN
 
-class TransposePlugin : public SpiralPlugin {
+class TransposePlugin : public Spiral::Core::Device {
 public:
 	TransposePlugin();
 	virtual ~TransposePlugin ();
@@ -30,9 +30,10 @@ public:
 	//virtual void ExecuteCommands ();
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
-	int GetAmount () { return m_Amount; }
+	int GetAmount () { return AsSigned(m_Amount); }
 private:
-	int m_Amount;
+	Spiral::Core::SignedProperty m_Amount;
+    Spiral::Core::ToggleProperty m_Aliasing;
 	float m_Out;
 
       	float m_Buffer[2][2];

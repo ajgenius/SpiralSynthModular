@@ -21,6 +21,7 @@
 #include "NoteTable.h"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -69,17 +70,33 @@ string SpiralPlugin_GetGroupName()
 
 ///////////////////////////////////////////////////////
 
-LogicPlugin::LogicPlugin() :
-m_Operator(AND)
+LogicPlugin::LogicPlugin()
 {
+	const NamedPropertyValue OperatorTypes[] = 
+	{
+		{"AND", DefaultUnsigned(AND)},
+		{"OR", DefaultUnsigned(OR)},
+		{"NOT", DefaultUnsigned(NOT)},
+		{"NAND", DefaultUnsigned(NAND)},
+		{"NOR", DefaultUnsigned(NOR)},
+		{"XOR", DefaultUnsigned(XOR)},
+		{"XNOR", DefaultUnsigned(XNOR)}
+	};
+
+	m_Operator = SetProperty(Property::WriteOnly, 0, NamedPropertySet(OperatorTypes, sizeof(OperatorTypes)/sizeof(OperatorTypes[0])));
+	RegisterSharedProperty(m_Operator, "Operator", "Operator");
+
+	m_Inputs = UnsignedProperty(DefaultLinearFlags | Property::ForceUpdate, 2, 2, 256, 1, 1);
+	RegisterSharedProperty(m_Inputs, "Inputs", "Inputs");
+
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 2);
         m_Version = 2;
         m_PluginInfo.Name="Logic";
 	m_PluginInfo.Width=80;
 	m_PluginInfo.Height=140;
 
         CreatePorts ();
-	m_AudioCH->Register("Operator",(int*)&m_Operator);
-        m_AudioCH->Register ("Inputs", &m_Inputs);
 
 }
 
@@ -97,7 +114,7 @@ PluginInfo &LogicPlugin::Initialise(const HostInfo *Host)
 void LogicPlugin::Execute (void) {
     float Freq=0, OldFreq=0;
     for (int n=0; n<m_HostInfo->BUFSIZE; n++) {
-        switch (m_Operator) {
+        switch (AsUnsigned(m_Operator)) {
           case NOT: // Only Uses Input 1
                if (GetInput(0,n)>0) SetOutput(0,n,-1.0f);
                else SetOutput(0,n,1.0f);
@@ -114,7 +131,7 @@ void LogicPlugin::Execute (void) {
                break;
           default: // Uses all available inputs
                int true_val, give_up;
-               switch (m_Operator) {
+               switch (AsUnsigned(m_Operator)) {
                       case AND:  true_val =  1; give_up = -1; break;
                       case OR:   true_val =  1; give_up =  1; break;
                       case NAND: true_val = -1; give_up =  1; break;
@@ -137,7 +154,7 @@ void LogicPlugin::ExecuteCommands() {
   if (m_AudioCH->IsCommandWaiting ()) {
     switch (m_AudioCH->GetCommand()) {
       case SETINPUTS:
-        SetInputs (m_Inputs);
+        SetInputs (AsUnsigned(m_Inputs));
         break;
     }
   }
@@ -163,7 +180,7 @@ void LogicPlugin::SetInputs (int n) {
 void LogicPlugin::CreatePorts (int n, bool AddPorts) {
   int c;
   m_PluginInfo.NumInputs = n;
-  m_Inputs = n;
+  AsUnsigned(m_Inputs) = n;
   char t[256];
   for (c=1; c<=n; c++) {
     sprintf (t, "Input %d", c);
@@ -179,7 +196,7 @@ void LogicPlugin::CreatePorts (int n, bool AddPorts) {
 
 void LogicPlugin::Describe(Spiral::Core::Description &d)
 {
-	d.Value(m_Version).Separator(" ").Value(m_PluginInfo.NumInputs).Separator(" ").Value(m_Operator);
+	d.Value(m_Version).Separator(" ").Value(m_PluginInfo.NumInputs).Separator(" ").Value(AsUnsigned(m_Operator));
 }
 
 void LogicPlugin::Apply(Spiral::Core::Description::Reader &r) {
@@ -194,7 +211,7 @@ void LogicPlugin::Apply(Spiral::Core::Description::Reader &r) {
       r.Value(datum);
       SetInputs (datum);
       r.Value(datum);
-      m_Operator = (OperatorType)datum;
+      AsUnsigned(m_Operator) = (OperatorType)datum;
       break;
   }
 }

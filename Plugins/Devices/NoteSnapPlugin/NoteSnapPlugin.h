@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef NoteSnapPLUGIN
 #define NoteSnapPLUGIN
 
-class NoteSnapPlugin : public SpiralPlugin
+class NoteSnapPlugin : public Spiral::Core::Device
 {
 public:
  	NoteSnapPlugin();
@@ -34,14 +34,14 @@ public:
 	virtual void	    Describe(Spiral::Core::Description &d);
 	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 
-	bool GetFilter(int n) { return m_Filter[n]; }
+	bool GetFilter(int n) { return AsBoolean(m_Filter[n]); }
 
 	enum GUICommands{NONE,NOTE_ON,NOTE_OFF};
 
 private:
 
 	int  m_Note;
-	bool m_Filter[12];
+	Spiral::Core::ToggleProperty m_Filter[12];
 	float m_Out;
 	float m_LastFreq;
 	int   m_LastNote;

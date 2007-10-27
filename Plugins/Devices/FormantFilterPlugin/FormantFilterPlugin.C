@@ -20,6 +20,7 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 /*
 Public source code by alex@smartelectronix.com
@@ -100,8 +101,7 @@ string SpiralPlugin_GetGroupName()
 
 ///////////////////////////////////////////////////////
 
-FormantFilterPlugin::FormantFilterPlugin() :
-m_Vowel(0)
+FormantFilterPlugin::FormantFilterPlugin()
 {
 	Clear();
 
@@ -114,7 +114,13 @@ m_Vowel(0)
 	m_PluginInfo.PortTips.push_back("Vowel CV");	
 	m_PluginInfo.PortTips.push_back("Output");	
 	
-	m_AudioCH->Register("Vowel",&m_Vowel);
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
+
+	m_Vowel = FloatProperty(DefaultLinearFlags,0, 0, 4, 0.0001, 0.001);
+
+	RegisterSharedProperty(m_Vowel, "Vowel", "Vowel");
+
 }
 
 FormantFilterPlugin::~FormantFilterPlugin()
@@ -188,31 +194,31 @@ void FormantFilterPlugin::Execute()
 			
 			if (InputExists(1)) 
 			{	
-				m_Vowel=fabs(GetInput(1,n))*4.0f;
+				AsFloat(m_Vowel)=fabs(GetInput(1,n))*4.0f;
 			}
 		
 			// mix between vowel sounds
-			if (m_Vowel<1) 
+			if (AsFloat(m_Vowel)<1) 
 			{
-				out=Linear(0,1,m_Vowel,o[1],o[0]); 
+				out=Linear(0,1,AsFloat(m_Vowel),o[1],o[0]); 
 			}	
 			else 
-				if (m_Vowel>1 && m_Vowel<2) 
+				if (AsFloat(m_Vowel)>1 && AsFloat(m_Vowel)<2) 
 				{
-					out=Linear(0,1,m_Vowel-1.0f,o[2],o[1]);
+					out=Linear(0,1,AsFloat(m_Vowel)-1.0f,o[2],o[1]);
 				}	
 			else 
-				if (m_Vowel>2 && m_Vowel<3) 
+				if (AsFloat(m_Vowel)>2 && AsFloat(m_Vowel)<3) 
 				{
-					out=Linear(0,1,m_Vowel-2.0f,o[3],o[2]);
+					out=Linear(0,1,AsFloat(m_Vowel)-2.0f,o[3],o[2]);
 				}	
 			else 
-				if (m_Vowel>3 && m_Vowel<4) 
+				if (AsFloat(m_Vowel)>3 && AsFloat(m_Vowel)<4) 
 				{
-					out=Linear(0,1,m_Vowel-3.0f,o[4],o[3]);
+					out=Linear(0,1,AsFloat(m_Vowel)-3.0f,o[4],o[3]);
 				}	
 			else 
-				if (m_Vowel==4) 
+				if (AsFloat(m_Vowel)==4) 
 				{
 					out=o[4];
 				}	
@@ -240,12 +246,12 @@ void FormantFilterPlugin::Clear()
 	
 void FormantFilterPlugin::Describe(Spiral::Core::Description &d)
 {
-	d.Value(m_Version).Separator(" ").Value(m_Vowel).Separator(" ");
+	d.Value(m_Version).Separator(" ").Value(AsFloat(m_Vowel)).Separator(" ");
 }
 
 void FormantFilterPlugin::Apply(Spiral::Core::Description::Reader &r)
 {	
 	int version;
 	r.Value(version);
-	r.Value(m_Vowel);
+	r.Value(AsFloat(m_Vowel));
 }

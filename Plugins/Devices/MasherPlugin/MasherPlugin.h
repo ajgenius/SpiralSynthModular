@@ -16,14 +16,14 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef MasherPLUGIN
 #define MasherPLUGIN
 
 static const int MAX_GRAINSTORE_SIZE = 1000;
 
-class MasherPlugin : public SpiralPlugin
+class MasherPlugin : public Spiral::Core::Device
 {
 public:
  	MasherPlugin();
@@ -37,18 +37,18 @@ public:
 	
 	// has to be defined in the plugin	
 		
-	float GetGrainPitch()       { return m_GrainPitch; }
-	int GetGrainStoreSize()     { return m_GrainStoreSize;  } 
-	int GetDensity()     		{ return m_Density;  } 
-	int GetRandomness()     	{ return m_Randomness;  } 
+	float GetGrainPitch()       { return AsFloat(m_GrainPitch); }
+	int GetGrainStoreSize()     { return AsSigned(m_GrainStoreSize);  } 
+	int GetDensity()     		{ return AsSigned(m_Density);  } 
+	int GetRandomness()     	{ return AsSigned(m_Randomness);  } 
 	
 	void Randomise();
 
 private:
-	int m_GrainStoreSize;
-	int m_Density;
-	int m_Randomness;
-	float m_GrainPitch;
+	Spiral::Core::SignedProperty m_GrainStoreSize;
+	Spiral::Core::SignedProperty m_Density;
+	Spiral::Core::SignedProperty m_Randomness;
+	Spiral::Core::FloatProperty m_GrainPitch;
 	
 	int m_ReadGrain;
 	int m_WriteGrain;

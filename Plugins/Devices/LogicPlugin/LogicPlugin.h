@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef PLUGIN
 #define PLUGIN
 
-class LogicPlugin : public SpiralPlugin
+class LogicPlugin : public Spiral::Core::Device
 {
 public:
  	LogicPlugin();
@@ -35,13 +35,13 @@ public:
 
 	enum OperatorType{NONE,AND,OR,NOT,NAND,NOR,XOR,XNOR};
 
-	OperatorType GetOperator() { return m_Operator; }
+	OperatorType GetOperator() { return (OperatorType)AsUnsigned(m_Operator); }
         enum GUICommands {NOCMD, SETINPUTS};
-        int GetInputs (void) { return m_Inputs; }
+        int GetInputs (void) { return AsUnsigned(m_Inputs); }
 
 private:
-	OperatorType m_Operator;
-        int m_Inputs;
+	Spiral::Core::SetProperty m_Operator;
+        Spiral::Core::UnsignedProperty m_Inputs;
         void SetInputs (int n);
         void CreatePorts (int n = 2, bool AddPorts = false);
 };

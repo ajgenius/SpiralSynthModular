@@ -21,6 +21,7 @@
 #include <stdlib.h>
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -69,9 +70,19 @@ string SpiralPlugin_GetGroupName()
 
 ///////////////////////////////////////////////////////
 
-NoisePlugin::NoisePlugin() :
-m_Type(WHITE)
+NoisePlugin::NoisePlugin()
 {
+	const NamedPropertyValue NoiseTypes[] = 
+	{
+		{"White Noise", DefaultUnsigned(WHITE)},
+		{"Pink Noise", DefaultUnsigned(PINK)}
+	};
+
+	m_Type = SetProperty(Property::WriteOnly, 0, NamedPropertySet(NoiseTypes, sizeof(NoiseTypes)/sizeof(NoiseTypes[0])));
+	RegisterSharedProperty(m_Type, "NoiseType", "NoiseType");	
+
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
 	m_PluginInfo.Name="Noise";
 	m_PluginInfo.Width=80;
 	m_PluginInfo.Height=60;
@@ -81,7 +92,6 @@ m_Type(WHITE)
 	
 	b0=b1=b2=b3=b4=b5=b6=0;
 	
-	m_AudioCH->Register("Type",(char*)&m_Type);	
 }
 
 NoisePlugin::~NoisePlugin()
@@ -98,7 +108,7 @@ PluginInfo &NoisePlugin::Initialise(const HostInfo *Host)
 void NoisePlugin::Execute()
 {
 	float White,Pink;
-	if (m_Type==PINK)
+	if (AsUnsigned(m_Type)==PINK)
 	{
 		for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 		{
@@ -127,7 +137,7 @@ void NoisePlugin::Execute()
 
 void NoisePlugin::Describe(Spiral::Core::Description &d)
 {
-	d.Value(m_Version).Separator(" ").Value((char)m_Type);
+	d.Value(m_Version).Separator(" ").Value((char)AsUnsigned(m_Type));
 }
 
 void NoisePlugin::Apply(Spiral::Core::Description::Reader &r)
@@ -135,5 +145,5 @@ void NoisePlugin::Apply(Spiral::Core::Description::Reader &r)
 	int version;
 	char t;
 	r.Value(version).Value(t);
-	m_Type=(Type)t;
+	AsUnsigned(m_Type)=(Type)t;
 }

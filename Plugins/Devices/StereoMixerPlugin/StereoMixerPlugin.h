@@ -16,14 +16,15 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
+#include <vector>
 
 #ifndef StereoMixerPLUGIN
 #define StereoMixerPLUGIN
 
 static const int NUM_CHANNELS = 4;
 
-class StereoMixerPlugin : public SpiralPlugin
+class StereoMixerPlugin : public Spiral::Core::Device
 {
 public:
  	StereoMixerPlugin();
@@ -35,8 +36,8 @@ public:
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
 		
-	float GetChannel(int n) { return m_ChannelVal[n]; }
-	float GetPan(int n) { return m_Pan[n]; }
+	float GetChannel(int n) { return m_Volume[n]->Value.AsFloat; }
+	float GetPan(int n) { return m_Pan[n]->Value.AsFloat; }
 	
 	enum GUICommands {NONE,SETCH,SETPAN};
 	struct GUIArgs
@@ -48,11 +49,13 @@ public:
 private:
 	GUIArgs m_GUIArgs;
 
-	void  SetChannel(int n, float s) { m_ChannelVal[n]=s; }
-	void  SetPan(int n, float s) { m_Pan[n]=s; }
+	void  SetChannel(int n, float s) { m_Volume[n]->Value.AsFloat=s; }
+	void  SetPan(int n, float s) { m_Pan[n]->Value.AsFloat=s; }
+	void  EnsureChannelProperties();
 
-	float m_ChannelVal[NUM_CHANNELS];
-	float m_Pan[NUM_CHANNELS];
+	Spiral::Core::UnsignedProperty m_NumChannels;
+	std::vector<Spiral::Core::FloatProperty*> m_Volume;
+	std::vector<Spiral::Core::FloatProperty*> m_Pan;
 };
 
 #endif

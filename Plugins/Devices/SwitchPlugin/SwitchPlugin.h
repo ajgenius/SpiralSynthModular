@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef PLUGIN
 #define PLUGIN
 
-class SwitchPlugin : public SpiralPlugin
+class SwitchPlugin : public Spiral::Core::Device
 {
 public:
  	SwitchPlugin();
@@ -34,10 +34,10 @@ public:
 	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 	virtual std::string GetGroupName() { return "Maths/Logic"; }
 	
-	bool      GetMix() { return m_Mix; }
+	bool      GetMix() { return AsBoolean(m_Mix); }
 	
 private:
-	bool       m_Mix;
+	Spiral::Core::ToggleProperty       m_Mix;
 };
 
 #endif

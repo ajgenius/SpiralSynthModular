@@ -20,6 +20,7 @@
 #include "NoteTable.h"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -68,9 +69,7 @@ string SpiralPlugin_GetGroupName()
 
 ///////////////////////////////////////////////////////
 
-OperatorPlugin::OperatorPlugin() :
-m_Operator(ADD),
-m_Constant(0)
+OperatorPlugin::OperatorPlugin()
 {
 	m_Version=2;
 
@@ -83,8 +82,15 @@ m_Constant(0)
 	m_PluginInfo.PortTips.push_back("Input 2");	
 	m_PluginInfo.PortTips.push_back("Output");
 		
-	m_AudioCH->Register("Operator",(int*)&m_Operator);
-	m_AudioCH->Register("Constant",&m_Constant);
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
+
+	m_Operator = SignedProperty(DefaultLinearFlags,0,0,3,1,1);
+	RegisterSharedProperty(m_Operator, "Operator", "Operator");
+	m_Constant = FloatProperty(DefaultLinearFlags,0,0,1,0.01,0.1);
+	RegisterSharedProperty(m_Constant, "Constant", "Constant");
+
+
 }
 
 OperatorPlugin::~OperatorPlugin()
@@ -101,7 +107,7 @@ PluginInfo &OperatorPlugin::Initialise(const HostInfo *Host)
 void OperatorPlugin::Execute()
 {	
 	float Freq=0, OldFreq=0;
-	switch (m_Operator) 
+	switch (AsSigned(m_Operator)) 
 	{
 		case ADD : 
 			if (InputExists(1))
@@ -115,7 +121,7 @@ void OperatorPlugin::Execute()
 			{
 				for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 				{
-					SetOutput(0,n,GetInput(0,n)+m_Constant);
+					SetOutput(0,n,GetInput(0,n)+AsFloat(m_Constant));
 				} 
 			}
 			break;
@@ -131,7 +137,7 @@ void OperatorPlugin::Execute()
 			{
 				for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 				{
-					SetOutput(0,n,GetInput(0,n)-m_Constant);
+					SetOutput(0,n,GetInput(0,n)-AsFloat(m_Constant));
 				} 
 			}
 			break;
@@ -148,8 +154,8 @@ void OperatorPlugin::Execute()
 			{
 				for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 				{
-					if (m_Constant==0) SetOutput(0,n,0);
-					else SetOutput(0,n,GetInput(0,n)/m_Constant);
+					if (AsFloat(m_Constant)==0) SetOutput(0,n,0);
+					else SetOutput(0,n,GetInput(0,n)/AsFloat(m_Constant));
 				} 
 			}
 			break;
@@ -165,7 +171,7 @@ void OperatorPlugin::Execute()
 			{
 				for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 				{
-					SetOutput(0,n,GetInput(0,n)*m_Constant);
+					SetOutput(0,n,GetInput(0,n)*AsFloat(m_Constant));
 				}
 			}
 			break;
@@ -181,19 +187,19 @@ void OperatorPlugin::ExecuteCommands()
 void OperatorPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Line();
-	d.Value(m_Constant).Separator(" ");
-	d.Value((int)m_Operator).Separator(" ");
+	d.Value(AsFloat(m_Constant)).Separator(" ");
+	d.Value((int)AsSigned(m_Operator)).Separator(" ");
 }
 
 void OperatorPlugin::Apply(Spiral::Core::Description::Reader &r) 
 {
 	int version;
 	r.Value(version);
-	r.Value(m_Constant);
+	r.Value(AsFloat(m_Constant));
 	if (version>1)
 	{
 		int t;
 		r.Value(t);
-		m_Operator=(OperatorType)t;
+		AsSigned(m_Operator)=(OperatorType)t;
 	}
 }

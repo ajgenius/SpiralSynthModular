@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef XFadePLUGIN
 #define XFadePLUGIN
 
-class XFadePlugin : public SpiralPlugin
+class XFadePlugin : public Spiral::Core::Device
 {
 public:
  	XFadePlugin();
@@ -32,12 +32,12 @@ public:
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
 			
-	float GetMix()        { return m_Mix; }
+	float GetMix()        { return AsFloat(m_Mix); }
 	
 	void Randomise();
 
 private:	
-	float m_Mix;
+	Spiral::Core::FloatProperty m_Mix;
 	
 	friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, XFadePlugin &o);
 	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, XFadePlugin &o);
