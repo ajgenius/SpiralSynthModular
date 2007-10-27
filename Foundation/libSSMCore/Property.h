@@ -180,7 +180,7 @@ namespace Spiral
 		virtual ~NumericProperty() {}
 
 		NumericProperty(const NumericProperty &Copy):
-		Property((NumericProperty)Copy)
+		Property(Copy)
 		{
 			Value = Copy.Value;
 		}
@@ -209,7 +209,7 @@ namespace Spiral
 		virtual ~LinearProperty() {}
 
 		LinearProperty(const LinearProperty &Copy) :
-		NumericProperty((NumericProperty)Copy)
+		NumericProperty(Copy)
 		{
 			Min = Copy.Min;
 			Max = Copy.Max;
@@ -363,7 +363,7 @@ namespace Spiral
 		}
 
 		SetProperty(const SetProperty &Copy) :
-		NumericProperty((NumericProperty)Copy)
+		NumericProperty(Copy)
 		{
 			m_Set = Copy.m_Set;
 		}
@@ -383,7 +383,7 @@ namespace Spiral
 		StringProperty(int Flags, char *InitialValue): Property(Flags) { Value = InitialValue; }
 
 		StringProperty(const StringProperty &Copy):
-		Property((StringProperty)Copy)
+		Property(Copy)
 		{
 			Value = Copy.Value;
 		}
@@ -404,7 +404,7 @@ namespace Spiral
 		SampleProperty(int Flags, int InitialSize): Property(Flags) { Value = Sample(InitialSize); }
 
 		SampleProperty(const SampleProperty &Copy):
-		Property((SampleProperty)Copy)
+		Property(Copy)
 		{
 			CopyValue(Copy);
 		}
