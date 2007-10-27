@@ -117,6 +117,12 @@ namespace Spiral
 		#define ValueAsBoolean(property) property.Value.AsBoolean
 		#define ValueSetBoolean(property, new) property.Value.AsBoolean = new
 
+		/* Rethink all of this registering crap - simple is better */
+		inline void UnregisterSharedProperty(string Label)
+		{
+			m_SharedProperties[Label] = NULL;
+		}
+
 
 		inline void RegisterSharedProperty(Property *Property, string Label, string Hint)
 		{
