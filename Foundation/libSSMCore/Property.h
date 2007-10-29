@@ -88,8 +88,8 @@ namespace Spiral
 		{
 			bool AsBoolean;
 
-			int64_t AsSigned;
-			uint64_t AsUnsigned;
+			SignedType AsSigned;
+			UnsignedType AsUnsigned;
 
 			double AsFloat;
 		};
@@ -219,8 +219,8 @@ namespace Spiral
 
 		union
 		{
-			int64_t AsSigned;
-			uint64_t AsUnsigned;
+			SignedType AsSigned;
+			UnsignedType AsUnsigned;
 
 			double AsFloat;
 		} Min, Max, SmallStep, Step;
@@ -252,9 +252,9 @@ namespace Spiral
 		SignedProperty() {}
 		virtual ~SignedProperty() {}
 
-		SignedProperty(int Flags, int64_t InitialValue, 
-				int64_t MinimumValue, int64_t MaximumValue, 
-				int64_t MinimumStep, int64_t DefaultStep):
+		SignedProperty(int Flags, SignedType InitialValue, 
+				SignedType MinimumValue, SignedType MaximumValue, 
+				SignedType MinimumStep, SignedType DefaultStep):
 		LinearProperty(Flags)
 		{
 			Value.Type = NumericPropertyValue::Signed;
@@ -283,9 +283,9 @@ namespace Spiral
 		UnsignedProperty() {}
 		virtual ~UnsignedProperty() {}
 
-		UnsignedProperty(int Flags, uint64_t InitialValue, 
-				uint64_t MinimumValue, uint64_t MaximumValue, 
-				uint64_t MinimumStep, uint64_t DefaultStep):
+		UnsignedProperty(int Flags, UnsignedType InitialValue, 
+				UnsignedType MinimumValue, UnsignedType MaximumValue, 
+				UnsignedType MinimumStep, UnsignedType DefaultStep):
 		LinearProperty(Flags)
 		{
 			Value.Type = NumericPropertyValue::Unsigned;

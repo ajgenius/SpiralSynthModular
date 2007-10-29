@@ -54,49 +54,53 @@ namespace Spiral
 
 
 		/* Process */
-		virtual void Process(unsigned int SampleCount)=0;
-
+		virtual void Process(UnsignedType SampleCount)=0;
 
 		/* Current Patch Settings */
-		inline unsigned int SampleRate() { return m_SampleRate; }
-		inline unsigned int SampleCount() { return m_SampleCount; }
-		inline unsigned int VoiceCount() { return m_VoiceCount; }
+		inline UnsignedType SampleRate() { return m_SampleRate; }
+		inline UnsignedType SampleCount() { return m_SampleCount; }
+		inline UnsignedType VoiceCount() { return m_VoiceCount; }
 
 
-		/* Permanent Device Settings */
-		virtual bool IsMonophonic()=0;
+		/* Permanent Device Features */
+		virtual bool IsMonophonic() { return false; }
 
-		virtual bool SupportsInputs()=0;
-		virtual bool SupportsOutputs()=0;
-		virtual bool SupportsShadows()=0;
+		virtual bool SupportsInputs() { return true; }
+		virtual bool SupportsOutputs() { return true; }
+		virtual bool SupportsShadows() { return true; }
 
 		virtual bool IsTerminal() { return false; }
 
 		inline Patch *Host() { return m_Host; }
 
 		/* Properties */
+		virtual void PropertyUpdate(Property *Changed) {};
+
 		inline bool IsLive() { return m_Initialized; }
-		inline void SetVoice(unsigned int voice) { m_CurrentVoice = voice; }
-		inline unsigned int GetVoice() { return m_CurrentVoice; }
+		inline void SetVoice(UnsignedType voice) { m_CurrentVoice = voice; }
+		inline UnsignedType GetVoice() { return m_CurrentVoice; }
 
-		virtual InputPort* GetInputPort(unsigned int PortNumber);
-		virtual OutputPort* GetOutputPort(unsigned int PortNumber);
+		/* Ports */
+		virtual InputPort* GetInputPort(UnsignedType PortNumber);
+		virtual OutputPort* GetOutputPort(UnsignedType PortNumber);
 
-		virtual ShadowPort* GetShadowPort(unsigned int PortNumber);
-
+		virtual ShadowPort* GetShadowPort(UnsignedType PortNumber);
 
 		vector<ShadowPort*> ShadowPorts() { return m_ShadowPorts; }
 
 		/* Convenience Macros For Common DSP Needs */
 		#define InputExists(input_port) input_port->IsConnected()
+		#define GetInputBuffer(input_port) input_port->GetSampleBuffer(GetVoice())
 		#define GetInput(input_port, pos) input_port->GetSampleValue(pos, GetVoice())
 		#define GetInputPitch(input_port, pos) input_port->GetSamplePitch(pos, GetVoice())
 
 		#define OutputExists(output_port) output_port->IsConnected()
+		#define GetOutputBuffer(output_port) output_port->GetSampleBuffer(GetVoice())
 		#define SetOutput(output_port, pos, value) output_port->SetSampleValue(pos, value, GetVoice())
 		#define SetOutputPitch(output_port, pos, value) output_port->SetSamplePitch(pos, value, GetVoice())
 
 	protected:
+		/* Ports */
 		friend class InputPort;
 		vector<InputPort*> m_InputPorts;
 
@@ -106,7 +110,25 @@ namespace Spiral
 		friend class OutputPort;
 		vector<OutputPort*> m_OutputPorts;
 
-		map<string,Property*> m_SharedProperties;
+		/* Properties */
+		typedef vector<NumericPropertyValue> StateProperties;
+		
+		/* Per Class Properties*/
+		SignedProperty DeviceVersion;
+		StringProperty DeviceName;
+
+		/* State Properties */	
+		struct
+		{
+			/* Per Instance Properties */
+			map<string,Property*> Properties;
+			map<Property*,Property> UpdateData; /* For ProcessUpdate */
+
+			/* Per Voice State Values */
+			StateProperties DefaultValues;
+			vector<StateProperties> Values;
+		} m_State;
+
 
 		#define ValueAsInt(property) property.Value.AsSigned
 		#define ValueAsUInt(property) property.Value.AsUnsigned
@@ -117,85 +139,95 @@ namespace Spiral
 		#define ValueAsBoolean(property) property.Value.AsBoolean
 		#define ValueSetBoolean(property, new) property.Value.AsBoolean = new
 
-		/* Rethink all of this registering crap - simple is better */
+		#define AsSigned(property) property.Value.AsSigned
+		#define AsUnsigned(property) property.Value.AsUnsigned
+		#define AsFloat(property) property.Value.AsFloat
+		#define SetSigned(property, new) property.Value.AsSigned = new
+		#define SetUnsigned(property, new) property.Value.AsUnsigned = new
+		#define SetFloat(property, new) property.Value.AsFloat = new
+
+		#define AsBoolean(property) property.Value.AsBoolean
+		#define SetBoolean(property, new) property.Value.AsBoolean = new
+
+		#define AsString(property) property.Value
+		#define SetString(property, new) property.Value = new
+
+		/* Rethink all of this registering crap - simple is best */
 		inline void UnregisterSharedProperty(string Label)
 		{
-			m_SharedProperties[Label] = NULL;
+			m_State.UpdateData.erase(m_State.Properties[Label]);
+			delete m_State.Properties[Label];
+			m_State.Properties[Label] = NULL;
 		}
 
-
-		inline void RegisterSharedProperty(Property *Property, string Label, string Hint)
+		inline void RegisterSharedProperty(Property *Initializer, string Label, string Hint)
 		{
-			assert(m_SharedProperties[Label]==NULL);
+			assert(m_State.Properties[Label]==NULL);
 
-			Property->SetLabel(Label);
-			Property->SetHint(Hint);
-
-			m_SharedProperties[Label] = Property;
+			m_State.Properties[Label] = new Property(*Initializer);
+			m_State.Properties[Label]->SetLabel(Label);
+			m_State.Properties[Label]->SetHint(Hint);
 		}
 
-		typedef vector<NumericPropertyValue> StateProperties;
-		StateProperties m_DefaultState;
-		vector<StateProperties> m_StateValues;
-		
-		inline unsigned int NewStateProperty(bool Initializer)
+		/* Voice State Properties */
+		inline UnsignedType NewStateProperty(bool Initializer)
 		{
 			NumericPropertyValue init = DefaultBoolean(Initializer);
-			m_DefaultState.push_back(init);
+			m_State.DefaultValues.push_back(init);
 
-			for (unsigned int i=0; i<m_StateValues.size(); i++)
+			for (UnsignedType i=0; i<m_State.Values.size(); i++)
 			{
-				m_StateValues[i].push_back(init);
+				m_State.Values[i].push_back(init);
 			}
 
-			return m_DefaultState.size() - 1;
+			return m_State.DefaultValues.size() - 1;
 		}
 
-		inline unsigned int NewStateProperty(int64_t Initializer)
+		inline UnsignedType NewStateProperty(SignedType Initializer)
 		{
 			NumericPropertyValue init = DefaultSigned(Initializer);
-			m_DefaultState.push_back(init);
+			m_State.DefaultValues.push_back(init);
 
-			for (unsigned int i=0; i<m_StateValues.size(); i++)
+			for (UnsignedType i=0; i<m_State.Values.size(); i++)
 			{
-				m_StateValues[i].push_back(init);
+				m_State.Values[i].push_back(init);
 			}
 
-			return m_DefaultState.size() - 1;
+			return m_State.DefaultValues.size() - 1;
 		}
 
-		inline unsigned int NewStateProperty(uint64_t Initializer)
+		inline UnsignedType NewStateProperty(UnsignedType Initializer)
 		{
 			NumericPropertyValue init = DefaultUnsigned(Initializer);
-			m_DefaultState.push_back(init);
+			m_State.DefaultValues.push_back(init);
 
-			for (unsigned int i=0; i<m_StateValues.size(); i++)
+			for (UnsignedType i=0; i<m_State.Values.size(); i++)
 			{
-				m_StateValues[i].push_back(init);
+				m_State.Values[i].push_back(init);
 			}
 
-			return m_DefaultState.size() - 1;
+			return m_State.DefaultValues.size() - 1;
 		}
 
-		inline unsigned int NewStateProperty(double Initializer)
+		inline UnsignedType NewStateProperty(double Initializer)
 		{
 			NumericPropertyValue init = DefaultFloat(Initializer);
-			m_DefaultState.push_back(init);
+			m_State.DefaultValues.push_back(init);
 
-			for (unsigned int i=0; i<m_StateValues.size(); i++)
+			for (UnsignedType i=0; i<m_State.Values.size(); i++)
 			{
-				m_StateValues[i].push_back(init);
+				m_State.Values[i].push_back(init);
 			}
 
-			return m_DefaultState.size() - 1;
+			return m_State.DefaultValues.size() - 1;
 		}
 
-		inline NumericPropertyValue *StateValue(unsigned int index) 
+		inline NumericPropertyValue *StateValue(UnsignedType index) 
 		{ 
-			return &m_StateValues[m_CurrentVoice][index]; 
+			return &m_State.Values[m_CurrentVoice][index]; 
 		}
 	private:
-		unsigned int m_SampleRate, m_SampleCount, m_VoiceCount, m_CurrentVoice;
+		UnsignedType m_SampleRate, m_SampleCount, m_VoiceCount, m_CurrentVoice;
 
 		bool m_Initialized;
 

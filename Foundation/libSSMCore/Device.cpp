@@ -36,6 +36,10 @@ Device::Device(Patch *Host)
 	m_VoiceCount = m_Host->VoiceCount();
 	m_CurrentVoice = 0;
 
+	/* Used For Loading Information, and User Graph */
+	DeviceVersion = SignedProperty(Property::ReadOnly, 1, 0, 0, 0, 0);
+	DeviceName = StringProperty(Property::ReadOnly, "Device");
+
 	m_Initialized = false;
 }
 
@@ -51,6 +55,9 @@ Device::~Device()
 bool Device::Setup()
 {
 	m_Initialized = CreatePorts();
+
+	if (m_Initialized)
+		Reset();
 
 	return m_Initialized;
 }
@@ -116,18 +123,18 @@ void Device::Reset()
 		(*port)->Reset();
 	}
 
-	while (m_VoiceCount > m_StateValues.size())
+	while (m_VoiceCount > m_State.Values.size())
 	{
-		m_StateValues.push_back(m_DefaultState);
+		m_State.Values.push_back(m_State.DefaultValues);
 	}
 
-	while (m_VoiceCount < m_StateValues.size())
+	while (m_VoiceCount < m_State.Values.size())
 	{
-		m_StateValues.pop_back();
+		m_State.Values.pop_back();
 	}
 }
 
-InputPort* Device::GetInputPort(unsigned int PortNumber)
+InputPort* Device::GetInputPort(UnsignedType PortNumber)
 {
 	if (PortNumber < m_InputPorts.size())
 	{
@@ -137,7 +144,7 @@ InputPort* Device::GetInputPort(unsigned int PortNumber)
 	return NULL;
 }
 
-OutputPort* Device::GetOutputPort(unsigned int PortNumber)
+OutputPort* Device::GetOutputPort(UnsignedType PortNumber)
 {
 	if (PortNumber < m_OutputPorts.size())
 	{
@@ -147,7 +154,7 @@ OutputPort* Device::GetOutputPort(unsigned int PortNumber)
 	return NULL;
 }
 
-ShadowPort* Device::GetShadowPort(unsigned int PortNumber)
+ShadowPort* Device::GetShadowPort(UnsignedType PortNumber)
 {
 	if (PortNumber < m_ShadowPorts.size())
 	{
