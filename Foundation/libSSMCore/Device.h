@@ -21,6 +21,9 @@
 #define __DEVICE_H__
 
 #include <list>
+#include <string>
+#include <algorithm>
+#include <cctype>
 
 #include "Property.h"
 
@@ -40,6 +43,10 @@ namespace Spiral
 		Device(Patch *Host);
 		virtual ~Device();
 
+		/* Setting Properties */
+		virtual bool LoadProperties(map<string,Property*> properties);
+		bool CopyDevice(Device *device);
+		virtual bool UpdateProperty(string name) { return true; }
 
 		/* Setup/Shutdown */
 		virtual bool Setup();		/* Create Ports, Setup	*/
@@ -86,7 +93,9 @@ namespace Spiral
 
 		virtual ShadowPort* GetShadowPort(UnsignedType PortNumber);
 
-		vector<ShadowPort*> ShadowPorts() { return m_ShadowPorts; }
+		inline vector<InputPort*> InputPorts() { return m_InputPorts; }
+		inline vector<OutputPort*> OutputPorts() { return m_OutputPorts; }
+		inline vector<ShadowPort*> ShadowPorts() { return m_ShadowPorts; }
 
 		/* Convenience Macros For Common DSP Needs */
 		#define InputExists(input_port) input_port->IsConnected()
@@ -114,7 +123,7 @@ namespace Spiral
 		typedef vector<NumericPropertyValue> StateProperties;
 		
 		/* Per Class Properties*/
-		SignedProperty DeviceVersion;
+		UnsignedProperty DeviceVersion;
 		StringProperty DeviceName;
 
 		/* State Properties */	
@@ -155,18 +164,23 @@ namespace Spiral
 		/* Rethink all of this registering crap - simple is best */
 		inline void UnregisterSharedProperty(string Label)
 		{
+			string key = Label;
+			transform (key.begin(), key.end(), key.begin(), (int(*)(int))std::toupper);
+
 			m_State.UpdateData.erase(m_State.Properties[Label]);
-			delete m_State.Properties[Label];
-			m_State.Properties[Label] = NULL;
+			m_State.Properties.erase(key);
 		}
 
-		inline void RegisterSharedProperty(Property *Initializer, string Label, string Hint)
+		inline void RegisterSharedProperty(Property &Initializer, string Label, string Hint)
 		{
-			assert(m_State.Properties[Label]==NULL);
+			string key = Label;
+			transform (key.begin(), key.end(), key.begin(), (int(*)(int))std::toupper);
 
-			m_State.Properties[Label] = new Property(*Initializer);
-			m_State.Properties[Label]->SetLabel(Label);
-			m_State.Properties[Label]->SetHint(Hint);
+			assert(m_State.Properties[key]==NULL);
+
+			m_State.Properties[key] = &Initializer;
+			m_State.Properties[key]->SetLabel(Label);
+			m_State.Properties[key]->SetHint(Hint);
 		}
 
 		/* Voice State Properties */

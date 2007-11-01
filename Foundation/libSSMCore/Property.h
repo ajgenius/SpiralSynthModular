@@ -47,7 +47,7 @@ namespace Spiral
 			m_Hint = Copy.m_Hint;
 		}
 
-		inline void CopyValue(const Property CopyFrom) {}
+		inline void CopyValue(const Property &CopyFrom) {}
 
 		inline string GetLabel() { return m_Label; }
 		inline string GetHint() { return m_Hint; }
@@ -57,14 +57,14 @@ namespace Spiral
 
 		inline bool IsReadOnly() { return m_ReadOnly; }
 		inline bool IsInternal() { return m_Internal; }
-		inline bool IsForceUpdate() { return m_ForceUpdate; }
+		inline bool RequiresUpdates() { return m_ForceUpdate; }
 
 	protected:
 		Property(int Flags) 
 		{
 			#define FlagSet(Flag) ((Flags & Flag) == Flag)
 
-			m_ReadOnly = FlagSet(ReadOnly);
+			m_ReadOnly = !FlagSet(WriteOnly);
 			m_Internal = FlagSet(Internal);
 			m_ForceUpdate = FlagSet(ForceUpdate);
 		}
@@ -185,7 +185,7 @@ namespace Spiral
 			Value = Copy.Value;
 		}
 
-		inline void CopyValue(const NumericProperty CopyFrom) { Value = CopyFrom.Value; }
+		inline void CopyValue(const NumericProperty &CopyFrom) { Value = CopyFrom.Value; }
 
 		NumericPropertyValue Value;
 	protected:
@@ -388,11 +388,61 @@ namespace Spiral
 			Value = Copy.Value;
 		}
 
-		inline void CopyValue(const StringProperty CopyFrom) { Value = CopyFrom.Value; }
+		inline void CopyValue(const StringProperty &CopyFrom) { Value = CopyFrom.Value; }
 
 		string Value;
 	protected:
 		StringProperty(int Flags): Property(Flags) {}
+	};
+
+	class NoteProperty : public Property
+	{
+	public:
+		NoteProperty() {}
+		virtual ~NoteProperty() {}
+
+		NoteProperty(int Flags, unsigned int InitialNote, unsigned int InitialOctave,
+					float InitialVelocity):
+		Property(Flags) 
+		{ 
+			/* Notes start at 1 */
+			Note = InitialNote;
+
+			/* 8 Octaves */
+			Octave = InitialOctave;
+
+			/* Constrain to 0-127, (Velocity*127) */
+			Velocity = InitialVelocity;
+
+			/* Start/End Positions */
+			Start = 0;
+			End = 0;
+		}
+
+		NoteProperty(const NoteProperty &Copy):
+		Property(Copy)
+		{
+			CopyValue(Copy);
+		}
+
+		inline void CopyValue(const NoteProperty &CopyFrom) 
+		{ 
+			Note = CopyFrom.Note;
+			Octave = CopyFrom.Octave;
+			Velocity = CopyFrom.Velocity;
+			Start = CopyFrom.Start;
+			End = CopyFrom.End;
+		}
+
+		UnsignedType Note; /* 1-12, "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" */
+		UnsignedType Octave; /* 0-6 */
+
+		UnsignedType Start; /* 0-infinite */
+		UnsignedType End; /* 0-infinite */
+
+		FloatType Velocity; /* (0 - 1.0f)*127 */
+	protected:
+		NoteProperty(int Flags): Property(Flags) {}
 	};
 
 	class SampleProperty : public Property
@@ -409,11 +459,80 @@ namespace Spiral
 			CopyValue(Copy);
 		}
 
-		inline void CopyValue(const SampleProperty CopyFrom) { Value.Clear(); Value.Add(CopyFrom.Value); }
+		inline void CopyValue(const SampleProperty &CopyFrom) { Value.Clear(); Value.Add(CopyFrom.Value); }
 
 		Sample Value;
 	protected:
 		SampleProperty(int Flags): Property(Flags) {}
+	};
+
+	class ComplexProperty : public Property
+	{
+	public:
+		virtual ~ComplexProperty() {}
+
+		virtual inline Property* operator[](UnsignedType i) = 0;
+		virtual inline UnsignedType size()=0;
+
+		virtual void Add(Property *New)=0;
+	protected:
+		ComplexProperty() {}
+		ComplexProperty(int Flags): Property(Flags) { }
+	};
+
+	class VectorProperty : public ComplexProperty
+	{
+	public:
+		VectorProperty() {}
+		virtual ~VectorProperty() 
+		{
+		}
+
+		VectorProperty(int Flags, vector<Property*> Values): 
+		ComplexProperty(Flags)
+		{
+			CopyContents(Values);
+		}
+
+		VectorProperty(const ComplexProperty &Copy):
+		ComplexProperty(Copy)
+		{
+			CopyValue(Copy);
+		}
+
+		inline void CopyValue(const VectorProperty &CopyFrom)
+		{ 
+			CopyContents(CopyFrom.Values);
+		}
+
+		virtual inline Property* operator[](UnsignedType i)
+		{		
+			return Values[i];
+		}
+		
+		virtual inline UnsignedType size()
+		{
+			return Values.size();
+		}
+
+		virtual void Add(Property *Property)
+		{
+			Values.push_back(Property);
+		}
+
+		vector<Property*> Values;
+	protected:
+
+		virtual inline void CopyContents(vector<Property*> Contents)
+		{
+			if (!Contents.size()) return;
+
+			for (unsigned int i=0; i < Contents.size(); i++)
+			{
+				if (Contents[i])
+					Values.push_back(Contents[i]);
+			}
+		}
 	};
 }
 

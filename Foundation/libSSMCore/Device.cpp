@@ -37,7 +37,7 @@ Device::Device(Patch *Host)
 	m_CurrentVoice = 0;
 
 	/* Used For Loading Information, and User Graph */
-	DeviceVersion = SignedProperty(Property::ReadOnly, 1, 0, 0, 0, 0);
+	DeviceVersion = UnsignedProperty(Property::ReadOnly, 1, 0, 0, 0, 0);
 	DeviceName = StringProperty(Property::ReadOnly, "Device");
 
 	m_Initialized = false;
@@ -50,6 +50,124 @@ Device::~Device()
 	Clear();
 
 	Host()->m_Devices.erase(find(Host()->m_Devices.begin(), Host()->m_Devices.end(), this));
+}
+
+bool Device::LoadProperties(map<string,Property*> properties)
+{
+	/* See if this is a versioned set of properties */
+	if (properties.count("VERSION"))
+	{
+		UnsignedProperty *version = dynamic_cast<UnsignedProperty*>(properties["VERSION"]);
+
+		if (version->Value.AsUnsigned != DeviceVersion.Value.AsUnsigned)
+		{
+			cerr << "Version Mismatch (" << version->Value.AsUnsigned << " != " << DeviceVersion.Value.AsUnsigned 
+				<<") in property loading! This probably indicates a bug in " << DeviceName.Value << endl;
+
+			return false;
+		}
+	}
+	
+	map<string,Property*>::iterator iter;
+	for (iter = m_State.Properties.begin(); iter != m_State.Properties.end(); iter++)
+	{
+//		if (iter->second->IsReadOnly())
+//			continue;
+
+		printf("Maybe Loading Property - %s\n", iter->first.c_str());
+
+		if (properties.count(iter->first))
+		{
+			printf("Almost Certainly Loading Property - %s\n", iter->first.c_str());
+
+			{
+				if (dynamic_cast<ToggleProperty*>(iter->second))
+				{
+					printf("Loading Property - %s (%d, %d)\n", iter->first.c_str(),
+						((ToggleProperty*)iter->second)->Value.AsBoolean,
+						 ((ToggleProperty*)properties[iter->first])->Value.AsBoolean);
+
+					((ToggleProperty*)iter->second)->Value.Type = NumericPropertyValue::Boolean;
+					((ToggleProperty*)iter->second)->Value.AsBoolean = ((ToggleProperty*)properties[iter->first])->Value.AsBoolean;	
+				}
+				else if (dynamic_cast<FloatProperty*>(iter->second))
+				{
+					printf("Loading Property - %s (%f, %f)\n", iter->first.c_str(),
+						((FloatProperty*)iter->second)->Value.AsFloat,
+						 ((FloatProperty*)properties[iter->first])->Value.AsFloat);
+
+					((FloatProperty*)iter->second)->Value.Type = NumericPropertyValue::Float;
+					((FloatProperty*)iter->second)->Value.AsFloat = ((FloatProperty*)properties[iter->first])->Value.AsFloat;	
+				}
+				else if (dynamic_cast<SignedProperty*>(iter->second))
+				{
+					printf("Loading Property - %s (%d, %d)\n", iter->first.c_str(),
+						((SignedProperty*)iter->second)->Value.AsSigned,
+						 ((SignedProperty*)properties[iter->first])->Value.AsSigned);
+
+					((SignedProperty*)iter->second)->Value.Type = NumericPropertyValue::Signed;
+					((SignedProperty*)iter->second)->Value.AsSigned = ((SignedProperty*)properties[iter->first])->Value.AsSigned;	
+				}
+				else if (dynamic_cast<UnsignedProperty*>(iter->second))
+				{
+					printf("Loading Property - %s (%u, %u)\n", iter->first.c_str(),
+						((UnsignedProperty*)iter->second)->Value.AsUnsigned,
+						 ((UnsignedProperty*)properties[iter->first])->Value.AsUnsigned);
+
+					((UnsignedProperty*)iter->second)->Value.Type = NumericPropertyValue::Unsigned;
+					((UnsignedProperty*)iter->second)->Value.AsUnsigned = ((UnsignedProperty*)properties[iter->first])->Value.AsUnsigned;	
+				}
+				else if (dynamic_cast<SetProperty*>(iter->second))
+				{
+					printf("Loading Property - %s (?,?)\n", iter->first.c_str());
+
+					((NumericProperty*)iter->second)->Value = ((NumericProperty*)properties[iter->first])->Value;	
+				}
+				else if (dynamic_cast<StringProperty*>(iter->second))
+				{
+					StringProperty *np_from, *np_to;
+
+					np_from = dynamic_cast<StringProperty*>(properties[iter->first]);
+					np_to = dynamic_cast<StringProperty*>(iter->second);
+
+					np_to->CopyValue(*np_from);
+				}
+				else if (dynamic_cast<SampleProperty*>(iter->second))
+				{
+					SampleProperty *np_from, *np_to;
+
+					np_from = dynamic_cast<SampleProperty*>(properties[iter->first]);
+					np_to = dynamic_cast<SampleProperty*>(iter->second);
+
+					np_to->CopyValue(*np_from);
+				}
+
+				if (iter->second->RequiresUpdates())
+				{
+					UpdateProperty(iter->first);
+				}
+			}
+		}
+	}
+
+	return true;
+}
+
+bool Device::CopyDevice(Device *device)
+{
+	if (!device)
+	{
+		// Gimme an error
+		return false;
+	}
+
+	if (typeid(device) != typeid(this))
+	{
+		// Gimme an error
+		return false;
+	}
+
+	return LoadProperties(device->m_State.Properties);
 }
 
 bool Device::Setup()

@@ -25,7 +25,7 @@
 
 #include <ladspa.h>
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 #include "LADSPAInfo.h"
 
 struct PortSetting
@@ -42,7 +42,7 @@ struct PortValue
 	bool  Connected;
 };
 
-class LADSPAPlugin : public SpiralPlugin
+class LADSPAPlugin : public Spiral::Core::Device
 {
 public:
 	// Built into the host: registered with the device registry, no module.
@@ -58,7 +58,7 @@ public:
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
 
-	unsigned long  GetUniqueID() { return m_UniqueID; }
+	unsigned long  GetUniqueID() { return AsUnsigned(m_UniqueID); }
 	const char    *GetName() { return (const char *)m_Name; }
 	// Virtual, and defined in the module that owns m_LADSPAInfo. An inline body
 	// here makes every caller reference that static directly, and the editor
@@ -125,10 +125,14 @@ private:
 	LADSPA_Handle                m_PlugInstHandle;
 
 	std::vector<int>        m_PortID;
-	std::vector<float>      m_InputPortMin;
-	std::vector<float>      m_InputPortMax;
-	std::vector<char>       m_InputPortClamp; /* not vector<bool> — proxy refs */
-	std::vector<float>      m_InputPortDefault;
+	std::vector<Spiral::Core::FloatProperty*>   m_InputPortMin;
+	std::vector<Spiral::Core::FloatProperty*>   m_InputPortMax;
+	std::vector<Spiral::Core::ToggleProperty*>  m_InputPortClamp;
+	std::vector<Spiral::Core::FloatProperty*>   m_InputPortDefault;
+	void AddPortSetting(std::vector<Spiral::Core::FloatProperty*> &list, const char *prefix, float value);
+	void AddPortSetting(std::vector<Spiral::Core::ToggleProperty*> &list, const char *prefix, bool value);
+	void ClearPortSettings(std::vector<Spiral::Core::FloatProperty*> &list, const char *prefix);
+	void ClearPortSettings(std::vector<Spiral::Core::ToggleProperty*> &list, const char *prefix);
 
 	int             m_Version;
 
@@ -136,7 +140,7 @@ private:
 	static int                  InstanceCount;
 
 	unsigned long   m_PluginIndex;
-	unsigned long   m_UniqueID;
+	Spiral::Core::UnsignedProperty m_UniqueID;
 	int             m_Page;
 	bool            m_UpdateInputs;
 
