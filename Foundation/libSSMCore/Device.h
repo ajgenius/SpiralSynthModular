@@ -80,9 +80,6 @@ namespace Spiral
 
 		inline Patch *Host() { return m_Host; }
 
-		/* Properties */
-		virtual void PropertyUpdate(Property *Changed) {};
-
 		inline bool IsLive() { return m_Initialized; }
 		inline void SetVoice(UnsignedType voice) { m_CurrentVoice = voice; }
 		inline UnsignedType GetVoice() { return m_CurrentVoice; }
