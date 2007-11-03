@@ -47,7 +47,9 @@ namespace Spiral
 			m_Hint = Copy.m_Hint;
 		}
 
-		inline void CopyValue(const Property &CopyFrom) {}
+		virtual string ClassName()=0;
+
+		virtual void CopyValue(const Property &CopyFrom)=0;
 
 		inline string GetLabel() { return m_Label; }
 		inline string GetHint() { return m_Hint; }
@@ -62,11 +64,16 @@ namespace Spiral
 	protected:
 		Property(int Flags) 
 		{
-			#define FlagSet(Flag) ((Flags & Flag) == Flag)
+			#define FlagSet(Flag) ((Flags & Flag) != 0)
 
 			m_ReadOnly = !FlagSet(WriteOnly);
 			m_Internal = FlagSet(Internal);
 			m_ForceUpdate = FlagSet(ForceUpdate);
+		}
+
+		void InvalidPropertyCopy(const Property& CopyFrom)
+		{
+			cerr << "WARNING - Incompatible Property Types. Cannot copy a " << ((Property&)CopyFrom).ClassName() << " into a " << ClassName() << "." << endl;
 		}
 
 		bool m_ReadOnly, m_Internal, m_ForceUpdate;
@@ -185,7 +192,17 @@ namespace Spiral
 			Value = Copy.Value;
 		}
 
-		inline void CopyValue(const NumericProperty &CopyFrom) { Value = CopyFrom.Value; }
+		virtual void CopyValue(const Property &CopyFrom) 
+		{ 
+			if (!dynamic_cast<const NumericProperty*>(&CopyFrom))
+			{
+				InvalidPropertyCopy(CopyFrom);
+				return;
+			}
+
+			/* FIXME - This replaces current Type, instead of setting the right value */
+			Value = ((NumericProperty&)CopyFrom).Value; 
+		}
 
 		NumericPropertyValue Value;
 	protected:
@@ -227,6 +244,24 @@ namespace Spiral
 
 		virtual void Clamp() {}
 
+		virtual void CopyValue(const Property &CopyFrom) 
+		{ 
+			if (!dynamic_cast<const LinearProperty*>(&CopyFrom))
+			{
+				InvalidPropertyCopy(CopyFrom);
+				return;
+			}
+
+			/* FIXME - This replaces current Type, instead of setting the right value */
+			const LinearProperty *copy = ((const LinearProperty*)&CopyFrom);
+			Value = copy->Value; 
+
+			Min = copy->Min;
+			Max = copy->Max;
+			SmallStep = copy->SmallStep;
+			Step = copy->Step;
+		}
+
 		inline bool IsLogarithmic() { return m_Logarithmic; }
 		inline bool IsClampLower() { return m_ClampLower; }
 		inline bool IsClampUpper() { return m_ClampUpper; }
@@ -235,8 +270,6 @@ namespace Spiral
 		LinearProperty(int Flags): 
 		NumericProperty(Flags)
 		{
-			#define FlagSet(Flag) ((Flags & Flag) == Flag)
-
 			m_Logarithmic = FlagSet(Logarithmic);
 			m_ClampLower = FlagSet(ClampLower);
 			m_ClampUpper = FlagSet(ClampUpper);
@@ -267,13 +300,18 @@ namespace Spiral
 		}
 
 		SignedProperty(const SignedProperty &Copy) :
-		LinearProperty((LinearProperty)Copy)
+		LinearProperty(Copy)
 		{
 		}
 
 		virtual void Clamp()
 		{
 			Value.AsSigned = min(max(Value.AsSigned, Min.AsSigned),Max.AsSigned);
+		}
+
+		virtual string ClassName()
+		{
+			return "SignedProperty";
 		}
 	};
 
@@ -298,13 +336,18 @@ namespace Spiral
 		}
 
 		UnsignedProperty(const UnsignedProperty &Copy) :
-		LinearProperty((LinearProperty)Copy)
+		LinearProperty(Copy)
 		{
 		}
 
 		virtual void Clamp()
 		{
 			Value.AsUnsigned = min(max(Value.AsUnsigned, Min.AsUnsigned),Max.AsUnsigned);
+		}
+
+		virtual string ClassName()
+		{
+			return "UnsignedProperty";
 		}
 	};
 
@@ -329,13 +372,18 @@ namespace Spiral
 		}
 
 		FloatProperty(const FloatProperty &Copy) :
-		LinearProperty((LinearProperty)Copy)
+		LinearProperty(Copy)
 		{
 		}
 
 		virtual void Clamp()
 		{
 			Value.AsFloat = min(max(Value.AsFloat, Min.AsFloat),Max.AsFloat);
+		}
+
+		virtual string ClassName()
+		{
+			return "FloatProperty";
 		}
 	};
 
@@ -346,7 +394,12 @@ namespace Spiral
 		virtual ~ToggleProperty() {}
 
 		ToggleProperty(int Flags, bool InitialValue) : NumericProperty(Flags) { Value.AsBoolean = InitialValue; }
-		ToggleProperty(const ToggleProperty &Copy) : NumericProperty((NumericProperty)Copy){}
+		ToggleProperty(const ToggleProperty &Copy) : NumericProperty(Copy){}
+
+		virtual string ClassName()
+		{
+			return "ToggleProperty";
+		}
 	};
 
 	class SetProperty : public NumericProperty
@@ -369,6 +422,11 @@ namespace Spiral
 		}
 
 		inline PropertySet Set() { return m_Set; }
+
+		virtual string ClassName()
+		{
+			return "SetProperty";
+		}
 	private:
 		PropertySet m_Set;
 	};
@@ -388,7 +446,21 @@ namespace Spiral
 			Value = Copy.Value;
 		}
 
-		inline void CopyValue(const StringProperty &CopyFrom) { Value = CopyFrom.Value; }
+		inline void CopyValue(const Property &CopyFrom)
+		{
+			if (!dynamic_cast<const StringProperty*>(&CopyFrom))
+			{
+				InvalidPropertyCopy(CopyFrom);
+				return;
+			}
+
+			Value = ((StringProperty&)CopyFrom).Value; 
+		}
+
+		virtual string ClassName()
+		{
+			return "StringProperty";
+		}
 
 		string Value;
 	protected:
@@ -425,13 +497,21 @@ namespace Spiral
 			CopyValue(Copy);
 		}
 
-		inline void CopyValue(const NoteProperty &CopyFrom) 
+		inline void CopyValue(const Property &CopyFrom) 
 		{ 
-			Note = CopyFrom.Note;
-			Octave = CopyFrom.Octave;
-			Velocity = CopyFrom.Velocity;
-			Start = CopyFrom.Start;
-			End = CopyFrom.End;
+			if (!dynamic_cast<const NoteProperty*>(&CopyFrom))
+			{
+				InvalidPropertyCopy(CopyFrom);
+				return;
+			}
+
+			const NoteProperty *copy = ((const NoteProperty*)&CopyFrom);
+
+			Note = copy->Note;
+			Octave = copy->Octave;
+			Velocity = copy->Velocity;
+			Start = copy->Start;
+			End = copy->End;
 		}
 
 		UnsignedType Note; /* 1-12, "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" */
@@ -441,6 +521,11 @@ namespace Spiral
 		UnsignedType End; /* 0-infinite */
 
 		FloatType Velocity; /* (0 - 1.0f)*127 */
+
+		virtual string ClassName()
+		{
+			return "NoteProperty";
+		}
 	protected:
 		NoteProperty(int Flags): Property(Flags) {}
 	};
@@ -459,9 +544,24 @@ namespace Spiral
 			CopyValue(Copy);
 		}
 
-		inline void CopyValue(const SampleProperty &CopyFrom) { Value.Clear(); Value.Add(CopyFrom.Value); }
+		virtual void CopyValue(const Property &CopyFrom) 
+		{
+			if (!dynamic_cast<const SampleProperty*>(&CopyFrom))
+			{
+				InvalidPropertyCopy(CopyFrom);
+				return;
+			}
+
+			Value.Clear(); 
+			Value.Add(((SampleProperty&)CopyFrom).Value); 
+		}
 
 		Sample Value;
+
+		virtual string ClassName()
+		{
+			return "SampleProperty";
+		}
 	protected:
 		SampleProperty(int Flags): Property(Flags) {}
 	};
@@ -471,8 +571,8 @@ namespace Spiral
 	public:
 		virtual ~ComplexProperty() {}
 
-		virtual inline Property* operator[](UnsignedType i) = 0;
-		virtual inline UnsignedType size()=0;
+		virtual Property* operator[](UnsignedType i) = 0;
+		virtual UnsignedType size()=0;
 
 		virtual void Add(Property *New)=0;
 	protected:
@@ -500,17 +600,23 @@ namespace Spiral
 			CopyValue(Copy);
 		}
 
-		inline void CopyValue(const VectorProperty &CopyFrom)
+		virtual void CopyValue(const Property &CopyFrom)
 		{ 
-			CopyContents(CopyFrom.Values);
+			if (!dynamic_cast<const VectorProperty*>(&CopyFrom))
+			{
+				InvalidPropertyCopy(CopyFrom);
+				return;
+			}
+
+			CopyContents(((const VectorProperty*)&CopyFrom)->Values);
 		}
 
-		virtual inline Property* operator[](UnsignedType i)
+		virtual Property* operator[](UnsignedType i)
 		{		
 			return Values[i];
 		}
 		
-		virtual inline UnsignedType size()
+		virtual UnsignedType size()
 		{
 			return Values.size();
 		}
@@ -518,6 +624,11 @@ namespace Spiral
 		virtual void Add(Property *Property)
 		{
 			Values.push_back(Property);
+		}
+
+		virtual string ClassName()
+		{
+			return "VectorProperty";
 		}
 
 		vector<Property*> Values;

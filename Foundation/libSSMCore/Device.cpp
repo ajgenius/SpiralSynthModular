@@ -20,6 +20,7 @@
 #include "Device.h"
 #include "Patch.h"
 
+//#define DEBUG_LOADING
 using namespace std;
 using namespace Spiral;
 
@@ -45,11 +46,12 @@ Device::Device(Patch *Host)
 
 Device::~Device()
 {
-	Shutdown();
-
-	Clear();
+	if (IsLive())
+		Shutdown();
 
 	Host()->m_Devices.erase(find(Host()->m_Devices.begin(), Host()->m_Devices.end(), this));
+
+	Clear();
 }
 
 bool Device::LoadProperties(map<string,Property*> properties)
@@ -71,76 +73,22 @@ bool Device::LoadProperties(map<string,Property*> properties)
 	map<string,Property*>::iterator iter;
 	for (iter = m_State.Properties.begin(); iter != m_State.Properties.end(); iter++)
 	{
-//		if (iter->second->IsReadOnly())
-//			continue;
+		if (iter->second && iter->second->IsReadOnly())
+			continue;
 
+
+		#ifdef DEBUG_LOADING
 		printf("Maybe Loading Property - %s\n", iter->first.c_str());
+		#endif
 
 		if (properties.count(iter->first))
 		{
-			printf("Almost Certainly Loading Property - %s\n", iter->first.c_str());
+			#ifdef DEBUG_LOADING
+			printf("Almost Certainly Loading Property - %s which is of type %s\n", iter->first.c_str(), iter->second->ClassName().c_str());
+			#endif
 
 			{
-				if (dynamic_cast<ToggleProperty*>(iter->second))
-				{
-					printf("Loading Property - %s (%d, %d)\n", iter->first.c_str(),
-						((ToggleProperty*)iter->second)->Value.AsBoolean,
-						 ((ToggleProperty*)properties[iter->first])->Value.AsBoolean);
-
-					((ToggleProperty*)iter->second)->Value.Type = NumericPropertyValue::Boolean;
-					((ToggleProperty*)iter->second)->Value.AsBoolean = ((ToggleProperty*)properties[iter->first])->Value.AsBoolean;	
-				}
-				else if (dynamic_cast<FloatProperty*>(iter->second))
-				{
-					printf("Loading Property - %s (%f, %f)\n", iter->first.c_str(),
-						((FloatProperty*)iter->second)->Value.AsFloat,
-						 ((FloatProperty*)properties[iter->first])->Value.AsFloat);
-
-					((FloatProperty*)iter->second)->Value.Type = NumericPropertyValue::Float;
-					((FloatProperty*)iter->second)->Value.AsFloat = ((FloatProperty*)properties[iter->first])->Value.AsFloat;	
-				}
-				else if (dynamic_cast<SignedProperty*>(iter->second))
-				{
-					printf("Loading Property - %s (%d, %d)\n", iter->first.c_str(),
-						((SignedProperty*)iter->second)->Value.AsSigned,
-						 ((SignedProperty*)properties[iter->first])->Value.AsSigned);
-
-					((SignedProperty*)iter->second)->Value.Type = NumericPropertyValue::Signed;
-					((SignedProperty*)iter->second)->Value.AsSigned = ((SignedProperty*)properties[iter->first])->Value.AsSigned;	
-				}
-				else if (dynamic_cast<UnsignedProperty*>(iter->second))
-				{
-					printf("Loading Property - %s (%u, %u)\n", iter->first.c_str(),
-						((UnsignedProperty*)iter->second)->Value.AsUnsigned,
-						 ((UnsignedProperty*)properties[iter->first])->Value.AsUnsigned);
-
-					((UnsignedProperty*)iter->second)->Value.Type = NumericPropertyValue::Unsigned;
-					((UnsignedProperty*)iter->second)->Value.AsUnsigned = ((UnsignedProperty*)properties[iter->first])->Value.AsUnsigned;	
-				}
-				else if (dynamic_cast<SetProperty*>(iter->second))
-				{
-					printf("Loading Property - %s (?,?)\n", iter->first.c_str());
-
-					((NumericProperty*)iter->second)->Value = ((NumericProperty*)properties[iter->first])->Value;	
-				}
-				else if (dynamic_cast<StringProperty*>(iter->second))
-				{
-					StringProperty *np_from, *np_to;
-
-					np_from = dynamic_cast<StringProperty*>(properties[iter->first]);
-					np_to = dynamic_cast<StringProperty*>(iter->second);
-
-					np_to->CopyValue(*np_from);
-				}
-				else if (dynamic_cast<SampleProperty*>(iter->second))
-				{
-					SampleProperty *np_from, *np_to;
-
-					np_from = dynamic_cast<SampleProperty*>(properties[iter->first]);
-					np_to = dynamic_cast<SampleProperty*>(iter->second);
-
-					np_to->CopyValue(*np_from);
-				}
+				iter->second->CopyValue(*properties[iter->first]);
 
 				if (iter->second->RequiresUpdates())
 				{

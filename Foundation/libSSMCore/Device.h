@@ -128,7 +128,7 @@ namespace Spiral
 		{
 			/* Per Instance Properties */
 			map<string,Property*> Properties;
-			map<Property*,Property> UpdateData; /* For ProcessUpdate */
+			map<Property*,Property*> UpdateData; /* For ProcessUpdate */
 
 			/* Per Voice State Values */
 			StateProperties DefaultValues;
