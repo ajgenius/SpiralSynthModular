@@ -62,7 +62,7 @@ namespace Spiral
 		inline bool RequiresUpdates() { return m_ForceUpdate; }
 
 	protected:
-		Property(int Flags) 
+		Property(SignedType Flags) 
 		{
 			#define FlagSet(Flag) ((Flags & Flag) != 0)
 
@@ -98,7 +98,7 @@ namespace Spiral
 			SignedType AsSigned;
 			UnsignedType AsUnsigned;
 
-			double AsFloat;
+			FloatType AsFloat;
 		};
 	} NumericPropertyValue;
 
@@ -111,17 +111,17 @@ namespace Spiral
 			m_Values.insert(m_Values.end(), Values.begin(), Values.end());
 		}
 
-		PropertySet(const NumericPropertyValue Values[], unsigned int Count)
+		PropertySet(const NumericPropertyValue Values[], UnsignedType Count)
 		{
-			for (unsigned int i = 0; i < Count; i++)
+			for (UnsignedType i = 0; i < Count; i++)
 			{
 				m_Values.push_back(Values[i]);
 			}
 		}
 
-		inline unsigned int size() { return m_Values.size(); }
+		inline UnsignedType size() { return m_Values.size(); }
 
-		inline NumericPropertyValue operator[](unsigned int i)
+		inline NumericPropertyValue operator[](UnsignedType i)
 		{		
 			return m_Values[i];
 		}
@@ -152,13 +152,13 @@ namespace Spiral
 		{
 			m_Names.insert(m_Names.end(), Names.begin(), Names.end());
 
-			for (unsigned int i = 0; i < size(); i++)
+			for (UnsignedType i = 0; i < size(); i++)
 				m_Index[m_Names[i]] = i;
 		}
 
-		NamedPropertySet(const NamedPropertyValue Values[], unsigned int Count)
+		NamedPropertySet(const NamedPropertyValue Values[], UnsignedType Count)
 		{
-			for (unsigned int i = 0; i < Count; i++)
+			for (UnsignedType i = 0; i < Count; i++)
 			{
 				m_Values.push_back(Values[i].Value);
 				m_Names.push_back(Values[i].Name);
@@ -166,7 +166,7 @@ namespace Spiral
 			}
 		}
 
-		inline string Names(unsigned int i)
+		inline string Names(UnsignedType i)
 		{		
 			return m_Names[i];
 		}
@@ -177,7 +177,7 @@ namespace Spiral
 		}
 	private:
 		vector<string> m_Names;
-		map<string,int> m_Index;
+		map<string,SignedType> m_Index;
 	};
 
 	class NumericProperty : public Property
@@ -206,7 +206,7 @@ namespace Spiral
 
 		NumericPropertyValue Value;
 	protected:
-		NumericProperty(int Flags): Property(Flags) {}
+		NumericProperty(SignedType Flags): Property(Flags) {}
 	};
 
 	#define DefaultLinearFlags Property::WriteOnly | LinearProperty::ClampLower | LinearProperty::ClampUpper
@@ -239,7 +239,7 @@ namespace Spiral
 			SignedType AsSigned;
 			UnsignedType AsUnsigned;
 
-			double AsFloat;
+			FloatType AsFloat;
 		} Min, Max, SmallStep, Step;
 
 		virtual void Clamp() {}
@@ -267,7 +267,7 @@ namespace Spiral
 		inline bool IsClampUpper() { return m_ClampUpper; }
 
 	protected:
-		LinearProperty(int Flags): 
+		LinearProperty(SignedType Flags): 
 		NumericProperty(Flags)
 		{
 			m_Logarithmic = FlagSet(Logarithmic);
@@ -285,7 +285,7 @@ namespace Spiral
 		SignedProperty() {}
 		virtual ~SignedProperty() {}
 
-		SignedProperty(int Flags, SignedType InitialValue, 
+		SignedProperty(SignedType Flags, SignedType InitialValue, 
 				SignedType MinimumValue, SignedType MaximumValue, 
 				SignedType MinimumStep, SignedType DefaultStep):
 		LinearProperty(Flags)
@@ -321,7 +321,7 @@ namespace Spiral
 		UnsignedProperty() {}
 		virtual ~UnsignedProperty() {}
 
-		UnsignedProperty(int Flags, UnsignedType InitialValue, 
+		UnsignedProperty(SignedType Flags, UnsignedType InitialValue, 
 				UnsignedType MinimumValue, UnsignedType MaximumValue, 
 				UnsignedType MinimumStep, UnsignedType DefaultStep):
 		LinearProperty(Flags)
@@ -357,9 +357,9 @@ namespace Spiral
 		FloatProperty() {}
 		virtual ~FloatProperty() {}
 
-		FloatProperty(int Flags, double InitialValue, 
-				double MinimumValue, double MaximumValue, 
-				double MinimumStep, double DefaultStep):
+		FloatProperty(SignedType Flags, FloatType InitialValue, 
+				FloatType MinimumValue, FloatType MaximumValue, 
+				FloatType MinimumStep, FloatType DefaultStep):
 		LinearProperty(Flags)
 		{
 			Value.Type = NumericPropertyValue::Float;
@@ -393,7 +393,7 @@ namespace Spiral
 		ToggleProperty() {}
 		virtual ~ToggleProperty() {}
 
-		ToggleProperty(int Flags, bool InitialValue) : NumericProperty(Flags) { Value.AsBoolean = InitialValue; }
+		ToggleProperty(SignedType Flags, bool InitialValue) : NumericProperty(Flags) { Value.AsBoolean = InitialValue; }
 		ToggleProperty(const ToggleProperty &Copy) : NumericProperty(Copy){}
 
 		virtual string ClassName()
@@ -408,7 +408,7 @@ namespace Spiral
 		SetProperty() {}
 		virtual ~SetProperty() {}
 
-		SetProperty(int Flags, unsigned int InitialValueIndex, PropertySet Set):
+		SetProperty(SignedType Flags, UnsignedType InitialValueIndex, PropertySet Set):
 		NumericProperty(Flags)
 		{
 			m_Set = Set;
@@ -437,8 +437,8 @@ namespace Spiral
 		StringProperty() {}
 		virtual ~StringProperty() {}
 
-		StringProperty(int Flags, string InitialValue): Property(Flags) { Value = InitialValue; }
-		StringProperty(int Flags, char *InitialValue): Property(Flags) { Value = InitialValue; }
+		StringProperty(SignedType Flags, string InitialValue): Property(Flags) { Value = InitialValue; }
+		StringProperty(SignedType Flags, char *InitialValue): Property(Flags) { Value = InitialValue; }
 
 		StringProperty(const StringProperty &Copy):
 		Property(Copy)
@@ -464,7 +464,7 @@ namespace Spiral
 
 		string Value;
 	protected:
-		StringProperty(int Flags): Property(Flags) {}
+		StringProperty(SignedType Flags): Property(Flags) {}
 	};
 
 	class NoteProperty : public Property
@@ -473,8 +473,8 @@ namespace Spiral
 		NoteProperty() {}
 		virtual ~NoteProperty() {}
 
-		NoteProperty(int Flags, unsigned int InitialNote, unsigned int InitialOctave,
-					float InitialVelocity):
+		NoteProperty(SignedType Flags, UnsignedType InitialNote, UnsignedType InitialOctave,
+					FloatType InitialVelocity):
 		Property(Flags) 
 		{ 
 			/* Notes start at 1 */
@@ -527,7 +527,7 @@ namespace Spiral
 			return "NoteProperty";
 		}
 	protected:
-		NoteProperty(int Flags): Property(Flags) {}
+		NoteProperty(SignedType Flags): Property(Flags) {}
 	};
 
 	class SampleProperty : public Property
@@ -536,7 +536,7 @@ namespace Spiral
 		SampleProperty() {}
 		virtual ~SampleProperty() {}
 
-		SampleProperty(int Flags, int InitialSize): Property(Flags) { Value = Sample(InitialSize); }
+		SampleProperty(SignedType Flags, UnsignedType InitialSize): Property(Flags) { Value = Sample(InitialSize); }
 
 		SampleProperty(const SampleProperty &Copy):
 		Property(Copy)
@@ -563,7 +563,7 @@ namespace Spiral
 			return "SampleProperty";
 		}
 	protected:
-		SampleProperty(int Flags): Property(Flags) {}
+		SampleProperty(SignedType Flags): Property(Flags) {}
 	};
 
 	class ComplexProperty : public Property
@@ -577,7 +577,7 @@ namespace Spiral
 		virtual void Add(Property *New)=0;
 	protected:
 		ComplexProperty() {}
-		ComplexProperty(int Flags): Property(Flags) { }
+		ComplexProperty(SignedType Flags): Property(Flags) { }
 	};
 
 	class VectorProperty : public ComplexProperty
@@ -588,7 +588,7 @@ namespace Spiral
 		{
 		}
 
-		VectorProperty(int Flags, vector<Property*> Values): 
+		VectorProperty(SignedType Flags, vector<Property*> Values): 
 		ComplexProperty(Flags)
 		{
 			CopyContents(Values);
@@ -638,7 +638,7 @@ namespace Spiral
 		{
 			if (!Contents.size()) return;
 
-			for (unsigned int i=0; i < Contents.size(); i++)
+			for (UnsignedType i=0; i < Contents.size(); i++)
 			{
 				if (Contents[i])
 					Values.push_back(Contents[i]);
