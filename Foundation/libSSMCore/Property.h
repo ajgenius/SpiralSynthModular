@@ -438,7 +438,7 @@ namespace Spiral
 		virtual ~StringProperty() {}
 
 		StringProperty(SignedType Flags, string InitialValue): Property(Flags) { Value = InitialValue; }
-		StringProperty(SignedType Flags, char *InitialValue): Property(Flags) { Value = InitialValue; }
+		StringProperty(SignedType Flags, const char *InitialValue): Property(Flags) { Value = InitialValue; }
 
 		StringProperty(const StringProperty &Copy):
 		Property(Copy)
