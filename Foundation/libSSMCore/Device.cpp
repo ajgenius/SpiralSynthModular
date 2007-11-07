@@ -54,7 +54,7 @@ Device::~Device()
 	Clear();
 }
 
-bool Device::LoadProperties(map<string,Property*> properties)
+bool Device::LoadProperties(map<string,Property*> &properties)
 {
 	/* See if this is a versioned set of properties */
 	if (properties.count("VERSION"))

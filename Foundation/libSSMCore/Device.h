@@ -44,7 +44,7 @@ namespace Spiral
 		virtual ~Device();
 
 		/* Setting Properties */
-		virtual bool LoadProperties(map<string,Property*> properties);
+		virtual bool LoadProperties(map<string,Property*> &properties);
 		bool CopyDevice(Device *device);
 		virtual bool UpdateProperty(string name) { return true; }
 
