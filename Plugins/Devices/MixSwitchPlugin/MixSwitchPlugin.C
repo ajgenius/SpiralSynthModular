@@ -17,6 +17,7 @@
 */
 #include "MixSwitchPlugin.h"
 #include <stdio.h>
+#include <math.h>
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -158,7 +159,7 @@ void MixSwitchPlugin::Execute() {
     if (InputExists (0)) {
       m_GUIArgs.Auto = true;
       // Check the Switch Pos CV Value
-      AsSigned(m_SwitchPos) = int (GetInput (0, n));
+      AsSigned(m_SwitchPos) = lrint (fabs (GetInput (0, n)));
     }
     else if (InputExists (1)) {
       m_GUIArgs.Auto = true;
