@@ -18,12 +18,115 @@
 #define __PROPERTY_H__
 
 #include <string>
+#include <vector>
+#include <map>
 
 #include "Types.h"
 #include "Sample.h"
 
 using namespace std;
 
+/* REWORK -
+	Like ports,
+	Properties should be created FOR a device
+	and the property then adds itself to the host
+	new *Property(this, name, flags, ....)
+
+	an Internal flag, means a state property,
+	otherwise a shared property
+
+	every readonly,
+	gets a public writeonly duplicate
+	and vica versa.
+
+	calling Syncronize on a writeonly,
+	sets the readonly's value,
+	and if forceupdate, calls
+	host->UpdateProperty(this)
+
+	the entire design should be under the concept of two threads
+	no matter how many threads there are, the property is only
+	in two threads, the processing thread, and the command thread
+	thus so long as synchronize is called from within a locked mutex
+	between command and audio, there will never be problems.
+
+	so Synth will handle this for us.
+
+	the complex issues are for complex properties,
+	where you don't want to have to COPY back and forth between
+	the private, and public copies of a property in-device,
+	all the contents and sub-properties...
+
+	but, so long as properties /themselves/ manage their polar opposite
+	it doesn't matter. creating a writeonly will automagically create
+	a readonly pair, and mark it private, and vica versa
+
+	Note - write vs read is based on public, not private,
+
+		so creating a writeonly property
+		is creating a readonly internal
+
+		and creating a readonly property
+		is creating a writeonly internal
+
+		aka a readonly property is one which
+		the device writes to, 
+		and a writeonly is one which it reads from
+
+
+	the question then is, can an external source
+	insert a new property into a complex property -
+
+	NO NO NO.
+
+	If that is needed, we can use a more complex mechanism later.
+	I don't think we need such a thing ever however.
+
+	a sane device would instead use say, a command property,
+	which allowed setting a new command (like add/delete property)
+
+	which is how the old SSM did things... but I don't think we need such a thing
+	what kind of single device needs commands that can't be instead better handled as properties?
+
+	like Mixer, yes it has public properties for each input, but that is set by a channel count,
+	which is a normal standalone property. the other side doesn't need to do anything, but set the channel
+	count....
+
+	the only exception to this rule is sequencing
+	and that I think should be broken out of the usual sphere of devices,
+	and made something special.. midi based. streaming values. 
+
+	but till then.. hmm. a custom property. Pattern, Notes.
+	Notes aren't properties, but have properties associated with them
+	so a Pattern would be a publically modifiable vector of Notes,
+	along with stacks of notes deleted, and added, and modified.
+
+	yes we will have NoteProperties, for loading, but in this case 
+	they won't add themselves to a host device, but instead a pattern property
+	and they won't ever be managed directly, but instead be private things,
+	/only/ for loading.
+
+	so calling synchronize on a Patten, would result in
+		for iter add.begin
+			add note
+
+		clear add
+
+		for iter delete.begin
+			delete note 
+
+		clear delete
+
+		for iter modify.begin
+			update note
+
+		clear modify
+
+	the other issue, is should pattern itself be like note, a special property,
+	not managed directly, only from a sequencer property, which could contain
+	multiple patterns..... hmm. think more on all this....
+
+*/
 namespace Spiral
 {
 	class Property
@@ -41,11 +144,7 @@ namespace Spiral
 		Property() {}
 		virtual ~Property() {}
 
-		Property(const Property &Copy)
-		{
-			m_Label = Copy.m_Label;
-			m_Hint = Copy.m_Hint;
-		}
+		Property(const Property &Copy);
 
 		virtual string ClassName()=0;
 
@@ -62,19 +161,9 @@ namespace Spiral
 		inline bool RequiresUpdates() { return m_ForceUpdate; }
 
 	protected:
-		Property(SignedType Flags) 
-		{
-			#define FlagSet(Flag) ((Flags & Flag) != 0)
+		Property(SignedType Flags);
 
-			m_ReadOnly = !FlagSet(WriteOnly);
-			m_Internal = FlagSet(Internal);
-			m_ForceUpdate = FlagSet(ForceUpdate);
-		}
-
-		void InvalidPropertyCopy(const Property& CopyFrom)
-		{
-			cerr << "WARNING - Incompatible Property Types. Cannot copy a " << ((Property&)CopyFrom).ClassName() << " into a " << ClassName() << "." << endl;
-		}
+		void InvalidPropertyCopy(const Property& CopyFrom);
 
 		bool m_ReadOnly, m_Internal, m_ForceUpdate;
 	private:
@@ -106,25 +195,12 @@ namespace Spiral
 	{
 	public:
 		PropertySet() {}
-		PropertySet(vector<NumericPropertyValue> Values)
-		{
-			m_Values.insert(m_Values.end(), Values.begin(), Values.end());
-		}
-
-		PropertySet(const NumericPropertyValue Values[], UnsignedType Count)
-		{
-			for (UnsignedType i = 0; i < Count; i++)
-			{
-				m_Values.push_back(Values[i]);
-			}
-		}
+		PropertySet(vector<NumericPropertyValue> Values);
+		PropertySet(const NumericPropertyValue Values[], UnsignedType Count);
 
 		inline UnsignedType size() { return m_Values.size(); }
 
-		inline NumericPropertyValue operator[](UnsignedType i)
-		{		
-			return m_Values[i];
-		}
+		inline NumericPropertyValue operator[](UnsignedType i) { return m_Values[i]; }
 
 	protected:
 		vector<NumericPropertyValue> m_Values;
@@ -147,29 +223,11 @@ namespace Spiral
 		#define NameArray(...) ((char*[]){__VA_ARGS__})
 
 		NamedPropertySet() {}
-		NamedPropertySet(vector<string> Names,vector<NumericPropertyValue> Values):
-		PropertySet(Values)
-		{
-			m_Names.insert(m_Names.end(), Names.begin(), Names.end());
+		NamedPropertySet(vector<string> Names,vector<NumericPropertyValue> Values);
 
-			for (UnsignedType i = 0; i < size(); i++)
-				m_Index[m_Names[i]] = i;
-		}
+		NamedPropertySet(const NamedPropertyValue Values[], UnsignedType Count);
 
-		NamedPropertySet(const NamedPropertyValue Values[], UnsignedType Count)
-		{
-			for (UnsignedType i = 0; i < Count; i++)
-			{
-				m_Values.push_back(Values[i].Value);
-				m_Names.push_back(Values[i].Name);
-				m_Index[Values[i].Name] = i;
-			}
-		}
-
-		inline string Names(UnsignedType i)
-		{		
-			return m_Names[i];
-		}
+		inline string Names(UnsignedType i) { return m_Names[i]; }
 
 		inline NumericPropertyValue operator[](string name)
 		{		
@@ -186,24 +244,9 @@ namespace Spiral
 		NumericProperty() {}
 		virtual ~NumericProperty() {}
 
-		NumericProperty(const NumericProperty &Copy):
-		Property(Copy)
-		{
-			Value = Copy.Value;
-		}
+		NumericProperty(const NumericProperty &Copy);
 
-		virtual void CopyValue(const Property &CopyFrom) 
-		{ 
-			if (!dynamic_cast<const NumericProperty*>(&CopyFrom))
-			{
-				InvalidPropertyCopy(CopyFrom);
-				return;
-			}
-
-			/* FIXME - This replaces current Type, instead of setting the right value */
-			Value = ((NumericProperty&)CopyFrom).Value; 
-		}
-
+		virtual void CopyValue(const Property &CopyFrom);
 		NumericPropertyValue Value;
 	protected:
 		NumericProperty(SignedType Flags): Property(Flags) {}
@@ -225,14 +268,7 @@ namespace Spiral
 		LinearProperty() {}
 		virtual ~LinearProperty() {}
 
-		LinearProperty(const LinearProperty &Copy) :
-		NumericProperty(Copy)
-		{
-			Min = Copy.Min;
-			Max = Copy.Max;
-			SmallStep = Copy.SmallStep;
-			Step = Copy.Step;
-		}
+		LinearProperty(const LinearProperty &Copy);
 
 		union
 		{
@@ -244,36 +280,14 @@ namespace Spiral
 
 		virtual void Clamp() {}
 
-		virtual void CopyValue(const Property &CopyFrom) 
-		{ 
-			if (!dynamic_cast<const LinearProperty*>(&CopyFrom))
-			{
-				InvalidPropertyCopy(CopyFrom);
-				return;
-			}
-
-			/* FIXME - This replaces current Type, instead of setting the right value */
-			const LinearProperty *copy = ((const LinearProperty*)&CopyFrom);
-			Value = copy->Value; 
-
-			Min = copy->Min;
-			Max = copy->Max;
-			SmallStep = copy->SmallStep;
-			Step = copy->Step;
-		}
+		virtual void CopyValue(const Property &CopyFrom);
 
 		inline bool IsLogarithmic() { return m_Logarithmic; }
 		inline bool IsClampLower() { return m_ClampLower; }
 		inline bool IsClampUpper() { return m_ClampUpper; }
 
 	protected:
-		LinearProperty(SignedType Flags): 
-		NumericProperty(Flags)
-		{
-			m_Logarithmic = FlagSet(Logarithmic);
-			m_ClampLower = FlagSet(ClampLower);
-			m_ClampUpper = FlagSet(ClampUpper);
-		}
+		LinearProperty(SignedType Flags);
 
 	private:
 		bool m_Logarithmic, m_ClampLower, m_ClampUpper;
@@ -287,27 +301,14 @@ namespace Spiral
 
 		SignedProperty(SignedType Flags, SignedType InitialValue, 
 				SignedType MinimumValue, SignedType MaximumValue, 
-				SignedType MinimumStep, SignedType DefaultStep):
-		LinearProperty(Flags)
-		{
-			Value.Type = NumericPropertyValue::Signed;
-			Value.AsSigned = InitialValue;
-
-			Min.AsSigned = MinimumValue;
-			Max.AsSigned = MaximumValue;
-			SmallStep.AsSigned = MinimumStep;
-			Step.AsSigned = DefaultStep;
-		}
+				SignedType MinimumStep, SignedType DefaultStep);
 
 		SignedProperty(const SignedProperty &Copy) :
 		LinearProperty(Copy)
 		{
 		}
 
-		virtual void Clamp()
-		{
-			Value.AsSigned = min(max(Value.AsSigned, Min.AsSigned),Max.AsSigned);
-		}
+		virtual void Clamp();
 
 		virtual string ClassName()
 		{
@@ -323,27 +324,14 @@ namespace Spiral
 
 		UnsignedProperty(SignedType Flags, UnsignedType InitialValue, 
 				UnsignedType MinimumValue, UnsignedType MaximumValue, 
-				UnsignedType MinimumStep, UnsignedType DefaultStep):
-		LinearProperty(Flags)
-		{
-			Value.Type = NumericPropertyValue::Unsigned;
-			Value.AsUnsigned = InitialValue;
-
-			Min.AsUnsigned = MinimumValue;
-			Max.AsUnsigned = MaximumValue;
-			SmallStep.AsUnsigned = MinimumStep;
-			Step.AsUnsigned = DefaultStep;
-		}
+				UnsignedType MinimumStep, UnsignedType DefaultStep);
 
 		UnsignedProperty(const UnsignedProperty &Copy) :
 		LinearProperty(Copy)
 		{
 		}
 
-		virtual void Clamp()
-		{
-			Value.AsUnsigned = min(max(Value.AsUnsigned, Min.AsUnsigned),Max.AsUnsigned);
-		}
+		virtual void Clamp();
 
 		virtual string ClassName()
 		{
@@ -359,28 +347,14 @@ namespace Spiral
 
 		FloatProperty(SignedType Flags, FloatType InitialValue, 
 				FloatType MinimumValue, FloatType MaximumValue, 
-				FloatType MinimumStep, FloatType DefaultStep):
-		LinearProperty(Flags)
-		{
-			Value.Type = NumericPropertyValue::Float;
-			Value.AsFloat = InitialValue;
-
-			Min.AsFloat = MinimumValue;
-			Max.AsFloat = MaximumValue;
-			SmallStep.AsFloat = MinimumStep;
-			Step.AsFloat = DefaultStep;
-		}
+				FloatType MinimumStep, FloatType DefaultStep);
 
 		FloatProperty(const FloatProperty &Copy) :
 		LinearProperty(Copy)
 		{
 		}
 
-		virtual void Clamp()
-		{
-			Value.AsFloat = min(max(Value.AsFloat, Min.AsFloat),Max.AsFloat);
-		}
-
+		virtual void Clamp();
 		virtual string ClassName()
 		{
 			return "FloatProperty";
@@ -408,18 +382,9 @@ namespace Spiral
 		SetProperty() {}
 		virtual ~SetProperty() {}
 
-		SetProperty(SignedType Flags, UnsignedType InitialValueIndex, PropertySet Set):
-		NumericProperty(Flags)
-		{
-			m_Set = Set;
-			Value = m_Set[InitialValueIndex];
-		}
+		SetProperty(SignedType Flags, UnsignedType InitialValueIndex, PropertySet Set);
 
-		SetProperty(const SetProperty &Copy) :
-		NumericProperty(Copy)
-		{
-			m_Set = Copy.m_Set;
-		}
+		SetProperty(const SetProperty &Copy);
 
 		inline PropertySet Set() { return m_Set; }
 
@@ -440,22 +405,9 @@ namespace Spiral
 		StringProperty(SignedType Flags, string InitialValue): Property(Flags) { Value = InitialValue; }
 		StringProperty(SignedType Flags, const char *InitialValue): Property(Flags) { Value = InitialValue; }
 
-		StringProperty(const StringProperty &Copy):
-		Property(Copy)
-		{
-			Value = Copy.Value;
-		}
+		StringProperty(const StringProperty &Copy);
 
-		inline void CopyValue(const Property &CopyFrom)
-		{
-			if (!dynamic_cast<const StringProperty*>(&CopyFrom))
-			{
-				InvalidPropertyCopy(CopyFrom);
-				return;
-			}
-
-			Value = ((StringProperty&)CopyFrom).Value; 
-		}
+		virtual void CopyValue(const Property &CopyFrom);
 
 		virtual string ClassName()
 		{
@@ -474,45 +426,11 @@ namespace Spiral
 		virtual ~NoteProperty() {}
 
 		NoteProperty(SignedType Flags, UnsignedType InitialNote, UnsignedType InitialOctave,
-					FloatType InitialVelocity):
-		Property(Flags) 
-		{ 
-			/* Notes start at 1 */
-			Note = InitialNote;
+					FloatType InitialVelocity);
 
-			/* 8 Octaves */
-			Octave = InitialOctave;
+		NoteProperty(const NoteProperty &Copy);
 
-			/* Constrain to 0-127, (Velocity*127) */
-			Velocity = InitialVelocity;
-
-			/* Start/End Positions */
-			Start = 0;
-			End = 0;
-		}
-
-		NoteProperty(const NoteProperty &Copy):
-		Property(Copy)
-		{
-			CopyValue(Copy);
-		}
-
-		inline void CopyValue(const Property &CopyFrom) 
-		{ 
-			if (!dynamic_cast<const NoteProperty*>(&CopyFrom))
-			{
-				InvalidPropertyCopy(CopyFrom);
-				return;
-			}
-
-			const NoteProperty *copy = ((const NoteProperty*)&CopyFrom);
-
-			Note = copy->Note;
-			Octave = copy->Octave;
-			Velocity = copy->Velocity;
-			Start = copy->Start;
-			End = copy->End;
-		}
+		virtual void CopyValue(const Property &CopyFrom);
 
 		UnsignedType Note; /* 1-12, "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" */
 		UnsignedType Octave; /* 0-6 */
@@ -538,23 +456,9 @@ namespace Spiral
 
 		SampleProperty(SignedType Flags, UnsignedType InitialSize): Property(Flags) { Value = Sample(InitialSize); }
 
-		SampleProperty(const SampleProperty &Copy):
-		Property(Copy)
-		{
-			CopyValue(Copy);
-		}
+		SampleProperty(const SampleProperty &Copy);
 
-		virtual void CopyValue(const Property &CopyFrom) 
-		{
-			if (!dynamic_cast<const SampleProperty*>(&CopyFrom))
-			{
-				InvalidPropertyCopy(CopyFrom);
-				return;
-			}
-
-			Value.Clear(); 
-			Value.Add(((SampleProperty&)CopyFrom).Value); 
-		}
+		virtual void CopyValue(const Property &CopyFrom);
 
 		Sample Value;
 
@@ -588,28 +492,10 @@ namespace Spiral
 		{
 		}
 
-		VectorProperty(SignedType Flags, vector<Property*> Values): 
-		ComplexProperty(Flags)
-		{
-			CopyContents(Values);
-		}
+		VectorProperty(SignedType Flags, vector<Property*> Values);
 
-		VectorProperty(const ComplexProperty &Copy):
-		ComplexProperty(Copy)
-		{
-			CopyValue(Copy);
-		}
-
-		virtual void CopyValue(const Property &CopyFrom)
-		{ 
-			if (!dynamic_cast<const VectorProperty*>(&CopyFrom))
-			{
-				InvalidPropertyCopy(CopyFrom);
-				return;
-			}
-
-			CopyContents(((const VectorProperty*)&CopyFrom)->Values);
-		}
+		VectorProperty(const ComplexProperty &Copy);
+		virtual void CopyValue(const Property &CopyFrom);
 
 		virtual Property* operator[](UnsignedType i)
 		{		
@@ -632,18 +518,9 @@ namespace Spiral
 		}
 
 		vector<Property*> Values;
-	protected:
 
-		virtual inline void CopyContents(vector<Property*> Contents)
-		{
-			if (!Contents.size()) return;
-
-			for (UnsignedType i=0; i < Contents.size(); i++)
-			{
-				if (Contents[i])
-					Values.push_back(Contents[i]);
-			}
-		}
+	private:
+		inline void CopyContents(vector<Property*> Contents);
 	};
 }
 
