@@ -126,6 +126,56 @@ using namespace std;
 	not managed directly, only from a sequencer property, which could contain
 	multiple patterns..... hmm. think more on all this....
 
+	for device/gui thread safety, two methods must be called to synchronize
+		property->Synchronize() synchronizes the shared and holding
+		Device->SynchronizeProperty(property) calls
+			property->SynchronizeLocal(), which synchronizes the local and holding
+
+		both functions will use seperate booleans to handle who is holding.
+
+
+		thus in a non-threaded use case,
+			property->value = blah;
+
+			if (property->IsReadOnly())
+				if (Device->SynchronizeProperty(property))
+					property->Synchronize();
+			else
+				if (property->Synchronize())
+					Device->SynchronizeProperty(property))
+
+	synth->SynchronizeProperty(property)
+		if synth thread
+			if (Device->SynchronizeProperty(property))
+				SynchronizeProperty(property);
+
+		if command thread
+			if (property->Synchronize())
+				SynchronizeProperty(property);
+
+	Device->SynchronizeProperty(property)
+	{
+		return property->SynchronizeLocal();
+	}
+
+
+	this still won't work.. I am missing.. something... work brain work....
+
+
+	whatever.. in the interim.
+
+	keep things the hackish way as is, but bringing in the pattern concept from above.
+
+	and implement a duplicate feature, to create a deep copy. (which we need anyway)
+
+	when a gui creates an object, it will call device,
+	to get a deep copy of everything .
+
+
+	so 
+		GUI
+			device = new ...
+			properties = device->SharedProperties()
 */
 namespace Spiral
 {
@@ -146,9 +196,14 @@ namespace Spiral
 
 		Property(const Property &Copy);
 
+		virtual Property *Duplicate()=0;
 		virtual string ClassName()=0;
 
 		virtual void CopyValue(const Property &CopyFrom)=0;
+
+		inline bool IsReferenced() { return (m_References!=0); }
+		inline void Reference() { m_References++; }
+		inline void UnReference() { m_References--; }
 
 		inline string GetLabel() { return m_Label; }
 		inline string GetHint() { return m_Hint; }
@@ -168,6 +223,7 @@ namespace Spiral
 		bool m_ReadOnly, m_Internal, m_ForceUpdate;
 	private:
 		string m_Name, m_Label, m_Hint;
+		int m_References;
 	};
 
 	typedef struct
@@ -280,8 +336,6 @@ namespace Spiral
 
 		virtual void Clamp() {}
 
-		virtual void CopyValue(const Property &CopyFrom);
-
 		inline bool IsLogarithmic() { return m_Logarithmic; }
 		inline bool IsClampLower() { return m_ClampLower; }
 		inline bool IsClampUpper() { return m_ClampUpper; }
@@ -308,6 +362,11 @@ namespace Spiral
 		{
 		}
 
+		virtual Property *Duplicate()
+		{
+			return new SignedProperty(*this);
+		}
+
 		virtual void Clamp();
 
 		virtual string ClassName()
@@ -330,6 +389,12 @@ namespace Spiral
 		LinearProperty(Copy)
 		{
 		}
+
+		virtual Property *Duplicate()
+		{
+			return new UnsignedProperty(*this);
+		}
+
 
 		virtual void Clamp();
 
@@ -354,6 +419,11 @@ namespace Spiral
 		{
 		}
 
+		virtual Property *Duplicate()
+		{
+			return new FloatProperty(*this);
+		}
+
 		virtual void Clamp();
 		virtual string ClassName()
 		{
@@ -370,6 +440,11 @@ namespace Spiral
 		ToggleProperty(SignedType Flags, bool InitialValue) : NumericProperty(Flags) { Value.AsBoolean = InitialValue; }
 		ToggleProperty(const ToggleProperty &Copy) : NumericProperty(Copy){}
 
+		virtual Property *Duplicate()
+		{
+			return new ToggleProperty(*this);
+		}
+
 		virtual string ClassName()
 		{
 			return "ToggleProperty";
@@ -385,6 +460,11 @@ namespace Spiral
 		SetProperty(SignedType Flags, UnsignedType InitialValueIndex, PropertySet Set);
 
 		SetProperty(const SetProperty &Copy);
+
+		virtual Property *Duplicate()
+		{
+			return new SetProperty(*this);
+		}
 
 		inline PropertySet Set() { return m_Set; }
 
@@ -406,6 +486,11 @@ namespace Spiral
 		StringProperty(SignedType Flags, const char *InitialValue): Property(Flags) { Value = InitialValue; }
 
 		StringProperty(const StringProperty &Copy);
+
+		virtual Property *Duplicate()
+		{
+			return new StringProperty(*this);
+		}
 
 		virtual void CopyValue(const Property &CopyFrom);
 
@@ -429,6 +514,12 @@ namespace Spiral
 					FloatType InitialVelocity);
 
 		NoteProperty(const NoteProperty &Copy);
+
+		virtual Property *Duplicate()
+		{
+			return new NoteProperty(*this);
+		}
+
 
 		virtual void CopyValue(const Property &CopyFrom);
 
@@ -457,6 +548,11 @@ namespace Spiral
 		SampleProperty(SignedType Flags, UnsignedType InitialSize): Property(Flags) { Value = Sample(InitialSize); }
 
 		SampleProperty(const SampleProperty &Copy);
+
+		virtual Property *Duplicate()
+		{
+			return new SampleProperty(*this);
+		}
 
 		virtual void CopyValue(const Property &CopyFrom);
 
@@ -495,6 +591,11 @@ namespace Spiral
 		VectorProperty(SignedType Flags, vector<Property*> Values);
 
 		VectorProperty(const ComplexProperty &Copy);
+		virtual Property *Duplicate()
+		{
+			return new VectorProperty(*this);
+		}
+
 		virtual void CopyValue(const Property &CopyFrom);
 
 		virtual Property* operator[](UnsignedType i)

@@ -25,8 +25,13 @@ using namespace Spiral;
 
 Property::Property(const Property &Copy)
 {
+	m_References = 1;
 	m_Label = Copy.m_Label;
 	m_Hint = Copy.m_Hint;
+
+	m_ReadOnly = Copy.m_ReadOnly;
+	m_Internal = Copy.m_Internal;
+	m_ForceUpdate =Copy.m_ForceUpdate;
 }
 
 Property::Property(SignedType Flags) 
@@ -36,6 +41,8 @@ Property::Property(SignedType Flags)
 	m_ReadOnly = !FlagSet(WriteOnly);
 	m_Internal = FlagSet(Internal);
 	m_ForceUpdate = FlagSet(ForceUpdate);
+
+	m_References = 1;
 }
 
 void Property::InvalidPropertyCopy(const Property& CopyFrom)
@@ -100,23 +107,6 @@ NumericProperty(Copy)
 	Max = Copy.Max;
 	SmallStep = Copy.SmallStep;
 	Step = Copy.Step;
-}
-void LinearProperty::CopyValue(const Property &CopyFrom) 
-{ 
-	if (!dynamic_cast<const LinearProperty*>(&CopyFrom))
-	{
-		InvalidPropertyCopy(CopyFrom);
-		return;
-	}
-
-	/* FIXME - This replaces current Type, instead of setting the right value */
-	const LinearProperty *copy = ((const LinearProperty*)&CopyFrom);
-	Value = copy->Value; 
-
-	Min = copy->Min;
-	Max = copy->Max;
-	SmallStep = copy->SmallStep;
-	Step = copy->Step;
 }
 
 LinearProperty::LinearProperty(SignedType Flags): 

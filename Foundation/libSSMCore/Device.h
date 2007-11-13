@@ -81,7 +81,18 @@ namespace Spiral
 		inline Patch *Host() { return m_Host; }
 
 		inline bool IsLive() { return m_Initialized; }
-		inline void SetVoice(UnsignedType voice) { m_CurrentVoice = voice; }
+		inline void SetVoice(UnsignedType voice) 
+		{ 
+			#ifdef BOUNDS_CHECK
+			if (UNLIKELY(voice >= m_VoiceCount))
+			{
+				cerr << "Voice Index Out Of Bounds" << endl;
+			}
+			#endif
+
+			m_CurrentVoice = voice; 
+		}
+
 		inline UnsignedType GetVoice() { return m_CurrentVoice; }
 
 		/* Ports */
@@ -104,6 +115,52 @@ namespace Spiral
 		#define GetOutputBuffer(output_port) output_port->GetSampleBuffer(GetVoice())
 		#define SetOutput(output_port, pos, value) output_port->SetSampleValue(pos, value, GetVoice())
 		#define SetOutputPitch(output_port, pos, value) output_port->SetSamplePitch(pos, value, GetVoice())
+
+		/* Shared Properties */
+		inline Property* DuplicateProperty(string &Key)
+		{
+			if (m_State.Properties.count(Key))
+			{
+				return m_State.Properties[Key]->Duplicate();
+			}
+
+			return NULL;
+		}
+
+		inline void DuplicateProperties(map<string,Property*> &External)
+		{
+			map<string, Property*>::iterator prop;
+
+			for (prop = m_State.Properties.begin();
+				prop != m_State.Properties.end();
+				prop++)
+			{
+				if (!External.count(prop->first))
+					External[prop->first] = prop->second->Duplicate();
+			}
+		}
+
+		inline void SynchronizeProperty(string Key, Property *Value)
+		{
+			if (m_State.Properties.count(Key))
+			{
+				Property *shared = m_State.Properties[Key];
+
+				if (shared->IsReadOnly())
+					Value->CopyValue(*shared);
+				else
+				{
+					shared->CopyValue(*Value);
+	
+					if (shared->RequiresUpdates())
+						UpdateProperty(Key);
+				}
+
+				return;
+			}
+
+			//WARNING?
+		}
 
 	protected:
 		/* Ports */
