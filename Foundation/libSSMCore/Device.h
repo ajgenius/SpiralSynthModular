@@ -221,7 +221,7 @@ namespace Spiral
 			string key = Label;
 			transform (key.begin(), key.end(), key.begin(), (int(*)(int))std::toupper);
 
-			m_State.UpdateData.erase(m_State.Properties[Label]);
+			m_State.UpdateData.erase(m_State.Properties[key]);
 			m_State.Properties.erase(key);
 		}
 
