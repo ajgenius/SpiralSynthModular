@@ -26,8 +26,10 @@
 #include <string.h>
 #include <termios.h>
 #include <stdio.h>
-#include <iostream.h>
 #include <pthread.h>
+
+#include <iostream>
+#include <string>
 
 class scratch {
    public:

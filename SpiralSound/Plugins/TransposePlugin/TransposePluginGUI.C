@@ -17,7 +17,7 @@
 */
 
 #include "TransposePluginGUI.h"
-#include <FL/fl_draw.h>
+#include <Fl/fl_draw.H>
 
 using namespace std;
 

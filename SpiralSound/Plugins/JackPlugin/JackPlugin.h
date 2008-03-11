@@ -72,7 +72,7 @@ public:
 	class JackPort
 	{		
 		public:
-		JackPort::JackPort() :
+		JackPort() :
 			Connected(false),Buf(NULL),Port(NULL) {}
 		
 		int            PortNo;

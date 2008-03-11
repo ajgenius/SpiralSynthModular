@@ -17,7 +17,7 @@
 */
 #include "SplitSwitchPlugin.h"
 #include "SplitSwitchPluginGUI.h"
-#include <FL/Fl_Button.h>
+#include <Fl/Fl_Button.H>
 #include <stdio.h>
 #include "SpiralIcon.xpm"
 

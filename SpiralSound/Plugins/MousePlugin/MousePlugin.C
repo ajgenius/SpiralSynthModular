@@ -20,6 +20,8 @@
 
 #define SCRATCH_DEVICE "/dev/ttyS0"
 
+#include <string>
+
 #include "MousePlugin.h"
 #include "MousePluginGUI.h"
 #include "SpiralIcon.xpm"
@@ -32,7 +34,7 @@ char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
 
 int SpiralPlugin_GetID() { return 300; }
 
-string SpiralPlugin_GetGroupName() { return "InputOutput"; }
+// string SpiralPlugin_GetGroupName() { return "InputOutput"; }
 
 }
 

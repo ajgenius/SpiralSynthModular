@@ -17,7 +17,7 @@
 */
 #include "SamplerPlugin.h"
 #include "SamplerPluginGUI.h"
-#include <FL/Fl_Button.h>
+#include <Fl/Fl_Button.H>
 #include "SpiralIcon.xpm"
 #include "../../RiffWav.h"
 #include "../../NoteTable.h"

@@ -26,9 +26,9 @@
 #include <dlfcn.h>
 #include <FL/Fl.H>
 #include <FL/Enumerations.H>
-#include <FL/fl_file_chooser.h>
-#include <FL/Fl_Box.h>
-#include <FL/Fl_Tooltip.h>
+#include <Fl/fl_file_chooser.H>
+#include <Fl/Fl_Box.H>
+#include <Fl/Fl_Tooltip.H>
 #include "SpiralSynthModular.h"
 #include "SpiralSound/PluginManager.h"
 #include "SpiralSound/SpiralInfo.h"

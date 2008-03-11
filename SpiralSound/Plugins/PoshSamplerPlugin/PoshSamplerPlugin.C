@@ -17,7 +17,7 @@
 */
 #include "PoshSamplerPlugin.h"
 #include "PoshSamplerPluginGUI.h"
-#include <FL/Fl_Button.h>
+#include <Fl/Fl_Button.H>
 #include "SpiralIcon.xpm"
 #include "../../NoteTable.h"
 #include "../../RiffWav.h"

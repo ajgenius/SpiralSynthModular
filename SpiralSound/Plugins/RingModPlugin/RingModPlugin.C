@@ -18,7 +18,7 @@
 #include <math.h>
 #include "RingModPlugin.h"
 #include "RingModPluginGUI.h"
-#include <FL/Fl_Button.h>
+#include <Fl/Fl_Button.H>
 #include "SpiralIcon.xpm"
 
 using namespace std;

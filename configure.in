@@ -42,7 +42,7 @@ PLUGINLIST="AmpPlugin AnotherFilterPlugin BeatMatchPlugin ControllerPlugin \
 CounterPlugin DelayPlugin DiskWriterPlugin DistributorPlugin EchoPlugin \
 EnvFollowerPlugin EnvelopePlugin FilterPlugin FlipflopPlugin FormantFilterPlugin \
 KeyboardPlugin LFOPlugin LogicPlugin MasherPlugin MatrixPlugin \
-MeterPlugin MidiPlugin MixSwitchPlugin MixerPlugin MoogFilterPlugin MousePlugin NoisePlugin \
+MeterPlugin MidiPlugin MixSwitchPlugin MixerPlugin MoogFilterPlugin NoisePlugin \
 NoteSnapPlugin OperatorPlugin OscillatorPlugin OutputPlugin PoshSamplerPlugin \
 RingModPlugin SVFilterPlugin SampleHoldPlugin ScopePlugin SeqSelectorPlugin \
 SmoothPlugin SpiralLoopPlugin SplitSwitchPlugin SplitterPlugin StereoMixerPlugin \
@@ -239,7 +239,6 @@ SpiralSound/Plugins/MidiPlugin/Makefile
 SpiralSound/Plugins/MixSwitchPlugin/Makefile
 SpiralSound/Plugins/MixerPlugin/Makefile
 SpiralSound/Plugins/MoogFilterPlugin/Makefile
-SpiralSound/Plugins/MousePlugin/Makefile
 SpiralSound/Plugins/NoisePlugin/Makefile
 SpiralSound/Plugins/NoteSnapPlugin/Makefile
 SpiralSound/Plugins/OperatorPlugin/Makefile
