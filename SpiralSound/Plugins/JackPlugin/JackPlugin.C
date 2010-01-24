@@ -39,7 +39,10 @@ inline void JackClient::JackProcess_i(jack_nframes_t nframes)
 		if (jack_port_connected(m_InputPortMap[n]->Port))
 		{
 			sample_t *in = (sample_t *) jack_port_get_buffer(m_InputPortMap[n]->Port, nframes);
-			memcpy (m_InputPortMap[n]->Buf, in, sizeof (sample_t) * GetBufferSize());
+
+			assert( m_InputPortMap[n]->Buf );
+
+			memcpy( m_InputPortMap[n]->Buf, in, sizeof (sample_t) * GetBufferSize());
 		}			
 	}
 	
@@ -50,6 +53,9 @@ inline void JackClient::JackProcess_i(jack_nframes_t nframes)
 			if ((m_OutputPortMap[n]->Buf) && (!host->PAUSED))
 			{ 
 				sample_t *out = (sample_t *) jack_port_get_buffer(m_OutputPortMap[n]->Port, nframes);
+				
+				assert( m_OutputPortMap[n]->Buf );
+				
 				memcpy (out, m_OutputPortMap[n]->Buf, sizeof (sample_t) * GetBufferSize());
 			}
 			else // no output availible, clear
@@ -208,6 +214,8 @@ bool JackClient::Attach()
 	m_OutputPortMap.clear();
 	for (int n=0; n<GetJackOutputCount(); n++)
 	  AddOutputPort(n);
+
+	// ProcessAudio();
 
 	// tell the JACK server that we are ready to roll 
 	if (jack_activate (m_Client)) 

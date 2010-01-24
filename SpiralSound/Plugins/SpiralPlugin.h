@@ -24,6 +24,7 @@
 #include <string>
 #include <iostream>
 #include <math.h>
+#include <stdlib.h>
 #include <Fl/Fl.H>
 #include <Fl/Fl_Group.H>
 #include "../Sample.h"

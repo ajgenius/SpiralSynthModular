@@ -20,6 +20,7 @@
 #include <Fl/Fl_Button.H>
 #include <limits.h>
 #include "SpiralIcon.xpm"
+#include <stdlib.h>
 
 using namespace std;
 

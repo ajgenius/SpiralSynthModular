@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <limits.h>
 #include <iostream>
+#include <cstring>
 
 //#define DEBUG
 
