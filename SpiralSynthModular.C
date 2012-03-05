@@ -1247,7 +1247,7 @@ inline void SynthModular::cb_Save_i (Fl_Widget *o, void *v) {
              m_TopWindow->label (TITLEBAR.c_str());
           }
           else {
-             fl_message (string ("Error saving " + string(fn)).c_str());
+              fl_message ( "%s", string ("Error saving " + string(fn)).c_str());
           }
        }
 }
