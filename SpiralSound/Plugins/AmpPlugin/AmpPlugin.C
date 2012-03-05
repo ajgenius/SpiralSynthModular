@@ -18,7 +18,7 @@
 #include <math.h>
 #include "AmpPlugin.h"
 #include "AmpPluginGUI.h"
-#include <Fl/Fl_Button.H>
+#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 
 #define PI 3.141592654

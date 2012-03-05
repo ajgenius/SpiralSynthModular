@@ -17,7 +17,7 @@
 */
 #include "NoteSnapPlugin.h"
 #include "NoteSnapPluginGUI.h"
-#include <Fl/Fl_Button.H>
+#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 #include "../../NoteTable.h"
 

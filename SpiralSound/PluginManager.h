@@ -16,8 +16,8 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include <Fl/Fl_Double_Window.H>
-#include <Fl/Fl_Pixmap.H>
+#include <FL/Fl_Double_Window.H>
+#include <FL/Fl_Pixmap.H>
 #include <iostream>
 #include <vector>
 #include "Plugins/SpiralPlugin.h"

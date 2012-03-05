@@ -18,7 +18,7 @@
 
 #include <stdio.h>
 #include "ComplexEnvelopePluginGUI.h"
-#include <Fl/fl_draw.H>
+#include <FL/fl_draw.H>
 #include <FL/fl_draw.H>
 
 static const float TIMED_SLIDER_MAX = 3.0f;

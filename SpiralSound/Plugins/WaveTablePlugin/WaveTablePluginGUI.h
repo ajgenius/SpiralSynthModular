@@ -21,9 +21,9 @@
 
 #include <FL/Fl_Pixmap.H>
 #include <FL/Fl_Counter.H>
-#include <Fl/Fl_Tabs.H>
-#include <Fl/Fl_Group.H>
-#include <Fl/Fl_Button.H>
+#include <FL/Fl_Tabs.H>
+#include <FL/Fl_Group.H>
+#include <FL/Fl_Button.H>
 #include "../Widgets/Fl_LED_Button.H"
 #include "../Widgets/Fl_Knob.H"
 #include "../SpiralPluginGUI.h"

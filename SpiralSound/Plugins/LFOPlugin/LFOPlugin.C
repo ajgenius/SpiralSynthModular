@@ -18,7 +18,7 @@
 
 #include "LFOPlugin.h"
 #include "LFOPluginGUI.h"
-#include <Fl/Fl_Button.H>
+#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 
 using namespace std;

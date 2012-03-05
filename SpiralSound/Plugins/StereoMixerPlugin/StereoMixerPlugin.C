@@ -17,7 +17,7 @@
 */ 
 #include "StereoMixerPlugin.h"
 #include "StereoMixerPluginGUI.h"
-#include <Fl/Fl_Button.H>
+#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 
 using namespace std;

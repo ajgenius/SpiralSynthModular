@@ -18,9 +18,9 @@
 
 #include <stdio.h>
 #include "SeqPluginGUI.h"
-#include <Fl/fl_draw.H>
 #include <FL/fl_draw.H>
-#include <Fl/fl_file_chooser.H>
+#include <FL/fl_draw.H>
+#include <FL/fl_file_chooser.H>
 
 using namespace std;
 

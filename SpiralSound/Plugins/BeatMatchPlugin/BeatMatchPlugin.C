@@ -17,7 +17,7 @@
 */ 
 #include "BeatMatchPlugin.h"
 #include "BeatMatchPluginGUI.h"
-#include <Fl/Fl_Button.H>
+#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 #include "../../NoteTable.h"
 

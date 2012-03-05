@@ -17,7 +17,7 @@
 */
 #include "OscillatorPlugin.h"
 #include "OscillatorPluginGUI.h"
-#include <Fl/Fl_Button.H>
+#include <FL/Fl_Button.H>
 #include <limits.h>
 #include "SpiralIcon.xpm"
 #include <stdlib.h>

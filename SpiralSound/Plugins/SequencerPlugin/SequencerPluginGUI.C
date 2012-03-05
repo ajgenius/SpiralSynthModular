@@ -18,9 +18,9 @@
 
 #include <stdio.h>
 #include "SequencerPluginGUI.h"
-#include <Fl/fl_draw.H>
 #include <FL/fl_draw.H>
-#include <Fl/fl_file_chooser.H>
+#include <FL/fl_draw.H>
+#include <FL/fl_file_chooser.H>
 #include <FL/Fl_Color_Chooser.H>
 
 using namespace std;

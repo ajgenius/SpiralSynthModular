@@ -17,7 +17,7 @@
 */ 
 #include "ComplexEnvelopePlugin.h"
 #include "ComplexEnvelopePluginGUI.h"
-#include <Fl/Fl_Button.H>
+#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 
 extern "C" {

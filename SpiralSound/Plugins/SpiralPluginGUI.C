@@ -19,11 +19,11 @@
 #include "SpiralPluginGUI.h"
 #include "SpiralPlugin.h"
 #include "../SpiralInfo.h"
-#include <Fl/fl_draw.H>
 #include <FL/fl_draw.H>
-#include <Fl/Fl_Multiline_Output.H>
-#include <Fl/Fl_Text_Display.H>
-#include <Fl/Fl_Text_Buffer.H>
+#include <FL/fl_draw.H>
+#include <FL/Fl_Multiline_Output.H>
+#include <FL/Fl_Text_Display.H>
+#include <FL/Fl_Text_Buffer.H>
 
 using namespace std;
 

@@ -19,7 +19,7 @@
 #ifndef COMMENTGUI
 #define COMMENTGUI
 
-#include <Fl/Fl_Input.H>
+#include <FL/Fl_Input.H>
 #include "Fl_DeviceGUI.h"
 
 class Fl_CommentGUI : public Fl_DeviceGUI

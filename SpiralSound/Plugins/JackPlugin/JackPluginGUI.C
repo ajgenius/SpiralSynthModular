@@ -18,7 +18,7 @@
 
 #include "JackPlugin.h"
 #include "JackPluginGUI.h"
-#include <Fl/fl_draw.H>
+#include <FL/fl_draw.H>
 #include <FL/fl_file_chooser.H>
 #include <FL/Fl_Hold_Browser.H>
 #include <algorithm>

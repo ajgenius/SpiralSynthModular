@@ -2,10 +2,10 @@
 version 1.0100 
 header_name {.H} 
 code_name {.cxx}
-decl {\#include <Fl/Fl_Valuator.H>} {public
+decl {\#include <FL/Fl_Valuator.H>} {public
 } 
 
-decl {\#include <Fl/fl_draw.H>} {} 
+decl {\#include <FL/fl_draw.H>} {} 
 
 decl {\#include <math.h>} {} 
 

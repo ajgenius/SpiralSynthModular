@@ -17,7 +17,7 @@
 */
 
 #include "FilterPluginGUI.h"
-#include <Fl/fl_draw.H>
+#include <FL/fl_draw.H>
 #include <FL/fl_draw.H>
 
 using namespace std;

@@ -18,7 +18,7 @@
 */
 
 #include "MousePluginGUI.h"
-#include <Fl/fl_draw.H>
+#include <FL/fl_draw.H>
 #include <FL/fl_draw.H>
 
 ScratchWidget::ScratchWidget (int x, int y, int w, int h, const char *l) :

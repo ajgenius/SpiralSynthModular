@@ -17,7 +17,7 @@
 */ 
 #include "CounterPlugin.h"
 #include "CounterPluginGUI.h"
-#include <Fl/Fl_Button.H>
+#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 #include "../../NoteTable.h"
 

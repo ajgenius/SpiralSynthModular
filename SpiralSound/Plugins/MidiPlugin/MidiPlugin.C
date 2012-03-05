@@ -18,7 +18,7 @@
 
 #include "MidiPlugin.h"
 #include "MidiPluginGUI.h"
-#include <Fl/Fl_Button.H>
+#include <FL/Fl_Button.H>
 #include "../../NoteTable.h"
 #include "../../Midi.h"
 #include "SpiralIcon.xpm"
