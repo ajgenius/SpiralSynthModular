@@ -26,7 +26,7 @@
 #include <dlfcn.h>
 #include <FL/Fl.H>
 #include <FL/Enumerations.H>
-#include <FL/fl_file_chooser.H>
+#include <FL/Fl_File_Chooser.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Tooltip.H>
 #include "SpiralSynthModular.h"
