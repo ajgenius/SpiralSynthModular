@@ -283,7 +283,7 @@ void SpiralInfo::StreamInPrefs (istream &s)
 			 */   
 			s.seekg (2, ios::cur );
 			
-			while (! s.eof ())
+			while (! s.eof () && ! s.fail() )
 			{
 				/* peek first char to find out if this is a delimiter line
 				   a header line, or a regular section 
@@ -323,6 +323,7 @@ void SpiralInfo::StreamInPrefs (istream &s)
 							{
 								s >> st;
 								if (st!="end" && USEPLUGINLIST) PLUGINVEC.push_back (st);
+                                                                printf ( "loop\n" );
 							}	
 
 							/* move to next line */
@@ -451,11 +452,11 @@ void SpiralInfo::StreamOutPrefs (ostream &s)
 	s << "[PLUGINS]" << endl;
 	s << "PluginPath        = " << PLUGIN_PATH << endl;
 	s << "PluginList        = " << endl;
-	for (vector<string>::iterator i=PLUGINVEC.begin(); i!=PLUGINVEC.end(); i++) 
+	for (vector<string>::iterator i=PLUGINVEC.begin(); i!=PLUGINVEC.end(); i++)
 	{
 		s << *i << endl;
 	}
-	s << "end" << endl;  
+	s << "end" << endl;
 }
 
 void SpiralInfo::Alert (string Text) {
