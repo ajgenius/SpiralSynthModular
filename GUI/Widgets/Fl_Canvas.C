@@ -22,6 +22,7 @@
 #include "Fl_DeviceGUI.h"
 #include <iostream>
 #include "../../SpiralSound/SpiralInfo.h"
+#include <math.h>
 
 // no of calls to handle when dragged, before the widget is redrawn
 // to allow the wire (connection currently being made) to be redrawn
@@ -388,12 +389,43 @@ void Fl_Canvas::DrawWires()
              case 4:     col = (Fl_Color) WIRE_COL4; break;
              default:    col = (Fl_Color) WIRE_COL0;
          }
- 		fl_color(col);
+         fl_color(fl_color_add_alpha( col, 127 ));
 
-		fl_line(SourceDevice->GetPortX(i->OutputPort+SourceDevice->GetInfo()->NumInputs),
-				SourceDevice->GetPortY(i->OutputPort+SourceDevice->GetInfo()->NumInputs),
-				DestDevice->GetPortX(i->InputPort),
-				DestDevice->GetPortY(i->InputPort));
+                double ep1_x, ep1_y, ep2_x, ep2_y,
+                    ep1_mix_x,
+                    ep1_new_x,
+                    ep1_mid_x,
+                    ep2_mid_x,
+                    ep2_new_x,
+                    ep1_mid_y,
+                    ep2_mid_y;
+                
+                ep1_x = SourceDevice->GetPortX(i->OutputPort+SourceDevice->GetInfo()->NumInputs);
+                
+                ep1_y = SourceDevice->GetPortY(i->OutputPort+SourceDevice->GetInfo()->NumInputs);
+                ep1_mid_y = ep1_y + 7.5;
+                
+                
+                ep2_x = DestDevice->GetPortX(i->InputPort);
+                ep2_y = DestDevice->GetPortY(i->InputPort);
+                ep2_mid_y = 7.5 + ep2_y;
+                
+                ep1_mid_x = fabs(ep1_x-ep2_x)/2;
+                ep1_new_x = ep1_x+ep1_mid_x;
+                
+                ep2_mid_x = fabs(ep1_x-ep2_x)/2;
+                ep2_new_x = ep2_x-ep2_mid_x;
+                
+                fl_begin_line();
+                
+                fl_curve( ep1_x, ep1_y, ep1_new_x, ep1_mid_y, ep2_new_x, ep2_mid_y, ep2_x, ep2_y );
+                
+                fl_end_line();
+
+		/* fl_line(SourceDevice->GetPortX(i->OutputPort+SourceDevice->GetInfo()->NumInputs), */
+		/* 		SourceDevice->GetPortY(i->OutputPort+SourceDevice->GetInfo()->NumInputs), */
+		/* 		DestDevice->GetPortX(i->InputPort), */
+		/* 		DestDevice->GetPortY(i->InputPort)); */
 	}
 
 	DrawIncompleteWire();
