@@ -365,6 +365,8 @@ void Fl_Canvas::StreamSelectionWiresOut(ostream &s)
 
 void Fl_Canvas::DrawWires()
 {
+        fl_line_style( FL_SOLID, 2 );
+
 	for(vector<CanvasWire>::iterator i=m_WireVec.begin();
 		i!=m_WireVec.end(); i++)
 	{
@@ -395,6 +397,8 @@ void Fl_Canvas::DrawWires()
 	}
 
 	DrawIncompleteWire();
+        
+        fl_line_style( FL_SOLID, 0 );
 }
 
 ////////////////////////////////////////////////////////////////////////
