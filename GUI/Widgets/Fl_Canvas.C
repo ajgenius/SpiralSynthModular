@@ -389,7 +389,11 @@ void Fl_Canvas::DrawWires()
              case 4:     col = (Fl_Color) WIRE_COL4; break;
              default:    col = (Fl_Color) WIRE_COL0;
          }
-         fl_color(fl_color_add_alpha( col, 127 ));
+         fl_color(col);
+
+#ifdef NTK_MAJOR_VERSION
+         fl_color( fl_color_add_alpha( fl_color(), 127 ) );
+#endif
 
                 double ep1_x, ep1_y, ep2_x, ep2_y,
                     ep1_mix_x,
