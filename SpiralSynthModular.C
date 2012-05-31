@@ -1323,29 +1323,29 @@ inline void SynthModular::cb_Copy_i (Fl_Widget *o, void *v) {
        else m_Copied.devices << false << endl;
        for (unsigned int i=0; i<m_Canvas->Selection().m_DeviceIds.size(); i++) {
            int ID = m_Canvas->Selection().m_DeviceIds[i];
-           std::map<int,DeviceWin*>::iterator i = m_DeviceWinMap.find(ID);
+           std::map<int,DeviceWin*>::iterator j = m_DeviceWinMap.find(ID);
            m_Copied.m_DeviceIds[ID] = ID;
            m_Copied.devicecount += 1;
-           m_Copied.devices << "Device " << i->first << " " ; // save the id
-           m_Copied.devices << "Plugin " <<i->second->m_PluginID << endl;
-           m_Copied.devices << i->second->m_DeviceGUI->x() << " ";
-           m_Copied.devices << i->second->m_DeviceGUI->y() << " ";
-           m_Copied.devices << i->second->m_DeviceGUI->GetName().size() << " ";
-           m_Copied.devices << i->second->m_DeviceGUI->GetName() << " ";
-           if (i->second->m_DeviceGUI->GetPluginWindow()) {
-              m_Copied.devices << i->second->m_DeviceGUI->GetPluginWindow()->visible() << " ";
-              m_Copied.devices << i->second->m_DeviceGUI->GetPluginWindow()->x() << " ";
-              m_Copied.devices << i->second->m_DeviceGUI->GetPluginWindow()->y() << " ";
+           m_Copied.devices << "Device " << j->first << " " ; // save the id
+           m_Copied.devices << "Plugin " <<j->second->m_PluginID << endl;
+           m_Copied.devices << j->second->m_DeviceGUI->x() << " ";
+           m_Copied.devices << j->second->m_DeviceGUI->y() << " ";
+           m_Copied.devices << j->second->m_DeviceGUI->GetName().size() << " ";
+           m_Copied.devices << j->second->m_DeviceGUI->GetName() << " ";
+           if (j->second->m_DeviceGUI->GetPluginWindow()) {
+              m_Copied.devices << j->second->m_DeviceGUI->GetPluginWindow()->visible() << " ";
+              m_Copied.devices << j->second->m_DeviceGUI->GetPluginWindow()->x() << " ";
+              m_Copied.devices << j->second->m_DeviceGUI->GetPluginWindow()->y() << " ";
            }
            else m_Copied.devices << 0 << " " << 0 << " " << 0;
            m_Copied.devices << endl;
-           if (i->second->m_PluginID == COMMENT_ID) {
+           if (j->second->m_PluginID == COMMENT_ID) {
               // save the comment gui
-              ((Fl_CommentGUI*)(i->second->m_DeviceGUI))->StreamOut (m_Copied.devices);
+              ((Fl_CommentGUI*)(j->second->m_DeviceGUI))->StreamOut (m_Copied.devices);
            }
            else {
               // save the plugin
-              i->second->m_Device->StreamOut (m_Copied.devices);
+              j->second->m_Device->StreamOut (m_Copied.devices);
            }
            m_Copied.devices<<endl;
        }
