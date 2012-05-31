@@ -20,7 +20,7 @@
 #include "SeqPluginGUI.h"
 #include <FL/fl_draw.H>
 #include <FL/fl_draw.H>
-#include <FL/fl_file_chooser.H>
+#include <FL/Fl_File_Chooser.H>
 
 using namespace std;
 

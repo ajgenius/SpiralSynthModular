@@ -19,7 +19,7 @@
 #include "SpiralLoopPluginGUI.h"
 #include <FL/fl_draw.H>
 #include <FL/fl_draw.H>
-#include <FL/fl_file_chooser.H>
+#include <FL/Fl_File_Chooser.H>
 #include "../GUI/WaveChooser.h"
 
 using namespace std;

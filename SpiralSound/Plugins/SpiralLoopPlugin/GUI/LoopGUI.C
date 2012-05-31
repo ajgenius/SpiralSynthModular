@@ -20,7 +20,7 @@
 #include "Widgets/Fl_Loop.h"
 #include "LoopGUI.h"
 #include "../Loop.h"
-#include <FL/fl_file_chooser.H>
+#include <FL/Fl_File_Chooser.H>
 
 static const int EFFECT_ADDITION = 130;
 static const int GUI_COLOUR = 154;
