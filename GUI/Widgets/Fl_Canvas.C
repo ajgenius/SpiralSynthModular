@@ -40,6 +40,7 @@ m_BGData(NULL),
 cb_Connection(NULL),
 cb_Unconnect(NULL),
 cb_AddDevice(NULL),
+cb_Rename(NULL),
 m_CanPaste(false),
 m_Selecting(false),
 m_UpdateTimer(0)
