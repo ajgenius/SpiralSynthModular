@@ -29,7 +29,7 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Pixmap.H>
 
-static char * tv_xpm[] = {
+static const char * tv_xpm[] = {
 "30 30 4 1",
 " 	c None",
 ".	c #000000",

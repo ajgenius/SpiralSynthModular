@@ -1,5 +1,5 @@
 /* XPM */
-static char * load_xpm[] = {
+static const char * load_xpm[] = {
 "30 30 384 2",
 "  	c None",
 ". 	c #E58500",

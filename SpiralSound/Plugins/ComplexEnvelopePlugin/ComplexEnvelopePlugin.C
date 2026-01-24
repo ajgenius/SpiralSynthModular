@@ -26,7 +26,7 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 	return new ComplexEnvelopePlugin;
 }
 
-char** SpiralPlugin_GetIcon()
+const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
 }

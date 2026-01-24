@@ -156,7 +156,7 @@ private:
 	string m_FilePath, m_MergeFilePath;
 
 	// Main GUI stuff
-	void CreateGUI (int xoff=0, int yoff=0, char *name="");
+	void CreateGUI (int xoff=0, int yoff=0, const char *name="");
         Fl_Menu_Bar *m_MainMenu;
         Fl_Pack *m_Topbar, *m_ToolbarPanel, *m_Toolbar;
         Fl_Group *m_GroupFiller;
