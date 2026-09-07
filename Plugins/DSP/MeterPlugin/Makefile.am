@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = MeterPlugin.la
 
 MeterPlugin_la_SOURCES =					\
-			MeterPluginGUI.h			\
-			MeterPluginGUI.C			\
+			../../GUI/MeterPlugin/MeterPluginGUI.h			\
+			../../GUI/MeterPlugin/MeterPluginGUI.C			\
 			MeterPlugin.h			\
 			MeterPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/MeterPlugin
