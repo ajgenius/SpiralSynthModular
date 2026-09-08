@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = MatrixPlugin.la
 
 MatrixPlugin_la_SOURCES =				\
-			MatrixPluginGUI.h		\
-			MatrixPluginGUI.C		\
+			../../GUI/MatrixPlugin/MatrixPluginGUI.h		\
+			../../GUI/MatrixPlugin/MatrixPluginGUI.C		\
 			MatrixPlugin.h			\
 			MatrixPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/MatrixPlugin
