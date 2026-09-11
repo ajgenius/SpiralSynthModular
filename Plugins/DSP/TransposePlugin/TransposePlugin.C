@@ -22,7 +22,6 @@
 #include <math.h>
 
 #include "TransposePlugin.h"
-#include "TransposePluginGUI.h"
 #include "SpiralIcon.xpm"
 #include "NoteTable.h"
 
@@ -33,6 +32,12 @@ extern "C" {
 SpiralPlugin* SpiralPlugin_CreateInstance () {
     return new TransposePlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon () {
     return SpiralIcon_xpm;
@@ -73,9 +78,7 @@ PluginInfo &TransposePlugin::Initialise (const HostInfo *Host) {
     return SpiralPlugin::Initialise (Host);
 }
 
-SpiralGUIType *TransposePlugin::CreateGUI() {
-    return new TransposePluginGUI (m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
-}
+
 
 
 

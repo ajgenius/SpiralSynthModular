@@ -17,7 +17,6 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include "WaveShaperPlugin.h"
-#include "WaveShaperPluginGUI.h"
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -27,6 +26,12 @@ extern "C" {
 SpiralPlugin* SpiralPlugin_CreateInstance() {
   return new WaveShaperPlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon() {
   return SpiralIcon_xpm;
@@ -76,9 +81,7 @@ PluginInfo &WaveShaperPlugin::Initialise (const HostInfo *Host) {
   return Info;
 }
 
-SpiralGUIType *WaveShaperPlugin::CreateGUI () {
-  return new WaveShaperPluginGUI (m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
-}
+
 
 void WaveShaperPlugin::ExecuteCommands () {
   if (m_AudioCH->IsCommandWaiting ()) {

@@ -17,7 +17,6 @@
 */ 
 
 #include "SpiralPlugin.h"
-#include <FL/Fl_Pixmap.H>
 
 #ifndef WaveTablePLUGIN
 #define WaveTablePLUGIN
@@ -32,7 +31,6 @@ public:
 	virtual ~WaveTablePlugin();
 
 	virtual PluginInfo &Initialise(const HostInfo *Host);
-	virtual SpiralGUIType *CreateGUI();
 	virtual void 		Execute();
 	virtual void		Reset();
 
@@ -40,7 +38,6 @@ public:
 	virtual void	    StreamIn(std::istream &s);
 	
 	// has to be defined in the plugin	
-	virtual void UpdateGUI() { Fl::check(); }
 
 	typedef char Type;
 	enum {SINE,SQUARE,SAW,REVSAW,TRIANGLE,PULSE1,PULSE2,INVSINE};

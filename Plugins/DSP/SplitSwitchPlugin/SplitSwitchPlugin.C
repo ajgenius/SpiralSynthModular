@@ -16,8 +16,6 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include "SplitSwitchPlugin.h"
-#include "SplitSwitchPluginGUI.h"
-#include <FL/Fl_Button.H>
 #include <stdio.h>
 #include "SpiralIcon.xpm"
 
@@ -26,6 +24,12 @@ using namespace std;
 extern "C" {
 
    SpiralPlugin* SpiralPlugin_CreateInstance () { return new SplitSwitchPlugin; }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
    const char** SpiralPlugin_GetIcon () { return SpiralIcon_xpm; }
 
@@ -71,9 +75,7 @@ PluginInfo &SplitSwitchPlugin::Initialise (const HostInfo *Host) {
   return SpiralPlugin::Initialise (Host);
 }
 
-SpiralGUIType *SplitSwitchPlugin::CreateGUI () {
-  return new SplitSwitchPluginGUI (m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
-}
+
 
 void SplitSwitchPlugin::ExecuteCommands () {
   if (m_AudioCH->IsCommandWaiting ()) {

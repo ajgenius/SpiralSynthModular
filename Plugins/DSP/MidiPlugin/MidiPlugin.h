@@ -17,7 +17,6 @@
 */ 
 
 #include "SpiralPlugin.h"
-#include <FL/Fl_Pixmap.H>
 
 #ifndef OscillatorPLUGIN
 #define OscillatorPLUGIN
@@ -29,14 +28,12 @@ public:
 	virtual ~MidiPlugin();
 
 	virtual PluginInfo& Initialise(const HostInfo *Host);
-	virtual SpiralGUIType*  CreateGUI();
 	virtual void 		Execute();
 	virtual void        ExecuteCommands();
 	virtual void	    StreamOut(std::ostream &s);
 	virtual void	    StreamIn(std::istream &s);
 	
 	// has to be defined in the plugin	
-	virtual void UpdateGUI() { Fl::check(); }
 	
 	int  GetDeviceNum()      { return m_DeviceNum; }
 	bool GetNoteCut()        { return m_NoteCut; }

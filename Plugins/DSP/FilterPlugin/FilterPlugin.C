@@ -16,8 +16,6 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 #include "FilterPlugin.h"
-#include "FilterPluginGUI.h"
-#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -33,6 +31,12 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new FilterPlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon()
 {
@@ -103,12 +107,7 @@ PluginInfo &FilterPlugin::Initialise(const HostInfo *Host)
 	return Info;
 }
 
-SpiralGUIType *FilterPlugin::CreateGUI()
-{
-	return new FilterPluginGUI(m_PluginInfo.Width,
-								  	    m_PluginInfo.Height,
-										this,m_AudioCH,m_HostInfo);
-}
+
 
 void FilterPlugin::Reset()
 {

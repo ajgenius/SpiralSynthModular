@@ -17,7 +17,6 @@
 */ 
 
 #include "SpiralPlugin.h"
-#include <FL/Fl_Pixmap.H>
 
 #ifndef FormantFilterPLUGIN
 #define FormantFilterPLUGIN
@@ -29,7 +28,6 @@ public:
 	virtual ~FormantFilterPlugin();
 	
 	virtual PluginInfo &Initialise(const HostInfo *Host);
-	virtual SpiralGUIType *CreateGUI();
 	virtual void Execute();
 	virtual void Reset();
 

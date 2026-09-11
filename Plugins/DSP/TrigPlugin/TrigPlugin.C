@@ -16,8 +16,6 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 #include "TrigPlugin.h"
-#include "TrigPluginGUI.h"
-#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 #include "NoteTable.h"
 
@@ -31,6 +29,12 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new TrigPlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon()
 {
@@ -75,12 +79,7 @@ PluginInfo &TrigPlugin::Initialise(const HostInfo *Host)
 	return SpiralPlugin::Initialise(Host);
 }
 
-SpiralGUIType *TrigPlugin::CreateGUI()
-{
-	return new TrigPluginGUI(m_PluginInfo.Width,
-						     m_PluginInfo.Height,
-							 this,m_AudioCH,m_HostInfo);
-}
+
 
 void TrigPlugin::Execute()
 {	

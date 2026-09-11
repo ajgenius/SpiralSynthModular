@@ -17,7 +17,6 @@
 */ 
 
 #include "SpiralPlugin.h"
-#include <FL/Fl_Pixmap.H>
 
 #ifndef TransposePLUGIN
 #define TransposePLUGIN
@@ -27,7 +26,6 @@ public:
 	TransposePlugin();
 	virtual ~TransposePlugin ();
 	virtual PluginInfo& Initialise (const HostInfo *Host);
-	virtual SpiralGUIType* CreateGUI ();
 	virtual void Execute ();
 	//virtual void ExecuteCommands ();
 	virtual void StreamOut (std::ostream &s);

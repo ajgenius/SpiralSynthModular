@@ -25,15 +25,19 @@
 #include <iostream>
 #include <math.h>
 #include <stdlib.h>
-#include <FL/Fl.H>
-#include <FL/Fl_Group.H>
 #include "Sample.h"
 using spiralcore::Sample;
 using spiralcore::Linear;
 using spiralcore::feq;
 #include "ChannelHandler.h"
 using spiralcore::ChannelHandler;
-#include "SpiralGUI.H"
+
+enum
+{
+	SPIRAL_PLUGIN_TYPE_DSP = 1,
+	SPIRAL_PLUGIN_TYPE_GUI = 2,
+	SPIRAL_PLUGIN_TYPE_PAIRED = 3
+};
 
 static const float MAX_FREQ = 13000;
 
@@ -93,8 +97,6 @@ public:
 
 	// run the commands from the GUI
 	virtual void        ExecuteCommands() {}
-	// create the GUI, do not store the pointer - it wont be threadsafe to use it
-	virtual SpiralGUIType*  CreateGUI()=0;
 
 	// stream the plugins state
 	virtual void	    StreamOut(std::ostream &s)=0;
@@ -105,6 +107,7 @@ public:
 	virtual bool	    SaveExternalFiles(const std::string &Dir) { return false; }
 	virtual void	    LoadExternalFiles(const std::string &Dir, int withID=-1) {}
 
+	const PluginInfo& GetPluginInfo() const { return m_PluginInfo; }
 	const HostInfo*     GetHostInfo() { return m_HostInfo; }
 	bool                GetOutput(unsigned int n, Sample **s);
 	bool                SetInput(unsigned int n, const Sample *s);

@@ -1,37 +1,11 @@
-INCLUDES = 						\
-		$(FLTK_CXXFLAGS)			\
-		$(FLTK_CFLAGS)				\
-		-I$(top_builddir)/GUI/Widgets		\
-		-I$(top_srcdir)/libspiralcore/include
-		
+AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir)
 EXTRA_DIST = SpiralIcon.xpm
-	
-plugin = OscillatorPlugin.so
 plugindir = $(libdir)/SpiralPlugins
-plugin_LTLIBRARIES = OscillatorPlugin.la
-
-OscillatorPlugin_la_SOURCES =					\
-			../../GUI/OscillatorPlugin/OscillatorPluginGUI.h			\
-			../../GUI/OscillatorPlugin/OscillatorPluginGUI.cpp			\
-			OscillatorPlugin.h			\
-			OscillatorPlugin.C
-			
-OscillatorPlugin_la_LDFLAGS = -shared -module -avoid-version -shared -no-undefined
-OscillatorPlugin_la_LIBADD = 							\
-			$(FLTK_LIBS)					\
-			-lm -ldl -lpthread				\
-			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
-                $(top_builddir)/libspiralcore/libspiralcore.la
-
-# PluginManager dlopens FooPlugin.so.  Drop the libtool .la after install
-# (same trick master used) so the directory only contains the module.
+plugin_LTLIBRARIES = OscillatorPlugin_DSP.la
+OscillatorPlugin_DSP_la_SOURCES = OscillatorPlugin.h OscillatorPlugin.C
+OscillatorPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
+OscillatorPlugin_DSP_la_LIBADD = $(top_builddir)/GUI/Widgets/libSpiralPlugin.la $(top_builddir)/libspiralcore/libspiralcore.la -lm -ldl -lpthread
 install-data-hook:
-	-rm -f "$(DESTDIR)$(plugindir)/OscillatorPlugin.la"
-
-# The installed .la is removed, so libtool cannot discover the module at uninstall.
+	-rm -f "$(DESTDIR)$(plugindir)/OscillatorPlugin_DSP.la"
 uninstall-local:
-	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
-
-AM_CPPFLAGS = -I$(srcdir)
-
-AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/OscillatorPlugin
+	rm -f "$(DESTDIR)$(plugindir)/OscillatorPlugin_DSP.so"

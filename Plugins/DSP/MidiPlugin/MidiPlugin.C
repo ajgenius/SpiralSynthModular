@@ -17,8 +17,6 @@
 */ 
 
 #include "MidiPlugin.h"
-#include "MidiPluginGUI.h"
-#include <FL/Fl_Button.H>
 #include "NoteTable.h"
 #include "Midi.h"
 using spiralcore::MidiDevice;
@@ -34,6 +32,12 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new MidiPlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon()
 {
@@ -110,12 +114,7 @@ PluginInfo &MidiPlugin::Initialise(const HostInfo *Host)
 	return Info;
 }
 
-SpiralGUIType *MidiPlugin::CreateGUI()
-{
-	return new MidiPluginGUI(m_PluginInfo.Width,
-										  m_PluginInfo.Height,
-										  this,m_AudioCH,m_HostInfo);
-}
+
 
 void MidiPlugin::Execute()
 {

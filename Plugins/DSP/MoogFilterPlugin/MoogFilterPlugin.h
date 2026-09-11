@@ -17,7 +17,6 @@
 */ 
 
 #include "SpiralPlugin.h"
-#include <FL/Fl_Pixmap.H>
 
 #ifndef MOOGFILTERPLUGIN
 #define MOOGFILTERPLUGIN
@@ -29,7 +28,6 @@ public:
 	virtual ~MoogFilterPlugin();
 	
 	virtual PluginInfo &Initialise(const HostInfo *Host);
-	virtual SpiralGUIType *CreateGUI();
 	virtual void Execute();
 	virtual void Reset();
 

@@ -27,8 +27,6 @@
 //#include <unistd.h>
 //#include <limits.h>
 #include "DiskWriterPlugin.h"
-#include "DiskWriterPluginGUI.h"
-#include <FL/Fl_File_Chooser.H>
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -45,6 +43,12 @@ extern "C"
 {
 
 SpiralPlugin* SpiralPlugin_CreateInstance() { return new DiskWriterPlugin; }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
 
@@ -91,10 +95,7 @@ PluginInfo &DiskWriterPlugin::Initialise(const HostInfo *Host)
 	return Info;
 }
 
-SpiralGUIType *DiskWriterPlugin::CreateGUI()
-{
-	return new DiskWriterPluginGUI(m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
-}
+
 
 void DiskWriterPlugin::Execute()
 {

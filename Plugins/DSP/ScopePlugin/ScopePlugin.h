@@ -20,14 +20,12 @@
 #define SCOPEPLUGIN
 
 #include "SpiralPlugin.h"
-#include <FL/Fl_Pixmap.H>
 
 class ScopePlugin : public SpiralPlugin {
    public:
       ScopePlugin();
       virtual ~ScopePlugin();
       virtual PluginInfo& Initialise(const HostInfo *Host);
-      virtual SpiralGUIType* CreateGUI();
       virtual void Execute();
       virtual void ExecuteCommands();
       virtual void Reset();

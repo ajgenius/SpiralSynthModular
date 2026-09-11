@@ -17,8 +17,6 @@
 */
 #include <math.h>
 #include "AmpPlugin.h"
-#include "AmpPluginGUI.h"
-#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 
 #define PI 3.141592654
@@ -30,6 +28,12 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new AmpPlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon()
 {
@@ -75,12 +79,7 @@ PluginInfo &AmpPlugin::Initialise(const HostInfo *Host)
 	return SpiralPlugin::Initialise(Host);
 }
 
-SpiralGUIType *AmpPlugin::CreateGUI()
-{
-	return new AmpPluginGUI(m_PluginInfo.Width,
-							 m_PluginInfo.Height,
-							 this,m_AudioCH,m_HostInfo);
-}
+
 
 void AmpPlugin::Execute()
 {

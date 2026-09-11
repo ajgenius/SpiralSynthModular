@@ -18,8 +18,6 @@
 
 #include "OutputPlugin.h"
 #include <algorithm>
-#include "OutputPluginGUI.h"
-#include <FL/Fl_File_Chooser.H>
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -32,6 +30,12 @@ OutputPlugin::Mode OutputPlugin::m_Mode=NO_MODE;
 extern "C"
 {
 SpiralPlugin* SpiralPlugin_CreateInstance() { return new OutputPlugin; }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
 int SpiralPlugin_GetID() { return 0x0000; }
 string SpiralPlugin_GetGroupName() { return "InputOutput"; }
@@ -78,10 +82,7 @@ PluginInfo &OutputPlugin::Initialise(const HostInfo *Host)
 	return Info;
 }
 
-SpiralGUIType *OutputPlugin::CreateGUI()
-{
-	return new OutputPluginGUI(m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
-}
+
 
 bool OutputPlugin::Kill()
 {

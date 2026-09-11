@@ -16,8 +16,6 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 #include "DelayPlugin.h"
-#include "DelayPluginGUI.h"
-#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -29,6 +27,12 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new DelayPlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon()
 {
@@ -78,12 +82,7 @@ PluginInfo &DelayPlugin::Initialise(const HostInfo *Host)
 	return Info;
 }
 
-SpiralGUIType *DelayPlugin::CreateGUI()
-{
-	return new DelayPluginGUI(m_PluginInfo.Width,
-								  	    m_PluginInfo.Height,
-										this,m_AudioCH,m_HostInfo);
-}
+
 
 void DelayPlugin::Reset()
 {

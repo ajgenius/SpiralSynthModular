@@ -10,7 +10,7 @@ EXTRA_DIST = 				\
 		Fl_LED_Button.fld	\
 		Fl_SevenSeg.fld
 
-lib_LTLIBRARIES = libSpiralWidgets.la
+lib_LTLIBRARIES = libSpiralPlugin.la libSpiralWidgets.la
 libSpiralWidgets_la_SOURCES =					\
 					Fl_Canvas.h		\
 					Fl_Canvas.C		\
@@ -44,8 +44,6 @@ libSpiralWidgets_la_SOURCES =					\
 					PluginManager.C		\
 			                SpiralGUI.H		\
 			                SpiralGUI.C		\
-					SpiralPlugin.h		\
-					SpiralPlugin.C		\
 					SpiralPluginGUI.h	\
 					SpiralPluginGUI.C	\
 					WS_Pulse1.h		\
@@ -65,3 +63,8 @@ libSpiralWidgets_la_LIBADD = 				\
 				$(FLTK_LIBS)		\
 				 -lm -ldl -lpthread	\
                 $(top_builddir)/libspiralcore/libspiralcore.la
+
+libSpiralPlugin_la_SOURCES = SpiralPlugin.C SpiralPlugin.h
+libSpiralPlugin_la_LIBADD = $(top_builddir)/libspiralcore/libspiralcore.la
+libSpiralPlugin_la_LDFLAGS = -shared -no-undefined -version-info $(LT_VERSION_INFO)
+libSpiralWidgets_la_LIBADD += libSpiralPlugin.la

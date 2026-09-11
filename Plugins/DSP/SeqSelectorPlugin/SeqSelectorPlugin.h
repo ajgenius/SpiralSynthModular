@@ -17,7 +17,6 @@
 */ 
 
 #include "SpiralPlugin.h"
-#include <FL/Fl_Pixmap.H>
 
 #ifndef SEQSELECTORPlugin
 #define SEQSELECTORPlugin
@@ -31,7 +30,6 @@ public:
 	virtual ~SeqSelectorPlugin();
 	
 	virtual PluginInfo &Initialise(const HostInfo *Host);
-	virtual SpiralGUIType *CreateGUI();
 	virtual void Execute();
 	virtual void Reset();
 	virtual void ExecuteCommands();

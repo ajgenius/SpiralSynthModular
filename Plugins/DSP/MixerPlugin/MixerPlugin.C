@@ -18,14 +18,18 @@
 
 #include <stdio.h>
 #include "MixerPlugin.h"
-#include "MixerPluginGUI.h"
-#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 
 using namespace std;
 
 extern "C" {
     SpiralPlugin* SpiralPlugin_CreateInstance() { return new MixerPlugin; }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
     const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
     int SpiralPlugin_GetID() { return 0x0007; }
     string SpiralPlugin_GetGroupName() { return "Amps/Mixers"; }
@@ -69,9 +73,7 @@ PluginInfo &MixerPlugin::Initialise (const HostInfo *Host) {
     return SpiralPlugin::Initialise (Host);
 }
 
-SpiralGUIType *MixerPlugin::CreateGUI() {
-    return new MixerPluginGUI (m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
-}
+
 
 void MixerPlugin::Execute () {
      // Mix the inputs

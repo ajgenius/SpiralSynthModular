@@ -17,7 +17,6 @@
 */ 
 #include <math.h>
 #include "SVFilterPlugin.h"
-#include "SVFilterPluginGUI.h"
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -30,6 +29,12 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new SVFilterPlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon()
 {
@@ -93,12 +98,7 @@ PluginInfo &SVFilterPlugin::Initialise(const HostInfo *Host)
 	return Info;
 }
 
-SpiralGUIType *SVFilterPlugin::CreateGUI()
-{
-	return new SVFilterPluginGUI(m_PluginInfo.Width,
-								  	    m_PluginInfo.Height,
-										this,m_AudioCH,m_HostInfo);
-}
+
 
 void SVFilterPlugin::Reset()
 {

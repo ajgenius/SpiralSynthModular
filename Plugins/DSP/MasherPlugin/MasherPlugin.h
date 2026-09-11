@@ -17,7 +17,6 @@
 */ 
 
 #include "SpiralPlugin.h"
-#include <FL/Fl.H>
 
 #ifndef MasherPLUGIN
 #define MasherPLUGIN
@@ -31,14 +30,12 @@ public:
 	virtual ~MasherPlugin();
 	
 	virtual PluginInfo &Initialise(const HostInfo *Host);
-	virtual SpiralGUIType *CreateGUI();
 	virtual void Execute();
 	virtual void Reset();
 	virtual void StreamOut(std::ostream &s);
 	virtual void StreamIn(std::istream &s);
 	
 	// has to be defined in the plugin	
-	virtual void UpdateGUI() { Fl::check(); }
 		
 	float GetGrainPitch()       { return m_GrainPitch; }
 	int GetGrainStoreSize()     { return m_GrainStoreSize;  } 

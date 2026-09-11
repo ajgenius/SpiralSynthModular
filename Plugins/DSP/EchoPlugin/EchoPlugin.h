@@ -17,7 +17,6 @@
 */ 
 
 #include "SpiralPlugin.h"
-#include <FL/Fl_Pixmap.H>
 
 #ifndef ECHOPLUGIN
 #define ECHOPLUGIN
@@ -28,7 +27,6 @@ class EchoPlugin : public SpiralPlugin
  	EchoPlugin();
 	virtual ~EchoPlugin();
 	virtual PluginInfo &Initialise (const HostInfo *Host);
-	virtual SpiralGUIType *CreateGUI();
 	virtual void Execute();
 	virtual void Reset();
 

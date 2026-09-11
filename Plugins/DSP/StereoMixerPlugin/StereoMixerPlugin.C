@@ -16,8 +16,6 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 #include "StereoMixerPlugin.h"
-#include "StereoMixerPluginGUI.h"
-#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -27,6 +25,12 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new StereoMixerPlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon()
 {
@@ -83,12 +87,7 @@ PluginInfo &StereoMixerPlugin::Initialise(const HostInfo *Host)
 	return SpiralPlugin::Initialise(Host);
 }
 
-SpiralGUIType *StereoMixerPlugin::CreateGUI()
-{
-	return new StereoMixerPluginGUI(m_PluginInfo.Width,
-								  	    m_PluginInfo.Height,
-										this,m_AudioCH,m_HostInfo);
-}
+
 
 void StereoMixerPlugin::Execute()
 {

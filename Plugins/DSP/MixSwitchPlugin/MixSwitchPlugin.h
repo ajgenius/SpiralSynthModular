@@ -17,7 +17,6 @@
 */
 
 #include "SpiralPlugin.h"
-#include <FL/Fl_Pixmap.H>
 
 #ifndef MixSwitchPLUGIN
 #define MixSwitchPLUGIN
@@ -27,7 +26,6 @@ class MixSwitchPlugin : public SpiralPlugin {
     MixSwitchPlugin ();
     virtual ~MixSwitchPlugin ();
     virtual PluginInfo& Initialise (const HostInfo *Host);
-    virtual SpiralGUIType* CreateGUI ();
     virtual void Execute ();
     virtual void Reset();
     virtual void ExecuteCommands();

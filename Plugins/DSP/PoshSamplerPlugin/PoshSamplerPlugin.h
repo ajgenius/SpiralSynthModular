@@ -20,7 +20,6 @@
 #define PoshSamplerPLUGIN
 
 #include "SpiralPlugin.h"
-#include <FL/Fl_Pixmap.H>
 
 static const int NUM_SAMPLES = 8;
 static const int TRANSBUF_SIZE = 0x10000;
@@ -42,7 +41,6 @@ class PoshSamplerPlugin : public SpiralPlugin {
       PoshSamplerPlugin();
       virtual ~PoshSamplerPlugin();
       virtual PluginInfo &Initialise (const HostInfo *Host);
-      virtual SpiralGUIType *CreateGUI();
       virtual void Execute();
       virtual void Reset();
       virtual void ExecuteCommands();

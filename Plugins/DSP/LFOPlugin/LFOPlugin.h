@@ -20,7 +20,6 @@
 #define LFOPLUGIN
 
 #include "SpiralPlugin.h"
-#include <FL/Fl_Pixmap.H>
 
 static const int NUM_TABLES = 6;
 static const int DEFAULT_TABLE_LEN = 1024;
@@ -30,7 +29,6 @@ class LFOPlugin : public SpiralPlugin {
       LFOPlugin();
       virtual ~LFOPlugin();
       virtual PluginInfo &Initialise (const HostInfo *Host);
-      virtual SpiralGUIType* CreateGUI();
       virtual void Execute();
       virtual void Reset();
 

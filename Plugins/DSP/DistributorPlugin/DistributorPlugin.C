@@ -21,8 +21,6 @@
 #include <stdio.h>
 
 #include "DistributorPlugin.h"
-#include "DistributorPluginGUI.h"
-#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -32,6 +30,12 @@ extern "C" {
 SpiralPlugin* SpiralPlugin_CreateInstance() {
       return new DistributorPlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon() {
        return SpiralIcon_xpm;
@@ -117,10 +121,7 @@ PluginInfo &DistributorPlugin::Initialise (const HostInfo *Host)
            return SpiralPlugin::Initialise (Host);
 }
 
-SpiralGUIType *DistributorPlugin::CreateGUI() 
-{
-	return new DistributorPluginGUI (m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
-}
+
 
 void DistributorPlugin::Reset()
 {

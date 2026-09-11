@@ -20,10 +20,13 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <set>
+#include <algorithm>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <dlfcn.h>
+#include <string.h>
 #include <FL/Fl.H>
 #include <FL/Enumerations.H>
 #include <FL/Fl_File_Chooser.H>
@@ -490,48 +493,30 @@ SpiralWindowType *SynthModular::CreateWindow()
 
 //////////////////////////////////////////////////////////
 
-vector<string> SynthModular::BuildPluginList (const string &Path) {
-	// Scan plugin path for plugins.
-	DIR *dp;
-	struct dirent *ep;
-	struct stat sb;
-	void *handle;
-	string fullpath;
-	const char *path = Path.c_str();
+vector<string> SynthModular::BuildPluginList (const string &Path)
+{
 	vector<string> ret;
-
-	dp = opendir(path);
-	if (!dp) {
-	   cerr << "WARNING: Could not open path " << path << endl;
+	DIR *directory = opendir(Path.c_str());
+	if (!directory)
+	{
+		cerr << "WARNING: Could not open path " << Path << endl;
+		return ret;
 	}
-	else {
-		while ((ep = readdir(dp))) {
-			// Need full path
-			fullpath = path;
-			fullpath.append(ep->d_name);
 
-                        // Stat file to get type
-			if (!stat(fullpath.c_str(), &sb)) {
-				// We only want regular files
-				if (S_ISREG(sb.st_mode))  {
-                                        // We're not fussed about resolving symbols yet, since we are just
-                                        // checking if it's a DLL.
-					handle = dlopen(fullpath.c_str(), RTLD_LAZY);
-					if (!handle) {
-						cerr << "WARNING: File " << path << ep->d_name
-							<< " could not be examined" << endl;
-						cerr << "dlerror() output:" << endl;
-						cerr << dlerror() << endl;
-					}
-					else {
-						// It's a DLL. Add name to list
-						ret.push_back(ep->d_name);
-					}
-                                }
-                        }
-		}
+	string root = Path;
+	if (!root.empty() && root[root.size()-1] != '/') root += '/';
+	struct dirent *entry;
+	while ((entry = readdir(directory)))
+	{
+		string name = entry->d_name;
+		if (name.size() < 3 || name.substr(name.size()-3) != ".so") continue;
+		struct stat info;
+		if (!stat((root+name).c_str(), &info) && S_ISREG(info.st_mode))
+			ret.push_back(name);
 	}
-        return ret;
+	closedir(directory);
+	sort(ret.begin(), ret.end());
+	return ret;
 }
 
 void SynthModular::LoadPlugins (string pluginPath) {
@@ -555,6 +540,7 @@ void SynthModular::LoadPlugins (string pluginPath) {
      Splash->show();
      int ID=-1;
      vector<string> PluginVector;
+     set<int> ShownDSP;
      if (SpiralInfo::USEPLUGINLIST) PluginVector = SpiralInfo::PLUGINVEC;
      else {
         if (pluginPath.empty()) PluginVector = BuildPluginList (SpiralInfo::PLUGIN_PATH);
@@ -564,12 +550,39 @@ void SynthModular::LoadPlugins (string pluginPath) {
            PluginVector = BuildPluginList (pluginPath);
         }
      }
+     string PluginRoot = pluginPath.empty() ? SpiralInfo::PLUGIN_PATH : pluginPath;
+     if (!PluginRoot.empty() && PluginRoot[PluginRoot.size()-1] != '/') PluginRoot += '/';
+     vector<string> DSPNames;
+     vector<string> GUINames;
+     set<string> SeenModules;
+     for (vector<string>::const_iterator i = PluginVector.begin(); i != PluginVector.end(); ++i)
+     {
+         string name = *i;
+         if (name.size() > 3 && name.substr(name.size()-3) == ".so" &&
+             name.find("_DSP.so") == string::npos && name.find("_GUI.so") == string::npos)
+         {
+             // Preferences written before the split name the combined module.
+             string stem = name.substr(0, name.size()-3);
+             name = stem + "_DSP.so";
+             string gui = stem + "_GUI.so";
+             struct stat info;
+             if (!stat((PluginRoot+gui).c_str(), &info) && SeenModules.insert(gui).second)
+                 GUINames.push_back(gui);
+         }
+         if (!SeenModules.insert(name).second) continue;
+         if (name.size() >= 7 && name.substr(name.size()-7) == "_GUI.so")
+             GUINames.push_back(name);
+         else
+             DSPNames.push_back(name);
+     }
+     PluginVector = DSPNames;
+     PluginVector.insert(PluginVector.end(), GUINames.begin(), GUINames.end());
      for (vector<string>::iterator i=PluginVector.begin(); i!=PluginVector.end(); i++) {
          string Fullpath;
-         if (pluginPath=="") Fullpath=SpiralInfo::PLUGIN_PATH+*i;
-         else Fullpath = pluginPath + *"/" + *i;
+         Fullpath = PluginRoot + *i;
          ID = PluginManager::Get()->LoadPlugin (Fullpath.c_str());
-         if (ID!=PluginError) {
+         const HostsideInfo *info = (ID!=PluginError) ? PluginManager::Get()->GetPlugin(ID) : NULL;
+         if (info && info->HasDSP() && ShownDSP.insert(ID).second) {
             #ifdef DEBUG_PLUGINS
             cerr << ID << " = Plugin [" << *i << "]" << endl;
             #endif
@@ -577,10 +590,10 @@ void SynthModular::LoadPlugins (string pluginPath) {
             // we can't set user data, because the callback uses it
             // NewButton->user_data ((void*)(this));
             NewButton->labelsize (1);
-            Fl_Pixmap *tPix = new Fl_Pixmap (PluginManager::Get()->GetPlugin(ID)->GetIcon());
+            Fl_Pixmap *tPix = new Fl_Pixmap (info->Icon());
             NewButton->image(tPix->copy(tPix->w(),tPix->h()));
             delete tPix;
-            string GroupName = PluginManager::Get()->GetPlugin(ID)->GetGroupName();
+            string GroupName = info->GroupName();
             Fl_Pack* the_group=NULL;
             // find or create this group, and add an icon
             map<string,Fl_Pack*>::iterator gi = m_PluginGroupMap.find (GroupName);
@@ -619,6 +632,14 @@ void SynthModular::LoadPlugins (string pluginPath) {
             p = PluginName->rfind ('.');
             unsigned int l = PluginName->length ();
             if (p < l) PluginName->erase (p, l);
+            /* FooPlugin_DSP.so / FooPlugin_GUI.so share one toolbar entry.
+               Strip the ABI suffix so the tooltip stays "OscillatorPlugin". */
+            l = PluginName->length();
+            if (l > 4) {
+               string suf = PluginName->substr(l - 4);
+               if (suf == "_DSP" || suf == "_GUI")
+                  PluginName->erase(l - 4);
+            }
             NewButton->tooltip (PluginName->c_str());
             // Slashes have significance to the menu widgets, remove them from the GroupName
             while ((p = GroupName.find ('/')) < PluginName->length())
@@ -630,7 +651,7 @@ void SynthModular::LoadPlugins (string pluginPath) {
             // m_MainMenu->add (MenuEntry.c_str(), 0, NULL, &Numbers[ID], 0);
 
             // Add the plugins to the canvas menu
-            m_Canvas->AddPluginName (MenuEntry, PluginManager::Get()->GetPlugin(ID)->ID);
+            m_Canvas->AddPluginName (MenuEntry, info->ID);
             // this overwrites the widget's user_data with that specified for the callback
             // so we can't use it for other purposes
             NewButton->callback ((Fl_Callback*)cb_NewDevice, &Numbers[ID]);
@@ -713,7 +734,7 @@ DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 
 	if (!Plugin) return NULL;
 
-	nlw->m_Device=Plugin->CreateInstance();
+	nlw->m_Device=Plugin->CreateDSPInstance();
 
 	if (!nlw->m_Device) return NULL;
 
@@ -728,8 +749,8 @@ DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 	}
 
 	PluginInfo PInfo    = nlw->m_Device->Initialise(&m_Info);
-	SpiralGUIType *temp = nlw->m_Device->CreateGUI();
-	Fl_Pixmap *Pix      = new Fl_Pixmap(Plugin->GetIcon());
+	SpiralGUIType *temp = Plugin->CreateGUI(nlw->m_Device);
+	Fl_Pixmap *Pix      = new Fl_Pixmap(Plugin->Icon());
 	nlw->m_PluginID     = n;
 
 	if (temp) temp->position(x+10,y);

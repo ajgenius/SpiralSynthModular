@@ -31,7 +31,6 @@ public:
 	virtual ~OutputPlugin();
 
 	virtual PluginInfo& Initialise(const HostInfo *Host);
-	virtual SpiralGUIType*  CreateGUI();
 
 	virtual void Execute();
 	virtual void ExecuteCommands();

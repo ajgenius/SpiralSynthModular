@@ -21,14 +21,12 @@
 
 #include "SpiralPlugin.h"
 #include "RiffWav.h"
-#include <FL/Fl_Pixmap.H>
 
 class StreamPlugin : public SpiralPlugin {
    public:
       StreamPlugin();
       virtual ~StreamPlugin();
       virtual PluginInfo &Initialise (const HostInfo *Host);
-      virtual SpiralGUIType *CreateGUI();
       virtual void Execute();
       virtual void Reset();
 
@@ -37,7 +35,6 @@ class StreamPlugin : public SpiralPlugin {
       virtual void StreamIn (std::istream &s);
       enum GUICommands { NONE, SET_TIME, LOAD, RESTART, STOP, PLAY };
       // has to be defined in the plugin
-      //virtual void UpdateGUI() { Fl::check(); }
       float GetVolume (void) { return m_GUIArgs.Volume; }
       float GetPitch (void) { return m_GUIArgs.PitchMod; }
    private:

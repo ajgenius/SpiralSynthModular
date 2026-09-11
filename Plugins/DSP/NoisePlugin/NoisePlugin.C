@@ -16,8 +16,6 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include "NoisePlugin.h"
-#include "NoisePluginGUI.h"
-#include <FL/Fl_Button.H>
 #include <limits.h>
 #include "SpiralIcon.xpm"
 #include <stdlib.h>
@@ -29,6 +27,12 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new NoisePlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon()
 {
@@ -72,12 +76,7 @@ PluginInfo &NoisePlugin::Initialise(const HostInfo *Host)
 	return SpiralPlugin::Initialise(Host);
 }
 
-SpiralGUIType *NoisePlugin::CreateGUI()
-{
-	return new NoisePluginGUI(m_PluginInfo.Width,
-										  m_PluginInfo.Height,
-										  this,m_AudioCH,m_HostInfo);									  
-}
+
 
 void NoisePlugin::Execute()
 {

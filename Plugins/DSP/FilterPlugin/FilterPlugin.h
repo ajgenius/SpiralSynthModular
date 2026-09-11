@@ -17,7 +17,6 @@
 */ 
 
 #include "SpiralPlugin.h"
-#include <FL/Fl_Pixmap.H>
 #include "iir_filter.h"
 
 #ifndef FilterPLUGIN
@@ -32,7 +31,6 @@ public:
 	virtual ~FilterPlugin();
 	
 	virtual PluginInfo &Initialise(const HostInfo *Host);
-	virtual SpiralGUIType *CreateGUI();
 	virtual void Execute();
 	virtual void StreamOut(std::ostream &s);
 	virtual void StreamIn(std::istream &s);

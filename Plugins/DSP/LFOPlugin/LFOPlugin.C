@@ -17,8 +17,6 @@
  */
 
 #include "LFOPlugin.h"
-#include "LFOPluginGUI.h"
-#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -26,6 +24,12 @@ using namespace std;
 extern "C" {
 
 SpiralPlugin* SpiralPlugin_CreateInstance() { return new LFOPlugin; }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
 
@@ -66,9 +70,7 @@ PluginInfo &LFOPlugin::Initialise (const HostInfo *Host) {
            return Info;
 }
 
-SpiralGUIType *LFOPlugin::CreateGUI() {
-      return new LFOPluginGUI(m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
-}
+
 
 void LFOPlugin::WriteWaves() {
      float RadCycle = (M_PI/180) * 360;

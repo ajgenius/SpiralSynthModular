@@ -16,8 +16,6 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include "EchoPlugin.h"
-#include "EchoPluginGUI.h"
-#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -29,6 +27,12 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new EchoPlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon()
 {
@@ -84,10 +88,7 @@ PluginInfo &EchoPlugin::Initialise (const HostInfo *Host)
 	return Info;
 }
 
-SpiralGUIType *EchoPlugin::CreateGUI()
-{
-	return new EchoPluginGUI (m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
-}
+
 
 void EchoPlugin::Reset()
 {

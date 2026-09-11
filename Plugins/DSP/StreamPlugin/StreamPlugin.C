@@ -16,8 +16,6 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include "StreamPlugin.h"
-#include "StreamPluginGUI.h"
-#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 #include "NoteTable.h"
 #include <stdio.h>
@@ -28,6 +26,12 @@ using namespace std;
 extern "C" {
 
 SpiralPlugin* SpiralPlugin_CreateInstance() { return new StreamPlugin; }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
 
@@ -91,9 +95,7 @@ PluginInfo &StreamPlugin::Initialise(const HostInfo *Host)
 	return Info;
 }
 
-SpiralGUIType *StreamPlugin::CreateGUI() {
-	return new StreamPluginGUI(m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
-}
+
 
 void StreamPlugin::Reset()
 {

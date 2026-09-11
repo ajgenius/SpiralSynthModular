@@ -17,7 +17,6 @@
 */ 
 
 #include "SpiralPlugin.h"
-#include <FL/Fl_Pixmap.H>
 
 #ifndef PLUGIN
 #define PLUGIN
@@ -28,7 +27,6 @@ public:
  	KeyboardPlugin();
 	virtual ~KeyboardPlugin();
 
-	virtual SpiralGUIType*  CreateGUI();
 	virtual void 		Execute();
 	virtual void        ExecuteCommands();
 	virtual void	    StreamOut(std::ostream &s);

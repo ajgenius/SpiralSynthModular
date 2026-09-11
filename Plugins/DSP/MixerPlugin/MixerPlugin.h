@@ -28,13 +28,11 @@ class MixerPlugin : public SpiralPlugin {
       MixerPlugin();
       virtual ~MixerPlugin();
       virtual PluginInfo &Initialise(const HostInfo *Host);
-      virtual SpiralGUIType *CreateGUI();
       virtual void Execute();
       virtual void ExecuteCommands();
       virtual void StreamOut(std::ostream &s);
       virtual void StreamIn(std::istream &s);
       // has to be defined in the plugin
-      virtual void UpdateGUI() { Fl::check(); }
       enum GUICommands { NONE, SETMIX, ADDCHAN, REMOVECHAN };
       struct GUIArgs {
 	     int Num;

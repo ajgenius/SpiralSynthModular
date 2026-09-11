@@ -17,8 +17,6 @@
 */
 #include <math.h>
 #include "RingModPlugin.h"
-#include "RingModPluginGUI.h"
-#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -28,6 +26,12 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new RingModPlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon()
 {
@@ -71,12 +75,7 @@ PluginInfo &RingModPlugin::Initialise(const HostInfo *Host)
 	return SpiralPlugin::Initialise(Host);
 }
 
-SpiralGUIType *RingModPlugin::CreateGUI()
-{
-	return new RingModPluginGUI(m_PluginInfo.Width,
-								  	    m_PluginInfo.Height,
-										this,m_AudioCH,m_HostInfo);
-}
+
 
 void RingModPlugin::Execute()
 {

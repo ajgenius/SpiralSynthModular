@@ -1,37 +1,11 @@
-INCLUDES = 						\
-		$(FLTK_CXXFLAGS)			\
-		$(FLTK_CFLAGS)				\
-		-I$(top_builddir)/GUI/Widgets		\
-		-I$(top_srcdir)/libspiralcore/include
-		
+AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir)
 EXTRA_DIST = SpiralIcon.xpm
-	
-plugin = MatrixPlugin.so
 plugindir = $(libdir)/SpiralPlugins
-plugin_LTLIBRARIES = MatrixPlugin.la
-
-MatrixPlugin_la_SOURCES =				\
-			../../GUI/MatrixPlugin/MatrixPluginGUI.h		\
-			../../GUI/MatrixPlugin/MatrixPluginGUI.cpp		\
-			MatrixPlugin.h			\
-			MatrixPlugin.C
-			
-MatrixPlugin_la_LDFLAGS = -shared -module -avoid-version -shared -no-undefined
-MatrixPlugin_la_LIBADD = 							\
-			$(FLTK_LIBS)					\
-			-lm -ldl -lpthread				\
-			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
-                $(top_builddir)/libspiralcore/libspiralcore.la
-
-# PluginManager dlopens FooPlugin.so.  Drop the libtool .la after install
-# (same trick master used) so the directory only contains the module.
+plugin_LTLIBRARIES = MatrixPlugin_DSP.la
+MatrixPlugin_DSP_la_SOURCES = MatrixPlugin.h MatrixPlugin.C
+MatrixPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
+MatrixPlugin_DSP_la_LIBADD = $(top_builddir)/GUI/Widgets/libSpiralPlugin.la $(top_builddir)/libspiralcore/libspiralcore.la -lm -ldl -lpthread
 install-data-hook:
-	-rm -f "$(DESTDIR)$(plugindir)/MatrixPlugin.la"
-
-# The installed .la is removed, so libtool cannot discover the module at uninstall.
+	-rm -f "$(DESTDIR)$(plugindir)/MatrixPlugin_DSP.la"
 uninstall-local:
-	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
-
-AM_CPPFLAGS = -I$(srcdir)
-
-AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/MatrixPlugin
+	rm -f "$(DESTDIR)$(plugindir)/MatrixPlugin_DSP.so"

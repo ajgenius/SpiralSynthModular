@@ -10,7 +10,8 @@ INCLUDES =                                              \
 LIBS = 							\
 	$(FLTK_LIBS)					\
 	-lm -ldl -lpthread				\
-	$(top_builddir)/GUI/Widgets/libSpiralWidgets.la\
+	$(top_builddir)/GUI/Widgets/libSpiralWidgets.la \
+	$(top_builddir)/GUI/Widgets/libSpiralPlugin.la\
                 $(top_builddir)/libspiralcore/libspiralcore.la
 
 

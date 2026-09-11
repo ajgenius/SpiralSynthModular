@@ -20,7 +20,6 @@
 #define DistributorPLUGIN
 
 #include "SpiralPlugin.h"
-#include <FL/Fl_Pixmap.H>
 
 class DistributorPlugin : public SpiralPlugin {
 public:
@@ -28,7 +27,6 @@ public:
 	virtual ~DistributorPlugin();
 
 	virtual PluginInfo& Initialise(const HostInfo *Host);
-	virtual SpiralGUIType* CreateGUI ();
 	
 	virtual void 		Execute();
 	virtual void		Reset();

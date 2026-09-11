@@ -17,8 +17,6 @@
 */
 #include <math.h>
 #include "FormantFilterPlugin.h"
-#include "FormantFilterPluginGUI.h"
-#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -60,6 +58,12 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new FormantFilterPlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon()
 {
@@ -105,12 +109,7 @@ PluginInfo &FormantFilterPlugin::Initialise(const HostInfo *Host)
 	return SpiralPlugin::Initialise(Host);		
 }
 
-SpiralGUIType *FormantFilterPlugin::CreateGUI()
-{
-	return new FormantFilterPluginGUI(m_PluginInfo.Width,
-								  	    m_PluginInfo.Height,
-										this,m_AudioCH,m_HostInfo);
-}
+
 
 void FormantFilterPlugin::Reset()
 {

@@ -26,7 +26,6 @@ class MeterPlugin : public SpiralPlugin {
     MeterPlugin();
     virtual ~MeterPlugin();
     virtual PluginInfo& Initialise (const HostInfo *Host);
-    virtual SpiralGUIType* CreateGUI();
     virtual void Execute();
     virtual void Reset();
     virtual void ExecuteCommands();

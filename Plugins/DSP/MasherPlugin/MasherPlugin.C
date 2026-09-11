@@ -18,8 +18,6 @@
 #include <math.h>
 #include <cstdlib>
 #include "MasherPlugin.h"
-#include "MasherPluginGUI.h"
-#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 
 #define PI 3.141592654
@@ -36,6 +34,12 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new MasherPlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon()
 {
@@ -88,12 +92,7 @@ PluginInfo &MasherPlugin::Initialise(const HostInfo *Host)
 	return SpiralPlugin::Initialise(Host);
 }
 
-SpiralGUIType *MasherPlugin::CreateGUI()
-{
-	return new MasherPluginGUI(m_PluginInfo.Width,
-							 m_PluginInfo.Height,
-							 this,m_AudioCH,m_HostInfo);
-}
+
 
 void MixPitch(Sample &src, Sample &dst, int Pos, float Pitch)
 {

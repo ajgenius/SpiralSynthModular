@@ -16,8 +16,6 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include "PoshSamplerPlugin.h"
-#include "PoshSamplerPluginGUI.h"
-#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 #include "NoteTable.h"
 #include "RiffWav.h"
@@ -33,6 +31,12 @@ static const int S3_INPUT = 20;
 
 extern "C" {
    SpiralPlugin* SpiralPlugin_CreateInstance() { return new PoshSamplerPlugin; }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
    const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
    int SpiralPlugin_GetID() { return 32; }
    string SpiralPlugin_GetGroupName() { return "Delay/Sampling"; }
@@ -114,9 +118,7 @@ PluginInfo &PoshSamplerPlugin::Initialise (const HostInfo *Host) {
            return SpiralPlugin::Initialise (Host);
 }
 
-SpiralGUIType *PoshSamplerPlugin::CreateGUI() {
-   return new PoshSamplerPluginGUI (m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
-}
+
 
 void PoshSamplerPlugin::Reset() {
      ResetPorts();

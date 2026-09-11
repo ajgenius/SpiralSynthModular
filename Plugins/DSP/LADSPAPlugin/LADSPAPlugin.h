@@ -23,7 +23,6 @@
 
 #include <config.h>
 
-#include <FL/Fl_Pixmap.H>
 #include <ladspa.h>
 
 #include "SpiralPlugin.h"
@@ -50,7 +49,6 @@ public:
 	virtual ~LADSPAPlugin();
 
 	virtual PluginInfo &Initialise(const HostInfo *Host);
-	virtual SpiralGUIType *CreateGUI();
 	virtual void Execute();
 	virtual void Reset();
 	virtual void ExecuteCommands();
@@ -59,6 +57,10 @@ public:
 
 	unsigned long  GetUniqueID() { return m_UniqueID; }
 	const char    *GetName() { return (const char *)m_Name; }
+	const std::vector<LADSPAInfo::PluginEntry> &GetMenuList() const
+	{
+		return m_LADSPAInfo->GetMenuList();
+	}
 	const char    *GetMaker() { return (const char *)m_Maker; }
 	int            GetPage() { return m_Page; }
 	bool           GetUpdateInputs() { return m_UpdateInputs; }

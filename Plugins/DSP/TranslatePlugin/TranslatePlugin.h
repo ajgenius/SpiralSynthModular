@@ -17,7 +17,6 @@
 */
 
 #include "SpiralPlugin.h"
-#include <FL/Fl_Pixmap.H>
 
 #ifndef TranslatePLUGIN
 #define TranslatePLUGIN
@@ -62,7 +61,6 @@ class TranslatePlugin : public SpiralPlugin {
       TranslatePlugin();
       virtual ~TranslatePlugin ();
       virtual PluginInfo& Initialise (const HostInfo *Host);
-      virtual SpiralGUIType* CreateGUI ();
       virtual void Execute ();
       enum GUICommands { NOCMD, SETMETHOD };
       virtual void ExecuteCommands ();

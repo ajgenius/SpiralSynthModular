@@ -16,8 +16,6 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 #include "OperatorPlugin.h"
-#include "OperatorPluginGUI.h"
-#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 #include "NoteTable.h"
 
@@ -28,6 +26,12 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new OperatorPlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon()
 {
@@ -75,12 +79,7 @@ PluginInfo &OperatorPlugin::Initialise(const HostInfo *Host)
 	return SpiralPlugin::Initialise(Host);
 }
 
-SpiralGUIType *OperatorPlugin::CreateGUI()
-{
-	return new OperatorPluginGUI(m_PluginInfo.Width,
-						     m_PluginInfo.Height,
-							 this,m_AudioCH,m_HostInfo);
-}
+
 
 void OperatorPlugin::Execute()
 {	

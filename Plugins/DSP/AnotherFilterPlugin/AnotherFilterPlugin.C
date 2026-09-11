@@ -17,8 +17,6 @@
 */ 
 #include <math.h>
 #include "AnotherFilterPlugin.h"
-#include "AnotherFilterPluginGUI.h"
-#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 
 #define PI 3.141592654
@@ -32,6 +30,12 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new AnotherFilterPlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon()
 {
@@ -80,12 +84,7 @@ PluginInfo &AnotherFilterPlugin::Initialise(const HostInfo *Host)
 	return SpiralPlugin::Initialise(Host);		
 }
 
-SpiralGUIType *AnotherFilterPlugin::CreateGUI()
-{
-	return new AnotherFilterPluginGUI(m_PluginInfo.Width,
-								  	    m_PluginInfo.Height,
-										this,m_AudioCH,m_HostInfo);
-}
+
 
 void AnotherFilterPlugin::Reset()
 {

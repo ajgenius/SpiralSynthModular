@@ -17,7 +17,6 @@
 */ 
 
 #include "SpiralPlugin.h"
-#include <FL/Fl_Pixmap.H>
 
 #ifndef SplitterPLUGIN
 #define SplitterPLUGIN
@@ -29,7 +28,6 @@ public:
 	virtual ~SplitterPlugin();
 	
 	virtual PluginInfo& Initialise(const HostInfo *Host);
-	virtual SpiralGUIType* CreateGUI ();
 	
 	virtual void 		Execute();
 	virtual void 		ExecuteCommands();

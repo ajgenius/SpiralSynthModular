@@ -17,7 +17,6 @@
 */ 
 
 #include "SpiralPlugin.h"
-#include <FL/Fl_Pixmap.H>
 #include <jack/jack.h>
 
 using namespace std;
@@ -127,7 +126,6 @@ public:
 	virtual ~JackPlugin();
 
 	virtual PluginInfo& Initialise(const HostInfo *Host);
-	virtual SpiralGUIType*  CreateGUI();
 	
 	/* General Plugin Function */
 	virtual void	Execute();

@@ -21,7 +21,6 @@
 
 #include "SpiralPlugin.h"
 #include "RiffWav.h"
-#include <FL/Fl_Pixmap.H>
 
 class DiskWriterPlugin : public SpiralPlugin
 {
@@ -30,7 +29,6 @@ public:
 	virtual ~DiskWriterPlugin();
 
 	virtual PluginInfo& Initialise(const HostInfo *Host);
-	virtual SpiralGUIType*  CreateGUI();
 	virtual void 		Execute();
 	virtual void 		ExecuteCommands();
 

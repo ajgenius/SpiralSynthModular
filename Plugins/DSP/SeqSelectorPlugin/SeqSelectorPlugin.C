@@ -16,8 +16,6 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include "SeqSelectorPlugin.h"
-#include "SeqSelectorPluginGUI.h"
-#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 #include "NoteTable.h"
 
@@ -28,6 +26,12 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new SeqSelectorPlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon()
 {
@@ -83,12 +87,7 @@ PluginInfo &SeqSelectorPlugin::Initialise(const HostInfo *Host)
 	return SpiralPlugin::Initialise(Host);
 }
 
-SpiralGUIType *SeqSelectorPlugin::CreateGUI()
-{
-	return new SeqSelectorPluginGUI(m_PluginInfo.Width,
-								  	    m_PluginInfo.Height,
-										this,m_AudioCH,m_HostInfo);
-}
+
 
 void SeqSelectorPlugin::Reset()
 {

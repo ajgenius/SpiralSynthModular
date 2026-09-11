@@ -1,37 +1,11 @@
-INCLUDES = 						\
-		$(FLTK_CXXFLAGS)			\
-		$(FLTK_CFLAGS)				\
-		-I$(top_builddir)/GUI/Widgets		\
-		-I$(top_srcdir)/libspiralcore/include
-		
+AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir)
 EXTRA_DIST = SpiralIcon.xpm
-	
-plugin = OperatorPlugin.so
 plugindir = $(libdir)/SpiralPlugins
-plugin_LTLIBRARIES = OperatorPlugin.la
-
-OperatorPlugin_la_SOURCES =					\
-			../../GUI/OperatorPlugin/OperatorPluginGUI.h			\
-			../../GUI/OperatorPlugin/OperatorPluginGUI.cpp			\
-			OperatorPlugin.h			\
-			OperatorPlugin.C
-			
-OperatorPlugin_la_LDFLAGS = -shared -module -avoid-version -shared -no-undefined
-OperatorPlugin_la_LIBADD = 							\
-			$(FLTK_LIBS)					\
-			-lm -ldl -lpthread				\
-			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
-                $(top_builddir)/libspiralcore/libspiralcore.la
-
-# PluginManager dlopens FooPlugin.so.  Drop the libtool .la after install
-# (same trick master used) so the directory only contains the module.
+plugin_LTLIBRARIES = OperatorPlugin_DSP.la
+OperatorPlugin_DSP_la_SOURCES = OperatorPlugin.h OperatorPlugin.C
+OperatorPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
+OperatorPlugin_DSP_la_LIBADD = $(top_builddir)/GUI/Widgets/libSpiralPlugin.la $(top_builddir)/libspiralcore/libspiralcore.la -lm -ldl -lpthread
 install-data-hook:
-	-rm -f "$(DESTDIR)$(plugindir)/OperatorPlugin.la"
-
-# The installed .la is removed, so libtool cannot discover the module at uninstall.
+	-rm -f "$(DESTDIR)$(plugindir)/OperatorPlugin_DSP.la"
 uninstall-local:
-	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
-
-AM_CPPFLAGS = -I$(srcdir)
-
-AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/OperatorPlugin
+	rm -f "$(DESTDIR)$(plugindir)/OperatorPlugin_DSP.so"

@@ -17,7 +17,6 @@
 */ 
 
 #include "KeyboardPlugin.h"
-#include "KeyboardPluginGUI.h"
 #include "NoteTable.h"
 #include "SpiralIcon.xpm"
 
@@ -28,6 +27,12 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new KeyboardPlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon()
 {
@@ -68,12 +73,7 @@ KeyboardPlugin::~KeyboardPlugin()
 {
 }
 
-SpiralGUIType *KeyboardPlugin::CreateGUI()
-{
-	return new KeyboardPluginGUI(m_PluginInfo.Width,
-										  m_PluginInfo.Height,
-										  this,m_AudioCH,m_HostInfo);
-}
+
 
 void KeyboardPlugin::Execute()
 {

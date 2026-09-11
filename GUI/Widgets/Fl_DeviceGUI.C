@@ -155,8 +155,10 @@ int Fl_DeviceGUI::handle (int event) {
           if (!m_PluginWindow->visible()) Maximise();
        }
     }
-    // plugin GUI killed - minimise device, show icon
-    if (!m_Minimised && !m_PluginWindow->visible()) {
+    // plugin GUI killed - minimise device, show icon.
+    // else-if: Maximise() in this same event must not immediately Minimise()
+    // if show() has not yet marked the child visible.
+    else if (!m_Minimised && m_PluginWindow && !m_PluginWindow->visible()) {
        Minimise();
        if (m_IconButton) m_IconButton->show();
     }
@@ -165,6 +167,7 @@ int Fl_DeviceGUI::handle (int event) {
 }
 
 void Fl_DeviceGUI::ResizeToPluginWindow (void) {
+     if (!m_PluginWindow) return;
      if (m_PluginWindow->h()+2 > m_MiniHeight)
         Resize (m_PluginWindow->w()+(PortGroupWidth*2)-5, m_PluginWindow->h()+2);
      else
@@ -177,11 +180,12 @@ void Fl_DeviceGUI::Minimise() {
 }
 
 void Fl_DeviceGUI::Maximise() {
+     if (!m_PluginWindow) return;
      m_Minimised=false;
      m_PluginWindow->show();
-     m_IconButton->hide();
+     if (m_IconButton) m_IconButton->hide();
      ResizeToPluginWindow();
-     ((Fl_Canvas*)parent())->ToTop(this);
+     if (parent()) ((Fl_Canvas*)parent())->ToTop(this);
 }
 
 void Fl_DeviceGUI::Resize (int width, int height) {
@@ -195,8 +199,9 @@ void Fl_DeviceGUI::Resize (int width, int height) {
      m_Menu->resize (x(), y(), width, height);
      int Centx = x()+w()/2;
      int Centy = y()+h()/2;
-     m_IconButton->position (Centx-m_Icon->w()/2, Centy-m_Icon->h()/2);
-     parent()->redraw();
+     if (m_IconButton && m_Icon)
+         m_IconButton->position (Centx-m_Icon->w()/2, Centy-m_Icon->h()/2);
+     if (parent()) parent()->redraw();
 }
 
 void Fl_DeviceGUI::Setup(const DeviceGUIInfo& Info, bool FirstTime)

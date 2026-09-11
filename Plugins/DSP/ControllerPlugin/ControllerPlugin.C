@@ -18,8 +18,6 @@
 
 #include <stdio.h>
 #include "ControllerPlugin.h"
-#include "ControllerPluginGUI.h"
-#include <FL/Fl_Button.H>
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -29,6 +27,12 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new ControllerPlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon()
 {
@@ -87,12 +91,7 @@ PluginInfo &ControllerPlugin::Initialise(const HostInfo *Host)
 	return SpiralPlugin::Initialise(Host);
 }
 
-SpiralGUIType *ControllerPlugin::CreateGUI()
-{
-	return new ControllerPluginGUI(m_PluginInfo.Width,
-								  	    m_PluginInfo.Height,
-										this,m_AudioCH,m_HostInfo);
-}
+
 
 void ControllerPlugin::Execute()
 {

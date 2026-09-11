@@ -16,7 +16,6 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include "MeterPlugin.h"
-#include "MeterPluginGUI.h"
 #include "SpiralIcon.xpm"
 #include <stdio.h>
 
@@ -25,6 +24,12 @@ using namespace std;
 extern "C" {
 
 SpiralPlugin* SpiralPlugin_CreateInstance() { return new MeterPlugin; }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
 
@@ -66,9 +71,7 @@ PluginInfo &MeterPlugin::Initialise (const HostInfo *Host) {
   return Info;
 }
 
-SpiralGUIType *MeterPlugin::CreateGUI() {
-  return new MeterPluginGUI (m_PluginInfo.Width, m_PluginInfo.Height, this, m_AudioCH, m_HostInfo);
-}
+
 
 void MeterPlugin::Reset()
 {

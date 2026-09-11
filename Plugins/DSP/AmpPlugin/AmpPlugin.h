@@ -20,7 +20,6 @@
 #define AMPPLUGIN
 
 #include "SpiralPlugin.h"
-#include <FL/Fl.H>
 
 class AmpPlugin : public SpiralPlugin
 {
@@ -29,13 +28,11 @@ public:
 	virtual ~AmpPlugin();
 
 	virtual PluginInfo &Initialise(const HostInfo *Host);
-	virtual SpiralGUIType *CreateGUI();
 	virtual void Execute();
 	virtual void StreamOut(std::ostream &s);
 	virtual void StreamIn(std::istream &s);
 
 	// has to be defined in the plugin
-	virtual void UpdateGUI() { Fl::check(); }
 
 	float GetGain() { return m_Gain; }
 	float GetDC() { return m_DC;  }

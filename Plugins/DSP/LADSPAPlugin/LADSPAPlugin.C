@@ -28,7 +28,6 @@
 
 #include "SpiralIcon.xpm"
 #include "LADSPAPlugin.h"
-#include "LADSPAPluginGUI.h"
 #include "LADSPAInfo.h"
 
 using namespace std;
@@ -55,6 +54,12 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new LADSPAPlugin;
 }
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DSP;
+}
+
 
 const char** SpiralPlugin_GetIcon()
 {
@@ -172,11 +177,7 @@ PluginInfo &LADSPAPlugin::Initialise(const HostInfo *Host)
 	return Info;
 }
 
-SpiralGUIType *LADSPAPlugin::CreateGUI()
-{
-	return new LADSPAPluginGUI(m_PluginInfo.Width, m_PluginInfo.Height,
-	                           this, m_AudioCH, m_HostInfo, m_LADSPAInfo->GetMenuList());
-}
+
 
 void LADSPAPlugin::Reset()
 {

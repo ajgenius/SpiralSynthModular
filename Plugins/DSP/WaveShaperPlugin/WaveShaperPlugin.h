@@ -18,7 +18,6 @@
 */
 
 #include "SpiralPlugin.h"
-#include <FL/Fl_Pixmap.H>
 
 #ifndef WaveShaperPLUGIN
 #define WaveShaperPLUGIN
@@ -28,7 +27,6 @@ class WaveShaperPlugin : public SpiralPlugin {
     WaveShaperPlugin();
     virtual ~WaveShaperPlugin ();
     virtual PluginInfo& Initialise (const HostInfo *Host);
-    virtual SpiralGUIType* CreateGUI();
     virtual void Execute();
     virtual void Reset();
     virtual void ExecuteCommands();

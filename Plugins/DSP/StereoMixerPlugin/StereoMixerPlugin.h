@@ -17,7 +17,6 @@
 */ 
 
 #include "SpiralPlugin.h"
-#include <FL/Fl_Pixmap.H>
 
 #ifndef StereoMixerPLUGIN
 #define StereoMixerPLUGIN
@@ -31,7 +30,6 @@ public:
 	virtual ~StereoMixerPlugin();
 	
 	virtual PluginInfo &Initialise(const HostInfo *Host);
-	virtual SpiralGUIType *CreateGUI();
 	virtual void Execute();
 	virtual void ExecuteCommands();
 	virtual void StreamOut(std::ostream &s);
