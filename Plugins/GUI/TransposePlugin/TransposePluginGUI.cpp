@@ -1,3 +1,4 @@
+#include "TransposePlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2003 Andy Preston <andy@clublinux.co.uk>
  *
@@ -66,4 +67,32 @@ const string TransposePluginGUI::GetHelpText (const string &loc) {
     + "With only one input connected the 'Amount' value lets you\n"
     + "transpose the input up or down by the indicated number of\n"
     + "notes.";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 122;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	TransposePlugin *p = (TransposePlugin *)plugin;
+	if (!p) return 0;
+	return new TransposePluginGUI (p->GetPluginInfo().Width, p->GetPluginInfo().Height, p, p->GetChannelHandler(), p->GetHostInfo());
+}
+
 }

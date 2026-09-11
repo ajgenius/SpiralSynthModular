@@ -1,3 +1,4 @@
+#include "EnvelopePlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -368,4 +369,34 @@ const string EnvelopePluginGUI::GetHelpText (const string &loc) {
     + "In fact, the envelope plugin itself can be made into a\n"
     + "compressor, by feeding the audio signal into both inputs,\n"
     + "and tweaking the ADSR values. \n";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x0005;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	EnvelopePlugin *p = (EnvelopePlugin *)plugin;
+	if (!p) return 0;
+	return new EnvelopePluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

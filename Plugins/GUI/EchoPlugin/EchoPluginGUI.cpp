@@ -1,3 +1,4 @@
+#include "EchoPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -178,4 +179,32 @@ const string EchoPluginGUI::GetHelpText(const string &loc){
     + "feedback controls can be modulated via CV inputs.\n\n"
     + "Bounce mode makes the echo bounce to-and-fro between\n"
     + "the 2 (stereo) outputs.\n";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x000e;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	EchoPlugin *p = (EchoPlugin *)plugin;
+	if (!p) return 0;
+	return new EchoPluginGUI (p->GetPluginInfo().Width, p->GetPluginInfo().Height, p, p->GetChannelHandler(), p->GetHostInfo());
+}
+
 }

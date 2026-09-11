@@ -1,3 +1,4 @@
+#include "OscillatorPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -416,4 +417,34 @@ const string OscillatorPluginGUI::GetHelpText(const string &loc){
 	+ "sample and hold manually, and control the modulation depth of the input CV's.\n\n"
 	+ "The frequency can be set extremely low on this oscillator, so you can use\n"
 	+ "it as an LFO for controlling other plugins.";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x0004;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	OscillatorPlugin *p = (OscillatorPlugin *)plugin;
+	if (!p) return 0;
+	return new OscillatorPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

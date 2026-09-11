@@ -1,3 +1,4 @@
+#include "DistributorPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -71,4 +72,32 @@ const string DistributorPluginGUI::GetHelpText(const string &loc)
 {
 	return string("")
 	+ "The Distributor plugin is for polyphony. NEED MORE INFO HERE.\n";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x0056;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	DistributorPlugin *p = (DistributorPlugin *)plugin;
+	if (!p) return 0;
+	return new DistributorPluginGUI (p->GetPluginInfo().Width, p->GetPluginInfo().Height, p, p->GetChannelHandler(), p->GetHostInfo());
+}
+
 }

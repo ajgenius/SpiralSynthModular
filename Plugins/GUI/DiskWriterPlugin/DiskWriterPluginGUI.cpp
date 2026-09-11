@@ -1,3 +1,4 @@
+#include "DiskWriterPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -227,4 +228,32 @@ const string DiskWriterPluginGUI::GetHelpText(const string &loc)
 	+ "You are able to stop and restart recording without closing the\n"
 	+ "file, which should make life a little easier if you are doing\n"
 	+ "things like recording lots of little samples.";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 41;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	DiskWriterPlugin *p = (DiskWriterPlugin *)plugin;
+	if (!p) return 0;
+	return new DiskWriterPluginGUI(p->GetPluginInfo().Width, p->GetPluginInfo().Height, p, p->GetChannelHandler(), p->GetHostInfo());
+}
+
 }

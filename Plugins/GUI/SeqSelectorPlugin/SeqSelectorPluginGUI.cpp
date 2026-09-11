@@ -1,3 +1,4 @@
+#include "SeqSelectorPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -297,4 +298,34 @@ const string SeqSelectorPluginGUI::GetHelpText(const string &loc){
 	+ "triggering the next patterns on it's slave sequencers or matrix plugins.\n\n"
 	+ "You can also specify a loop, which will be used if the \"use range\"\n"
 	+ "button is activated. This is useful for auditioning sections of a track.";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x0015;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	SeqSelectorPlugin *p = (SeqSelectorPlugin *)plugin;
+	if (!p) return 0;
+	return new SeqSelectorPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

@@ -1,3 +1,4 @@
+#include "MoogFilterPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -79,4 +80,34 @@ const string MoogFilterPluginGUI::GetHelpText(const string &loc){
 	+ "pass are simultaneously calculated too. The emphasis can be pushed\n"
 	+ "into self oscillation (careful of the speakers). In this way, it\n" 
 	+ "can be used to generate sinewave oscillations.";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x000d;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	MoogFilterPlugin *p = (MoogFilterPlugin *)plugin;
+	if (!p) return 0;
+	return new MoogFilterPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

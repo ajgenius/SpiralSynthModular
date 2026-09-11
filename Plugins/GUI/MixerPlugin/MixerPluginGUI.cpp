@@ -1,3 +1,4 @@
+#include "MixerPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -173,4 +174,32 @@ const string MixerPluginGUI::GetHelpText (const string &loc){
       + "levels to reset them.\n"
       + "Add up to 16 channels using the '+' button.\n"
       + "Use the '-' button to remove unwanted channels.\n";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x0007;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	MixerPlugin *p = (MixerPlugin *)plugin;
+	if (!p) return 0;
+	return new MixerPluginGUI (p->GetPluginInfo().Width, p->GetPluginInfo().Height, p, p->GetChannelHandler(), p->GetHostInfo());
+}
+
 }

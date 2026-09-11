@@ -1,3 +1,4 @@
+#include "SpiralLoopPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -556,4 +557,34 @@ const string SpiralLoopPluginGUI::GetHelpText(const string &loc){
 	+ "Loop triggers are sync points that you can drag around the loop. When the play\n"
 	+ "position crosses one, the corresponding output CV will go high. Multiple triggers\n"
 	+ "can effect the same CV, use the right mouse button to cycle through the outputs";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x001a;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	SpiralLoopPlugin *p = (SpiralLoopPlugin *)plugin;
+	if (!p) return 0;
+	return new SpiralLoopPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

@@ -538,3 +538,33 @@ const string JackPluginGUI::GetHelpText(const string &loc)
 		+ "match the JACK server, otherwise glitchy playback, and/or crashes may\n"
 		+ "result";
 }
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 31;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	JackPlugin *p = (JackPlugin *)plugin;
+	if (!p) return 0;
+	return new JackPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
+}

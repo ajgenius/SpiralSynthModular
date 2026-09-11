@@ -1,3 +1,4 @@
+#include "DelayPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -170,4 +171,34 @@ const string DelayPluginGUI::GetHelpText(const string &loc){
     + "is fed back into the input, you get a similar effect\n"
     + "to the echo, but you can add cool effects by routing\n"
     + "the signal back through a lowpass filter (for example).\n";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x000f;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	DelayPlugin *p = (DelayPlugin *)plugin;
+	if (!p) return 0;
+	return new DelayPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

@@ -1,3 +1,4 @@
+#include "AnotherFilterPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -76,4 +77,34 @@ void AnotherFilterPluginGUI::cb_Resonance(Fl_Knob* o, void* v)
 const string AnotherFilterPluginGUI::GetHelpText(const string &loc){
     return string("")
 	 + "Resonant IIR lowpass (12dB/oct) filter\n";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 43;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	AnotherFilterPlugin *p = (AnotherFilterPlugin *)plugin;
+	if (!p) return 0;
+	return new AnotherFilterPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

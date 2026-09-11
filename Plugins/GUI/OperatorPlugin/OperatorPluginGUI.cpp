@@ -1,3 +1,4 @@
+#include "OperatorPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -137,4 +138,34 @@ const string OperatorPluginGUI::GetHelpText(const string &loc){
     return string("")
     + "Simply performs the operation on the input data,\n"
     + "if there is only one input, it uses the constant.";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 44;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	OperatorPlugin *p = (OperatorPlugin *)plugin;
+	if (!p) return 0;
+	return new OperatorPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

@@ -330,6 +330,14 @@ CXXFLAGS="$CFLAGS -fPIC"
 
 AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
+GUI_PLUGINLIST=""
+for plugin in $PLUGINLIST; do
+    case "$plugin" in
+        SampleHoldPlugin) ;;
+        *) GUI_PLUGINLIST="$GUI_PLUGINLIST $plugin" ;;
+    esac
+done
+AC_SUBST(GUI_PLUGINLIST)
 AC_SUBST(PLUGINLIST)
 
 dnl Modify the output files.
@@ -341,6 +349,56 @@ GUI/Widgets/Makefile
 libspiralcore/Makefile
 Plugins/Makefile
 Plugins/DSP/Makefile
+Plugins/GUI/Makefile
+Plugins/GUI/AmpPlugin/Makefile
+Plugins/GUI/AnotherFilterPlugin/Makefile
+Plugins/GUI/BeatMatchPlugin/Makefile
+Plugins/GUI/ControllerPlugin/Makefile
+Plugins/GUI/CounterPlugin/Makefile
+Plugins/GUI/DelayPlugin/Makefile
+Plugins/GUI/DiskWriterPlugin/Makefile
+Plugins/GUI/DistributorPlugin/Makefile
+Plugins/GUI/EchoPlugin/Makefile
+Plugins/GUI/EnvFollowerPlugin/Makefile
+Plugins/GUI/EnvelopePlugin/Makefile
+Plugins/GUI/FilterPlugin/Makefile
+Plugins/GUI/FlipflopPlugin/Makefile
+Plugins/GUI/FormantFilterPlugin/Makefile
+Plugins/GUI/JackPlugin/Makefile
+Plugins/GUI/KeyboardPlugin/Makefile
+Plugins/GUI/LADSPAPlugin/Makefile
+Plugins/GUI/LFOPlugin/Makefile
+Plugins/GUI/LogicPlugin/Makefile
+Plugins/GUI/MasherPlugin/Makefile
+Plugins/GUI/MatrixPlugin/Makefile
+Plugins/GUI/MeterPlugin/Makefile
+Plugins/GUI/MidiPlugin/Makefile
+Plugins/GUI/MixSwitchPlugin/Makefile
+Plugins/GUI/MixerPlugin/Makefile
+Plugins/GUI/MoogFilterPlugin/Makefile
+Plugins/GUI/NoisePlugin/Makefile
+Plugins/GUI/NoteSnapPlugin/Makefile
+Plugins/GUI/OperatorPlugin/Makefile
+Plugins/GUI/OscillatorPlugin/Makefile
+Plugins/GUI/OutputPlugin/Makefile
+Plugins/GUI/PoshSamplerPlugin/Makefile
+Plugins/GUI/RingModPlugin/Makefile
+Plugins/GUI/SVFilterPlugin/Makefile
+Plugins/GUI/ScopePlugin/Makefile
+Plugins/GUI/SeqSelectorPlugin/Makefile
+Plugins/GUI/SmoothPlugin/Makefile
+Plugins/GUI/SpiralLoopPlugin/Makefile
+Plugins/GUI/SplitSwitchPlugin/Makefile
+Plugins/GUI/SplitterPlugin/Makefile
+Plugins/GUI/StereoMixerPlugin/Makefile
+Plugins/GUI/StreamPlugin/Makefile
+Plugins/GUI/SwitchPlugin/Makefile
+Plugins/GUI/TranslatePlugin/Makefile
+Plugins/GUI/TransposePlugin/Makefile
+Plugins/GUI/TrigPlugin/Makefile
+Plugins/GUI/WaveShaperPlugin/Makefile
+Plugins/GUI/WaveTablePlugin/Makefile
+Plugins/GUI/XFadePlugin/Makefile
 Plugins/DSP/AmpPlugin/Makefile
 Plugins/DSP/AnotherFilterPlugin/Makefile
 Plugins/DSP/BeatMatchPlugin/Makefile

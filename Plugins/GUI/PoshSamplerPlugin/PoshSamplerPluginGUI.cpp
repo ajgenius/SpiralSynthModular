@@ -1,3 +1,4 @@
+#include "PoshSamplerPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -789,4 +790,32 @@ const string PoshSamplerPluginGUI::GetHelpText(const string &loc){
 	+ "Left mouse also drags loop points. The Loop end marker defaults to the\n"
 	+ "end of the sample.\n\n"
 	+ "Note: The loading and saving of samples is not yet realtime safe";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 32;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	PoshSamplerPlugin *p = (PoshSamplerPlugin *)plugin;
+	if (!p) return 0;
+	return new PoshSamplerPluginGUI (p->GetPluginInfo().Width, p->GetPluginInfo().Height, p, p->GetChannelHandler(), p->GetHostInfo());
+}
+
 }

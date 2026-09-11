@@ -1,3 +1,4 @@
+#include "MatrixPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -566,4 +567,34 @@ const string MatrixPluginGUI::GetHelpText(const string &loc){
 	+ "to select which pattern will be played next. There are a maximum of 16\n"
 	+ "patterns to the sequence, but you can use less by setting a slot to -1\n"
 	+ "this will cause the sequence to loop back to zero";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x0012;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	MatrixPlugin *p = (MatrixPlugin *)plugin;
+	if (!p) return 0;
+	return new MatrixPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

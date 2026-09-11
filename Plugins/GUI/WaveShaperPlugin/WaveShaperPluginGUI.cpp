@@ -1,3 +1,4 @@
+#include "WaveShaperPlugin.h"
 /*  WaveShaper Plugin Copyleft (C) 2001 Yves Usson
  *  for SpiralSynthModular
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
@@ -196,4 +197,32 @@ const string WaveShaperPluginGUI::GetHelpText(const string &loc){
     return string("")
     + "This plugin simulates wave shaping as found on analogue\n"
     + "synths, usable in two modes, linear or sine based.\n";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x0032;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	WaveShaperPlugin *p = (WaveShaperPlugin *)plugin;
+	if (!p) return 0;
+	return new WaveShaperPluginGUI (p->GetPluginInfo().Width, p->GetPluginInfo().Height, p, p->GetChannelHandler(), p->GetHostInfo());
+}
+
 }

@@ -1,3 +1,4 @@
+#include "NoteSnapPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -113,4 +114,34 @@ const string NoteSnapPluginGUI::GetHelpText(const string &loc){
     + "(using the midi note data).\n"
 	+ "Use the keyboard to select notes to be filtered out\n"
 	+ "for generating scales and chords";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x0018;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	NoteSnapPlugin *p = (NoteSnapPlugin *)plugin;
+	if (!p) return 0;
+	return new NoteSnapPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

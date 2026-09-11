@@ -1,3 +1,4 @@
+#include "ScopePlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -152,4 +153,32 @@ const string ScopePluginGUI::GetHelpText(const string &loc){
     + "data flowing through it. It does nothing to the signal,\n"
     + "but its very useful for checking the layouts, looking at\n"
     + "CV value etc.\n";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x0001;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	ScopePlugin *p = (ScopePlugin *)plugin;
+	if (!p) return 0;
+	return new ScopePluginGUI(p->GetPluginInfo().Width, p->GetPluginInfo().Height, p, p->GetChannelHandler(), p->GetHostInfo());
+}
+
 }

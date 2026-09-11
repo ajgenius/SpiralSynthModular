@@ -1,3 +1,4 @@
+#include "TranslatePlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2003 Andy Preston <andy@clublinux.co.uk>
  *
@@ -59,4 +60,32 @@ void TranslatePluginGUI::cb_Method (Fl_Choice *o, void *v) {
 const string TranslatePluginGUI::GetHelpText (const string &loc) {
     return string("")
     + "Translates control voltages into other formats.";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 121;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	TranslatePlugin *p = (TranslatePlugin *)plugin;
+	if (!p) return 0;
+	return new TranslatePluginGUI (p->GetPluginInfo().Width, p->GetPluginInfo().Height, p, p->GetChannelHandler(), p->GetHostInfo());
+}
+
 }

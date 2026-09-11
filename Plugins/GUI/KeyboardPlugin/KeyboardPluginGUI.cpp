@@ -1,3 +1,4 @@
+#include "KeyboardPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -195,4 +196,34 @@ const string KeyboardPluginGUI::GetHelpText(const string &loc){
 	+ "The keyboard map follows the SoundTracker standard - i.e:\n"
 	+ "z=C4 s=C#4 x=D4 ... q=C5 2=C#5 w=D5...\n"
 	+ "The function keys change the octave.";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 40;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	KeyboardPlugin *p = (KeyboardPlugin *)plugin;
+	if (!p) return 0;
+	return new KeyboardPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

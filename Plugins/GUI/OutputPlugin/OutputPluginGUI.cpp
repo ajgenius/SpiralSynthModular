@@ -1,3 +1,4 @@
+#include "OutputPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -155,4 +156,32 @@ const string OutputPluginGUI::GetHelpText(const string &loc){
 	+ "read to record/process sound from your soundcard, write to play sound\n"
 	+ "(default) and if your card supports it - duplex, to play and record \n"
 	+ "simultaneously.";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x0000;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	OutputPlugin *p = (OutputPlugin *)plugin;
+	if (!p) return 0;
+	return new OutputPluginGUI(p->GetPluginInfo().Width, p->GetPluginInfo().Height, p, p->GetChannelHandler(), p->GetHostInfo());
+}
+
 }

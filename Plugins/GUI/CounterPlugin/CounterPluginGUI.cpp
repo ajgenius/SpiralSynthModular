@@ -1,3 +1,4 @@
+#include "CounterPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -64,4 +65,34 @@ const string CounterPluginGUI::GetHelpText(const string &loc){
     return string("")
     + "Counts input pulses (zero crossings) and flips the output\n"
 	+ "CV every time the count is reached.";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 45;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	CounterPlugin *p = (CounterPlugin *)plugin;
+	if (!p) return 0;
+	return new CounterPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

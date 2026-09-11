@@ -1,3 +1,4 @@
+#include "FormantFilterPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -81,4 +82,34 @@ const string FormantFilterPluginGUI::GetHelpText(const string &loc){
 	 + "From the great www.musicdsp.org site, I've added linear\n"
 	 + "interpolation between the filters so you can sweep them with\n"
 	 + "an external CV if desired";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 42;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	FormantFilterPlugin *p = (FormantFilterPlugin *)plugin;
+	if (!p) return 0;
+	return new FormantFilterPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

@@ -1,3 +1,4 @@
+#include "LFOPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2002 Andy Preston <andy@clubunix.co.uk>
  *
@@ -206,4 +207,32 @@ const string LFOPluginGUI::GetHelpText(const string &loc){
     + "A very low frequency oscillator. Also produces inverted and \"cosine\"\n"
 	+ "outputs (output phase shifted by 180 degrees)\n"
 	+ "Period length goes down to 2 minutes :]\n";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 124;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	LFOPlugin *p = (LFOPlugin *)plugin;
+	if (!p) return 0;
+	return new LFOPluginGUI(p->GetPluginInfo().Width, p->GetPluginInfo().Height, p, p->GetChannelHandler(), p->GetHostInfo());
+}
+
 }

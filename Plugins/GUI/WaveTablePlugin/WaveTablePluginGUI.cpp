@@ -1,3 +1,4 @@
+#include "WaveTablePlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -402,4 +403,32 @@ const string WaveTablePluginGUI::GetHelpText(const string &loc){
 	+ "The oscillator can be pitched very low for use as a LFO CV generator,\n" 
 	+ "using any of the supported wave shapes. User wave shapes are planned,\n" 
 	+ "so you will be able to load your own samples in.";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x0017;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	WaveTablePlugin *p = (WaveTablePlugin *)plugin;
+	if (!p) return 0;
+	return new WaveTablePluginGUI(p->GetPluginInfo().Width,p->GetPluginInfo().Height,p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

@@ -1,3 +1,4 @@
+#include "FlipflopPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -82,4 +83,34 @@ const string FlipflopPluginGUI::GetHelpText(const string &loc){
 	+ "cause an output pulse to be generated, the length of which is set by the\n"
 	+ "trigger time control (out of 1 second max)\n\n"
 	+ "For a better description, google \"flipflop bistable monostable\" :)";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 46;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	FlipflopPlugin *p = (FlipflopPlugin *)plugin;
+	if (!p) return 0;
+	return new FlipflopPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

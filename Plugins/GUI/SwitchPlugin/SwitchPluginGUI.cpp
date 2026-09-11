@@ -1,3 +1,4 @@
+#include "SwitchPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -58,4 +59,34 @@ const string SwitchPluginGUI::GetHelpText(const string &loc){
     return string("")
     + "Switches between inputs, if mix is turned on the inputs are\n"
 	+ "crossfaded between, according to the CV input";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 47;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	SwitchPlugin *p = (SwitchPlugin *)plugin;
+	if (!p) return 0;
+	return new SwitchPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

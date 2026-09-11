@@ -1,3 +1,4 @@
+#include "LogicPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -263,4 +264,34 @@ const string LogicPluginGUI::GetHelpText(const string &loc){
     + "0010101010111010010010101010001010011110001010101000101010\n"
     + "1110111101101001000010101010111110101010101010101111010101\n"
     + "0011011111010101101000001010101010001010100001100111010111";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 52;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	LogicPlugin *p = (LogicPlugin *)plugin;
+	if (!p) return 0;
+	return new LogicPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

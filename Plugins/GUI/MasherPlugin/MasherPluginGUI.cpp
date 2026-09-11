@@ -1,3 +1,4 @@
+#include "MasherPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -120,4 +121,34 @@ const string MasherPluginGUI::GetHelpText(const string &loc){
 	+ "carries out various patented algorithms on the result.\n\n"
 	+ "Truth is I don't really know how it works, but makes sounds like\n"
 	+ "tttttthhhIIiissssSSSSSSsssssSsSSsS.";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 54;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	MasherPlugin *p = (MasherPlugin *)plugin;
+	if (!p) return 0;
+	return new MasherPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

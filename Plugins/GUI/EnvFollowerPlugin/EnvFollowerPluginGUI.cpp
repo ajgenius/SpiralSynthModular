@@ -1,3 +1,4 @@
+#include "EnvFollowerPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -78,4 +79,34 @@ const string EnvFollowerPluginGUI::GetHelpText(const string &loc){
     + "\n"
     + "The sensitivity of the EnvFollower can be set with the\n"
     + "Attack and Decay controls on the plugin window.\n";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x0013;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	EnvFollowerPlugin *p = (EnvFollowerPlugin *)plugin;
+	if (!p) return 0;
+	return new EnvFollowerPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

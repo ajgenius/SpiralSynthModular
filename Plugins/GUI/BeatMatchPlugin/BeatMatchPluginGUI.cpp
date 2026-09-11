@@ -1,3 +1,4 @@
+#include "BeatMatchPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -57,4 +58,34 @@ const string BeatMatchPluginGUI::GetHelpText(const string &loc){
 	+ "the sensitivity sets the time it takes to sync up.\n"
 	+ "Can be used to transition between different tempo speeds and\n" 
 	+ "other stuff";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 48;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	BeatMatchPlugin *p = (BeatMatchPlugin *)plugin;
+	if (!p) return 0;
+	return new BeatMatchPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

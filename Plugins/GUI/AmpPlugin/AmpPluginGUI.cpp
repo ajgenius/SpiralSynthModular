@@ -1,3 +1,4 @@
+#include "AmpPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -186,4 +187,34 @@ const string AmpPluginGUI::GetHelpText(const string &loc){
     + "controls.\n\n"
     + "The reset button quickly resets the gain back to 1 and the\n"
     + "offset back to 0\n";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x0009;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	AmpPlugin *p = (AmpPlugin *)plugin;
+	if (!p) return 0;
+	return new AmpPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

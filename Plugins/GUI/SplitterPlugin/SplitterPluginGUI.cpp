@@ -1,3 +1,4 @@
+#include "SplitterPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -73,4 +74,32 @@ const string SplitterPluginGUI::GetHelpText(const string &loc)
 	+ "The simplest plugin - the splitter simply takes the input,\n"
 	+ "and duplicates it into it's outputs. Simple, but difficult\n"
 	+ "to do without.\n";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x0006;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	SplitterPlugin *p = (SplitterPlugin *)plugin;
+	if (!p) return 0;
+	return new SplitterPluginGUI (p->GetPluginInfo().Width, p->GetPluginInfo().Height, p, p->GetChannelHandler(), p->GetHostInfo());
+}
+
 }

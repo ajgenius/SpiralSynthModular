@@ -1,3 +1,4 @@
+#include "LADSPAPlugin.h"
 /*  LADSPAPluginGUI.C
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *  LADSPA Plugin by Nicolas Noble <nicolas@nobis-crew.org>
@@ -1480,4 +1481,33 @@ inline void LADSPAPluginGUI::cb_SliderValue_i(Fl_Input *o)
 void LADSPAPluginGUI::cb_SliderValue(Fl_Input *o)
 {   //                     Group     GUI
 	((LADSPAPluginGUI*)(o->parent()->parent()))->cb_SliderValue_i(o);
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x0016;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	LADSPAPlugin *p = (LADSPAPlugin *)plugin;
+	if (!p) return 0;
+	return new LADSPAPluginGUI(p->GetPluginInfo().Width, p->GetPluginInfo().Height,
+	p, p->GetChannelHandler(), p->GetHostInfo(), p->GetMenuList());
+}
+
 }

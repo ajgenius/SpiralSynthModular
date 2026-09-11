@@ -1,3 +1,4 @@
+#include "FilterPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -110,4 +111,34 @@ const string FilterPluginGUI::GetHelpText(const string &loc){
 	+ "Quite a meaty sound - low pass only, nice for bass modulations.\n"
 	+ "With variable emphasis/cutoff CV's.\n\n"
 	+ "It's also pretty fast, and well tested in SpiralSynth.";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x000b;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	FilterPlugin *p = (FilterPlugin *)plugin;
+	if (!p) return 0;
+	return new FilterPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

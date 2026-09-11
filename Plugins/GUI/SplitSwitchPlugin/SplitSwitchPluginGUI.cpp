@@ -1,3 +1,4 @@
+#include "SplitSwitchPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -101,4 +102,32 @@ const string SplitSwitchPluginGUI::GetHelpText(const string &loc){
     + "The 'Clock' input is a trigger to select the next output chanel.\n\n"
     + "The 'CV' output enables you to gang several switches together, by\n"
     + "connecting it to the other switches' 'CV' input.\n";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 125;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	SplitSwitchPlugin *p = (SplitSwitchPlugin *)plugin;
+	if (!p) return 0;
+	return new SplitSwitchPluginGUI (p->GetPluginInfo().Width, p->GetPluginInfo().Height, p, p->GetChannelHandler(), p->GetHostInfo());
+}
+
 }

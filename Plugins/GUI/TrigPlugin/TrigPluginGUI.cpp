@@ -1,3 +1,4 @@
+#include "TrigPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -125,4 +126,34 @@ void TrigPluginGUI::cb_Tan(Fl_Button* o, void* v)
 const string TrigPluginGUI::GetHelpText(const string &loc){
     return string("")
     + "Calculates the sin/cos/tan of the input value, 1.0=360 degrees.";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 53;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	TrigPlugin *p = (TrigPlugin *)plugin;
+	if (!p) return 0;
+	return new TrigPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }

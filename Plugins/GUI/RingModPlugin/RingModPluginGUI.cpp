@@ -1,3 +1,4 @@
+#include "RingModPlugin.h"
 /*  SpiralPlugin
  *  Copyleft (C) 2000 David Griffiths <dave@pawfal.org>
  *
@@ -60,4 +61,34 @@ const string RingModPluginGUI::GetHelpText(const string &loc){
     + "in the signal, although this is often out of tune\n"
     + "with the other signals, its useful for creating bell\n"
     + "or struck metallic sounds.\n";
+}
+
+#include "SpiralIcon.xpm"
+
+extern "C" {
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_GUI;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x000a;
+}
+
+const char **SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
+{
+	RingModPlugin *p = (RingModPlugin *)plugin;
+	if (!p) return 0;
+	return new RingModPluginGUI(p->GetPluginInfo().Width,
+	p->GetPluginInfo().Height,
+	p,p->GetChannelHandler(),p->GetHostInfo());
+}
+
 }
