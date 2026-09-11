@@ -16,7 +16,7 @@ EnvFollowerPlugin_la_SOURCES =					\
 			EnvFollowerPlugin.h			\
 			EnvFollowerPlugin.C
 			
-EnvFollowerPlugin_la_LDFLAGS = -shared -module -avoid-version -no-undefined
+EnvFollowerPlugin_la_LDFLAGS = -shared -module -avoid-version -shared -no-undefined
 EnvFollowerPlugin_la_LIBADD = 							\
 			$(FLTK_LIBS)					\
 			-lm -ldl -lpthread				\
@@ -24,5 +24,7 @@ EnvFollowerPlugin_la_LIBADD = 							\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la \
                 $(top_builddir)/libspiralcore/libspiralcore.la
 
-install:$(plugin_LTLIBRARIES)
-	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)
+# PluginManager dlopens FooPlugin.so.  Drop the libtool .la after install
+# (same trick master used) so the directory only contains the module.
+install-data-hook:
+	-rm -f "$(DESTDIR)$(plugindir)/EnvFollowerPlugin.la"

@@ -16,7 +16,7 @@ JackPlugin_la_SOURCES =					\
 			JackPlugin.h			\
 			JackPlugin.C
 			
-JackPlugin_la_LDFLAGS = -shared -module -avoid-version -no-undefined
+JackPlugin_la_LDFLAGS = -shared -module -avoid-version -shared -no-undefined
 JackPlugin_la_LIBADD = 							\
 			$(FLTK_LIBS)					\
 			-lm -ldl -lpthread				\
@@ -24,5 +24,7 @@ JackPlugin_la_LIBADD = 							\
 			$(top_builddir)/SpiralSound/libSpiralCommon.la \
                 $(top_builddir)/libspiralcore/libspiralcore.la
 
-install:$(plugin_LTLIBRARIES)
-	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)
+# PluginManager dlopens FooPlugin.so.  Drop the libtool .la after install
+# (same trick master used) so the directory only contains the module.
+install-data-hook:
+	-rm -f "$(DESTDIR)$(plugindir)/JackPlugin.la"
