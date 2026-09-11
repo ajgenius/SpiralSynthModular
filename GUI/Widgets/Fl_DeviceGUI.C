@@ -227,7 +227,8 @@ void Fl_DeviceGUI::Setup(const DeviceGUIInfo& Info, bool FirstTime)
 		NewInput->box(FL_ROUNDED_BOX);
 
         Fl_Color col = (Fl_Color) WIRE_COL0;
-         switch (m_Info.PortTypes[n]) {
+         int ptype = (n >= 0 && n < (int)m_Info.PortTypes.size()) ? m_Info.PortTypes[n] : 0;
+         switch (ptype) {
              case 0:     col = (Fl_Color) WIRE_COL0;
                          break;
              case 1:     col = (Fl_Color) WIRE_COL1;
@@ -243,7 +244,8 @@ void Fl_DeviceGUI::Setup(const DeviceGUIInfo& Info, bool FirstTime)
  		NewInput->selection_color(col);
 
 		NewInput->down_box(FL_ROUNDED_BOX);
-		NewInput->tooltip(m_Info.PortTips[n].c_str());
+		if (n >= 0 && n < (int)m_Info.PortTips.size())
+			NewInput->tooltip(m_Info.PortTips[n].c_str());
 		NewInput->callback((Fl_Callback*)cb_Port,(void*)&Numbers[PortNum]);
 		m_PortVec.push_back(NewInput);
 		add(NewInput);
@@ -259,7 +261,9 @@ void Fl_DeviceGUI::Setup(const DeviceGUIInfo& Info, bool FirstTime)
 		NewOutput->box(FL_ROUNDED_BOX);
 
         Fl_Color col = (Fl_Color) WIRE_COL0;
-         switch (m_Info.PortTypes[n+m_Info.NumInputs]) {
+         int out_idx = n + m_Info.NumInputs;
+         int ptype = (out_idx >= 0 && out_idx < (int)m_Info.PortTypes.size()) ? m_Info.PortTypes[out_idx] : 0;
+         switch (ptype) {
              case 0:     col = (Fl_Color) WIRE_COL0;
                          break;
              case 1:     col = (Fl_Color) WIRE_COL1;
@@ -275,7 +279,8 @@ void Fl_DeviceGUI::Setup(const DeviceGUIInfo& Info, bool FirstTime)
  		NewOutput->selection_color(col);
 
 		NewOutput->down_box(FL_ROUNDED_BOX);
-		NewOutput->tooltip(m_Info.PortTips[n+m_Info.NumInputs].c_str());
+		if (out_idx >= 0 && out_idx < (int)m_Info.PortTips.size())
+			NewOutput->tooltip(m_Info.PortTips[out_idx].c_str());
 		NewOutput->callback((Fl_Callback*)cb_Port,(void*)&Numbers[PortNum]);
 		m_PortVec.push_back(NewOutput);
 		add(NewOutput);

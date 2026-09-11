@@ -46,6 +46,8 @@ SpiralPluginGUI(w,h,o,ch)
 
 // Get maximum input port count
 	m_GUICH->GetData("GetMaxInputPortCount",&(m_MaxInputPortCount));
+	if (m_MaxInputPortCount < 1)
+		m_MaxInputPortCount = 1;
 
 // Set up buffers for data transfer via ChannelHandler
 	m_InputPortNames = (char *)malloc(256 * m_MaxInputPortCount);
@@ -295,10 +297,19 @@ void LADSPAPluginGUI::UpdateValues(SpiralPlugin *o)
 	SetMaker(Plugin->GetMaker());
 	SetUpdateInputs(Plugin->GetUpdateInputs());
 	m_InputPortCount = Plugin->GetInputPortCount();
+	if (m_InputPortCount > m_MaxInputPortCount)
+		m_InputPortCount = m_MaxInputPortCount;
 
 	m_UnconnectedInputs = Plugin->GetUnconnectedInputs();
 
 	const char *name;
+
+	if (!m_InputPortNames || !m_InputPortSettings ||
+	    !m_InputPortValues || !m_InputPortDefaults)
+	{
+		SetPage(Plugin->GetPage());
+		return;
+	}
 
 	for (unsigned long p = 0; p < m_InputPortCount; p++) {
 		name = Plugin->GetInputPortName(p);

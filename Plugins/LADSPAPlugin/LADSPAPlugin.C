@@ -23,6 +23,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
+#include <cassert>
+#include <iostream>
 
 #include "SpiralIcon.xpm"
 #include "LADSPAPlugin.h"
@@ -33,6 +35,19 @@ using namespace std;
 
 LADSPAInfo * LADSPAPlugin::m_LADSPAInfo= NULL;
 int LADSPAPlugin::InstanceCount=0;
+
+static bool ssm_finite(float f)
+{
+	return (f == f) && (f < 1e30f) && (f > -1e30f);
+}
+
+static float ssm_sanitize(float in, float replacement)
+{
+	if (!ssm_finite(in))
+		return replacement;
+	return in;
+}
+
 ////////////////////////////////////////////////////
 
 extern "C" {
@@ -62,28 +77,42 @@ string SpiralPlugin_GetGroupName()
 LADSPAPlugin::LADSPAPlugin()
 {
 	InstanceCount++;
-	if (!m_LADSPAInfo)
-	{
-		m_LADSPAInfo = new LADSPAInfo(false, "");
-	}	
+	m_LADSPAInfo = LADSPAInfo::Get();
 
 	m_PlugDesc = NULL;
+	m_PlugInstHandle = NULL;
 	m_SSMPluginReset = false;
+	m_PluginIndex = 0;
+	m_UniqueID = 0;
+	m_Page = 2;
+	m_UpdateInputs = true;
+	m_InputPortCount = 0;
+	m_UnconnectedInputs = 0;
+	m_Version = 9;
+
+	m_OutData.InputPortNames = NULL;
+	m_OutData.InputPortSettings = NULL;
+	m_OutData.InputPortValues = NULL;
+	m_OutData.InputPortDefaults = NULL;
+
+	memset(&m_InData, 0, sizeof(m_InData));
+	strncpy(m_Name, "None", 5);
+	strncpy(m_Maker, "None", 5);
 
 	ClearPlugin();
-
-	m_Version=9;
 
 	m_PluginInfo.Name="LADSPA";
 	m_PluginInfo.Width=500;
 	m_PluginInfo.Height=320;
 	m_PluginInfo.NumInputs=0;
-	m_PluginInfo.NumOutputs=1;
-	m_PluginInfo.PortTips.push_back("Nuffink yet");
+	m_PluginInfo.NumOutputs=0;
 
 	m_MaxInputPortCount = m_LADSPAInfo->GetMaxInputPortCount();
+	if (m_MaxInputPortCount < 1)
+		m_MaxInputPortCount = 1;
+	if (m_MaxInputPortCount > 4096)
+		m_MaxInputPortCount = 4096;
 
-// For receiving from GUI
 	m_AudioCH->RegisterData("SetUniqueID", ChannelHandler::INPUT,&(m_InData.UniqueID), sizeof(m_InData.UniqueID));
 	m_AudioCH->RegisterData("SetPage", ChannelHandler::INPUT,&(m_InData.Page), sizeof(m_InData.Page));
 	m_AudioCH->RegisterData("SetUpdateInputs", ChannelHandler::INPUT,&(m_InData.UpdateInputs),sizeof(m_InData.UpdateInputs));
@@ -93,7 +122,6 @@ LADSPAPlugin::LADSPAPlugin()
 	m_AudioCH->RegisterData("SetInputPortMax", ChannelHandler::INPUT, &(m_InData.InputPortMax), sizeof(m_InData.InputPortMax));
 	m_AudioCH->RegisterData("SetInputPortClamp", ChannelHandler::INPUT, &(m_InData.InputPortClamp), sizeof(m_InData.InputPortClamp));
 
-// For sending to GUI
 	m_AudioCH->RegisterData("GetName",ChannelHandler::OUTPUT,m_Name,256);
 	m_AudioCH->RegisterData("GetMaker",ChannelHandler::OUTPUT,m_Maker,256);
 	m_AudioCH->RegisterData("GetMaxInputPortCount",ChannelHandler::OUTPUT,&(m_MaxInputPortCount),sizeof(m_MaxInputPortCount));
@@ -109,6 +137,8 @@ LADSPAPlugin::LADSPAPlugin()
 	    m_OutData.InputPortValues &&
 	    m_OutData.InputPortDefaults)
 	{
+		memset(m_OutData.InputPortNames, 0, 256 * m_MaxInputPortCount);
+		memset(m_OutData.InputPortSettings, 0, sizeof(PortSetting) * m_MaxInputPortCount);
 		m_AudioCH->RegisterData("GetInputPortNames", ChannelHandler::OUTPUT, m_OutData.InputPortNames, 256 * m_MaxInputPortCount);
 		m_AudioCH->RegisterData("GetInputPortSettings", ChannelHandler::OUTPUT, m_OutData.InputPortSettings, sizeof(PortSetting) * m_MaxInputPortCount);
 		m_AudioCH->RegisterData("GetInputPortValues", ChannelHandler::OUTPUT, m_OutData.InputPortValues, sizeof(PortValue) * m_MaxInputPortCount);
@@ -120,10 +150,8 @@ LADSPAPlugin::LADSPAPlugin()
 
 LADSPAPlugin::~LADSPAPlugin()
 {
-// Clear plugin
 	ClearPlugin();
 
-// Free allocated buffers
 	if (m_OutData.InputPortNames)  free(m_OutData.InputPortNames);
 	if (m_OutData.InputPortSettings) free(m_OutData.InputPortSettings);
 	if (m_OutData.InputPortValues) free(m_OutData.InputPortValues);
@@ -132,16 +160,15 @@ LADSPAPlugin::~LADSPAPlugin()
 	InstanceCount--;
 	if (m_LADSPAInfo && InstanceCount<=0)
 	{
-		delete m_LADSPAInfo;
+		LADSPAInfo::PackUpAndGoHome();
 		m_LADSPAInfo = NULL;
-	}	
+	}
 }
 
 PluginInfo &LADSPAPlugin::Initialise(const HostInfo *Host)
 {
 	PluginInfo& Info = SpiralPlugin::Initialise(Host);
-	LADSPA_Data *NewPort = new LADSPA_Data[m_HostInfo->BUFSIZE];
-	m_LADSPABufVec.push_back(NewPort);
+	SyncPortTypes();
 	return Info;
 }
 
@@ -154,7 +181,7 @@ SpiralGUIType *LADSPAPlugin::CreateGUI()
 void LADSPAPlugin::Reset()
 {
 	ResetPorts();
-	
+
 	m_SSMPluginReset = true;
 	UpdatePlugin(m_UniqueID);
 	m_SSMPluginReset = false;
@@ -162,61 +189,75 @@ void LADSPAPlugin::Reset()
 
 void LADSPAPlugin::Execute()
 {
-	if (m_PlugDesc)
+	if (!m_PlugDesc || !m_PlugInstHandle || !m_HostInfo)
+		return;
+
+	int nInputs = m_PluginInfo.NumInputs;
+	int nOutputs = m_PluginInfo.NumOutputs;
+	if ((int)m_LADSPABufVec.size() < nInputs + nOutputs)
+		return;
+	if ((int)m_InputPortClamp.size() < nInputs ||
+	    (int)m_InputPortMin.size() < nInputs ||
+	    (int)m_InputPortMax.size() < nInputs ||
+	    (int)m_InputPortDefault.size() < nInputs)
+		return;
+
+	for (int n=0; n<nInputs; n++)
 	{
-		// convert inputs if exist (use default if not)
-		for (int n=0; n<m_PluginInfo.NumInputs; n++)
+		if (!m_LADSPABufVec[n])
+			continue;
+
+		if (GetInput(n))
 		{
-			if (GetInput(n))
-			{
-				if (m_InputPortClamp[n]) {
-					// scale input to match hinted range
-					float Offset=m_InputPortMin[n];
-					float Scale=m_InputPortMax[n]-m_InputPortMin[n];
+			if (m_InputPortClamp[n]) {
+				float Offset=m_InputPortMin[n];
+				float Scale=m_InputPortMax[n]-m_InputPortMin[n];
 
-					//cerr<<n<<" ["<<Scale<<"] ["<<Offset<<"]"<<endl;
-
-					for (int i=0; i<m_HostInfo->BUFSIZE; i++)
-					{
-						m_LADSPABufVec[n][i]=Offset+(GetInput(n,i)*0.5f+0.5f)*Scale;
-						//cerr<<Scale<<" "<<Offset<<" "<<m_LADSPABufVec[n][i]<<endl;
-					}
-				} else {
-					// pass input as is
-					for (int i=0; i<m_HostInfo->BUFSIZE; i++)
-					{
-						m_LADSPABufVec[n][i]=GetInput(n,i);
-					}
+				for (int i=0; i<m_HostInfo->BUFSIZE; i++)
+				{
+					float in = ssm_sanitize(GetInput(n,i), 0.0f);
+					m_LADSPABufVec[n][i]=Offset+(in*0.5f+0.5f)*Scale;
 				}
-				m_OutData.InputPortValues[n].Connected = true;
-				m_InputPortDefault[n] = m_LADSPABufVec[n][0];
+			} else {
+				for (int i=0; i<m_HostInfo->BUFSIZE; i++)
+				{
+					m_LADSPABufVec[n][i]=ssm_sanitize(GetInput(n,i), 0.0f);
+				}
 			}
-			else // Use default
-			{
-				for (int i=0; i<m_HostInfo->BUFSIZE; i++) {
-					m_LADSPABufVec[n][i]=m_InputPortDefault[n];
-				}
+			if (m_OutData.InputPortValues && n < (int)m_MaxInputPortCount) {
+				m_OutData.InputPortValues[n].Connected = true;
+			}
+			m_InputPortDefault[n] = m_LADSPABufVec[n][0];
+		}
+		else
+		{
+			for (int i=0; i<m_HostInfo->BUFSIZE; i++) {
+				m_LADSPABufVec[n][i]=m_InputPortDefault[n];
+			}
+			if (m_OutData.InputPortValues && n < (int)m_MaxInputPortCount) {
 				if (m_OutData.InputPortValues[n].Connected) {
 					m_OutData.InputPortValues[n].Connected = false;
 					m_InputPortDefault[n] = m_OutData.InputPortValues[n].Value;
 				}
 			}
-			// Copy values into OutData value buffer for display in GUI
+		}
+		if (m_OutData.InputPortValues && n < (int)m_MaxInputPortCount) {
 			m_OutData.InputPortValues[n].Value = m_LADSPABufVec[n][0];
-			// Ditto for default, which may have been set to value
+		}
+		if (m_OutData.InputPortDefaults && n < (int)m_MaxInputPortCount) {
 			m_OutData.InputPortDefaults[n] = m_InputPortDefault[n];
 		}
+	}
 
-		// run plugin
-		m_PlugDesc->run(m_PlugInstHandle,m_HostInfo->BUFSIZE);
+	m_PlugDesc->run(m_PlugInstHandle,m_HostInfo->BUFSIZE);
 
-		// convert outputs
-		for (int n=0; n<m_PluginInfo.NumOutputs; n++)
+	for (int n=0; n<nOutputs; n++)
+	{
+		if (!m_LADSPABufVec[n+nInputs])
+			continue;
+		for (int i=0; i<m_HostInfo->BUFSIZE; i++)
 		{
-			for (int i=0; i<m_HostInfo->BUFSIZE; i++)
-			{
-				SetOutput(n,i,m_LADSPABufVec[n+m_PluginInfo.NumInputs][i]);
-			}
+			SetOutput(n,i,m_LADSPABufVec[n+nInputs][i]);
 		}
 	}
 }
@@ -240,8 +281,6 @@ void LADSPAPlugin::ExecuteCommands()
 			case (CLEARPLUGIN):
 			{
 				ClearPlugin();
-				m_PluginInfo.NumOutputs=1;
-				m_PluginInfo.PortTips.push_back("Nuffink yet");
 				UpdatePluginInfoWithHost();
 			}
 			break;
@@ -252,45 +291,57 @@ void LADSPAPlugin::ExecuteCommands()
 			break;
 			case (SETDEFAULT):
 			{
-				m_InputPortDefault[m_InData.InputPortIndex] = m_InData.InputPortDefault;
-				m_OutData.InputPortDefaults[m_InData.InputPortIndex] = m_InData.InputPortDefault;
+				if (m_InData.InputPortIndex < m_InputPortDefault.size() &&
+				    m_OutData.InputPortDefaults &&
+				    m_InData.InputPortIndex < m_MaxInputPortCount) {
+					m_InputPortDefault[m_InData.InputPortIndex] = m_InData.InputPortDefault;
+					m_OutData.InputPortDefaults[m_InData.InputPortIndex] = m_InData.InputPortDefault;
+				}
 			}
 			break;
 			case (SETMIN):
 			{
-				m_InputPortMin[m_InData.InputPortIndex] = m_InData.InputPortMin;
-				m_OutData.InputPortSettings[m_InData.InputPortIndex].Min = m_InData.InputPortMin;
+				if (m_InData.InputPortIndex < m_InputPortMin.size() &&
+				    m_OutData.InputPortSettings &&
+				    m_InData.InputPortIndex < m_MaxInputPortCount) {
+					m_InputPortMin[m_InData.InputPortIndex] = m_InData.InputPortMin;
+					m_OutData.InputPortSettings[m_InData.InputPortIndex].Min = m_InData.InputPortMin;
+				}
 			}
 			break;
 			case (SETMAX):
 			{
-				m_InputPortMax[m_InData.InputPortIndex] = m_InData.InputPortMax;
-				m_OutData.InputPortSettings[m_InData.InputPortIndex].Max = m_InData.InputPortMax;
+				if (m_InData.InputPortIndex < m_InputPortMax.size() &&
+				    m_OutData.InputPortSettings &&
+				    m_InData.InputPortIndex < m_MaxInputPortCount) {
+					m_InputPortMax[m_InData.InputPortIndex] = m_InData.InputPortMax;
+					m_OutData.InputPortSettings[m_InData.InputPortIndex].Max = m_InData.InputPortMax;
+				}
 			}
 			break;
 			case (SETCLAMP):
 			{
-				m_InputPortClamp[m_InData.InputPortIndex] = m_InData.InputPortClamp;
-				m_OutData.InputPortSettings[m_InData.InputPortIndex].Clamp = m_InData.InputPortClamp;
+				if (m_InData.InputPortIndex < m_InputPortClamp.size() &&
+				    m_OutData.InputPortSettings &&
+				    m_InData.InputPortIndex < m_MaxInputPortCount) {
+					m_InputPortClamp[m_InData.InputPortIndex] = m_InData.InputPortClamp;
+					m_OutData.InputPortSettings[m_InData.InputPortIndex].Clamp = m_InData.InputPortClamp;
+				}
 			}
 		}
 	}
 
-// If there are no connections, Execute() will not be called.
-// If the last connection is removed, it will not be reflected in
-// the GUI data (m_OutData.InputPortValues.Connected)
 	bool has_connection = false;
 	for (int p = 0; p < m_PluginInfo.NumInputs && !has_connection; p++)
 	{
 		if (GetInput(p)) has_connection = true;
 	}
-	if (!has_connection)
+	if (!has_connection && m_OutData.InputPortValues)
 	{
-	// Only change stuff if there are no connections
-	// (i.e. if Execute has not already taken care of this)
 		for (int p = 0; p < m_PluginInfo.NumInputs; p++)
 		{
-			m_OutData.InputPortValues[p].Connected = false;
+			if (p < (int)m_MaxInputPortCount)
+				m_OutData.InputPortValues[p].Connected = false;
 		}
 	}
 }
@@ -303,10 +354,13 @@ void LADSPAPlugin::StreamOut(ostream &s)
 	{
 		case 9:
 		{
-		// Get number of unconnected inputs
 			m_UnconnectedInputs = m_PluginInfo.NumInputs;
-			for (int p = 0; p < m_PluginInfo.NumInputs; p++) {
-				if (m_OutData.InputPortValues[p].Connected) m_UnconnectedInputs--;
+			if (m_OutData.InputPortValues) {
+				for (int p = 0; p < m_PluginInfo.NumInputs; p++) {
+					if (p < (int)m_MaxInputPortCount &&
+					    m_OutData.InputPortValues[p].Connected)
+						m_UnconnectedInputs--;
+				}
 			}
 
 			s<<m_Page<<" ";
@@ -320,238 +374,39 @@ void LADSPAPlugin::StreamOut(ostream &s)
 			for (vector<float>::iterator i=m_InputPortMin.begin();
 			     i!=m_InputPortMin.end(); i++)
 			{
-				float f = finite(*i)?(*i):0.0f;
+				float f = ssm_finite(*i)?(*i):0.0f;
 				s<< f <<" ";
 			}
 			for (vector<float>::iterator i=m_InputPortMax.begin();
 			     i!=m_InputPortMax.end(); i++)
 			{
-				float f = finite(*i)?(*i):0.0f;
+				float f = ssm_finite(*i)?(*i):0.0f;
 				s<< f <<" ";
 			}
-			for (vector<bool>::iterator i=m_InputPortClamp.begin();
+			for (vector<char>::iterator i=m_InputPortClamp.begin();
 			     i!=m_InputPortClamp.end(); i++)
 			{
-				float f = finite(*i)?(*i):0.0f;
-				s<< f <<" ";
+				s<< (int)(*i) <<" ";
 			}
 			for (vector<float>::iterator i=m_InputPortDefault.begin();
 			     i!=m_InputPortDefault.end(); i++)
 			{
-				float f = finite(*i)?(*i):0.0f;
+				float f = ssm_finite(*i)?(*i):0.0f;
 				s<< f <<" ";
 			}
 		}
 		break;
-		case 8:
-		{
-//			s<<m_Page<<" ";
-//			s<<m_UpdateInputs<<" ";
-//			s<<m_UniqueID<<" ";
-//			s<<m_InputPortMin.size()<<" ";
-//			assert(m_InputPortMin.size()==m_InputPortMax.size());
-//			assert(m_InputPortMin.size()==m_InputPortClamp.size());
-//			assert(m_InputPortMin.size()==m_InputPortDefault.size());
-//			for (vector<float>::iterator i=m_InputPortMin.begin();
-//			     i!=m_InputPortMin.end(); i++)
-//			{
-//				float f = finite(*i)?(*i):0.0f;
-//				s<< f <<" ";
-//			}
-//			for (vector<float>::iterator i=m_InputPortMax.begin();
-//			     i!=m_InputPortMax.end(); i++)
-//			{
-//				float f = finite(*i)?(*i):0.0f;
-//				s<< f <<" ";
-//			}
-//			for (vector<bool>::iterator i=m_InputPortClamp.begin();
-//			     i!=m_InputPortClamp.end(); i++)
-//			{
-//				float f = finite(*i)?(*i):0.0f;
-//				s<< f <<" ";
-//			}
-//			for (vector<float>::iterator i=m_InputPortDefault.begin();
-//			     i!=m_InputPortDefault.end(); i++)
-//			{
-//				float f = finite(*i)?(*i):0.0f;
-//				s<< f <<" ";
-//			}
-		}
-		break;
-		case 7:
-		{
-//			s<<m_Page<<" ";
-//			s<<m_UniqueID<<" ";
-//			s<<m_InputPortMin.size()<<" ";
-//			assert(m_InputPortMin.size()==m_InputPortMax.size());
-//			assert(m_InputPortMin.size()==m_InputPortClamp.size());
-//			assert(m_InputPortMin.size()==m_InputPortDefault.size());
-//			for (vector<float>::iterator i=m_InputPortMin.begin();
-//			     i!=m_InputPortMin.end(); i++)
-//			{
-//				s<<*i<<" ";
-//			}
-//			for (vector<float>::iterator i=m_InputPortMax.begin();
-//			     i!=m_InputPortMax.end(); i++)
-//			{
-//				s<<*i<<" ";
-//			}
-//			for (vector<bool>::iterator i=m_InputPortClamp.begin();
-//			     i!=m_InputPortClamp.end(); i++)
-//			{
-//				s<<*i<<" ";
-//			}
-//			for (vector<float>::iterator i=m_InputPortDefault.begin();
-//			     i!=m_InputPortDefault.end(); i++)
-//			{
-//				s<<*i<<" ";
-//			}
-		}
-		break;
-		case 6:
-		{
-//			s<<m_UniqueID<<" ";
-//			s<<m_InputPortMin.size()<<" ";
-//			assert(m_InputPortMin.size()==m_InputPortMax.size());
-//			assert(m_InputPortMin.size()==m_InputPortClamp.size());
-//			assert(m_InputPortMin.size()==m_InputPortDefault.size());
-//			for (vector<float>::iterator i=m_InputPortMin.begin();
-//			     i!=m_InputPortMin.end(); i++)
-//			{
-//				s<<*i<<" ";
-//			}
-//			for (vector<float>::iterator i=m_InputPortMax.begin();
-//			     i!=m_InputPortMax.end(); i++)
-//			{
-//				s<<*i<<" ";
-//			}
-//			for (vector<bool>::iterator i=m_InputPortClamp.begin();
-//			     i!=m_InputPortClamp.end(); i++)
-//			{
-//				s<<*i<<" ";
-//			}
-//			for (vector<float>::iterator i=m_InputPortDefault.begin();
-//			     i!=m_InputPortDefault.end(); i++)
-//			{
-//				s<<*i<<" ";
-//			}
-		}
-		break;
-		case 5:
-		{
-//			s<<m_Gain<<" ";
-//			s<<m_UniqueID<<" ";
-//			s<<m_InputPortMin.size()<<" ";
-//			assert(m_InputPortMin.size()==m_InputPortMax.size());
-//			assert(m_InputPortMin.size()==m_InputPortClamp.size());
-//			assert(m_InputPortMin.size()==m_InputPortDefault.size());
-//			for (vector<float>::iterator i=m_InputPortMin.begin();
-//			     i!=m_InputPortMin.end(); i++)
-//			{
-//				s<<*i<<" ";
-//			}
-//			for (vector<float>::iterator i=m_InputPortMax.begin();
-//			     i!=m_InputPortMax.end(); i++)
-//			{
-//				s<<*i<<" ";
-//			}
-//			for (vector<bool>::iterator i=m_InputPortClamp.begin();
-//			     i!=m_InputPortClamp.end(); i++)
-//			{
-//				s<<*i<<" ";
-//			}
-//			for (vector<float>::iterator i=m_InputPortDefault.begin();
-//			     i!=m_InputPortDefault.end(); i++)
-//			{
-//				s<<*i<<" ";
-//			}
-		}
-		break;
-		case 4:
-		{
-//			s<<m_Gain<<" ";
-//			s<<m_UniqueID<<" ";
-//			s<<m_InputPortMin.size()<<" ";
-//			assert(m_InputPortMin.size()==m_InputPortMax.size());
-//			assert(m_InputPortMin.size()==m_InputPortClamp.size());
-//			assert(m_InputPortMin.size()==m_InputPortDefault.size());
-//			for (vector<float>::iterator i=m_InputPortMin.begin();
-//			     i!=m_InputPortMin.end(); i++)
-//			{
-//				s<<*i<<" ";
-//			}
-//			for (vector<float>::iterator i=m_InputPortMax.begin();
-//			     i!=m_InputPortMax.end(); i++)
-//			{
-//				s<<*i<<" ";
-//			}
-//			for (vector<bool>::iterator i=m_InputPortClamp.begin();
-//			     i!=m_InputPortClamp.end(); i++)
-//			{
-//				s<<*i<<" ";
-//			}
-		}
-		break;
-		case 3:
-		{
-//			s<<m_Gain<<" ";
-//			s<<m_Filename<<" ";
-//			s<<m_Label<<" ";
-//			s<<m_InputPortMin.size()<<" ";
-//			assert(m_InputPortMin.size()==m_InputPortMax.size());
-//			assert(m_InputPortMin.size()==m_InputPortClamp.size());
-//			for (vector<float>::iterator i=m_InputPortMin.begin();
-//				 i!=m_InputPortMin.end(); i++)
-//			{
-//			s<<*i<<" ";
-//			}
-//			for (vector<float>::iterator i=m_InputPortMax.begin();
-//				 i!=m_InputPortMax.end(); i++)
-//			{
-//				s<<*i<<" ";
-//			}
-//			for (vector<bool>::iterator i=m_InputPortClamp.begin();
-//			 i!=m_InputPortClamp.end(); i++)
-//			{
-//				s<<*i<<" ";
-//			}
-		}
-		break;
-		case 2:
-		{
-//			s<<m_Gain<<" ";
-//			s<<m_Filename<<" ";
-//			s<<m_Label<<" ";
-//			s<<m_InputPortMin.size()<<" ";
-//			assert(m_InputPortMin.size()==m_InputPortMax.size());
-//			for (vector<float>::iterator i=m_InputPortMin.begin();
-//				 i!=m_InputPortMin.end(); i++)
-//			{
-//				s<<*i<<" ";
-//			}
-//			for (vector<float>::iterator i=m_InputPortMax.begin();
-//				 i!=m_InputPortMax.end(); i++)
-//			{
-//				s<<*i<<" ";
-//			}
-		}
-		break;
-		case 1:
-		{
-//			s<<m_Gain<<" ";
-//			s<<m_Filename<<" ";
-//			s<<m_Label<<" ";
-		}
-		break;
+		default:
+			break;
 	}
 }
 
 void LADSPAPlugin::StreamIn(istream &s)
 {
-	int Version;
-	float Gain;
-	unsigned long UniqueID;
-	int PortCount;
+	int Version = 0;
+	float Gain = 0.0f;
+	unsigned long UniqueID = 0;
+	int PortCount = 0;
 	float Min, Max;
 	bool Clamp;
 	float Default;
@@ -733,7 +588,6 @@ void LADSPAPlugin::StreamIn(istream &s)
 			}
 			for (int n=0; n<PortCount; n++)
 			{
-			// Set defaults to zero
 				m_InputPortDefault.push_back(0.0f);
 			}
 		}
@@ -767,13 +621,11 @@ void LADSPAPlugin::StreamIn(istream &s)
 
 			for (int n=0; n<PortCount; n++)
 			{
-			// Set defaults to zero
 				m_InputPortDefault.push_back(0.0f);
 			}
 
 			if (Filename!="None")
 			{
-			// Get Unique ID from filename and label
 				UniqueID = m_LADSPAInfo->GetIDFromFilenameAndLabel(Filename, Label);
 			}
 		}
@@ -802,19 +654,16 @@ void LADSPAPlugin::StreamIn(istream &s)
 
 			for (int n=0; n<PortCount; n++)
 			{
-			// Set InputPortClamp to true as default
 				m_InputPortClamp.push_back(true);
 			}
 
 			for (int n=0; n<PortCount; n++)
 			{
-			// Set defaults to zero
 				m_InputPortDefault.push_back(0.0f);
 			}
 
 			if (Filename!="None")
 			{
-			// Get Unique ID from filename and label
 				UniqueID = m_LADSPAInfo->GetIDFromFilenameAndLabel(Filename, Label);
 			}
 		}
@@ -830,7 +679,6 @@ void LADSPAPlugin::StreamIn(istream &s)
 
 			if (Filename!="None")
 			{
-			// Get Unique ID from filename and label
 				UniqueID = m_LADSPAInfo->GetIDFromFilenameAndLabel(Filename, Label);
 			}
 		}
@@ -838,21 +686,21 @@ void LADSPAPlugin::StreamIn(istream &s)
 	}
 
 	if (Version == 1) {
-	// Need to reset ports - none will have been saved
 		UpdatePlugin(UniqueID);
 	} else {
-	// Versions prior to 9 have 'Setup' page as page 1
-	// This is now page 2, as the sliders are page 1
 		if (Version < 9 && m_Page == 1) m_Page = 2;
 
 		if (SelectPlugin(UniqueID)) {
-		// Versions prior to 9 will not have the unconnected inupts saved
-		// Default to the number of input ports.
 			if (Version < 9) m_UnconnectedInputs = m_InputPortCount;
-
 			SetGUIExports();
 		} else {
-			ClearPlugin();
+			m_UniqueID = UniqueID;
+			if (UniqueID)
+				cerr << "Error loading LADSPA Plugin " << UniqueID << ".\n";
+			strncpy(m_Name, "Missing LADSPA plugin", 255);
+			strncpy(m_Maker, "Install the plugin and reload the patch", 255);
+			m_Name[255] = '\0';
+			m_Maker[255] = '\0';
 		}
 	}
 }
@@ -866,23 +714,24 @@ bool LADSPAPlugin::UpdatePlugin(unsigned long UniqueID)
 		return true;
 	}
 
-// Oops. Clean up.
 	m_SSMPluginReset = false;
-	ClearPlugin();
-	cerr << "Error loading LADSPA Plugin.\n";
+	if (UniqueID)
+	{
+		m_UniqueID = UniqueID;
+		cerr << "Error loading LADSPA Plugin " << UniqueID << ".\n";
+	}
 
 	return false;
 }
 
 bool LADSPAPlugin::SelectPlugin(unsigned long UniqueID)
 {
-// Reject trivial case
 	if (UniqueID == 0) return false;
+	if (!m_HostInfo) return false;
 
 	m_PlugDesc = m_LADSPAInfo->GetDescriptorByID(UniqueID);
 
 	if (m_PlugDesc) {
-	// Create instance
 		if (!(m_PlugInstHandle = m_PlugDesc->instantiate(m_PlugDesc, m_HostInfo->SAMPLERATE))) {
 			cerr << "WARNING: Could not instantiate plugin " << UniqueID << endl;
 			m_LADSPAInfo->DiscardDescriptorByID(UniqueID);
@@ -890,7 +739,15 @@ bool LADSPAPlugin::SelectPlugin(unsigned long UniqueID)
 			return false;
 		}
 
-		// Find number of input and output ports
+		if (!m_PlugDesc->PortDescriptors || !m_PlugDesc->connect_port || !m_PlugDesc->run) {
+			cerr << "WARNING: Plugin " << UniqueID << " is missing required LADSPA functions" << endl;
+			if (m_PlugDesc->cleanup) m_PlugDesc->cleanup(m_PlugInstHandle);
+			m_LADSPAInfo->DiscardDescriptorByID(UniqueID);
+			m_PlugDesc = 0;
+			m_PlugInstHandle = 0;
+			return false;
+		}
+
 		if (! m_SSMPluginReset)
 			for (unsigned long i = 0; i < m_PlugDesc->PortCount; i++) {
 				if (LADSPA_IS_PORT_INPUT(m_PlugDesc->PortDescriptors[i])) {
@@ -899,9 +756,6 @@ bool LADSPAPlugin::SelectPlugin(unsigned long UniqueID)
 					m_PluginInfo.NumOutputs++;
 				}
 			}
-
-/////////////////////////////////
-// LADSPA Buffers
 
 		unsigned long c=0;
 		for (unsigned int n=0; n<m_PlugDesc->PortCount; n++)
@@ -928,35 +782,30 @@ bool LADSPAPlugin::SelectPlugin(unsigned long UniqueID)
 			}
 		}
 
-		// activate the plugin now
 		if (m_PlugDesc->activate)
 			m_PlugDesc->activate(m_PlugInstHandle);
 
-/////////////////////////////////
-// SSM Buffers
-
-		// Allocate the i/o buffers required
 		if (! m_SSMPluginReset)
 		{
 			for (int n=0; n<m_PluginInfo.NumInputs; n++) AddInput();
 			for (int n=0; n<m_PluginInfo.NumOutputs; n++) AddOutput();
 		}
-//////////////////////////////
-// Update the GUI stuff
 
 		if (! m_SSMPluginReset)
 		{
 			string desc;
 			c=0;
-		
+
 			for (unsigned int i = 0; i < m_PlugDesc->PortCount; i++)
 			{
 				if (LADSPA_IS_PORT_INPUT(m_PlugDesc->PortDescriptors[i]))
 				{
-					desc = string(m_PlugDesc->PortNames[i]) +
+					const char *pname = m_PlugDesc->PortNames && m_PlugDesc->PortNames[i]
+						? m_PlugDesc->PortNames[i] : "in";
+					desc = string(pname) +
 						(LADSPA_IS_PORT_CONTROL(m_PlugDesc->PortDescriptors[i]) ? " (CV)" : " (AU)");
 					m_PluginInfo.PortTips.push_back(desc.c_str());
-	
+
 					c++;
 				}
 			}
@@ -964,29 +813,35 @@ bool LADSPAPlugin::SelectPlugin(unsigned long UniqueID)
 			for (unsigned int i = 0; i < m_PlugDesc->PortCount; i++)
 			{
 				if (LADSPA_IS_PORT_OUTPUT(m_PlugDesc->PortDescriptors[i])) {
-	
-					desc = string(m_PlugDesc->PortNames[i]) +
+
+					const char *pname = m_PlugDesc->PortNames && m_PlugDesc->PortNames[i]
+						? m_PlugDesc->PortNames[i] : "out";
+					desc = string(pname) +
 						(LADSPA_IS_PORT_CONTROL(m_PlugDesc->PortDescriptors[i]) ? " (CV)" : " (AU)");
-	
+
 					m_PluginInfo.PortTips.push_back(desc.c_str());
 				}
 			}
+
+			SyncPortTypes();
 			UpdatePluginInfoWithHost();
-	
+
 			m_UniqueID = m_PlugDesc->UniqueID;
 
 			m_InputPortCount = m_PluginInfo.NumInputs;
 
-			size_t lbl_length;
+			int lbl_length;
 
-			lbl_length = strlen(m_PlugDesc->Name);
+			const char *nm = m_PlugDesc->Name ? m_PlugDesc->Name : "LADSPA";
+			lbl_length = strlen(nm);
 			lbl_length = lbl_length > 255 ? 255 : lbl_length;
-			memcpy(m_Name, m_PlugDesc->Name, lbl_length);
+			strncpy(m_Name, nm, lbl_length);
 			m_Name[lbl_length] = '\0';
 
-			lbl_length = strlen(m_PlugDesc->Maker);
+			const char *mk = m_PlugDesc->Maker ? m_PlugDesc->Maker : "";
+			lbl_length = strlen(mk);
 			lbl_length = lbl_length > 255 ? 255 : lbl_length;
-			memcpy(m_Maker, m_PlugDesc->Maker, lbl_length);
+			strncpy(m_Maker, mk, lbl_length);
 			m_Maker[lbl_length] = '\0';
 		}
 
@@ -997,26 +852,28 @@ bool LADSPAPlugin::SelectPlugin(unsigned long UniqueID)
 
 void LADSPAPlugin::ClearPlugin(void)
 {
-// Clear selected plugin
 	if (m_PlugDesc) {
 		if (m_PlugDesc->deactivate) m_PlugDesc->deactivate(m_PlugInstHandle);
-		m_PlugDesc->cleanup(m_PlugInstHandle);
+		if (m_PlugDesc->cleanup) m_PlugDesc->cleanup(m_PlugInstHandle);
 		m_PlugDesc = NULL;
+		m_PlugInstHandle = NULL;
 
 		m_LADSPAInfo->DiscardDescriptorByID(m_UniqueID);
 	}
 
 	if (! m_SSMPluginReset)
 	{
-		m_Page = 1;
+		m_Page = 2;
 		m_UpdateInputs = true;
 		m_UniqueID = 0;
 		m_InputPortCount = 0;
 		m_UnconnectedInputs = 0;
-		strncpy(m_Name, "None\0", 5);
-		strncpy(m_Maker, "None\0", 5);
+		strncpy(m_Name, "None", 5);
+		strncpy(m_Maker, "None", 5);
+		m_Name[4] = '\0';
+		m_Maker[4] = '\0';
 	}
-	
+
 	for(vector<LADSPA_Data*>::iterator i=m_LADSPABufVec.begin();
 		i!=m_LADSPABufVec.end(); i++)
 	{
@@ -1032,27 +889,49 @@ void LADSPAPlugin::ClearPlugin(void)
 		m_PluginInfo.NumInputs = 0;
 		m_PluginInfo.NumOutputs = 0;
 		m_PluginInfo.PortTips.clear();
+		m_PluginInfo.PortTypes.clear();
 	}
-	
+
 	m_PortID.clear();
 	m_InputPortMin.clear();
 	m_InputPortMax.clear();
 	m_InputPortClamp.clear();
-	
+
 	if (! m_SSMPluginReset)
 	{
 		m_InputPortDefault.clear();
-	}	
+	}
+}
+
+void LADSPAPlugin::SyncPortTypes(void)
+{
+	m_PluginInfo.PortTypes.clear();
+	m_PluginInfo.PortTypes.resize(m_PluginInfo.NumInputs + m_PluginInfo.NumOutputs, 0);
 }
 
 void LADSPAPlugin::ResetPortSettings(void)
 {
+	if (!m_PlugDesc || !m_HostInfo)
+		return;
+
 	for (int n=0; n<m_PluginInfo.NumInputs; n++)
 	{
+		if (n >= (int)m_PortID.size())
+			break;
+
 		float Max=1.0f, Min=-1.0f, Default=0.0f;
 		int Port=m_PortID[n];
 
-		// Get the bounding hints for the port
+		if (!m_PlugDesc->PortRangeHints)
+		{
+			m_InputPortMin.push_back(Min);
+			m_InputPortMax.push_back(Max);
+			m_InputPortClamp.push_back(true);
+			if (! m_SSMPluginReset)
+				m_InputPortDefault.push_back(Default);
+			continue;
+		}
+
 		LADSPA_PortRangeHintDescriptor HintDesc=m_PlugDesc->PortRangeHints[Port].HintDescriptor;
 		if (LADSPA_IS_HINT_BOUNDED_BELOW(HintDesc))
 		{
@@ -1072,9 +951,7 @@ void LADSPAPlugin::ResetPortSettings(void)
 		}
 
 #ifdef LADSPA_VERSION
-// We've got a version of the header that supports port defaults
 		if (LADSPA_IS_HINT_HAS_DEFAULT(HintDesc)) {
-		// LADSPA_HINT_DEFAULT_0 is assumed anyway, so we don't check for it
 			if (LADSPA_IS_HINT_DEFAULT_1(HintDesc)) {
 				Default = 1.0f;
 			} else if (LADSPA_IS_HINT_DEFAULT_100(HintDesc)) {
@@ -1082,7 +959,6 @@ void LADSPAPlugin::ResetPortSettings(void)
 			} else if (LADSPA_IS_HINT_DEFAULT_440(HintDesc)) {
 				Default = 440.0f;
 			} else {
-			// These hints may be affected by SAMPLERATE, LOGARITHMIC and INTEGER
 				if (LADSPA_IS_HINT_DEFAULT_MINIMUM(HintDesc) &&
 				    LADSPA_IS_HINT_BOUNDED_BELOW(HintDesc)) {
 					Default=m_PlugDesc->PortRangeHints[Port].LowerBound;
@@ -1091,7 +967,6 @@ void LADSPAPlugin::ResetPortSettings(void)
 					Default=m_PlugDesc->PortRangeHints[Port].UpperBound;
 				} else if (LADSPA_IS_HINT_BOUNDED_BELOW(HintDesc) &&
 				           LADSPA_IS_HINT_BOUNDED_ABOVE(HintDesc)) {
-				// These hints require both upper and lower bounds
 					float lp = 0.0f, up = 0.0f;
 					float min = m_PlugDesc->PortRangeHints[Port].LowerBound;
 					float max = m_PlugDesc->PortRangeHints[Port].UpperBound;
@@ -1108,12 +983,8 @@ void LADSPAPlugin::ResetPortSettings(void)
 
 					if (LADSPA_IS_HINT_LOGARITHMIC(HintDesc)) {
 						if (min==0.0f || max==0.0f) {
-						// Zero at either end means zero no matter
-						// where hint is at, since:
-						//  log(n->0) -> Infinity
 							Default = 0.0f;
 						} else {
-						// Catch negatives
 							bool neg_min = min < 0.0f ? true : false;
 							bool neg_max = max < 0.0f ? true : false;
 
@@ -1122,8 +993,6 @@ void LADSPAPlugin::ResetPortSettings(void)
 							} else if (neg_min && neg_max) {
 								Default = -exp(log(-min) * lp + log(-max) * up);
 							} else {
-							// Logarithmic range has asymptote
-							// so just use linear scale
 								Default = min * lp + max * up;
 							}
 						}
@@ -1140,7 +1009,6 @@ void LADSPAPlugin::ResetPortSettings(void)
 			}
 		}
 #else
-// No LADSPA_VERSION - implies no defaults
 #warning ************************************
 #warning Your LADSPA header is out of date!
 #warning Please get the latest sdk from
@@ -1153,25 +1021,34 @@ void LADSPAPlugin::ResetPortSettings(void)
 		m_InputPortMin.push_back(Min);
 		m_InputPortMax.push_back(Max);
 		m_InputPortClamp.push_back(true);
-		
+
 		if (! m_SSMPluginReset)
 		{
 			m_InputPortDefault.push_back(Default);
-		}	
+		}
 	}
 }
 
 void LADSPAPlugin::SetGUIExports(void)
 {
-	size_t lbl_length;
+	if (!m_PlugDesc || !m_OutData.InputPortNames || !m_OutData.InputPortSettings)
+		return;
+
+	int lbl_length;
 	char *lbl_start;
 
 	lbl_start = m_OutData.InputPortNames;
-	for (unsigned long p = 0; p < m_InputPortCount; p++) {
-		int Port = m_PortID[p];
-		LADSPA_PortRangeHintDescriptor HintDesc=m_PlugDesc->PortRangeHints[Port].HintDescriptor;
+	for (unsigned long p = 0; p < m_InputPortCount && p < m_MaxInputPortCount; p++) {
+		if (p >= m_PortID.size() || p >= m_PluginInfo.PortTips.size() ||
+		    p >= m_InputPortMin.size() || p >= m_InputPortMax.size() ||
+		    p >= m_InputPortClamp.size() || p >= m_InputPortDefault.size())
+			break;
 
-	// Port Labels
+		int Port = m_PortID[p];
+		LADSPA_PortRangeHintDescriptor HintDesc = 0;
+		if (m_PlugDesc->PortRangeHints)
+			HintDesc = m_PlugDesc->PortRangeHints[Port].HintDescriptor;
+
 		lbl_length = m_PluginInfo.PortTips[p].size();
 		lbl_length = lbl_length > 255 ? 255 : lbl_length;
 		strncpy(lbl_start, m_PluginInfo.PortTips[p].c_str(), lbl_length);
@@ -1191,7 +1068,7 @@ void LADSPAPlugin::SetGUIExports(void)
 
 		m_OutData.InputPortSettings[p].Min = m_InputPortMin[p];
 		m_OutData.InputPortSettings[p].Max = m_InputPortMax[p];
-		m_OutData.InputPortSettings[p].Clamp = m_InputPortClamp[p];
+		m_OutData.InputPortSettings[p].Clamp = m_InputPortClamp[p] ? true : false;
 		m_OutData.InputPortDefaults[p] = m_InputPortDefault[p];
 	}
 }

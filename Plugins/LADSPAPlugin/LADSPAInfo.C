@@ -45,13 +45,33 @@
 
 using namespace std;
 
+LADSPAInfo *LADSPAInfo::m_Singleton = NULL;
+
+LADSPAInfo *
+LADSPAInfo::Get()
+{
+	if (!m_Singleton)
+		m_Singleton = new LADSPAInfo(false, "");
+	return m_Singleton;
+}
+
+void
+LADSPAInfo::PackUpAndGoHome()
+{
+	if (m_Singleton)
+	{
+		delete m_Singleton;
+		m_Singleton = NULL;
+	}
+}
+
 LADSPAInfo::LADSPAInfo(bool override,
                        const char *path_list)
 {
-	if (strlen(path_list) > 0) {
+	m_ExtraPaths = NULL;
+	m_MaxInputPortCount = 0;
+	if (path_list && strlen(path_list) > 0) {
 		m_ExtraPaths = strdup(path_list);
-	} else {
-		m_ExtraPaths = NULL;
 	}
 	m_LADSPAPathOverride = override;
 
@@ -61,90 +81,87 @@ LADSPAInfo::LADSPAInfo(bool override,
 LADSPAInfo::~LADSPAInfo()
 {
 	CleanUp();
+	if (m_ExtraPaths) {
+		free(m_ExtraPaths);
+		m_ExtraPaths = NULL;
+	}
 }
 
 void
 LADSPAInfo::RescanPlugins(void)
 {
-// Clear out what we've got
 	CleanUp();
 
 	if (!m_LADSPAPathOverride) {
-	// Get $LADPSA_PATH, if available
 		char *ladspa_path = getenv("LADSPA_PATH");
 		if (ladspa_path) {
 			ScanPathList(ladspa_path, &LADSPAInfo::ExaminePluginLibrary);
-
 		} else {
-
 			cerr << "WARNING: LADSPA_PATH environment variable not set" << endl;
 			cerr << "         Assuming /usr/lib/ladspa:/usr/local/lib/ladspa" << endl;
-
 			ScanPathList("/usr/lib/ladspa:/usr/local/lib/ladspa", &LADSPAInfo::ExaminePluginLibrary);
 		}
 	}
 
-// Check any supplied extra paths
 	if (m_ExtraPaths) {
 		ScanPathList(m_ExtraPaths, &LADSPAInfo::ExaminePluginLibrary);
 	}
 
-// Do we have any plugins now?
 	if (m_Plugins.size() == 0) {
 		cerr << "WARNING: No plugins found" << endl;
 	} else {
 		cerr << m_Plugins.size() << " plugins found in " << m_Libraries.size() << " libraries" << endl;
 
 #ifdef HAVE_LIBLRDF
-	// Got some plugins. Now search for RDF data
 		lrdf_init();
 
 		char *rdf_path = getenv("LADSPA_RDF_PATH");
 
 		if (rdf_path) {
-		// Examine rdf info
 			ScanPathList(rdf_path, &LADSPAInfo::ExamineRDFFile);
-
 		} else {
 			cerr << "WARNING: LADSPA_RDF_PATH environment variable not set" << endl;
 			cerr << "         Assuming /usr/share/ladspa/rdf:/usr/local/share/ladspa/rdf" << endl;
-
-		// Examine rdf info
 			ScanPathList("/usr/share/ladspa/rdf:/usr/local/share/ladspa/rdf", &LADSPAInfo::ExamineRDFFile);
 		}
 		MetadataRDFDescend(LADSPA_BASE "Plugin", 0);
 
-	// See which plugins were not added to an rdf group, and add them
-	// all into the top level 'LADSPA' one
+		if (m_RDFURIs.empty()) {
+			RDFURIInfo ri;
+			ri.URI = LADSPA_BASE "Plugin";
+			ri.Label = "LADSPA";
+			m_RDFURIs.push_back(ri);
+			m_RDFURILookup[ri.URI] = 0;
+			m_RDFLabelLookup["LADSPA"] = 0;
+		}
+
 		list<unsigned long> rdf_p;
 
-	// Get indices of plugins added to groups
 		for (vector<RDFURIInfo>::iterator ri = m_RDFURIs.begin(); ri != m_RDFURIs.end(); ri++) {
 			rdf_p.insert(rdf_p.begin(), ri->Plugins.begin(), ri->Plugins.end());
 		}
 
-	// Add all uncategorized plugins to top level group, subclassed by their
-	// library's basename.
-		rdf_p.unique();
+		/* unique() only collapses consecutive duplicates — sort first. */
 		rdf_p.sort();
-		unsigned long last_p = 0;
+		rdf_p.unique();
+		/* Fill URI 0 with plugins the RDF tree never mentioned.
+		   The old last_p=0 start skipped index 0 when it was unclassified. */
+		unsigned long next = 0;
 		for (list<unsigned long>::iterator p = rdf_p.begin(); p != rdf_p.end(); p++) {
-			if ((*p - last_p) > 1) {
-				for (unsigned long i = last_p + 1; i < *p; i++) {
-				// URI 0 is top-level "LADSPA" group
-					m_RDFURIs[0].Plugins.push_back(i);
-				}
+			while (next < *p && next < m_Plugins.size()) {
+				m_RDFURIs[0].Plugins.push_back(next);
+				next++;
 			}
-			last_p = *p;
+			if (next == *p)
+				next++;
 		}
-		while (++last_p < m_Plugins.size()) {
-		// URI 0 is top-level "LADSPA" group
-			m_RDFURIs[0].Plugins.push_back(last_p);
+		while (next < m_Plugins.size()) {
+			m_RDFURIs[0].Plugins.push_back(next);
+			next++;
 		}
 
 		lrdf_cleanup();
 #else
-	// No RDF. Add all plugins to top-level group
 		RDFURIInfo ri;
 
 		ri.URI = "";
@@ -154,22 +171,25 @@ LADSPAInfo::RescanPlugins(void)
 		m_RDFLabelLookup["LADSPA"] = 0;
 
 		for (unsigned long i = 0; i < m_Plugins.size(); i++) {
-		// Add plugin index
 			m_RDFURIs[0].Plugins.push_back(i);
 		}
 #endif
+	}
+
+	/* Master's LADSPAManager builds the menu once at scan time. */
+	DescendGroup("", "LADSPA", 1);
+	if (m_SSMMenuList.empty() && !m_Plugins.empty()) {
+		BuildUnclassifiedFallback();
 	}
 }
 
 void
 LADSPAInfo::UnloadAllLibraries(void)
 {
-// Blank descriptors
 	for (vector<PluginInfo>::iterator i = m_Plugins.begin();
 		i != m_Plugins.end(); i++) {
 		if (i->Descriptor) i->Descriptor = NULL;
 	}
-// Unload DLLs,
 	for (vector<LibraryInfo>::iterator i = m_Libraries.begin();
 		i != m_Libraries.end(); i++) {
 		if (i->Handle) {
@@ -188,7 +208,6 @@ LADSPAInfo::GetDescriptorByID(unsigned long unique_id)
 		return NULL;
 	}
 
-// Got plugin index
 	unsigned long plugin_index = m_IDLookup[unique_id];
 
 	PluginInfo *pi = &(m_Plugins[plugin_index]);
@@ -200,8 +219,6 @@ LADSPAInfo::GetDescriptorByID(unsigned long unique_id)
 	}
 
 	if (pi->Descriptor) {
-
-	// Success, so increment ref counter for library
 		li->RefCount++;
 	}
 
@@ -212,33 +229,24 @@ void
 LADSPAInfo::DiscardDescriptorByID(unsigned long unique_id)
 {
 	if (m_IDLookup.find(unique_id) == m_IDLookup.end()) {
-		cerr << "LADSPA Plugin ID " << unique_id << " not found!" << endl;
-	} else {
+		return;
+	}
 
-	// Get plugin index
-		unsigned long plugin_index = m_IDLookup[unique_id];
+	unsigned long plugin_index = m_IDLookup[unique_id];
 
-		PluginInfo *pi = &(m_Plugins[plugin_index]);
-		LibraryInfo *li = &(m_Libraries[pi->LibraryIndex]);
+	PluginInfo *pi = &(m_Plugins[plugin_index]);
+	LibraryInfo *li = &(m_Libraries[pi->LibraryIndex]);
 
-		pi->Descriptor = NULL;
+	pi->Descriptor = NULL;
 
-	// Decrement reference counter for library, and unload if last
-		if (li->RefCount > 0) {
-			li->RefCount--;
-			if (li->RefCount == 0) {
-
-			// Unload library
-				dlclose(li->Handle);
-				li->Handle = NULL;
-			}
+	if (li->RefCount > 0) {
+		li->RefCount--;
+		if (li->RefCount == 0 && li->Handle) {
+			dlclose(li->Handle);
+			li->Handle = NULL;
 		}
 	}
 }
-
-// ****************************************************************************
-// **                      SSM Specific Functions                            **
-// ****************************************************************************
 
 unsigned long
 LADSPAInfo::GetIDFromFilenameAndLabel(std::string filename,
@@ -261,15 +269,12 @@ LADSPAInfo::GetIDFromFilenameAndLabel(std::string filename,
 		return 0;
 	}
 
-// Search for label in library
 	const LADSPA_Descriptor *desc;
 	for (unsigned long i = 0; (desc = desc_func(i)) != NULL; i++) {
-		string l = desc->Label;
+		string l = desc->Label ? desc->Label : "";
 		if (l == label) {
-
-		// If we had to load the library, unload it
 			unsigned long id = desc->UniqueID;
-			if (library_loaded) {
+			if (library_loaded && m_Libraries[library_index].Handle) {
 				dlclose(m_Libraries[library_index].Handle);
 				m_Libraries[library_index].Handle = NULL;
 			}
@@ -279,16 +284,6 @@ LADSPAInfo::GetIDFromFilenameAndLabel(std::string filename,
 
 	cerr << "Plugin " << label << " not found in library " << filename << endl;
 	return 0;
-}
-
-const vector<LADSPAInfo::PluginEntry>
-LADSPAInfo::GetMenuList(void)
-{
-	m_SSMMenuList.clear();
-
-	DescendGroup("", "LADSPA", 1);
-
-	return m_SSMMenuList;
 }
 
 unsigned long
@@ -302,87 +297,95 @@ LADSPAInfo::GetPluginListEntryByID(unsigned long unique_id)
 	return m_SSMMenuList.size();
 }
 
-// ****************************************************************************
-// **                     Private Member Functions                           **
-// ****************************************************************************
+std::string
+LADSPAInfo::GetPluginNameByID(unsigned long unique_id) const
+{
+	if (m_IDLookup.find(unique_id) == m_IDLookup.end())
+		return std::string();
+	unsigned long plugin_index = m_IDLookup.find(unique_id)->second;
+	return m_Plugins[plugin_index].Name;
+}
 
-// Build a list of plugins by group, suitable for SSM LADSPA Plugin drop-down
-// The top-level "LADSPA" group is not included
+static string
+EscapeMenuName(const string &src)
+{
+	string name;
+	string::size_type x = src.find_first_of("/|");
+	if (x == string::npos) {
+		return src;
+	}
+	string::size_type last_x = 0;
+	while (x != string::npos) {
+		name += src.substr(last_x, x - last_x) + '\\' + src[x];
+		last_x = x + 1;
+		x = src.find_first_of("/|", last_x);
+	}
+	name += src.substr(last_x);
+	return name;
+}
+
+void
+LADSPAInfo::BuildUnclassifiedFallback(void)
+{
+	list<PluginEntry> plugins;
+	for (unsigned long i = 0; i < m_Plugins.size(); i++) {
+		PluginEntry pe;
+		pe.Depth = 2;
+		pe.UniqueID = m_Plugins[i].UniqueID;
+		pe.Name = string("Unclassified/") + EscapeMenuName(m_Plugins[i].Name);
+		plugins.push_back(pe);
+	}
+	plugins.sort();
+	for (list<PluginEntry>::iterator p = plugins.begin(); p != plugins.end(); p++) {
+		m_SSMMenuList.push_back(*p);
+	}
+}
 
 void
 LADSPAInfo::DescendGroup(string prefix,
                          const string group,
                          unsigned int depth)
 {
+	if (depth > 64)
+		return;
+
 	list<string> groups = GetSubGroups(group);
 
 	if (prefix.length() > 0) {
-	// Add an explicit '/' as we're creating sub-menus from groups
 		prefix += "/";
 	}
 
 	for (list<string>::iterator g = groups.begin(); g != groups.end(); g++) {
-		string name;
-
-		// Escape '/' and '|' characters
-		unsigned int x = g->find_first_of("/|");
-		if (x == string::npos) {
-			name = *g;
-		} else {
-			unsigned int last_x = 0;
-			while (x < string::npos) {
-				name += g->substr(last_x, x - last_x) + '\\' + (*g)[x];
-				last_x = x + 1;
-				x = g->find_first_of("/|", x + 1);
-			}
-			name += g->substr(last_x, x - last_x);
-		}
-
-		DescendGroup(prefix + name, *g, depth + 1);
+		DescendGroup(prefix + EscapeMenuName(*g), *g, depth + 1);
 	}
 	if (m_RDFLabelLookup.find(group) != m_RDFLabelLookup.end()) {
 		unsigned long uri_index = m_RDFLabelLookup[group];
+		if (uri_index >= m_RDFURIs.size())
+			return;
 
-	// Create group for unclassified plugins
 		if (prefix.length() == 0) {
 			prefix = "Unclassified/";
 			depth = depth + 1;
 		}
 
-	// Temporary list (for sorting the plugins by name)
 		list<PluginEntry> plugins;
 
 		for (vector<unsigned long>::iterator p = m_RDFURIs[uri_index].Plugins.begin();
 			p != m_RDFURIs[uri_index].Plugins.end(); p++) {
 
-			PluginInfo *pi = &(m_Plugins[*p]);
-			string name;
+			if (*p >= m_Plugins.size())
+				continue;
 
-		// Escape '/' and '|' characters
-			unsigned int x = pi->Name.find_first_of("/|");
-			if (x == string::npos) {
-				name = pi->Name;
-			} else {
-				unsigned int last_x = 0;
-				while (x < string::npos) {
-					name += pi->Name.substr(last_x, x - last_x) + '\\' + pi->Name[x];
-					last_x = x + 1;
-					x = pi->Name.find_first_of("/|", x + 1);
-				}
-				name += pi->Name.substr(last_x, x - last_x);
-			}
+			PluginInfo *pi = &(m_Plugins[*p]);
 
 			PluginEntry pe;
-
 			pe.Depth = depth;
 			pe.UniqueID = pi->UniqueID;
-			pe.Name = prefix + name;
-
+			pe.Name = prefix + EscapeMenuName(pi->Name);
 			plugins.push_back(pe);
 		}
 		plugins.sort();
 
-	// Deal with duplicates by numbering them
 		for (list<PluginEntry>::iterator i = plugins.begin();
 			i != plugins.end(); ) {
 			string name = i->Name;
@@ -398,16 +401,12 @@ LADSPAInfo::DescendGroup(string prefix,
 			}
 		}
 
-	// Add all ordered entries to the Menu List
-	// This ensures that plugins appear after groups
 		for (list<PluginEntry>::iterator p = plugins.begin(); p != plugins.end(); p++) {
 			m_SSMMenuList.push_back(*p);
 		}
 	}
 }
 
-// Get list of groups that are within given group. The root group is
-// always "LADSPA"
 list<string>
 LADSPAInfo::GetSubGroups(const string group)
 {
@@ -420,9 +419,13 @@ LADSPAInfo::GetSubGroups(const string group)
 		uri_index = m_RDFLabelLookup[group];
 	}
 
+	if (uri_index >= m_RDFURIs.size())
+		return groups;
+
 	for (vector<unsigned long>::iterator sg = m_RDFURIs[uri_index].Children.begin();
 		sg != m_RDFURIs[uri_index].Children.end(); sg++) {
-		groups.push_back(m_RDFURIs[*sg].Label);
+		if (*sg < m_RDFURIs.size())
+			groups.push_back(m_RDFURIs[*sg].Label);
 	}
 
 	groups.sort();
@@ -430,7 +433,6 @@ LADSPAInfo::GetSubGroups(const string group)
 	return groups;
 }
 
-// Unload any loaded DLLs and clear vectors etc
 void
 LADSPAInfo::CleanUp(void)
 {
@@ -439,7 +441,6 @@ LADSPAInfo::CleanUp(void)
 	m_IDLookup.clear();
 	m_Plugins.clear();
 
-// Unload loaded dlls
 	for (vector<LibraryInfo>::iterator i = m_Libraries.begin();
 		i != m_Libraries.end(); i++) {
 		if (i->Handle) dlclose(i->Handle);
@@ -449,20 +450,13 @@ LADSPAInfo::CleanUp(void)
 	m_Paths.clear();
 
 	m_RDFURILookup.clear();
+	m_RDFLabelLookup.clear();
 	m_RDFURIs.clear();
-
-	if (m_ExtraPaths) {
-		free(m_ExtraPaths);
-		m_ExtraPaths = NULL;
-	}
+	m_FilenameLookup.clear();
+	m_SSMMenuList.clear();
+	/* Keep m_ExtraPaths — RescanPlugins needs it. Freed in the dtor. */
 }
 
-// Given a colon-separated list of paths, examine the contents of each
-// path, examining any regular files using the given member function,
-// which currently can be:
-//
-//   ExaminePluginLibrary - add plugin library info from plugins
-//   ExamineRDFFile       - add plugin information from .rdf/.rdfs files
 void
 LADSPAInfo::ScanPathList(const char *path_list,
                          void (LADSPAInfo::*ExamineFunc)(const string,
@@ -477,8 +471,9 @@ LADSPAInfo::ScanPathList(const char *path_list,
 	struct dirent *ep;
 	struct stat sb;
 
-// This does the same kind of thing as strtok, but strtok won't
-// like the const
+	if (!path_list)
+		return;
+
 	start = path_list;
 	while (*start != '\0') {
 		while (*start == ':') start++;
@@ -498,12 +493,8 @@ LADSPAInfo::ScanPathList(const char *path_list,
 					cerr << "WARNING: Could not open path " << path << endl;
 				} else {
 					while ((ep = readdir(dp))) {
-
-					// Stat file to get type
 						basename = ep->d_name;
 						if (!stat((path + basename).c_str(), &sb)) {
-
-						// We only want regular files
 							if (S_ISREG(sb.st_mode)) (*this.*ExamineFunc)(path, basename);
 						}
 					}
@@ -516,11 +507,6 @@ LADSPAInfo::ScanPathList(const char *path_list,
 	}
 }
 
-// Check given file is a valid LADSPA Plugin library
-//
-// If so, add path, library and plugin info
-// to the m_Paths, m_Libraries and m_Plugins vectors.
-//
 void
 LADSPAInfo::ExaminePluginLibrary(const string path,
                                  const string basename)
@@ -530,7 +516,6 @@ LADSPAInfo::ExaminePluginLibrary(const string path,
 	const LADSPA_Descriptor *desc;
 	string fullpath = path + basename;
 
-// We're not executing any code, so be lazy about resolving symbols
 	handle = dlopen(fullpath.c_str(), RTLD_LAZY);
 
 	if (!handle) {
@@ -540,25 +525,20 @@ LADSPAInfo::ExaminePluginLibrary(const string path,
 		cerr << dlerror() << endl;
 	} else {
 
-	// It's a DLL, so now see if it's a LADSPA plugin library
 		desc_func = (LADSPA_Descriptor_Function)dlsym(handle,
 													"ladspa_descriptor");
 		if (!desc_func) {
-
-		// Is DLL, but not a LADSPA one
 			cerr << "WARNING: DLL " << fullpath
 				<< " has no ladspa_descriptor function" << endl;
 			cerr << "dlerror() output:" << endl;
 			cerr << dlerror() << endl;
 		} else {
 
-		// Got ladspa_descriptor, so we can now get plugin info
 			bool library_added = false;
 			unsigned long i = 0;
 			desc = desc_func(i);
 			while (desc) {
 
-			// First, check that it's not a dupe
 				if (m_IDLookup.find(desc->UniqueID) != m_IDLookup.end()) {
 					unsigned long plugin_index = m_IDLookup[desc->UniqueID];
 					unsigned long library_index = m_Plugins[plugin_index].LibraryIndex;
@@ -576,7 +556,6 @@ LADSPAInfo::ExaminePluginLibrary(const string path,
 				} else {
 					if (CheckPlugin(desc)) {
 
-					// Add path if not already added
 						unsigned long path_index;
 						vector<string>::iterator p = find(m_Paths.begin(), m_Paths.end(), path);
 						if (p == m_Paths.end()) {
@@ -586,7 +565,6 @@ LADSPAInfo::ExaminePluginLibrary(const string path,
 							path_index = p - m_Paths.begin();
 						}
 
-					// Add library info if not already added
 						if (!library_added) {
 							LibraryInfo li;
 							li.PathIndex = path_index;
@@ -594,32 +572,31 @@ LADSPAInfo::ExaminePluginLibrary(const string path,
 							li.RefCount = 0;
 							li.Handle = NULL;
 							m_Libraries.push_back(li);
-
+							m_FilenameLookup[basename] = m_Libraries.size() - 1;
 							library_added = true;
 						}
 
-					// Add plugin info
 						PluginInfo pi;
 						pi.LibraryIndex = m_Libraries.size() - 1;
 						pi.Index = i;
 						pi.UniqueID = desc->UniqueID;
-						pi.Label = desc->Label;
-						pi.Name = desc->Name;
+						pi.Label = desc->Label ? desc->Label : "";
+						pi.Name = desc->Name ? desc->Name : (desc->Label ? desc->Label : "Unnamed");
 						pi.Descriptor = NULL;
 						m_Plugins.push_back(pi);
 
-					// Find number of input ports
 						unsigned long in_port_count = 0;
-						for (unsigned long p = 0; p < desc->PortCount; p++) {
-							if (LADSPA_IS_PORT_INPUT(desc->PortDescriptors[p])) {
-								in_port_count++;
+						if (desc->PortDescriptors) {
+							for (unsigned long p = 0; p < desc->PortCount; p++) {
+								if (LADSPA_IS_PORT_INPUT(desc->PortDescriptors[p])) {
+									in_port_count++;
+								}
 							}
 						}
 						if (in_port_count > m_MaxInputPortCount) {
 							m_MaxInputPortCount = in_port_count;
 						}
 
-					// Add to index
 						m_IDLookup[desc->UniqueID] = m_Plugins.size() - 1;
 
 					} else {
@@ -635,7 +612,6 @@ LADSPAInfo::ExaminePluginLibrary(const string path,
 }
 
 #ifdef HAVE_LIBLRDF
-// Examine given RDF plugin meta-data file
 void
 LADSPAInfo::ExamineRDFFile(const std::string path,
                            const std::string basename)
@@ -647,27 +623,22 @@ LADSPAInfo::ExamineRDFFile(const std::string path,
 	}
 }
 
-// Recursively add rdf information for plugins that have been
-// found from scanning LADSPA_PATH
 void
 LADSPAInfo::MetadataRDFDescend(const char * uri,
                                unsigned long parent)
 {
 	unsigned long this_uri_index;
 
-// Check URI not already added
+	if (!uri)
+		return;
+
 	if (m_RDFURILookup.find(uri) == m_RDFURILookup.end()) {
 
-	// Not found
 		RDFURIInfo ri;
 
 		ri.URI = uri;
 
 		if (ri.URI == LADSPA_BASE "Plugin") {
-
-		// Add top level group as "LADSPA"
-		// This will always happen, even if there are no .rdf files read by liblrdf
-		// or if there is no liblrdf support
 			ri.Label = "LADSPA";
 		} else {
 			char * label = lrdf_get_label(uri);
@@ -678,7 +649,6 @@ LADSPAInfo::MetadataRDFDescend(const char * uri,
 			}
 		}
 
-	// Add any instances found
 		lrdf_uris * instances = lrdf_get_instances(uri);
 		if (instances) {
 			for (long j = 0; j < instances->count; j++) {
@@ -687,9 +657,8 @@ LADSPAInfo::MetadataRDFDescend(const char * uri,
 					ri.Plugins.push_back(m_IDLookup[uid]);
 				}
 			}
+			lrdf_free_uris(instances);
 		}
-
-		lrdf_free_uris(instances);
 
 		m_RDFURIs.push_back(ri);
 		this_uri_index = m_RDFURIs.size() - 1;
@@ -697,27 +666,30 @@ LADSPAInfo::MetadataRDFDescend(const char * uri,
 		m_RDFURILookup[ri.URI] = this_uri_index;
 		m_RDFLabelLookup[ri.Label] = this_uri_index;
 
+		if (this_uri_index > 0 && parent < m_RDFURIs.size()) {
+			m_RDFURIs[this_uri_index].Parents.push_back(parent);
+			m_RDFURIs[parent].Children.push_back(this_uri_index);
+		}
+
+		lrdf_uris * uris = lrdf_get_subclasses(uri);
+
+		if (uris) {
+			for (long i = 0; i < uris->count; i++) {
+				MetadataRDFDescend(uris->items[i], this_uri_index);
+			}
+			lrdf_free_uris(uris);
+		}
+
 	} else {
-
-	// Already added
+		/* Already visited. Link this parent but do not walk subclasses
+		   again (diamond graphs would explode; cycles would recurse
+		   until the stack died — crash on first LADSPA device). */
 		this_uri_index = m_RDFURILookup[uri];
-	}
-
-// Only add parent - child info if this uri is NOT the first (root) uri
-	if (this_uri_index > 0) {
-		m_RDFURIs[this_uri_index].Parents.push_back(parent);
-		m_RDFURIs[parent].Children.push_back(this_uri_index);
-	}
-
-	lrdf_uris * uris = lrdf_get_subclasses(uri);
-
-	if (uris) {
-		for (long i = 0; i < uris->count; i++) {
-			MetadataRDFDescend(uris->items[i], this_uri_index);
+		if (this_uri_index > 0 && parent < m_RDFURIs.size()) {
+			m_RDFURIs[this_uri_index].Parents.push_back(parent);
+			m_RDFURIs[parent].Children.push_back(this_uri_index);
 		}
 	}
-
-	lrdf_free_uris(uris);
 }
 #endif
 
@@ -730,6 +702,7 @@ LADSPAInfo::CheckPlugin(const LADSPA_Descriptor *desc)
 		return false; \
 	} \
 }
+	test(desc, "WARNING: NULL LADSPA descriptor");
 	test(desc->instantiate, "WARNING: Plugin has no instatiate function");
 	test(desc->connect_port, "WARNING: Warning: Plugin has no connect_port funciton");
 	test(desc->run, "WARNING: Plugin has no run function");
@@ -741,6 +714,9 @@ LADSPAInfo::CheckPlugin(const LADSPA_Descriptor *desc)
 	test(!LADSPA_IS_INPLACE_BROKEN(desc->Properties),
 			"WARNING: Plugin cannot use in place processing");
 	test(desc->PortCount, "WARNING: Plugin has no ports");
+	test(desc->PortDescriptors, "WARNING: Plugin has no port descriptors");
+	test(desc->PortNames, "WARNING: Plugin has no port names");
+	/* PortRangeHints may be NULL per the LADSPA spec. */
 
 	return true;
 }
@@ -748,19 +724,19 @@ LADSPAInfo::CheckPlugin(const LADSPA_Descriptor *desc)
 LADSPA_Descriptor_Function
 LADSPAInfo::GetDescriptorFunctionForLibrary(unsigned long library_index)
 {
+	if (library_index >= m_Libraries.size())
+		return NULL;
+
 	LibraryInfo *li = &(m_Libraries[library_index]);
 
 	if (!(li->Handle)) {
 
-	// Need full path
 		string fullpath = m_Paths[li->PathIndex];
 		fullpath.append(li->Basename);
 
-	// Immediate symbol resolution, as plugin code is likely to be executed
 		li->Handle = dlopen(fullpath.c_str(), RTLD_NOW);
 		if (!(li->Handle)) {
 
-		// Plugin library changed since last path scan
 			cerr << "WARNING: Plugin library " << fullpath << " cannot be loaded" << endl;
 			cerr << "Rescan of plugins recommended" << endl;
 			cerr << "dlerror() output:" << endl;
@@ -769,20 +745,18 @@ LADSPAInfo::GetDescriptorFunctionForLibrary(unsigned long library_index)
 		}
 	}
 
-// Got handle so now verify that it's a LADSPA plugin library
 	const LADSPA_Descriptor_Function desc_func = (LADSPA_Descriptor_Function)dlsym(li->Handle,
 																				"ladspa_descriptor");
 	if (!desc_func) {
 
-	// Is DLL, but not a LADSPA one (changed since last path scan?)
 		cerr << "WARNING: DLL " << m_Paths[li->PathIndex] << li->Basename
 			<< " has no ladspa_descriptor function" << endl;
 		cerr << "Rescan of plugins recommended" << endl;
 		cerr << "dlerror() output:" << endl;
 		cerr << dlerror() << endl;
 
-	// Unload library
 		dlclose(li->Handle);
+		li->Handle = NULL;
 		return NULL;
 	}
 

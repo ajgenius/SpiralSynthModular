@@ -66,18 +66,28 @@ public:
 	unsigned long  GetUnconnectedInputs() { return m_UnconnectedInputs; }
 	const char    *GetInputPortName(unsigned long p)
 	{
+		if (!m_OutData.InputPortNames || p >= m_MaxInputPortCount)
+			return "";
 		return (const char *)(m_OutData.InputPortNames + p * 256);
 	}
 	PortSetting GetInputPortSetting(unsigned long p)
 	{
+		PortSetting empty = { -1.0f, 1.0f, true, 0.0f, false };
+		if (!m_OutData.InputPortSettings || p >= m_MaxInputPortCount)
+			return empty;
 		return m_OutData.InputPortSettings[p];
 	}
 	float          GetInputPortDefault(unsigned long p)
 	{
+		if (!m_OutData.InputPortDefaults || p >= m_MaxInputPortCount)
+			return 0.0f;
 		return m_OutData.InputPortDefaults[p];
 	}
 	PortValue GetInputPortValue(unsigned long p)
 	{
+		PortValue empty = { 0.0f, false };
+		if (!m_OutData.InputPortValues || p >= m_MaxInputPortCount)
+			return empty;
 		return m_OutData.InputPortValues[p];
 	}
 
@@ -100,24 +110,25 @@ private:
 	void ClearPlugin(void);
 	void ResetPortSettings(void);
 	void SetGUIExports(void);
+	void SyncPortTypes(void);
 
 	bool m_SSMPluginReset;
 
 	const LADSPA_Descriptor     *m_PlugDesc;
 	std::vector<LADSPA_Data*>    m_LADSPABufVec;
 	LADSPA_Handle                m_PlugInstHandle;
-	
+
 	std::vector<int>        m_PortID;
 	std::vector<float>      m_InputPortMin;
 	std::vector<float>      m_InputPortMax;
-	std::vector<bool>       m_InputPortClamp;
+	std::vector<char>       m_InputPortClamp; /* not vector<bool> — proxy refs */
 	std::vector<float>      m_InputPortDefault;
 
 	int             m_Version;
 
-	static LADSPAInfo	*m_LADSPAInfo;
-	static int		InstanceCount;
-	
+	static LADSPAInfo          *m_LADSPAInfo;
+	static int                  InstanceCount;
+
 	unsigned long   m_PluginIndex;
 	unsigned long   m_UniqueID;
 	int             m_Page;
@@ -128,12 +139,8 @@ private:
 	char            m_Name[256];
 	char            m_Maker[256];
 
-// This is stored in the patch file, and retreived by the GUI
-// on patch load, since we won't know this until the whole patch
-// is loaded and connected.
 	unsigned long   m_UnconnectedInputs;
 
-	// Data sent to GUI
 	struct OutputChannelData
 	{
 		char         *InputPortNames;
@@ -142,7 +149,6 @@ private:
 		float        *InputPortDefaults;
 	};
 
-	// Data received from GUI
 	struct InputChannelData
 	{
 		unsigned long UniqueID;

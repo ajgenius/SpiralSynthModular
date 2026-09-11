@@ -101,7 +101,10 @@ class Fl_DeviceGUI : public Fl_Group {
       // automatically called from the constructor, but may be redone at any time.
       virtual void Setup (const DeviceGUIInfo& Info, bool FirstTime = false);
       virtual void Clear();
-      int GetPortType (int n) { return m_Info.PortTypes[n]; }
+      int GetPortType (int n) {
+	      if (n < 0 || n >= (int)m_Info.PortTypes.size()) return 0;
+	      return m_Info.PortTypes[n];
+      }
       // do we belong to a plugin that is an output?
       bool IsTerminal() { return m_IsTerminal; }
       
