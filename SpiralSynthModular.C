@@ -617,6 +617,7 @@ void SynthModular::LoadPlugins (string pluginPath) {
             //NewButton->color(SpiralInfo::GUICOL_Button);
             //NewButton->selection_color(SpiralInfo::GUICOL_Button);
             the_group->add (NewButton);
+            the_group->end();
 
             // we need to keep tooltips stored outside their widgets - widgets just have a pointer
             // I haven't done anything about cleaning up these strings - which may cause memory leaks?
@@ -669,7 +670,10 @@ void SynthModular::LoadPlugins (string pluginPath) {
      for (PlugGrp = m_PluginGroupMap.begin(); PlugGrp!= m_PluginGroupMap.end(); ++PlugGrp) {
          m_GroupTab->add (PlugGrp->second);
          PlugGrp->second->add (new Fl_Box (0, 0, 600, 100, ""));
+         PlugGrp->second->end();
      }
+     m_GroupTab->end();
+     Fl_Group::current(0);
      // try to show the SpiralSound group
      PlugGrp = m_PluginGroupMap.find("SpiralSound");
      // can't find it - show the first plugin group
@@ -749,7 +753,13 @@ DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 	}
 
 	PluginInfo PInfo    = nlw->m_Device->Initialise(&m_Info);
+	/* Toolbar Fl_Pack ctors leave Fl_Group::current() on the pack.
+	   Constructing the plugin GUI then parents it into the toolbar
+	   during the click handler — crash or a window that cannot expand. */
+	Fl_Group *prev = Fl_Group::current();
+	Fl_Group::current(0);
 	SpiralGUIType *temp = Plugin->CreateGUI(nlw->m_Device);
+	if (temp) temp->end();
 	Fl_Pixmap *Pix      = new Fl_Pixmap(Plugin->Icon());
 	nlw->m_PluginID     = n;
 
@@ -761,6 +771,8 @@ DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 	Info.YPos       = y; //rand()%400;
 
 	nlw->m_DeviceGUI = new Fl_DeviceGUI(Info, temp, Pix, nlw->m_Device->IsTerminal());
+	nlw->m_DeviceGUI->end();
+	Fl_Group::current(prev);
 	Fl_Canvas::SetDeviceCallbacks(nlw->m_DeviceGUI, m_Canvas);
 	m_Canvas->add(nlw->m_DeviceGUI);
 	m_Canvas->redraw();
