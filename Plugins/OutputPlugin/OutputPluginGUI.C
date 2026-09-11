@@ -73,7 +73,7 @@ void OutputPluginGUI::Update()
 
 void OutputPluginGUI::UpdateValues(SpiralPlugin *o)
 {
-	Volume->value(OSSClient::Get()->GetVolume());
+	Volume->value(OUTPUTCLIENT::Get()->GetVolume());
 }
 
 //// Callbacks ////
@@ -149,9 +149,10 @@ void OutputPluginGUI::cb_OpenWrite(Fl_Button* o, void* v)
 
 const string OutputPluginGUI::GetHelpText(const string &loc){
     return string("")
-	+ "Your basic OSS i/o plugin, It opens the OSS sound driver, and outputs\n"
-	+ "whatever is passed into it's inputs to the soundcard. It works in stereo,\n"
-	+ "so you have seperate left and right inputs.\n\n"
+	+ "Audio i/o plugin.  It opens the selected backend (OSS, ALSA, or\n"
+	+ "PortAudio — see Options / Audio Client) and outputs whatever is\n"
+	+ "passed into its inputs to the soundcard. It works in stereo, so\n"
+	+ "you have separate left and right inputs.\n\n"
 	+ "There are three modes of operation: read, write and duplex. You can select\n"
 	+ "read to record/process sound from your soundcard, write to play sound\n"
 	+ "(default) and if your card supports it - duplex, to play and record \n"

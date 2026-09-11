@@ -1,155 +1,202 @@
 // Copyright (C) 2003 David Griffiths <dave@pawfal.org>
-//
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+// SSM blocking Pa_WriteStream adaptation (PortAudio 2.0 / v19).
 
-#include <stdio.h>
-#include <limits.h>
+#include <cctype>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
 
 #include "PortAudioClient.h"
 
-PortAudioClient*  PortAudioClient::m_Singleton  = NULL;
-bool              PortAudioClient::m_Attached   = false;
-long unsigned int PortAudioClient::m_BufferSize = 0;
-long unsigned int PortAudioClient::m_SampleRate = 44100;
-void            (*PortAudioClient::RunCallback)(void*, unsigned int BufSize)=NULL;
-void             *PortAudioClient::RunContext   = NULL;	
-PortAudioStream  *PortAudioClient::m_Client     = NULL;
-float *PortAudioClient::m_RightData=NULL;
-float *PortAudioClient::m_LeftData=NULL;
-float *PortAudioClient::m_RightInData=NULL;
-float *PortAudioClient::m_LeftInData=NULL;
+using namespace std;
+using namespace spiralcore;
 
-///////////////////////////////////////////////////////
+PortAudioClient *PortAudioClient::m_Singleton = NULL;
 
-PortAudioClient::PortAudioClient() 
+PortAudioClient *PortAudioClient::Get()
+{
+	if (!m_Singleton) m_Singleton = new PortAudioClient;
+	return m_Singleton;
+}
+
+void PortAudioClient::PackUpAndGoHome()
+{
+	if (m_Singleton)
+	{
+		delete m_Singleton;
+		m_Singleton = NULL;
+	}
+}
+
+PortAudioClient::PortAudioClient() :
+	m_Stream(NULL),
+	m_Attached(false),
+	m_Initialized(false),
+	m_HasInput(false),
+	m_HasOutput(false),
+	m_Channels(2),
+	m_Device("default")
 {
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////
-
-PortAudioClient::~PortAudioClient()	
-{	
+PortAudioClient::~PortAudioClient()
+{
 	Detach();
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////
-
-bool PortAudioClient::Attach(const string &ClientName, const DeviceOptions &dopt)
+bool PortAudioClient::Check(PaError err, const char *op) const
 {
-	if (m_Attached) return true;
+	if (err == paNoError) return true;
+	cerr << "PortAudio " << op << " failed: " << Pa_GetErrorText(err) << endl;
+	return false;
+}
 
-	m_SampleRate=dopt.Samplerate;
+PaDeviceIndex PortAudioClient::FindDevice(bool input) const
+{
+	if (m_Device.empty() || m_Device == "default")
+		return input ? Pa_GetDefaultInputDevice() : Pa_GetDefaultOutputDevice();
 
-    PaError err;
-    int i;
-    int totalSamps;
-
-	err = Pa_Initialize();
-    if( err != paNoError ) 
- 	{
-		cerr<<"Could not init PortAudioClient"<<endl;
-		Pa_Terminate();
-	}
-		
-    err = Pa_OpenStream(&m_Client,
-              paNoDevice,
-              0,            
-              paFloat32,  /* 32 bit floating point input */
-              NULL,
-              Pa_GetDefaultOutputDeviceID(),
-              2,              /* stereo output */
-              paFloat32,      /* 32 bit floating point output */
-              NULL,
-              m_SampleRate,
-              dopt.BufferSize,
-              dopt.NumBuffers,  /* number of buffers, if zero then use default minimum */
-              paClipOff|paDitherOff, /* we won't output out of range samples so don't bother clipping them */
-              Process,
-              NULL );
-	
-    if( err != paNoError ) 
+	bool numeric = !m_Device.empty();
+	for (size_t i = 0; i < m_Device.size(); ++i)
 	{
-		cerr<<"Could not attach PortAudioClient: "<<Pa_GetErrorText( err )<<endl;
-		Pa_Terminate();
+		if (!isdigit((unsigned char)m_Device[i]))
+		{
+			numeric = false;
+			break;
+		}
+	}
+
+	const PaDeviceIndex count = Pa_GetDeviceCount();
+	if (count < 0) return paNoDevice;
+
+	if (numeric)
+	{
+		const long value = strtol(m_Device.c_str(), NULL, 10);
+		if (value >= 0 && value < count)
+		{
+			const PaDeviceInfo *info = Pa_GetDeviceInfo((PaDeviceIndex)value);
+			if (info && (input ? info->maxInputChannels : info->maxOutputChannels) >= m_Channels)
+				return (PaDeviceIndex)value;
+		}
+		return paNoDevice;
+	}
+
+	PaDeviceIndex partial = paNoDevice;
+	for (PaDeviceIndex i = 0; i < count; ++i)
+	{
+		const PaDeviceInfo *info = Pa_GetDeviceInfo(i);
+		if (!info || !info->name) continue;
+		if ((input ? info->maxInputChannels : info->maxOutputChannels) < m_Channels)
+			continue;
+		if (m_Device == info->name) return i;
+		if (partial == paNoDevice && string(info->name).find(m_Device) != string::npos)
+			partial = i;
+	}
+	return partial;
+}
+
+bool PortAudioClient::FillParameters(PaStreamParameters &params, bool input) const
+{
+	memset(&params, 0, sizeof(params));
+	params.device = FindDevice(input);
+	if (params.device == paNoDevice)
+	{
+		cerr << "PortAudio: no " << (input ? "input" : "output")
+		     << " device matches destination '" << m_Device << "'" << endl;
 		return false;
 	}
-
-	err = Pa_StartStream( m_Client );
-	
-	if( err != paNoError ) 
-	{
-		cerr<<"Could not start stream: "<<Pa_GetErrorText( err )<<endl;
-		Pa_Terminate();
-		return false;
-	}
-	
-	m_Attached=true;
-	cerr<<"connected to portaudio..."<<endl;
+	const PaDeviceInfo *info = Pa_GetDeviceInfo(params.device);
+	if (!info) return false;
+	params.channelCount = m_Channels;
+	params.sampleFormat = paFloat32;
+	params.suggestedLatency = input ? info->defaultLowInputLatency
+	                                : info->defaultLowOutputLatency;
+	params.hostApiSpecificStreamInfo = NULL;
 	return true;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////
+bool PortAudioClient::Attach(const string &device, const AudioClientOptions &opt)
+{
+	Detach();
+	m_Opt = opt;
+	m_Device = device.empty() ? "default" : device;
+	m_Channels = opt.OutChannels ? (int)opt.OutChannels
+	            : (opt.InChannels ? (int)opt.InChannels : 2);
+	if (m_Channels < 1) m_Channels = 2;
+
+	if (!m_Initialized)
+	{
+		if (!Check(Pa_Initialize(), "init")) return false;
+		m_Initialized = true;
+	}
+
+	PaStreamParameters inP, outP;
+	PaStreamParameters *in = NULL, *out = NULL;
+	if (opt.InChannels)
+	{
+		if (!FillParameters(inP, true)) { Detach(); return false; }
+		in = &inP;
+		m_HasInput = true;
+	}
+	if (opt.OutChannels)
+	{
+		if (!FillParameters(outP, false)) { Detach(); return false; }
+		out = &outP;
+		m_HasOutput = true;
+	}
+
+	/* NULL callback — Pa_WriteStream / Pa_ReadStream block, pacing the engine. */
+	PaError err = Pa_OpenStream(&m_Stream, in, out,
+	                            opt.Samplerate, opt.BufferSize,
+	                            paClipOff | paDitherOff,
+	                            NULL, NULL);
+	if (!Check(err, "open")) { Detach(); return false; }
+	if (!Check(Pa_StartStream(m_Stream), "start")) { Detach(); return false; }
+
+	m_Attached = true;
+	cerr << "PortAudio: attached (blocking) dest=" << m_Device
+	     << " sr=" << opt.Samplerate
+	     << " buf=" << opt.BufferSize
+	     << " ch=" << m_Channels << endl;
+	return true;
+}
 
 void PortAudioClient::Detach()
 {
-	if (m_Client)
+	if (m_Stream)
 	{
-		cerr<<"Detaching from portaudio"<<endl;
-		Pa_Terminate();
-		m_Client=NULL;
-		m_Attached=false;
+		const PaError active = Pa_IsStreamActive(m_Stream);
+		if (active == 1)
+		{
+			const PaError err = Pa_StopStream(m_Stream);
+			if (err != paNoError && err != paStreamIsStopped)
+				Check(err, "stop");
+		}
+		Check(Pa_CloseStream(m_Stream), "close");
+		m_Stream = NULL;
 	}
+	if (m_Initialized)
+	{
+		Check(Pa_Terminate(), "terminate");
+		m_Initialized = false;
+	}
+	m_Attached = m_HasInput = m_HasOutput = false;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////
-
-int PortAudioClient::Process(void *inputBuffer, void *outputBuffer,
-                           unsigned long framesPerBuffer,
-                           PaTimestamp outTime, void *userData)
-{	
-	m_BufferSize=framesPerBuffer;
-
-	if(RunCallback&&RunContext)
-	{
-		// do the work
-		RunCallback(RunContext, framesPerBuffer);
-	}
-	
-	if (m_RightData && m_LeftData)
-	{
-		float *out = (float*)outputBuffer;
-		for (unsigned int n=0; n<m_BufferSize; n++)
-		{
-			*out=m_LeftData[n];
-			out++;
-			*out=m_RightData[n];
-			out++;
-		}
-	}
-		
-	if (m_RightInData && m_LeftInData)
-	{
-		float *in = (float*)inputBuffer;
-		for (unsigned int n=0; n<m_BufferSize; n++)
-		{
-			m_LeftInData[n]=*in;
-			in++;
-			m_RightInData[n]=*in;
-			in++;
-		}
-	}
-	return 0;
+bool PortAudioClient::Write(const float *interleaved, unsigned int nframes)
+{
+	if (!m_Attached || !m_HasOutput || !m_Stream || !interleaved) return false;
+	PaError err = Pa_WriteStream(m_Stream, interleaved, nframes);
+	if (err != paNoError && err != paOutputUnderflowed)
+		return Check(err, "write");
+	return true;
 }
 
+bool PortAudioClient::Read(float *interleaved, unsigned int nframes)
+{
+	if (!m_Attached || !m_HasInput || !m_Stream || !interleaved) return false;
+	PaError err = Pa_ReadStream(m_Stream, interleaved, nframes);
+	if (err != paNoError && err != paInputOverflowed)
+		return Check(err, "read");
+	return true;
+}
