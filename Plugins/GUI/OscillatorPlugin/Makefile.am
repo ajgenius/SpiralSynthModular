@@ -1,5 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/OscillatorPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
 plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/OscillatorPlugin
+dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = OscillatorPlugin_GUI.la
 OscillatorPlugin_GUI_la_SOURCES = OscillatorPluginGUI.cpp OscillatorPluginGUI.h
 OscillatorPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

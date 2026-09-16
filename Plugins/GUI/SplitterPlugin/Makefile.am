@@ -1,5 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/SplitterPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
 plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/SplitterPlugin
+dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = SplitterPlugin_GUI.la
 SplitterPlugin_GUI_la_SOURCES = SplitterPluginGUI.cpp SplitterPluginGUI.h
 SplitterPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

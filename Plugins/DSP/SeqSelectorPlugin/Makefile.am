@@ -1,6 +1,7 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir)
 EXTRA_DIST = SpiralIcon.xpm
 plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/dsp/SeqSelectorPlugin
+dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = SeqSelectorPlugin_DSP.la
 SeqSelectorPlugin_DSP_la_SOURCES = SeqSelectorPlugin.h SeqSelectorPlugin.C
 SeqSelectorPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined

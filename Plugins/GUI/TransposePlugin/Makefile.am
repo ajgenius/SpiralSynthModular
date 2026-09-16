@@ -1,5 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/TransposePlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
 plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/TransposePlugin
+dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = TransposePlugin_GUI.la
 TransposePlugin_GUI_la_SOURCES = TransposePluginGUI.cpp TransposePluginGUI.h
 TransposePlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

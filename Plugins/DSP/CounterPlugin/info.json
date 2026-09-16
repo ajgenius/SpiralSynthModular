@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": 45,
+  "name": "Counter",
+  "type": "dsp",
+  "category": "Maths/Logic",
+  "authors": [
+    "David Griffiths"
+  ],
+  "version": "1",
+  "host": {
+    "name": "SpiralSynthModular",
+    "version": "0.3.1",
+    "abi": "0.3.1"
+  },
+  "registration": "module",
+  "module": "CounterPlugin_DSP.so"
+}

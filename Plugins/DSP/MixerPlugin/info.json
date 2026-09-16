@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": 7,
+  "name": "Mixer",
+  "type": "dsp",
+  "category": "Amps/Mixers",
+  "authors": [
+    "David Griffiths"
+  ],
+  "version": "2",
+  "host": {
+    "name": "SpiralSynthModular",
+    "version": "0.3.1",
+    "abi": "0.3.1"
+  },
+  "registration": "module",
+  "module": "MixerPlugin_DSP.so"
+}

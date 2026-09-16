@@ -1,5 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/DelayPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
 plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/DelayPlugin
+dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = DelayPlugin_GUI.la
 DelayPlugin_GUI_la_SOURCES = DelayPluginGUI.cpp DelayPluginGUI.h
 DelayPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

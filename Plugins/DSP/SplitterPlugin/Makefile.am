@@ -1,6 +1,7 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir)
 EXTRA_DIST = SpiralIcon.xpm
 plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/dsp/SplitterPlugin
+dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = SplitterPlugin_DSP.la
 SplitterPlugin_DSP_la_SOURCES = SplitterPlugin.h SplitterPlugin.C
 SplitterPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined

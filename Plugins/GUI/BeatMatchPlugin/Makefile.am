@@ -1,5 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/BeatMatchPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
 plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/BeatMatchPlugin
+dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = BeatMatchPlugin_GUI.la
 BeatMatchPlugin_GUI_la_SOURCES = BeatMatchPluginGUI.cpp BeatMatchPluginGUI.h
 BeatMatchPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

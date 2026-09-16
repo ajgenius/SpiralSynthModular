@@ -1,6 +1,7 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir)
 EXTRA_DIST = SpiralIcon.xpm
 plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/dsp/OscillatorPlugin
+dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = OscillatorPlugin_DSP.la
 OscillatorPlugin_DSP_la_SOURCES = OscillatorPlugin.h OscillatorPlugin.C
 OscillatorPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined

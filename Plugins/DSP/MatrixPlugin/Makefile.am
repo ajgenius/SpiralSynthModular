@@ -1,6 +1,7 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir)
 EXTRA_DIST = SpiralIcon.xpm
 plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/dsp/MatrixPlugin
+dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = MatrixPlugin_DSP.la
 MatrixPlugin_DSP_la_SOURCES = MatrixPlugin.h MatrixPlugin.C
 MatrixPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined

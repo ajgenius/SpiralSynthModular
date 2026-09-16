@@ -1,5 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/DistributorPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
 plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/DistributorPlugin
+dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = DistributorPlugin_GUI.la
 DistributorPlugin_GUI_la_SOURCES = DistributorPluginGUI.cpp DistributorPluginGUI.h
 DistributorPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

@@ -1,5 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/NoisePlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
 plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/NoisePlugin
+dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = NoisePlugin_GUI.la
 NoisePlugin_GUI_la_SOURCES = NoisePluginGUI.cpp NoisePluginGUI.h
 NoisePlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

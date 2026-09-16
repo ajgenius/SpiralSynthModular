@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "id": 18,
+  "name": "Matrix",
+  "type": "gui",
+  "category": "Sequencing",
+  "authors": [
+    "David Griffiths"
+  ],
+  "version": "5",
+  "host": {
+    "name": "SpiralSynthModular",
+    "version": "0.3.1",
+    "abi": "0.3.1"
+  },
+  "registration": "module",
+  "module": "MatrixPlugin_GUI.so",
+  "gui_stack": {
+    "name": "FLTK",
+    "abi": "1",
+    "version": "1.x"
+  }
+}

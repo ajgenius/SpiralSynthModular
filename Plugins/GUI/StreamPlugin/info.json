@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": 281,
+  "name": "Stream",
+  "type": "gui",
+  "category": "Delay/Sampling",
+  "authors": [
+    "David Griffiths",
+    "SSM contributors"
+  ],
+  "version": "1",
+  "host": {
+    "name": "SpiralSynthModular",
+    "version": "0.3.1",
+    "abi": "0.3.1"
+  },
+  "registration": "module",
+  "module": "StreamPlugin_GUI.so",
+  "gui_stack": {
+    "name": "FLTK",
+    "abi": "1",
+    "version": "1.x"
+  }
+}

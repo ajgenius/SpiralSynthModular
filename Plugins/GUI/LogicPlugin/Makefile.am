@@ -1,5 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/LogicPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
 plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/LogicPlugin
+dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = LogicPlugin_GUI.la
 LogicPlugin_GUI_la_SOURCES = LogicPluginGUI.cpp LogicPluginGUI.h
 LogicPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

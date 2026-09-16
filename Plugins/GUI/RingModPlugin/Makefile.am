@@ -1,5 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/RingModPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
 plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/RingModPlugin
+dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = RingModPlugin_GUI.la
 RingModPlugin_GUI_la_SOURCES = RingModPluginGUI.cpp RingModPluginGUI.h
 RingModPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

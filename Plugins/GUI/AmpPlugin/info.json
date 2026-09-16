@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "id": 9,
+  "name": "Amp",
+  "type": "gui",
+  "category": "Amps/Mixers",
+  "authors": [
+    "David Griffiths"
+  ],
+  "version": "1",
+  "host": {
+    "name": "SpiralSynthModular",
+    "version": "0.3.1",
+    "abi": "0.3.1"
+  },
+  "registration": "module",
+  "module": "AmpPlugin_GUI.so",
+  "gui_stack": {
+    "name": "FLTK",
+    "abi": "1",
+    "version": "1.x"
+  }
+}

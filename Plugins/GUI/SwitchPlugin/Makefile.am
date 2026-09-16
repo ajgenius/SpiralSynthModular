@@ -1,5 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/SwitchPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
 plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/SwitchPlugin
+dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = SwitchPlugin_GUI.la
 SwitchPlugin_GUI_la_SOURCES = SwitchPluginGUI.cpp SwitchPluginGUI.h
 SwitchPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

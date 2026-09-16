@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": 12,
+  "name": "SVFilter",
+  "type": "dsp",
+  "category": "Filters/FX",
+  "authors": [
+    "David Griffiths"
+  ],
+  "version": "2",
+  "host": {
+    "name": "SpiralSynthModular",
+    "version": "0.3.1",
+    "abi": "0.3.1"
+  },
+  "registration": "module",
+  "module": "SVFilterPlugin_DSP.so"
+}

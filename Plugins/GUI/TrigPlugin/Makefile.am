@@ -1,5 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/TrigPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
 plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/TrigPlugin
+dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = TrigPlugin_GUI.la
 TrigPlugin_GUI_la_SOURCES = TrigPluginGUI.cpp TrigPluginGUI.h
 TrigPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared
