@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/StereoMixerPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/StereoMixerPlugin
 plugin_LTLIBRARIES = StereoMixerPlugin_GUI.la
 StereoMixerPlugin_GUI_la_SOURCES = StereoMixerPluginGUI.cpp StereoMixerPluginGUI.h
 StereoMixerPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

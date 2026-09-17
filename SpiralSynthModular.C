@@ -493,28 +493,56 @@ SpiralWindowType *SynthModular::CreateWindow()
 
 //////////////////////////////////////////////////////////
 
-vector<string> SynthModular::BuildPluginList (const string &Path)
+static void CollectSo(const string &dir, const string &rel, vector<string> &ret)
 {
-	vector<string> ret;
-	DIR *directory = opendir(Path.c_str());
-	if (!directory)
-	{
-		cerr << "WARNING: Could not open path " << Path << endl;
-		return ret;
-	}
-
-	string root = Path;
-	if (!root.empty() && root[root.size()-1] != '/') root += '/';
+	DIR *directory = opendir(dir.c_str());
+	if (!directory) return;
 	struct dirent *entry;
 	while ((entry = readdir(directory)))
 	{
 		string name = entry->d_name;
 		if (name.size() < 3 || name.substr(name.size()-3) != ".so") continue;
+		string full = dir + "/" + name;
 		struct stat info;
-		if (!stat((root+name).c_str(), &info) && S_ISREG(info.st_mode))
-			ret.push_back(name);
+		if (!stat(full.c_str(), &info) && S_ISREG(info.st_mode))
+			ret.push_back(rel.empty() ? name : rel + "/" + name);
 	}
 	closedir(directory);
+}
+
+static void CollectPluginDirs(const string &root, const char *kind, vector<string> &ret)
+{
+	string base = root + "/" + kind;
+	DIR *directory = opendir(base.c_str());
+	if (!directory) return;
+	struct dirent *entry;
+	while ((entry = readdir(directory)))
+	{
+		string name = entry->d_name;
+		if (name == "." || name == "..") continue;
+		string dir = base + "/" + name;
+		struct stat info;
+		if (!stat(dir.c_str(), &info) && S_ISDIR(info.st_mode))
+			CollectSo(dir, string(kind) + "/" + name, ret);
+	}
+	closedir(directory);
+}
+
+vector<string> SynthModular::BuildPluginList (const string &Path)
+{
+	vector<string> ret;
+	string root = Path;
+	if (!root.empty() && root[root.size()-1] == '/') root.erase(root.size()-1);
+	DIR *directory = opendir(root.c_str());
+	if (!directory)
+	{
+		cerr << "WARNING: Could not open path " << Path << endl;
+		return ret;
+	}
+	closedir(directory);
+	CollectSo(root, "", ret);
+	CollectPluginDirs(root, "dsp", ret);
+	CollectPluginDirs(root, "gui", ret);
 	sort(ret.begin(), ret.end());
 	return ret;
 }

@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/MixerPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/MixerPlugin
 plugin_LTLIBRARIES = MixerPlugin_GUI.la
 MixerPlugin_GUI_la_SOURCES = MixerPluginGUI.cpp MixerPluginGUI.h
 MixerPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

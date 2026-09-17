@@ -1,6 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir)
 EXTRA_DIST = SpiralIcon.xpm
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/dsp/MixerPlugin
 plugin_LTLIBRARIES = MixerPlugin_DSP.la
 MixerPlugin_DSP_la_SOURCES = MixerPlugin.h MixerPlugin.C
 MixerPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined

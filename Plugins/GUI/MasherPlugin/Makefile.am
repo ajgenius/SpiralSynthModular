@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/MasherPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/MasherPlugin
 plugin_LTLIBRARIES = MasherPlugin_GUI.la
 MasherPlugin_GUI_la_SOURCES = MasherPluginGUI.cpp MasherPluginGUI.h
 MasherPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

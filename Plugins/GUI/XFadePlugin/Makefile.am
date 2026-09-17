@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/XFadePlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/XFadePlugin
 plugin_LTLIBRARIES = XFadePlugin_GUI.la
 XFadePlugin_GUI_la_SOURCES = XFadePluginGUI.cpp XFadePluginGUI.h
 XFadePlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

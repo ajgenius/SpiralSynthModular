@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/KeyboardPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/KeyboardPlugin
 plugin_LTLIBRARIES = KeyboardPlugin_GUI.la
 KeyboardPlugin_GUI_la_SOURCES = KeyboardPluginGUI.cpp KeyboardPluginGUI.h
 KeyboardPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

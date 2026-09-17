@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/JackPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/JackPlugin
 plugin_LTLIBRARIES = JackPlugin_GUI.la
 JackPlugin_GUI_la_SOURCES = JackPluginGUI.cpp JackPluginGUI.h
 JackPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

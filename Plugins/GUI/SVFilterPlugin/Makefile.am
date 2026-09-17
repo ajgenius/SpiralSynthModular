@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/SVFilterPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/SVFilterPlugin
 plugin_LTLIBRARIES = SVFilterPlugin_GUI.la
 SVFilterPlugin_GUI_la_SOURCES = SVFilterPluginGUI.cpp SVFilterPluginGUI.h
 SVFilterPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

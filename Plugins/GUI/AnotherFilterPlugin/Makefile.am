@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/AnotherFilterPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/AnotherFilterPlugin
 plugin_LTLIBRARIES = AnotherFilterPlugin_GUI.la
 AnotherFilterPlugin_GUI_la_SOURCES = AnotherFilterPluginGUI.cpp AnotherFilterPluginGUI.h
 AnotherFilterPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

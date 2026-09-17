@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/FlipflopPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/FlipflopPlugin
 plugin_LTLIBRARIES = FlipflopPlugin_GUI.la
 FlipflopPlugin_GUI_la_SOURCES = FlipflopPluginGUI.cpp FlipflopPluginGUI.h
 FlipflopPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

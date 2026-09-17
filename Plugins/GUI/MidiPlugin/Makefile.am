@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/MidiPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/MidiPlugin
 plugin_LTLIBRARIES = MidiPlugin_GUI.la
 MidiPlugin_GUI_la_SOURCES = MidiPluginGUI.cpp MidiPluginGUI.h
 MidiPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

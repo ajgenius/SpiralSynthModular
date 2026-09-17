@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/WaveShaperPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/WaveShaperPlugin
 plugin_LTLIBRARIES = WaveShaperPlugin_GUI.la
 WaveShaperPlugin_GUI_la_SOURCES = WaveShaperPluginGUI.cpp WaveShaperPluginGUI.h
 WaveShaperPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

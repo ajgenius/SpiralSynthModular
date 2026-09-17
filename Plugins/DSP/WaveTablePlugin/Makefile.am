@@ -1,6 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir)
 EXTRA_DIST = SpiralIcon.xpm
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/dsp/WaveTablePlugin
 plugin_LTLIBRARIES = WaveTablePlugin_DSP.la
 WaveTablePlugin_DSP_la_SOURCES = WaveTablePlugin.h WaveTablePlugin.C
 WaveTablePlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined

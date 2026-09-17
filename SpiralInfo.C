@@ -504,11 +504,9 @@ void SpiralInfo::StreamInPrefs (istream &s)
 			}
 		}
 	}
-#if __APPLE__
-     // ignore custom paths, plugins are encapsulated in the app anyway
-     // this prevents the program to fail if the user move the application icon
-     PLUGIN_PATH = PLUGIN_PATH_LOCATION;
-#endif
+	// Plugins install under the compiled versioned path. A PluginPath saved
+	// before that layout is ignored. --PluginPath still overrides.
+	PLUGIN_PATH = PLUGIN_PATH_LOCATION;
 }
 
 void SpiralInfo::StreamOutPrefs (ostream &s) 

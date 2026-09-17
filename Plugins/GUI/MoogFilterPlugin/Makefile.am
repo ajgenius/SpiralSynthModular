@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/MoogFilterPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/MoogFilterPlugin
 plugin_LTLIBRARIES = MoogFilterPlugin_GUI.la
 MoogFilterPlugin_GUI_la_SOURCES = MoogFilterPluginGUI.cpp MoogFilterPluginGUI.h
 MoogFilterPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

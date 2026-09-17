@@ -1,6 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir)
 EXTRA_DIST = SpiralIcon.xpm
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/dsp/ScopePlugin
 plugin_LTLIBRARIES = ScopePlugin_DSP.la
 ScopePlugin_DSP_la_SOURCES = ScopePlugin.h ScopePlugin.C
 ScopePlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined

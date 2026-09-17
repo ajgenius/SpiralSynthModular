@@ -167,7 +167,7 @@ dnl Check plugin directory
 AC_ARG_WITH(plugindir,
   [  --with-plugindir=dir    give the plugin directory],
   plugindir="$withval",
-  plugindir="/usr/lib/SpiralPlugins")
+  plugindir="/usr/lib/SpiralPlugins/${PACKAGE_VERSION}")
 AC_SUBST(PLUGINDIR, $plugindir)
 
 dnl Check whether to enable debugging

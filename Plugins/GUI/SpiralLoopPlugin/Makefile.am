@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/SpiralLoopPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/SpiralLoopPlugin
 plugin_LTLIBRARIES = SpiralLoopPlugin_GUI.la
 SpiralLoopPlugin_GUI_la_SOURCES = SpiralLoopPluginGUI.cpp SpiralLoopPluginGUI.h
 SpiralLoopPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

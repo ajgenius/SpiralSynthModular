@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/SplitSwitchPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/SplitSwitchPlugin
 plugin_LTLIBRARIES = SplitSwitchPlugin_GUI.la
 SplitSwitchPlugin_GUI_la_SOURCES = SplitSwitchPluginGUI.cpp SplitSwitchPluginGUI.h
 SplitSwitchPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

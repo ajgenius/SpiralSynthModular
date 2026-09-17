@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/OperatorPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/OperatorPlugin
 plugin_LTLIBRARIES = OperatorPlugin_GUI.la
 OperatorPlugin_GUI_la_SOURCES = OperatorPluginGUI.cpp OperatorPluginGUI.h
 OperatorPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

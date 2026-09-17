@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/LFOPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/LFOPlugin
 plugin_LTLIBRARIES = LFOPlugin_GUI.la
 LFOPlugin_GUI_la_SOURCES = LFOPluginGUI.cpp LFOPluginGUI.h
 LFOPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

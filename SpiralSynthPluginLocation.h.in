@@ -17,4 +17,4 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#define	PLUGIN_PATH_LOCATION	"@prefix@/lib/SpiralPlugins/"
+#define	PLUGIN_PATH_LOCATION	"@prefix@/lib/SpiralPlugins/@PACKAGE_VERSION@/"

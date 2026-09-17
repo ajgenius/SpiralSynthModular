@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/PoshSamplerPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/PoshSamplerPlugin
 plugin_LTLIBRARIES = PoshSamplerPlugin_GUI.la
 PoshSamplerPlugin_GUI_la_SOURCES = PoshSamplerPluginGUI.cpp PoshSamplerPluginGUI.h
 PoshSamplerPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

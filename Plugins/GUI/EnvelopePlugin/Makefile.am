@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/EnvelopePlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/EnvelopePlugin
 plugin_LTLIBRARIES = EnvelopePlugin_GUI.la
 EnvelopePlugin_GUI_la_SOURCES = EnvelopePluginGUI.cpp EnvelopePluginGUI.h
 EnvelopePlugin_GUI_la_LDFLAGS = -module -avoid-version -shared

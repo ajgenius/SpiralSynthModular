@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/EnvFollowerPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = $(libdir)/SpiralPlugins
+plugindir = $(libdir)/SpiralPlugins/$(PACKAGE_VERSION)/gui/EnvFollowerPlugin
 plugin_LTLIBRARIES = EnvFollowerPlugin_GUI.la
 EnvFollowerPlugin_GUI_la_SOURCES = EnvFollowerPluginGUI.cpp EnvFollowerPluginGUI.h
 EnvFollowerPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared
