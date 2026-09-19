@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = RingModPlugin.la
 
 RingModPlugin_la_SOURCES =					\
 			../../GUI/RingModPlugin/RingModPluginGUI.h			\
-			../../GUI/RingModPlugin/RingModPluginGUI.C			\
+			../../GUI/RingModPlugin/RingModPluginGUI.cpp			\
 			RingModPlugin.h			\
 			RingModPlugin.C
 			

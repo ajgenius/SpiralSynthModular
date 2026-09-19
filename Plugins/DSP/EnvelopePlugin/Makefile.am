@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = EnvelopePlugin.la
 
 EnvelopePlugin_la_SOURCES =					\
 			../../GUI/EnvelopePlugin/EnvelopePluginGUI.h			\
-			../../GUI/EnvelopePlugin/EnvelopePluginGUI.C			\
+			../../GUI/EnvelopePlugin/EnvelopePluginGUI.cpp			\
 			EnvelopePlugin.h			\
 			EnvelopePlugin.C
 			

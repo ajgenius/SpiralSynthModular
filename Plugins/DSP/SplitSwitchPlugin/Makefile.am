@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = SplitSwitchPlugin.la
 
 SplitSwitchPlugin_la_SOURCES =					\
 			../../GUI/SplitSwitchPlugin/SplitSwitchPluginGUI.h			\
-			../../GUI/SplitSwitchPlugin/SplitSwitchPluginGUI.C			\
+			../../GUI/SplitSwitchPlugin/SplitSwitchPluginGUI.cpp			\
 			SplitSwitchPlugin.h			\
 			SplitSwitchPlugin.C
 			

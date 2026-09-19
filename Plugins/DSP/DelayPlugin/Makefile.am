@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = DelayPlugin.la
 
 DelayPlugin_la_SOURCES =					\
 			../../GUI/DelayPlugin/DelayPluginGUI.h			\
-			../../GUI/DelayPlugin/DelayPluginGUI.C			\
+			../../GUI/DelayPlugin/DelayPluginGUI.cpp			\
 			DelayPlugin.h			\
 			DelayPlugin.C
 			

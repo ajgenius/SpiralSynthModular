@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = TrigPlugin.la
 
 TrigPlugin_la_SOURCES =					\
 			../../GUI/TrigPlugin/TrigPluginGUI.h			\
-			../../GUI/TrigPlugin/TrigPluginGUI.C			\
+			../../GUI/TrigPlugin/TrigPluginGUI.cpp			\
 			TrigPlugin.h			\
 			TrigPlugin.C
 			

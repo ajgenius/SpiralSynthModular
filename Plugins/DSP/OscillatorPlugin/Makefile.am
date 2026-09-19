@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = OscillatorPlugin.la
 
 OscillatorPlugin_la_SOURCES =					\
 			../../GUI/OscillatorPlugin/OscillatorPluginGUI.h			\
-			../../GUI/OscillatorPlugin/OscillatorPluginGUI.C			\
+			../../GUI/OscillatorPlugin/OscillatorPluginGUI.cpp			\
 			OscillatorPlugin.h			\
 			OscillatorPlugin.C
 			

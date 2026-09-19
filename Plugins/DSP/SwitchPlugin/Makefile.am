@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = SwitchPlugin.la
 
 SwitchPlugin_la_SOURCES =					\
 			../../GUI/SwitchPlugin/SwitchPluginGUI.h			\
-			../../GUI/SwitchPlugin/SwitchPluginGUI.C			\
+			../../GUI/SwitchPlugin/SwitchPluginGUI.cpp			\
 			SwitchPlugin.h			\
 			SwitchPlugin.C
 			

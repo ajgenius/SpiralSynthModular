@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = MixerPlugin.la
 
 MixerPlugin_la_SOURCES =					\
 			../../GUI/MixerPlugin/MixerPluginGUI.h			\
-			../../GUI/MixerPlugin/MixerPluginGUI.C			\
+			../../GUI/MixerPlugin/MixerPluginGUI.cpp			\
 			MixerPlugin.h			\
 			MixerPlugin.C
 			

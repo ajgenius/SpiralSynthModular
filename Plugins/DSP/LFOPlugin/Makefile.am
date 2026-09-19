@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = LFOPlugin.la
 
 LFOPlugin_la_SOURCES =					\
 			../../GUI/LFOPlugin/LFOPluginGUI.h			\
-			../../GUI/LFOPlugin/LFOPluginGUI.C			\
+			../../GUI/LFOPlugin/LFOPluginGUI.cpp			\
 			LFOPlugin.h			\
 			LFOPlugin.C
 			

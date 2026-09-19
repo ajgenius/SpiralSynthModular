@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = CounterPlugin.la
 
 CounterPlugin_la_SOURCES =					\
 			../../GUI/CounterPlugin/CounterPluginGUI.h			\
-			../../GUI/CounterPlugin/CounterPluginGUI.C			\
+			../../GUI/CounterPlugin/CounterPluginGUI.cpp			\
 			CounterPlugin.h			\
 			CounterPlugin.C
 			

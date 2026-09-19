@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = TranslatePlugin.la
 
 TranslatePlugin_la_SOURCES =					\
 			../../GUI/TranslatePlugin/TranslatePluginGUI.h			\
-			../../GUI/TranslatePlugin/TranslatePluginGUI.C			\
+			../../GUI/TranslatePlugin/TranslatePluginGUI.cpp			\
 			TranslatePlugin.h			\
 			TranslatePlugin.C
 			

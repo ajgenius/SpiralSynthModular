@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = BeatMatchPlugin.la
 
 BeatMatchPlugin_la_SOURCES =					\
 			../../GUI/BeatMatchPlugin/BeatMatchPluginGUI.h			\
-			../../GUI/BeatMatchPlugin/BeatMatchPluginGUI.C			\
+			../../GUI/BeatMatchPlugin/BeatMatchPluginGUI.cpp			\
 			BeatMatchPlugin.h			\
 			BeatMatchPlugin.C
 			

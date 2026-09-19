@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = EchoPlugin.la
 
 EchoPlugin_la_SOURCES =					\
 			../../GUI/EchoPlugin/EchoPluginGUI.h			\
-			../../GUI/EchoPlugin/EchoPluginGUI.C			\
+			../../GUI/EchoPlugin/EchoPluginGUI.cpp			\
 			EchoPlugin.h			\
 			EchoPlugin.C
 			

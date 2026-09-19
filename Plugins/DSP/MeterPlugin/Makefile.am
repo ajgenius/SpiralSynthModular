@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = MeterPlugin.la
 
 MeterPlugin_la_SOURCES =					\
 			../../GUI/MeterPlugin/MeterPluginGUI.h			\
-			../../GUI/MeterPlugin/MeterPluginGUI.C			\
+			../../GUI/MeterPlugin/MeterPluginGUI.cpp			\
 			MeterPlugin.h			\
 			MeterPlugin.C
 			

@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = DiskWriterPlugin.la
 
 DiskWriterPlugin_la_SOURCES =					\
 			../../GUI/DiskWriterPlugin/DiskWriterPluginGUI.h			\
-			../../GUI/DiskWriterPlugin/DiskWriterPluginGUI.C			\
+			../../GUI/DiskWriterPlugin/DiskWriterPluginGUI.cpp			\
 			DiskWriterPlugin.h			\
 			DiskWriterPlugin.C
 			

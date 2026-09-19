@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = AnotherFilterPlugin.la
 
 AnotherFilterPlugin_la_SOURCES =					\
 			../../GUI/AnotherFilterPlugin/AnotherFilterPluginGUI.h			\
-			../../GUI/AnotherFilterPlugin/AnotherFilterPluginGUI.C			\
+			../../GUI/AnotherFilterPlugin/AnotherFilterPluginGUI.cpp			\
 			AnotherFilterPlugin.h			\
 			AnotherFilterPlugin.C
 			

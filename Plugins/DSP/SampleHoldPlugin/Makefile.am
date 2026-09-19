@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = SampleHoldPlugin.la
 
 SampleHoldPlugin_la_SOURCES =					\
 			../../GUI/SampleHoldPlugin/SampleHoldPluginGUI.h			\
-			../../GUI/SampleHoldPlugin/SampleHoldPluginGUI.C			\
+			../../GUI/SampleHoldPlugin/SampleHoldPluginGUI.cpp			\
 			SampleHoldPlugin.h			\
 			SampleHoldPlugin.C
 			

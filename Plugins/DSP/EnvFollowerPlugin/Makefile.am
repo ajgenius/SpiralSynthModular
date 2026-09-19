@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = EnvFollowerPlugin.la
 
 EnvFollowerPlugin_la_SOURCES =					\
 			../../GUI/EnvFollowerPlugin/EnvFollowerPluginGUI.h			\
-			../../GUI/EnvFollowerPlugin/EnvFollowerPluginGUI.C			\
+			../../GUI/EnvFollowerPlugin/EnvFollowerPluginGUI.cpp			\
 			EnvFollowerPlugin.h			\
 			EnvFollowerPlugin.C
 			

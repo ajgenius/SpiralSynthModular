@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = MatrixPlugin.la
 
 MatrixPlugin_la_SOURCES =				\
 			../../GUI/MatrixPlugin/MatrixPluginGUI.h		\
-			../../GUI/MatrixPlugin/MatrixPluginGUI.C		\
+			../../GUI/MatrixPlugin/MatrixPluginGUI.cpp		\
 			MatrixPlugin.h			\
 			MatrixPlugin.C
 			

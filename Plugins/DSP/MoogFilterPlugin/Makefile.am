@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = MoogFilterPlugin.la
 
 MoogFilterPlugin_la_SOURCES =					\
 			../../GUI/MoogFilterPlugin/MoogFilterPluginGUI.h			\
-			../../GUI/MoogFilterPlugin/MoogFilterPluginGUI.C			\
+			../../GUI/MoogFilterPlugin/MoogFilterPluginGUI.cpp			\
 			MoogFilterPlugin.h			\
 			MoogFilterPlugin.C
 			

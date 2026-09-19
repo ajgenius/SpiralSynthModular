@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = SplitterPlugin.la
 
 SplitterPlugin_la_SOURCES =					\
 			../../GUI/SplitterPlugin/SplitterPluginGUI.h			\
-			../../GUI/SplitterPlugin/SplitterPluginGUI.C			\
+			../../GUI/SplitterPlugin/SplitterPluginGUI.cpp			\
 			SplitterPlugin.h			\
 			SplitterPlugin.C
 			

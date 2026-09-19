@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = SVFilterPlugin.la
 
 SVFilterPlugin_la_SOURCES =					\
 			../../GUI/SVFilterPlugin/SVFilterPluginGUI.h			\
-			../../GUI/SVFilterPlugin/SVFilterPluginGUI.C			\
+			../../GUI/SVFilterPlugin/SVFilterPluginGUI.cpp			\
 			SVFilterPlugin.h			\
 			SVFilterPlugin.C
 			

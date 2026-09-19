@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = StereoMixerPlugin.la
 
 StereoMixerPlugin_la_SOURCES =					\
 			../../GUI/StereoMixerPlugin/StereoMixerPluginGUI.h			\
-			../../GUI/StereoMixerPlugin/StereoMixerPluginGUI.C			\
+			../../GUI/StereoMixerPlugin/StereoMixerPluginGUI.cpp			\
 			StereoMixerPlugin.h			\
 			StereoMixerPlugin.C
 			

@@ -14,7 +14,7 @@ FilterPlugin_la_SOURCES =					\
 			iir_filter.h				\
 			iir_filter.C				\
 			../../GUI/FilterPlugin/FilterPluginGUI.h			\
-			../../GUI/FilterPlugin/FilterPluginGUI.C			\
+			../../GUI/FilterPlugin/FilterPluginGUI.cpp			\
 			FilterPlugin.h				\
 			FilterPlugin.C
 			

@@ -11,7 +11,7 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = AmpPlugin.la
 AmpPlugin_la_SOURCES =					\
 			../../GUI/AmpPlugin/AmpPluginGUI.h			\
-			../../GUI/AmpPlugin/AmpPluginGUI.C			\
+			../../GUI/AmpPlugin/AmpPluginGUI.cpp			\
 			AmpPlugin.h			\
 			AmpPlugin.C
 			

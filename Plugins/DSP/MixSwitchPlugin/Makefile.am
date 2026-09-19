@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = MixSwitchPlugin.la
 
 MixSwitchPlugin_la_SOURCES =					\
 			../../GUI/MixSwitchPlugin/MixSwitchPluginGUI.h			\
-			../../GUI/MixSwitchPlugin/MixSwitchPluginGUI.C			\
+			../../GUI/MixSwitchPlugin/MixSwitchPluginGUI.cpp			\
 			MixSwitchPlugin.h			\
 			MixSwitchPlugin.C
 			

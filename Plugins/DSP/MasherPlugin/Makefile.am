@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = MasherPlugin.la
 
 MasherPlugin_la_SOURCES =				\
 			../../GUI/MasherPlugin/MasherPluginGUI.h		\
-			../../GUI/MasherPlugin/MasherPluginGUI.C		\
+			../../GUI/MasherPlugin/MasherPluginGUI.cpp		\
 			MasherPlugin.h			\
 			MasherPlugin.C
 			

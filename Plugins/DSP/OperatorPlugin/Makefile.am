@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = OperatorPlugin.la
 
 OperatorPlugin_la_SOURCES =					\
 			../../GUI/OperatorPlugin/OperatorPluginGUI.h			\
-			../../GUI/OperatorPlugin/OperatorPluginGUI.C			\
+			../../GUI/OperatorPlugin/OperatorPluginGUI.cpp			\
 			OperatorPlugin.h			\
 			OperatorPlugin.C
 			

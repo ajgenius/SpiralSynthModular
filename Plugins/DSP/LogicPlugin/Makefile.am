@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = LogicPlugin.la
 
 LogicPlugin_la_SOURCES =					\
 			../../GUI/LogicPlugin/LogicPluginGUI.h			\
-			../../GUI/LogicPlugin/LogicPluginGUI.C			\
+			../../GUI/LogicPlugin/LogicPluginGUI.cpp			\
 			LogicPlugin.h			\
 			LogicPlugin.C
 			

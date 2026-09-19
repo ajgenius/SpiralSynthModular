@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = SeqSelectorPlugin.la
 
 SeqSelectorPlugin_la_SOURCES =					\
 			../../GUI/SeqSelectorPlugin/SeqSelectorPluginGUI.h			\
-			../../GUI/SeqSelectorPlugin/SeqSelectorPluginGUI.C			\
+			../../GUI/SeqSelectorPlugin/SeqSelectorPluginGUI.cpp			\
 			SeqSelectorPlugin.h			\
 			SeqSelectorPlugin.C
 			

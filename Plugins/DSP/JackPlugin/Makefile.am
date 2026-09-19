@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = JackPlugin.la
 
 JackPlugin_la_SOURCES =					\
 			../../GUI/JackPlugin/JackPluginGUI.h			\
-			../../GUI/JackPlugin/JackPluginGUI.C			\
+			../../GUI/JackPlugin/JackPluginGUI.cpp			\
 			JackPlugin.h			\
 			JackPlugin.C
 			

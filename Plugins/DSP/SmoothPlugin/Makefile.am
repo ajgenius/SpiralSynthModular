@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = SmoothPlugin.la
 
 SmoothPlugin_la_SOURCES =					\
 			../../GUI/SmoothPlugin/SmoothPluginGUI.h			\
-			../../GUI/SmoothPlugin/SmoothPluginGUI.C			\
+			../../GUI/SmoothPlugin/SmoothPluginGUI.cpp			\
 			SmoothPlugin.h			\
 			SmoothPlugin.C
 			

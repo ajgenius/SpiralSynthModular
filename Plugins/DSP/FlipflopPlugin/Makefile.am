@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = FlipflopPlugin.la
 
 FlipflopPlugin_la_SOURCES =					\
 			../../GUI/FlipflopPlugin/FlipflopPluginGUI.h			\
-			../../GUI/FlipflopPlugin/FlipflopPluginGUI.C			\
+			../../GUI/FlipflopPlugin/FlipflopPluginGUI.cpp			\
 			FlipflopPlugin.h			\
 			FlipflopPlugin.C
 			

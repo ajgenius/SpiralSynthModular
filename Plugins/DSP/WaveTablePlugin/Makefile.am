@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = WaveTablePlugin.la
 
 WaveTablePlugin_la_SOURCES =					\
 			../../GUI/WaveTablePlugin/WaveTablePluginGUI.h			\
-			../../GUI/WaveTablePlugin/WaveTablePluginGUI.C			\
+			../../GUI/WaveTablePlugin/WaveTablePluginGUI.cpp			\
 			WaveTablePlugin.h			\
 			WaveTablePlugin.C
 			

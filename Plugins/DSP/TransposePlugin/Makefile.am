@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = TransposePlugin.la
 
 TransposePlugin_la_SOURCES =					\
 			../../GUI/TransposePlugin/TransposePluginGUI.h			\
-			../../GUI/TransposePlugin/TransposePluginGUI.C			\
+			../../GUI/TransposePlugin/TransposePluginGUI.cpp			\
 			TransposePlugin.h			\
 			TransposePlugin.C
 			

@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = FormantFilterPlugin.la
 
 FormantFilterPlugin_la_SOURCES =					\
 			../../GUI/FormantFilterPlugin/FormantFilterPluginGUI.h			\
-			../../GUI/FormantFilterPlugin/FormantFilterPluginGUI.C			\
+			../../GUI/FormantFilterPlugin/FormantFilterPluginGUI.cpp			\
 			FormantFilterPlugin.h			\
 			FormantFilterPlugin.C
 			

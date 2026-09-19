@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = NoteSnapPlugin.la
 
 NoteSnapPlugin_la_SOURCES =					\
 			../../GUI/NoteSnapPlugin/NoteSnapPluginGUI.h			\
-			../../GUI/NoteSnapPlugin/NoteSnapPluginGUI.C			\
+			../../GUI/NoteSnapPlugin/NoteSnapPluginGUI.cpp			\
 			NoteSnapPlugin.h			\
 			NoteSnapPlugin.C
 			

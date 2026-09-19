@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = NoisePlugin.la
 
 NoisePlugin_la_SOURCES =					\
 			../../GUI/NoisePlugin/NoisePluginGUI.h			\
-			../../GUI/NoisePlugin/NoisePluginGUI.C			\
+			../../GUI/NoisePlugin/NoisePluginGUI.cpp			\
 			NoisePlugin.h			\
 			NoisePlugin.C
 			

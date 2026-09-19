@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = XFadePlugin.la
 
 XFadePlugin_la_SOURCES =					\
 			../../GUI/XFadePlugin/XFadePluginGUI.h			\
-			../../GUI/XFadePlugin/XFadePluginGUI.C			\
+			../../GUI/XFadePlugin/XFadePluginGUI.cpp			\
 			XFadePlugin.h			\
 			XFadePlugin.C
 			

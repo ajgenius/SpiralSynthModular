@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = OutputPlugin.la
 
 OutputPlugin_la_SOURCES =					\
 			../../GUI/OutputPlugin/OutputPluginGUI.h			\
-			../../GUI/OutputPlugin/OutputPluginGUI.C			\
+			../../GUI/OutputPlugin/OutputPluginGUI.cpp			\
 			OutputPlugin.h			\
 			OutputPlugin.C \
                         OutputAudioClient.C \

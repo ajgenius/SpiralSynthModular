@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = ControllerPlugin.la
 
 ControllerPlugin_la_SOURCES =					\
 			../../GUI/ControllerPlugin/ControllerPluginGUI.h			\
-			../../GUI/ControllerPlugin/ControllerPluginGUI.C			\
+			../../GUI/ControllerPlugin/ControllerPluginGUI.cpp			\
 			ControllerPlugin.h			\
 			ControllerPlugin.C
 			

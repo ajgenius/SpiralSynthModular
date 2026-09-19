@@ -12,7 +12,7 @@ plugin_LTLIBRARIES = DistributorPlugin.la
 
 DistributorPlugin_la_SOURCES =					\
 			../../GUI/DistributorPlugin/DistributorPluginGUI.h			\
-			../../GUI/DistributorPlugin/DistributorPluginGUI.C			\
+			../../GUI/DistributorPlugin/DistributorPluginGUI.cpp			\
 			DistributorPlugin.h			\
 			DistributorPlugin.C
 			
