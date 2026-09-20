@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = MidiPlugin.la
 
 MidiPlugin_la_SOURCES =					\
-			MidiPluginGUI.h			\
-			MidiPluginGUI.C			\
+			../../GUI/MidiPlugin/MidiPluginGUI.h			\
+			../../GUI/MidiPlugin/MidiPluginGUI.cpp			\
 			MidiPlugin.h			\
 			MidiPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(top_srcdir)/Plugins/GUI/MidiPlugin

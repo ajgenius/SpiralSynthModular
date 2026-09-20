@@ -13,8 +13,8 @@ plugin_LTLIBRARIES = LADSPAPlugin.la
 LADSPAPlugin_la_SOURCES =					\
 			LADSPAInfo.h				\
 			LADSPAInfo.C				\
-			LADSPAPluginGUI.h			\
-			LADSPAPluginGUI.C			\
+			../../GUI/LADSPAPlugin/LADSPAPluginGUI.h			\
+			../../GUI/LADSPAPlugin/LADSPAPluginGUI.cpp			\
 			LADSPAPlugin.h				\
 			LADSPAPlugin.C
 			
@@ -35,3 +35,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(top_srcdir)/Plugins/GUI/LADSPAPlugin
