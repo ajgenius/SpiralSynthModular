@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = StreamPlugin.la
 
 StreamPlugin_la_SOURCES =					\
-			StreamPluginGUI.h			\
-			StreamPluginGUI.C			\
+			../../GUI/StreamPlugin/StreamPluginGUI.h			\
+			../../GUI/StreamPlugin/StreamPluginGUI.cpp			\
 			StreamPlugin.h			\
 			StreamPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(top_srcdir)/Plugins/GUI/StreamPlugin

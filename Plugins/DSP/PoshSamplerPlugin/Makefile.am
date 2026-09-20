@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = PoshSamplerPlugin.la
 
 PoshSamplerPlugin_la_SOURCES =					\
-			PoshSamplerPluginGUI.h			\
-			PoshSamplerPluginGUI.C			\
+			../../GUI/PoshSamplerPlugin/PoshSamplerPluginGUI.h			\
+			../../GUI/PoshSamplerPlugin/PoshSamplerPluginGUI.cpp			\
 			PoshSamplerPlugin.h			\
 			PoshSamplerPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(top_srcdir)/Plugins/GUI/PoshSamplerPlugin
