@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = SpiralLoopPlugin.la
 
 SpiralLoopPlugin_la_SOURCES =					\
-			SpiralLoopPluginGUI.h			\
-			SpiralLoopPluginGUI.C			\
+			../../GUI/SpiralLoopPlugin/SpiralLoopPluginGUI.h			\
+			../../GUI/SpiralLoopPlugin/SpiralLoopPluginGUI.cpp			\
 			SpiralLoopPlugin.h			\
 			SpiralLoopPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(top_srcdir)/Plugins/GUI/SpiralLoopPlugin
