@@ -10,8 +10,8 @@ plugin = KeyboardPlugin.so
 plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = KeyboardPlugin.la
 KeyboardPlugin_la_SOURCES =					\
-			KeyboardPluginGUI.h			\
-			KeyboardPluginGUI.C			\
+			../../GUI/KeyboardPlugin/KeyboardPluginGUI.h			\
+			../../GUI/KeyboardPlugin/KeyboardPluginGUI.cpp			\
 			KeyboardPlugin.h			\
 			KeyboardPlugin.C
 			
@@ -32,3 +32,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(top_srcdir)/Plugins/GUI/KeyboardPlugin

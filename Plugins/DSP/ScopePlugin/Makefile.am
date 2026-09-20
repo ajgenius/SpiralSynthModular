@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = ScopePlugin.la
 
 ScopePlugin_la_SOURCES =					\
-			ScopePluginGUI.h			\
-			ScopePluginGUI.C			\
+			../../GUI/ScopePlugin/ScopePluginGUI.h			\
+			../../GUI/ScopePlugin/ScopePluginGUI.cpp			\
 			ScopePlugin.h			\
 			ScopePlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(top_srcdir)/Plugins/GUI/ScopePlugin
