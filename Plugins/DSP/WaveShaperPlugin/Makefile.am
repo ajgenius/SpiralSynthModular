@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = WaveShaperPlugin.la
 
 WaveShaperPlugin_la_SOURCES =					\
-			WaveShaperPluginGUI.h			\
-			WaveShaperPluginGUI.C			\
+			../../GUI/WaveShaperPlugin/WaveShaperPluginGUI.h			\
+			../../GUI/WaveShaperPlugin/WaveShaperPluginGUI.cpp			\
 			WaveShaperPlugin.h			\
 			WaveShaperPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(top_srcdir)/Plugins/GUI/WaveShaperPlugin
