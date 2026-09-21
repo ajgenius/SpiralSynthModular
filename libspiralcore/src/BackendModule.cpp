@@ -12,6 +12,9 @@
 #endif
 namespace Spiral
 {
+	static std::map<std::string,std::string> deviceDefaults;
+	void SetDeviceDefaults(const std::map<std::string,std::string> &v) { deviceDefaults=v; }
+	std::string DeviceDefault(const std::string &k,const std::string &fallback) { auto i=deviceDefaults.find(k);return i==deviceDefaults.end()?fallback:i->second; }
 	static std::string defaultAudio= "dummy", defaultDestination= "default";
 	void SetAudioBackendDefaults(const std::string &name, const std::string &destination)
 	{
@@ -50,7 +53,10 @@ namespace Spiral
 		while((entry= readdir(dir)))
 		{
 			std::string n= entry->d_name;
-			if(n.size() > 3 && n.substr(n.size() - 3) == ".so")
+			// Match the module suffixes accepted by the DSP/GUI loader on Darwin.
+			size_t dot= n.rfind('.');
+			std::string suffix= dot == std::string::npos ? "" : n.substr(dot);
+			if(suffix == ".so" || suffix == ".dylib" || suffix == ".bundle")
 				files.push_back(n);
 		}
 		closedir(dir);

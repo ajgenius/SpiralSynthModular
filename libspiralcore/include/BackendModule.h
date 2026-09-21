@@ -2,9 +2,12 @@
 #ifndef SSM_BACKEND_MODULE_H
 #define SSM_BACKEND_MODULE_H
 #include <string>
+#include <map>
 #include <vector>
 namespace Spiral
 {
+	void SetDeviceDefaults(const std::map<std::string,std::string> &);
+	std::string DeviceDefault(const std::string &, const std::string &fallback);
 	void SetAudioBackendDefaults(const std::string &, const std::string &);
 	std::string DefaultAudioBackend();
 	std::string DefaultAudioDestination();
