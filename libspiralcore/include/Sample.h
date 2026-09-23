@@ -14,8 +14,8 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-#ifndef SAMPLE
-#define SAMPLE
+#ifndef SPIRALCORE_SAMPLE_H
+#define SPIRALCORE_SAMPLE_H
 
 #include <memory.h>
 #include <assert.h>
@@ -28,10 +28,10 @@ namespace spiralcore
 {
 //#define DEBUG
 
-inline float Linear(float bot,float top,float pos,float val1,float val2) 
-{ 
-    float t=(pos-bot)/(top-bot); 
-    return val1*t + val2*(1.0f-t); 
+inline float Linear(float bot,float top,float pos,float val1,float val2)
+{
+    float t=(pos-bot)/(top-bot);
+    return val1*t + val2*(1.0f-t);
 }
 
 inline bool feq(float a, float b, float tol)
@@ -43,7 +43,7 @@ class Sample
 {
 public:
 	enum SampleType {AUDIO=0, IMAGE, MIDI};
-	
+
 	Sample(int Len=0);
 	Sample(const Sample &rhs);
 	Sample(const AudioType *S, int Len);
@@ -70,55 +70,69 @@ public:
 	void Expand(int Length);
 	void Shrink(int Length);
 	void CropTo(int NewLength);
+	bool IsEmpty() const { return m_IsEmpty; }
+	void SetDataGranularity(int s) { assert(s > 0); m_DataGranularity=s; }
+	void setSpecificData(void *ptr) { m_PluginSpecificData=ptr; }
+	void *getSpecificData() { return m_PluginSpecificData; }
+	void setSampleType(SampleType t) { m_SampleType=t; }
+	SampleType getSampleType() { return m_SampleType; }
 
 	AudioType &operator[](unsigned int i) const
-	{		
+	{
 		#ifdef DEBUG
 			assert(i>=0 && i<m_Length);
 		#endif
 		return m_Data[i];
 	}
-	
+
 	AudioType &operator[](int i) const
 	{
 		//return (*this)[(int)i];
 		return m_Data[i];
 	}
-	
+
 	// Linear interpolated
 	inline AudioType operator[](float i) const
-	{		
+	{
 		int ii=(int)i;
-		
+
 		#ifdef DEBUG
 			assert(ii>=0 && ii<m_Length);
 		#endif
-		
-		if (ii==m_Length-1) return m_Data[ii];	
-		AudioType t=i-ii;		
+
+		if (ii==m_Length-1) return m_Data[ii];
+		AudioType t=i-ii;
 		return ((m_Data[ii]*(1-t))+(m_Data[ii+1])*t);
 	}
 
 
 	void Set(int i, AudioType v)
-	{	
+	{
+		m_IsEmpty=false;
 		#ifdef DEBUG
 			assert(i>=0 && i<m_Length);
-		#endif							
+		#endif
 		m_Data[i]=v;
-	}	
-	
+	}
+
 	Sample &operator=(const Sample &rhs)
 	{
-		if (GetLength()!=rhs.GetLength()) Allocate(rhs.GetLength());		
-		memcpy(m_Data,rhs.GetBuffer(),GetLengthInBytes());
+		if (this == &rhs) return *this;
+		if (GetLength()!=rhs.GetLength()) Allocate(rhs.GetLength());
+		if (m_Length) memcpy(m_Data,rhs.GetBuffer(),GetLengthInBytes());
+		m_IsEmpty=rhs.m_IsEmpty;
 		return *this;
 	}
-		
+
+protected:
+	bool m_IsEmpty;
+
 private:
+	int m_DataGranularity;
+	void *m_PluginSpecificData;
 	AudioType *m_Data;
 	long  int  m_Length;
-	
+
     SampleType m_SampleType;
 	static Allocator *m_Allocator;
 };

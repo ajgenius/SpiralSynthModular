@@ -60,7 +60,7 @@ void ChannelHandler::UpdateDataNow()
 	// we can't get a lock on the data
 	m_Command[0]=0;
 
-    if (pthread_mutex_trylock(m_Mutex))
+    if (pthread_mutex_trylock(m_Mutex) == 0)
     {
 		#ifdef CHANNEL_DEBUG
 		cerr<<"Got lock"<<endl;
@@ -218,11 +218,29 @@ void ChannelHandler::GetData(const string &ID, void *data)
     pthread_mutex_unlock(m_Mutex);
 }
 
+void ChannelHandler::ReplaceData(const std::string &ID, void *pData, int size)
+{
+    map<string,Channel*>::iterator i=m_ChannelMap.find(ID);
+    if (i==m_ChannelMap.end())
+    {
+        cerr<<"ChannelHandler: Channel ["<<ID<<"] does not exist"<<endl;
+        return;
+    }
+
+    pthread_mutex_lock(m_Mutex);
+    i->second->data = pData;
+    i->second->size = size;
+    free(i->second->data_buf);
+    i->second->data_buf = malloc(size);
+    memcpy(i->second->data_buf,i->second->data,size);
+    pthread_mutex_unlock(m_Mutex);
+}
+
 void ChannelHandler::SetString(const std::string &ID, const char* s)  
 { 	
-	static char tmp[4096];
+	char tmp[4096] = {0};
 	// copy the string into a buffer of the correct size
-	strcpy(tmp,s);
+	strncpy(tmp,s,sizeof(tmp)-1);
 	SetData(ID,(void*)tmp); 
 }
         

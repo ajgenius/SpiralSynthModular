@@ -14,8 +14,8 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-#ifndef CHANNEL_HANDLER
-#define CHANNEL_HANDLER
+#ifndef SPIRALCORE_CHANNEL_HANDLER_H
+#define SPIRALCORE_CHANNEL_HANDLER_H
 
 #include <pthread.h>
 #include <string>
@@ -75,6 +75,8 @@ public:
     const double  GetDouble(const std::string &ID)            { double t; GetData(ID,&t); return t; }
     const void   *GetPtr(const std::string &ID)               { void *t; GetData(ID,&t); return t; }
     void   GetString(const std::string &ID,char* str)      { GetData(ID,str); }
+
+    void          ReplaceData(const std::string &ID, void *pData, int size);
 
     void          SetData(const std::string &ID, void *s);
     void          Set(const std::string &ID, const bool& s)     { SetData(ID,(void*)&s); }

@@ -24,8 +24,12 @@ using namespace spiralcore;
 Allocator *Sample::m_Allocator = new MallocAllocator();
 
 Sample::Sample(int Len) :
+m_IsEmpty(true),
+m_DataGranularity(1),
+m_PluginSpecificData(NULL),
 m_Data(NULL),
-m_Length(0)
+m_Length(0),
+m_SampleType(AUDIO)
 {	
 	if (Len) 
 	{
@@ -34,17 +38,25 @@ m_Length(0)
 }
 
 
-Sample::Sample(const Sample &rhs):
+Sample::Sample(const Sample &rhs) :
+m_IsEmpty(true),
+m_DataGranularity(512),
+m_PluginSpecificData(NULL),
 m_Data(NULL),
-m_Length(0)
+m_Length(0),
+m_SampleType(AUDIO)
 {
 	*this=rhs;
 }
 
 
-Sample::Sample(const AudioType *S, int Len):
+Sample::Sample(const AudioType *S, int Len) :
+m_IsEmpty(true),
+m_DataGranularity(512),
+m_PluginSpecificData(NULL),
 m_Data(NULL),
-m_Length(0)
+m_Length(0),
+m_SampleType(AUDIO)
 {
 	assert(S);
 	Allocate(Len);		
@@ -73,6 +85,7 @@ bool Sample::Allocate(int Size)
 
 void Sample::Clear()
 {
+	m_IsEmpty=true;
 	if (m_Data)
 	{
 		m_Allocator->Delete((char*)m_Data);
@@ -83,11 +96,13 @@ void Sample::Clear()
 
 void Sample::Zero()
 {
+	m_IsEmpty=true;
 	memset(m_Data,0,GetLengthInBytes());
 }
 
 void Sample::Set(AudioType Val)
 {
+	m_IsEmpty=false;
 	for (int n=0; n<m_Length; n++)
 	{
 		m_Data[n]=Val;
@@ -166,6 +181,7 @@ void Sample::Remove(int Start, int End)
 	// calc lengths and allocate memory
 	int CutLen = End - Start;
 	// has to be granulated by the buffer size
+	CutLen-=CutLen % m_DataGranularity;
 	
 	int NewLen = GetLength()-CutLen;
 
@@ -253,6 +269,7 @@ void Sample::GetRegion(Sample &S, int Start, int End) const
 	assert(Start<=End);
 	
 	int Length=End-Start;
+	Length-=Length % m_DataGranularity;
 	S.Allocate(Length);
 	
 	int FromPos=Start;
