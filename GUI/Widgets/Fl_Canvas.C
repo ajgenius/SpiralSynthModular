@@ -535,12 +535,8 @@ int Fl_Canvas::handle (int event) {
        m_DragX=Fl::event_x();
        m_DragY=Fl::event_y();
     }
-    if ((Fl::event_button() == 1) && ((Fl::event_state() & FL_SHIFT) == 0) && ((Fl::event_state() & FL_CTRL) == 0)) {
-       // Left-Click  (or plain click for those who are mouse-button challenged)
-       // Select / Multi-select / move devices
-       // Handled below - If on a non-selected plugin, deselect and move
-       // Handled below - If on a selected plugin, move selection
-       // Handled Here - If on canvas - multi select
+    if ((Fl::event_button() == 1) && ((Fl::event_state() & FL_SHIFT) != 0) && ((Fl::event_state() & FL_CTRL) == 0)) {
+       // Shift-left-drag on empty canvas selects a group of devices.
        if (event==FL_PUSH) {
           if (m_HaveSelection) {
              m_Selection.Clear();
@@ -586,10 +582,8 @@ int Fl_Canvas::handle (int event) {
           redraw();
        }
     }
-    if ((Fl::event_button() == 2) || ((Fl::event_button() == 1) && ((Fl::event_state() & FL_SHIFT) != 0))) {
-       // Middle-Click  (or shift-click for the mouse button challenged) - old left click
-       // Handled Below - If on items allows selecting of individual items
-       // Handled Here - If on canvas, drags canvas
+    if ((Fl::event_button() == 2) || ((Fl::event_button() == 1) && ((Fl::event_state() & (FL_SHIFT | FL_CTRL)) == 0))) {
+       // Plain left-drag or middle-drag on empty canvas pans the canvas.
        if (event==FL_PUSH) {
           ClearIncompleteWire();
           redraw();
