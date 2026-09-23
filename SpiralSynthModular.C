@@ -1210,7 +1210,7 @@ inline void SynthModular::cb_Load_i (Fl_Widget *o, void *v) {
        if (m_DeviceWinMap.size()>0 && !Pawfal_YesNo ("Load - Lose changes to current patch?"))
           return;
        char *fn=fl_file_chooser ("Load a patch", "*.ssm", NULL);
-       if (fn && fn!='\0') {
+       if (fn && *fn!='\0') {
           ifstream in (fn);
           if (in) {
              fstream inf;
@@ -1233,7 +1233,7 @@ void SynthModular::cb_Load(Fl_Widget *o, void *v) {
 
 inline void SynthModular::cb_Save_i (Fl_Widget *o, void *v) {
        char *fn=fl_file_chooser("Save a patch", "*.ssm", NULL);
-       if (fn && fn!='\0') {
+       if (fn && *fn!='\0') {
           ifstream ifl (fn);
           if (ifl) {
              if (!Pawfal_YesNo ("File [%s] exists, overwrite?", fn))
@@ -1260,7 +1260,7 @@ void SynthModular::cb_Save (Fl_Widget *o, void *v) {
 
 inline void SynthModular::cb_Merge_i (Fl_Widget *o, void *v) {
        char *fn = fl_file_chooser ("Merge a patch", "*.ssm", NULL);
-       if (fn && fn!='\0') {
+       if (fn && *fn!='\0') {
           ifstream in (fn);
           if (in) {
              fstream inf;

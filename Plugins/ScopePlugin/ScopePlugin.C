@@ -26,7 +26,7 @@ extern "C"
 {
 SpiralPlugin* SpiralPlugin_CreateInstance() { return new ScopePlugin; }
 
-char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
+const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
 
 int SpiralPlugin_GetID() { return 0x0001; }
 

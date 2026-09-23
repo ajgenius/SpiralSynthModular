@@ -46,7 +46,7 @@ extern "C"
 
 SpiralPlugin* SpiralPlugin_CreateInstance() { return new DiskWriterPlugin; }
 
-char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
+const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
 
 int SpiralPlugin_GetID() { return 41; }
 

@@ -26,7 +26,7 @@ struct HostsideInfo
 {
 	void* Handle;
 	int   ID;
-	char **(*GetIcon)(void);
+	const char **(*GetIcon)(void);
 	SpiralPlugin *(*CreateInstance)(void);
 	int           (*GetID)(void);
 	string        (*GetGroupName)(void);

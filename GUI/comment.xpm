@@ -1,5 +1,5 @@
 /* XPM */
-static char * comment_xpm[] = {
+static const char * comment_xpm[] = {
 "30 30 107 2",
 "  	c None",
 ". 	c #606060",

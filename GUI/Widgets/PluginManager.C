@@ -59,7 +59,7 @@ PluginID PluginManager::LoadPlugin(const char *PluginName)
          return PluginError;
     }
 	
-	NewPlugin->GetIcon = (char **(*)()) dlsym(NewPlugin->Handle, "SpiralPlugin_GetIcon");
+	NewPlugin->GetIcon = (const char **(*)()) dlsym(NewPlugin->Handle, "SpiralPlugin_GetIcon");
 
     if ((error = dlerror()) != NULL)
     {

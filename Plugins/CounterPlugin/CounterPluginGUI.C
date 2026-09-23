@@ -20,6 +20,7 @@
 #include <FL/fl_draw.H>
 #include <FL/fl_draw.H>
 #include <stdio.h>
+#include <cstdlib>
 
 using namespace std;
 

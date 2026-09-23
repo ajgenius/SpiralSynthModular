@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <cstring>
 #include <FL/Fl.H>
 #include <FL/Fl_Tooltip.H>
 #include <unistd.h>

@@ -16,6 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include <math.h>
+#include <cstdlib>
 #include "MasherPlugin.h"
 #include "MasherPluginGUI.h"
 #include <FL/Fl_Button.H>
@@ -36,7 +37,7 @@ SpiralPlugin* SpiralPlugin_CreateInstance()
 	return new MasherPlugin;
 }
 
-char** SpiralPlugin_GetIcon()
+const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
 }

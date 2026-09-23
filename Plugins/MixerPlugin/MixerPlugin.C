@@ -26,7 +26,7 @@ using namespace std;
 
 extern "C" {
     SpiralPlugin* SpiralPlugin_CreateInstance() { return new MixerPlugin; }
-    char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
+    const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
     int SpiralPlugin_GetID() { return 0x0007; }
     string SpiralPlugin_GetGroupName() { return "Amps/Mixers"; }
 }
