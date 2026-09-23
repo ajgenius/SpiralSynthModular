@@ -92,7 +92,7 @@ inline void SamplerPluginGUI::cb_Load_i(Fl_Button* o, void* v)
 { 
 	char *fn=fl_file_chooser("Load a sample", "{*.wav,*.WAV}",NULL);
 		
-	if (fn && fn!='\0')
+	if (fn && *fn!='\0')
 	{
 		m_Plugin->LoadSample(*(int*)v,fn); 	
 	}

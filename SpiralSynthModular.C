@@ -586,7 +586,10 @@ void SynthModular::LoadPlugins (string pluginPath) {
             if (gi == m_PluginGroupMap.end()) {
                the_group = new Fl_Pack (m_GroupTab->x(), 16, m_GroupTab->w(), m_GroupTab->h() - 15, GroupName.c_str());
                the_group->type(FL_HORIZONTAL);
+
+		the_group->copy_label(GroupName.c_str());
                the_group->labelsize(8);
+
                the_group->color(SpiralInfo::GUICOL_Button);
                the_group->user_data((void*)(this));
                //m_GroupTab->add(the_group);

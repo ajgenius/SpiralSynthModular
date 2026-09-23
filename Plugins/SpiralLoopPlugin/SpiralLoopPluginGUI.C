@@ -349,7 +349,7 @@ void SpiralLoopPluginGUI::cb_OverDub(Fl_Button* o, void* v)
 inline void SpiralLoopPluginGUI::cb_Load_i(Fl_Button* o, void* v)
 {
         char *fn=WaveFileName ();
-	if (fn && fn!='\0')
+	if (fn && *fn!='\0')
 	{
 		strcpy(m_TextBuf,fn);
 		m_GUICH->SetData("Name",m_TextBuf);
@@ -366,7 +366,7 @@ void SpiralLoopPluginGUI::cb_Load(Fl_Button* o, void* v)
 inline void SpiralLoopPluginGUI::cb_Save_i(Fl_Button* o, void* v)
 {	
 	char *fn=fl_file_chooser("Load a sample", "{*.wav,*.WAV}", NULL);
-	if (fn && fn!='\0')
+	if (fn && *fn!='\0')
 	{
 		strcpy(m_TextBuf,fn);
 		m_GUICH->SetData("Name",m_TextBuf);
