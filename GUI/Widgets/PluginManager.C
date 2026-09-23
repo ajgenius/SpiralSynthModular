@@ -40,46 +40,60 @@ PluginID PluginManager::LoadPlugin(const char *PluginName)
 	NewPlugin->ID=PluginError;
 	
 	// Attempt to open the plugin
+	dlerror(); // Discard errors from previous loads or library probes.
 	NewPlugin->Handle = dlopen (PluginName, RTLD_NOW);
 	
     if (NewPlugin->Handle==NULL)
     {
 		SpiralInfo::Alert("Error loading ["+string(PluginName)+"]: \n"+string(dlerror()));
+        delete NewPlugin;
         return PluginError;
     }
 		
 	// Link the neccesary functions 
 	char *error;
 	
+	dlerror(); // dlsym success need not clear a previous error.
 	NewPlugin->CreateInstance  = (SpiralPlugin*(*)()) dlsym(NewPlugin->Handle, "SpiralPlugin_CreateInstance"); 	
 	
 	if ((error = dlerror()) != NULL)
     {
          SpiralInfo::Alert("Error linking to plugin "+string(PluginName)+"\n"+string(error));
+         if (NewPlugin->Handle) dlclose(NewPlugin->Handle);
+         delete NewPlugin;
          return PluginError;
     }
 	
+	dlerror(); // dlsym success need not clear a previous error.
 	NewPlugin->GetIcon = (const char **(*)()) dlsym(NewPlugin->Handle, "SpiralPlugin_GetIcon");
 
     if ((error = dlerror()) != NULL)
     {
          SpiralInfo::Alert("Error linking to plugin "+string(PluginName)+"\n"+string(error));
+         if (NewPlugin->Handle) dlclose(NewPlugin->Handle);
+         delete NewPlugin;
          return PluginError;
     }
 
+	dlerror(); // dlsym success need not clear a previous error.
 	NewPlugin->GetID  = (int(*)()) dlsym(NewPlugin->Handle, "SpiralPlugin_GetID"); 	
 			
     if ((error = dlerror()) != NULL)
     {
 		SpiralInfo::Alert("Error linking to plugin "+string(PluginName)+"\n"+string(error));
+        if (NewPlugin->Handle) dlclose(NewPlugin->Handle);
+        delete NewPlugin;
         return PluginError;
     }  
 	     
+	dlerror(); // dlsym success need not clear a previous error.
 	NewPlugin->GetGroupName  = (string(*)()) dlsym(NewPlugin->Handle, "SpiralPlugin_GetGroupName"); 	
 			
     if ((error = dlerror()) != NULL)
     {
 		SpiralInfo::Alert("Error linking to plugin "+string(PluginName)+"\n"+string(error));
+        if (NewPlugin->Handle) dlclose(NewPlugin->Handle);
+        delete NewPlugin;
         return PluginError;
     }       
 		

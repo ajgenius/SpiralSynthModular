@@ -20,7 +20,7 @@ LADSPAPlugin_la_SOURCES =					\
 			
 LADSPAPlugin_la_LDFLAGS = -shared -module -avoid-version -shared -no-undefined
 LADSPAPlugin_la_LIBADD = 							\
-			$(FLTK_LIBS)					\
+			$(FLTK_LIBS) $(LRDFLIBS)					\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
                 $(top_builddir)/libspiralcore/libspiralcore.la
