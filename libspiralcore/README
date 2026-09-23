@@ -1,0 +1,19 @@
+libspiralcore : (C) 2006 Dave Griffiths : dave at pawfal dot org : www.pawfal.org
+--------------------------------------------------------------------------
+
+libspiralcore contains functionality for the following tasks:
+
+* sample class with support for mixing, joining, linear interpolation etc.
+* alsa midi client read/write
+* jack low latency audio i/o
+* lock free ringbuffer class
+* ntp timing class for timestamping
+* scala file format reading and converting into a frequency map
+* osc client -> ringbuffer -> realtime thread mechanism
+* channelhandler for using threadsafe non-blocking communication between
+  audio and non-realtime interface threads.
+
+libspiralcore is based on code from spiralsynthmodular 
+[http://www.pawfal.org/Software/SSM/]
+
+released under the GPL, see COPYING for more info
