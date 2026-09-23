@@ -28,3 +28,7 @@ DiskWriterPlugin_la_LIBADD = 							\
 # (same trick master used) so the directory only contains the module.
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/DiskWriterPlugin.la"
+
+# The installed .la is removed, so libtool cannot discover the module at uninstall.
+uninstall-local:
+	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
