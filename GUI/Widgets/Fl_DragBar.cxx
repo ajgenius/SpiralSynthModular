@@ -105,6 +105,10 @@ int mx,my;
 	{
 		case FL_PUSH:
 		{
+			// Plain dragging replaces selection; modified gestures retain release handling.
+			if (cb_OnClick && Fl::event_button() == 1 &&
+			    (Fl::event_state() & (FL_SHIFT | FL_CTRL)) == 0)
+				cb_OnClick(this, Fl::event_button(), Fl::event_state(), cb_OnClick_Data);
 			window()->show();
 			fl_cursor(FL_CURSOR_MOVE);
 			if (_type < (int)Fl_DragBar::FLDRAG)
