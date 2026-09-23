@@ -18,9 +18,10 @@ class Fl_DragBar {open : {public Fl_Widget}
 } {
   decl {int old_rx,old_ry;} {}
   decl {int _type;} {}
+  decl {int m_PressState;} {}
   decl {void (*cb_OnDrag)(Fl_Widget*, int xoffset,int yoffset, void*);} {public}
   decl {void *cb_OnDrag_Data;} {public}
-  decl {void (*cb_OnClick)(Fl_Widget*, int button, int shift_state, void*);} {public}
+  decl {void (*cb_OnClick)(Fl_Widget*, int event, int button, int shift_state, void*);} {public}
   decl {void *cb_OnClick_Data;} {public}
   decl {enum DragType {WINDRAG=0,NICEWINDRAG,FLDRAG,NICEFLDRAG};} {public
   }
@@ -124,9 +125,10 @@ int mx,my;
 	{
 		case FL_PUSH:
 		{
-			// Decide selection once, using the modifiers at mouse-down.
+			// Keep the gesture modifiers even if Shift is released before the mouse.
+			m_PressState = Fl::event_state();
 			if (cb_OnClick && Fl::event_button() == 1)
-				cb_OnClick(this, Fl::event_button(), Fl::event_state(), cb_OnClick_Data);
+				cb_OnClick(this, FL_PUSH, Fl::event_button(), m_PressState, cb_OnClick_Data);
 			window()->show();
 			fl_cursor(FL_CURSOR_MOVE);
 			if (_type < (int)Fl_DragBar::FLDRAG)
@@ -145,6 +147,8 @@ int mx,my;
 		{
 			fl_cursor(FL_CURSOR_DEFAULT);
 			do_callback();
+			if (cb_OnClick)
+				cb_OnClick(this, FL_RELEASE, Fl::event_button(), m_PressState, cb_OnClick_Data);
 			return 1;
 		}
 		case FL_DRAG:

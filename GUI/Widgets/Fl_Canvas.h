@@ -174,8 +174,8 @@ private:
 	// Callbacks
         static void cb_OnDrag_s (Fl_Widget* widget, int x, int y, void* data);
         inline void cb_OnDrag_i (Fl_Widget* widget, int x,int y);
-        static void cb_OnDragClick_s (Fl_Widget* widget, int button, int shift_state, void* data);
-        inline void cb_OnDragClick_i(Fl_Widget* widget, int button,int shift_state);
+        static void cb_OnDragClick_s (Fl_Widget* widget, int event, int button, int shift_state, void* data);
+        inline void cb_OnDragClick_i(Fl_Widget* widget, int event, int button,int shift_state);
         static void cb_DeleteDeviceGroup (Fl_Widget* widget, void* data);
         inline void cb_DeleteDeviceGroup_i();
         static void cb_AddDeviceFromMenu (Fl_Widget* widget, void* data);

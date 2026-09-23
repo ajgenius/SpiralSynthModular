@@ -631,12 +631,23 @@ inline void Fl_Canvas::cb_OnDrag_i (Fl_Widget* widget, int xoffset, int yoffset)
        return;
 }
 
-void Fl_Canvas::cb_OnDragClick_s (Fl_Widget* widget, int button, int shift_state, void* data) {
-     ((Fl_Canvas *)data)->cb_OnDragClick_i (widget, button, shift_state);
+void Fl_Canvas::cb_OnDragClick_s (Fl_Widget* widget, int event, int button, int shift_state, void* data) {
+     ((Fl_Canvas *)data)->cb_OnDragClick_i (widget, event, button, shift_state);
 }
 
-inline void Fl_Canvas::cb_OnDragClick_i(Fl_Widget* widget, int button,int shift_state) {
+inline void Fl_Canvas::cb_OnDragClick_i(Fl_Widget* widget, int event, int button,int shift_state) {
        if (!widget || !widget->parent() || button != 1) return;
+       if (event == FL_RELEASE) {
+          // A plain gesture keeps the group until movement has finished.
+          if ((shift_state & (FL_SHIFT | FL_CTRL)) == 0) {
+             m_Selection.Clear();
+             m_HaveSelection = false;
+             redraw();
+          }
+          return;
+       }
+       if (event != FL_PUSH) return;
+
 
        int ID = ((Fl_DeviceGUI*)widget->parent())->GetID();
        std::vector<int>::iterator device_iter = std::find(
@@ -653,10 +664,7 @@ inline void Fl_Canvas::cb_OnDragClick_i(Fl_Widget* widget, int button,int shift_
           else
              m_Selection.m_DeviceIds.erase(device_iter);
        }
-       else {
-          // A plain drag is temporary movement, never a persistent selection.
-          m_Selection.Clear();
-       }
+       // Plain press neither selects an item nor clears the existing group.
        m_HaveSelection = !m_Selection.m_DeviceIds.empty();
        redraw();
 }

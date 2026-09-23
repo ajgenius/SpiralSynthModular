@@ -109,7 +109,7 @@ class Fl_DeviceGUI : public Fl_Group {
       bool IsTerminal() { return m_IsTerminal; }
       
       void SetOnDragCallback(void (*cb)(Fl_Widget*, int x,int y, void*), void* data) { m_DragBar->cb_OnDrag = cb; m_DragBar->cb_OnDrag_Data = data; }
-      void SetOnClickCallback(void (*cb)(Fl_Widget*, int button, int shift_state, void*), void* data) { m_DragBar->cb_OnClick = cb; m_DragBar->cb_OnClick_Data = data; }
+      void SetOnClickCallback(void (*cb)(Fl_Widget*, int event, int button, int shift_state, void*), void* data) { m_DragBar->cb_OnClick = cb; m_DragBar->cb_OnClick_Data = data; }
       static void Kill(Fl_DeviceGUI *device) { if (device) device->m_DelMe = true; }
    protected:
       DeviceGUIInfo m_Info;
