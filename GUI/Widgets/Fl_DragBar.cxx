@@ -6,7 +6,9 @@
 Fl_DragBar::Fl_DragBar(int x,int y,int w,int h,const char *l): 
 Fl_Widget(x,y,w,h,l),
 cb_OnDrag(NULL),
-cb_OnDrag_Data(NULL)
+cb_OnDrag_Data(NULL),
+cb_OnClick(NULL),
+cb_OnClick_Data(NULL)
 {
   _type = Fl_DragBar::NICEFLDRAG;
 }
@@ -105,9 +107,8 @@ int mx,my;
 	{
 		case FL_PUSH:
 		{
-			// Plain dragging replaces selection; modified gestures retain release handling.
-			if (cb_OnClick && Fl::event_button() == 1 &&
-			    (Fl::event_state() & (FL_SHIFT | FL_CTRL)) == 0)
+			// Decide selection once, using the modifiers at mouse-down.
+			if (cb_OnClick && Fl::event_button() == 1)
 				cb_OnClick(this, Fl::event_button(), Fl::event_state(), cb_OnClick_Data);
 			window()->show();
 			fl_cursor(FL_CURSOR_MOVE);
@@ -127,11 +128,6 @@ int mx,my;
 		{
 			fl_cursor(FL_CURSOR_DEFAULT);
 			do_callback();
-
-			if ((Fl::event_is_click()) && (cb_OnClick))
-			{
-				cb_OnClick(this, Fl::event_button(), Fl::event_state(), cb_OnClick_Data);
-			}
 
 			return 1;
 		}

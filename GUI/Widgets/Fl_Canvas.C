@@ -616,9 +616,9 @@ void Fl_Canvas::cb_OnDrag_s (Fl_Widget* widget, int x, int y, void* data) {
 inline void Fl_Canvas::cb_OnDrag_i (Fl_Widget* widget, int xoffset, int yoffset) {
        if ((widget) && (widget->parent())) {
           int moved_device_id = ((Fl_DeviceGUI*)(widget->parent()))->GetID();
-          if (m_HaveSelection) {
-             if (m_Selection.m_DeviceIds.size() <= 0)
-                m_HaveSelection = false;
+          if (m_HaveSelection &&
+              std::find(m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(),
+                        moved_device_id) != m_Selection.m_DeviceIds.end()) {
              for (unsigned int i=0; i<m_Selection.m_DeviceIds.size(); i++) {
                  int ID = Selection().m_DeviceIds[i];
                  Fl_Widget *o = FindDevice(ID);
@@ -636,33 +636,29 @@ void Fl_Canvas::cb_OnDragClick_s (Fl_Widget* widget, int button, int shift_state
 }
 
 inline void Fl_Canvas::cb_OnDragClick_i(Fl_Widget* widget, int button,int shift_state) {
-       // this bit seems to be unnecessary - andy preston
-       // if ((button==3) && ((shift_state & FL_CTRL) != 0)) {
-       //   PopupEditMenu(widget->parent());
-       // }
-       if ((widget) && (button==1)) {
-          int ID = ((Fl_DeviceGUI*)(widget->parent()))->GetID();
-          std::vector<int>::iterator device_iter = std::find(m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), ID);
-          if (((shift_state & FL_SHIFT) != 0) || ((shift_state & FL_CTRL) != 0)) {
-             if (m_HaveSelection) {
-                if (device_iter != m_Selection.m_DeviceIds.end())
-                   m_Selection.m_DeviceIds.erase(device_iter);
-                else
-                   m_Selection.m_DeviceIds.push_back(ID);
-             }
-             else {
-                m_Selection.Clear();
-                m_HaveSelection = true;
-                m_Selection.m_DeviceIds.push_back(ID);
-             }
-          }
-          else {
-             m_Selection.Clear();
-             m_HaveSelection = true;
+       if (!widget || !widget->parent() || button != 1) return;
+
+       int ID = ((Fl_DeviceGUI*)widget->parent())->GetID();
+       std::vector<int>::iterator device_iter = std::find(
+           m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), ID);
+       if ((shift_state & FL_SHIFT) != 0) {
+          // Shift adds before dragging, including when this item is already selected.
+          if (device_iter == m_Selection.m_DeviceIds.end())
              m_Selection.m_DeviceIds.push_back(ID);
-          }
-          redraw();
        }
+       else if ((shift_state & FL_CTRL) != 0) {
+          // Retain the existing Ctrl-click selection toggle.
+          if (device_iter == m_Selection.m_DeviceIds.end())
+             m_Selection.m_DeviceIds.push_back(ID);
+          else
+             m_Selection.m_DeviceIds.erase(device_iter);
+       }
+       else {
+          // A plain drag is temporary movement, never a persistent selection.
+          m_Selection.Clear();
+       }
+       m_HaveSelection = !m_Selection.m_DeviceIds.empty();
+       redraw();
 }
 
 ////////////////////////////////////////////////////////////////////////
