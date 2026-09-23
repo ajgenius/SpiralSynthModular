@@ -20,12 +20,13 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Pixmap.H>
 
+#include "config.h"
 #include "SettingsWindow.h"
 #include "SpiralInfo.h"
 #include "GUI/options.xpm"
 
 SettingsWindow::SettingsWindow() :
-Fl_Double_Window(250,275,"SSM Options"),
+Fl_Double_Window(250,295,"SSM Options"),
 m_App(NULL)
 {
 	color(SpiralInfo::GUICOL_Tool);
@@ -54,11 +55,11 @@ m_App(NULL)
 	TextBox->labelsize(10);
 
 
-	Fl_Group *OptionsGrp = new Fl_Group(5,95,240,150,"");
+	Fl_Group *OptionsGrp = new Fl_Group(5,95,240,170,"");
 	OptionsGrp->box(FL_FLAT_BOX);
 	OptionsGrp->color(SpiralInfo::GUICOL_Button);
 
-	m_Options = new Fl_Pack(5,115,230,100,"Settings");
+	m_Options = new Fl_Pack(5,115,230,120,"Settings");
 	m_Options->color(SpiralInfo::GUICOL_Button);
 	OptionsGrp->add(m_Options);
 
@@ -133,6 +134,40 @@ m_App(NULL)
 
 	Line = new Fl_Pack(0,0,100,20,"");
 	Line->type(FL_HORIZONTAL);
+	Name = new Fl_Box(55,0,150,20,"Audio Client");
+	Name->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+	Name->labelsize(10);
+	Line->add(Name);
+	m_AudioClient = new Fl_Choice(0,0,80,20,"");
+	m_AudioClient->labelsize(10);
+	m_AudioClient->tooltip("OutputPlugin backend (compiled-in clients only)");
+	{
+		int idx = 0, active = 0;
+#ifdef HAVE_OUTPUT_PORTAUDIO
+		m_AudioClient->add("portaudio");
+		if (SpiralInfo::AUDIOCLIENT == "portaudio") active = idx;
+		idx++;
+#endif
+#ifdef HAVE_OUTPUT_ALSA
+		m_AudioClient->add("alsa");
+		if (SpiralInfo::AUDIOCLIENT == "alsa") active = idx;
+		idx++;
+#endif
+#ifdef HAVE_OUTPUT_OSS
+		m_AudioClient->add("oss");
+		if (SpiralInfo::AUDIOCLIENT == "oss") active = idx;
+		idx++;
+#endif
+		if (idx == 0)
+			m_AudioClient->add("none");
+		m_AudioClient->value(active);
+	}
+	Line->add(m_AudioClient);
+	Line->end();
+	m_Options->add(Line);
+
+	Line = new Fl_Pack(0,0,100,20,"");
+	Line->type(FL_HORIZONTAL);
 	Name = new Fl_Box(55,0,150,20,"Output Device");
 	Name->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 	Name->labelsize(10);
@@ -157,13 +192,13 @@ m_App(NULL)
 
 	m_Options->end();
 
-	m_Save = new Fl_Button(140,250,50,20,"Save");
+	m_Save = new Fl_Button(140,270,50,20,"Save");
  	m_Save->labelsize(10);
  	m_Save->tooltip("Save these settings");
 	m_Save->callback((Fl_Callback*)cb_Save);
  	add(m_Save);
 
-	m_Apply = new Fl_Button(195,250,50,20,"Apply");
+	m_Apply = new Fl_Button(195,270,50,20,"Apply");
 	m_Apply->labelsize(10);
 	m_Apply->tooltip("Some plugins may request to save data first");
 	m_Apply->callback((Fl_Callback*)cb_Apply);
@@ -182,6 +217,7 @@ inline void SettingsWindow::cb_Apply_i(Fl_Button* o, void* v)
 	SpiralInfo::FRAGSIZE=(int)atof(m_FragmentSize->value());
 	SpiralInfo::FRAGCOUNT=(int)atof(m_FragmentCount->value());
 	SpiralInfo::SAMPLERATE=(int)atof(m_Samplerate->value());
+	if (m_AudioClient->text()) SpiralInfo::AUDIOCLIENT=m_AudioClient->text();
 	SpiralInfo::OUTPUTFILE=m_OutputDevice->value();
 	SpiralInfo::MIDIFILE=m_MidiDevice->value();
 
@@ -200,7 +236,8 @@ inline void SettingsWindow::cb_Save_i(Fl_Button* o, void* v)
  	SpiralInfo::FRAGSIZE=(int)atof(m_FragmentSize->value());
  	SpiralInfo::FRAGCOUNT=(int)atof(m_FragmentCount->value());
  	SpiralInfo::SAMPLERATE=(int)atof(m_Samplerate->value());
- 	SpiralInfo::OUTPUTFILE=m_OutputDevice->value();
+	if (m_AudioClient->text()) SpiralInfo::AUDIOCLIENT=m_AudioClient->text();
+	SpiralInfo::OUTPUTFILE=m_OutputDevice->value();
  	SpiralInfo::MIDIFILE=m_MidiDevice->value();
  	SpiralInfo::Get()->SavePrefs();
 }

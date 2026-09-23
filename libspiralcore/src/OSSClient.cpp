@@ -3,6 +3,8 @@
 
 #define _ISOC9X_SOURCE 1
 #define _ISOC99_SOURCE 1
+#include "config.h"
+#include <errno.h>
 #include <math.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -81,7 +83,7 @@ void OSSClient::FreeConv()
 
 void OSSClient::Byteswap(short *buf, unsigned int nsamp) const
 {
-#if defined(__BYTE_ORDER) && __BYTE_ORDER == BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
 	for (unsigned int n = 0; n < nsamp; ++n)
 		buf[n] = (short)(((buf[n] << 8) & 0xff00) | ((buf[n] >> 8) & 0xff));
 #else
@@ -123,7 +125,7 @@ bool OSSClient::OpenDevice(int flags)
 		else if (numfgmts <= 0) numfgmts = 8;
 		int fragsize = (int)m_FragSize;
 		if (fragsize <= 0) fragsize = 256;
-		for (int i = 0; i < 32; i++)
+		for (int i = 0; i < 31; i++)
 			if (fragsize == (1 << i)) { fgmtsize = i; break; }
 		if (fgmtsize == 0)
 		{
@@ -153,6 +155,9 @@ bool OSSClient::OpenDevice(int flags)
 		CHECK_AND_REPORT_ERROR;
 		val = AFMT_S16_LE;
 		result = ioctl(m_Fd, SNDCTL_DSP_SETFMT, &val);
+		CHECK_AND_REPORT_ERROR;
+		val = (m_Channels == 2) ? 1 : 0;
+		result = ioctl(m_Fd, SNDCTL_DSP_STEREO, &val);
 		CHECK_AND_REPORT_ERROR;
 		val = (int)m_Samplerate;
 		result = ioctl(m_Fd, SNDCTL_DSP_SPEED, &val);
@@ -202,7 +207,13 @@ bool OSSClient::Write(const float *interleaved, unsigned int nframes)
 	}
 	Byteswap(m_Conv, nsamp);
 	const ssize_t bytes = (ssize_t)(nsamp * sizeof(short));
-	if (write(m_Fd, m_Conv, bytes) != bytes) return false;
+	ssize_t done=0;
+	while (done<bytes) {
+		ssize_t n=write(m_Fd,(const char *)m_Conv+done,bytes-done);
+		if (n<0 && errno==EINTR) continue;
+		if (n<=0) return false;
+		done+=n;
+	}
 	return true;
 }
 
@@ -218,7 +229,13 @@ bool OSSClient::Read(float *interleaved, unsigned int nframes)
 	}
 	const ssize_t bytes = (ssize_t)(nsamp * sizeof(short));
 	memset(m_Conv, 0, bytes);
-	if (read(m_Fd, m_Conv, bytes) < 0) return false;
+	ssize_t done=0;
+	while (done<bytes) {
+		ssize_t n=read(m_Fd,(char *)m_Conv+done,bytes-done);
+		if (n<0 && errno==EINTR) continue;
+		if (n<=0) return false;
+		done+=n;
+	}
 	Byteswap(m_Conv, nsamp);
 	for (unsigned int i = 0; i < nsamp; ++i)
 		interleaved[i] = m_Conv[i] / (float)SHRT_MAX;

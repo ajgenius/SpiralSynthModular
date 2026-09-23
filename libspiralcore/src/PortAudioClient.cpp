@@ -148,7 +148,7 @@ bool PortAudioClient::Attach(const string &device, const AudioClientOptions &opt
 	/* NULL callback — Pa_WriteStream / Pa_ReadStream block, pacing the engine. */
 	PaError err = Pa_OpenStream(&m_Stream, in, out,
 	                            opt.Samplerate, opt.BufferSize,
-	                            paClipOff | paDitherOff,
+	                            paNoFlag,
 	                            NULL, NULL);
 	if (!Check(err, "open")) { Detach(); return false; }
 	if (!Check(Pa_StartStream(m_Stream), "start")) { Detach(); return false; }

@@ -167,6 +167,8 @@ void OutputAudioClient::AllocateBuffer()
 	const int frames = host->BUFSIZE;
 	if (m_Out[0] && m_Frames == frames) return;
 	DeallocateBuffer();
+	if (frames <= 0) return;
+	m_WriteBuf = m_ReadBuf = 0;
 	m_Frames = frames;
 	const int samples = frames * m_Channels;
 	m_Out[0] = new float[samples];
@@ -196,8 +198,7 @@ void OutputAudioClient::SendStereo(const Sample *ldata, const Sample *rdata)
 		if (m_IsDead) return;
 		float l = ldata ? (*ldata)[n] * m_Volume : 0.f;
 		float r = rdata ? (*rdata)[n] * m_Volume : 0.f;
-		if (l > 1) l = 1; if (l < -1) l = -1;
-		if (r > 1) r = 1; if (r < -1) r = -1;
+
 		m_Out[m_WriteBuf][on++] += l;
 		m_Out[m_WriteBuf][on++] += r;
 	}
@@ -217,32 +218,34 @@ void OutputAudioClient::GetStereo(Sample *ldata, Sample *rdata)
 	}
 }
 
-void OutputAudioClient::Play()
+bool OutputAudioClient::Play()
 {
-	if (!host || !m_Out[0]) return;
-	const int send = !m_WriteBuf;
+	if (!host || !m_Out[0]) return false;
+	const int send = m_WriteBuf;
 	const int samples = host->BUFSIZE * m_Channels;
-	if (m_Client)
-		m_Client->Write(m_Out[send], (unsigned int)host->BUFSIZE);
+	bool ok=m_Client && m_Client->Write(m_Out[send], (unsigned int)host->BUFSIZE);
 	memset(m_Out[send], 0, samples * sizeof(float));
-	m_WriteBuf = send;
+	m_WriteBuf = !send;
+	return ok;
 }
 
-void OutputAudioClient::Read()
+bool OutputAudioClient::Read()
 {
-	if (!host || !m_In[0]) return;
+	if (!host || !m_In[0]) return false;
 	const int got = !m_ReadBuf;
 	const int samples = host->BUFSIZE * m_Channels;
 	memset(m_In[got], 0, samples * sizeof(float));
-	if (m_Client)
-		m_Client->Read(m_In[got], (unsigned int)host->BUFSIZE);
+	bool ok=m_Client && m_Client->Read(m_In[got], (unsigned int)host->BUFSIZE);
 	m_ReadBuf = got;
+	return ok;
 }
 
 bool OutputAudioClient::AttachMode(unsigned int inChans, unsigned int outChans)
 {
 	if (!m_Client) return false;
+	DeallocateBuffer();
 	AllocateBuffer();
+	if (!m_Out[0]) return false;
 	m_IsDead = false;
 	return m_Client->Attach(m_Destination, MakeOptions(inChans, outChans));
 }

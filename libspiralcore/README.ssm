@@ -7,9 +7,11 @@ no historical commits are rewritten or attributed to the integration author.
 
 The Automake library builds the shared implementations used by this SSM tree:
 Sample, ChannelHandler, MidiDevice/MidiEvent, WavFile (RiffWav), and Sample's
-Allocator support.
+Allocator support. OutputPlugin also uses optional blocking PortAudio v19,
+ALSA PCM, and OSS AudioClient implementations. Configure detects these
+independently of MIDI support.
 NoteTable is the same header-only table in both histories. The remaining
-archived sources are distributed but not enabled as new backend dependencies.
+archived sources are distributed but not enabled.
 
 Reconciliation choices:
 - Sample retains the library allocator and default Mix position, plus SSM's

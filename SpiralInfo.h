@@ -51,6 +51,7 @@ class SpiralInfo {
       static float  VALUECONV;
       static bool   WANTMIDI;
       static int    FILTERGRAN;
+      static string AUDIOCLIENT;
       static string OUTPUTFILE;
       static string MIDIFILE;
       static bool   USEPLUGINLIST;

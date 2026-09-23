@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
-AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include
+AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include $(PORTAUDIO_CFLAGS) $(ALSA_CFLAGS)
 lib_LTLIBRARIES = libspiralcore.la
 libspiralcore_la_SOURCES = \
     include/Allocator.h \
@@ -16,7 +16,7 @@ libspiralcore_la_SOURCES = \
     include/RiffWav.h \
     src/RiffWav.cpp
 libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 0:0:0
-libspiralcore_la_LIBADD = $(AMIDILIBS) $(SFLIBS) -lm -lpthread
+libspiralcore_la_LIBADD = $(AMIDILIBS) $(SFLIBS) $(PORTAUDIO_LIBS) $(ALSA_LIBS) -lm -lpthread
 
 check_PROGRAMS = compatibility-test
 TESTS = $(check_PROGRAMS)
@@ -55,3 +55,14 @@ EXTRA_DIST = \
     src/Tuna.cpp
 
 EXTRA_DIST += README.ssm
+
+libspiralcore_la_SOURCES += include/AudioClient.h
+if HAVE_OUTPUT_PORTAUDIO
+libspiralcore_la_SOURCES += src/PortAudioClient.cpp include/PortAudioClient.h
+endif
+if HAVE_OUTPUT_ALSA
+libspiralcore_la_SOURCES += src/AlsaClient.cpp include/AlsaClient.h
+endif
+if HAVE_OUTPUT_OSS
+libspiralcore_la_SOURCES += src/OSSClient.cpp include/OSSClient.h
+endif

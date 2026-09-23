@@ -9,8 +9,9 @@
 #define __OUTPUT_AUDIO_CLIENT_H__
 
 #include <string>
-#include "../SpiralPlugin.h"
-#include "../../Sample.h"
+#include "SpiralPlugin.h"
+#include "Sample.h"
+using spiralcore::Sample;
 #include "AudioClient.h"
 
 class OutputAudioClient
@@ -31,8 +32,8 @@ public:
 	void SetVolume(float s) { m_Volume = s; }
 	void SetNumChannels(int s) { m_Channels = s; }
 	float GetVolume() const { return m_Volume; }
-	void Play();
-	void Read();
+	bool Play();
+	bool Read();
 	bool OpenReadWrite();
 	bool OpenWrite();
 	bool OpenRead();

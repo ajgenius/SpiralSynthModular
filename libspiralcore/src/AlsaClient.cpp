@@ -1,6 +1,7 @@
 // SSM blocking ALSA PCM client (Grok Build).  Device-paced snd_pcm_writei/readi.
 
 #include <iostream>
+#include <cerrno>
 #include "AlsaClient.h"
 
 using namespace std;
@@ -51,9 +52,19 @@ bool AlsaClient::OpenStream(snd_pcm_t **slot, snd_pcm_stream_t stream)
 		cerr << "ALSA open '" << dev << "': " << snd_strerror(err) << endl;
 		return false;
 	}
-	err = snd_pcm_set_params(*slot, SND_PCM_FORMAT_FLOAT_LE,
-	                         SND_PCM_ACCESS_RW_INTERLEAVED,
-	                         m_Channels, m_Samplerate, 1, 500000);
+	snd_pcm_hw_params_t *params;
+	snd_pcm_hw_params_alloca(&params);
+	unsigned int rate=m_Samplerate;
+	err=snd_pcm_hw_params_any(*slot,params);
+	if (err>=0) err=snd_pcm_hw_params_set_access(*slot,params,SND_PCM_ACCESS_RW_INTERLEAVED);
+	if (err>=0) err=snd_pcm_hw_params_set_format(*slot,params,SND_PCM_FORMAT_FLOAT);
+	if (err>=0) err=snd_pcm_hw_params_set_channels(*slot,params,m_Channels);
+	if (err>=0) err=snd_pcm_hw_params_set_rate_near(*slot,params,&rate,0);
+	if (err>=0 && rate!=m_Samplerate) err=-EINVAL;
+	unsigned int latency=500000;
+	if (err>=0) err=snd_pcm_hw_params_set_buffer_time_near(*slot,params,&latency,0);
+	if (err>=0) err=snd_pcm_hw_params(*slot,params);
+	if (err>=0) err=snd_pcm_prepare(*slot);
 	if (err < 0)
 	{
 		cerr << "ALSA params: " << snd_strerror(err) << endl;
@@ -96,12 +107,18 @@ void AlsaClient::Detach()
 bool AlsaClient::Write(const float *interleaved, unsigned int nframes)
 {
 	if (!m_Playback || !interleaved) return false;
-	snd_pcm_sframes_t n = snd_pcm_writei(m_Playback, interleaved, nframes);
-	if (n < 0) n = snd_pcm_recover(m_Playback, (int)n, 1);
-	if (n < 0)
-	{
-		cerr << "ALSA write: " << snd_strerror((int)n) << endl;
-		return false;
+	unsigned int done=0;
+	unsigned int recoveries=0;
+	while (done<nframes) {
+		snd_pcm_sframes_t n = snd_pcm_writei(m_Playback, interleaved+done*m_Channels, nframes-done);
+		if (n == -EINTR) continue;
+		if (n < 0) {
+			if (++recoveries>3 || ((n==-EPIPE || n==-ESTRPIPE) ? snd_pcm_prepare(m_Playback) : (int)n)<0) return false;
+			continue;
+		}
+		if (n==0) return false;
+		done+=(unsigned int)n;
+		recoveries=0;
 	}
 	return true;
 }
@@ -109,12 +126,18 @@ bool AlsaClient::Write(const float *interleaved, unsigned int nframes)
 bool AlsaClient::Read(float *interleaved, unsigned int nframes)
 {
 	if (!m_Capture || !interleaved) return false;
-	snd_pcm_sframes_t n = snd_pcm_readi(m_Capture, interleaved, nframes);
-	if (n < 0) n = snd_pcm_recover(m_Capture, (int)n, 1);
-	if (n < 0)
-	{
-		cerr << "ALSA read: " << snd_strerror((int)n) << endl;
-		return false;
+	unsigned int done=0;
+	unsigned int recoveries=0;
+	while (done<nframes) {
+		snd_pcm_sframes_t n = snd_pcm_readi(m_Capture, interleaved+done*m_Channels, nframes-done);
+		if (n == -EINTR) continue;
+		if (n < 0) {
+			if (++recoveries>3 || ((n==-EPIPE || n==-ESTRPIPE) ? snd_pcm_prepare(m_Capture) : (int)n)<0) return false;
+			continue;
+		}
+		if (n==0) return false;
+		done+=(unsigned int)n;
+		recoveries=0;
 	}
 	return true;
 }

@@ -83,6 +83,7 @@ m_NextID(0)
 	m_Info.FRAGSIZE = SpiralInfo::FRAGSIZE;
 	m_Info.FRAGCOUNT = SpiralInfo::FRAGCOUNT;
 	m_Info.OUTPUTFILE = SpiralInfo::OUTPUTFILE;
+	m_Info.AUDIOCLIENT = SpiralInfo::AUDIOCLIENT;
 	m_Info.MIDIFILE = SpiralInfo::MIDIFILE;
 	m_Info.POLY = SpiralInfo::POLY;
 
@@ -850,6 +851,7 @@ void SynthModular::UpdateHostInfo()
 	m_Info.FRAGSIZE   = SpiralInfo::FRAGSIZE;
 	m_Info.FRAGCOUNT  = SpiralInfo::FRAGCOUNT;
 	m_Info.OUTPUTFILE = SpiralInfo::OUTPUTFILE;
+	m_Info.AUDIOCLIENT = SpiralInfo::AUDIOCLIENT;
 	m_Info.MIDIFILE   = SpiralInfo::MIDIFILE;
 	m_Info.POLY       = SpiralInfo::POLY;
 

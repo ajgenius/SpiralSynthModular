@@ -71,6 +71,7 @@ struct HostInfo
         unsigned GUIDEVICE_Box;
 
 	bool   PAUSED;
+	std::string AUDIOCLIENT;
 };
 
 /////////////////////////////////////////////////////////////////////

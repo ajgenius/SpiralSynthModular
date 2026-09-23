@@ -63,12 +63,10 @@ SpiralPluginGUI(w,h,o,ch)
 
 void OutputPluginGUI::Update()
 {
-     if (m_GUICH->GetBool ("OpenOut")) {
-        OpenWrite->value (1);
-        OpenRead->value (0);
-        OpenDuplex->value (0);
-        m_GUICH->SetCommand (OutputPlugin::CLEAR_NOTIFY);
-     }
+	const int mode=m_GUICH->GetInt("Mode");
+	OpenWrite->value(mode==OutputPlugin::OUTPUT);
+	OpenRead->value(mode==OutputPlugin::INPUT);
+	OpenDuplex->value(mode==OutputPlugin::DUPLEX);
 }
 
 void OutputPluginGUI::UpdateValues(SpiralPlugin *o)

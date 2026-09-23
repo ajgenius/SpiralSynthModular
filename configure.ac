@@ -19,9 +19,114 @@ AM_MAINTAINER_MODE
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
+AC_C_BIGENDIAN
 AC_PROG_INSTALL
 
 AM_PROG_LIBTOOL
+
+AC_PATH_TOOL([PKG_CONFIG], [pkg-config], [no])
+
+dnl ---- OutputPlugin audio backends (in libspiralcore) ----
+dnl Blocking device-paced I/O: PortAudio Pa_WriteStream, ALSA writei, OSS
+dnl write().  Not the original callback PortAudioClient, not PipeWire/ESD.
+
+AC_ARG_ENABLE([portaudio],
+    [AS_HELP_STRING([--disable-portaudio], [Do not build PortAudio output support])],
+    [enable_output_portaudio="$enableval"], [enable_output_portaudio="yes"])
+have_output_portaudio="no"
+portaudio_message="manually disabled"
+PORTAUDIO_CFLAGS=""
+PORTAUDIO_LIBS=""
+if test "x$enable_output_portaudio" = "xyes"; then
+    if test "$PKG_CONFIG" != no && $PKG_CONFIG --exists portaudio-2.0; then
+        PORTAUDIO_CFLAGS=`$PKG_CONFIG --cflags portaudio-2.0`
+        PORTAUDIO_LIBS=`$PKG_CONFIG --libs portaudio-2.0`
+        have_output_portaudio=yes
+        portaudio_message=found
+    fi
+    if test "x$have_output_portaudio" != "xyes"; then
+        AC_CHECK_HEADER([portaudio.h],
+            [save_LIBS="$LIBS"
+             AC_CHECK_LIB([portaudio], [Pa_WriteStream],
+                [have_output_portaudio="yes"; PORTAUDIO_LIBS="-lportaudio"; portaudio_message="found"],
+                [portaudio_message="libportaudio not found"])
+             LIBS="$save_LIBS"],
+            [portaudio_message="portaudio.h not found"])
+    fi
+fi
+if test "x$have_output_portaudio" = "xyes"; then
+    AC_DEFINE([HAVE_OUTPUT_PORTAUDIO], [1], [Build PortAudio output support in libspiralcore])
+fi
+AC_SUBST([PORTAUDIO_CFLAGS])
+AC_SUBST([PORTAUDIO_LIBS])
+AM_CONDITIONAL([HAVE_OUTPUT_PORTAUDIO], [test "x$have_output_portaudio" = "xyes"])
+
+AC_ARG_ENABLE([alsa-output],
+    [AS_HELP_STRING([--disable-alsa-output], [Do not build ALSA PCM output support])],
+    [enable_output_alsa="$enableval"], [enable_output_alsa="yes"])
+have_output_alsa="no"
+alsa_output_message="manually disabled"
+ALSA_CFLAGS=""
+ALSA_LIBS=""
+if test "x$enable_output_alsa" = "xyes"; then
+    if test "$PKG_CONFIG" != no && $PKG_CONFIG --exists alsa; then
+        ALSA_CFLAGS=`$PKG_CONFIG --cflags alsa`
+        ALSA_LIBS=`$PKG_CONFIG --libs alsa`
+        have_output_alsa=yes
+        alsa_output_message=found
+    fi
+    if test "x$have_output_alsa" != "xyes"; then
+        AC_CHECK_HEADER([alsa/asoundlib.h],
+            [save_LIBS="$LIBS"
+             AC_CHECK_LIB([asound], [snd_pcm_open],
+                [have_output_alsa="yes"; ALSA_LIBS="-lasound"; alsa_output_message="found"],
+                [alsa_output_message="libasound not found"])
+             LIBS="$save_LIBS"],
+            [alsa_output_message="alsa/asoundlib.h not found"])
+    fi
+fi
+if test "x$have_output_alsa" = "xyes"; then
+    AC_DEFINE([HAVE_OUTPUT_ALSA], [1], [Build ALSA PCM output support in libspiralcore])
+fi
+AC_SUBST([ALSA_CFLAGS])
+AC_SUBST([ALSA_LIBS])
+AM_CONDITIONAL([HAVE_OUTPUT_ALSA], [test "x$have_output_alsa" = "xyes"])
+
+AC_ARG_ENABLE([oss-output],
+    [AS_HELP_STRING([--disable-oss-output], [Do not build legacy OSS output support])],
+    [enable_output_oss="$enableval"], [enable_output_oss="yes"])
+have_output_oss="no"
+oss_output_message="manually disabled"
+if test "x$enable_output_oss" = "xyes"; then
+    AC_CHECK_HEADERS([sys/soundcard.h soundcard.h machine/soundcard.h])
+    if test "x$ac_cv_header_sys_soundcard_h" = "xyes" -o \
+            "x$ac_cv_header_soundcard_h" = "xyes" -o \
+            "x$ac_cv_header_machine_soundcard_h" = "xyes"; then
+        have_output_oss="yes"
+        oss_output_message="found"
+    else
+        oss_output_message="no OSS soundcard header found"
+    fi
+fi
+if test "x$have_output_oss" = "xyes"; then
+    AC_DEFINE([HAVE_OUTPUT_OSS], [1], [Build OSS output support in libspiralcore])
+fi
+AM_CONDITIONAL([HAVE_OUTPUT_OSS], [test "x$have_output_oss" = "xyes"])
+
+default_output_audio_client="none"
+if test "x$have_output_portaudio" = "xyes"; then
+    default_output_audio_client="portaudio"
+elif test "x$have_output_alsa" = "xyes"; then
+    default_output_audio_client="alsa"
+elif test "x$have_output_oss" = "xyes"; then
+    default_output_audio_client="oss"
+fi
+AC_DEFINE_UNQUOTED([DEFAULT_OUTPUT_AUDIO_CLIENT], ["$default_output_audio_client"],
+    [Default OutputPlugin audio client])
+if test "x$default_output_audio_client" = "xnone"; then
+    AC_MSG_WARN([No OutputPlugin audio backend found (PortAudio, ALSA, or OSS)])
+fi
+
 
 dnl Checks for header files.
 AC_HEADER_STDC

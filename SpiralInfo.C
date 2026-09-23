@@ -16,6 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
+#include "config.h"
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
@@ -43,7 +44,8 @@ long   SpiralInfo::MAXSAMPLE   = 32767;
 float  SpiralInfo::VALUECONV   = 1.0f/MAXSAMPLE;
 bool   SpiralInfo::WANTMIDI    = false;
 int    SpiralInfo::FILTERGRAN  = 50;
-string SpiralInfo::OUTPUTFILE  = "/dev/dsp";
+string SpiralInfo::AUDIOCLIENT = DEFAULT_OUTPUT_AUDIO_CLIENT;
+string SpiralInfo::OUTPUTFILE  = "default";
 string SpiralInfo::MIDIFILE    = "/dev/midi";
 int    SpiralInfo::POLY        = 1;
 bool   SpiralInfo::USEPLUGINLIST = false;
@@ -88,13 +90,29 @@ m_Version(2)
 }
 
 void SpiralInfo::LoadPrefs() {
+     /* Missing AudioClient is how old version-2 files are distinguished
+        from the multi-backend preference set. */
+     AUDIOCLIENT.clear();
+
      ifstream i (m_ResFileName.c_str());
      if (!i) {
         cerr << "Creating " << m_ResFileName << endl;
+        AUDIOCLIENT = DEFAULT_OUTPUT_AUDIO_CLIENT;
+        if (AUDIOCLIENT != "oss" && OUTPUTFILE == "/dev/dsp")
+           OUTPUTFILE = "default";
         SavePrefs ();
         return;
      }
      StreamInPrefs (i);
+
+     if (AUDIOCLIENT.empty()) {
+        AUDIOCLIENT = DEFAULT_OUTPUT_AUDIO_CLIENT;
+        /* /dev/dsp was the historical default, not necessarily an
+           explicit user choice.  Do not feed that path to ALSA or
+           PortAudio. */
+        if (OUTPUTFILE == "/dev/dsp" && AUDIOCLIENT != "oss")
+           OUTPUTFILE = "default";
+     }
 }
 
 void SpiralInfo::SavePrefs() {
@@ -206,6 +224,7 @@ void SpiralInfo::StreamOutAudioSettingsPrefs (ostream &s)
 	s << "Samplerate        = " << SAMPLERATE << endl;
 	s << "WantMidi          = " << WANTMIDI << endl;
 	s << "FilterGranularity = " << FILTERGRAN << endl;
+	s << "AudioClient       = " << AUDIOCLIENT << endl;
 	s << "Output            = " << OUTPUTFILE << endl;
 	s << "Midi              = " << MIDIFILE << endl;
 	s << "UsePluginList     = " << USEPLUGINLIST << endl;
@@ -240,8 +259,17 @@ bool SpiralInfo::StreamInAudioSettingsPrefs (istream &s, string &section, string
 		else if (ident == "FilterGranularity")
 			s >> FILTERGRAN;
 
-		else if (ident == "Output")
-			s >> OUTPUTFILE;
+		else if (ident == "AudioClient")
+			s >> AUDIOCLIENT;
+
+		else if (ident == "Output") {
+			std::getline(s, OUTPUTFILE);
+			if (s && !s.eof()) s.unget(); // the outer parser consumes the newline
+			const string::size_type first=OUTPUTFILE.find_first_not_of(" \t");
+			OUTPUTFILE.erase(0,first==string::npos ? OUTPUTFILE.size() : first);
+			if (!OUTPUTFILE.empty() && OUTPUTFILE[OUTPUTFILE.size()-1] == '\r')
+				OUTPUTFILE.erase(OUTPUTFILE.size()-1);
+		}
 
 		else if (ident == "Midi")
 			s >> MIDIFILE;

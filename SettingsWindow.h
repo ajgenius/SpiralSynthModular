@@ -25,6 +25,7 @@
 #include <FL/Fl_Pack.H>
 #include <FL/Fl_Int_Input.H>
 #include <FL/Fl_Input.H>
+#include <FL/Fl_Choice.H>
 
 #include "SpiralSynthModular.h"
 
@@ -46,6 +47,7 @@ private:
 	Fl_Int_Input *m_FragmentSize;
 	Fl_Int_Input *m_FragmentCount;
 	Fl_Int_Input *m_Samplerate;	
+	Fl_Choice    *m_AudioClient;
 	Fl_Input     *m_OutputDevice;
 	Fl_Input     *m_MidiDevice;
 	Fl_Button    *m_Save;	

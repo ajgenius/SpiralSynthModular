@@ -1,11 +1,23 @@
 /*  SpiralSound
  *  Copyleft (C) 2001 David Griffiths <dave@pawfal.org>
  *
- *  OutputPlugin talks to OutputAudioClient, which picks a libspiralcore
- *  blocking AudioClient (PortAudio / ALSA / OSS) from HostInfo.AUDIOCLIENT.
- */
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+*/
 
 #include "OutputPlugin.h"
+#include <algorithm>
 #include "OutputPluginGUI.h"
 #include <FL/Fl_File_Chooser.H>
 #include "SpiralIcon.xpm"
@@ -13,14 +25,14 @@
 using namespace std;
 
 static const HostInfo* host;
-int OutputPlugin::m_RefCount=0;
-int OutputPlugin::m_NoExecuted=0;
+std::vector<OutputPlugin *> OutputPlugin::m_Members;
+bool OutputPlugin::m_Configured=false;
 OutputPlugin::Mode OutputPlugin::m_Mode=NO_MODE;
 
 extern "C"
 {
 SpiralPlugin* SpiralPlugin_CreateInstance() { return new OutputPlugin; }
-char** SpiralPlugin_GetIcon() { return SsmXpmExport(SpiralIcon_xpm); }
+const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
 int SpiralPlugin_GetID() { return 0x0000; }
 string SpiralPlugin_GetGroupName() { return "InputOutput"; }
 }
@@ -28,9 +40,11 @@ string SpiralPlugin_GetGroupName() { return "InputOutput"; }
 OutputPlugin::OutputPlugin() :
 m_Volume(1.0f)
 {
-	m_RefCount++;
+	m_Members.push_back(this);
 	m_IsTerminal=true;
 	m_NotifyOpenOut=false;
+	m_ReportedMode=(int)m_Mode;
+	m_AudioCH->Register("Mode",&m_ReportedMode,ChannelHandler::OUTPUT);
 	m_PluginInfo.Name="Output";
 	m_PluginInfo.Width=100;
 	m_PluginInfo.Height=100;
@@ -46,13 +60,7 @@ m_Volume(1.0f)
 
 OutputPlugin::~OutputPlugin()
 {
-	m_RefCount--;
-	if (m_RefCount==0)
-	{
-		cb_Blocking(m_Parent,false);
-		OUTPUTCLIENT::PackUpAndGoHome();
-		m_Mode=NO_MODE;
-	}
+	Kill();
 }
 
 PluginInfo &OutputPlugin::Initialise(const HostInfo *Host)
@@ -62,7 +70,10 @@ PluginInfo &OutputPlugin::Initialise(const HostInfo *Host)
 	OUTPUTCLIENT::host = Host;
 	string client = Host->AUDIOCLIENT;
 	string dest   = Host->OUTPUTFILE;
-	OUTPUTCLIENT::Get()->Configure(client, dest);
+	if (!m_Configured) {
+		m_Configured = OUTPUTCLIENT::Get()->Configure(client, dest);
+		if (!m_Configured) m_Mode=CLOSED;
+	}
 	OUTPUTCLIENT::Get()->AllocateBuffer();
 	return Info;
 }
@@ -75,40 +86,44 @@ SpiralGUIType *OutputPlugin::CreateGUI()
 bool OutputPlugin::Kill()
 {
 	m_IsDead=true;
-	OUTPUTCLIENT::Get()->Kill();
-	m_Mode=CLOSED;
-	cb_Blocking(m_Parent,false);
+	m_Members.erase(std::remove(m_Members.begin(),m_Members.end(),this),m_Members.end());
+	if (m_Members.empty()) {
+		if (cb_Blocking) cb_Blocking(m_Parent,false);
+		OUTPUTCLIENT::PackUpAndGoHome();
+		m_Mode=NO_MODE;
+		m_Configured=false;
+	}
 	return true;
+}
+
+void OutputPlugin::ReportMode()
+{
+	for (size_t i=0;i<m_Members.size();++i)
+		m_Members[i]->m_ReportedMode=(int)m_Mode;
+}
+
+void OutputPlugin::OpenMode(Mode mode)
+{
+	bool opened=false;
+	m_Mode=CLOSED;
+	if (m_Configured) {
+		if (mode==INPUT) opened=OUTPUTCLIENT::Get()->OpenRead();
+		if (mode==OUTPUT) opened=OUTPUTCLIENT::Get()->OpenWrite();
+		if (mode==DUPLEX) opened=OUTPUTCLIENT::Get()->OpenReadWrite();
+	}
+	if (opened) m_Mode=mode;
+	ReportMode();
+	if (cb_Blocking) cb_Blocking(m_Parent,opened);
 }
 
 void OutputPlugin::Reset()
 {
 	if (m_IsDead) return;
-	m_IsDead=true;
-	OUTPUTCLIENT::Get()->Close();
-	cb_Blocking(m_Parent,false);
 	ResetPorts();
-	if (host)
-		OUTPUTCLIENT::Get()->Configure(host->AUDIOCLIENT, host->OUTPUTFILE);
+	const Mode previous=m_Mode;
+	m_Configured=host && OUTPUTCLIENT::Get()->Configure(host->AUDIOCLIENT,host->OUTPUTFILE);
 	OUTPUTCLIENT::Get()->AllocateBuffer();
-
-	switch (m_Mode)
-	{
-		case INPUT :
-			OUTPUTCLIENT::Get()->OpenRead();
-			cb_Blocking(m_Parent,true);
-		break;
-		case OUTPUT :
-			OUTPUTCLIENT::Get()->OpenWrite();
-			cb_Blocking(m_Parent,true);
-		break;
-		case DUPLEX :
-			OUTPUTCLIENT::Get()->OpenReadWrite();
-			cb_Blocking(m_Parent,true);
-		break;
-		default:{}
-	}
-	m_IsDead=false;
+	OpenMode(previous==NO_MODE ? OUTPUT : previous);
 }
 
 void OutputPlugin::Execute()
@@ -116,15 +131,6 @@ void OutputPlugin::Execute()
 	if (m_IsDead)
 		return;
 
-	if (m_Mode==NO_MODE && m_RefCount==1)
-	{
-		if (OUTPUTCLIENT::Get()->OpenWrite())
-		{
-			cb_Blocking(m_Parent,true);
-			m_Mode=OUTPUT;
-			m_NotifyOpenOut=true;
-		}
-	}
 
 	if (m_Mode==OUTPUT || m_Mode==DUPLEX)
 		OUTPUTCLIENT::Get()->SendStereo(GetInput(0),GetInput(1));
@@ -135,57 +141,37 @@ void OutputPlugin::Execute()
 
 void OutputPlugin::ExecuteCommands()
 {
-	if (m_IsDead)
-		return;
-
-	if (m_AudioCH->IsCommandWaiting())
-	{
-		switch(m_AudioCH->GetCommand())
-		{
-			case OPENREAD :
-				if (OUTPUTCLIENT::Get()->OpenRead())
-					m_Mode=INPUT;
+	if (m_IsDead || !m_AudioCH->IsCommandWaiting()) return;
+	switch(m_AudioCH->GetCommand()) {
+		case OPENREAD: OpenMode(INPUT); break;
+		case OPENWRITE: OpenMode(OUTPUT); break;
+		case OPENDUPLEX: OpenMode(DUPLEX); break;
+		case CLOSE:
+			OUTPUTCLIENT::Get()->Close();
+			m_Mode=CLOSED;
+			ReportMode();
+			if (cb_Blocking) cb_Blocking(m_Parent,false);
 			break;
-			case OPENWRITE :
-				if (OUTPUTCLIENT::Get()->OpenWrite())
-				{
-					m_Mode=OUTPUT;
-					cb_Blocking(m_Parent,true);
-				}
-			break;
-			case OPENDUPLEX :
-				if (OUTPUTCLIENT::Get()->OpenReadWrite())
-				{
-					m_Mode=DUPLEX;
-					cb_Blocking(m_Parent,true);
-				}
-			break;
-			case CLOSE :
-				m_Mode=CLOSED;
-				cb_Blocking(m_Parent,false);
-				OUTPUTCLIENT::Get()->Close();
-			break;
-			case SET_VOLUME :
-				OUTPUTCLIENT::Get()->SetVolume(m_Volume);
-				break;
-			case CLEAR_NOTIFY:
-				m_NotifyOpenOut=false;
-				break;
-			default: break;
-		}
+		case SET_VOLUME: OUTPUTCLIENT::Get()->SetVolume(m_Volume); break;
+		case CLEAR_NOTIFY: m_NotifyOpenOut=false; break;
+		default: break;
 	}
 }
 
 void OutputPlugin::ProcessAudio()
 {
-	if (m_IsDead)
-		return;
-
-	m_NoExecuted--;
-	if (m_NoExecuted<=0)
-	{
-		if (m_Mode==INPUT || m_Mode==DUPLEX) OUTPUTCLIENT::Get()->Read();
-		if (m_Mode==OUTPUT || m_Mode==DUPLEX) OUTPUTCLIENT::Get()->Play();
-		m_NoExecuted=m_RefCount;
+	if (m_IsDead || m_Members.empty() || m_Members.front()!=this) return;
+	if (m_Mode==NO_MODE) {
+		OpenMode(OUTPUT);
+		m_NotifyOpenOut=m_Mode==OUTPUT;
+	}
+	bool ok=true;
+	if (m_Mode==INPUT || m_Mode==DUPLEX) ok=OUTPUTCLIENT::Get()->Read();
+	if (ok && (m_Mode==OUTPUT || m_Mode==DUPLEX)) ok=OUTPUTCLIENT::Get()->Play();
+	if (!ok) {
+		OUTPUTCLIENT::Get()->Close();
+		m_Mode=CLOSED;
+		ReportMode();
+		if (cb_Blocking) cb_Blocking(m_Parent,false);
 	}
 }

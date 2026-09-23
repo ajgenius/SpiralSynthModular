@@ -1,10 +1,10 @@
 INCLUDES = 						\
 		$(FLTK_CXXFLAGS)			\
-		$(FLTK_CFLAGS)				\
+		$(FLTK_CFLAGS) $(PORTAUDIO_CFLAGS) $(ALSA_CFLAGS)				\
 		-I$(top_builddir)/GUI/Widgets		\
 		-I$(top_srcdir)/libspiralcore/include
 		
-EXTRA_DIST = SpiralIcon.xpm
+EXTRA_DIST = SpiralIcon.xpm README-audio-backends.md
 	
 plugin = OutputPlugin.so
 plugindir = $(libdir)/SpiralPlugins
@@ -14,7 +14,9 @@ OutputPlugin_la_SOURCES =					\
 			OutputPluginGUI.h			\
 			OutputPluginGUI.C			\
 			OutputPlugin.h			\
-			OutputPlugin.C
+			OutputPlugin.C \
+                        OutputAudioClient.C \
+                        OutputAudioClient.h
 			
 OutputPlugin_la_LDFLAGS = -shared -module -avoid-version -shared -no-undefined
 OutputPlugin_la_LIBADD = 							\
