@@ -232,7 +232,6 @@ Makefile
 GUI/Makefile
 GUI/Widgets/Makefile
 libspiralcore/Makefile
-SpiralSound/Makefile
 Plugins/Makefile
 Plugins/AmpPlugin/Makefile
 Plugins/AnotherFilterPlugin/Makefile

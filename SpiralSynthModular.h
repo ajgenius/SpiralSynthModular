@@ -40,6 +40,7 @@
 #include "Fl_Canvas.h"
 #include "SpiralPlugin.h"
 #include "ChannelHandler.h"
+using spiralcore::ChannelHandler;
 #include "SettingsWindow.h"
 
 const static string VER_STRING = "0.2.3.cvs";

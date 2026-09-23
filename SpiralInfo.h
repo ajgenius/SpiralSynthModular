@@ -24,6 +24,9 @@
 #include <vector>
 #include <stdlib.h>
 #include "Sample.h"
+using spiralcore::Sample;
+using spiralcore::Linear;
+using spiralcore::feq;
 
 using namespace std;
 

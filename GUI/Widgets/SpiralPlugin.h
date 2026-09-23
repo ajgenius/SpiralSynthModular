@@ -28,7 +28,11 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Group.H>
 #include "Sample.h"
+using spiralcore::Sample;
+using spiralcore::Linear;
+using spiralcore::feq;
 #include "ChannelHandler.h"
+using spiralcore::ChannelHandler;
 #include "SpiralGUI.H"
 
 static const float MAX_FREQ = 13000;

@@ -21,6 +21,8 @@
 #include <FL/Fl_Button.H>
 #include "NoteTable.h"
 #include "Midi.h"
+using spiralcore::MidiDevice;
+using spiralcore::MidiEvent;
 #include "SpiralIcon.xpm"
 
 using namespace std;

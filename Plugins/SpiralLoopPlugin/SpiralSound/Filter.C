@@ -18,6 +18,9 @@
 
 #include "Filter.h"
 #include "Sample.h"
+using spiralcore::Sample;
+using spiralcore::Linear;
+using spiralcore::feq;
 
 static const float MAX_RES = 10;
 static const float MIN_RES = 1;

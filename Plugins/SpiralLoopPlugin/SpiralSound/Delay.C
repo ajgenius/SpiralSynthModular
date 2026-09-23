@@ -20,6 +20,9 @@
 
 #include "Delay.h"
 #include "Sample.h"
+using spiralcore::Sample;
+using spiralcore::Linear;
+using spiralcore::feq;
 
 static const int DELAYBUFFERSIZE=44100;
 

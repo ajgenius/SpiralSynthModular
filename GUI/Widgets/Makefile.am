@@ -2,7 +2,7 @@ INCLUDES =                                              \
                 $(FLTK_CXXFLAGS)                        \
                 $(FLTK_CFLAGS)                          \
                 -I$(top_builddir)/GUI/Widgets           \
-                -I$(top_builddir)/SpiralSound
+                -I$(top_srcdir)/libspiralcore/include
 
 EXTRA_DIST = 				\
 		Fl_DragBar.fld  	\
@@ -64,5 +64,4 @@ libSpiralWidgets_la_LDFLAGS = -shared -no-undefined -version-info $(LT_VERSION_I
 libSpiralWidgets_la_LIBADD = 				\
 				$(FLTK_LIBS)		\
 				 -lm -ldl -lpthread	\
-				$(top_builddir)/SpiralSound/libSpiralCommon.la \
                 $(top_builddir)/libspiralcore/libspiralcore.la

@@ -6,7 +6,8 @@ existing SSM history. Integration is a new set of changes above that merge;
 no historical commits are rewritten or attributed to the integration author.
 
 The Automake library builds the shared implementations used by this SSM tree:
-Sample, ChannelHandler, MidiDevice/MidiEvent, and Sample's Allocator support.
+Sample, ChannelHandler, MidiDevice/MidiEvent, WavFile (RiffWav), and Sample's
+Allocator support.
 NoteTable is the same header-only table in both histories. The remaining
 archived sources are distributed but not enabled as new backend dependencies.
 
@@ -20,13 +21,15 @@ Reconciliation choices:
   configured ALSA/OSS selection and bidirectional ALSA support rather than
   reverting to the library snapshot's hard-coded ALSA, single-direction client.
   This does not introduce new MIDI hardware-selection UI or modern backends.
-- SpiralSound headers are compatibility includes/aliases, not duplicate classes.
-  libSpiralCommon now contains RiffWav only and depends on libspiralcore.
+- RiffWav is moved unchanged into the shared library; its existing global WavFile
+  API and optional libsndfile/native RIFF paths are preserved.
+- Consumers include the library headers directly. The redundant SpiralSound
+  directory and libSpiralCommon target have been removed.
 
 Rebuild the host, widget library and every plugin together after regenerating
 Autotools files. Namespace-qualified shared types change the C++ ABI; old plugin
-binaries are not interchangeable with the rebuilt ones. libSpiralCommon's
-library version is bumped for the removed class implementations.
+binaries are not interchangeable with the rebuilt ones. The host, widgets and
+plugins link directly to libspiralcore; libSpiralCommon is no longer built.
 
 Noninteractive regression checks are available with:
     make -C libspiralcore check

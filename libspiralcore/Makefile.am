@@ -12,9 +12,11 @@ libspiralcore_la_SOURCES = \
     src/Allocator.cpp \
     src/ChannelHandler.cpp \
     src/Midi.cpp \
-    src/Sample.cpp
+    src/Sample.cpp \
+    include/RiffWav.h \
+    src/RiffWav.cpp
 libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 0:0:0
-libspiralcore_la_LIBADD = $(AMIDILIBS) -lpthread
+libspiralcore_la_LIBADD = $(AMIDILIBS) $(SFLIBS) -lm -lpthread
 
 check_PROGRAMS = compatibility-test
 TESTS = $(check_PROGRAMS)
