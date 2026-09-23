@@ -23,7 +23,7 @@ int main()
 	CHECK(root && error.empty());
 	long n = 0;
 	CHECK(root->Get("id")->Integer(n) && n == 7);
-	CHECK(root->Get("ok")->Bool());
+	CHECK(root->Get("ok")->AsBool());
 	CHECK(root->Get("items")->At(0)->GetType() == JSONValue::Null);
 	CHECK(root->Get("items")->At(1)->Text() == "a");
 	CHECK(root->Get("items")->Size() == 3);

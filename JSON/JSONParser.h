@@ -14,7 +14,7 @@ public:
 	~JSONValue();
 	Type GetType() const { return mType; }
 	const std::string &Text() const { return mText; }
-	bool Bool() const { return mBool; }
+	bool AsBool() const { return mBool; } // X11's Bool macro breaks Bool() under FLTK
 	bool Integer(long &value) const;
 	const JSONValue *Get(const std::string &key) const;
 	const JSONValue *At(size_t index) const;
