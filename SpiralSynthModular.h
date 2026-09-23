@@ -35,11 +35,11 @@
 #include <iostream>
 #include <fstream>
 #include <map>
-#include "GUI/Widgets/Fl_DeviceGUI.h"
-#include "GUI/Widgets/Fl_CommentGUI.h"
-#include "GUI/Widgets/Fl_Canvas.h"
-#include "SpiralSound/Plugins/SpiralPlugin.h"
-#include "SpiralSound/ChannelHandler.h"
+#include "Fl_DeviceGUI.h"
+#include "Fl_CommentGUI.h"
+#include "Fl_Canvas.h"
+#include "SpiralPlugin.h"
+#include "ChannelHandler.h"
 #include "SettingsWindow.h"
 
 const static string VER_STRING = "0.2.3.cvs";

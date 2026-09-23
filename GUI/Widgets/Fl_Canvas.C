@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "FL/fl_draw.H"
+#include <FL/fl_draw.H>
 #include <FL/Fl_Scroll.H>
 #include "Fl_Canvas.h"
 #include "Fl_DeviceGUI.h"
 #include <iostream>
-#include "../../SpiralSound/SpiralInfo.h"
+#include "SpiralInfo.h"
 #include <math.h>
 
 // no of calls to handle when dragged, before the widget is redrawn

@@ -18,8 +18,8 @@
 
 #include "Fl_CommentGUI.h"
 #include <FL/fl_draw.H>
-#include "../../SpiralSound/SpiralInfo.h"
-#include "../../GUI/Widgets/PawfalInput.h"
+#include "SpiralInfo.h"
+#include "PawfalInput.h"
 
 Fl_CommentGUI::Fl_CommentGUI(const DeviceGUIInfo& Info, SpiralGUIType *PW, Fl_Pixmap *Icon) :
 Fl_DeviceGUI(Info,PW,Icon),

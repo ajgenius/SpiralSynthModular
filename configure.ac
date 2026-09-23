@@ -1,0 +1,320 @@
+dnl Library Revisions
+
+m4_define([lt_current], [0])
+m4_define([lt_revision], [1])
+m4_define([lt_age], [0])
+          
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT([SpiralSynthModular], [0.3.0])
+AC_CONFIG_SRCDIR([SpiralSynthModular.C])
+
+AM_INIT_AUTOMAKE
+
+dnl Automake (can't use AC_CONFIG_HEADER - get complaints!)
+AM_CONFIG_HEADER(config.h)
+
+dnl Initialize maintainer mode
+AM_MAINTAINER_MODE
+
+dnl Checks for programs.
+AC_PROG_CC
+AC_PROG_CXX
+AC_PROG_INSTALL
+
+AM_PROG_LIBTOOL
+
+dnl Checks for header files.
+AC_HEADER_STDC
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_C_INLINE
+
+LT_VERSION_INFO="lt_current:lt_revision:lt_age"
+AC_SUBST(LT_VERSION_INFO)
+
+dnl Check plugin directory
+AC_ARG_WITH(plugindir,
+  [  --with-plugindir=dir    give the plugin directory],
+  plugindir="$withval",
+  plugindir="/usr/lib/SpiralPlugins")
+AC_SUBST(PLUGINDIR, $plugindir)
+
+dnl Check whether to enable debugging
+AC_ARG_ENABLE(debug,  [  --enable-debug          enable debugging ],
+        ac_arg_debug="Y", ac_arg_debug="N")
+
+if test $ac_arg_debug = "Y" ; then
+	CFLAGS="-pipe -Wall -O0 -ggdb "
+	CXXFLAGS="-pipe -Wall -O0 -ggdb "
+else
+	CFLAGS="-pipe -Wall -O3 -ffast-math -DNO_DEBUG -Wno-unused "
+	CXXFLAGS="-pipe -Wall -O3 -ffast-math -DNO_DEBUG -Wno-unused "
+fi
+
+dnl build plugin list - plugins that do not require an optional component
+dnl (i.e. Jack, and LADSPA)
+
+PLUGINLIST="AmpPlugin AnotherFilterPlugin BeatMatchPlugin ControllerPlugin \
+CounterPlugin DelayPlugin DiskWriterPlugin DistributorPlugin EchoPlugin \
+EnvFollowerPlugin EnvelopePlugin FilterPlugin FlipflopPlugin FormantFilterPlugin \
+KeyboardPlugin LFOPlugin LogicPlugin MasherPlugin MatrixPlugin \
+MeterPlugin MidiPlugin MixSwitchPlugin MixerPlugin MoogFilterPlugin NoisePlugin \
+NoteSnapPlugin OperatorPlugin OscillatorPlugin OutputPlugin PoshSamplerPlugin \
+RingModPlugin SVFilterPlugin SampleHoldPlugin ScopePlugin SeqSelectorPlugin \
+SmoothPlugin SpiralLoopPlugin SplitSwitchPlugin SplitterPlugin StereoMixerPlugin \
+StreamPlugin SwitchPlugin TranslatePlugin TransposePlugin TrigPlugin WaveShaperPlugin \
+WaveTablePlugin XFadePlugin"
+
+dnl Check whether jack is present or has been disabled
+jack_message=""
+AC_ARG_ENABLE(
+    jack,
+    [  --disable-jack          Do not build JackPlugin],
+    [build_jack="n" ; jack_message="manually disabled"],
+    [build_jack="y"]
+)
+if test "$build_jack" = "y"; then
+   AC_CHECK_HEADER(jack/jack.h, [build_jack="y"], [build_jack="n" ; jack_message="No jack/jack.h found"])
+fi
+if test "$build_jack" = "y"; then
+   AC_CHECK_LIB(jack, jack_client_new, [build_jack="y"], [build_jack="n" ; jack_message="No libjack found"])
+fi
+if test "$build_jack" = "y" ; then
+   PLUGINLIST="JackPlugin $PLUGINLIST"
+fi
+
+dnl Check whether LADSPA is present or has been disabled
+ladspa_message=""
+AC_ARG_ENABLE(
+    ladspa,
+    [  --disable-ladspa        Do not build LADSPAPlugin],
+    [build_ladspa="n" ; ladspa_message="manually disabled"],
+    [build_ladspa="y"]
+)
+if test "$build_ladspa" = "y"; then
+   AC_CHECK_HEADER(ladspa.h, [build_ladspa="y"], [build_ladspa="n" ; ladspa_message="No ladspa.h found"])
+fi
+if test "$build_ladspa" = "y" ; then
+   PLUGINLIST="LADSPAPlugin $PLUGINLIST"
+fi
+
+dnl Check whether liblrdf is present or has been disabled
+lrdf_message=""
+AC_ARG_ENABLE(
+    lrdf,
+    [  --disable-lrdf          Disable liblrdf for LADSPA Plugin],
+    [use_liblrdf="n" ; lrdf_message="manually disabled"],
+    [use_liblrdf="y"]
+)
+if test "$build_ladspa" = "n" ; then
+   use_liblrdf="n"
+   lrdf_message="LADSPAPlugin not used"
+fi
+if test "$use_liblrdf" = "y"; then
+   AC_CHECK_HEADER(lrdf.h, [use_liblrdf="y"], [use_liblrdf="n" ; lrdf_message="No lrdf.h found"])
+fi
+if test "$use_liblrdf" = "y"; then
+   AC_CHECK_LIB(lrdf, lrdf_init, [use_liblrdf="y"], [use_liblrdf="n" ; lrdf_message="No liblrdf found"])
+fi
+if test "$use_liblrdf" = "y"; then
+   AC_DEFINE(HAVE_LIBLRDF, , [Enable liblrdf support for LADSPA Plugin])
+   LRDFLIBS="-llrdf"
+   AC_SUBST(LRDFLIBS)
+fi
+
+dnl Check whether alsa-midi is present or has been disabled
+amidi_message=""
+AC_ARG_ENABLE(
+    alsa_midi,
+    [  --disable-alsa-midi     Disable alsa midi (use OSS)],
+    [use_alsa_midi="n"; amidi_message="manually disabled"],
+    [use_alsa_midi="y"]
+)
+if test "$use_alsa_midi" = "y"; then
+   AC_CHECK_HEADER(alsa/asoundlib.h, [use_alsa_midi="y"], [use_alsa_midi="n" ; amidi_message="No alsa/asoundlib.h found"])
+fi
+if test "$use_alsa_midi" = "y"; then
+   AC_CHECK_LIB(asound, snd_seq_open, [use_alsa_midi="y"], [use_alsa_midi="n" ; amidi_message="No libasound found"])
+fi
+if test "$use_alsa_midi" = "y"; then
+   AC_DEFINE(USE_ALSA_MIDI, , [Use ALSA MIDI not OSS])
+   AMIDILIBS="-lasound"
+   AC_SUBST(AMIDILIBS)
+else
+   AC_DEFINE(USE_OSS_MIDI, , [Use OSS MIDI not ALSA])
+fi
+
+dnl Check whether libsndfile is present or has been disabled
+sndfile_message=""
+AC_ARG_ENABLE(
+    sndfile,
+    [  --disable-sndfile       Disable libsndfile for waveform loading],
+    [use_sndfile="n" ; sndfile_message="manually disabled"],
+    [use_sndfile="y"]
+)
+if test "$use_sndfile" = "y"; then
+   AC_CHECK_HEADER(sndfile.h, [use_sndfile="y"], [use_sndfile="n" ; sndfile_message="No sndfile.h found"])
+fi
+if test "$use_sndfile" = "y"; then
+   AC_CHECK_LIB(sndfile, sf_open, [use_sndfile="y"], [use_sndfile="n" ; sndfile_message="No libsndfile found"])
+fi
+if test "$use_sndfile" = "y"; then
+   AC_DEFINE(USE_LIBSNDFILE, , [Enable libsndfile for waveform loading])
+   SFLIBS="-lsndfile"
+   AC_SUBST(SFLIBS)
+fi
+
+dnl Checks for library functions.
+
+AC_CHECK_HEADERS(math.h)
+AC_CHECK_LIB(m, sin)
+
+dnl AC_CHECK_HEADERS(X11/Xlib.h)
+dnl AC_CHECK_LIB(X11, XDisplayName)
+dnl AC_CHECK_LIB(Xext, main)
+
+AC_PATH_PROG(FLTK_CONFIG, fltk-config, no)
+if test "$FLTK_CONFIG" = "no"; then
+  AC_PATH_XTRA
+  LIBGL=""
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  AC_CHECK_HEADERS(GL/gl.h)
+  if test $ac_cv_header_GL_gl_h = "yes" ; then
+    AC_CHECK_LIB(GL, glBegin, LIBGL="-lGL")
+  fi
+  AC_CHECK_HEADERS(FL/Fl.h)
+  if test $ac_cv_header_FL_Fl_h = "no" ; then
+    echo "*** FLTK headers missing."
+    exit 1
+  fi
+  AC_CHECK_LIB(fltk, main)
+  FLTK_CXXFLAGS="$X_CFLAGS"
+  FLTK_CFLAGS="$FLTK_CXXFLAGS"
+  FLTK_LIBS="$X_LIBS -lfltk $LIBGL"
+else
+  FLTK_CXXFLAGS=`$FLTK_CONFIG $fltk_config_args --cxxflags`
+  FLTK_CFLAGS=`$FLTK_CONFIG $fltk_config_args --cxxflags`
+  FLTK_LIBS=`$FLTK_CONFIG $fltk_config_args --ldflags`
+dnl This caused problems for debian users,
+dnl It would be nice to find a more robust way of doing it.
+dnl  if test "${FLTK_LIBS/*-rpath*/yes}" != "yes"; then
+dnl    echo "*** FLTK needs to be configured with --enable-shared"
+dnl   exit 1
+dnl  fi
+fi
+AC_SUBST(FLTK_CXXFLAGS)
+AC_SUBST(FLTK_CFLAGS)
+AC_SUBST(FLTK_LIBS)
+
+AC_CHECK_HEADERS(dlfcn.h)
+AC_CHECK_LIB(dl, dlopen)
+
+dnl Do we need png?????
+dnl AC_CHECK_HEADERS(png.h)
+dnl AC_CHECK_LIB(png, png_get_copyright)
+
+dnl This is normally done with libtool but since we aren't using libtool
+dnl yet to it here.
+
+dnl FIXME: forced to add -fPIC here..
+CFLAGS="$CFLAGS -fPIC"
+CXXFLAGS="$CFLAGS -fPIC"
+
+AC_SUBST(CFLAGS)
+AC_SUBST(CXXFLAGS)
+AC_SUBST(PLUGINLIST)
+
+dnl Modify the output files.
+AC_OUTPUT(
+SpiralSynthPluginLocation.h
+Makefile
+GUI/Makefile
+GUI/Widgets/Makefile
+SpiralSound/Makefile
+Plugins/Makefile
+Plugins/AmpPlugin/Makefile
+Plugins/AnotherFilterPlugin/Makefile
+Plugins/BeatMatchPlugin/Makefile
+Plugins/ControllerPlugin/Makefile
+Plugins/CounterPlugin/Makefile
+Plugins/DelayPlugin/Makefile
+Plugins/DiskWriterPlugin/Makefile
+Plugins/DistributorPlugin/Makefile
+Plugins/EchoPlugin/Makefile
+Plugins/EnvFollowerPlugin/Makefile
+Plugins/EnvelopePlugin/Makefile
+Plugins/FilterPlugin/Makefile
+Plugins/FlipflopPlugin/Makefile
+Plugins/FormantFilterPlugin/Makefile
+Plugins/JackPlugin/Makefile
+Plugins/KeyboardPlugin/Makefile
+Plugins/LADSPAPlugin/Makefile
+Plugins/LFOPlugin/Makefile
+Plugins/LogicPlugin/Makefile
+Plugins/MasherPlugin/Makefile
+Plugins/MatrixPlugin/Makefile
+Plugins/MeterPlugin/Makefile
+Plugins/MidiPlugin/Makefile
+Plugins/MixSwitchPlugin/Makefile
+Plugins/MixerPlugin/Makefile
+Plugins/MoogFilterPlugin/Makefile
+Plugins/MousePlugin/Makefile
+Plugins/NoisePlugin/Makefile
+Plugins/NoteSnapPlugin/Makefile
+Plugins/OperatorPlugin/Makefile
+Plugins/OscillatorPlugin/Makefile
+Plugins/OutputPlugin/Makefile
+Plugins/PoshSamplerPlugin/Makefile
+Plugins/RingModPlugin/Makefile
+Plugins/SVFilterPlugin/Makefile
+Plugins/SampleHoldPlugin/Makefile
+Plugins/ScopePlugin/Makefile
+Plugins/SeqSelectorPlugin/Makefile
+Plugins/SmoothPlugin/Makefile
+Plugins/SpiralLoopPlugin/Makefile
+Plugins/SplitSwitchPlugin/Makefile
+Plugins/SplitterPlugin/Makefile
+Plugins/StereoMixerPlugin/Makefile
+Plugins/StreamPlugin/Makefile
+Plugins/SwitchPlugin/Makefile
+Plugins/TranslatePlugin/Makefile
+Plugins/TransposePlugin/Makefile
+Plugins/TrigPlugin/Makefile
+Plugins/WaveShaperPlugin/Makefile
+Plugins/WaveTablePlugin/Makefile
+Plugins/XFadePlugin/Makefile
+)
+
+echo -e "\nConfig options:"
+echo -n "libsndfile support for wave loading - "
+if test "$use_sndfile" = "y"; then
+   echo "Enabled"
+else
+   echo "Disabled - $sndfile_message"
+fi
+echo -n "        ALSA support for MidiPlugin - "
+if test "$use_alsa_midi" = "y"; then
+   echo "Enabled"
+else
+   echo "Disabled - $amidi_message - Using OSS instead"
+fi
+echo -n "      Jack support (via JackPlugin) - "
+if test "$build_jack" = "y"; then
+   echo "Enabled"
+else
+   echo "Disabled - $jack_message"
+fi
+echo -n "  LADSPA support (via LADSPAPlugin) - "
+if test "$build_ladspa" = "y"; then
+   echo "Enabled"
+else
+   echo "Disabled - $ladspa_message"
+fi
+echo -n "   liblrdf support for LADSPAPlugin - "
+if test "$use_liblrdf" = "y"; then
+   echo "Enabled"
+else
+   echo "Disabled - $lrdf_message"
+fi
+echo ""
