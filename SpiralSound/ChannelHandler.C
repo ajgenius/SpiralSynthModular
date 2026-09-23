@@ -61,7 +61,7 @@ void ChannelHandler::UpdateDataNow()
 	// we can't get a lock on the data
 	m_Command[0]=0;
 
-    if (pthread_mutex_trylock(m_Mutex))
+    if (pthread_mutex_trylock(m_Mutex) == 0)
     {
 		#ifdef CHANNEL_DEBUG
 		cerr<<"Got lock"<<endl;
