@@ -544,18 +544,15 @@ void LADSPAPluginGUI::SetName(const char *s)
 
 void LADSPAPluginGUI::SetMaker(const char *s)
 {
-	char temp[256];
-	unsigned int len = strlen(s);
-
-	strncpy(temp, s, len);
-	// If this has got an "@" in it FLTK thinks it's a special character not an E.mail address
-	int t=0;
-	for (unsigned int f=0; f<len; f++) {
-		if (t==255) break;
-		if (temp[f]=='@') m_Maker[t++]='@';
-		m_Maker[t++]=temp[f];
+	size_t t = 0;
+	// Escape FLTK's @ symbol marker without splitting an escaped pair.
+	for (size_t f = 0; s[f]; ++f) {
+		const size_t count = s[f] == '@' ? 2 : 1;
+		if (t + count >= sizeof(m_Maker)) break;
+		if (count == 2) m_Maker[t++] = '@';
+		m_Maker[t++] = s[f];
 	}
-	m_Maker[t]=0;
+	m_Maker[t] = '\0';
 	m_MakerLabel->label (m_Maker);
 }
 
@@ -1220,10 +1217,9 @@ inline void LADSPAPluginGUI::cb_Min_i(Fl_Input* o)
 		m_GUICH->Wait();
 
 	// Swap displayed min and max
-		char temp[256];
-		strncpy(temp, m_PortMin[m_PortIndex]->value(), 256);
+		const std::string temp(m_PortMin[m_PortIndex]->value());
 		m_PortMin[m_PortIndex]->value(m_PortMax[m_PortIndex]->value());
-		m_PortMax[m_PortIndex]->value(temp);
+		m_PortMax[m_PortIndex]->value(temp.c_str());
 		m_PortMin[m_PortIndex]->redraw();
 		m_PortMax[m_PortIndex]->redraw();
 	}
@@ -1290,10 +1286,9 @@ inline void LADSPAPluginGUI::cb_Max_i(Fl_Input* o)
 		m_GUICH->Wait();
 
 	// Swap displayed min and max
-		char temp[256];
-		strncpy(temp, m_PortMax[m_PortIndex]->value(), 256);
+		const std::string temp(m_PortMax[m_PortIndex]->value());
 		m_PortMax[m_PortIndex]->value(m_PortMin[m_PortIndex]->value());
-		m_PortMin[m_PortIndex]->value(temp);
+		m_PortMin[m_PortIndex]->value(temp.c_str());
 		m_PortMax[m_PortIndex]->redraw();
 		m_PortMin[m_PortIndex]->redraw();
 	}

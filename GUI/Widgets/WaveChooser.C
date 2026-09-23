@@ -74,8 +74,8 @@ char *WaveFileName (void) {
      #else
             AvailFmt = "{*.wav,*.WAV}";
      #endif
-     char *fname;
-     char *title = "Load a wave";
+     const char *fname;
+     const char *title = "Load a wave";
      if (!fc) {
         fname = ".";
         // as ever, I'm a bit worried that this is never deallocated

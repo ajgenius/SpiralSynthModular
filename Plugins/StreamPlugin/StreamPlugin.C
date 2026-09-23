@@ -257,7 +257,7 @@ void StreamPlugin::StreamIn(istream &s) {
      if (size > 255) size = 255;
      s.ignore (1);
      s.get (m_GUIArgs.FileName, size+1);
-     if (m_GUIArgs.FileName != "None") OpenStream ();
+     if (std::string(m_GUIArgs.FileName) != "None") OpenStream ();
        // is it really necessary to load this lot??
      s >> m_Pos;
      s >> m_StreamPos;

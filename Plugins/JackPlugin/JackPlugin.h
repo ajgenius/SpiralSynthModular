@@ -93,9 +93,9 @@ public:
 	std::vector<JackPort*> m_InputPortsChanged;
 	
 	//// inline Callbacks ////
-        inline void JackProcess_i(jack_nframes_t nframes);	
-	inline void SampleRateChange_i(jack_nframes_t nframes);
-	inline void JackShutdown_i();	
+        void JackProcess_i(jack_nframes_t nframes);
+	void SampleRateChange_i(jack_nframes_t nframes);
+	void JackShutdown_i();
 
 	//// static Callbacks ////
         static int JackProcess(jack_nframes_t nframes, void *jack_client) { ((JackClient *)jack_client)->JackProcess_i(nframes); return 0;}

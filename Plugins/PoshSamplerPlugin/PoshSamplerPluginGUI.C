@@ -17,6 +17,7 @@
 */
 
 #include "PoshSamplerPluginGUI.h"
+#include <FL/fl_ask.H>
 #include <FL/fl_draw.H>
 #include <FL/fl_draw.H>
 #include "WaveChooser.h"
@@ -26,7 +27,7 @@ using namespace std;
 
 ////////////////////////////////////////////
 
-Fl_WaveDisplay::Fl_WaveDisplay(int x,int y,int w,int h, char *Name) :
+Fl_WaveDisplay::Fl_WaveDisplay(int x,int y,int w,int h, const char *Name) :
 Fl_Widget(x,y,w,h,Name),
 m_Sample(NULL),
 m_StartPos(1),
@@ -506,6 +507,10 @@ void PoshSamplerPluginGUI::UpdateValues (SpiralPlugin *o) {
 inline void PoshSamplerPluginGUI::cb_Load_i(Fl_Button* o, void* v)
 {
         char *fn=WaveFileName ();
+	if (fn && strlen(fn) >= sizeof(m_TextBuf)) {
+		fl_alert("Filename is too long (maximum 255 bytes).");
+		return;
+	}
 	if (fn && *fn!='\0')
 	{
 		strcpy(m_TextBuf,fn);
@@ -527,10 +532,14 @@ inline void PoshSamplerPluginGUI::cb_Save_i(Fl_Button* o, void* v)
 {
 	char *fn=fl_file_chooser("Save sample", "{*.wav,*.WAV}", NULL);
 
+	if (fn && strlen(fn) >= sizeof(m_TextBuf)) {
+		fl_alert("Filename is too long (maximum 255 bytes).");
+		return;
+	}
 	if (fn && *fn!='\0')
 	{
 		strcpy(m_TextBuf,fn);
-		m_GUICH->Set("Name",m_TextBuf);
+		m_GUICH->SetData("Name",m_TextBuf);
 		m_GUICH->Set("Num",(int)m_SampleNum->value());
 		m_GUICH->SetCommand(PoshSamplerPlugin::SAVE);
 	}

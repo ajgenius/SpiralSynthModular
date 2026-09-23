@@ -53,7 +53,7 @@ void SplitterPluginGUI::UpdateValues(SpiralPlugin *o)
 	m_Channels->value (Plugin->GetChannelCount());
 }
 	
-inline void SplitterPluginGUI::cb_Channels_i (Fl_Counter* o) 
+void SplitterPluginGUI::cb_Channels_i (Fl_Counter* o)
 {
 	if (o->value() < 2) 
 	{

@@ -977,16 +977,16 @@ bool LADSPAPlugin::SelectPlugin(unsigned long UniqueID)
 
 			m_InputPortCount = m_PluginInfo.NumInputs;
 
-			int lbl_length;
+			size_t lbl_length;
 
 			lbl_length = strlen(m_PlugDesc->Name);
 			lbl_length = lbl_length > 255 ? 255 : lbl_length;
-			strncpy(m_Name, m_PlugDesc->Name, lbl_length);
+			memcpy(m_Name, m_PlugDesc->Name, lbl_length);
 			m_Name[lbl_length] = '\0';
 
 			lbl_length = strlen(m_PlugDesc->Maker);
 			lbl_length = lbl_length > 255 ? 255 : lbl_length;
-			strncpy(m_Maker, m_PlugDesc->Maker, lbl_length);
+			memcpy(m_Maker, m_PlugDesc->Maker, lbl_length);
 			m_Maker[lbl_length] = '\0';
 		}
 
@@ -1163,7 +1163,7 @@ void LADSPAPlugin::ResetPortSettings(void)
 
 void LADSPAPlugin::SetGUIExports(void)
 {
-	int lbl_length;
+	size_t lbl_length;
 	char *lbl_start;
 
 	lbl_start = m_OutData.InputPortNames;

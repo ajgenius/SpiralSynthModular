@@ -73,7 +73,7 @@ public:
 class Fl_Canvas : public Fl_Group
 {
 public:
-	Fl_Canvas(int x, int y, int w, int h, char *name);
+	Fl_Canvas(int x, int y, int w, int h, const char *name);
 	~Fl_Canvas();
 	Fl_Menu_Button *m_Menu;
 

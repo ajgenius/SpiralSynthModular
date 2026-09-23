@@ -17,6 +17,7 @@
 */ 
 
 #include "DiskWriterPluginGUI.h"
+#include <FL/fl_ask.H>
 #include <FL/fl_draw.H>
 #include <FL/Fl_File_Chooser.H>
 
@@ -142,7 +143,7 @@ void DiskWriterPluginGUI::UpdateValues (SpiralPlugin *o)
 
 //// Callbacks ////
 
-inline void DiskWriterPluginGUI::cb_Open_i(Fl_Button* o)
+void DiskWriterPluginGUI::cb_Open_i(Fl_Button* o)
 {
 	if (o->value())
 	{
@@ -161,12 +162,16 @@ inline void DiskWriterPluginGUI::cb_Open_i(Fl_Button* o)
                 // A solution would be to use a custom allocator, with constant timing
                 // - or a ringbuffer mechanism I think...
 
-                char t[256];
-                strcpy (t, fn);
-		//sprintf(t,"%s",fn);
+                char t[256] = {0};
+                if (fn && strlen(fn) >= sizeof(t)) {
+                    fl_alert("Filename is too long (maximum 255 bytes).");
+                    o->value(false);
+                    return;
+                }
 
-		if (fn && fn!="")
+		if (fn && *fn)
 		{
+			strcpy(t, fn);
 			m_GUICH->SetData("Filename",(void*)t);
 			m_GUICH->SetCommand(DiskWriterPlugin::OPENWAV);
 		}
@@ -182,7 +187,7 @@ inline void DiskWriterPluginGUI::cb_Open_i(Fl_Button* o)
 	}
 }
 
-inline void DiskWriterPluginGUI::cb_Record_i(Fl_Button* o)
+void DiskWriterPluginGUI::cb_Record_i(Fl_Button* o)
 {
 	if (o->value())
 	{
@@ -194,22 +199,22 @@ inline void DiskWriterPluginGUI::cb_Record_i(Fl_Button* o)
 	}
 }
 
-inline void DiskWriterPluginGUI::cb_16bits_i(Fl_Button* o)
+void DiskWriterPluginGUI::cb_16bits_i(Fl_Button* o)
 {
 	m_GUICH->Set("BitsPerSample",16);
 }
 
-inline void DiskWriterPluginGUI::cb_24bits_i(Fl_Button* o)
+void DiskWriterPluginGUI::cb_24bits_i(Fl_Button* o)
 {
 	m_GUICH->Set("BitsPerSample",24);
 }
 
-inline void DiskWriterPluginGUI::cb_32bits_i(Fl_Button* o)
+void DiskWriterPluginGUI::cb_32bits_i(Fl_Button* o)
 {
 	m_GUICH->Set("BitsPerSample",32);
 }
 
-inline void DiskWriterPluginGUI::cb_Stereo_i(Fl_Button* o)
+void DiskWriterPluginGUI::cb_Stereo_i(Fl_Button* o)
 {
 	m_GUICH->Set("Stereo",o->value());
 }

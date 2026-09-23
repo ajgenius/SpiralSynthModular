@@ -28,7 +28,7 @@
 
 class Fl_WaveDisplay : public Fl_Widget {
    public:
-      Fl_WaveDisplay (int x,int y,int w,int h, char* Name);
+      Fl_WaveDisplay (int x,int y,int w,int h, const char* Name);
       ~Fl_WaveDisplay();
       virtual void draw();
       virtual int handle (int event);

@@ -209,7 +209,7 @@ void WaveTablePlugin::Execute()
 		
 		if (m_CyclePos<0 || m_CyclePos>=m_TableLength) m_CyclePos=0;
 		
-		SetOutput(OUT_MAIN,n,m_Table[m_Type][m_CyclePos]);	
+		SetOutput(OUT_MAIN,n,m_Table[static_cast<unsigned char>(m_Type)][m_CyclePos]);
 	}
 }
 

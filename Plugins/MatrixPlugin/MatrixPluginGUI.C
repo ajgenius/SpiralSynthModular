@@ -27,7 +27,7 @@ static const char NoteText[12][3] = {"C","C#","D","D#","E","F","F#","G","G#","A"
 
 ////////////////////////////////////////////
 
-Fl_MatrixButton::Fl_MatrixButton(int x, int y, int w, int h, char* n) :
+Fl_MatrixButton::Fl_MatrixButton(int x, int y, int w, int h, const char* n) :
 Fl_Button(x,y,w,h,n),
 m_Volume(NULL),
 m_SelCol(FL_BLUE),

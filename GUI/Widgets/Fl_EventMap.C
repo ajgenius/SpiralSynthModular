@@ -493,7 +493,8 @@ istream &operator>>(istream &s, Fl_EventMap &o)
 	string dummy;
 	s>>dummy;
 	if (dummy!="EventMap") cerr<<"Error in stream before Fl_EventMap"<<endl;
-	s>>(int&)o.m_Type;
+	int type = static_cast<int>(o.m_Type);
+	if (s >> type) o.m_Type = static_cast<Fl_EventMap::ModeType>(type);
 	s>>o.m_Zoom;
 	s>>o.m_GridSizeX;
 	s>>o.m_GridSizeY;

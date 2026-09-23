@@ -342,7 +342,7 @@ void JackPluginGUI::AddInput() {
 	Fl::check();	
 }
 
-inline void  JackPluginGUI::cb_Remove_i(Fl_Button* o)
+void  JackPluginGUI::cb_Remove_i(Fl_Button* o)
 { 
         int n = (int) m_InputName.size();
 
@@ -377,7 +377,7 @@ inline void  JackPluginGUI::cb_Remove_i(Fl_Button* o)
         }	
 }
 
-inline void  JackPluginGUI::cb_Add_i(Fl_Button* o)
+void  JackPluginGUI::cb_Add_i(Fl_Button* o)
 { 
         int n = (int) m_OutputName.size();
         
@@ -412,12 +412,12 @@ inline void  JackPluginGUI::cb_Add_i(Fl_Button* o)
        }	
 }
 
-inline void  JackPluginGUI::cb_Attach_i(Fl_Button* o)
+void  JackPluginGUI::cb_Attach_i(Fl_Button* o)
 { 
 	m_JackPlugin->Attach();
 }
 
-inline void  JackPluginGUI::cb_Detach_i(Fl_Button* o)
+void  JackPluginGUI::cb_Detach_i(Fl_Button* o)
 {
 	for (int n=0; n<(int)m_OutputName.size(); n++)
 	{		
@@ -434,7 +434,7 @@ inline void  JackPluginGUI::cb_Detach_i(Fl_Button* o)
 	m_JackPlugin->Detach();
 }
 
-inline void JackPluginGUI::cb_OutputConnect_i(Fl_Button* o)
+void JackPluginGUI::cb_OutputConnect_i(Fl_Button* o)
 {
 	int index=0;
 	std::vector<Fl_Button *>::iterator it = std::find( m_OutputButton.begin(), m_OutputButton.end(), o );
@@ -479,7 +479,7 @@ inline void JackPluginGUI::cb_OutputConnect_i(Fl_Button* o)
 	}
 }
 
-inline void JackPluginGUI::cb_InputConnect_i(Fl_Button* o)
+void JackPluginGUI::cb_InputConnect_i(Fl_Button* o)
 { 
 	int index=0;
 	std::vector<Fl_Button *>::iterator it = std::find( m_InputButton.begin(), m_InputButton.end(), o );

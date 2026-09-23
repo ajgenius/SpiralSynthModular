@@ -61,7 +61,7 @@ public:
 	virtual void StreamOut(std::ostream &s);
 	virtual void StreamIn(std::istream &s);
 	virtual bool SaveExternalFiles(const std::string &Dir);
-	virtual void LoadExternalFiles(const std::string &Dir);
+	virtual void LoadExternalFiles(const std::string &Dir, int withID=-1);
 	
 	enum GUICommands{NONE,START,STOP,RECORD,OVERDUB,ENDRECORD,LOAD,SAVE,CUT,
 					 COPY,PASTE,PASTEMIX,ZERO_RANGE,REVERSE_RANGE,SELECT_ALL,DOUBLE,HALF,

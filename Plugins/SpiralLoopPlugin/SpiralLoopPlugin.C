@@ -267,10 +267,10 @@ bool SpiralLoopPlugin::SaveExternalFiles(const string &Dir)
 	return true;
 }
 
-void SpiralLoopPlugin::LoadExternalFiles(const string &Dir)
+void SpiralLoopPlugin::LoadExternalFiles(const string &Dir, int withID)
 {
 	char temp[256];
-	sprintf(temp,"%sSpiralLoopSample%d.wav",Dir.c_str(),SpiralPlugin_GetID());	
+	sprintf(temp,"%sSpiralLoopSample%d.wav",Dir.c_str(),withID == -1 ? SpiralPlugin_GetID() : withID);
 	LoadWav(temp);
 }
 

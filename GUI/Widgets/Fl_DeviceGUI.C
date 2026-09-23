@@ -24,7 +24,7 @@
 
 int Fl_DeviceGUI::Numbers[512];
 
-Fl_PortButton::Fl_PortButton(int x, int y, int w, int h, char *n) :
+Fl_PortButton::Fl_PortButton(int x, int y, int w, int h, const char *n) :
 Fl_Button(x,y,w,h,n)
 {
 	m_ConnectionCount=0;
@@ -252,7 +252,7 @@ void Fl_DeviceGUI::Setup(const DeviceGUIInfo& Info, bool FirstTime)
 
 	for (int n=0; n<m_Info.NumOutputs; n++)
 	{
-		Fl_PortButton* NewOutput= NewOutput = new Fl_PortButton(OutputX,StartY+PortDist*n,PortSize,PortSize,"");
+		Fl_PortButton* NewOutput = new Fl_PortButton(OutputX,StartY+PortDist*n,PortSize,PortSize,"");
 		NewOutput->type(1);
 		NewOutput->SetType(Fl_PortButton::OUTPUT);
 		NewOutput->value(false);

@@ -81,6 +81,8 @@ if test "$build_jack" = "y"; then
    AC_CHECK_LIB(jack, jack_client_new, [build_jack="y"], [build_jack="n" ; jack_message="No libjack found"])
 fi
 if test "$build_jack" = "y" ; then
+   AC_CHECK_LIB(jack, jack_client_open,
+      [AC_DEFINE([HAVE_JACK_CLIENT_OPEN], [1], [Define if JACK provides jack_client_open])])
    PLUGINLIST="JackPlugin $PLUGINLIST"
 fi
 

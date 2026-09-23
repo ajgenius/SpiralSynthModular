@@ -135,6 +135,8 @@ void LFOPlugin::StreamOut(ostream &s) {
 void LFOPlugin::StreamIn(istream &s) {
      int version;
      s >> version;
-     s >> (int&)m_Type >> m_Freq;
+     int type = static_cast<int>(m_Type);
+     if (s >> type) m_Type = static_cast<Type>(type);
+     s >> m_Freq;
 }
 

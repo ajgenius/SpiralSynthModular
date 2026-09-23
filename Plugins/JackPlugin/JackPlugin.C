@@ -20,6 +20,7 @@
 #include <limits.h>
 #include <math.h>
 
+#include "config.h"
 #include "JackPlugin.h"
 #include "JackPluginGUI.h"
 #include "SpiralIcon.xpm"
@@ -30,7 +31,7 @@ int JackClient::JackProcessInstanceID = -1;
 int JackPlugin::JackInstanceCount = 0;
 const HostInfo *host = NULL;
 /////////////////////////////////////////////////////////////////////////////////////////////
-inline void JackClient::JackProcess_i(jack_nframes_t nframes)
+void JackClient::JackProcess_i(jack_nframes_t nframes)
 {	
 	SetBufferSize(nframes);
   		
@@ -78,14 +79,14 @@ inline void JackClient::JackProcess_i(jack_nframes_t nframes)
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-inline void JackClient::SampleRateChange_i(jack_nframes_t nframes)
+void JackClient::SampleRateChange_i(jack_nframes_t nframes)
 {
 	SetSampleRate(nframes);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-inline void JackClient::JackShutdown_i()
+void JackClient::JackShutdown_i()
 {
 	cerr<<"Shutdown"<<endl;
 
@@ -193,7 +194,13 @@ bool JackClient::Attach()
 	if (m_Attached) return true;
 
 	sprintf(JackClientName,"SSM%d",GetJackInstanceID());
-	if (!(m_Client = jack_client_new(JackClientName))) 
+#ifdef HAVE_JACK_CLIENT_OPEN
+	m_Client = jack_client_open(JackClientName,
+		static_cast<jack_options_t>(JackNoStartServer | JackUseExactName), 0);
+#else
+	m_Client = jack_client_new(JackClientName);
+#endif
+	if (!m_Client)
 	{
 		cerr<<"jack server not running?"<<endl;
 		return false;

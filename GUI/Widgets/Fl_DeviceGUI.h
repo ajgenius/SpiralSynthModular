@@ -48,7 +48,7 @@ class Fl_PortButton : public Fl_Button {
    public:
 	enum Type {INPUT,OUTPUT};
 
-	Fl_PortButton(int x, int y, int w, int h, char *n);
+	Fl_PortButton(int x, int y, int w, int h, const char *n);
 	virtual ~Fl_PortButton() {};
 	void SetType(Type s) { m_Type=s; }
 	virtual int handle(int event);

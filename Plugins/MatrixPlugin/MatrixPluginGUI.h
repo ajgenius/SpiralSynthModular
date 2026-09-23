@@ -33,7 +33,7 @@
 class Fl_MatrixButton : public Fl_Button
 {
 public:
-	Fl_MatrixButton(int x, int y, int w, int h, char* n);
+	Fl_MatrixButton(int x, int y, int w, int h, const char* n);
 	~Fl_MatrixButton() {}
 
 	virtual int handle(int event);

@@ -38,7 +38,7 @@ protected:
 private:
 	Fl_Counter *m_Channels;
 
-	inline void cb_Channels_i (Fl_Counter* o);
+	void cb_Channels_i (Fl_Counter* o);
 	static void cb_Channels(Fl_Counter* o, SplitterPluginGUI* v)  {v->cb_Channels_i(o);}
 };
 

@@ -55,14 +55,14 @@ private:
 
 	//// Inline Callbacks ////
 
-	inline void cb_Record_i(Fl_Button* o);	
-	inline void cb_Open_i(Fl_Button* o);
+	void cb_Record_i(Fl_Button* o);
+	void cb_Open_i(Fl_Button* o);
 
-	inline void cb_16bits_i(Fl_Button* o);	
-	inline void cb_24bits_i(Fl_Button* o);	
-	inline void cb_32bits_i(Fl_Button* o);
+	void cb_16bits_i(Fl_Button* o);
+	void cb_24bits_i(Fl_Button* o);
+	void cb_32bits_i(Fl_Button* o);
 
-	inline void cb_Stereo_i(Fl_Button* o);
+	void cb_Stereo_i(Fl_Button* o);
 
 
 	//// Static Callbacks ////

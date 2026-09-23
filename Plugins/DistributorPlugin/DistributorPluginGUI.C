@@ -53,7 +53,7 @@ void DistributorPluginGUI::UpdateValues(SpiralPlugin *o)
 	m_Chans->value (Plugin->GetChannelCount());
 }
 	
-inline void DistributorPluginGUI::cb_Chans_i (Fl_Counter* o) 
+void DistributorPluginGUI::cb_Chans_i (Fl_Counter* o)
 {
 	if (o->value() < 2) 
 	{

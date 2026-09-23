@@ -26,6 +26,7 @@ class TranslatePlugin;
 
 class TranslateClass {
    public:
+      virtual ~TranslateClass() {}
       virtual float Translate (float i) = 0;
 };
 

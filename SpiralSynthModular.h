@@ -220,7 +220,7 @@ private:
 	static void cb_Update(void* o, bool Mode);
 	static void cb_Blocking(void* o, bool Mode);
 	static void cb_UpdatePluginInfo(int ID, void *PluginInfo);
-        inline void cb_ChangeBufferAndSampleRate_i(long int NewBufferSize, long int NewSamplerate);
+        void cb_ChangeBufferAndSampleRate_i(long int NewBufferSize, long int NewSamplerate);
 	static void cb_ChangeBufferAndSampleRate(long unsigned int NewBufferSize, long unsigned int NewSamplerate, void *o)
 	{
 		((SynthModular*)o)->cb_ChangeBufferAndSampleRate_i(NewBufferSize, NewSamplerate);

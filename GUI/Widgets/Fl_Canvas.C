@@ -32,7 +32,7 @@ static int Numbers[512];
 
 ////////////////////////////////////////////////////////////////////////
 
-Fl_Canvas::Fl_Canvas(int x, int y, int w, int h, char *name) :
+Fl_Canvas::Fl_Canvas(int x, int y, int w, int h, const char *name) :
 Fl_Group(x,y,w,h,name),
 m_Menu(NULL),
 m_BG(NULL),

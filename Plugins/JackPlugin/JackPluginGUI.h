@@ -78,12 +78,12 @@ private:
 	void AddOutput() ;		
 	
 	//// inline Callbacks ////
-	inline void cb_Add_i(Fl_Button* o);
-	inline void cb_Remove_i(Fl_Button* o);
-	inline void cb_Attach_i(Fl_Button* o);
-	inline void cb_Detach_i(Fl_Button* o);
-	inline void cb_OutputConnect_i(Fl_Button* o);
-	inline void cb_InputConnect_i(Fl_Button* o);
+	void cb_Add_i(Fl_Button* o);
+	void cb_Remove_i(Fl_Button* o);
+	void cb_Attach_i(Fl_Button* o);
+	void cb_Detach_i(Fl_Button* o);
+	void cb_OutputConnect_i(Fl_Button* o);
+	void cb_InputConnect_i(Fl_Button* o);
 
 	//// Static Callbacks ////
 	static void cb_Add(Fl_Button* o, JackPluginGUI* v)  {v->cb_Add_i(o);}

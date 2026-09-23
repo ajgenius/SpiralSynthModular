@@ -38,7 +38,7 @@ protected:
 private:
 	Fl_Counter *m_Chans;
 
-	inline void cb_Chans_i (Fl_Counter* o);
+	void cb_Chans_i (Fl_Counter* o);
 	static void cb_Chans(Fl_Counter* o, DistributorPluginGUI* v)  {v->cb_Chans_i(o);}
 };
 
