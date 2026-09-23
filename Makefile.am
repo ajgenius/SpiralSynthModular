@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = SpiralSound GUI Plugins
+SUBDIRS = libspiralcore SpiralSound GUI Plugins
 
 INCLUDES =                                              \
                 $(FLTK_CXXFLAGS)                        \
@@ -11,7 +11,8 @@ LIBS = 							\
 	$(FLTK_LIBS)					\
 	-lm -ldl -lpthread				\
 	$(top_builddir)/GUI/Widgets/libSpiralWidgets.la\
-	$(top_builddir)/SpiralSound/libSpiralCommon.la
+	$(top_builddir)/SpiralSound/libSpiralCommon.la \
+                $(top_builddir)/libspiralcore/libspiralcore.la
 
 
 EXTRA_DIST = autogen.sh	

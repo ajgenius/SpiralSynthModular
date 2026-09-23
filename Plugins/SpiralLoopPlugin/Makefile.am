@@ -21,7 +21,8 @@ SpiralLoopPlugin_la_LIBADD = 							\
 			$(FLTK_LIBS)					\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
-			$(top_builddir)/SpiralSound/libSpiralCommon.la
+			$(top_builddir)/SpiralSound/libSpiralCommon.la \
+                $(top_builddir)/libspiralcore/libspiralcore.la
 
 install:$(plugin_LTLIBRARIES)
 	cp .libs/$(plugin) $(DESTDIR)/$(plugindir)

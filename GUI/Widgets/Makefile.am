@@ -64,4 +64,5 @@ libSpiralWidgets_la_LDFLAGS = -shared -no-undefined -version-info $(LT_VERSION_I
 libSpiralWidgets_la_LIBADD = 				\
 				$(FLTK_LIBS)		\
 				 -lm -ldl -lpthread	\
-				$(top_builddir)/SpiralSound/libSpiralCommon.la
+				$(top_builddir)/SpiralSound/libSpiralCommon.la \
+                $(top_builddir)/libspiralcore/libspiralcore.la
