@@ -51,3 +51,5 @@ EXTRA_DIST = \
     src/SearchPaths.cpp \
     src/Time.cpp \
     src/Tuna.cpp
+
+EXTRA_DIST += README.ssm
