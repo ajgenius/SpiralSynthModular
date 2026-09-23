@@ -22,12 +22,12 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <cstring>
 #include <FL/Fl.H>
 #include <FL/Fl_Tooltip.H>
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <cstring>
 
 #include "SpiralSynthModular.h"
 #include "SpiralSound/SpiralInfo.h"
