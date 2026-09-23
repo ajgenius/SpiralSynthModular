@@ -280,11 +280,13 @@ void SynthModular::UpdatePluginGUIs()
 			i->second->m_DeviceGUI = NULL;
 
 			//Erase from winmap if no audio to do it
-			if (erase){
+			if (erase)
+			{
 				m_DeviceWinMap.erase(i++);
 				continue;
 			}
 		}
+
 		i++;
 	}
 
