@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = TranslatePlugin.la
 
 TranslatePlugin_la_SOURCES =					\
-			TranslatePluginGUI.h			\
-			TranslatePluginGUI.C			\
+			../../GUI/TranslatePlugin/TranslatePluginGUI.h			\
+			../../GUI/TranslatePlugin/TranslatePluginGUI.C			\
 			TranslatePlugin.h			\
 			TranslatePlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/TranslatePlugin
