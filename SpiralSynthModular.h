@@ -42,8 +42,9 @@
 #include "ChannelHandler.h"
 using spiralcore::ChannelHandler;
 #include "SettingsWindow.h"
+#include "config.h"
 
-const static string VER_STRING = "0.2.3.cvs";
+const static string VER_STRING = PACKAGE_VERSION;
 
 typedef Fl_Double_Window SpiralWindowType;
 // typedef Fl_Window SpiralWindowType;
