@@ -21,6 +21,7 @@
 #include "Fl_Canvas.h"
 #include "PawfalInput.h"
 #include "SpiralInfo.h"
+#include <algorithm>
 
 int Fl_DeviceGUI::Numbers[512];
 
@@ -129,6 +130,24 @@ void Fl_DeviceGUI::cb_Resize (Fl_DeviceGUI *o) {
 
 int Fl_DeviceGUI::handle (int event) {
     int t=Fl_Group::handle(event);
+
+    // IF we are starting a drag in select mode, don't change state
+    if (event == FL_PUSH 
+    		&& Fl::event_button 
+    		&& ((Fl_Canvas*)parent())->HaveSelection())
+    {
+       const vector<int> selected = ((Fl_Canvas*)parent())->Selection().m_DeviceIds;
+       if (std::find(selected.begin(), selected.end(), GetID()) != selected.end())
+       {
+          Fl_Widget *drag = m_DragBar;
+          Fl::pushed(drag);
+
+          return drag->handle(event);
+	}
+       
+       return 1;
+    }
+
     // Click on icon in minimised device - Maximise, hide icon
     if (m_IconButton && m_IconButton->value()) {
        m_IconButton->value (false);
