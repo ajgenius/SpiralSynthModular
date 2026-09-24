@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = SplitterPlugin.la
 
 SplitterPlugin_la_SOURCES =					\
-			SplitterPluginGUI.h			\
-			SplitterPluginGUI.C			\
+			../../GUI/SplitterPlugin/SplitterPluginGUI.h			\
+			../../GUI/SplitterPlugin/SplitterPluginGUI.C			\
 			SplitterPlugin.h			\
 			SplitterPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/SplitterPlugin

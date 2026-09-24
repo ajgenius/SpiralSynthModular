@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = DistributorPlugin.la
 
 DistributorPlugin_la_SOURCES =					\
-			DistributorPluginGUI.h			\
-			DistributorPluginGUI.C			\
+			../../GUI/DistributorPlugin/DistributorPluginGUI.h			\
+			../../GUI/DistributorPlugin/DistributorPluginGUI.C			\
 			DistributorPlugin.h			\
 			DistributorPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/DistributorPlugin

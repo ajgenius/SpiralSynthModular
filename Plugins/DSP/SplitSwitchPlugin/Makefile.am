@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = SplitSwitchPlugin.la
 
 SplitSwitchPlugin_la_SOURCES =					\
-			SplitSwitchPluginGUI.h			\
-			SplitSwitchPluginGUI.C			\
+			../../GUI/SplitSwitchPlugin/SplitSwitchPluginGUI.h			\
+			../../GUI/SplitSwitchPlugin/SplitSwitchPluginGUI.C			\
 			SplitSwitchPlugin.h			\
 			SplitSwitchPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/SplitSwitchPlugin

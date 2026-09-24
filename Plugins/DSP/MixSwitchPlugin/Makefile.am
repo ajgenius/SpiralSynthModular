@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = MixSwitchPlugin.la
 
 MixSwitchPlugin_la_SOURCES =					\
-			MixSwitchPluginGUI.h			\
-			MixSwitchPluginGUI.C			\
+			../../GUI/MixSwitchPlugin/MixSwitchPluginGUI.h			\
+			../../GUI/MixSwitchPlugin/MixSwitchPluginGUI.C			\
 			MixSwitchPlugin.h			\
 			MixSwitchPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/MixSwitchPlugin

@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = LogicPlugin.la
 
 LogicPlugin_la_SOURCES =					\
-			LogicPluginGUI.h			\
-			LogicPluginGUI.C			\
+			../../GUI/LogicPlugin/LogicPluginGUI.h			\
+			../../GUI/LogicPlugin/LogicPluginGUI.C			\
 			LogicPlugin.h			\
 			LogicPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/LogicPlugin
