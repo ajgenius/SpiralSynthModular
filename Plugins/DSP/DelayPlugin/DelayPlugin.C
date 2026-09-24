@@ -22,7 +22,19 @@ using namespace std;
 
 static const float MAX_DELAY=1.0f;
 
+#include <config.h>
+
 extern "C" {
+const char *SpiralPlugin_GetHostVersion()
+{
+	return PACKAGE_VERSION;
+}
+
+const char *SpiralPlugin_GetHostABI()
+{
+	return SSM_HOST_ABI;
+}
+
 SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new DelayPlugin;

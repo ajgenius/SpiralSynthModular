@@ -27,7 +27,19 @@ static const float TRIG_THRESH = 0.1;
 static const int   RECBUFFERSIZE = 16384;
 static const float RECORD_GAIN = 1.0f;
 
+#include <config.h>
+
 extern "C" {
+const char *SpiralPlugin_GetHostVersion()
+{
+	return PACKAGE_VERSION;
+}
+
+const char *SpiralPlugin_GetHostABI()
+{
+	return SSM_HOST_ABI;
+}
+
 SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new SpiralLoopPlugin;

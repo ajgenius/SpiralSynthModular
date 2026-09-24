@@ -24,7 +24,19 @@ using namespace std;
 static const float PI=3.141592654;
 static const float RAD=(PI/180)*360;
 
+#include <config.h>
+
 extern "C" {
+const char *SpiralPlugin_GetHostVersion()
+{
+	return PACKAGE_VERSION;
+}
+
+const char *SpiralPlugin_GetHostABI()
+{
+	return SSM_HOST_ABI;
+}
+
 SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new TrigPlugin;

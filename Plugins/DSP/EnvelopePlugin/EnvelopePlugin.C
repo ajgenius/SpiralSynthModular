@@ -24,7 +24,19 @@ using namespace std;
 static float SMOOTH = 0.99;
 static float ONEMINUS_SMOOTH = 1-SMOOTH;
 
+#include <config.h>
+
 extern "C" {
+const char *SpiralPlugin_GetHostVersion()
+{
+	return PACKAGE_VERSION;
+}
+
+const char *SpiralPlugin_GetHostABI()
+{
+	return SSM_HOST_ABI;
+}
+
 SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new EnvelopePlugin;

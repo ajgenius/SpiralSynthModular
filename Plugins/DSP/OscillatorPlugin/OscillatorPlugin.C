@@ -28,7 +28,19 @@ static const int IN_SHLEN = 2;
 
 static const int OUT_MAIN = 0;
 
+#include <config.h>
+
 extern "C" {
+const char *SpiralPlugin_GetHostVersion()
+{
+	return PACKAGE_VERSION;
+}
+
+const char *SpiralPlugin_GetHostABI()
+{
+	return SSM_HOST_ABI;
+}
+
 SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new OscillatorPlugin;

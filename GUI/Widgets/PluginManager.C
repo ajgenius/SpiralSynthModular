@@ -16,6 +16,8 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
+#include <config.h>
+#include <cstring>
 #include <dlfcn.h>
 #include <stdio.h>
 #include "SpiralInfo.h"
@@ -78,6 +80,17 @@ PluginID PluginManager::LoadPlugin(const char *PluginName)
 	if (handle == NULL)
 	{
 		SpiralInfo::Alert("Error loading ["+string(PluginName)+"]: \n"+string(dlerror()));
+		return PluginError;
+	}
+
+	typedef const char *(*TextFn)();
+	TextFn GetHostABI = (TextFn)dlsym(handle, "SpiralPlugin_GetHostABI");
+	const char *abi = GetHostABI ? GetHostABI() : NULL;
+
+	if (!abi || strcmp(abi, SSM_HOST_ABI) != 0)
+	{
+		SpiralInfo::Alert("Missing or incompatible plugin ABI: " + string(PluginName));
+		dlclose(handle);
 		return PluginError;
 	}
 

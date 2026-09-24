@@ -29,7 +29,19 @@ float RandRange(float L, float H)
 	return ((rand()%10000/10000.0f)*(H-L))+L;
 }
 
+#include <config.h>
+
 extern "C" {
+const char *SpiralPlugin_GetHostVersion()
+{
+	return PACKAGE_VERSION;
+}
+
+const char *SpiralPlugin_GetHostABI()
+{
+	return SSM_HOST_ABI;
+}
+
 SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new MasherPlugin;

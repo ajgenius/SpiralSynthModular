@@ -69,6 +69,8 @@ SpiralPluginGUI(w,h,o,ch)
 	end();
 }
 
+#include <config.h>
+
 extern "C" int sprintf(char *,const char *,...);
 
 void MasherPluginGUI::UpdateValues(SpiralPlugin *o)
@@ -126,6 +128,16 @@ const string MasherPluginGUI::GetHelpText(const string &loc){
 #include "SpiralIcon.xpm"
 
 extern "C" {
+const char *SpiralPlugin_GetHostVersion()
+{
+	return PACKAGE_VERSION;
+}
+
+const char *SpiralPlugin_GetHostABI()
+{
+	return SSM_HOST_ABI;
+}
+
 
 int SpiralPlugin_GetType()
 {

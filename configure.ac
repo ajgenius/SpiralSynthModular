@@ -8,6 +8,8 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT([SpiralSynthModular], [0.3.1])
 AC_CONFIG_SRCDIR([SpiralSynthModular.C])
 
+AC_DEFINE([SSM_HOST_ABI], ["ssm-fltk-channel-1"], [SSM plugin host ABI])
+
 AM_INIT_AUTOMAKE
 
 dnl Automake (can't use AC_CONFIG_HEADER - get complaints!)

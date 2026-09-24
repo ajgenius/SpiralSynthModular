@@ -105,7 +105,19 @@ const string MixSwitchPluginGUI::GetHelpText(const string &loc){
 
 #include "SpiralIcon.xpm"
 
+#include <config.h>
+
 extern "C" {
+const char *SpiralPlugin_GetHostVersion()
+{
+	return PACKAGE_VERSION;
+}
+
+const char *SpiralPlugin_GetHostABI()
+{
+	return SSM_HOST_ABI;
+}
+
 
 int SpiralPlugin_GetType()
 {

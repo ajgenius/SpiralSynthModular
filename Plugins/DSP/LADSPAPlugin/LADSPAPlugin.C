@@ -49,7 +49,19 @@ static float ssm_sanitize(float in, float replacement)
 
 ////////////////////////////////////////////////////
 
+#include <config.h>
+
 extern "C" {
+const char *SpiralPlugin_GetHostVersion()
+{
+	return PACKAGE_VERSION;
+}
+
+const char *SpiralPlugin_GetHostABI()
+{
+	return SSM_HOST_ABI;
+}
+
 SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new LADSPAPlugin;

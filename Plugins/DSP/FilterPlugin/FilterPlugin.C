@@ -26,7 +26,19 @@ static const float MAX_CUTOFF = 3000;
 static const float MIN_CUTOFF = 500;
 static const int   FILTERGRAN = 50;
 
+#include <config.h>
+
 extern "C" {
+const char *SpiralPlugin_GetHostVersion()
+{
+	return PACKAGE_VERSION;
+}
+
+const char *SpiralPlugin_GetHostABI()
+{
+	return SSM_HOST_ABI;
+}
+
 SpiralPlugin* SpiralPlugin_CreateInstance()
 {
 	return new FilterPlugin;

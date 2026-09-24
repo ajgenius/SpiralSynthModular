@@ -29,7 +29,19 @@ static const int S1_INPUT = 18;
 static const int S2_INPUT = 19;
 static const int S3_INPUT = 20;
 
+#include <config.h>
+
 extern "C" {
+const char *SpiralPlugin_GetHostVersion()
+{
+	return PACKAGE_VERSION;
+}
+
+const char *SpiralPlugin_GetHostABI()
+{
+	return SSM_HOST_ABI;
+}
+
    SpiralPlugin* SpiralPlugin_CreateInstance() { return new PoshSamplerPlugin; }
 
 int SpiralPlugin_GetType()

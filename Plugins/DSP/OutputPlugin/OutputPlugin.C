@@ -27,8 +27,20 @@ std::vector<OutputPlugin *> OutputPlugin::m_Members;
 bool OutputPlugin::m_Configured=false;
 OutputPlugin::Mode OutputPlugin::m_Mode=NO_MODE;
 
+#include <config.h>
+
 extern "C"
 {
+const char *SpiralPlugin_GetHostVersion()
+{
+	return PACKAGE_VERSION;
+}
+
+const char *SpiralPlugin_GetHostABI()
+{
+	return SSM_HOST_ABI;
+}
+
 SpiralPlugin* SpiralPlugin_CreateInstance() { return new OutputPlugin; }
 
 int SpiralPlugin_GetType()
