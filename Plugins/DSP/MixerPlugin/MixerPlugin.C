@@ -44,6 +44,11 @@ int SpiralPlugin_GetType()
 
     const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
     int SpiralPlugin_GetID() { return 0x0007; }
+    string SpiralPlugin_GetName()
+    {
+        return "Mixer";
+    }
+
     string SpiralPlugin_GetGroupName() { return "Amps/Mixers"; }
 }
 

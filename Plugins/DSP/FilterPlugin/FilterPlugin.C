@@ -60,6 +60,11 @@ int SpiralPlugin_GetID()
 	return 0x000b;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "Filter";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "Filters/FX";

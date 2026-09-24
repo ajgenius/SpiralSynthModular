@@ -55,6 +55,11 @@ int SpiralPlugin_GetID()
 	return 0x0015;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "SeqSelector";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "Sequencing";

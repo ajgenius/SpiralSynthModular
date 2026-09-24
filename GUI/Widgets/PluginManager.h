@@ -34,6 +34,7 @@ struct HostsideInfo
 {
 	int   ID;
 	int   type;
+	std::string Name;
 
 	struct {
 		void *Handle;

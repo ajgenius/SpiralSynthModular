@@ -48,6 +48,11 @@ const char** SpiralPlugin_GetIcon () { return SpiralIcon_xpm; }
 
 int SpiralPlugin_GetID () { return 121; }
 
+string SpiralPlugin_GetName()
+{
+	return "Translate";
+}
+
 string SpiralPlugin_GetGroupName() { return "Control"; }
 
 }

@@ -47,6 +47,11 @@ const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
 
 int SpiralPlugin_GetID() { return 124; }
 
+string SpiralPlugin_GetName()
+{
+	return "LFO";
+}
+
 string SpiralPlugin_GetGroupName() { return "Oscillators"; }
 
 }

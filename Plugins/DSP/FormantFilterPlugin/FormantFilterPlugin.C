@@ -87,6 +87,11 @@ int SpiralPlugin_GetID()
 	return 42;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "FormantFilter";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "Filters/FX";

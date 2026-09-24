@@ -61,6 +61,11 @@ int SpiralPlugin_GetID()
 	return 0x001a;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "SpiralLoop";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "Delay/Sampling";

@@ -59,6 +59,11 @@ int SpiralPlugin_GetID()
 	return 43;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "AnotherLPF";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "Filters/FX";

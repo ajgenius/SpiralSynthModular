@@ -188,6 +188,17 @@ PluginID PluginManager::LoadPlugin(const char *PluginName)
 		return PluginError;
 	}
 
+	std::string (*GetName)(void) = (std::string(*)()) dlsym(handle, "SpiralPlugin_GetName");
+	std::string name = GetName ? GetName() : std::string();
+	if (name.empty())
+	{
+		SpiralInfo::Alert("Missing plugin name: " + string(PluginName));
+		dlclose(handle);
+		return PluginError;
+	}
+
+	slot->Name = name;
+
 	slot->dsp.Handle = handle;
 	slot->dsp.CreateInstance = CreateInstance;
 	slot->dsp.GetIcon = GetIcon;

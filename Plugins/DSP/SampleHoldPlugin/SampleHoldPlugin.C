@@ -54,6 +54,11 @@ int SpiralPlugin_GetID()
 	return 0x0033;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "SampleHold";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "Control";

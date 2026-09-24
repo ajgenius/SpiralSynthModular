@@ -56,6 +56,11 @@ int SpiralPlugin_GetID()
 	return 52;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "Logic";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "Maths/Logic";

@@ -46,6 +46,11 @@ const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
 
 int SpiralPlugin_GetID() { return 0x0001; }
 
+string SpiralPlugin_GetName()
+{
+	return "Scope";
+}
+
 string SpiralPlugin_GetGroupName() { return "InputOutput"; }
 }
 

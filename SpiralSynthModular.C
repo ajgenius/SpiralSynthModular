@@ -653,25 +653,11 @@ void SynthModular::LoadPlugins (string pluginPath) {
             //     created NewButton widgets isn't cleaned up either, so we might have 2 memory leaks
             //     involved? - but then again, they might be automatically deallocated because they're
             //     in another widget, in which case there's just one memory leak to deal with. (andy)
-            string* PluginName = new string (*i);
-            // find the first slash, if there is one, and get rid of everything before and including it
-            unsigned int p = PluginName->find ('/');
-            if (p < PluginName->length()) PluginName->erase (0, p);
-            // find last . and get rid of everything after and including it
-            p = PluginName->rfind ('.');
-            unsigned int l = PluginName->length ();
-            if (p < l) PluginName->erase (p, l);
-            /* FooPlugin_DSP.so / FooPlugin_GUI.so share one toolbar entry.
-               Strip the ABI suffix so the tooltip stays "OscillatorPlugin". */
-            l = PluginName->length();
-            if (l > 4) {
-               string suf = PluginName->substr(l - 4);
-               if (suf == "_DSP" || suf == "_GUI")
-                  PluginName->erase(l - 4);
-            }
+            string* PluginName = new string (info->Name);
+            string::size_type p;
             NewButton->tooltip (PluginName->c_str());
             // Slashes have significance to the menu widgets, remove them from the GroupName
-            while ((p = GroupName.find ('/')) < PluginName->length())
+            while ((p = GroupName.find ('/')) != string::npos)
                   GroupName = GroupName.replace (p, 1, " and ");
             string MenuEntry = "Plugins/" + GroupName + "/" + *PluginName;
             m_MainMenu->add (MenuEntry.c_str(), 0, cb_NewDeviceFromMenu, &Numbers[ID], 0);

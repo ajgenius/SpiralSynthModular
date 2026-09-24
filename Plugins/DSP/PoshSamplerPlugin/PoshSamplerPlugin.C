@@ -51,6 +51,11 @@ int SpiralPlugin_GetType()
 
    const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
    int SpiralPlugin_GetID() { return 32; }
+   string SpiralPlugin_GetName()
+   {
+       return "PoshSampler";
+   }
+
    string SpiralPlugin_GetGroupName() { return "Delay/Sampling"; }
 }
 

@@ -421,6 +421,11 @@ int SpiralPlugin_GetID()
 	return 31;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "Jack";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "InputOutput";

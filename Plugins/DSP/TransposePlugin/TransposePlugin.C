@@ -59,6 +59,11 @@ int SpiralPlugin_GetID () {
     return 122;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "Transpose";
+}
+
 string SpiralPlugin_GetGroupName() {
     return "Control";
 }

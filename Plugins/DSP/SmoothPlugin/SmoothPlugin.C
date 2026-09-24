@@ -54,6 +54,11 @@ int SpiralPlugin_GetID()
 	return 0x0014;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "Smooth";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "Control";

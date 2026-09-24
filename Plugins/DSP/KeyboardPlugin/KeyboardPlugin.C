@@ -56,6 +56,11 @@ int SpiralPlugin_GetID()
 	return 40;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "Keyboard";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "InputOutput";

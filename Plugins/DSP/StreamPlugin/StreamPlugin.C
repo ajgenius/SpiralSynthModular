@@ -49,6 +49,11 @@ const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
 
 int SpiralPlugin_GetID() { return 0x0119; }
 
+string SpiralPlugin_GetName()
+{
+	return "Stream";
+}
+
 string SpiralPlugin_GetGroupName() { return "Delay/Sampling"; }
 
 }

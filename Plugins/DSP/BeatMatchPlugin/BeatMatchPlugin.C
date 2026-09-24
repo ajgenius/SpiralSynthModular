@@ -55,6 +55,11 @@ int SpiralPlugin_GetID()
 	return 48;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "BeatMatch";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "Maths/Logic";

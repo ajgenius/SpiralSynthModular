@@ -61,6 +61,11 @@ int SpiralPlugin_GetID()
 	return 0x0002;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "Midi";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "InputOutput";

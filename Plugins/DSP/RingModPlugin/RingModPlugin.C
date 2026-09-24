@@ -55,6 +55,11 @@ int SpiralPlugin_GetID()
 	return 0x000a;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "Ring Mod";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "Filters/FX";

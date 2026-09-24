@@ -57,6 +57,11 @@ int SpiralPlugin_GetID()
 	return 0x0009;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "Amp";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "Amps/Mixers";

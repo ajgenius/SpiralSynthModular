@@ -83,6 +83,11 @@ int SpiralPlugin_GetID()
 	return 0x0016;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "LADSPA";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "Filters/FX";

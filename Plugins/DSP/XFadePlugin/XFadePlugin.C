@@ -55,6 +55,11 @@ int SpiralPlugin_GetID()
 	return 0x001b;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "XFade";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "Amps/Mixers";

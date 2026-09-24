@@ -47,6 +47,11 @@ int SpiralPlugin_GetType()
 
    int SpiralPlugin_GetID () { return 126; }
 
+   string SpiralPlugin_GetName()
+   {
+       return "MixSwitch";
+   }
+
    string SpiralPlugin_GetGroupName() { return "Maths/Logic"; }
 }
 

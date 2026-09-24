@@ -47,6 +47,11 @@ int SpiralPlugin_GetType()
 
    int SpiralPlugin_GetID () { return 125; }
 
+   string SpiralPlugin_GetName()
+   {
+       return "SplitSwitch";
+   }
+
    string SpiralPlugin_GetGroupName() { return "Maths/Logic"; }
 }
 

@@ -52,6 +52,11 @@ const char** SpiralPlugin_GetIcon() {
 int SpiralPlugin_GetID() {
   return 0x0032;
 }
+string SpiralPlugin_GetName()
+{
+	return "WaveShaper";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "Filters/FX";

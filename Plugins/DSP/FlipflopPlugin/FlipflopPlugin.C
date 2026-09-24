@@ -55,6 +55,11 @@ int SpiralPlugin_GetID()
 	return 46;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "Flipflop";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "Maths/Logic";

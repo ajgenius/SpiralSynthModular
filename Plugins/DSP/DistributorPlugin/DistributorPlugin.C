@@ -57,6 +57,11 @@ int SpiralPlugin_GetID() {
     return 0x0056;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "Distributor";
+}
+
 string SpiralPlugin_GetGroupName() {
        return "Control";
 }

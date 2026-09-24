@@ -59,6 +59,11 @@ int SpiralPlugin_GetID()
 	return 0x000d;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "Moog Filter";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "Filters/FX";

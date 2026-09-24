@@ -66,6 +66,11 @@ const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
 
 int SpiralPlugin_GetID() { return 41; }
 
+string SpiralPlugin_GetName()
+{
+	return "DiskWriter";
+}
+
 string SpiralPlugin_GetGroupName() { return "InputOutput"; }
 
 }

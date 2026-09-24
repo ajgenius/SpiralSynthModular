@@ -56,6 +56,11 @@ int SpiralPlugin_GetID()
 	return 49;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "Noise";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "Oscillators";

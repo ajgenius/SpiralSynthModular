@@ -61,6 +61,11 @@ int SpiralPlugin_GetID()
 	return 0x0017;
 }
 
+string SpiralPlugin_GetName()
+{
+	return "WaveTable";
+}
+
 string SpiralPlugin_GetGroupName()
 {
 	return "Oscillators";
