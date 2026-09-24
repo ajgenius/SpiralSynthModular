@@ -367,7 +367,7 @@ Plugins/DSP/MidiPlugin/Makefile
 Plugins/DSP/MixSwitchPlugin/Makefile
 Plugins/DSP/MixerPlugin/Makefile
 Plugins/DSP/MoogFilterPlugin/Makefile
-Plugins/DSP/MousePlugin/Makefile
+Plugins/Broken/MousePlugin/Makefile
 Plugins/DSP/NoisePlugin/Makefile
 Plugins/DSP/NoteSnapPlugin/Makefile
 Plugins/DSP/OperatorPlugin/Makefile

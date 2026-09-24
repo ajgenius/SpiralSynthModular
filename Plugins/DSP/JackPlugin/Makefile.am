@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = JackPlugin.la
 
 JackPlugin_la_SOURCES =					\
-			JackPluginGUI.h			\
-			JackPluginGUI.C			\
+			../../GUI/JackPlugin/JackPluginGUI.h			\
+			../../GUI/JackPlugin/JackPluginGUI.C			\
 			JackPlugin.h			\
 			JackPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/JackPlugin
