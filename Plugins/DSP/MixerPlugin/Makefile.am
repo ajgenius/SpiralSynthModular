@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = MixerPlugin.la
 
 MixerPlugin_la_SOURCES =					\
-			MixerPluginGUI.h			\
-			MixerPluginGUI.C			\
+			../../GUI/MixerPlugin/MixerPluginGUI.h			\
+			../../GUI/MixerPlugin/MixerPluginGUI.C			\
 			MixerPlugin.h			\
 			MixerPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/MixerPlugin

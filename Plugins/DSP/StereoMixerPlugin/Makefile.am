@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = StereoMixerPlugin.la
 
 StereoMixerPlugin_la_SOURCES =					\
-			StereoMixerPluginGUI.h			\
-			StereoMixerPluginGUI.C			\
+			../../GUI/StereoMixerPlugin/StereoMixerPluginGUI.h			\
+			../../GUI/StereoMixerPlugin/StereoMixerPluginGUI.C			\
 			StereoMixerPlugin.h			\
 			StereoMixerPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/StereoMixerPlugin
