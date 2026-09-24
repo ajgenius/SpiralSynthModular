@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = SVFilterPlugin.la
 
 SVFilterPlugin_la_SOURCES =					\
-			SVFilterPluginGUI.h			\
-			SVFilterPluginGUI.C			\
+			../../GUI/SVFilterPlugin/SVFilterPluginGUI.h			\
+			../../GUI/SVFilterPlugin/SVFilterPluginGUI.C			\
 			SVFilterPlugin.h			\
 			SVFilterPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/SVFilterPlugin

@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = MoogFilterPlugin.la
 
 MoogFilterPlugin_la_SOURCES =					\
-			MoogFilterPluginGUI.h			\
-			MoogFilterPluginGUI.C			\
+			../../GUI/MoogFilterPlugin/MoogFilterPluginGUI.h			\
+			../../GUI/MoogFilterPlugin/MoogFilterPluginGUI.C			\
 			MoogFilterPlugin.h			\
 			MoogFilterPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/MoogFilterPlugin

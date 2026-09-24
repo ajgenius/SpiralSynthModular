@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = FlipflopPlugin.la
 
 FlipflopPlugin_la_SOURCES =					\
-			FlipflopPluginGUI.h			\
-			FlipflopPluginGUI.C			\
+			../../GUI/FlipflopPlugin/FlipflopPluginGUI.h			\
+			../../GUI/FlipflopPlugin/FlipflopPluginGUI.C			\
 			FlipflopPlugin.h			\
 			FlipflopPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/FlipflopPlugin

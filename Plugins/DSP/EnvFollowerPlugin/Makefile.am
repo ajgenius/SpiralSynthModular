@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = EnvFollowerPlugin.la
 
 EnvFollowerPlugin_la_SOURCES =					\
-			EnvFollowerPluginGUI.h			\
-			EnvFollowerPluginGUI.C			\
+			../../GUI/EnvFollowerPlugin/EnvFollowerPluginGUI.h			\
+			../../GUI/EnvFollowerPlugin/EnvFollowerPluginGUI.C			\
 			EnvFollowerPlugin.h			\
 			EnvFollowerPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/EnvFollowerPlugin

@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = FormantFilterPlugin.la
 
 FormantFilterPlugin_la_SOURCES =					\
-			FormantFilterPluginGUI.h			\
-			FormantFilterPluginGUI.C			\
+			../../GUI/FormantFilterPlugin/FormantFilterPluginGUI.h			\
+			../../GUI/FormantFilterPlugin/FormantFilterPluginGUI.C			\
 			FormantFilterPlugin.h			\
 			FormantFilterPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/FormantFilterPlugin

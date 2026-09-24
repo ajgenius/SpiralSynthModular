@@ -13,8 +13,8 @@ plugin_LTLIBRARIES = FilterPlugin.la
 FilterPlugin_la_SOURCES =					\
 			iir_filter.h				\
 			iir_filter.C				\
-			FilterPluginGUI.h			\
-			FilterPluginGUI.C			\
+			../../GUI/FilterPlugin/FilterPluginGUI.h			\
+			../../GUI/FilterPlugin/FilterPluginGUI.C			\
 			FilterPlugin.h				\
 			FilterPlugin.C
 			
@@ -35,3 +35,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/FilterPlugin

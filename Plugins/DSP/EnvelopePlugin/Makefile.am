@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = EnvelopePlugin.la
 
 EnvelopePlugin_la_SOURCES =					\
-			EnvelopePluginGUI.h			\
-			EnvelopePluginGUI.C			\
+			../../GUI/EnvelopePlugin/EnvelopePluginGUI.h			\
+			../../GUI/EnvelopePlugin/EnvelopePluginGUI.C			\
 			EnvelopePlugin.h			\
 			EnvelopePlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/EnvelopePlugin
