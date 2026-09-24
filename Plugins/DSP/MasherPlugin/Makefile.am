@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = MasherPlugin.la
 
 MasherPlugin_la_SOURCES =				\
-			MasherPluginGUI.h		\
-			MasherPluginGUI.C		\
+			../../GUI/MasherPlugin/MasherPluginGUI.h		\
+			../../GUI/MasherPlugin/MasherPluginGUI.C		\
 			MasherPlugin.h			\
 			MasherPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/MasherPlugin

@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = SwitchPlugin.la
 
 SwitchPlugin_la_SOURCES =					\
-			SwitchPluginGUI.h			\
-			SwitchPluginGUI.C			\
+			../../GUI/SwitchPlugin/SwitchPluginGUI.h			\
+			../../GUI/SwitchPlugin/SwitchPluginGUI.C			\
 			SwitchPlugin.h			\
 			SwitchPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/SwitchPlugin

@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = XFadePlugin.la
 
 XFadePlugin_la_SOURCES =					\
-			XFadePluginGUI.h			\
-			XFadePluginGUI.C			\
+			../../GUI/XFadePlugin/XFadePluginGUI.h			\
+			../../GUI/XFadePlugin/XFadePluginGUI.C			\
 			XFadePlugin.h			\
 			XFadePlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/XFadePlugin

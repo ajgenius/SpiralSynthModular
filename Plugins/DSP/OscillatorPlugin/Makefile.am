@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = OscillatorPlugin.la
 
 OscillatorPlugin_la_SOURCES =					\
-			OscillatorPluginGUI.h			\
-			OscillatorPluginGUI.C			\
+			../../GUI/OscillatorPlugin/OscillatorPluginGUI.h			\
+			../../GUI/OscillatorPlugin/OscillatorPluginGUI.C			\
 			OscillatorPlugin.h			\
 			OscillatorPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/OscillatorPlugin

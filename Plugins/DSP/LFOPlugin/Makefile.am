@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = LFOPlugin.la
 
 LFOPlugin_la_SOURCES =					\
-			LFOPluginGUI.h			\
-			LFOPluginGUI.C			\
+			../../GUI/LFOPlugin/LFOPluginGUI.h			\
+			../../GUI/LFOPlugin/LFOPluginGUI.C			\
 			LFOPlugin.h			\
 			LFOPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/LFOPlugin

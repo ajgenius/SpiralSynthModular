@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = SmoothPlugin.la
 
 SmoothPlugin_la_SOURCES =					\
-			SmoothPluginGUI.h			\
-			SmoothPluginGUI.C			\
+			../../GUI/SmoothPlugin/SmoothPluginGUI.h			\
+			../../GUI/SmoothPlugin/SmoothPluginGUI.C			\
 			SmoothPlugin.h			\
 			SmoothPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/SmoothPlugin

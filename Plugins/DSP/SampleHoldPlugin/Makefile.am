@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = SampleHoldPlugin.la
 
 SampleHoldPlugin_la_SOURCES =					\
-			SampleHoldPluginGUI.h			\
-			SampleHoldPluginGUI.C			\
+			../../GUI/SampleHoldPlugin/SampleHoldPluginGUI.h			\
+			../../GUI/SampleHoldPlugin/SampleHoldPluginGUI.C			\
 			SampleHoldPlugin.h			\
 			SampleHoldPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/SampleHoldPlugin

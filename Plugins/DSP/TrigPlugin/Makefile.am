@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = TrigPlugin.la
 
 TrigPlugin_la_SOURCES =					\
-			TrigPluginGUI.h			\
-			TrigPluginGUI.C			\
+			../../GUI/TrigPlugin/TrigPluginGUI.h			\
+			../../GUI/TrigPlugin/TrigPluginGUI.C			\
 			TrigPlugin.h			\
 			TrigPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/TrigPlugin

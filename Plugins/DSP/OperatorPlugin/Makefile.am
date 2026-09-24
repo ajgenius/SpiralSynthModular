@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = OperatorPlugin.la
 
 OperatorPlugin_la_SOURCES =					\
-			OperatorPluginGUI.h			\
-			OperatorPluginGUI.C			\
+			../../GUI/OperatorPlugin/OperatorPluginGUI.h			\
+			../../GUI/OperatorPlugin/OperatorPluginGUI.C			\
 			OperatorPlugin.h			\
 			OperatorPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/OperatorPlugin

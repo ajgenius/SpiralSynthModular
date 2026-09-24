@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = RingModPlugin.la
 
 RingModPlugin_la_SOURCES =					\
-			RingModPluginGUI.h			\
-			RingModPluginGUI.C			\
+			../../GUI/RingModPlugin/RingModPluginGUI.h			\
+			../../GUI/RingModPlugin/RingModPluginGUI.C			\
 			RingModPlugin.h			\
 			RingModPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/RingModPlugin

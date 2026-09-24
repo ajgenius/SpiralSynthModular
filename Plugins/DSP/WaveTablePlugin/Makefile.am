@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = WaveTablePlugin.la
 
 WaveTablePlugin_la_SOURCES =					\
-			WaveTablePluginGUI.h			\
-			WaveTablePluginGUI.C			\
+			../../GUI/WaveTablePlugin/WaveTablePluginGUI.h			\
+			../../GUI/WaveTablePlugin/WaveTablePluginGUI.C			\
 			WaveTablePlugin.h			\
 			WaveTablePlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/WaveTablePlugin

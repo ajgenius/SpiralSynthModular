@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = TransposePlugin.la
 
 TransposePlugin_la_SOURCES =					\
-			TransposePluginGUI.h			\
-			TransposePluginGUI.C			\
+			../../GUI/TransposePlugin/TransposePluginGUI.h			\
+			../../GUI/TransposePlugin/TransposePluginGUI.C			\
 			TransposePlugin.h			\
 			TransposePlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/TransposePlugin
