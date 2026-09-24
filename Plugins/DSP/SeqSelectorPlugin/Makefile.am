@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = SeqSelectorPlugin.la
 
 SeqSelectorPlugin_la_SOURCES =					\
-			SeqSelectorPluginGUI.h			\
-			SeqSelectorPluginGUI.C			\
+			../../GUI/SeqSelectorPlugin/SeqSelectorPluginGUI.h			\
+			../../GUI/SeqSelectorPlugin/SeqSelectorPluginGUI.C			\
 			SeqSelectorPlugin.h			\
 			SeqSelectorPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/SeqSelectorPlugin
