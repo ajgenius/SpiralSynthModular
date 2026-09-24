@@ -19,7 +19,7 @@ int main()
 	std::fclose(file);
 
 	std::string error("stale");
-	JSONValue *root = ParseJSON(path, &error);
+	JSONValue *root = ParseJSON(path, false, &error);
 	CHECK(root && error.empty());
 	long n = 0;
 	CHECK(root->Get("id")->Integer(n) && n == 7);
@@ -30,12 +30,19 @@ int main()
 	CHECK(root->Keys().size() == 3);
 	delete root;
 
-	root = ParseJSON(path, &error);
+	root = ParseJSON(path, false, &error);
 	CHECK(root);
 	delete root;
 	std::remove(path);
-	CHECK(!ParseJSON(path, &error) && !error.empty());
-	CHECK(!ParseJSON(NULL, &error));
+	CHECK(!ParseJSON(path, false, &error) && !error.empty());
+	CHECK(!ParseJSON(NULL, false, &error));
+
+	std::fputs("{\"Name\":1}", file = std::fopen(path, "wb"));
+	std::fclose(file);
+	root = ParseJSON(path, true, &error);
+	CHECK(root && root->Get("name") && !root->Get("Name"));
+	delete root;
+	std::remove(path);
 
 	return failures ? 1 : 0;
 }

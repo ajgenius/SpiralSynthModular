@@ -32,6 +32,7 @@ private:
 	friend class JSONParser;
 };
 
-JSONValue *ParseJSON(const char *fileName, std::string *error = NULL);
+JSONValue *ParseJSON(const char *fileName, bool caseInsensitive = false,
+		     std::string *error = NULL);
 }
 #endif

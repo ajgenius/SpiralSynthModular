@@ -91,6 +91,7 @@ namespace SpiralJSON
 
 		JSONValue *root;
 		std::vector<Frame> stack;
+		bool folding;
 		std::string failure;
 		yajl_handle handle;
 
@@ -202,6 +203,12 @@ namespace SpiralJSON
 			Frame &frame = p->stack.back();
 
 			frame.key.assign(reinterpret_cast<const char *>(s), n);
+
+			if (p->folding)
+				for (size_t i = 0; i < n; ++i)
+					if (frame.key[i] >= 'A' && frame.key[i] <= 'Z')
+						frame.key[i] += 'a' - 'A';
+
 			frame.hasKey = true;
 
 			return 1;
@@ -220,8 +227,9 @@ namespace SpiralJSON
 		}
 
 	public:
-		JSONParser():
-		    root(NULL)
+		explicit JSONParser(bool fold):
+		    root(NULL),
+		    folding(fold)
 		{
 			static const yajl_callbacks callbacks = {Null, Boolean, NULL, NULL, Number, String,
 								 Map, Key, Pop, Array, Pop};
@@ -308,9 +316,9 @@ namespace SpiralJSON
 		}
 	};
 
-	JSONValue *ParseJSON(const char *fileName, std::string *error)
+	JSONValue *ParseJSON(const char *fileName, bool caseInsensitive, std::string *error)
 	{
-		JSONParser parser;
+		JSONParser parser(caseInsensitive);
 
 		return parser.Parse(fileName, error);
 	}
