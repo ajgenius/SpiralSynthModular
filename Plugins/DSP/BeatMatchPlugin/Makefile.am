@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = BeatMatchPlugin.la
 
 BeatMatchPlugin_la_SOURCES =					\
-			BeatMatchPluginGUI.h			\
-			BeatMatchPluginGUI.C			\
+			../../GUI/BeatMatchPlugin/BeatMatchPluginGUI.h			\
+			../../GUI/BeatMatchPlugin/BeatMatchPluginGUI.C			\
 			BeatMatchPlugin.h			\
 			BeatMatchPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/BeatMatchPlugin

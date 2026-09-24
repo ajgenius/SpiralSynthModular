@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = EchoPlugin.la
 
 EchoPlugin_la_SOURCES =					\
-			EchoPluginGUI.h			\
-			EchoPluginGUI.C			\
+			../../GUI/EchoPlugin/EchoPluginGUI.h			\
+			../../GUI/EchoPlugin/EchoPluginGUI.C			\
 			EchoPlugin.h			\
 			EchoPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/EchoPlugin

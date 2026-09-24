@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = CounterPlugin.la
 
 CounterPlugin_la_SOURCES =					\
-			CounterPluginGUI.h			\
-			CounterPluginGUI.C			\
+			../../GUI/CounterPlugin/CounterPluginGUI.h			\
+			../../GUI/CounterPlugin/CounterPluginGUI.C			\
 			CounterPlugin.h			\
 			CounterPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/CounterPlugin

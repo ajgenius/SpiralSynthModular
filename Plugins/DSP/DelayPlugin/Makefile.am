@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = DelayPlugin.la
 
 DelayPlugin_la_SOURCES =					\
-			DelayPluginGUI.h			\
-			DelayPluginGUI.C			\
+			../../GUI/DelayPlugin/DelayPluginGUI.h			\
+			../../GUI/DelayPlugin/DelayPluginGUI.C			\
 			DelayPlugin.h			\
 			DelayPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/DelayPlugin
