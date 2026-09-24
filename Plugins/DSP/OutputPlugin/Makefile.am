@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = OutputPlugin.la
 
 OutputPlugin_la_SOURCES =					\
-			OutputPluginGUI.h			\
-			OutputPluginGUI.C			\
+			../../GUI/OutputPlugin/OutputPluginGUI.h			\
+			../../GUI/OutputPlugin/OutputPluginGUI.C			\
 			OutputPlugin.h			\
 			OutputPlugin.C \
                         OutputAudioClient.C \
@@ -35,3 +35,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/OutputPlugin

@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = DiskWriterPlugin.la
 
 DiskWriterPlugin_la_SOURCES =					\
-			DiskWriterPluginGUI.h			\
-			DiskWriterPluginGUI.C			\
+			../../GUI/DiskWriterPlugin/DiskWriterPluginGUI.h			\
+			../../GUI/DiskWriterPlugin/DiskWriterPluginGUI.C			\
 			DiskWriterPlugin.h			\
 			DiskWriterPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/DiskWriterPlugin
