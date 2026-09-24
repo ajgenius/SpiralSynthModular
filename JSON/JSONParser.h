@@ -32,7 +32,11 @@ private:
 	friend class JSONParser;
 };
 
+// Strict JSON. Duplicate keys rejected. 16 MiB. 64 containers.
+// ParseJSONText keeps embedded NUL bytes. ASCII key folding is opt-in.
 JSONValue *ParseJSON(const char *fileName, bool caseInsensitive = false,
 		     std::string *error = NULL);
+JSONValue *ParseJSONText(const std::string &text, bool caseInsensitive = false,
+			 std::string *error = NULL);
 }
 #endif

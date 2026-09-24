@@ -115,19 +115,13 @@ namespace SpiralJSON
 
 				if (frame.container->GetType() == JSONValue::Object)
 				{
-					if (!frame.hasKey)
+					if (!frame.hasKey || frame.container->Get(frame.key))
 					{
 						delete value;
-						failure = "Missing JSON object key";
+						failure = "Duplicate or missing JSON object key";
 
 						return 0;
 					}
-
-					std::map<std::string, JSONValue *>::iterator existing =
-					    frame.container->mMembers.find(frame.key);
-
-					if (existing != frame.container->mMembers.end())
-						delete existing->second;
 
 					frame.container->mMembers[frame.key] = value;
 					frame.hasKey = false;
@@ -141,6 +135,13 @@ namespace SpiralJSON
 
 		int Push(JSONValue::Type type)
 		{
+			if (stack.size() >= 64)
+			{
+				failure = "JSON nesting exceeds 64 containers";
+
+				return 0;
+			}
+
 			JSONValue *value = new JSONValue(type);
 
 			if (!Append(value))
@@ -210,6 +211,13 @@ namespace SpiralJSON
 						frame.key[i] += 'a' - 'A';
 
 			frame.hasKey = true;
+
+			if (frame.container->Get(frame.key))
+			{
+				p->failure = "Duplicate JSON object key";
+
+				return 0;
+			}
 
 			return 1;
 		}
@@ -296,11 +304,19 @@ namespace SpiralJSON
 			}
 
 			unsigned char buffer[4096];
-			size_t length = 0;
+			size_t length = 0, total = 0;
 			yajl_status status = yajl_status_ok;
 
 			while ((length = fread(buffer, 1, sizeof(buffer), file)) != 0)
 			{
+				total += length;
+
+				if (total > 16 * 1024 * 1024)
+				{
+					failure = "JSON file exceeds 16 MiB";
+					break;
+				}
+
 				status = yajl_parse(handle, buffer, length);
 
 				if (status != yajl_status_ok)
@@ -314,6 +330,32 @@ namespace SpiralJSON
 
 			return Finish(status, buffer, length, error);
 		}
+
+		JSONValue *ParseText(const char *text, size_t length, std::string *error)
+		{
+			if (error)
+				error->clear();
+
+			if (!text || !handle)
+			{
+				if (error)
+					*error = "Cannot parse empty JSON text";
+
+				return NULL;
+			}
+
+			if (length > 16 * 1024 * 1024)
+			{
+				if (error)
+					*error = "JSON file exceeds 16 MiB";
+
+				return NULL;
+			}
+
+			yajl_status status = yajl_parse(handle, reinterpret_cast<const unsigned char *>(text), length);
+
+			return Finish(status, reinterpret_cast<const unsigned char *>(text), length, error);
+		}
 	};
 
 	JSONValue *ParseJSON(const char *fileName, bool caseInsensitive, std::string *error)
@@ -321,5 +363,12 @@ namespace SpiralJSON
 		JSONParser parser(caseInsensitive);
 
 		return parser.Parse(fileName, error);
+	}
+
+	JSONValue *ParseJSONText(const std::string &text, bool caseInsensitive, std::string *error)
+	{
+		JSONParser parser(caseInsensitive);
+
+		return parser.ParseText(text.data(), text.size(), error);
 	}
 }
