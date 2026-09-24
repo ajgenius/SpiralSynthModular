@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = ControllerPlugin.la
 
 ControllerPlugin_la_SOURCES =					\
-			ControllerPluginGUI.h			\
-			ControllerPluginGUI.C			\
+			../../GUI/ControllerPlugin/ControllerPluginGUI.h			\
+			../../GUI/ControllerPlugin/ControllerPluginGUI.C			\
 			ControllerPlugin.h			\
 			ControllerPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/ControllerPlugin
