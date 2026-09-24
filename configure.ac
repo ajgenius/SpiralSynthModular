@@ -26,6 +26,26 @@ AM_PROG_LIBTOOL
 
 AC_PATH_TOOL([PKG_CONFIG], [pkg-config], [no])
 
+dnl JSON reader. YAJL is required for the check program.
+AC_ARG_VAR([YAJL_CFLAGS], [C preprocessor flags for YAJL])
+AC_ARG_VAR([YAJL_LIBS], [Linker flags for YAJL])
+if test "$PKG_CONFIG" != no && $PKG_CONFIG --exists yajl; then
+    test -n "$YAJL_CFLAGS" || YAJL_CFLAGS=`$PKG_CONFIG --cflags yajl`
+    test -n "$YAJL_LIBS" || YAJL_LIBS=`$PKG_CONFIG --libs yajl`
+fi
+test -n "$YAJL_LIBS" || YAJL_LIBS="-lyajl"
+ssm_saved_CPPFLAGS="$CPPFLAGS"
+ssm_saved_LIBS="$LIBS"
+CPPFLAGS="$CPPFLAGS $YAJL_CFLAGS"
+LIBS="$YAJL_LIBS $LIBS"
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <yajl/yajl_parse.h>]], [[
+    yajl_handle parser = yajl_alloc(0, 0, 0);
+    yajl_complete_parse(parser);
+    yajl_free(parser);
+]])], [], [AC_MSG_ERROR([YAJL development files required])])
+CPPFLAGS="$ssm_saved_CPPFLAGS"
+LIBS="$ssm_saved_LIBS"
+
 dnl ---- OutputPlugin audio backends (in libspiralcore) ----
 dnl Blocking device-paced I/O: PortAudio Pa_WriteStream, ALSA writei, OSS
 dnl write().  Not the original callback PortAudioClient, not PipeWire/ESD.
@@ -342,6 +362,7 @@ AC_SUBST(PLUGINLIST)
 
 dnl Modify the output files.
 AC_OUTPUT(
+JSON/Makefile
 SpiralSynthPluginLocation.h
 Makefile
 GUI/Makefile

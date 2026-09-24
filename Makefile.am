@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = libspiralcore GUI Plugins
+SUBDIRS = JSON libspiralcore GUI Plugins
 
 INCLUDES =                                              \
                 $(FLTK_CXXFLAGS)                        \
