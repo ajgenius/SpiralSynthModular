@@ -11,8 +11,8 @@ plugindir = $(libdir)/SpiralPlugins
 plugin_LTLIBRARIES = NoteSnapPlugin.la
 
 NoteSnapPlugin_la_SOURCES =					\
-			NoteSnapPluginGUI.h			\
-			NoteSnapPluginGUI.C			\
+			../../GUI/NoteSnapPlugin/NoteSnapPluginGUI.h			\
+			../../GUI/NoteSnapPlugin/NoteSnapPluginGUI.C			\
 			NoteSnapPlugin.h			\
 			NoteSnapPlugin.C
 			
@@ -33,3 +33,5 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 
 AM_CPPFLAGS = -I$(srcdir)
+
+AM_CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/Plugins/GUI/NoteSnapPlugin
