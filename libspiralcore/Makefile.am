@@ -38,7 +38,7 @@ EXTRA_DIST = \
     include/PortAudioClient.h \
     include/RingBuffer.h \
     include/SearchPaths.h \
-    include/Time.h \
+    include/SpiralTime.h \
     include/Trace.h \
     include/Tuna.h \
     src/AsyncSampleLoader.cpp \
