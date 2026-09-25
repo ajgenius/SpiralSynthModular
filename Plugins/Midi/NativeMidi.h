@@ -3,11 +3,9 @@
 #ifndef SSM_NATIVE_MIDI_H
 #define SSM_NATIVE_MIDI_H
 #include "MidiBackend.h"
-#include <atomic>
-#include <chrono>
 #include <memory>
-#include <mutex>
-#include <thread>
+#include "ThreadCompatibility.h"
+#include "Compatibility.h"
 
 namespace Spiral
 {
@@ -15,27 +13,28 @@ namespace Spiral
 class MidiQueue
 {
 	MidiPacket packets[1024];
-	std::atomic<unsigned> read{0}, write{0};
+	SSMCompat::Atomic<unsigned> read, write;
 public:
+	MidiQueue():read(0),write(0) {}
 	bool Push(const MidiPacket &packet)
 	{
-		unsigned w= write.load(std::memory_order_relaxed), next= (w + 1) % 1024;
-		if(next == read.load(std::memory_order_acquire)) return false;
+		unsigned w= write.load(SSMCompat::Relaxed), next= (w + 1) % 1024;
+		if(next == read.load(SSMCompat::Acquire)) return false;
 		packets[w]= packet;
-		write.store(next, std::memory_order_release);
+		write.store(next, SSMCompat::Release);
 		return true;
 	}
 	bool Peek(MidiPacket &packet)
 	{
-		unsigned r= read.load(std::memory_order_relaxed);
-		if(r == write.load(std::memory_order_acquire)) return false;
+		unsigned r= read.load(SSMCompat::Relaxed);
+		if(r == write.load(SSMCompat::Acquire)) return false;
 		packet= packets[r];
 		return true;
 	}
 	bool Pop(MidiPacket &packet)
 	{
 		if(!Peek(packet)) return false;
-		read.store((read.load(std::memory_order_relaxed) + 1) % 1024, std::memory_order_release);
+		read.store((read.load(SSMCompat::Relaxed) + 1) % 1024, SSMCompat::Release);
 		return true;
 	}
 };
@@ -75,16 +74,17 @@ public:
 
 class NativeMidiBackend: public MidiBackend
 {
-	std::unique_ptr<MidiTransport> transport;
+	std::auto_ptr<MidiTransport> transport;
 	MidiQueue incoming, outgoing;
-	std::atomic<bool> stop{false}, reset{false}, overflow{false}, ready{false};
-	std::atomic<unsigned> epoch{0};
-	std::mutex mutex;
+	SSMCompat::Atomic<bool> stop, reset, overflow, ready;
+	SSMCompat::Atomic<unsigned> epoch;
+	SSMCompat::Mutex mutex;
 	std::string source, destination, status;
 	std::vector<std::string> inputs, outputs;
-	bool notes[16][128]= {};
-	bool sustain[16]= {};
-	std::thread worker;
+	bool notes[16][128];
+	bool sustain[16];
+	pthread_t worker;
+	static void *Worker(void *);
 	void Run();
 	void Panic();
 	void Track(const MidiPacket &);
