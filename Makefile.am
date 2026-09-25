@@ -1,15 +1,14 @@
 AUTOMAKE_OPTIONS = foreign
 SUBDIRS = JSON libspiralcore GUI Plugins
 
-INCLUDES =                                              \
+AM_CPPFLAGS =                                              \
                 $(FLTK_CXXFLAGS)                        \
-                $(FLTK_CFLAGS)                          \
-                -I$(top_builddir)/GUI/Widgets           \
+                -I$(top_srcdir)/GUI/Widgets           \
                 -I$(top_srcdir)/libspiralcore/include
 
-LIBS = 							\
+SpiralSynthModular_LDADD = 							\
 	$(FLTK_LIBS)					\
-	-lm -ldl -lpthread				\
+	-lm				\
 	$(top_builddir)/GUI/Widgets/libSpiralWidgets.la \
 	$(top_builddir)/GUI/Widgets/libSpiralPlugin.la\
                 $(top_builddir)/libspiralcore/libspiralcore.la
@@ -30,3 +29,9 @@ SpiralSynthModular_SOURCES = \
 		GraphSort.h \
 		GraphSort.C \
 		main.cpp
+
+AM_CPPFLAGS += -DPLUGIN_PATH_LOCATION=\"$(ssm_plugindir)/\"
+ssm_plugindir = @PLUGINDIR@
+
+# Widgets and loadable plugins resolve host symbols from the executable.
+SpiralSynthModular_LDFLAGS = -export-dynamic

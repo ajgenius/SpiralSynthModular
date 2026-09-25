@@ -1,7 +1,6 @@
-INCLUDES =                                              \
+AM_CPPFLAGS = -I$(top_srcdir)                                              \
                 $(FLTK_CXXFLAGS)                        \
-                $(FLTK_CFLAGS)                          \
-                -I$(top_builddir)/GUI/Widgets           \
+                -I$(top_srcdir)/GUI/Widgets           \
                 -I$(top_srcdir)/libspiralcore/include
 
 EXTRA_DIST = 				\
@@ -58,10 +57,10 @@ libSpiralWidgets_la_SOURCES =					\
 					WS_InvSine.h		\
 					WS_Noise.h
 					
-libSpiralWidgets_la_LDFLAGS = -shared -no-undefined -version-info $(LT_VERSION_INFO)
+libSpiralWidgets_la_LDFLAGS = -shared -version-info $(LT_VERSION_INFO)
 libSpiralWidgets_la_LIBADD = 				\
 				$(FLTK_LIBS)		\
-				 -lm -ldl -lpthread	\
+				 -lm	\
                 $(top_builddir)/libspiralcore/libspiralcore.la
 
 libSpiralPlugin_la_SOURCES = SpiralPlugin.C SpiralPlugin.h
