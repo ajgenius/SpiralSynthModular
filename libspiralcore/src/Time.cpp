@@ -16,7 +16,7 @@
 
 #include <assert.h>
 #include <math.h>
-#include "Time.h"
+#include "SpiralTime.h"
 
 using namespace spiralcore;
 

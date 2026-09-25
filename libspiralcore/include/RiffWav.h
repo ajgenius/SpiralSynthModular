@@ -32,10 +32,9 @@ using spiralcore::Sample;
 #endif
 
 #ifndef USE_LIBSNDFILE
-#if __APPLE__
-// this is the traditional way of setting 2 bytes alignment
-// else the apple compiler might use 4, or even 8
-#pragma options align=mac68k
+#if defined(__APPLE__) && defined(__MACH__)
+// WAV headers use two-byte alignment, including on Intel and ARM Macs.
+#pragma pack(push, 2)
 #endif
 
 struct CanonicalWavHeader
@@ -60,8 +59,8 @@ struct DataHeader
 	int   DataLengthBytes;
 };
 
-#if __APPLE__
-#pragma options align=reset
+#if defined(__APPLE__) && defined(__MACH__)
+#pragma pack(pop)
 #endif
 #endif
 

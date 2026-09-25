@@ -12,8 +12,8 @@ AC_DEFINE([SSM_HOST_ABI], ["ssm-fltk-channel-1"], [SSM plugin host ABI])
 
 AM_INIT_AUTOMAKE
 
-dnl Automake (can't use AC_CONFIG_HEADER - get complaints!)
-AM_CONFIG_HEADER(config.h)
+dnl Generate the configuration header.
+AC_CONFIG_HEADERS([config.h])
 
 dnl Initialize maintainer mode
 AM_MAINTAINER_MODE
@@ -33,9 +33,16 @@ AC_ARG_VAR([YAJL_CFLAGS], [C preprocessor flags for YAJL 2])
 AC_ARG_VAR([YAJL_LIBS], [Linker flags for YAJL 2])
 have_yajl=no
 if test "$PKG_CONFIG" != no && $PKG_CONFIG --exists 'yajl >= 2.0'; then
-    test -n "$YAJL_CFLAGS" || YAJL_CFLAGS=`$PKG_CONFIG --cflags yajl`
+    if test -z "$YAJL_CFLAGS"; then
+        YAJL_CFLAGS=`$PKG_CONFIG --cflags yajl`
+        dnl Some YAJL .pc files advertise include/yajl, although their
+        dnl own headers include <yajl/yajl_common.h>.
+        yajl_includedir=`$PKG_CONFIG --variable=includedir yajl`
+        case "$yajl_includedir" in
+            */yajl) YAJL_CFLAGS="$YAJL_CFLAGS -I${yajl_includedir%/yajl}" ;;
+        esac
+    fi
     test -n "$YAJL_LIBS" || YAJL_LIBS=`$PKG_CONFIG --libs yajl`
-    have_yajl=yes
 fi
 if test "$have_yajl" = no; then
     test -n "$YAJL_LIBS" || YAJL_LIBS="-lyajl"
@@ -169,19 +176,19 @@ dnl Check plugin directory
 AC_ARG_WITH(plugindir,
   [  --with-plugindir=dir    give the plugin directory],
   plugindir="$withval",
-  plugindir="/usr/lib/SpiralPlugins/${PACKAGE_VERSION}")
+  plugindir='${libdir}/SpiralPlugins/${PACKAGE_VERSION}')
 AC_SUBST(PLUGINDIR, $plugindir)
 
 dnl Check whether to enable debugging
 AC_ARG_ENABLE(debug,  [  --enable-debug          enable debugging ],
-        ac_arg_debug="Y", ac_arg_debug="N")
+        [ac_arg_debug="$enableval"], [ac_arg_debug="no"])
 
-if test $ac_arg_debug = "Y" ; then
-	CFLAGS="-pipe -Wall -O0 -ggdb "
-	CXXFLAGS="-pipe -Wall -O0 -ggdb "
+dnl Keep caller-supplied compiler flags (including the selected C++ standard).
+if test "$ac_arg_debug" = "yes"; then
+    CFLAGS="$CFLAGS -O0 -g"
+    CXXFLAGS="$CXXFLAGS -O0 -g"
 else
-	CFLAGS="-pipe -Wall -O3 -ffast-math -DNO_DEBUG -Wno-unused "
-	CXXFLAGS="-pipe -Wall -O3 -ffast-math -DNO_DEBUG -Wno-unused "
+    AC_DEFINE([NO_DEBUG], [1], [Disable debug diagnostics])
 fi
 
 dnl build plugin list - plugins that do not require an optional component
@@ -342,18 +349,21 @@ AC_SUBST(FLTK_CFLAGS)
 AC_SUBST(FLTK_LIBS)
 
 AC_CHECK_HEADERS(dlfcn.h)
-AC_CHECK_LIB(dl, dlopen)
+AC_SEARCH_LIBS([dlopen], [dl])
+AC_SEARCH_LIBS([pthread_create], [pthread], [],
+    [AC_MSG_ERROR([POSIX threads are required])])
+
+dnl The existing Apple MIDI implementation uses these system frameworks.
+MIDI_LIBS=""
+case "$host_os" in
+    darwin*) MIDI_LIBS="-framework CoreMIDI -framework CoreFoundation" ;;
+esac
+AC_SUBST([MIDI_LIBS])
+AM_CONDITIONAL([MACOS_BUNDLE], [test "x$MIDI_LIBS" != x])
 
 dnl Do we need png?????
 dnl AC_CHECK_HEADERS(png.h)
 dnl AC_CHECK_LIB(png, png_get_copyright)
-
-dnl This is normally done with libtool but since we aren't using libtool
-dnl yet to it here.
-
-dnl FIXME: forced to add -fPIC here..
-CFLAGS="$CFLAGS -fPIC"
-CXXFLAGS="$CFLAGS -fPIC"
 
 AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)

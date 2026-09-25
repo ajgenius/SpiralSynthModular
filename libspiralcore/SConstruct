@@ -27,7 +27,7 @@ Headers = Split("include/ChannelHandler.h \
 				include/Types.h \
 				include/Trace.h \
 				include/NoteTable.h \
-				include/Time.h \
+				include/SpiralTime.h \
 				include/Event.h \
 				include/Tuna.h \
 				include/EventQueue.h \

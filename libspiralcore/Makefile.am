@@ -16,7 +16,7 @@ libspiralcore_la_SOURCES = \
     include/RiffWav.h \
     src/RiffWav.cpp
 libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 0:0:0
-libspiralcore_la_LIBADD = $(AMIDILIBS) $(SFLIBS) $(PORTAUDIO_LIBS) $(ALSA_LIBS) -lm -lpthread
+libspiralcore_la_LIBADD = $(MIDI_LIBS) $(AMIDILIBS) $(SFLIBS) $(PORTAUDIO_LIBS) $(ALSA_LIBS) -lm
 
 check_PROGRAMS = compatibility-test
 TESTS = $(check_PROGRAMS)
@@ -38,7 +38,7 @@ EXTRA_DIST = \
     include/PortAudioClient.h \
     include/RingBuffer.h \
     include/SearchPaths.h \
-    include/Time.h \
+    include/SpiralTime.h \
     include/Trace.h \
     include/Tuna.h \
     src/AsyncSampleLoader.cpp \

@@ -2,6 +2,7 @@
 #include "Sample.h"
 #include "ChannelHandler.h"
 #include "Midi.h"
+#include "RiffWav.h"
 #include <cassert>
 #include <cstring>
 using namespace spiralcore;
@@ -15,6 +16,10 @@ public:
 };
 
 int main() {
+#ifndef USE_LIBSNDFILE
+    assert(sizeof(CanonicalWavHeader) == 36);
+    assert(sizeof(DataHeader) == 8);
+#endif
     Allocator *original=Sample::GetAllocator();
     CountingAllocator allocator;
     Sample::SetAllocator(&allocator);

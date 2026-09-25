@@ -28,3 +28,15 @@ spiralsynthmodular
 /ltmain.sh
 /missing
 /test-driver
+
+# Automake test programs and results
+/JSON/json-reader-test
+/JSON/manifest-test
+/JSON/*.log
+/JSON/*.trs
+/libspiralcore/compatibility-test
+/libspiralcore/*.log
+/libspiralcore/*.trs
+
+/SpiralSynthModular.app/
+/.ssm-bundle-*/
