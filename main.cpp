@@ -101,31 +101,10 @@ void audioloop(void* o)
 }
 
 //////////////////////////////////////////////////////
-#if __APPLE__
-#include <CoreFoundation/CFBundle.h>
-#include <libgen.h>
-#endif
-
 #include "GraphSort.h"
 
 int main(int argc, char **argv)
 {
-#if __APPLE__
-	// --with-plugindir=./Libraries
-	system("pwd");
-	CFBundleRef main	= CFBundleGetMainBundle();
-	CFURLRef	url		= main ? CFBundleCopyExecutableURL(main) : NULL;
-	CFStringRef path	= url ? CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle) : NULL;
-	char *		dst		= (char*)CFStringGetCStringPtr(path, 0);
-
-	printf("main %p url %p path %p dst %p", main, url, path, dst);
-	if (dst) {
-		printf("Have a valid name '%s'\n", dst);
-		chdir(dirname(dst));
-		chdir("..");
-	} else
-		printf("No base pathname\n");
-#endif
         srand(time(NULL));
 	SpiralInfo::Get()->LoadPrefs();
 

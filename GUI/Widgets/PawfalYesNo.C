@@ -34,20 +34,8 @@ bool Pawfal_YesNo(const char *a,...)
 	    ::vsnprintf(buffer, 1024, a, ap);
 	}
 	va_end(ap);
-#if !__APPLE__
 	PawfalYesNo pi(300, 100,buffer);
 	if (pi.go()) return true;
-#else
-	Str255 copy;
-	strncpy((char*)copy + 1, buffer, 253);
-	copy[0] = strlen((char*)copy+1);
-	AlertStdAlertParamRec	rec = { true, false, NULL, 
-		(StringPtr)-1, (StringPtr)-1, NULL, 
-		kAlertStdAlertOKButton, 0, kWindowAlertPositionParentWindowScreen };
-	SInt16					ret = 0;
-	StandardAlert(kAlertCautionAlert, copy, NULL, &rec, &ret);
-	return ret == kAlertStdAlertOKButton;
-#endif
 	return false;
 }
 
