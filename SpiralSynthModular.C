@@ -112,16 +112,20 @@ m_NextID(0)
 
 SynthModular::~SynthModular()
 {
-	ClearUp();
+	// main has stopped the engine; no channel handshake can run now.
+	m_Frozen = true;
+	ClearUp(false);
+	delete m_SettingsWindow;
+	delete m_TopWindow;
 	PluginManager::Get()->PackUpAndGoHome();
 	system("rm -f ___temp.ssmcopytmp");
 }
 
 //////////////////////////////////////////////////////////
 
-void SynthModular::ClearUp()
+void SynthModular::ClearUp(bool synchronize)
 {
-	FreezeAll();
+	if (synchronize) FreezeAll();
 
 	for(map<int,DeviceWin*>::iterator i=m_DeviceWinMap.begin();
 		i!=m_DeviceWinMap.end(); i++)
@@ -138,16 +142,19 @@ void SynthModular::ClearUp()
 			i->second->m_DeviceGUI->GetPluginWindow()->hide();
 		}
 
-		//Delete Device
+		// On shutdown, destroy GUI instances while their modules and DSP
+		// objects are still present. Widget destructors detach from the canvas.
+		if (!synchronize) delete i->second->m_DeviceGUI;
 		delete i->second->m_Device;
 		i->second->m_Device=NULL;
+		if (!synchronize) delete i->second;
 	}
 
 	m_Canvas->Clear();
 	m_DeviceWinMap.clear();
 	m_NextID=0;
 
-	ThawAll();
+	if (synchronize) ThawAll();
 }
 
 //////////////////////////////////////////////////////////
@@ -313,6 +320,7 @@ SpiralWindowType *SynthModular::CreateWindow()
 {
 	m_TopWindow = new SpiralWindowType(MAIN_WIDTH, MAIN_HEIGHT, LABEL.c_str());
         m_TopWindow->user_data((void*)(this));
+        m_TopWindow->callback(cb_Close, this);
 	//m_TopWindow->resizable(m_TopWindow);
         m_MainMenu = new Fl_Menu_Bar (0, 0, MAIN_WIDTH, 20, "");
         m_MainMenu->user_data((void*)(this));
@@ -1360,10 +1368,9 @@ void SynthModular::cb_Merge (Fl_Widget *o, void *v) {
 // Close
 
 inline void SynthModular::cb_Close_i (Fl_Widget *o, void *v) {
+       // Leave widgets alive until engine and plugin cleanup has finished.
        m_SettingsWindow->hide();
-       delete m_SettingsWindow;
        m_TopWindow->hide();
-       delete m_TopWindow;
 }
 
 void SynthModular::cb_Close (Fl_Widget *o, void *v) {

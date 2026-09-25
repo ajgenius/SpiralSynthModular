@@ -35,6 +35,16 @@
 
 pthread_t loopthread,watchdogthread;
 SynthModular *synth;
+static pthread_mutex_t audioStopMutex = PTHREAD_MUTEX_INITIALIZER;
+static bool audioStopRequested = false;
+
+static bool AudioStopRequested()
+{
+    pthread_mutex_lock(&audioStopMutex);
+    bool stop = audioStopRequested;
+    pthread_mutex_unlock(&audioStopMutex);
+    return stop;
+}
 
 char watchdog_check = 1;
 char gui_watchdog_check = 1;
@@ -49,7 +59,7 @@ bool GUI = true;
 
 /////////////////////////////////////////////////////////////
 
-void watchdog (void *arg)
+void *watchdog (void *arg)
 {
 	pthread_setcanceltype (PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
@@ -74,9 +84,9 @@ void watchdog (void *arg)
 
 ///////////////////////////////////////////////////////////////////////
 
-void audioloop(void* o)
+void *audioloop(void* o)
 {
-	while(1)
+	while(!AudioStopRequested())
 	{
 		if (!synth->CallbackMode())
 		{
@@ -99,6 +109,7 @@ void audioloop(void* o)
 
 		watchdog_check = 1;
 	}
+	return NULL;
 }
 
 //////////////////////////////////////////////////////
@@ -167,18 +178,30 @@ int main(int argc, char **argv)
 	if (GUI) win->show(1, argv); // prevents stuff happening before the plugins have loaded
 	
 	// spawn the audio thread
+	bool watchdogStarted = false;
+	int audioError;
 	if (FIFO) 
 	{	
-		pthread_create_realtime(&watchdogthread,(void*(*)(void*))watchdog,NULL,sched_get_priority_max(SCHED_FIFO));
-		pthread_create_realtime(&loopthread,(void*(*)(void*))audioloop,NULL,sched_get_priority_max(SCHED_FIFO)-1);
+		watchdogStarted = (pthread_create_realtime(&watchdogthread,watchdog,NULL,sched_get_priority_max(SCHED_FIFO)) == 0);
+		audioError = pthread_create_realtime(&loopthread,audioloop,NULL,sched_get_priority_max(SCHED_FIFO)-1);
 	}
 	else 
 	{
-		pthread_create(&loopthread,NULL,(void*(*)(void*))audioloop,NULL);
+		audioError = pthread_create(&loopthread,NULL,audioloop,NULL);
 		// reduce the priority of the gui
 		if (setpriority(PRIO_PROCESS,0,20)) cerr<<"Could not set priority for GUI thread"<<endl;
 	}
 	
+	if (audioError != 0) {
+		cerr << "Cannot start audio thread" << endl;
+		if (watchdogStarted) {
+			pthread_cancel(watchdogthread);
+			pthread_join(watchdogthread, NULL);
+		}
+		delete synth;
+		return 1;
+	}
+
 	// do we need to load a patch on startup? 
     if (cmd_specd) synth->LoadPatch(cmd_filename.c_str());        
 	
@@ -197,10 +220,19 @@ int main(int argc, char **argv)
 		gui_watchdog_check=1;
   	}
 	
-	//pthread_cancel(loopthread);
-        delete synth;
+	if (watchdogStarted) {
+		pthread_cancel(watchdogthread);
+		pthread_join(watchdogthread, NULL);
+	}
+	// Acknowledge the freeze while the engine can still service channels.
+	synth->FreezeAll();
+	pthread_mutex_lock(&audioStopMutex);
+	audioStopRequested = true;
+	pthread_mutex_unlock(&audioStopMutex);
+	pthread_join(loopthread, NULL);
+	delete synth;
 
-	return 1;
+	return 0;
 }
 
 // nicked from Paul Barton-Davis' Ardour code :)

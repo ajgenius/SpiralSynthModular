@@ -91,7 +91,7 @@ public:
 	void Update();
 	void AddDevice(int n, int x, int y);
 	void AddComment(int n);
-	void ClearUp();
+	void ClearUp(bool synchronize = true);
 	void UpdateHostInfo();
 	bool CallbackMode() { return m_CallbackUpdateMode; }
 	bool IsBlockingOutputPluginReady() { return m_BlockingOutputPluginIsReady; }
