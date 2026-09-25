@@ -4,26 +4,30 @@
 #include <cassert>
 #include <iostream>
 using namespace Spiral;
+
 int main()
 {
 	snd_midi_event_t *encoder, *decoder;
 	assert(snd_midi_event_new(256, &encoder) == 0);
 	assert(snd_midi_event_new(256, &decoder) == 0);
 	snd_midi_event_no_status(decoder, 1);
-	MidiPacket packets[]= {MidiPacket(0x90, 60, 100), MidiPacket(0x80, 60), MidiPacket(0xb2, 64, 127),
-	                      MidiPacket(0xe0, 0, 64), MidiPacket(0xd0, 45), MidiPacket(0xc0, 7), MidiPacket(0xf8), MidiPacket(0xfa)};
-	for(const auto &p: packets)
+	MidiPacket packets[] = {MidiPacket(0x90, 60, 100), MidiPacket(0x80, 60), MidiPacket(0xb2, 64, 127),
+				MidiPacket(0xe0, 0, 64), MidiPacket(0xd0, 45), MidiPacket(0xc0, 7), MidiPacket(0xf8), MidiPacket(0xfa)};
+	for (size_t i = 0; i < sizeof(packets) / sizeof(packets[0]); ++i)
 	{
-		unsigned size= MidiSize(p.Status);
-		unsigned char bytes[]= {p.Status, p.Data1, p.Data2}, decoded[3]= {};
+		const MidiPacket &p = packets[i];
+		unsigned size = MidiSize(p.Status);
+		unsigned char bytes[] = {p.Status, p.Data1, p.Data2}, decoded[3] = {};
 		snd_seq_event_t event;
 		snd_seq_ev_clear(&event);
 		snd_midi_event_reset_encode(encoder);
 		assert(snd_midi_event_encode(encoder, bytes, size, &event) == size);
 		assert(event.type != SND_SEQ_EVENT_NONE);
 		assert(snd_midi_event_decode(decoder, decoded, sizeof(decoded), &event) == size);
-		for(unsigned i= 0; i < size; ++i) assert(decoded[i] == bytes[i]);
+		for (unsigned i = 0; i < size; ++i)
+			assert(decoded[i] == bytes[i]);
 	}
-	snd_midi_event_free(encoder); snd_midi_event_free(decoder);
+	snd_midi_event_free(encoder);
+	snd_midi_event_free(decoder);
 	std::cout << "ALSA note, CC, bend, pressure, program and realtime codec round-trips PASS\n";
 }
