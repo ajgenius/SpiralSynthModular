@@ -37,3 +37,6 @@ spiralsynthmodular
 /libspiralcore/compatibility-test
 /libspiralcore/*.log
 /libspiralcore/*.trs
+
+/SpiralSynthModular.app/
+/.ssm-bundle-*/

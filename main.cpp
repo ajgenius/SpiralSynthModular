@@ -31,6 +31,7 @@
 
 #include "SpiralSynthModular.h"
 #include "SpiralInfo.h"
+#include "MacBundle.h"
 
 pthread_t loopthread,watchdogthread;
 SynthModular *synth;
@@ -111,12 +112,16 @@ int main(int argc, char **argv)
 	// get args
     string cmd_filename="";
     bool cmd_specd = false;
-	string cmd_pluginPath="";
+	string cmd_pluginPath=SSMBundlePluginPath();
 	// parse the args
     if (argc>1)
 	{
 		for (int a=1; a<argc; a++)
 		{
+#ifdef __APPLE__
+			// Older Finder versions pass a process serial number at launch.
+			if (!strncmp(argv[a], "-psn_", 5)) continue;
+#endif
 			if (!strcmp(argv[a],"--NoGUI")) GUI = false;
 			else if (!strcmp(argv[a],"--Realtime")) FIFO = true;
 			else if (!strcmp(argv[a],"-h"))
