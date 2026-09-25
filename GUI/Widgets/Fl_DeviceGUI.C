@@ -206,13 +206,20 @@ void Fl_DeviceGUI::Resize (int width, int height) {
 
 void Fl_DeviceGUI::Setup(const DeviceGUIInfo& Info, bool FirstTime)
 {
-	m_Info=Info;
+	SetupPorts(Info, FirstTime, false);
+}
 
-	// Remove all current connections - it's the safest thing to do.
+void Fl_DeviceGUI::SetupPorts(const DeviceGUIInfo& Info, bool FirstTime, bool preserveConnections)
+{
+	// Disconnect removed ports while the old buttons and DSP inputs still exist.
 	if (parent() && !FirstTime)
 	{
-		((Fl_Canvas*)(parent()))->ClearConnections(this);
+		if (preserveConnections)
+			((Fl_Canvas*)parent())->PruneConnections(this, Info.NumInputs, Info.NumOutputs);
+		else
+			((Fl_Canvas*)parent())->ClearConnections(this);
 	}
+	m_Info=Info;
 
 	// delete the current ports
 	for(vector<Fl_PortButton*>::iterator i=m_PortVec.begin();
@@ -310,6 +317,8 @@ void Fl_DeviceGUI::Setup(const DeviceGUIInfo& Info, bool FirstTime)
 		add(NewOutput);
 		PortNum++;
 	}
+	if (parent() && !FirstTime && preserveConnections)
+		((Fl_Canvas*)parent())->RestorePortConnections(this);
 }
 
 bool Fl_DeviceGUI::AddConnection(int n)

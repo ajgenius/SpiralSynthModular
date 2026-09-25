@@ -1653,7 +1653,8 @@ void SynthModular::cb_UpdatePluginInfo(int ID, void *PInfo)
 	{
 		DeviceGUIInfo Info=BuildDeviceGUIInfo(*((PluginInfo*)PInfo));
 
-		(*i).second->m_DeviceGUI->Setup(Info);
+		bool preserve = dynamic_cast<StablePortLayout*>((*i).second->m_Device) != NULL;
+		(*i).second->m_DeviceGUI->SetupPorts(Info, false, preserve);
 		(*i).second->m_DeviceGUI->redraw();
 	}
 }

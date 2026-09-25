@@ -100,6 +100,7 @@ class Fl_DeviceGUI : public Fl_Group {
       void Maximise();
       // automatically called from the constructor, but may be redone at any time.
       virtual void Setup (const DeviceGUIInfo& Info, bool FirstTime = false);
+      void SetupPorts(const DeviceGUIInfo& Info, bool FirstTime, bool preserveConnections);
       virtual void Clear();
       int GetPortType (int n) {
 	      if (n < 0 || n >= (int)m_Info.PortTypes.size()) return 0;

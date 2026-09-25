@@ -16,6 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 #include "StereoMixerPlugin.h"
+#include "Finite.h"
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -108,30 +109,36 @@ PluginInfo &StereoMixerPlugin::Initialise(const HostInfo *Host)
 
 void StereoMixerPlugin::Execute()
 {
-	float Pan[4];
-	
-	// Mix the inputs
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 	{
-		Pan[0]=m_Pan[0];
-		Pan[1]=m_Pan[1];
-		Pan[2]=m_Pan[2];
-		Pan[3]=m_Pan[3];
-
-		if (InputExists(0)) Pan[0]+=GetInput(4,n)*0.5;
-		if (InputExists(1)) Pan[1]+=GetInput(5,n)*0.5;
-		if (InputExists(2)) Pan[2]+=GetInput(6,n)*0.5;
-		if (InputExists(3)) Pan[3]+=GetInput(7,n)*0.5;
-	
-		SetOutput(0,n,(GetInput(0,n)*m_ChannelVal[0])*Pan[0]+
-					  (GetInput(1,n)*m_ChannelVal[1])*Pan[1]+
-					  (GetInput(2,n)*m_ChannelVal[2])*Pan[2]+
-					  (GetInput(3,n)*m_ChannelVal[3])*Pan[3]);
-							 
-		SetOutput(1,n,(GetInput(0,n)*m_ChannelVal[0])*(1-Pan[0])+
-					  (GetInput(1,n)*m_ChannelVal[1])*(1-Pan[1])+
-					  (GetInput(2,n)*m_ChannelVal[2])*(1-Pan[2])+
-					  (GetInput(3,n)*m_ChannelVal[3])*(1-Pan[3]));
+		float left = 0.0f, right = 0.0f;
+		for (int c=0; c<NUM_CHANNELS; c++)
+		{
+			const float volume = m_ChannelVal[c];
+			if (volume == 0.0f || !spiralcore::IsFinite(volume)) continue;
+			const float in = GetInput(c,n);
+			float pan = m_Pan[c];
+			if (!spiralcore::IsFinite(in) || !spiralcore::IsFinite(pan)) continue;
+			if (InputExists(c))
+			{
+				const float cv = GetInput(c+4,n);
+				// Invalid CV leaves the channel at its base pan.
+				if (spiralcore::IsFinite(cv)) pan += cv * 0.5;
+			}
+			const float channelLeft = (in * volume) * pan;
+			const float channelRight = (in * volume) * (1 - pan);
+			const float mixedLeft = left + channelLeft;
+			const float mixedRight = right + channelRight;
+			// Keep both sides together, retaining the other healthy channels.
+			if (spiralcore::IsFinite(channelLeft) && spiralcore::IsFinite(channelRight) &&
+			    spiralcore::IsFinite(mixedLeft) && spiralcore::IsFinite(mixedRight))
+			{
+				left = mixedLeft;
+				right = mixedRight;
+			}
+		}
+		SetOutput(0,n,left);
+		SetOutput(1,n,right);
 	}
 }
 

@@ -95,6 +95,8 @@ public:
 
         void DeleteSelection (void);
 	void ClearConnections(Fl_DeviceGUI* Device);
+	void PruneConnections(Fl_DeviceGUI* Device, int inputs, int outputs);
+	void RestorePortConnections(Fl_DeviceGUI* Device);
 	void RemoveDevice(Fl_DeviceGUI* Device);
 	void Clear();
         void AddPluginName(const string &s, int ID);

@@ -775,6 +775,11 @@ void Fl_Canvas::PortClicked(Fl_DeviceGUI* Device, int Type, int Port, bool Value
 
 void Fl_Canvas::ClearConnections(Fl_DeviceGUI* Device)
 {
+	PruneConnections(Device, 0, 0);
+}
+
+void Fl_Canvas::PruneConnections(Fl_DeviceGUI* Device, int inputs, int outputs)
+{
 	bool removedall=false;
 
 	//make sure we don't leave a dangling incomplete wire this will cause errors/seg-faults
@@ -791,8 +796,8 @@ void Fl_Canvas::ClearConnections(Fl_DeviceGUI* Device)
 		for (vector<CanvasWire>::iterator i=m_WireVec.begin();
 			 i!=m_WireVec.end(); i++)
 		{
-			if (i->OutputID==Device->GetID() ||
-			    i->InputID==Device->GetID())
+			if ((i->OutputID==Device->GetID() && i->OutputPort>=outputs) ||
+			    (i->InputID==Device->GetID() && i->InputPort>=inputs))
 			{
 				// Turn off both ports
 				FindDevice(i->OutputID)->RemoveConnection(i->OutputPort+FindDevice(i->OutputID)->GetInfo()->NumInputs);
@@ -811,6 +816,17 @@ void Fl_Canvas::ClearConnections(Fl_DeviceGUI* Device)
 }
 
 ////////////////////////////////////////////////////////////////////////
+
+void Fl_Canvas::RestorePortConnections(Fl_DeviceGUI* Device)
+{
+	// Only this device's buttons were rebuilt; peer counts are still intact.
+	for (vector<CanvasWire>::const_iterator i=m_WireVec.begin(); i!=m_WireVec.end(); ++i)
+	{
+		if (i->InputID==Device->GetID()) Device->AddConnection(i->InputPort);
+		if (i->OutputID==Device->GetID())
+			Device->AddConnection(Device->GetInfo()->NumInputs+i->OutputPort);
+	}
+}
 
 void Fl_Canvas::RemoveDevice(Fl_DeviceGUI* Device)
 {

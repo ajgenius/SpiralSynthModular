@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include "MixerPlugin.h"
+#include "Finite.h"
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -97,9 +98,19 @@ void MixerPlugin::Execute () {
      for (int n=0; n<m_HostInfo->BUFSIZE; n++) {
          float in, out = 0.0;
          for (int c=0; c<m_NumChannels; c++) {
-             in = GetInput (c, n) * m_ChannelVal[c];
+             in = 0.0f;
+             const float volume = m_ChannelVal[c];
+             // Muting must not evaluate NaN * 0 or infinity * 0.
+             if (volume != 0.0f && spiralcore::IsFinite(volume)) {
+                 const float contribution = GetInput (c, n) * volume;
+                 const float mixed = out + contribution;
+                 // Reject only this channel, including arithmetic overflow.
+                 if (spiralcore::IsFinite(contribution) && spiralcore::IsFinite(mixed)) {
+                     in = contribution;
+                     out = mixed;
+                 }
+             }
              m_GUIArgs.inPeak[c] = (in > 1.0);
-             out += in;
          }
          SetOutput (0, n, out);
          m_GUIArgs.Peak = (out > 1.0);
@@ -110,7 +121,8 @@ void MixerPlugin::ExecuteCommands() {
      if (m_AudioCH->IsCommandWaiting()) {
         switch (m_AudioCH->GetCommand()) {
           case SETMIX:
-               m_ChannelVal[m_GUIArgs.Num] = m_GUIArgs.Value;
+               if (m_GUIArgs.Num >= 0 && m_GUIArgs.Num < m_NumChannels)
+                   m_ChannelVal[m_GUIArgs.Num] = m_GUIArgs.Value;
                break;
           case ADDCHAN:
                AddChannel ();
@@ -138,7 +150,7 @@ void MixerPlugin::SetChannels (int num) {
 }
 
 void MixerPlugin::AddChannel (void) {
-     UpdatePluginInfoWithHost(); // once to clear the connections with the current info
+     if (m_NumChannels >= MAX_CHANNELS) return;
      m_PluginInfo.NumInputs++;
      m_NumChannels++;
      AddInput ();
@@ -150,15 +162,14 @@ void MixerPlugin::AddChannel (void) {
 }
 
 void MixerPlugin::RemoveChannel (void) {
-     UpdatePluginInfoWithHost(); // once to clear the connections with the current info
+     if (m_NumChannels <= 2) return;
      m_PluginInfo.NumInputs--;
      m_NumChannels--;
-     vector<std::string>::iterator i = m_PluginInfo.PortTips.end();
-     m_PluginInfo.PortTips.erase (--i);
-     m_PluginInfo.PortTips.erase (--i);
+     m_PluginInfo.PortTips.pop_back();
+     m_PluginInfo.PortTips.pop_back();
      m_PluginInfo.PortTips.push_back ("Output");
+     UpdatePluginInfoWithHost (); // disconnect the removed port before discarding its DSP input
      RemoveInput();
-     UpdatePluginInfoWithHost ();  // do the actual update
 }
 
 void MixerPlugin::StreamOut (ostream &s) {
