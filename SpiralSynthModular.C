@@ -43,6 +43,9 @@
 #include "GUI/options.xpm"
 #include "GUI/comment.xpm"
 #include "PawfalYesNo.h"
+#ifdef __APPLE__
+#include "MacBundle.h"
+#endif
 
 //#define DEBUG_PLUGINS
 //#define DEBUG_STREAM
@@ -319,6 +322,10 @@ SpiralWindowType *SynthModular::CreateWindow()
         m_MainMenu->add ("File/Load", 0, cb_Load, (void*)(this), 0);
         m_MainMenu->add ("File/Save As", 0, cb_Save, (void*)(this), 0);
         m_MainMenu->add ("File/Merge", 0, cb_Merge, (void*)(this), FL_MENU_DIVIDER);
+#ifdef __APPLE__
+        if (!SSMBundleResourceDirectory("Examples").empty())
+            m_MainMenu->add ("File/Examples...", 0, cb_Examples, (void*)(this), FL_MENU_DIVIDER);
+#endif
         m_MainMenu->add ("File/Exit", 0, cb_Close, (void*)(this), 0);
         m_MainMenu->add ("Edit/Cut", 0, cb_Cut, (void*)(this), 0);
         m_MainMenu->add ("Edit/Copy", 0, cb_Copy, (void*)(this), 0);
@@ -1263,10 +1270,10 @@ void SynthModular::cb_New (Fl_Widget *o, void *v) {
 
 // Load
 
-inline void SynthModular::cb_Load_i (Fl_Widget *o, void *v) {
+void SynthModular::ChooseAndLoadPatch(const char *directory) {
        if (m_DeviceWinMap.size()>0 && !Pawfal_YesNo ("Load - Lose changes to current patch?"))
           return;
-       char *fn=fl_file_chooser ("Load a patch", "*.ssm", NULL);
+       char *fn=fl_file_chooser (directory ? "Load an example patch" : "Load a patch", "*.ssm", directory);
        if (fn && *fn!='\0') {
           ifstream in (fn);
           if (in) {
@@ -1281,6 +1288,22 @@ inline void SynthModular::cb_Load_i (Fl_Widget *o, void *v) {
           }
        }
 }
+
+inline void SynthModular::cb_Load_i (Fl_Widget *o, void *v) {
+     ChooseAndLoadPatch(NULL);
+}
+
+#ifdef __APPLE__
+void SynthModular::cb_Examples(Fl_Widget *o, void *v) {
+     std::string directory = SSMBundleResourceDirectory("Examples");
+     if (directory.empty()) {
+          fl_message("The bundled Examples folder is unavailable.");
+          return;
+     }
+     directory += "/";
+     ((SynthModular*)v)->ChooseAndLoadPatch(directory.c_str());
+}
+#endif
 
 void SynthModular::cb_Load(Fl_Widget *o, void *v) {
      ((SynthModular*)(o->user_data()))->cb_Load_i (o, v);

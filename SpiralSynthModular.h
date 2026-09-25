@@ -182,6 +182,10 @@ private:
 	static void cb_New (Fl_Widget *o, void *v);
 	inline void cb_Load_i (Fl_Widget *o, void *v);
 	static void cb_Load (Fl_Widget *o, void *v);
+        void ChooseAndLoadPatch(const char *directory);
+#ifdef __APPLE__
+        static void cb_Examples(Fl_Widget *o, void *v);
+#endif
 	inline void cb_Save_i (Fl_Widget *o, void *v);
 	static void cb_Save (Fl_Widget *o, void *v);
 	inline void cb_Merge_i (Fl_Widget *o, void *v);

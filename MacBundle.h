@@ -8,8 +8,8 @@
 #include <sys/stat.h>
 #endif
 
-// Return a bundle-local plugin path, or leave the Unix default in effect.
-static std::string SSMBundlePluginPath()
+// Return an existing resource directory, or an empty path outside a bundle.
+static inline std::string SSMBundleResourceDirectory(const char *name)
 {
 #ifdef __APPLE__
     CFBundleRef bundle = CFBundleGetMainBundle();
@@ -24,14 +24,20 @@ static std::string SSMBundlePluginPath()
         CFRelease(resources);
         if (valid)
         {
-            std::string plugins = std::string(reinterpret_cast<const char *>(path)) + "/SpiralPlugins";
+            std::string directory = std::string(reinterpret_cast<const char *>(path)) + "/" + name;
             struct stat info;
-            if (stat(plugins.c_str(), &info) == 0 && S_ISDIR(info.st_mode))
-                return plugins;
+            if (stat(directory.c_str(), &info) == 0 && S_ISDIR(info.st_mode))
+                return directory;
         }
     }
 #endif
     return std::string();
+}
+
+// Leave the configured Unix plugin directory in effect outside a bundle.
+static inline std::string SSMBundlePluginPath()
+{
+    return SSMBundleResourceDirectory("SpiralPlugins");
 }
 
 #endif
