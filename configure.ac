@@ -360,7 +360,6 @@ case "$host_os" in
 esac
 AC_SUBST([MIDI_LIBS])
 AM_CONDITIONAL([MACOS_BUNDLE], [test "x$MIDI_LIBS" != x])
-AC_PATH_PROGS([BUNDLE_PYTHON], [python3 python], [no])
 
 dnl Do we need png?????
 dnl AC_CHECK_HEADERS(png.h)

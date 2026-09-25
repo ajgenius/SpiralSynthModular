@@ -14,7 +14,7 @@ SpiralSynthModular_LDADD = 							\
                 $(top_builddir)/libspiralcore/libspiralcore.la
 
 
-EXTRA_DIST = autogen.sh build-aux/macos-bundle.py Examples
+EXTRA_DIST = autogen.sh build-aux/macos-bundle.sh GUI/SpiralSynthModular.icns Examples
 SpiralPlugins = $(libdir)/SpiralPlugins
 
 bin_PROGRAMS = SpiralSynthModular
@@ -40,10 +40,9 @@ BUNDLE_DIR = $(abs_builddir)/SpiralSynthModular.app
 .PHONY: bundle
 if MACOS_BUNDLE
 bundle: all
-	@test "$(BUNDLE_PYTHON)" != no || { echo "Python 2.7 or 3 is required for bundle packaging"; exit 1; }
-	+"$(BUNDLE_PYTHON)" "$(srcdir)/build-aux/macos-bundle.py" --make "$(MAKE)" \
-		--bindir "$(bindir)" --libdir "$(libdir)" --plugindir "$(ssm_plugindir)" \
-		--srcdir "$(srcdir)" --version "$(PACKAGE_VERSION)" --output "$(BUNDLE_DIR)"
+	+$(SHELL) "$(srcdir)/build-aux/macos-bundle.sh" "$(MAKE)" \
+		"$(bindir)" "$(libdir)" "$(ssm_plugindir)" \
+		"$(srcdir)" "$(PACKAGE_VERSION)" "$(BUNDLE_DIR)"
 else
 bundle:
 	@echo "Bundle packaging requires macOS"; exit 1
