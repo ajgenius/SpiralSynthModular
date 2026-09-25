@@ -14,7 +14,7 @@ namespace Spiral
 {
 	static std::map<std::string,std::string> deviceDefaults;
 	void SetDeviceDefaults(const std::map<std::string,std::string> &v) { deviceDefaults=v; }
-	std::string DeviceDefault(const std::string &k,const std::string &fallback) { auto i=deviceDefaults.find(k);return i==deviceDefaults.end()?fallback:i->second; }
+	std::string DeviceDefault(const std::string &k,const std::string &fallback) { std::map<std::string,std::string>::const_iterator i=deviceDefaults.find(k);return i==deviceDefaults.end()?fallback:i->second; }
 	static std::string defaultAudio= "dummy", defaultDestination= "default";
 	void SetAudioBackendDefaults(const std::string &name, const std::string &destination)
 	{

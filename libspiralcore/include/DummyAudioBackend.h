@@ -2,8 +2,8 @@
 #ifndef SSM_DUMMY_AUDIO_H
 #define SSM_DUMMY_AUDIO_H
 #include "AudioBackend.h"
-#include <chrono>
-#include <thread>
+#include <time.h>
+#include <errno.h>
 class DummyAudioBackend: public OutputAudioClientBackend
 {
 	Patch *host;
@@ -32,7 +32,13 @@ public:
 	void Play()
 	{
 		if(host && host->SampleRate())
-			std::this_thread::sleep_for(std::chrono::microseconds(1000000ULL * host->SampleCount() / host->SampleRate()));
+        {
+            const unsigned long long microseconds=1000000ULL * host->SampleCount() / host->SampleRate();
+            struct timespec delay;
+            delay.tv_sec=microseconds / 1000000;
+            delay.tv_nsec=(microseconds % 1000000) * 1000;
+            while(nanosleep(&delay,&delay) != 0 && errno == EINTR) {}
+        }
 	}
 	void Read() {}
 	bool OpenReadWrite() { return true; }
