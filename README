@@ -1,4 +1,71 @@
 ****** SpiralSynthModular ******
+Working Notes:
+
+It's Aliiive! Or is it walking dead... Hmm.
+
+Back in 2006 I started reworking SSM for portability (I had a new mac!), 
+more plugin backends, sub-patches, a better audio/GUI split, and a move away 
+from FLTK. Much of it worked in various branches, then disappeared along with 
+SVN access, darcs repos, and a hard drive. 
+
+Life happened. Bad decisions were made.
+
+In 2024 I recovered scattered pieces from roughly four(?) hard drives and 
+started working on them sporadically. More recently, Grok and now Astra have 
+helped reconstruct the history and lost work. 
+
+The private repos contain years of UI ports and engine experiments in various 
+states of usefulness. I am not publishing all of that.
+
+This public repo brings the best pieces back onto the abandoned upstream, 
+alongside patches from other people and new fixes.
+
+AI has been useful for build fixes, stack "modernizing" and certain bugs,
+sometimes better than my original work. Sometimes. 
+
+(side rant: modern stacks are SO BAD. Enshitification + Wirth's law in action), 
+
+Architectural changes still tend to involve burning through tokens, 
+then doing it myself anyway. 
+
+This past week cost $100 on Grok, $100 and three resets on Astra, 
+and still left me untangling a reconstructed git history 
+that bounced from 2026 to 2006 to 2026 to 2008 etc. Argh. 
+
+May fix that later at the expense of breaking things again.
+
+Currently included: 
+
+libspiralcore, 
+my 2006 autotools work with subsequent updates, 
+community patches not already incorporated, 
+2007 + 2026 plugin splitting partial work,
+more audio backends,
+FLTK fixes,
+???,
+and macOS fixes.
+
+Tested on Void Linux with musl and an M1 Mac running macOS 14.
+
+Some things tested using CI without my asking by ChatGPT on Ubuntu and others.
+
+(Burning through all my github actions at once....)
+
+Still very much a work in progress. The bad repo name will change.
+
+If someone finds this before I finish, here is what is coming—as soon as I get AI to do it properly, or do it myself:
+
+- JSON-only UI definitions, already functional for 30 plugins in private.
+- JSON definitions for external plugins such as LADSPA. Straightforward enough, but on hold.
+- Audio and MIDI backend fixes.
+- GTK3 and Cocoa hosts alongside the old FLTK host. Both already work in private.
+- A bundled file format containing JSON and assets in a branching folder structure.
+- Eventually, undo/redo.
+
+Undo/redo is on hold. The plan is patch-based history; my unpublished 2006–2008 implementation used darcs, but only the notes survived. Whether I want to make darcs a dependency just for undo/redo is another question.
+
+
+Old Readme from 2004:
 
 Last changed Tuesday 11-March-2004.
 
