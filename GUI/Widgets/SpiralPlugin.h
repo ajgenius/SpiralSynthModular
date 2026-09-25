@@ -80,6 +80,13 @@ struct HostInfo
 
 /////////////////////////////////////////////////////////////////////
 
+// Opt-in for plugins that retain port indices and sample buffers when resized.
+class StablePortLayout
+{
+public:
+	virtual ~StablePortLayout() {}
+};
+
 class SpiralPlugin
 {
 public:

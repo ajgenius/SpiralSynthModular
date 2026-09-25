@@ -47,3 +47,17 @@ else
 bundle:
 	@echo "Bundle packaging requires macOS"; exit 1
 endif
+
+check_PROGRAMS = mixer-ports-test
+TESTS = $(check_PROGRAMS)
+mixer_ports_test_SOURCES = tests/mixer-ports.cpp Plugins/DSP/MixerPlugin/MixerPlugin.C GraphSort.C SpiralInfo.C
+mixer_ports_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir) -I$(srcdir)/Plugins/DSP/MixerPlugin
+mixer_ports_test_LDADD = $(SpiralSynthModular_LDADD)
+
+check_PROGRAMS += mixer-signal-test stereo-mixer-signal-test
+mixer_signal_test_SOURCES = tests/mixer-signal.cpp Plugins/DSP/MixerPlugin/MixerPlugin.C
+mixer_signal_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/MixerPlugin
+mixer_signal_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la
+stereo_mixer_signal_test_SOURCES = tests/mixer-signal.cpp Plugins/DSP/StereoMixerPlugin/StereoMixerPlugin.C
+stereo_mixer_signal_test_CPPFLAGS = $(AM_CPPFLAGS) -DTEST_STEREO -I$(srcdir)/Plugins/DSP/StereoMixerPlugin
+stereo_mixer_signal_test_LDADD = $(mixer_signal_test_LDADD)

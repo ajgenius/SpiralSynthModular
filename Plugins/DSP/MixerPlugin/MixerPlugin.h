@@ -23,7 +23,7 @@
 
 static const int MAX_CHANNELS = 16;
 
-class MixerPlugin : public SpiralPlugin {
+class MixerPlugin : public SpiralPlugin, public StablePortLayout {
   public:
       MixerPlugin();
       virtual ~MixerPlugin();

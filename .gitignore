@@ -40,3 +40,10 @@ spiralsynthmodular
 
 /SpiralSynthModular.app/
 /.ssm-bundle-*/
+
+/mixer-ports-test
+/mixer-signal-test
+/stereo-mixer-signal-test
+/*-test.log
+/*-test.trs
+/test-suite.log

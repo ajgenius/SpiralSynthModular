@@ -3,6 +3,7 @@ AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include $(PORTAUDIO_CFLAGS) $(ALSA_C
 lib_LTLIBRARIES = libspiralcore.la
 libspiralcore_la_SOURCES = \
     include/Allocator.h \
+    include/Finite.h \
     include/ChannelHandler.h \
     include/Midi.h \
     include/NoteTable.h \
