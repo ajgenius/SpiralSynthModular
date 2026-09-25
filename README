@@ -64,6 +64,7 @@ If someone finds this before I finish, here is what is coming—as soon as I get
 
 Undo/redo is on hold. The plan is patch-based history; my unpublished 2006–2008 implementation used darcs, but only the notes survived. Whether I want to make darcs a dependency just for undo/redo is another question.
 
+- ajgenius (Sep 2026)
 
 Old Readme from 2004:
 
