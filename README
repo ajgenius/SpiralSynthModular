@@ -1,7 +1,25 @@
 ****** SpiralSynthModular ******
-Working Notes:
 
 It's Aliiive! Or is it walking dead... Hmm.
+
+GIT WARNING: This branch WILL BREAK later. 
+
+I AM MERGING UNRELATED HISTORIES OUT OF ORDER. 
+
+Once I am done with the historical merges, I will be fixing the out of order,
+so there is a seamless (lying) chronology. I have done it 4 times already, 
+I see at least 3 more in the future. Forks/Clones will not update cleanly.
+
+Until I am done any clones should be fresh every time.
+
+I am only making it public right now because I am paranoid after the last time
+I thought I was almost ready to release a new version. 16 years ago.
+
+(I should probably make public all the sources but... not that paranoid. yet.)
+
+- ajgenius
+
+WORKING NOTES:
 
 Back in 2006 I started reworking SSM for portability (I had a new mac!), 
 more plugin backends, sub-patches, a better audio/GUI split, and a move away 
@@ -53,7 +71,8 @@ Some things tested using CI without my asking by ChatGPT on Ubuntu and others.
 
 Still very much a work in progress. The bad repo name will change.
 
-If someone finds this before I finish, here is what is coming—as soon as I get AI to do it properly, or do it myself:
+If someone finds this before I finish, here is what is coming—as soon as I get AI 
+to do it properly, or do it myself:
 
 - JSON-only UI definitions, already functional for 30 plugins in private.
 - JSON definitions for external plugins such as LADSPA. Straightforward enough, but on hold.
@@ -62,7 +81,9 @@ If someone finds this before I finish, here is what is coming—as soon as I get
 - A bundled file format containing JSON and assets in a branching folder structure.
 - Eventually, undo/redo.
 
-Undo/redo is on hold. The plan is patch-based history; my unpublished 2006–2008 implementation used darcs, but only the notes survived. Whether I want to make darcs a dependency just for undo/redo is another question.
+Undo/redo is on hold. The plan is patch-based history; my unpublished 2006–2008 
+implementation used darcs, but only the notes survived. Whether I want to make 
+darcs a dependency just for undo/redo is another question.
 
 - ajgenius (Sep 2026)
 
