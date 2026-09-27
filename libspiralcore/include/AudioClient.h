@@ -1,9 +1,8 @@
 // Copyright (C) 2003 David Griffiths <dave@pawfal.org>
 // SSM blocking-output adaptation (Grok Build).
 //
-// Common device-paced audio I/O for PortAudio / ALSA / OSS.
-// Attach/Detach match JackClient/PortAudioClient; Write/Read are
-// blocking interleaved float (the engine clock), not a callback.
+// Device-paced or callback-driven audio I/O. Existing blocking clients keep
+// their Attach/Read/Write behavior; callback clients start after host setup.
 
 #ifndef SPIRALCORE_AUDIO_CLIENT
 #define SPIRALCORE_AUDIO_CLIENT
@@ -41,7 +40,22 @@ public:
 	virtual void Detach() = 0;
 	virtual bool IsAttached() const = 0;
 
-	/* Blocking, interleaved float32. nframes is the engine block. */
+	// Attach prepares a callback client without running the engine. Install the
+	// callback and agree on its actual format before Start. Detach must run on
+	// the control path, never from the device callback it waits to finish.
+	virtual bool IsCallbackDriven() const { return false; }
+
+	virtual void SetCallback(void (*)(void *, unsigned int), void *) {}
+
+	virtual bool Start() { return IsAttached(); }
+
+	virtual unsigned long GetBufferSize() const { return 0; }
+
+	virtual unsigned long GetSampleRate() const { return 0; }
+
+	// Interleaved float32. Blocking clients pace the caller; callback clients
+	// exchange only the current cycle's buffers from inside their callback.
+
 	virtual bool Write(const float *interleaved, unsigned int nframes) = 0;
 	virtual bool Read(float *interleaved, unsigned int nframes) = 0;
 };
