@@ -59,9 +59,12 @@ string SpiralPlugin_GetGroupName() { return "InputOutput"; }
 }
 
 OutputPlugin::OutputPlugin() :
-m_Volume(1.0f)
+m_IOFailed(false),
+m_NextRetry(0),
+m_Volume(1.0f),
+m_Registered(false),
+m_RequestedMode(OUTPUT)
 {
-	m_Members.push_back(this);
 	m_IsTerminal=true;
 	m_NotifyOpenOut=false;
 	m_ReportedMode=(int)m_Mode;
@@ -87,6 +90,9 @@ OutputPlugin::~OutputPlugin()
 PluginInfo &OutputPlugin::Initialise(const HostInfo *Host)
 {
 	PluginInfo& Info= SpiralPlugin::Initialise(Host);
+	if (!m_Registered) m_Members.push_back(this);
+
+	m_Registered=true;
 	host=Host;
 	OUTPUTCLIENT::host = Host;
 	string client = Host->AUDIOCLIENT;
@@ -104,6 +110,18 @@ PluginInfo &OutputPlugin::Initialise(const HostInfo *Host)
 bool OutputPlugin::Kill()
 {
 	m_IsDead=true;
+	if (!m_Registered) return true;
+
+	// Replace the callback context only after its client has stopped.
+	const bool wasOwner = !m_Members.empty() && m_Members.front() == this;
+	if (wasOwner && IsCallbackDriver())
+	{
+		OUTPUTCLIENT::Get()->Close();
+		if (m_Mode != CLOSED) m_Mode = NO_MODE;
+
+	}
+
+	m_Registered=false;
 	m_Members.erase(std::remove(m_Members.begin(),m_Members.end(),this),m_Members.end());
 	if (m_Members.empty()) {
 		if (cb_Blocking) cb_Blocking(m_Parent,false);
@@ -122,16 +140,23 @@ void OutputPlugin::ReportMode()
 
 void OutputPlugin::OpenMode(Mode mode)
 {
+	for (size_t i=0;i<m_Members.size();++i) m_Members[i]->m_RequestedMode=mode;
+
 	bool opened=false;
+	m_IOFailed=false;
+	m_NextRetry=time(NULL)+1;
 	m_Mode=CLOSED;
 	if (m_Configured) {
+		OUTPUTCLIENT::Get()->SetCallback(ProcessCallback, m_Members.empty() ? this : m_Members.front());
 		if (mode==INPUT) opened=OUTPUTCLIENT::Get()->OpenRead();
+
 		if (mode==OUTPUT) opened=OUTPUTCLIENT::Get()->OpenWrite();
 		if (mode==DUPLEX) opened=OUTPUTCLIENT::Get()->OpenReadWrite();
 	}
 	if (opened) m_Mode=mode;
 	ReportMode();
-	if (cb_Blocking) cb_Blocking(m_Parent,opened);
+	if (cb_Blocking) cb_Blocking(m_Parent,opened && !IsCallbackDriver());
+
 }
 
 void OutputPlugin::Reset()
@@ -139,7 +164,9 @@ void OutputPlugin::Reset()
 	if (m_IsDead) return;
 	ResetPorts();
 	const Mode previous=m_Mode;
-	m_Configured=host && OUTPUTCLIENT::Get()->Configure(host->AUDIOCLIENT,host->OUTPUTFILE);
+	m_Configured=host && OUTPUTCLIENT::Get()->Configure(
+		host->AUDIOCLIENT,
+		host->OUTPUTFILE);
 	OUTPUTCLIENT::Get()->AllocateBuffer();
 	OpenMode(previous==NO_MODE ? OUTPUT : previous);
 }
@@ -165,6 +192,8 @@ void OutputPlugin::ExecuteCommands()
 		case OPENWRITE: OpenMode(OUTPUT); break;
 		case OPENDUPLEX: OpenMode(DUPLEX); break;
 		case CLOSE:
+			for (size_t i=0;i<m_Members.size();++i) m_Members[i]->m_RequestedMode=CLOSED;
+
 			OUTPUTCLIENT::Get()->Close();
 			m_Mode=CLOSED;
 			ReportMode();
@@ -176,20 +205,58 @@ void OutputPlugin::ExecuteCommands()
 	}
 }
 
-void OutputPlugin::ProcessAudio()
+void OutputPlugin::ProcessCallback(void *context, unsigned int frames)
+{
+	static_cast<OutputPlugin *>(context)->RunAudioCycle(frames);
+}
+
+void OutputPlugin::ServiceAudio()
 {
 	if (m_IsDead || m_Members.empty() || m_Members.front()!=this) return;
 	if (m_Mode==NO_MODE) {
 		OpenMode(OUTPUT);
 		m_NotifyOpenOut=m_Mode==OUTPUT;
 	}
-	bool ok=true;
-	if (m_Mode==INPUT || m_Mode==DUPLEX) ok=OUTPUTCLIENT::Get()->Read();
-	if (ok && (m_Mode==OUTPUT || m_Mode==DUPLEX)) ok=OUTPUTCLIENT::Get()->Play();
-	if (!ok) {
+
+	if (m_IOFailed)
+	{
 		OUTPUTCLIENT::Get()->Close();
 		m_Mode=CLOSED;
 		ReportMode();
 		if (cb_Blocking) cb_Blocking(m_Parent,false);
+
+		m_IOFailed=false;
 	}
+
+	// Server shutdown removes the native ports without another audio callback.
+	// Keep the requested mode, but reopen only here on the control thread.
+	if (IsCallbackDriver() && !OUTPUTCLIENT::Get()->IsAttached() &&
+		m_RequestedMode!=CLOSED && m_RequestedMode!=NO_MODE)
+	{
+		if (m_Mode!=CLOSED)
+		{
+			OUTPUTCLIENT::Get()->Close();
+			m_Mode=CLOSED;
+			ReportMode();
+		}
+
+		if (time(NULL)>=m_NextRetry) OpenMode(m_RequestedMode);
+
+	}
+
+	if (IsCallbackDriver() && OUTPUTCLIENT::Get()->IsAttached() && OUTPUTCLIENT::Get()->BufferSize() && ChangeBufferAndSampleRate)
+		ChangeBufferAndSampleRate(OUTPUTCLIENT::Get()->BufferSize(), OUTPUTCLIENT::Get()->SampleRate(), m_Parent);
+
+}
+
+void OutputPlugin::ProcessAudio()
+{
+	if (m_IsDead || m_Members.empty() || m_Members.front()!=this) return;
+
+	bool ok=true;
+	if (m_Mode==INPUT || m_Mode==DUPLEX) ok=OUTPUTCLIENT::Get()->Read();
+
+	if (ok && (m_Mode==OUTPUT || m_Mode==DUPLEX)) ok=OUTPUTCLIENT::Get()->Play();
+
+	m_IOFailed = !ok;
 }

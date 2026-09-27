@@ -40,6 +40,17 @@ public:
 	bool Close();
 	void Kill();
 
+	bool IsAttached() const { return m_Client && m_Client->IsAttached(); }
+
+	bool IsCallbackDriven() const { return m_Client && m_Client->IsCallbackDriven(); }
+
+	void SetCallback(void (*run)(void *, unsigned int), void *context)
+		{ if (m_Client) m_Client->SetCallback(run, context); }
+
+	unsigned long BufferSize() const { return m_Client ? m_Client->GetBufferSize() : 0; }
+
+	unsigned long SampleRate() const { return m_Client ? m_Client->GetSampleRate() : 0; }
+
 	static const HostInfo *host;
 
 private:

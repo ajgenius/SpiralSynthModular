@@ -1,3 +1,4 @@
+#include <pthread.h>
 /*  SpiralSynthModular
  *  Copyleft (C) 2002 David Griffiths <dave@pawfal.org>
  *
@@ -93,8 +94,10 @@ public:
 	void AddComment(int n);
 	void ClearUp(bool synchronize = true);
 	void UpdateHostInfo();
-	bool CallbackMode() { return m_CallbackUpdateMode; }
+	bool CallbackMode() { return __sync_val_compare_and_swap(&m_CallbackOwner, (AudioDriver *)NULL, (AudioDriver *)NULL) != NULL; }
+
 	bool IsBlockingOutputPluginReady() { return m_BlockingOutputPluginIsReady; }
+
 	void UpdatePluginGUIs();
 	void LoadPatch(const char *fn);
 
@@ -111,12 +114,16 @@ public:
 
 	void PauseAudio()
 	{
+		pthread_mutex_lock(&m_CycleLock);
 		m_Info.PAUSED = true;
+		pthread_mutex_unlock(&m_CycleLock);
 	}
 
 	void ResumeAudio()
 	{
+		pthread_mutex_lock(&m_CycleLock);
 		m_Info.PAUSED = false;
+		pthread_mutex_unlock(&m_CycleLock);
 	}
 
 	void ResetAudio()
@@ -142,6 +149,12 @@ private:
 	DeviceWin* NewDeviceWin(int n, int x, int y);
 	DeviceWin* NewComment(int n, int x, int y);
 
+	void RenderAudio(bool callback);
+	static void cb_AudioCycle(void *context, AudioDriver *driver, unsigned int frames);
+	pthread_mutex_t m_CycleLock;
+	AudioDriver *m_CallbackOwner;
+	volatile unsigned m_ControlEpoch;
+	unsigned m_LastControlEpoch;
 	HostInfo m_Info;
 	bool m_ResetingAudioThread, m_HostNeedsUpdate, m_Frozen;
 

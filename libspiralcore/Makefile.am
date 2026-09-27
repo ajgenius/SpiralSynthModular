@@ -17,7 +17,7 @@ libspiralcore_la_SOURCES = \
     include/RiffWav.h \
     src/RiffWav.cpp
 libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 0:0:0
-libspiralcore_la_LIBADD = $(MIDI_LIBS) $(AMIDILIBS) $(SFLIBS) $(PORTAUDIO_LIBS) $(ALSA_LIBS) -lm
+libspiralcore_la_LIBADD = $(MIDI_LIBS) $(AMIDILIBS) $(SFLIBS) $(PORTAUDIO_LIBS) $(ALSA_LIBS) $(JACK_LIBS) $(CORE_AUDIO_LIBS) -lm
 
 check_PROGRAMS = compatibility-test
 TESTS = $(check_PROGRAMS)
@@ -34,7 +34,6 @@ EXTRA_DIST = \
     include/CommandRingBuffer.h \
     include/Event.h \
     include/EventQueue.h \
-    include/JackClient.h \
     include/OSCServer.h \
     include/PortAudioClient.h \
     include/RingBuffer.h \
@@ -47,7 +46,6 @@ EXTRA_DIST = \
     src/CommandRingBuffer.cpp \
     src/Event.cpp \
     src/EventQueue.cpp \
-    src/JackClient.cpp \
     src/OSCServer.cpp \
     src/PortAudioClient.cpp \
     src/RingBuffer.cpp \
@@ -66,4 +64,20 @@ libspiralcore_la_SOURCES += src/AlsaClient.cpp include/AlsaClient.h
 endif
 if HAVE_OUTPUT_OSS
 libspiralcore_la_SOURCES += src/OSSClient.cpp include/OSSClient.h
+endif
+
+if HAVE_JACK_CLIENT
+libspiralcore_la_SOURCES += src/JackClient.cpp include/JackClient.h
+check_PROGRAMS += jack-client-test
+jack_client_test_SOURCES = tests/jack-client.cpp src/JackClient.cpp
+jack_client_test_CPPFLAGS = $(AM_CPPFLAGS)
+endif
+
+EXTRA_DIST += tests/jack-live.cpp
+
+if HAVE_CORE_AUDIO_CLIENT
+libspiralcore_la_SOURCES += src/CoreAudioClient.cpp include/CoreAudioClient.h
+check_PROGRAMS += coreaudio-client-test
+coreaudio_client_test_SOURCES = tests/coreaudio-client.cpp
+coreaudio_client_test_LDADD = libspiralcore.la
 endif
