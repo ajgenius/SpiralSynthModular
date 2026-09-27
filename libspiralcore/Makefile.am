@@ -17,7 +17,7 @@ libspiralcore_la_SOURCES = \
     include/RiffWav.h \
     src/RiffWav.cpp
 libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 0:0:0
-libspiralcore_la_LIBADD = $(MIDI_LIBS) $(AMIDILIBS) $(SFLIBS) $(PORTAUDIO_LIBS) $(ALSA_LIBS) $(JACK_LIBS) -lm
+libspiralcore_la_LIBADD = $(MIDI_LIBS) $(AMIDILIBS) $(SFLIBS) $(PORTAUDIO_LIBS) $(ALSA_LIBS) $(JACK_LIBS) $(CORE_AUDIO_LIBS) -lm
 
 check_PROGRAMS = compatibility-test
 TESTS = $(check_PROGRAMS)
@@ -74,3 +74,10 @@ jack_client_test_CPPFLAGS = $(AM_CPPFLAGS)
 endif
 
 EXTRA_DIST += tests/jack-live.cpp
+
+if HAVE_CORE_AUDIO_CLIENT
+libspiralcore_la_SOURCES += src/CoreAudioClient.cpp include/CoreAudioClient.h
+check_PROGRAMS += coreaudio-client-test
+coreaudio_client_test_SOURCES = tests/coreaudio-client.cpp
+coreaudio_client_test_LDADD = libspiralcore.la
+endif
