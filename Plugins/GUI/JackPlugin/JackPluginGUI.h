@@ -46,7 +46,6 @@ protected:
     const std::string GetHelpText(const std::string &loc);	
 		
 private:
-        JackClient    *m_JackClient;
         JackPlugin    *m_JackPlugin;
 
         Fl_Color m_GUIColour;
