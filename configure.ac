@@ -147,6 +147,41 @@ if test "x$have_output_oss" = "xyes"; then
 fi
 AM_CONDITIONAL([HAVE_OUTPUT_OSS], [test "x$have_output_oss" = "xyes"])
 
+dnl Native CoreAudio is optional; other platforms keep their existing clients.
+AC_ARG_ENABLE([coreaudio],
+    [AS_HELP_STRING([--disable-coreaudio], [Do not build the native CoreAudio client])],
+    [enable_coreaudio="$enableval"], [enable_coreaudio="auto"])
+have_coreaudio=no
+CORE_AUDIO_LIBS=""
+if test "x$enable_coreaudio" != "xno"; then
+    ssm_saved_LIBS="$LIBS"
+    LIBS="$LIBS -framework AudioUnit -framework CoreAudio -framework CoreFoundation"
+    AC_LANG_PUSH([C++])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+        #include <AudioUnit/AudioUnit.h>
+        #include <CoreAudio/CoreAudio.h>
+    ]], [[
+        AudioComponentDescription description = {};
+        AudioComponent component = AudioComponentFindNext(0, &description);
+        AudioUnit unit = 0;
+        AudioComponentInstanceNew(component, &unit);
+        AudioObjectPropertyAddress address = {};
+        UInt32 size = 0;
+        AudioObjectGetPropertyData(kAudioObjectSystemObject, &address, 0, 0, &size, 0);
+    ]])], [have_coreaudio=yes], [])
+    AC_LANG_POP([C++])
+    LIBS="$ssm_saved_LIBS"
+fi
+if test "$have_coreaudio" = yes; then
+    CORE_AUDIO_LIBS="-framework AudioUnit -framework CoreAudio -framework CoreFoundation"
+    AC_DEFINE([HAVE_CORE_AUDIO_CLIENT], [1], [Build the native CoreAudio client])
+elif test "$enable_coreaudio" = yes; then
+    AC_MSG_ERROR([CoreAudio requested but its headers and frameworks are unavailable])
+fi
+AC_SUBST([CORE_AUDIO_LIBS])
+AM_CONDITIONAL([HAVE_CORE_AUDIO_CLIENT], [test "$have_coreaudio" = yes])
+AC_MSG_NOTICE([Native CoreAudio client: $have_coreaudio])
+
 default_output_audio_client="none"
 if test "x$have_output_portaudio" = "xyes"; then
     default_output_audio_client="portaudio"
