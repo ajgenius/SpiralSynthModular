@@ -69,6 +69,22 @@ jack_gui_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
 jack_gui_test_LDADD = $(SpiralSynthModular_LDADD) $(JACK_LIBS)
 jack_gui_test_LDFLAGS = -export-dynamic
 jack_plugin_test_SOURCES = tests/jack-plugin.cpp
-jack_plugin_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/JackPlugin
+jack_plugin_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/JackPlugin -I$(srcdir)/Plugins/DSP/OutputPlugin
 jack_plugin_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la $(JACK_LIBS) -ldl
+endif
+
+if HAVE_JACK_CLIENT
+check_PROGRAMS += jack-output-host-test
+jack_output_host_test_SOURCES = tests/jack-output-host.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
+jack_output_host_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
+jack_output_host_test_LDADD = $(SpiralSynthModular_LDADD) $(JACK_LIBS)
+jack_output_host_test_LDFLAGS = -export-dynamic
+endif
+
+if HAVE_JACK_CLIENT
+check_PROGRAMS += jack-output-timing-test
+jack_output_timing_test_SOURCES = tests/jack-output-timing.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
+jack_output_timing_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
+jack_output_timing_test_LDADD = $(SpiralSynthModular_LDADD) $(JACK_LIBS)
+jack_output_timing_test_LDFLAGS = -export-dynamic
 endif

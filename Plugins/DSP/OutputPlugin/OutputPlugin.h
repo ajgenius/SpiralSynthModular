@@ -21,6 +21,7 @@
 
 #include "SpiralPlugin.h"
 #include "OutputAudioClient.h"
+#include <ctime>
 
 class OutputPlugin : public AudioDriver
 {
@@ -41,6 +42,8 @@ public:
 	virtual bool IsAudioDriver() { return true; }
 	virtual AudioProcessType ProcessType() { return AudioDriver::ALWAYS; }
 	virtual void ProcessAudio();
+	virtual void ServiceAudio();
+	virtual bool IsCallbackDriver() const { return OUTPUTCLIENT::Get()->IsCallbackDriven(); }
 
 	enum GUICommands {NONE, OPENREAD, OPENWRITE, OPENDUPLEX, CLOSE, SET_VOLUME, CLEAR_NOTIFY};
 	float m_Volume;
@@ -53,11 +56,17 @@ private:
 	static std::vector<OutputPlugin *> m_Members;
 	static bool m_Configured;
 	void OpenMode(Mode mode);
+	static void ProcessCallback(void *context, unsigned int frames);
+	bool m_IOFailed;
+	time_t m_NextRetry;
 	static Mode m_Mode;
 	bool m_NotifyOpenOut;
 	int m_ReportedMode;
 	void ReportMode();
 	bool m_CheckedAlready;
+
+	bool m_Registered;
+	Mode m_RequestedMode;
 };
 
 #endif
