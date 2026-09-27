@@ -73,6 +73,21 @@ jack_plugin_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/JackPlugin -I
 jack_plugin_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la $(JACK_LIBS) -ldl
 endif
 
+if HAVE_CORE_AUDIO_CLIENT
+check_PROGRAMS += coreaudio-output-test
+coreaudio_output_test_SOURCES = tests/coreaudio-output.cpp Plugins/DSP/OutputPlugin/OutputPlugin.C Plugins/DSP/OutputPlugin/OutputAudioClient.C
+coreaudio_output_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/OutputPlugin
+coreaudio_output_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la
+endif
+
+if HAVE_CORE_AUDIO_CLIENT
+check_PROGRAMS += coreaudio-host-test
+coreaudio_host_test_SOURCES = tests/coreaudio-host.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
+coreaudio_host_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
+coreaudio_host_test_LDADD = $(SpiralSynthModular_LDADD)
+coreaudio_host_test_LDFLAGS = -export-dynamic
+endif
+
 if HAVE_JACK_CLIENT
 check_PROGRAMS += jack-output-host-test
 jack_output_host_test_SOURCES = tests/jack-output-host.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
