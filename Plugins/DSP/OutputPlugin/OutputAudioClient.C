@@ -7,6 +7,14 @@
 #include <cstring>
 #include <iostream>
 
+#ifdef HAVE_CORE_AUDIO_CLIENT
+#include "CoreAudioClient.h"
+#endif
+
+#ifdef HAVE_JACK_CLIENT
+#include "JackClient.h"
+#endif
+
 #ifdef HAVE_OUTPUT_PORTAUDIO
 #include "PortAudioClient.h"
 #endif
@@ -69,6 +77,15 @@ void OutputAudioClient::DestroyBackend()
 #endif
 #ifdef HAVE_OUTPUT_OSS
 	if (m_ClientName == "oss") OSSClient::PackUpAndGoHome();
+
+#endif
+#ifdef HAVE_JACK_CLIENT
+	if (m_ClientName == "jack") delete m_Client;
+
+#endif
+#ifdef HAVE_CORE_AUDIO_CLIENT
+	if (m_ClientName == "coreaudio") delete m_Client;
+
 #endif
 	m_Client = NULL;
 	m_ClientName.clear();
@@ -77,6 +94,24 @@ void OutputAudioClient::DestroyBackend()
 bool OutputAudioClient::Select(const string &client)
 {
 	DestroyBackend();
+#ifdef HAVE_CORE_AUDIO_CLIENT
+	if (client == "coreaudio")
+	{
+		m_Client = new CoreAudioClient;
+		m_ClientName = "coreaudio";
+		return true;
+	}
+
+#endif
+#ifdef HAVE_JACK_CLIENT
+	if (client == "jack")
+	{
+		m_Client = new JackClient;
+		m_ClientName = "jack";
+		return true;
+	}
+
+#endif
 #ifdef HAVE_OUTPUT_PORTAUDIO
 	if (client == "portaudio")
 	{
@@ -108,6 +143,10 @@ bool OutputAudioClient::SelectFirstAvailable()
 {
 #ifdef HAVE_OUTPUT_PORTAUDIO
 	if (Select("portaudio")) return true;
+#endif
+#ifdef HAVE_CORE_AUDIO_CLIENT
+	if (Select("coreaudio")) return true;
+
 #endif
 #ifdef HAVE_OUTPUT_ALSA
 	if (Select("alsa")) return true;
@@ -191,7 +230,8 @@ void OutputAudioClient::DeallocateBuffer()
 
 void OutputAudioClient::SendStereo(const Sample *ldata, const Sample *rdata)
 {
-	if (m_Channels != 2 || !host || !m_Out[m_WriteBuf] || m_IsDead) return;
+	if (m_Channels != 2 || !host || m_Frames != host->BUFSIZE || !m_Out[m_WriteBuf] || m_IsDead) return;
+
 	int on = 0;
 	for (int n = 0; n < host->BUFSIZE; ++n)
 	{
@@ -206,7 +246,8 @@ void OutputAudioClient::SendStereo(const Sample *ldata, const Sample *rdata)
 
 void OutputAudioClient::GetStereo(Sample *ldata, Sample *rdata)
 {
-	if (m_Channels != 2 || !host || !m_In[m_ReadBuf] || m_IsDead) return;
+	if (m_Channels != 2 || !host || m_Frames != host->BUFSIZE || !m_In[m_ReadBuf] || m_IsDead) return;
+
 	int on = 0;
 	for (int n = 0; n < host->BUFSIZE; ++n)
 	{
@@ -220,8 +261,10 @@ void OutputAudioClient::GetStereo(Sample *ldata, Sample *rdata)
 
 bool OutputAudioClient::Play()
 {
-	if (!host || !m_Out[0]) return false;
+	if (!host || m_Frames != host->BUFSIZE || !m_Out[0]) return false;
+
 	const int send = m_WriteBuf;
+
 	const int samples = host->BUFSIZE * m_Channels;
 	bool ok=m_Client && m_Client->Write(m_Out[send], (unsigned int)host->BUFSIZE);
 	memset(m_Out[send], 0, samples * sizeof(float));
@@ -231,8 +274,10 @@ bool OutputAudioClient::Play()
 
 bool OutputAudioClient::Read()
 {
-	if (!host || !m_In[0]) return false;
+	if (!host || m_Frames != host->BUFSIZE || !m_In[0]) return false;
+
 	const int got = !m_ReadBuf;
+
 	const int samples = host->BUFSIZE * m_Channels;
 	memset(m_In[got], 0, samples * sizeof(float));
 	bool ok=m_Client && m_Client->Read(m_In[got], (unsigned int)host->BUFSIZE);
@@ -247,7 +292,8 @@ bool OutputAudioClient::AttachMode(unsigned int inChans, unsigned int outChans)
 	AllocateBuffer();
 	if (!m_Out[0]) return false;
 	m_IsDead = false;
-	return m_Client->Attach(m_Destination, MakeOptions(inChans, outChans));
+	return m_Client->Attach(m_ClientName == "jack" && m_Destination == "default" ? "SSM-Output" : m_Destination,
+		MakeOptions(inChans, outChans)) && m_Client->Start();
 }
 
 bool OutputAudioClient::OpenWrite()     { Close(); return AttachMode(0, (unsigned int)m_Channels); }

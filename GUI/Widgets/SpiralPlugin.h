@@ -218,7 +218,18 @@ public:
 	 */  
 	enum AudioProcessType { ALWAYS, MANUAL, NEVER };
 	
+	AudioDriver() : m_AudioCycle(NULL), ChangeBufferAndSampleRate(NULL) {}
+
 	virtual bool IsAudioDriver() { return true; }
+
+	virtual bool IsCallbackDriver() const { return false; }
+
+	// Lifecycle and format work belongs to the host control loop.
+	virtual void ServiceAudio() {}
+
+	void SetAudioCycleCallback(void (*run)(void *, AudioDriver *, unsigned int)) { m_AudioCycle = run; }
+
+	void RunAudioCycle(unsigned int frames) { if (m_AudioCycle) m_AudioCycle(m_Parent, this, frames); }
 
 	virtual void ProcessAudio()=0;
 	
@@ -228,6 +239,7 @@ public:
 	void SetChangeBufferAndSampleRateCallback(void(*s)(long unsigned int, long unsigned int, void *)) { ChangeBufferAndSampleRate = s; } ;
 
 protected:
+	void (*m_AudioCycle)(void *, AudioDriver *, unsigned int);
 	void (*ChangeBufferAndSampleRate)(long unsigned int BufferSize, long unsigned int SampleRate, void *);	
 };
 

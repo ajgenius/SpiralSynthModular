@@ -26,368 +26,8 @@
 
 using namespace std;
 
-int JackClient::JackProcessInstanceID = -1;
 int JackPlugin::JackInstanceCount = 0;
-const HostInfo *host = NULL;
-/////////////////////////////////////////////////////////////////////////////////////////////
-void JackClient::JackProcess_i(jack_nframes_t nframes)
-{	
-	SetBufferSize(nframes);
-  		
-	for (int n=0; n<GetJackInputCount(); n++)
-	{
-		if (jack_port_connected(m_InputPortMap[n]->Port))
-		{
-			sample_t *in = (sample_t *) jack_port_get_buffer(m_InputPortMap[n]->Port, nframes);
 
-			assert( m_InputPortMap[n]->Buf );
-
-			memcpy( m_InputPortMap[n]->Buf, in, sizeof (sample_t) * GetBufferSize());
-		}			
-	}
-	
-	for (int n=0; n<GetJackOutputCount(); n++)
-	{
-		if (jack_port_connected(m_OutputPortMap[n]->Port))
-		{
-			if ((m_OutputPortMap[n]->Buf) && (!host->PAUSED))
-			{ 
-				sample_t *out = (sample_t *) jack_port_get_buffer(m_OutputPortMap[n]->Port, nframes);
-				
-				assert( m_OutputPortMap[n]->Buf );
-				
-				memcpy (out, m_OutputPortMap[n]->Buf, sizeof (sample_t) * GetBufferSize());
-			}
-			else // no output availible, clear
-			{ 
-				sample_t *out = (sample_t *) jack_port_get_buffer(m_OutputPortMap[n]->Port, nframes);
-				memset(out, 0, sizeof (sample_t) * GetBufferSize());
-			}
-		}
-	}
-		
-	if (RunCallback&&RunContext)
-	{
-		if (JackProcessInstanceID==-1)
-			JackProcessInstanceID = m_JackInstanceID;
-
-		if (JackProcessInstanceID==m_JackInstanceID)
-			RunCallback(RunContext,true);
-	}
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////
-
-void JackClient::SampleRateChange_i(jack_nframes_t nframes)
-{
-	SetSampleRate(nframes);
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////
-
-void JackClient::JackShutdown_i()
-{
-	cerr<<"Shutdown"<<endl;
-
-	SetAttached(false);
-
-	if (JackProcessInstanceID==m_JackInstanceID)
-		JackProcessInstanceID = -1;
-		
-	// tells ssm to go back to non callback mode
-	RunCallback(RunContext, false);
-}
-
-///////////////////////////////////////////////////////
-
-JackClient::JackClient()
-{
-  m_JackInstanceID = 0;
-  m_Attached = false;
-  m_SampleRate = 0;
-  m_BufferSize = 0;
-  m_JackInputCount = 4;
-  m_JackOutputCount = 4;        
-  m_Client=NULL;
-  m_JackSampleRate = -1;
-  m_JackBufferSize = -1;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////
-
-JackClient::~JackClient()	
-{	
-   if (IsAttached()) Detach();
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////
-
-void JackClient::AddInputPort(int NewPortNumber)
-{
-  char Name[256];
-  JackPort *NewPort;
-
-  if (!(m_Client)) return;
-  
-  NewPort = new JackPort;
-
-  sprintf(Name,"In%d", NewPortNumber);	
-  
-  NewPort->PortNo = NewPortNumber;
-  NewPort->Name=Name;
-  NewPort->Buf=NULL;		
-  NewPort->Port = jack_port_register (m_Client, Name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
-
-  m_InputPortMap[NewPortNumber]=NewPort;
-}
-
-void JackClient::AddOutputPort(int NewPortNumber)
-{
-  char Name[256];
-  JackPort *NewPort;
-  
-  if (!(m_Client)) return;
-  
-  NewPort = new JackPort;
-
-  sprintf(Name,"Out%d", NewPortNumber);	
-  
-  NewPort->PortNo = NewPortNumber;
-  NewPort->Name=Name;
-  NewPort->Buf=NULL;		
-  NewPort->Port = jack_port_register (m_Client, Name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
-
-  m_OutputPortMap[NewPortNumber]=NewPort;  
-}
-
-void JackClient::RemoveInputPort(int PortNumber)
-{
-  char Name[256];
-  JackPort *OldPort;
-
-  if (!(m_Client)) return;
-  
-  OldPort = m_InputPortMap[PortNumber];
-  m_InputPortMap[PortNumber] = NULL;
-  jack_port_unregister (m_Client, OldPort->Port);
-  delete OldPort;
-}
-
-void JackClient::RemoveOutputPort(int PortNumber)
-{
-  char Name[256];
-  JackPort *OldPort;
-
-  if (!(m_Client)) return;
-  
-  OldPort = m_OutputPortMap[PortNumber];
-  m_OutputPortMap[PortNumber] = NULL;
-  jack_port_unregister (m_Client, OldPort->Port);
-  delete OldPort;
-}
-
-bool JackClient::Attach()
-{
-	char JackClientName[256];
-
-	if (m_Attached) return true;
-
-	sprintf(JackClientName,"SSM%d",GetJackInstanceID());
-#ifdef HAVE_JACK_CLIENT_OPEN
-	m_Client = jack_client_open(JackClientName,
-		static_cast<jack_options_t>(JackNoStartServer | JackUseExactName), 0);
-#else
-	m_Client = jack_client_new(JackClientName);
-#endif
-	if (!m_Client)
-	{
-		cerr<<"jack server not running?"<<endl;
-		return false;
-	}
-
-	m_JackSampleRate = jack_get_sample_rate(m_Client);
-	m_JackBufferSize = jack_get_buffer_size(m_Client);
-	
-	jack_set_process_callback(m_Client, JackProcess, this);
-	jack_set_sample_rate_callback (m_Client, SampleRateChange, this);
-	jack_on_shutdown (m_Client, JackShutdown, this);
-
-	// create the ports 
-	m_InputPortMap.clear();
-	for (int n=0; n<GetJackInputCount(); n++)
-	  AddInputPort(n);
-
-	m_OutputPortMap.clear();
-	for (int n=0; n<GetJackOutputCount(); n++)
-	  AddOutputPort(n);
-
-	// ProcessAudio();
-
-	// tell the JACK server that we are ready to roll 
-	if (jack_activate (m_Client)) 
-	{
-		cerr<<"cannot activate client"<<endl;
-		return false;
-	}
-	
-	// tells ssm to go back to callback mode
-	RunCallback(RunContext, true);
-
-	m_Attached=true;
-	
-	cerr<<"connected to jack..."<<endl;
-		
-	return true;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////
-
-void JackClient::Detach()
-{
-	if (m_Client)
-	{
-		cerr<<"Detaching from JACK"<<endl;
-		jack_client_close(m_Client);
-		m_Client=NULL;
-		m_Attached=false;
-
-		if (JackProcessInstanceID==m_JackInstanceID)
-			JackProcessInstanceID = -1;
-
-		// tells ssm to go back to non callback mode
-		RunCallback(RunContext, false);
-	}
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////
-
-void JackClient::GetPortNames(vector<string> &InputNames, vector<string> &OutputNames)
-{
-	InputNames.clear();
-	OutputNames.clear();
-
-	if (!m_Attached) return;
-
-	//Outputs first
-	const char **PortNameList=jack_get_ports(m_Client,NULL,NULL,JackPortIsOutput);	
-	
-	int n=0;
-	while(PortNameList[n]!=NULL)
-	{		
-		OutputNames.push_back(PortNameList[n]);
-		n++;
-	}	
-	
-	delete PortNameList;
-	
-	//Inputs second
-	PortNameList=jack_get_ports(m_Client,NULL,NULL,JackPortIsInput);
-	
-	n=0;
-	while(PortNameList[n]!=NULL)
-	{		
-		InputNames.push_back(PortNameList[n]);
-		n++;
-	}
-	
-	delete PortNameList;		
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////
-// Input means input of SSM, so this connects jack sources to the plugin outputs
-void JackClient::ConnectInput(int n, const string &JackPort)
-{
-	if (!IsAttached()) return;
-
-	cerr<<"JackClient::ConnectInput: connecting source ["<<JackPort<<"] to dest ["<<m_InputPortMap[n]->Name<<"]"<<endl;
-
-	if (m_InputPortMap[n]->ConnectedTo!="")
-	{
-		if (jack_disconnect (m_Client, m_InputPortMap[n]->ConnectedTo.c_str(), jack_port_name(m_InputPortMap[n]->Port))) 
-			cerr<<"JackClient::ConnectInput: cannot disconnect input port ["
-				<<m_InputPortMap[n]->ConnectedTo<<"] from ["<<m_InputPortMap[n]->Name<<"]"<<endl;
-	}
-	
-	m_InputPortMap[n]->ConnectedTo = JackPort;
-		
-	if (jack_connect (m_Client, JackPort.c_str(), jack_port_name(m_InputPortMap[n]->Port))) 
-		cerr<<"JackClient::ConnectInput: cannot connect input port ["
-			<<JackPort<<"] to ["<<m_InputPortMap[n]->Name<<"]"<<endl;
-			
-	m_InputPortMap[n]->Connected=true;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////
-// Output means output of SSM, so this connects plugin inputs to a jack destination
-void JackClient::ConnectOutput(int n, const string &JackPort)
-{
-	if (!IsAttached()) return;
-	cerr<<"JackClient::ConnectOutput: connecting source ["<<m_OutputPortMap[n]->Name<<"] to dest ["<<JackPort<<"]"<<endl;
-
-	if (m_OutputPortMap[n]->ConnectedTo!="")
-	{
-		if (jack_disconnect (m_Client, jack_port_name(m_OutputPortMap[n]->Port), m_OutputPortMap[n]->ConnectedTo.c_str())) 
-			cerr<<"JackClient::ConnectOutput: cannot disconnect output port ["
-				<<m_OutputPortMap[n]->ConnectedTo<<"] from ["<<m_OutputPortMap[n]->Name<<"]"<<endl;
-	}
-	
-	m_OutputPortMap[n]->ConnectedTo = JackPort;
-	if (jack_connect (m_Client, jack_port_name(m_OutputPortMap[n]->Port), JackPort.c_str()))
-		cerr<<"JackClient::ConnectOutput: cannot connect output port ["
-			<<m_OutputPortMap[n]->Name<<"] to ["<<JackPort<<"]"<<endl;
-	m_OutputPortMap[n]->Connected=true; 
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////
-// Input means input of SSM, so this connects jack sources to the plugin outputs
-void JackClient::DisconnectInput(int n)
-{
-	if (!IsAttached()) return;
-	cerr<<"JackClient::DisconnectInput: Disconnecting input "<<n<<endl;
-
-	if (m_InputPortMap[n]->ConnectedTo!="")
-	{
-		if (jack_disconnect (m_Client, m_InputPortMap[n]->ConnectedTo.c_str(), jack_port_name(m_InputPortMap[n]->Port))) 
-			cerr<<"JackClient::ConnectInput: cannot disconnect input port ["
-				<<m_InputPortMap[n]->ConnectedTo<<"] from ["<<m_InputPortMap[n]->Name<<"]"<<endl;
-	}
-
-	m_InputPortMap[n]->Connected=false;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////
-// Output means output of SSM, so this connects plugin inputs to a jack destination
-void JackClient::DisconnectOutput(int n)
-{
-	if (!IsAttached()) return;
-	cerr<<"JackClient::DisconnectInput: Disconnecting input "<<n<<endl;
-
-	if (m_OutputPortMap[n]->ConnectedTo!="")
-	{
-		if (jack_disconnect (m_Client, jack_port_name(m_OutputPortMap[n]->Port), m_OutputPortMap[n]->ConnectedTo.c_str())) 
-			cerr<<"JackClient::ConnectOutput: cannot disconnect output port ["
-				<<m_OutputPortMap[n]->ConnectedTo<<"] from ["<<m_OutputPortMap[n]->Name<<"]"<<endl;
-	}
-
-	m_OutputPortMap[n]->Connected=false;
-}
-/////////////////////////////////////////////////////////////////////////////////////////////
-
-void JackClient::SetInputBuf(int ID, float* s)  
-{ 
-	if(m_InputPortMap.find(ID)!=m_InputPortMap.end()) m_InputPortMap[ID]->Buf=s; 
-} 
-
-/////////////////////////////////////////////////////////////////////////////////////////////
-	
-void JackClient::SetOutputBuf(int ID, float* s) 
-{ 
-	if(m_OutputPortMap.find(ID)!=m_OutputPortMap.end()) m_OutputPortMap[ID]->Buf=s; 
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////
-
-#include <config.h>
 
 extern "C" {
 const char *SpiralPlugin_GetHostVersion()
@@ -436,8 +76,11 @@ string SpiralPlugin_GetGroupName()
 
 JackPlugin::JackPlugin() :
 m_UpdateNames(false),
-m_Connected(false)
+m_Connected(false),
+m_InputCount(4),
+m_OutputCount(4)
 {
+	pthread_mutex_init(&m_TransferLock, NULL);
         m_JackClient=new JackClient;
 
 	//clunky way to ensure unique JackID - JackInstanceCount is never dec 
@@ -447,7 +90,9 @@ m_Connected(false)
 	m_JackInstanceID = JackInstanceCount;
 	JackInstanceCount++;
 
-        m_JackClient->SetJackInstanceID(m_JackInstanceID);
+	for (int n = 0; n < m_InputCount; ++n) m_JackClient->AddInputPort();
+
+	for (int n = 0; n < m_OutputCount; ++n) m_JackClient->AddOutputPort();
         
 	// we are an output
 	m_IsTerminal = true;
@@ -462,26 +107,27 @@ m_Connected(false)
 	
      	m_PluginInfo.PortTips.clear();
 
-     	m_PluginInfo.NumInputs = m_JackClient->GetJackOutputCount();
+	m_PluginInfo.NumInputs = m_OutputCount;
 	m_GUIArgs.NumInputs = m_PluginInfo.NumInputs;
 
-     	for (int n=0; n<m_JackClient->GetJackInputCount(); n++)
+	for (int n=0; n<m_InputCount; n++)
      	{
 		char Temp[256];
 		sprintf(Temp,"SSM Input %d",n);
 		m_PluginInfo.PortTips.push_back(Temp);
      	}
 	
-     	m_PluginInfo.NumOutputs = m_JackClient->GetJackOutputCount();
+	m_PluginInfo.NumOutputs = m_InputCount;
 	m_GUIArgs.NumOutputs = m_PluginInfo.NumOutputs;
 
-	for (int n=0; n<m_JackClient->GetJackOutputCount(); n++)
+	for (int n=0; n<m_OutputCount; n++)
 	{
 		char Temp[256];
 		sprintf(Temp,"SSM Output %d",n);
 		m_PluginInfo.PortTips.push_back(Temp);
 	}
      	
+	m_AudioCH->Register("PortIndex",&m_GUIArgs.PortIndex);
 	m_AudioCH->Register("NumInputs",&m_GUIArgs.NumInputs);
 	m_AudioCH->Register("NumOutputs",&m_GUIArgs.NumOutputs);
 	m_AudioCH->RegisterData("Port",ChannelHandler::INPUT,&m_GUIArgs.Port,sizeof(m_GUIArgs.Port));
@@ -500,24 +146,70 @@ JackPlugin::~JackPlugin()
 		m_JackClient->Detach();
 		delete m_JackClient; 
 		m_JackClient=NULL;
-	}	
+	}
+
+	pthread_mutex_destroy(&m_TransferLock);
 }
 
 PluginInfo &JackPlugin::Initialise(const HostInfo *Host)
 {	
 	PluginInfo& Info= SpiralPlugin::Initialise(Host);
 
-	host = Host;
-
-	m_JackClient->SetCallback(cb_Update,m_Parent);	
-	
+	m_JackClient->SetCallback(ProcessCallback, this);
+	Reset();
 	return Info;
 }
 
 
 
+void JackPlugin::Attach()
+{
+	char name[32];
+	sprintf(name, "SSM%d", m_JackInstanceID);
+	spiralcore::AudioClientOptions options;
+	options.InChannels = m_InputCount;
+	options.OutChannels = m_OutputCount;
+	if (m_JackClient->Attach(name, options))
+		m_JackClient->Start();
+
+}
+
+void JackPlugin::Detach()
+{
+	m_JackClient->Detach();
+}
+
+void JackPlugin::ProcessCallback(void *context, unsigned int frames)
+{
+	JackPlugin *plugin = static_cast<JackPlugin *>(context);
+	// Capture cannot depend on entering the host: a blocking output can
+	// hold its gate for an entire device period. Retain the latest block,
+	// then let either the callback or host loop deliver it to the graph.
+	if (frames && !pthread_mutex_trylock(&plugin->m_TransferLock))
+	{
+		if (plugin->m_Capture.size() == frames * plugin->m_InputCount)
+			plugin->m_JackClient->Read(&plugin->m_Capture[0], frames);
+
+		pthread_mutex_unlock(&plugin->m_TransferLock);
+	}
+
+	plugin->RunAudioCycle(frames);
+
+	if (frames && !pthread_mutex_trylock(&plugin->m_TransferLock))
+	{
+		if (plugin->m_Playback.size() == frames * plugin->m_OutputCount)
+			plugin->m_JackClient->Write(&plugin->m_Playback[0], frames);
+
+		pthread_mutex_unlock(&plugin->m_TransferLock);
+	}
+
+}
+
 void JackPlugin::Execute()
 {
+	// A blocking output may drive the graph while JACK callbacks only fill
+	// the exchange buffers. Deliver that capture when this node executes.
+	ProcessAudio();
 }
 
 void JackPlugin::ExecuteCommands()
@@ -527,6 +219,12 @@ void JackPlugin::ExecuteCommands()
 	if (m_AudioCH->IsCommandWaiting())
 	{
 		switch (m_AudioCH->GetCommand()) {
+			case ATTACH: Attach(); break;
+			case DETACH: Detach(); break;
+			case CONNECT_INPUT: ConnectInput(m_GUIArgs.PortIndex, m_GUIArgs.Port); break;
+			case CONNECT_OUTPUT: ConnectOutput(m_GUIArgs.PortIndex, m_GUIArgs.Port); break;
+			case DISCONNECT_INPUT: m_JackClient->DisconnectInput(m_GUIArgs.PortIndex); break;
+			case DISCONNECT_OUTPUT: m_JackClient->DisconnectOutput(m_GUIArgs.PortIndex); break;
 			case SET_PORT_COUNT :
 				SetNumberPorts (m_GUIArgs.NumInputs, m_GUIArgs.NumOutputs);				
 			break;	
@@ -538,42 +236,29 @@ void JackPlugin::ExecuteCommands()
 			    std::vector<string> InputNames,OutputNames;
 				GetPortNames(InputNames,OutputNames);
 				for (vector<string>::iterator i=InputNames.begin();
-					 i!=InputNames.end(); ++i)
+					 i!=InputNames.end() && c<MAX_PORTS; ++i)
 				{
-					strcpy(m_InputPortNames[c],i->c_str());
+					snprintf(m_InputPortNames[c], sizeof(m_InputPortNames[c]), "%s", i->c_str());
 					c++;
 				}
 		
 				c=0;
 		
 				for (std::vector<string>::iterator i=OutputNames.begin();
-					 i!=OutputNames.end(); ++i)
+					 i!=OutputNames.end() && c<MAX_PORTS; ++i)
 				{
-					strcpy(m_OutputPortNames[c],i->c_str());
+					snprintf(m_OutputPortNames[c], sizeof(m_OutputPortNames[c]), "%s", i->c_str());
 					c++;
 				}
 		
-				m_NumInputPortNames=InputNames.size();
-				m_NumOutputPortNames=OutputNames.size();
+				m_NumInputPortNames=std::min((int)InputNames.size(), MAX_PORTS);
+				m_NumOutputPortNames=std::min((int)OutputNames.size(), MAX_PORTS);
 			}
+
 			break;
 			
 			case CHECK_PORT_CHANGES :
-				if ((m_JackClient->IsAttached()) && (!m_JackClient->CheckingPortChanges)) {
-					m_JackClient->CheckingPortChanges = true;
-				
-					for (int n=0; n<m_PluginInfo.NumInputs; n++) {
-						if (jack_port_connected(m_JackClient->m_OutputPortMap[n]->Port)!=m_JackClient->m_OutputPortMap[n]->Connected)
-							m_JackClient->m_OutputPortsChanged.push_back(m_JackClient->m_OutputPortMap[n]);
-
-						if (jack_port_connected(m_JackClient->m_InputPortMap[n]->Port)!=m_JackClient->m_InputPortMap[n]->Connected)
-							m_JackClient->m_InputPortsChanged.push_back(m_JackClient->m_InputPortMap[n]);						
-					}		
-
-					m_JackClient->CheckingPortChanges = false;
-				}
-			
-			break;
+				break;
 
 			default : break;
 		}
@@ -584,75 +269,64 @@ void JackPlugin::ExecuteCommands()
 bool JackPlugin::Kill()
 {
 	m_IsDead=true;
+	if (m_JackClient) m_JackClient->Detach();
 
-	UpdatePluginInfoWithHost();
-	RemoveAllInputs ();
-	RemoveAllOutputs ();
-	UpdatePluginInfoWithHost();
-
-	if (m_JackClient)
-	{
-		m_JackClient->Detach();
-		delete m_JackClient; 
-		m_JackClient=NULL;
-	}	
-
+	// The host may already have removed neighboring devices during a patch
+	// replacement. Stop callbacks here; leave port and canvas disposal to the
+	// normal destruction path rather than issuing live topology updates.
 	return true;
 }
 
 void JackPlugin::Reset()
 {
-	// connect the buffers up if we are plugged into something		
-	for (int n=0; n<m_JackClient->GetJackOutputCount(); n++)
-	{
-		m_JackClient->SetOutputBuf(n,NULL);
-	}
-	
-	for (int n=0; n<m_JackClient->GetJackInputCount(); n++)
-	{
-		m_JackClient->SetInputBuf(n,NULL);
-  	} 
-
 	ResetPorts();
+	if (!m_HostInfo) return;
+
+	pthread_mutex_lock(&m_TransferLock);
+	m_Capture.assign(m_InputCount * m_HostInfo->BUFSIZE, 0);
+	m_Playback.assign(m_OutputCount * m_HostInfo->BUFSIZE, 0);
+	pthread_mutex_unlock(&m_TransferLock);
+}
+
+void JackPlugin::ServiceAudio()
+{
+	if (m_IsDead) return;
+
+	if (!m_JackClient->IsAttached()) return;
+
+	if (ChangeBufferAndSampleRate)
+		ChangeBufferAndSampleRate(m_JackClient->GetBufferSize(), m_JackClient->GetSampleRate(), m_Parent);
+
 }
 
 void JackPlugin::ProcessAudio()
 {
-	if (m_IsDead) return;
-	
-	// Make sure all plugins match Jack's SampleRate and Buffersize
-	if ((m_JackClient->JackSampleRate() != -1) && (m_JackClient->JackBufferSize() != -1))
+	if (m_IsDead || m_Capture.empty() || m_Playback.empty()) return;
+
+	const unsigned frames = m_HostInfo->BUFSIZE;
+	if (m_Capture.size() != frames * m_InputCount || m_Playback.size() != frames * m_OutputCount) return;
+
+	pthread_mutex_lock(&m_TransferLock);
+	const bool silent = m_HostInfo->PAUSED || !m_JackClient->IsAttached();
+	for (unsigned frame = 0; frame < frames; ++frame)
 	{
-		ChangeBufferAndSampleRate(m_JackClient->JackBufferSize(), m_JackClient->JackSampleRate(), m_Parent);
+		for (int channel = 0; channel < m_InputCount; ++channel)
+			if (OutputExists(channel))
+				GetOutputBuf(channel)->Set(frame, silent ? 0 : m_Capture[frame * m_InputCount + channel]);
+
+		for (int channel = 0; channel < m_OutputCount; ++channel)
+			m_Playback[frame * m_OutputCount + channel] = !silent && InputExists(channel)
+				? (*GetInput(channel))[frame] : 0;
 	}
 
-	// connect the buffers up if we are plugged into something		
-	for (int n=0; n<m_JackClient->GetJackOutputCount(); n++)
-	{
-		if (InputExists(n) && !m_HostInfo->PAUSED) 
-		{			
-			m_JackClient->SetOutputBuf(n,(float*)GetInput(n)->GetBuffer());		
-		}
-		else 
-		{	
-			m_JackClient->SetOutputBuf(n,NULL);
-		}
-	}
-	
-	for (int n=0; n<m_JackClient->GetJackInputCount(); n++)
-	{
-		if (OutputExists(n) && !m_HostInfo->PAUSED) 
-		{
-			m_JackClient->SetInputBuf(n,(float*)GetOutputBuf(n)->GetBuffer());		
-		} 
-		else	
-		{	
-			m_JackClient->SetInputBuf(n,NULL);
-		}
-  	} 
+	pthread_mutex_unlock(&m_TransferLock);
 }
 
 void  JackPlugin::SetNumberPorts (int nInputs, int nOutputs) {
+     nInputs = std::max(MIN_PORTS, std::min(MAX_PORTS, nInputs));
+     nOutputs = std::max(MIN_PORTS, std::min(MAX_PORTS, nOutputs));
+     const bool reconnect = m_JackClient->IsAttached();
+     Detach();
      UpdatePluginInfoWithHost();
      RemoveAllInputs ();
      RemoveAllOutputs ();
@@ -660,14 +334,19 @@ void  JackPlugin::SetNumberPorts (int nInputs, int nOutputs) {
      m_PluginInfo.NumOutputs = 0;
      m_PluginInfo.PortTips.clear ();
      CreatePorts (nInputs, nOutputs, true);
+     Reset();
      UpdatePluginInfoWithHost ();
+     if (reconnect) Attach();
+
 }
 
 void  JackPlugin::CreatePorts (int nInputs, int nOutputs, bool AddPorts) {
+        nInputs = std::max(MIN_PORTS, std::min(MAX_PORTS, nInputs));
+        nOutputs = std::max(MIN_PORTS, std::min(MAX_PORTS, nOutputs));
     	m_PluginInfo.PortTips.clear();
 
     	m_PluginInfo.NumInputs = nInputs;
-     	m_JackClient->SetJackInputCount(nInputs);
+	m_OutputCount = nInputs;
 
      	for (int n=0; n<nInputs; n++)
      	{
@@ -677,7 +356,7 @@ void  JackPlugin::CreatePorts (int nInputs, int nOutputs, bool AddPorts) {
      	}
 	
     	m_PluginInfo.NumOutputs = nOutputs;
-     	m_JackClient->SetJackOutputCount(nOutputs);
+	m_InputCount = nOutputs;
 
 	for (int n=0; n<nOutputs; n++)
 	{

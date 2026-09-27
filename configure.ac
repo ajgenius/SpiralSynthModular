@@ -8,7 +8,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT([SpiralSynthModular], [0.3.1])
 AC_CONFIG_SRCDIR([SpiralSynthModular.C])
 
-AC_DEFINE([SSM_HOST_ABI], ["ssm-fltk-channel-1"], [SSM plugin host ABI])
+AC_DEFINE([SSM_HOST_ABI], ["ssm-fltk-audio-2"], [SSM plugin host ABI])
 
 AM_INIT_AUTOMAKE
 
@@ -147,9 +147,46 @@ if test "x$have_output_oss" = "xyes"; then
 fi
 AM_CONDITIONAL([HAVE_OUTPUT_OSS], [test "x$have_output_oss" = "xyes"])
 
+dnl Native CoreAudio is optional; other platforms keep their existing clients.
+AC_ARG_ENABLE([coreaudio],
+    [AS_HELP_STRING([--disable-coreaudio], [Do not build the native CoreAudio client])],
+    [enable_coreaudio="$enableval"], [enable_coreaudio="auto"])
+have_coreaudio=no
+CORE_AUDIO_LIBS=""
+if test "x$enable_coreaudio" != "xno"; then
+    ssm_saved_LIBS="$LIBS"
+    LIBS="$LIBS -framework AudioUnit -framework CoreAudio -framework CoreFoundation"
+    AC_LANG_PUSH([C++])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+        #include <AudioUnit/AudioUnit.h>
+        #include <CoreAudio/CoreAudio.h>
+    ]], [[
+        AudioComponentDescription description = {};
+        AudioComponent component = AudioComponentFindNext(0, &description);
+        AudioUnit unit = 0;
+        AudioComponentInstanceNew(component, &unit);
+        AudioObjectPropertyAddress address = {};
+        UInt32 size = 0;
+        AudioObjectGetPropertyData(kAudioObjectSystemObject, &address, 0, 0, &size, 0);
+    ]])], [have_coreaudio=yes], [])
+    AC_LANG_POP([C++])
+    LIBS="$ssm_saved_LIBS"
+fi
+if test "$have_coreaudio" = yes; then
+    CORE_AUDIO_LIBS="-framework AudioUnit -framework CoreAudio -framework CoreFoundation"
+    AC_DEFINE([HAVE_CORE_AUDIO_CLIENT], [1], [Build the native CoreAudio client])
+elif test "$enable_coreaudio" = yes; then
+    AC_MSG_ERROR([CoreAudio requested but its headers and frameworks are unavailable])
+fi
+AC_SUBST([CORE_AUDIO_LIBS])
+AM_CONDITIONAL([HAVE_CORE_AUDIO_CLIENT], [test "$have_coreaudio" = yes])
+AC_MSG_NOTICE([Native CoreAudio client: $have_coreaudio])
+
 default_output_audio_client="none"
 if test "x$have_output_portaudio" = "xyes"; then
     default_output_audio_client="portaudio"
+elif test "x$have_coreaudio" = "xyes"; then
+    default_output_audio_client="coreaudio"
 elif test "x$have_output_alsa" = "xyes"; then
     default_output_audio_client="alsa"
 elif test "x$have_output_oss" = "xyes"; then
@@ -158,7 +195,7 @@ fi
 AC_DEFINE_UNQUOTED([DEFAULT_OUTPUT_AUDIO_CLIENT], ["$default_output_audio_client"],
     [Default OutputPlugin audio client])
 if test "x$default_output_audio_client" = "xnone"; then
-    AC_MSG_WARN([No OutputPlugin audio backend found (PortAudio, ALSA, or OSS)])
+    AC_MSG_WARN([No OutputPlugin audio backend found (PortAudio, CoreAudio, ALSA, or OSS)])
 fi
 
 
@@ -210,7 +247,7 @@ jack_message=""
 AC_ARG_ENABLE(
     jack,
     [  --disable-jack          Do not build JackPlugin],
-    [build_jack="n" ; jack_message="manually disabled"],
+    [if test "$enableval" = "no"; then build_jack="n"; jack_message="manually disabled"; else build_jack="y"; fi],
     [build_jack="y"]
 )
 if test "$build_jack" = "y"; then
@@ -222,8 +259,18 @@ fi
 if test "$build_jack" = "y" ; then
    AC_CHECK_LIB(jack, jack_client_open,
       [AC_DEFINE([HAVE_JACK_CLIENT_OPEN], [1], [Define if JACK provides jack_client_open])])
+   AC_CHECK_LIB(jack, jack_free,
+      [AC_DEFINE([HAVE_JACK_FREE], [1], [Define if JACK provides jack_free])])
    PLUGINLIST="JackPlugin $PLUGINLIST"
 fi
+
+AM_CONDITIONAL([HAVE_JACK_CLIENT], [test "$build_jack" = "y"])
+JACK_LIBS=""
+if test "$build_jack" = "y"; then
+   JACK_LIBS="-ljack"
+   AC_DEFINE([HAVE_JACK_CLIENT], [1], [Define if shared JACK audio is available])
+fi
+AC_SUBST([JACK_LIBS])
 
 dnl Check whether LADSPA is present or has been disabled
 ladspa_message=""

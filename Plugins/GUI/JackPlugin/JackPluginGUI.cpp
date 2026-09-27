@@ -42,6 +42,8 @@ int OptionsList(const std::vector<string> &List)
 		Browser->add(i->c_str());
 	}
 	
+	Win->end();
+	Win->set_modal();
 	Win->show();
 
 	int Choice=-1;
@@ -65,7 +67,12 @@ int OptionsList(const std::vector<string> &List)
 			break; 
 		}
 		
-		if (o==Win) break; 		
+		if (o==Win)
+		{
+			delete Win;
+			break;
+		}
+
   	}
 	
 	return Choice;
@@ -78,7 +85,6 @@ SpiralPluginGUI(w,h,o,ch)
 {	
         m_GUIColour = (Fl_Color)Info->GUI_COLOUR;
         m_JackPlugin =o;
-        m_JackClient = o->GetJackClient();
 
 	m_Indicator = new Fl_LED_Button(w/2 - 15,15,30,30,"");
 	m_Indicator->value(0);
@@ -124,125 +130,69 @@ SpiralPluginGUI(w,h,o,ch)
 	m_Scroll = new Fl_Scroll(5, 90, w - 10, h - 102);
 	m_Scroll->box(FL_PLASTIC_DOWN_BOX);
 	m_Scroll->type(Fl_Scroll::VERTICAL_ALWAYS);
-        m_Scroll->position(0, 0);
         add(m_Scroll);
 
         m_OutputPack = new Fl_Pack(15, 90, 85, h - 102);
 	m_Scroll->add(m_OutputPack);
+	m_OutputPack->end();
 	
         m_InputPack = new Fl_Pack(110, 90, 85, h - 102);
 	m_Scroll->add(m_InputPack);
+	m_InputPack->end();
+	m_Scroll->end();
 	
-	for (int n=0; n<m_JackClient->GetJackInputCount(); n++)
-	{
-		AddOutput();
-		AddInput();
-	}
-	
+	for (int n = 0; n < m_JackPlugin->GetOutputCount(); ++n) AddOutput();
+
+	for (int n = 0; n < m_JackPlugin->GetInputCount(); ++n) AddInput();
+
 	end();
 }
 
 void JackPluginGUI::UpdateValues(SpiralPlugin *o)
 {
-	//To make sure buttons match ports on loading a patch
-	if (! m_GUICH->GetBool("Connected"))
-	{
-		int i, numbuttons = (int) m_InputName.size(), numports = m_JackClient->GetJackInputCount();
-		
-		if (numbuttons > numports)
-		{
-			for (int i=numbuttons-numports; i > 0; i--)
-			{
-		        	RemoveOutput() ;		
-		        	RemoveInput() ;	
-		        }	
-		} 
-		
-		if (numbuttons < numports)
-		{
-			for (int i=0; i < numports-numbuttons; i++)
-			{
-		        	AddOutput() ;		
-		        	AddInput() ;	
-		        }	
-		} 
-	}	
+	if (m_GUICH->GetBool("Connected")) return;
+
+	unsigned int inputs = m_JackPlugin->GetInputCount();
+
+	unsigned int outputs = m_JackPlugin->GetOutputCount();
+	while (m_InputButton.size() > inputs) RemoveInput();
+
+	while (m_OutputButton.size() > outputs) RemoveOutput();
+
+	while (m_InputButton.size() < inputs) AddInput();
+
+	while (m_OutputButton.size() < outputs) AddOutput();
+
 }
 
 void JackPluginGUI::Update()
 {
-	if (m_GUICH->GetBool("Connected")) {
-		m_JackClient->CheckingPortChanges = true;
-
-		for (unsigned int n=0; n<m_JackClient->m_OutputPortsChanged.size(); n++) {
-			m_JackClient->m_OutputPortsChanged[n]->Connected = jack_port_connected(m_JackClient->m_OutputPortsChanged[n]->Port);
-
-			if (jack_port_connected(m_JackClient->m_OutputPortsChanged[n]->Port)) {
-				if (m_JackClient->m_OutputPortsChanged[n]->ConnectedTo!="") {
-					m_OutputButton[n]->label(m_JackClient->m_OutputPortsChanged[n]->ConnectedTo.c_str());
-				}
-				else
-				{	
-					const char** connections = jack_port_get_all_connections(m_JackClient->m_Client,m_JackClient->m_OutputPortsChanged[n]->Port);
-  					if (connections) {
-						m_OutputButton[m_JackClient->m_OutputPortsChanged[n]->PortNo]->label(connections[0]);
-						free(connections);
-					}  
-				}	
-				m_OutputButton[m_JackClient->m_OutputPortsChanged[n]->PortNo]->value(1);
-			}
-			else
-			{
-				m_OutputButton[m_JackClient->m_OutputPortsChanged[n]->PortNo]->value(0);
-				m_OutputButton[m_JackClient->m_OutputPortsChanged[n]->PortNo]->label("None");
-			}				
-		}
-
-		m_JackClient->m_OutputPortsChanged.clear();
-
-		for (unsigned int n=0; n<m_JackClient->m_InputPortsChanged.size(); n++) {
-			m_JackClient->m_InputPortsChanged[n]->Connected = jack_port_connected(m_JackClient->m_InputPortsChanged[n]->Port);
-
-			if (m_JackClient->m_InputPortsChanged[n]->Connected) {
-				if (m_JackClient->m_InputPortsChanged[n]->ConnectedTo!="") {
-					m_InputButton[n]->label(m_JackClient->m_InputPortsChanged[n]->ConnectedTo.c_str());
-				}
-				else
-				{	
-					const char** connections = jack_port_get_all_connections(m_JackClient->m_Client,m_JackClient->m_InputPortsChanged[n]->Port);
-  					if (connections) {
-						m_InputButton[m_JackClient->m_InputPortsChanged[n]->PortNo]->label(connections[0]);
-						free(connections);
-					}  
-				}	
-				m_InputButton[m_JackClient->m_InputPortsChanged[n]->PortNo]->value(1);
-			}
-			else
-			{
-				m_InputButton[m_JackClient->m_InputPortsChanged[n]->PortNo]->value(0);
-				m_InputButton[m_JackClient->m_InputPortsChanged[n]->PortNo]->label("None");
-			}
-
-		}
-
-		m_JackClient->m_InputPortsChanged.clear();
-
-		m_JackClient->CheckingPortChanges = false;
+	JackClient *client = m_JackPlugin->GetJackClient();
+	for (unsigned int n = 0; n < m_OutputButton.size(); ++n)
+	{
+		std::string name = client ? client->GetOutputConnection(n) : "";
+		m_OutputButton[n]->value(!name.empty());
+		m_OutputButton[n]->copy_label(name.empty() ? "None" : name.c_str());
 	}
-	
-	m_GUICH->SetCommand (JackPlugin::CHECK_PORT_CHANGES);
 
-	m_Indicator->value(m_GUICH->GetBool("Connected"));
-	redraw();	
+	for (unsigned int n = 0; n < m_InputButton.size(); ++n)
+	{
+		std::string name = client ? client->GetInputConnection(n) : "";
+		m_InputButton[n]->value(!name.empty());
+		m_InputButton[n]->copy_label(name.empty() ? "None" : name.c_str());
+	}
+
+	m_Indicator->value(client && client->IsAttached());
+	redraw();
 }
-	
+
 //// Callbacks ////
 void JackPluginGUI::RemoveOutput() {
-        int n =(int) m_InputName.size() - 1;
+        int n =(int) m_OutputName.size() - 1;
 
 	if (m_OutputName[n])
 	{
-		delete(m_OutputName[n]);
+		delete [] m_OutputName[n];
 		m_OutputName[n] = NULL;
 		m_OutputName.pop_back();
 	}
@@ -273,7 +223,7 @@ void JackPluginGUI::RemoveInput() {
 
 	if (m_InputName[n])
 	{
-		delete(m_InputName[n]);
+		delete [] m_InputName[n];
 		m_InputName[n] = NULL;
 		m_InputName.pop_back();
 	}
@@ -318,7 +268,6 @@ void JackPluginGUI::AddOutput() {
         m_OutputPack->add(m_OutputButton[n]);
 
 	redraw();
-	Fl::check();
 }
 
 void JackPluginGUI::AddInput() {
@@ -339,28 +288,21 @@ void JackPluginGUI::AddInput() {
         m_InputPack->add(m_InputButton[n]);
         
 	redraw();
-	Fl::check();	
 }
 
 void  JackPluginGUI::cb_Remove_i(Fl_Button* o)
 { 
         int n = (int) m_InputName.size();
 
-        if (n > MIN_PORTS)
+        if (n > MIN_PORTS && m_OutputName.size() > MIN_PORTS)
         {
 	        RemoveOutput() ;		
 	        RemoveInput() ;	
 
-		m_GUICH->Set ("NumInputs", n-1);
+		m_GUICH->Set ("NumInputs", int(m_OutputName.size()));
 		m_GUICH->Set ("NumOutputs", n-1);
 		m_GUICH->SetCommand (JackPlugin::SET_PORT_COUNT);
                 m_GUICH->Wait ();
-                
-		/* removing connections live must be called directly from here in the GUI thread */
-                if (m_GUICH->GetBool("Connected")) {
-                	m_JackClient->RemoveInputPort(n-1);
-                	m_JackClient->RemoveOutputPort(n-1);
-                }
                 
                 if (n > 19) {
 			resize (x(), y(), w(), h()-7);
@@ -381,16 +323,10 @@ void  JackPluginGUI::cb_Add_i(Fl_Button* o)
 { 
         int n = (int) m_OutputName.size();
         
-       if (n <= MAX_PORTS) 
+       if (n < MAX_PORTS && m_InputName.size() < MAX_PORTS)
        {
-		/* Adding connections live must be called directly from here in the GUI thread */
-                if (m_GUICH->GetBool("Connected")) {
-                	m_JackClient->AddInputPort(n);
-                	m_JackClient->AddOutputPort(n);
-                }
-
 		m_GUICH->Set ("NumInputs", n+1);
-		m_GUICH->Set ("NumOutputs", n+1);
+		m_GUICH->Set ("NumOutputs", int(m_InputName.size()) + 1);
 		m_GUICH->SetCommand (JackPlugin::SET_PORT_COUNT);
                 m_GUICH->Wait ();
                 
@@ -414,7 +350,8 @@ void  JackPluginGUI::cb_Add_i(Fl_Button* o)
 
 void  JackPluginGUI::cb_Attach_i(Fl_Button* o)
 { 
-	m_JackPlugin->Attach();
+	m_GUICH->SetCommand(JackPlugin::ATTACH);
+	m_GUICH->Wait();
 }
 
 void  JackPluginGUI::cb_Detach_i(Fl_Button* o)
@@ -431,7 +368,8 @@ void  JackPluginGUI::cb_Detach_i(Fl_Button* o)
 		m_InputButton[n]->label("None");
 	}
 
-	m_JackPlugin->Detach();
+	m_GUICH->SetCommand(JackPlugin::DETACH);
+	m_GUICH->Wait();
 }
 
 void JackPluginGUI::cb_OutputConnect_i(Fl_Button* o)
@@ -448,7 +386,7 @@ void JackPluginGUI::cb_OutputConnect_i(Fl_Button* o)
 		m_GUICH->Wait();
 
 		// bit of a hack for multithreaded safety
-		int ninputs=m_GUICH->GetInt("NumOutputPortNames");
+		int ninputs=m_GUICH->GetInt("NumInputPortNames");
 		char inputs[MAX_PORTS][256];
 		m_GUICH->GetData("InputPortNames",inputs);
 
@@ -459,9 +397,12 @@ void JackPluginGUI::cb_OutputConnect_i(Fl_Button* o)
 		// connect this plugin's output to a jack input
 		if (choice>0)
 		{		
-			m_JackClient->ConnectOutput(index,inputs[choice-1]);
+			m_GUICH->Set("PortIndex", index);
+			m_GUICH->SetData("Port", inputs[choice-1]);
+			m_GUICH->SetCommand(JackPlugin::CONNECT_OUTPUT);
+			m_GUICH->Wait();
 			
-			o->label(inputs[choice-1]);
+			o->copy_label(inputs[choice-1]);
 			o->redraw();
 		}
 		else {
@@ -472,7 +413,9 @@ void JackPluginGUI::cb_OutputConnect_i(Fl_Button* o)
 	}
 	else
 	{
-		m_JackClient->DisconnectOutput(index);
+		m_GUICH->Set("PortIndex", index);
+		m_GUICH->SetCommand(JackPlugin::DISCONNECT_OUTPUT);
+		m_GUICH->Wait();
 		o->label("None");
 		o->value(0);
 		o->redraw();
@@ -487,7 +430,7 @@ void JackPluginGUI::cb_InputConnect_i(Fl_Button* o)
 	if ( it != m_InputButton.end() )
 		index = std::distance( m_InputButton.begin(), it );
 
-	if ((o->value()) && (m_JackClient) && (m_JackClient->IsAttached()))
+	if ((o->value()) && (m_JackPlugin->GetJackClient()) && (m_JackPlugin->GetJackClient()->IsAttached()))
 	{
 		m_GUICH->SetCommand(JackPlugin::UPDATE_NAMES);	
 		m_GUICH->Wait();
@@ -504,9 +447,12 @@ void JackPluginGUI::cb_InputConnect_i(Fl_Button* o)
 		// connect this plugin's input to a jack output
 		if (choice>0)
 		{			
-			m_JackClient->ConnectInput(index,outputs[choice-1]);
+			m_GUICH->Set("PortIndex", index);
+			m_GUICH->SetData("Port", outputs[choice-1]);
+			m_GUICH->SetCommand(JackPlugin::CONNECT_INPUT);
+			m_GUICH->Wait();
 			
-			o->label(outputs[choice-1]);
+			o->copy_label(outputs[choice-1]);
 			o->redraw();
 		}
 		else {
@@ -517,7 +463,9 @@ void JackPluginGUI::cb_InputConnect_i(Fl_Button* o)
 	}
 	else
 	{
-		m_JackClient->DisconnectInput(index);
+		m_GUICH->Set("PortIndex", index);
+		m_GUICH->SetCommand(JackPlugin::DISCONNECT_INPUT);
+		m_GUICH->Wait();
 		o->label("None");
 		o->value(0);
 		o->redraw();
