@@ -7,6 +7,10 @@
 #include <cstring>
 #include <iostream>
 
+#ifdef HAVE_CORE_AUDIO_CLIENT
+#include "CoreAudioClient.h"
+#endif
+
 #ifdef HAVE_JACK_CLIENT
 #include "JackClient.h"
 #endif
@@ -79,6 +83,10 @@ void OutputAudioClient::DestroyBackend()
 	if (m_ClientName == "jack") delete m_Client;
 
 #endif
+#ifdef HAVE_CORE_AUDIO_CLIENT
+	if (m_ClientName == "coreaudio") delete m_Client;
+
+#endif
 	m_Client = NULL;
 	m_ClientName.clear();
 }
@@ -86,6 +94,15 @@ void OutputAudioClient::DestroyBackend()
 bool OutputAudioClient::Select(const string &client)
 {
 	DestroyBackend();
+#ifdef HAVE_CORE_AUDIO_CLIENT
+	if (client == "coreaudio")
+	{
+		m_Client = new CoreAudioClient;
+		m_ClientName = "coreaudio";
+		return true;
+	}
+
+#endif
 #ifdef HAVE_JACK_CLIENT
 	if (client == "jack")
 	{
@@ -126,6 +143,10 @@ bool OutputAudioClient::SelectFirstAvailable()
 {
 #ifdef HAVE_OUTPUT_PORTAUDIO
 	if (Select("portaudio")) return true;
+#endif
+#ifdef HAVE_CORE_AUDIO_CLIENT
+	if (Select("coreaudio")) return true;
+
 #endif
 #ifdef HAVE_OUTPUT_ALSA
 	if (Select("alsa")) return true;

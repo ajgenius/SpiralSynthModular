@@ -143,6 +143,12 @@ m_App(NULL)
 	m_AudioClient->tooltip("OutputPlugin backend (compiled-in clients only)");
 	{
 		int idx = 0, active = 0;
+#ifdef HAVE_CORE_AUDIO_CLIENT
+		m_AudioClient->add("coreaudio");
+		if (SpiralInfo::AUDIOCLIENT == "coreaudio") active = idx;
+
+		++idx;
+#endif
 #ifdef HAVE_JACK_CLIENT
 		m_AudioClient->add("jack");
 		if (SpiralInfo::AUDIOCLIENT == "jack") active = idx;

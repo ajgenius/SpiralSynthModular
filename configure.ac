@@ -185,6 +185,8 @@ AC_MSG_NOTICE([Native CoreAudio client: $have_coreaudio])
 default_output_audio_client="none"
 if test "x$have_output_portaudio" = "xyes"; then
     default_output_audio_client="portaudio"
+elif test "x$have_coreaudio" = "xyes"; then
+    default_output_audio_client="coreaudio"
 elif test "x$have_output_alsa" = "xyes"; then
     default_output_audio_client="alsa"
 elif test "x$have_output_oss" = "xyes"; then
@@ -193,7 +195,7 @@ fi
 AC_DEFINE_UNQUOTED([DEFAULT_OUTPUT_AUDIO_CLIENT], ["$default_output_audio_client"],
     [Default OutputPlugin audio client])
 if test "x$default_output_audio_client" = "xnone"; then
-    AC_MSG_WARN([No OutputPlugin audio backend found (PortAudio, ALSA, or OSS)])
+    AC_MSG_WARN([No OutputPlugin audio backend found (PortAudio, CoreAudio, ALSA, or OSS)])
 fi
 
 
