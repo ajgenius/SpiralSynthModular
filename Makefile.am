@@ -61,3 +61,14 @@ mixer_signal_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiral
 stereo_mixer_signal_test_SOURCES = tests/mixer-signal.cpp Plugins/DSP/StereoMixerPlugin/StereoMixerPlugin.C
 stereo_mixer_signal_test_CPPFLAGS = $(AM_CPPFLAGS) -DTEST_STEREO -I$(srcdir)/Plugins/DSP/StereoMixerPlugin
 stereo_mixer_signal_test_LDADD = $(mixer_signal_test_LDADD)
+
+if HAVE_JACK_CLIENT
+check_PROGRAMS += jack-gui-test jack-plugin-test
+jack_gui_test_SOURCES = tests/jack-gui.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
+jack_gui_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
+jack_gui_test_LDADD = $(SpiralSynthModular_LDADD) $(JACK_LIBS)
+jack_gui_test_LDFLAGS = -export-dynamic
+jack_plugin_test_SOURCES = tests/jack-plugin.cpp
+jack_plugin_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/JackPlugin
+jack_plugin_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la $(JACK_LIBS) -ldl
+endif

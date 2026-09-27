@@ -17,107 +17,17 @@
 */ 
 
 #include "SpiralPlugin.h"
-#include <jack/jack.h>
+#include "JackClient.h"
+#include <pthread.h>
+using spiralcore::JackClient;
 
 using namespace std;
-
-typedef jack_default_audio_sample_t sample_t;
 
 #ifndef JackPLUGIN
 #define JackPLUGIN
 
 const int MAX_PORTS = 64;
 const int MIN_PORTS = 2;
-
-class JackClient
-{
-public:
- 	JackClient();
-	virtual ~JackClient();
-
-	void   AddInputPort(int NewPortNumber);
-	void   AddOutputPort(int NewPortNumber);
-
-	void   RemoveInputPort(int PortNumber);
-	void   RemoveOutputPort(int PortNumber);
-
-	bool   Attach();
-	void   Detach();
-	bool   IsAttached()                   { return m_Attached; }
-	void   SetAttached(bool Attached)                   { m_Attached = Attached; }
-	void   SetCallback(void(*Run)(void*, bool m),void *Context) { RunCallback=Run; RunContext=Context; }
-	void   GetPortNames(std::vector<std::string> &InputNames,std::vector<std::string> &OutputNames);
-	void   ConnectInput(int n, const std::string &JackPort);
-	void   ConnectOutput(int n, const std::string &JackPort);
-	void   DisconnectInput(int n);
-	void   DisconnectOutput(int n);
-	std::string GetInputName(int ID)           { return m_InputPortMap[ID]->Name; }
-	std::string GetOutputName(int ID)          { return m_OutputPortMap[ID]->Name; }
-	void   SetInputBuf(int ID, float* s);
-	void   SetOutputBuf(int ID, float* s);
-	int    GetJackInstanceID()           { return m_JackInstanceID; }
-	void   SetJackInstanceID(int JackInstanceID)          { m_JackInstanceID=JackInstanceID; }
-	int    GetBufferSize()           { return m_BufferSize; }
-	void   SetBufferSize(jack_nframes_t BufferSize)          { m_BufferSize=BufferSize; }
-	int    GetSampleRate()           { return m_BufferSize; }
-	void   SetSampleRate(jack_nframes_t SampleRate)          { m_SampleRate=SampleRate; }
-	int    GetJackInputCount()           { return m_JackInputCount; }
-	void   SetJackInputCount(int JackInputCount)          { m_JackInputCount=JackInputCount; }
-	int    GetJackOutputCount()           { return m_JackOutputCount; }
-	void   SetJackOutputCount(int JackOutputCount)          { m_JackOutputCount=JackOutputCount; }
-	long int	JackSampleRate() { return m_JackSampleRate; }
-	long int 	JackBufferSize() { return m_JackBufferSize; }
-
-	class JackPort
-	{		
-		public:
-		JackPort() :
-			Connected(false),Buf(NULL),Port(NULL) {}
-		
-		int            PortNo;
-		std::string    Name;
-		bool           Connected;
-		float*         Buf;
-		jack_port_t*   Port;
-		std::string    ConnectedTo;
-	};
-
-	jack_client_t*     m_Client;
-	std::map<int,JackPort*> m_InputPortMap;
-	std::map<int,JackPort*> m_OutputPortMap;
-
-	//// Kludge for GUI ////
-	bool CheckingPortChanges;
-	std::vector<JackPort*> m_OutputPortsChanged;
-	std::vector<JackPort*> m_InputPortsChanged;
-	
-	//// inline Callbacks ////
-        void JackProcess_i(jack_nframes_t nframes);
-	void SampleRateChange_i(jack_nframes_t nframes);
-	void JackShutdown_i();
-
-	//// static Callbacks ////
-        static int JackProcess(jack_nframes_t nframes, void *jack_client) { ((JackClient *)jack_client)->JackProcess_i(nframes); return 0;}
-	static int SampleRateChange(jack_nframes_t nframes, void *jack_client) { ((JackClient *)jack_client)->SampleRateChange_i(nframes); return 0;}
-	static void JackShutdown(void *jack_client) { ((JackClient *)jack_client)->JackShutdown_i();}
-private:
-	jack_nframes_t  m_BufferSize;
-	jack_nframes_t  m_SampleRate;	
-	bool            m_Attached;
-        int             m_JackInputCount;
-        int             m_JackOutputCount;
-	int		m_JackInstanceID;
-
-	long int	m_JackSampleRate;
-	long int 	m_JackBufferSize;
-
-	static int JackProcessInstanceID;
-
-	void(*RunCallback)(void*, bool m);
-	void *RunContext;
-};
-
-///////////////////////////////////////////////////
 
 class JackPlugin : public AudioDriver
 {
@@ -138,22 +48,32 @@ public:
 	virtual bool			IsAudioDriver() { return true; }
 	virtual AudioProcessType	ProcessType() { return AudioDriver::ALWAYS; }		
 	virtual void			ProcessAudio();
+	virtual void ServiceAudio();
+	virtual bool IsCallbackDriver() const { return true; }
 
 	/* Jack Plugin Specific Functions */
+	int GetInputCount() const { return m_InputCount; }
+
+	int GetOutputCount() const { return m_OutputCount; }
+
 	JackClient *GetJackClient()           { return m_JackClient; }
 
         void SetNumberPorts (int nInputs, int nOutputs);
 
-	enum GUICommands{NONE,UPDATE_NAMES,SET_PORT_COUNT,CHECK_PORT_CHANGES};
+	enum GUICommands{NONE,UPDATE_NAMES,SET_PORT_COUNT,CHECK_PORT_CHANGES,ATTACH,DETACH,CONNECT_INPUT,CONNECT_OUTPUT,DISCONNECT_INPUT,DISCONNECT_OUTPUT};
+
 	struct GUIArgs
 	{
+		int PortIndex;
+
 		int NumInputs;
+
 		int NumOutputs;
 		char Port[256];
 	};
 
-	void Attach() { m_JackClient->Attach(); }
-	void Detach() { m_JackClient->Detach(); }
+	void Attach();
+	void Detach();
 
 	/* Jack Plugin Streaming - soon to be obsolete and for backward compatibility only*/
 	virtual void	StreamOut(std::ostream &s);
@@ -182,6 +102,13 @@ private:
 	
 	//clunky work-around for unique ID
 	static int JackInstanceCount;
+	// Exchange with JACK independently of the host graph/control gate.
+	pthread_mutex_t m_TransferLock;
+	std::vector<float> m_Capture, m_Playback;
+	static void ProcessCallback(void *context, unsigned int frames);
+	int m_InputCount;
+
+	int m_OutputCount;
 };
 
 #endif

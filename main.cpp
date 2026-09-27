@@ -88,24 +88,14 @@ void *audioloop(void* o)
 {
 	while(!AudioStopRequested())
 	{
-		if (!synth->CallbackMode())
-		{
-			// do funky stuff
-			synth->Update();
+		// Commands and lifecycle work continue on the original host thread even
+		// when a device callback owns audio processing.
+		synth->Update();
+		if (synth->CallbackMode())
+			usleep(1000);
 
-			// put the brakes on if there is no blocking output running
-			if (!synth->IsBlockingOutputPluginReady()||
-				 synth->IsFrozen())
-			{
-				usleep(10000);
-			}
-		}
-		else
-		{
-			// the engine is currently in callback mode, so we don't
-			// need to do anything unless we are switched back
-			usleep(1000000);
-		}
+		else if (!synth->IsBlockingOutputPluginReady() || synth->IsFrozen())
+			usleep(10000);
 
 		watchdog_check = 1;
 	}
