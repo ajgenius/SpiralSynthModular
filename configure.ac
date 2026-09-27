@@ -210,7 +210,7 @@ jack_message=""
 AC_ARG_ENABLE(
     jack,
     [  --disable-jack          Do not build JackPlugin],
-    [build_jack="n" ; jack_message="manually disabled"],
+    [if test "$enableval" = "no"; then build_jack="n"; jack_message="manually disabled"; else build_jack="y"; fi],
     [build_jack="y"]
 )
 if test "$build_jack" = "y"; then
@@ -222,8 +222,18 @@ fi
 if test "$build_jack" = "y" ; then
    AC_CHECK_LIB(jack, jack_client_open,
       [AC_DEFINE([HAVE_JACK_CLIENT_OPEN], [1], [Define if JACK provides jack_client_open])])
+   AC_CHECK_LIB(jack, jack_free,
+      [AC_DEFINE([HAVE_JACK_FREE], [1], [Define if JACK provides jack_free])])
    PLUGINLIST="JackPlugin $PLUGINLIST"
 fi
+
+AM_CONDITIONAL([HAVE_JACK_CLIENT], [test "$build_jack" = "y"])
+JACK_LIBS=""
+if test "$build_jack" = "y"; then
+   JACK_LIBS="-ljack"
+   AC_DEFINE([HAVE_JACK_CLIENT], [1], [Define if shared JACK audio is available])
+fi
+AC_SUBST([JACK_LIBS])
 
 dnl Check whether LADSPA is present or has been disabled
 ladspa_message=""
