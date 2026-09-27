@@ -1,6 +1,7 @@
 // Exercise the client adapter without property-state or SSMJ dependencies.
 #include "SpiralPlugin.h"
 #include "JackPlugin.h"
+#include "OutputPlugin.h"
 #include <cassert>
 #include <cstdio>
 #include <dlfcn.h>
@@ -47,10 +48,11 @@ struct Capture
 
 int main(int argc, char **argv)
 {
-	if (argc!=2) return 77;
+	if (argc!=2 && argc!=3) return 77;
 
+	const bool output=argc==3;
 	alarm(20);
-	void *module=dlopen((std::string(argv[1])+"/dsp/JackPlugin/JackPlugin_DSP.so").c_str(),RTLD_NOW|RTLD_GLOBAL);
+	void *module=dlopen((std::string(argv[1])+(output ? "/dsp/OutputPlugin/OutputPlugin_DSP.so" : "/dsp/JackPlugin/JackPlugin_DSP.so")).c_str(),RTLD_NOW|RTLD_GLOBAL);
 	if (!module) { puts(dlerror()); return 1; }
 
 	SpiralPlugin *(*create)()=(SpiralPlugin *(*)())dlsym(module,"SpiralPlugin_CreateInstance");
@@ -68,6 +70,8 @@ int main(int argc, char **argv)
 	HostInfo info=HostInfo();
 	info.BUFSIZE=capture.Client.GetBufferSize();
 	info.SAMPLERATE=capture.Client.GetSampleRate();
+	info.AUDIOCLIENT="jack";
+	info.OUTPUTFILE=std::string(name)+"-output";
 	Engine engine;
 	pthread_mutex_init(&engine.Gate,NULL);
 	for (unsigned cycle=0; cycle<3; ++cycle)
@@ -81,50 +85,67 @@ int main(int argc, char **argv)
 		driver->SetAudioCycleCallback(Engine::Run);
 		ChannelHandler *channel=plugin->GetChannelHandler();
 		pthread_mutex_lock(&engine.Gate);
+		if (!output)
+		{
 		channel->Set("NumInputs",6); channel->Set("NumOutputs",10);
 		channel->SetCommand(JackPlugin::SET_PORT_COUNT);
 		plugin->UpdateChannelHandler(); plugin->ExecuteCommands();
+		}
+
 		Sample source(info.BUFSIZE); source.Set(0.25f);
-		for (unsigned n=0; n<6; ++n) assert(plugin->SetInput(n,&source));
+		for (unsigned n=0; n<(output ? 2U : 6U); ++n) assert(plugin->SetInput(n,&source));
 
 		Sample *received[2];
-		for (unsigned n=0; n<2; ++n) assert(plugin->GetOutput(n,&received[n]));
+		if (!output)
+			for (unsigned n=0; n<2; ++n) assert(plugin->GetOutput(n,&received[n]));
 
-		channel->SetCommand(JackPlugin::ATTACH);
+		if (output) channel->Set("Volume",1.0f);
+
+		channel->SetCommand(output ? int(OutputPlugin::SET_VOLUME) : int(JackPlugin::ATTACH));
 		plugin->UpdateChannelHandler(); plugin->ExecuteCommands();
+		driver->ServiceAudio();
 		pthread_mutex_unlock(&engine.Gate);
 		std::vector<std::string> inputs,outputs;
 		capture.Client.GetPortNames(inputs,outputs);
-		std::string prefix="SSM"+std::string(1,char('0'+cycle))+":";
+		std::string prefix=output ? info.OUTPUTFILE+":" : "SSM"+std::string(1,char('0'+cycle))+":";
 
 		unsigned ins=0,outs=0;
 		for (size_t n=0;n<inputs.size();++n) if (inputs[n].find(prefix)==0) ++ins;
 
 		for (size_t n=0;n<outputs.size();++n) if (outputs[n].find(prefix)==0) ++outs;
 
-		assert(ins==10 && outs==6);
+		assert(ins==(output ? 0U : 10U) && outs==(output ? 2U : 6U));
 		capture.Client.ConnectInput(0,prefix+"Out0");
 		capture.Client.ConnectInput(1,prefix+"Out1");
-		capture.Client.ConnectOutput(0,prefix+"In0");
-		capture.Client.ConnectOutput(1,prefix+"In1");
+		if (!output)
+		{
+			capture.Client.ConnectOutput(0,prefix+"In0");
+			capture.Client.ConnectOutput(1,prefix+"In1");
+		}
+
 		unsigned before=__sync_fetch_and_add(&capture.Matches,0);
 		for (unsigned wait=0; wait<100 && __sync_fetch_and_add(&capture.Matches,0)<before+3; ++wait) usleep(10000);
 
 		assert(__sync_fetch_and_add(&capture.Matches,0)>=before+3);
 		pthread_mutex_lock(&engine.Gate);
-		// A blocking Output holds the host gate while waiting for its device.
-		// JACK must retain capture without entering the graph during that wait.
-		for (unsigned n=0; n<2; ++n) received[n]->Set(0);
+		if (!output)
+		{
+			// A blocking Output holds the host gate while waiting for its device.
+			// JACK must retain capture without entering the graph during that wait.
+			for (unsigned n=0; n<2; ++n) received[n]->Set(0);
 
-		usleep(150000);
-		driver->Execute();
-		for (unsigned n=0; n<2; ++n)
-			for (unsigned frame=0; frame<info.BUFSIZE; ++frame)
-				assert((*received[n])[frame]==-0.375f);
+			usleep(150000);
+			driver->Execute();
+			for (unsigned n=0; n<2; ++n)
+				for (unsigned frame=0; frame<info.BUFSIZE; ++frame)
+					assert((*received[n])[frame]==-0.375f);
+
+		}
 
 		plugin->Kill(); delete plugin;
 		pthread_mutex_unlock(&engine.Gate);
-		printf("JACK plugin cycle %u: playback and capture with the host gate held PASS\n",cycle+1);
+		printf("JACK %s cycle %u: %s PASS\n",output ? "Output" : "plugin",cycle+1,
+			output ? "playback" : "playback and capture with the host gate held");
 	}
 
 	capture.Client.Detach();
