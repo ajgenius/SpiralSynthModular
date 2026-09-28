@@ -1,0 +1,2173 @@
+{
+  "License": "GPL-2.0-or-later",
+  "Release": "0.2.2",
+  "Syntax": "SpiralPositionalText",
+  "Scope": "Layouts emitted by the unmodified 0.2.2 release. Earlier layouts accepted by its StreamIn methods and later CVS changes are not selected by this contract.",
+  "Origin": {
+    "Archive": "https://archive.debian.org/debian/pool/main/s/spiralsynthmodular/spiralsynthmodular_0.2.2.orig.tar.gz",
+    "SHA256": "0a2523660f67b8b9f057692bee2aa87bdac006da75fc817611406e876e3d17b1",
+    "AuthorsFile": "SpiralPositionalText-0.2.2.AUTHORS",
+    "AuthorsSHA256": "64290ea30d5b5e372f326b4417a7e3ea58fc6a20bc2a92175a304469dfded85c",
+    "Attribution": "Derived from SpiralSynthModular by David Griffiths and contributors; see the preserved release AUTHORS and individual source notices.",
+    "Sources": [
+      {
+        "Path": "SpiralSynthModular.C",
+        "SHA256": "4eeacc41d99a2954e95fc829f53c87247c9924476c5d24862f715e6cef395f48",
+        "Symbol": "operator<<(ostream &, SynthModular &)"
+      },
+      {
+        "Path": "GUI/Widgets/Fl_Canvas.C",
+        "SHA256": "1d341d060eb2ca0026c90743d088a4114849382f23c15f0b609a23750c5c6c99",
+        "Symbol": "operator<<(ostream &, Fl_Canvas &)"
+      }
+    ]
+  },
+  "Types": {
+    "Integer": {
+      "Read": "DecimalToken",
+      "Value": "Integer"
+    },
+    "Number": {
+      "Read": "NumberToken",
+      "Value": "Number",
+      "PreserveLexeme": true
+    },
+    "Boolean": {
+      "Read": "DecimalToken",
+      "Values": [
+        0,
+        1
+      ]
+    },
+    "Token": {
+      "Read": "WhitespaceDelimitedBytes"
+    },
+    "Byte": {
+      "Read": "OneByte",
+      "SkipWhitespace": true,
+      "Value": "UnsignedByte"
+    },
+    "ByteString": {
+      "Read": "LengthPrefixedBytes",
+      "LengthType": "Integer",
+      "SeparatorBytes": 1,
+      "Encoding": "Unspecified",
+      "PreserveBytes": true
+    }
+  },
+  "Fields": [
+    {
+      "Name": "Signature",
+      "Type": "Token",
+      "Equals": "SpiralSynthModular"
+    },
+    {
+      "Name": "FileMarker",
+      "Type": "Token",
+      "Equals": "File"
+    },
+    {
+      "Name": "VersionMarker",
+      "Type": "Token",
+      "Equals": "Ver"
+    },
+    {
+      "Name": "FileVersion",
+      "Type": "Integer",
+      "Equals": 4
+    },
+    {
+      "Name": "MainWindow",
+      "Type": "Window"
+    },
+    {
+      "Name": "EditorWindow",
+      "Type": "Window"
+    },
+    {
+      "Name": "SectionMarker",
+      "Type": "Token",
+      "Equals": "SectionList"
+    },
+    {
+      "Name": "DeviceCount",
+      "Type": "Integer"
+    },
+    {
+      "Name": "Devices",
+      "Type": "Array",
+      "Count": {
+        "Type": "PropertyValue",
+        "Value": null,
+        "PropertyName": "DeviceCount"
+      },
+      "Items": {
+        "Type": "Device"
+      }
+    },
+    {
+      "Name": "WireMarker",
+      "Type": "Integer",
+      "Equals": -1
+    },
+    {
+      "Name": "WireVersion",
+      "Type": "Integer",
+      "Equals": 0
+    },
+    {
+      "Name": "WireCount",
+      "Type": "Integer"
+    },
+    {
+      "Name": "Wires",
+      "Type": "Array",
+      "Count": {
+        "Type": "PropertyValue",
+        "Value": null,
+        "PropertyName": "WireCount"
+      },
+      "Items": {
+        "Type": "Wire"
+      }
+    }
+  ],
+  "Structures": {
+    "Window": {
+      "Type": "Object",
+      "Fields": [
+        {
+          "Name": "X",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Y",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Width",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Height",
+          "Type": "Integer"
+        }
+      ]
+    },
+    "Device": {
+      "Type": "Object",
+      "Fields": [
+        {
+          "Name": "DeviceMarker",
+          "Type": "Token",
+          "Equals": "Device"
+        },
+        {
+          "Name": "ID",
+          "Type": "Integer"
+        },
+        {
+          "Name": "PluginMarker",
+          "Type": "Token",
+          "Equals": "Plugin"
+        },
+        {
+          "Name": "PluginID",
+          "Type": "Integer"
+        },
+        {
+          "Name": "X",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Y",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Name",
+          "Type": "ByteString"
+        },
+        {
+          "Name": "WindowVisible",
+          "Type": "Boolean"
+        },
+        {
+          "Name": "WindowX",
+          "Type": "Integer"
+        },
+        {
+          "Name": "WindowY",
+          "Type": "Integer"
+        },
+        {
+          "Name": "State",
+          "Type": "PluginState",
+          "PropertyName": "PluginID"
+        }
+      ]
+    },
+    "Wire": {
+      "Type": "Object",
+      "Fields": [
+        {
+          "Name": "OutputID",
+          "Type": "Integer"
+        },
+        {
+          "Name": "OutputReserved",
+          "Type": "Integer"
+        },
+        {
+          "Name": "OutputPort",
+          "Type": "Integer"
+        },
+        {
+          "Name": "OutputTerminal",
+          "Type": "Integer"
+        },
+        {
+          "Name": "InputID",
+          "Type": "Integer"
+        },
+        {
+          "Name": "InputReserved",
+          "Type": "Integer"
+        },
+        {
+          "Name": "InputPort",
+          "Type": "Integer"
+        },
+        {
+          "Name": "InputTerminal",
+          "Type": "Integer"
+        }
+      ]
+    }
+  },
+  "Plugins": {
+    "Amp": {
+      "PluginID": 9,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Gain",
+          "Type": "Number"
+        },
+        {
+          "Name": "DC",
+          "Type": "Number"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/AmpPlugin/AmpPlugin.C",
+        "SHA256": "8a12beabae748de8c04dbb44befc2de6587ed16808ca2c81e7dadf16c63dcf26",
+        "Symbol": "AmpPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/AmpPlugin/AmpPlugin.C",
+        "SHA256": "8a12beabae748de8c04dbb44befc2de6587ed16808ca2c81e7dadf16c63dcf26",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "AnotherFilter": {
+      "PluginID": 43,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Cutoff",
+          "Type": "Number"
+        },
+        {
+          "Name": "Resonance",
+          "Type": "Number"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/AnotherFilterPlugin/AnotherFilterPlugin.C",
+        "SHA256": "9d9c9a7c02e8a9dc22ed7cff32e510359641c14ba0527a73d4a7dd003d2beac2",
+        "Symbol": "AnotherFilterPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/AnotherFilterPlugin/AnotherFilterPlugin.C",
+        "SHA256": "9d9c9a7c02e8a9dc22ed7cff32e510359641c14ba0527a73d4a7dd003d2beac2",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "BeatMatch": {
+      "PluginID": 48,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Sensitivity",
+          "Type": "Number"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/BeatMatchPlugin/BeatMatchPlugin.C",
+        "SHA256": "80b29f4d965807feb1a1ee34e37aca7fc7744e68ccb40dec153d58662998cae2",
+        "Symbol": "BeatMatchPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/BeatMatchPlugin/BeatMatchPlugin.C",
+        "SHA256": "80b29f4d965807feb1a1ee34e37aca7fc7744e68ccb40dec153d58662998cae2",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "Controller": {
+      "PluginID": 3,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 5
+        },
+        {
+          "Name": "ChannelCount",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Channels",
+          "Type": "Array",
+          "Count": {
+            "Type": "PropertyValue",
+            "Value": null,
+            "PropertyName": "ChannelCount"
+          },
+          "Items": {
+            "Type": "Object",
+            "Fields": [
+              {
+                "Name": "Name",
+                "Type": "ByteString"
+              },
+              {
+                "Name": "Minimum",
+                "Type": "Number"
+              },
+              {
+                "Name": "Maximum",
+                "Type": "Number"
+              },
+              {
+                "Name": "Value",
+                "Type": "Number"
+              }
+            ]
+          }
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/ControllerPlugin/ControllerPlugin.C",
+        "SHA256": "44ab9a2ea3268ce0230274f08d943b2ac41d02588be3d4a6c821962486ece52a",
+        "Symbol": "ControllerPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/ControllerPlugin/ControllerPlugin.C",
+        "SHA256": "44ab9a2ea3268ce0230274f08d943b2ac41d02588be3d4a6c821962486ece52a",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/ControllerPlugin/ControllerPlugin.C",
+        "SHA256": "44ab9a2ea3268ce0230274f08d943b2ac41d02588be3d4a6c821962486ece52a",
+        "Symbol": "ControllerPlugin::ControllerPlugin"
+      }
+    },
+    "Counter": {
+      "PluginID": 45,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Count",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Current",
+          "Type": "Integer"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/CounterPlugin/CounterPlugin.C",
+        "SHA256": "915c47d0aef04c2ef1a44fe632958f4a15552a474ea4486327aa0ef62c617221",
+        "Symbol": "CounterPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/CounterPlugin/CounterPlugin.C",
+        "SHA256": "915c47d0aef04c2ef1a44fe632958f4a15552a474ea4486327aa0ef62c617221",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "Delay": {
+      "PluginID": 15,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Delay",
+          "Type": "Number"
+        },
+        {
+          "Name": "Mix",
+          "Type": "Number"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/DelayPlugin/DelayPlugin.C",
+        "SHA256": "e4c5027c1b63b2aa8f48278548f2bc799eb2b0bd64bd792cd27ab8d3ed984819",
+        "Symbol": "DelayPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/DelayPlugin/DelayPlugin.C",
+        "SHA256": "e4c5027c1b63b2aa8f48278548f2bc799eb2b0bd64bd792cd27ab8d3ed984819",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "DiskWriter": {
+      "PluginID": 41,
+      "Fields": [],
+      "Source": {
+        "Path": "SpiralSound/Plugins/DiskWriterPlugin/DiskWriterPlugin.h",
+        "SHA256": "fda2262180f1e67ab76e88d77701ec184826010a8ea9200dd655124ce6f9b8b6",
+        "Symbol": "DiskWriterPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/DiskWriterPlugin/DiskWriterPlugin.C",
+        "SHA256": "0f1a2b346cae49b948c06b2a05692ab4b843cfa2803120f6ddc9e0686ad76698",
+        "Symbol": "SpiralPlugin_GetID"
+      }
+    },
+    "Distributor": {
+      "PluginID": 86,
+      "Fields": [],
+      "Source": {
+        "Path": "SpiralSound/Plugins/DistributorPlugin/DistributorPlugin.h",
+        "SHA256": "edce6eaf6912b75e40c8d90b7b12a98717d7be400e276ba12306281086eec310",
+        "Symbol": "DistributorPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/DistributorPlugin/DistributorPlugin.C",
+        "SHA256": "2f524e4a1d487d1f34a838e116f8acffd7e2a89bdc0a6db62ca3a9452167c0d5",
+        "Symbol": "SpiralPlugin_GetID"
+      }
+    },
+    "Echo": {
+      "PluginID": 14,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 2
+        },
+        {
+          "Name": "Delay",
+          "Type": "Number"
+        },
+        {
+          "Name": "Feedback",
+          "Type": "Number"
+        },
+        {
+          "Name": "Bounce",
+          "Type": "Boolean"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/EchoPlugin/EchoPlugin.C",
+        "SHA256": "5095588bfc0d896e0ed4603f93bedd25bf1e9413ea4fbd7f0d04b31b6f838cd8",
+        "Symbol": "EchoPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/EchoPlugin/EchoPlugin.C",
+        "SHA256": "5095588bfc0d896e0ed4603f93bedd25bf1e9413ea4fbd7f0d04b31b6f838cd8",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/EchoPlugin/EchoPlugin.C",
+        "SHA256": "5095588bfc0d896e0ed4603f93bedd25bf1e9413ea4fbd7f0d04b31b6f838cd8",
+        "Symbol": "EchoPlugin::EchoPlugin"
+      }
+    },
+    "EnvFollower": {
+      "PluginID": 19,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Attack",
+          "Type": "Number"
+        },
+        {
+          "Name": "Decay",
+          "Type": "Number"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/EnvFollowerPlugin/EnvFollowerPlugin.C",
+        "SHA256": "fddc89c4bf2110aa024f7d4b46a17e94b1d4292e37dd750d14ab368da4b1349f",
+        "Symbol": "EnvFollowerPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/EnvFollowerPlugin/EnvFollowerPlugin.C",
+        "SHA256": "fddc89c4bf2110aa024f7d4b46a17e94b1d4292e37dd750d14ab368da4b1349f",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "Envelope": {
+      "PluginID": 5,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Attack",
+          "Type": "Number"
+        },
+        {
+          "Name": "Decay",
+          "Type": "Number"
+        },
+        {
+          "Name": "Sustain",
+          "Type": "Number"
+        },
+        {
+          "Name": "Release",
+          "Type": "Number"
+        },
+        {
+          "Name": "Volume",
+          "Type": "Number"
+        },
+        {
+          "Name": "TriggerThreshold",
+          "Type": "Number"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/EnvelopePlugin/EnvelopePlugin.C",
+        "SHA256": "795b8fe47810981398681700bad2e4dbc233998c5a049dc1e46113c3af8ddb46",
+        "Symbol": "EnvelopePlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/EnvelopePlugin/EnvelopePlugin.C",
+        "SHA256": "795b8fe47810981398681700bad2e4dbc233998c5a049dc1e46113c3af8ddb46",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "Filter": {
+      "PluginID": 11,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Cutoff",
+          "Type": "Number"
+        },
+        {
+          "Name": "Resonance",
+          "Type": "Number"
+        },
+        {
+          "Name": "ReverseCutoffMod",
+          "Type": "Boolean"
+        },
+        {
+          "Name": "ReverseResonanceMod",
+          "Type": "Boolean"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/FilterPlugin/FilterPlugin.C",
+        "SHA256": "5ae621845a11a2b93459150e6ec30d7d56a337c2a60513d471b18622f0fe34c1",
+        "Symbol": "FilterPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/FilterPlugin/FilterPlugin.C",
+        "SHA256": "5ae621845a11a2b93459150e6ec30d7d56a337c2a60513d471b18622f0fe34c1",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "Flipflop": {
+      "PluginID": 46,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 2
+        },
+        {
+          "Name": "TriggerTime",
+          "Type": "Number"
+        },
+        {
+          "Name": "Monostable",
+          "Type": "Boolean"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/FlipflopPlugin/FlipflopPlugin.C",
+        "SHA256": "064d25bbaf66b0db84961560006a229e367d21d6d1f978ffd607f2abd57364e9",
+        "Symbol": "FlipflopPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/FlipflopPlugin/FlipflopPlugin.C",
+        "SHA256": "064d25bbaf66b0db84961560006a229e367d21d6d1f978ffd607f2abd57364e9",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/FlipflopPlugin/FlipflopPlugin.C",
+        "SHA256": "064d25bbaf66b0db84961560006a229e367d21d6d1f978ffd607f2abd57364e9",
+        "Symbol": "FlipflopPlugin::FlipflopPlugin"
+      }
+    },
+    "FormantFilter": {
+      "PluginID": 42,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Vowel",
+          "Type": "Number"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/FormantFilterPlugin/FormantFilterPlugin.C",
+        "SHA256": "d85f2941d8e27f8601b6f654f886dcbebf9b77814c2c19da563192d0093800cb",
+        "Symbol": "FormantFilterPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/FormantFilterPlugin/FormantFilterPlugin.C",
+        "SHA256": "d85f2941d8e27f8601b6f654f886dcbebf9b77814c2c19da563192d0093800cb",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "Jack": {
+      "PluginID": 31,
+      "Fields": [],
+      "Source": {
+        "Path": "SpiralSound/Plugins/JackPlugin/JackPlugin.h",
+        "SHA256": "7b069e59f59d8879f58989647ca0972383ae72f14284c76faab9051597cd3001",
+        "Symbol": "JackPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/JackPlugin/JackPlugin.C",
+        "SHA256": "f848a07ce76886410d85d00ff76a7cfe0dfba2d700bdaecbd6c64878c8b48c55",
+        "Symbol": "SpiralPlugin_GetID"
+      }
+    },
+    "Keyboard": {
+      "PluginID": 40,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 0
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/KeyboardPlugin/KeyboardPlugin.C",
+        "SHA256": "008bc8dbd8a293687c563f513f95765d86219b12858e4583a43ef5568ecb9b91",
+        "Symbol": "KeyboardPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/KeyboardPlugin/KeyboardPlugin.C",
+        "SHA256": "008bc8dbd8a293687c563f513f95765d86219b12858e4583a43ef5568ecb9b91",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/KeyboardPlugin/KeyboardPlugin.C",
+        "SHA256": "008bc8dbd8a293687c563f513f95765d86219b12858e4583a43ef5568ecb9b91",
+        "Symbol": "KeyboardPlugin::KeyboardPlugin"
+      }
+    },
+    "LADSPA": {
+      "PluginID": 22,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 9
+        },
+        {
+          "Name": "Page",
+          "Type": "Integer"
+        },
+        {
+          "Name": "UpdateInputs",
+          "Type": "Boolean"
+        },
+        {
+          "Name": "Identifier",
+          "Type": "Integer"
+        },
+        {
+          "Name": "PortCount",
+          "Type": "Integer"
+        },
+        {
+          "Name": "UnconnectedInputCount",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Minimum",
+          "Type": "Array",
+          "Count": {
+            "Type": "PropertyValue",
+            "Value": null,
+            "PropertyName": "PortCount"
+          },
+          "Items": {
+            "Type": "Number"
+          }
+        },
+        {
+          "Name": "Maximum",
+          "Type": "Array",
+          "Count": {
+            "Type": "PropertyValue",
+            "Value": null,
+            "PropertyName": "PortCount"
+          },
+          "Items": {
+            "Type": "Number"
+          }
+        },
+        {
+          "Name": "Clamp",
+          "Type": "Array",
+          "Count": {
+            "Type": "PropertyValue",
+            "Value": null,
+            "PropertyName": "PortCount"
+          },
+          "Items": {
+            "Type": "Boolean"
+          }
+        },
+        {
+          "Name": "Default",
+          "Type": "Array",
+          "Count": {
+            "Type": "PropertyValue",
+            "Value": null,
+            "PropertyName": "PortCount"
+          },
+          "Items": {
+            "Type": "Number"
+          }
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/LADSPAPlugin/LADSPAPlugin.C",
+        "SHA256": "181ade4f70f8a00f1d960387070271f975bcd32497d303035c88cb7149e54098",
+        "Symbol": "LADSPAPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/LADSPAPlugin/LADSPAPlugin.C",
+        "SHA256": "181ade4f70f8a00f1d960387070271f975bcd32497d303035c88cb7149e54098",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/LADSPAPlugin/LADSPAPlugin.C",
+        "SHA256": "181ade4f70f8a00f1d960387070271f975bcd32497d303035c88cb7149e54098",
+        "Symbol": "LADSPAPlugin::LADSPAPlugin"
+      },
+      "Notes": "Port arrays are separate, not interleaved. Identifier is the external LADSPA unique ID, not the native plugin ID. Plugin binary and port names are not embedded."
+    },
+    "LFO": {
+      "PluginID": 124,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Waveform",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Frequency",
+          "Type": "Number"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/LFOPlugin/LFOPlugin.C",
+        "SHA256": "6343eb16c95d75fe3f898c5809a5b28464b610d108581e270c4436562df9c2c2",
+        "Symbol": "LFOPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/LFOPlugin/LFOPlugin.C",
+        "SHA256": "6343eb16c95d75fe3f898c5809a5b28464b610d108581e270c4436562df9c2c2",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "Logic": {
+      "PluginID": 52,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 2
+        },
+        {
+          "Name": "InputCount",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Operator",
+          "Type": "Integer"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/LogicPlugin/LogicPlugin.C",
+        "SHA256": "baa68c2d348cc338b858d111959324adb2c940304000c09ee803e88ccc4d0bc6",
+        "Symbol": "LogicPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/LogicPlugin/LogicPlugin.C",
+        "SHA256": "baa68c2d348cc338b858d111959324adb2c940304000c09ee803e88ccc4d0bc6",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/LogicPlugin/LogicPlugin.C",
+        "SHA256": "baa68c2d348cc338b858d111959324adb2c940304000c09ee803e88ccc4d0bc6",
+        "Symbol": "LogicPlugin::LogicPlugin"
+      }
+    },
+    "Masher": {
+      "PluginID": 54,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "GrainStoreSize",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Density",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Randomness",
+          "Type": "Integer"
+        },
+        {
+          "Name": "GrainPitch",
+          "Type": "Number"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/MasherPlugin/MasherPlugin.C",
+        "SHA256": "09df8a41a2466249018fdf6b6a7e7156e856dbf04de814f164143a9ad52b9193",
+        "Symbol": "MasherPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/MasherPlugin/MasherPlugin.C",
+        "SHA256": "09df8a41a2466249018fdf6b6a7e7156e856dbf04de814f164143a9ad52b9193",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "Matrix": {
+      "PluginID": 18,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 4
+        },
+        {
+          "Name": "Current",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Time",
+          "Type": "Number"
+        },
+        {
+          "Name": "Step",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Loop",
+          "Type": "Boolean"
+        },
+        {
+          "Name": "NoteCut",
+          "Type": "Boolean"
+        },
+        {
+          "Name": "Patterns",
+          "Type": "Array",
+          "Count": {
+            "Type": "FixedValue",
+            "Value": 16,
+            "PropertyName": null
+          },
+          "Items": {
+            "Type": "Object",
+            "Fields": [
+              {
+                "Name": "Length",
+                "Type": "Integer"
+              },
+              {
+                "Name": "Speed",
+                "Type": "Number"
+              },
+              {
+                "Name": "Octave",
+                "Type": "Integer"
+              },
+              {
+                "Name": "Notes",
+                "Type": "Array",
+                "Until": {
+                  "Field": "X",
+                  "Equals": -1,
+                  "Consume": true
+                },
+                "Items": {
+                  "Type": "Object",
+                  "Fields": [
+                    {
+                      "Name": "X",
+                      "Type": "Integer"
+                    },
+                    {
+                      "Name": "Y",
+                      "Type": "Integer"
+                    },
+                    {
+                      "Name": "Volume",
+                      "Type": "Number"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "Name": "PatternSequence",
+          "Type": "Array",
+          "Count": {
+            "Type": "FixedValue",
+            "Value": 16,
+            "PropertyName": null
+          },
+          "Items": {
+            "Type": "Integer"
+          }
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/MatrixPlugin/MatrixPlugin.C",
+        "SHA256": "00fee877f12854c1c213fc59cbdbf62356498101f7c0364fa45e7dbc330aca43",
+        "Symbol": "MatrixPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/MatrixPlugin/MatrixPlugin.C",
+        "SHA256": "00fee877f12854c1c213fc59cbdbf62356498101f7c0364fa45e7dbc330aca43",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/MatrixPlugin/MatrixPlugin.C",
+        "SHA256": "00fee877f12854c1c213fc59cbdbf62356498101f7c0364fa45e7dbc330aca43",
+        "Symbol": "MatrixPlugin::MatrixPlugin"
+      },
+      "Notes": "Each pattern has sparse X,Y,Volume records in Y-major order. The -1 terminator contains X only; do not consume Y or Volume for it. Grid dimensions are 64 by 32."
+    },
+    "Meter": {
+      "PluginID": 123,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "VUMode",
+          "Type": "Boolean"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/MeterPlugin/MeterPlugin.C",
+        "SHA256": "07b3937cf101bfbeec440c5ac8550d26ac8deda46d456ae76d50942f675cb568",
+        "Symbol": "MeterPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/MeterPlugin/MeterPlugin.C",
+        "SHA256": "07b3937cf101bfbeec440c5ac8550d26ac8deda46d456ae76d50942f675cb568",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/MeterPlugin/MeterPlugin.C",
+        "SHA256": "07b3937cf101bfbeec440c5ac8550d26ac8deda46d456ae76d50942f675cb568",
+        "Symbol": "MeterPlugin::MeterPlugin"
+      }
+    },
+    "Midi": {
+      "PluginID": 2,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 2
+        },
+        {
+          "Name": "DeviceNumber",
+          "Type": "Integer"
+        },
+        {
+          "Name": "NoteCut",
+          "Type": "Boolean"
+        },
+        {
+          "Name": "ControlCount",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Controls",
+          "Type": "Array",
+          "Count": {
+            "Type": "PropertyValue",
+            "Value": null,
+            "PropertyName": "ControlCount"
+          },
+          "Items": {
+            "Type": "Object",
+            "Fields": [
+              {
+                "Name": "Controller",
+                "Type": "Integer"
+              },
+              {
+                "Name": "PortTip",
+                "Type": "ByteString"
+              }
+            ]
+          }
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/MidiPlugin/MidiPlugin.C",
+        "SHA256": "f4823078f0811968714bf11b1f14e1b57169dc0792cb299fd263215d06b3a91f",
+        "Symbol": "MidiPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/MidiPlugin/MidiPlugin.C",
+        "SHA256": "f4823078f0811968714bf11b1f14e1b57169dc0792cb299fd263215d06b3a91f",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/MidiPlugin/MidiPlugin.C",
+        "SHA256": "f4823078f0811968714bf11b1f14e1b57169dc0792cb299fd263215d06b3a91f",
+        "Symbol": "MidiPlugin::MidiPlugin"
+      }
+    },
+    "MixSwitch": {
+      "PluginID": 126,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "SwitchInputCount",
+          "Type": "Integer"
+        },
+        {
+          "Name": "SwitchPosition",
+          "Type": "Integer"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/MixSwitchPlugin/MixSwitchPlugin.C",
+        "SHA256": "a0402490385b61f4975aa2dc2acb72b0d9da4b9e6c7213463c32cd9f079e156b",
+        "Symbol": "MixSwitchPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/MixSwitchPlugin/MixSwitchPlugin.C",
+        "SHA256": "a0402490385b61f4975aa2dc2acb72b0d9da4b9e6c7213463c32cd9f079e156b",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      },
+      "Notes": "SwitchInputCount is total native inputs minus two."
+    },
+    "Mixer": {
+      "PluginID": 7,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 2
+        },
+        {
+          "Name": "ChannelCount",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Volumes",
+          "Type": "Array",
+          "Count": {
+            "Type": "PropertyValue",
+            "Value": null,
+            "PropertyName": "ChannelCount"
+          },
+          "Items": {
+            "Type": "Number"
+          }
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/MixerPlugin/MixerPlugin.C",
+        "SHA256": "1d66d58532f0262879f1bf23dacdae8eb9a42458f0ce7fbbe04189aec260f76d",
+        "Symbol": "MixerPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/MixerPlugin/MixerPlugin.C",
+        "SHA256": "1d66d58532f0262879f1bf23dacdae8eb9a42458f0ce7fbbe04189aec260f76d",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/MixerPlugin/MixerPlugin.C",
+        "SHA256": "1d66d58532f0262879f1bf23dacdae8eb9a42458f0ce7fbbe04189aec260f76d",
+        "Symbol": "MixerPlugin::MixerPlugin"
+      }
+    },
+    "MoogFilter": {
+      "PluginID": 13,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Cutoff",
+          "Type": "Number"
+        },
+        {
+          "Name": "Resonance",
+          "Type": "Number"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/MoogFilterPlugin/MoogFilterPlugin.C",
+        "SHA256": "1ee3091cedbd5b68657680283740c533ab4b0c802dbf1dc43d7b28026c2707e1",
+        "Symbol": "MoogFilterPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/MoogFilterPlugin/MoogFilterPlugin.C",
+        "SHA256": "1ee3091cedbd5b68657680283740c533ab4b0c802dbf1dc43d7b28026c2707e1",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "Noise": {
+      "PluginID": 49,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Waveform",
+          "Type": "Byte"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/NoisePlugin/NoisePlugin.C",
+        "SHA256": "04a60ce7f51774903138d04b30096fc8b8b378a60314fe1a37b478b582aac118",
+        "Symbol": "NoisePlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/NoisePlugin/NoisePlugin.C",
+        "SHA256": "04a60ce7f51774903138d04b30096fc8b8b378a60314fe1a37b478b582aac118",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      },
+      "Notes": "Waveform is one raw byte: WHITE=0, PINK=1; it is not an ASCII number. Preserve embedded NUL in Source."
+    },
+    "NoteSnap": {
+      "PluginID": 24,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Filter",
+          "Type": "Array",
+          "Count": {
+            "Type": "FixedValue",
+            "Value": 12,
+            "PropertyName": null
+          },
+          "Items": {
+            "Type": "Boolean"
+          }
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/NoteSnapPlugin/NoteSnapPlugin.C",
+        "SHA256": "5bb7ae3211ae1ebbeb1568513dcaf1f0a15aab5a29f8cff4455958e147214bf0",
+        "Symbol": "NoteSnapPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/NoteSnapPlugin/NoteSnapPlugin.C",
+        "SHA256": "5bb7ae3211ae1ebbeb1568513dcaf1f0a15aab5a29f8cff4455958e147214bf0",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "Operator": {
+      "PluginID": 44,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 2
+        },
+        {
+          "Name": "Constant",
+          "Type": "Number"
+        },
+        {
+          "Name": "Operator",
+          "Type": "Integer"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/OperatorPlugin/OperatorPlugin.C",
+        "SHA256": "2dca58c65f6878f8a25ed279b00b842e2cedb89be46ea4a59b702e0bdc4d95d8",
+        "Symbol": "OperatorPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/OperatorPlugin/OperatorPlugin.C",
+        "SHA256": "2dca58c65f6878f8a25ed279b00b842e2cedb89be46ea4a59b702e0bdc4d95d8",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/OperatorPlugin/OperatorPlugin.C",
+        "SHA256": "2dca58c65f6878f8a25ed279b00b842e2cedb89be46ea4a59b702e0bdc4d95d8",
+        "Symbol": "OperatorPlugin::OperatorPlugin"
+      }
+    },
+    "Oscillator": {
+      "PluginID": 4,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Waveform",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Octave",
+          "Type": "Integer"
+        },
+        {
+          "Name": "FineFrequency",
+          "Type": "Number"
+        },
+        {
+          "Name": "PulseWidth",
+          "Type": "Number"
+        },
+        {
+          "Name": "Reserved",
+          "Type": "Number"
+        },
+        {
+          "Name": "SHLength",
+          "Type": "Number"
+        },
+        {
+          "Name": "ModAmount",
+          "Type": "Number"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/OscillatorPlugin/OscillatorPlugin.C",
+        "SHA256": "ac2e587a6fbe53f731641780c7667eaf9e387c086f095dbfff5e23497d585aae",
+        "Symbol": "OscillatorPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/OscillatorPlugin/OscillatorPlugin.C",
+        "SHA256": "ac2e587a6fbe53f731641780c7667eaf9e387c086f095dbfff5e23497d585aae",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      },
+      "Notes": "Reserved is the historical dummy float emitted as zero."
+    },
+    "Output": {
+      "PluginID": 0,
+      "Fields": [],
+      "Source": {
+        "Path": "SpiralSound/Plugins/OutputPlugin/OutputPlugin.h",
+        "SHA256": "769d25b06b6512ea6768bdc73aac601b53ad89568c07aae33eac719374532acb",
+        "Symbol": "OutputPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/OutputPlugin/OutputPlugin.C",
+        "SHA256": "db02eaf5f9ded6843f26a37c453226ca5e639b7fd6e49d0199f6c712d5e897d2",
+        "Symbol": "SpiralPlugin_GetID"
+      }
+    },
+    "PoshSampler": {
+      "PluginID": 32,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 3
+        },
+        {
+          "Name": "Samples",
+          "Type": "Array",
+          "Count": {
+            "Type": "FixedValue",
+            "Value": 8,
+            "PropertyName": null
+          },
+          "Items": {
+            "Type": "Object",
+            "Fields": [
+              {
+                "Name": "Volume",
+                "Type": "Number"
+              },
+              {
+                "Name": "PitchMod",
+                "Type": "Number"
+              },
+              {
+                "Name": "Loop",
+                "Type": "Boolean"
+              },
+              {
+                "Name": "PingPong",
+                "Type": "Boolean"
+              },
+              {
+                "Name": "Note",
+                "Type": "Integer"
+              },
+              {
+                "Name": "Octave",
+                "Type": "Integer"
+              },
+              {
+                "Name": "SamplePosition",
+                "Type": "Number"
+              },
+              {
+                "Name": "PlayStart",
+                "Type": "Integer"
+              },
+              {
+                "Name": "LoopStart",
+                "Type": "Integer"
+              },
+              {
+                "Name": "LoopEnd",
+                "Type": "Integer"
+              },
+              {
+                "Name": "NoteRepeated",
+                "Type": "Integer"
+              }
+            ]
+          }
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/PoshSamplerPlugin/PoshSamplerPlugin.C",
+        "SHA256": "1c8aeae790b68fae9e38b18b8f6d00df6e6ea0041772e7d496e38f9141d697ae",
+        "Symbol": "PoshSamplerPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/PoshSamplerPlugin/PoshSamplerPlugin.C",
+        "SHA256": "1c8aeae790b68fae9e38b18b8f6d00df6e6ea0041772e7d496e38f9141d697ae",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/PoshSamplerPlugin/PoshSamplerPlugin.C",
+        "SHA256": "1c8aeae790b68fae9e38b18b8f6d00df6e6ea0041772e7d496e38f9141d697ae",
+        "Symbol": "PoshSamplerPlugin::PoshSamplerPlugin"
+      },
+      "Notes": "Note is serialized twice. Preserve both fields; the historical reader overwrites Note with NoteRepeated. Audio is external, not in this state."
+    },
+    "RingMod": {
+      "PluginID": 10,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Amount",
+          "Type": "Number"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/RingModPlugin/RingModPlugin.C",
+        "SHA256": "95c02e682af6f43b969c87a12c787436535e175e118c2cb15f8ef2df84952008",
+        "Symbol": "RingModPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/RingModPlugin/RingModPlugin.C",
+        "SHA256": "95c02e682af6f43b969c87a12c787436535e175e118c2cb15f8ef2df84952008",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "SVFilter": {
+      "PluginID": 12,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 2
+        },
+        {
+          "Name": "Cutoff",
+          "Type": "Number"
+        },
+        {
+          "Name": "Resonance",
+          "Type": "Number"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/SVFilterPlugin/SVFilterPlugin.C",
+        "SHA256": "fac9272bfb8646fc68dd70b790cb91014f22f4ef20709c1f79576f60bc3117b8",
+        "Symbol": "SVFilterPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/SVFilterPlugin/SVFilterPlugin.C",
+        "SHA256": "fac9272bfb8646fc68dd70b790cb91014f22f4ef20709c1f79576f60bc3117b8",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SVFilterPlugin/SVFilterPlugin.C",
+        "SHA256": "fac9272bfb8646fc68dd70b790cb91014f22f4ef20709c1f79576f60bc3117b8",
+        "Symbol": "SVFilterPlugin::SVFilterPlugin"
+      }
+    },
+    "SampleHold": {
+      "PluginID": 51,
+      "Fields": [],
+      "Source": {
+        "Path": "SpiralSound/Plugins/SampleHoldPlugin/SampleHoldPlugin.h",
+        "SHA256": "b2b83f58fbfcefe58472a6813539852139dbdb12c324b6fdd53ef348ab8b7af3",
+        "Symbol": "SampleHoldPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/SampleHoldPlugin/SampleHoldPlugin.C",
+        "SHA256": "dd0c8a75ef7c5316ae1fcb7991996cbb96fe2b987b819e1176db2d0ca17a3208",
+        "Symbol": "SpiralPlugin_GetID"
+      }
+    },
+    "Scope": {
+      "PluginID": 1,
+      "Fields": [],
+      "Source": {
+        "Path": "SpiralSound/Plugins/ScopePlugin/ScopePlugin.h",
+        "SHA256": "88bdf83d54fd4d5e9772bba57ff36da213031d720d42bab7687031b2cf6b1f43",
+        "Symbol": "ScopePlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/ScopePlugin/ScopePlugin.C",
+        "SHA256": "56db446e3199a2a041a116fd9cf4a6b4947165d07c0607ef405e8937c3e62431",
+        "Symbol": "SpiralPlugin_GetID"
+      }
+    },
+    "SeqSelector": {
+      "PluginID": 21,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "LineCount",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Lines",
+          "Type": "Array",
+          "Count": {
+            "Type": "PropertyValue",
+            "Value": null,
+            "PropertyName": "LineCount"
+          },
+          "Items": {
+            "Type": "Array",
+            "Count": {
+              "Type": "FixedValue",
+              "Value": 8,
+              "PropertyName": null
+            },
+            "Items": {
+              "Type": "Integer"
+            }
+          }
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/SeqSelectorPlugin/SeqSelectorPlugin.C",
+        "SHA256": "8a415fbaae6d976e688e97c9806dbc1dfbdb69ac16547a8c498d3726d12a5550",
+        "Symbol": "SeqSelectorPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/SeqSelectorPlugin/SeqSelectorPlugin.C",
+        "SHA256": "8a415fbaae6d976e688e97c9806dbc1dfbdb69ac16547a8c498d3726d12a5550",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "Smooth": {
+      "PluginID": 20,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Up",
+          "Type": "Number"
+        },
+        {
+          "Name": "Down",
+          "Type": "Number"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/SmoothPlugin/SmoothPlugin.C",
+        "SHA256": "a7867753c45169abab498131dacecb73ba627139ec66a253ec6b8472fdac51a0",
+        "Symbol": "SmoothPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/SmoothPlugin/SmoothPlugin.C",
+        "SHA256": "a7867753c45169abab498131dacecb73ba627139ec66a253ec6b8472fdac51a0",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "SpiralLoop": {
+      "PluginID": 26,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 2
+        },
+        {
+          "Name": "LoopPoint",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Speed",
+          "Type": "Number"
+        },
+        {
+          "Name": "Volume",
+          "Type": "Number"
+        },
+        {
+          "Name": "TicksPerLoop",
+          "Type": "Integer"
+        },
+        {
+          "Name": "TriggerCount",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Triggers",
+          "Type": "Array",
+          "Count": {
+            "Type": "PropertyValue",
+            "Value": null,
+            "PropertyName": "TriggerCount"
+          },
+          "Items": {
+            "Type": "Object",
+            "Fields": [
+              {
+                "Name": "Channel",
+                "Type": "Integer"
+              },
+              {
+                "Name": "Time",
+                "Type": "Number"
+              }
+            ]
+          }
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/SpiralLoopPlugin/SpiralLoopPlugin.C",
+        "SHA256": "da54975a3f844c818f0827a3d618a6064eac3a4bbfc4340e8b78e9d8c183945f",
+        "Symbol": "SpiralLoopPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/SpiralLoopPlugin/SpiralLoopPlugin.C",
+        "SHA256": "da54975a3f844c818f0827a3d618a6064eac3a4bbfc4340e8b78e9d8c183945f",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralLoopPlugin/SpiralLoopPlugin.C",
+        "SHA256": "da54975a3f844c818f0827a3d618a6064eac3a4bbfc4340e8b78e9d8c183945f",
+        "Symbol": "SpiralLoopPlugin::SpiralLoopPlugin"
+      },
+      "Notes": "Audio sidecar is SpiralLoopSample26.wav, keyed by plugin type rather than instance in this release; multiple instances can collide."
+    },
+    "SplitSwitch": {
+      "PluginID": 125,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "SwitchOutputCount",
+          "Type": "Integer"
+        },
+        {
+          "Name": "SwitchPosition",
+          "Type": "Integer"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/SplitSwitchPlugin/SplitSwitchPlugin.C",
+        "SHA256": "39dd37662fa629720d1319a1e23d763511f7c6aa1ebe7e37500507b5f4ab92a3",
+        "Symbol": "SplitSwitchPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/SplitSwitchPlugin/SplitSwitchPlugin.C",
+        "SHA256": "39dd37662fa629720d1319a1e23d763511f7c6aa1ebe7e37500507b5f4ab92a3",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      },
+      "Notes": "SwitchOutputCount is total native outputs minus one."
+    },
+    "Splitter": {
+      "PluginID": 6,
+      "Fields": [],
+      "Source": {
+        "Path": "SpiralSound/Plugins/SplitterPlugin/SplitterPlugin.h",
+        "SHA256": "d4aa5a81eaaf3813d9d1d09e1e714909043fedfd5688ce306e41f174887ac129",
+        "Symbol": "SplitterPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/SplitterPlugin/SplitterPlugin.C",
+        "SHA256": "25e8ded111f36d6ec6367c6825444afbd719f710dfd2f1df6a365f4f840a4336",
+        "Symbol": "SpiralPlugin_GetID"
+      }
+    },
+    "StereoMixer": {
+      "PluginID": 8,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Channels",
+          "Type": "Array",
+          "Count": {
+            "Type": "FixedValue",
+            "Value": 4,
+            "PropertyName": null
+          },
+          "Items": {
+            "Type": "Object",
+            "Fields": [
+              {
+                "Name": "Volume",
+                "Type": "Number"
+              },
+              {
+                "Name": "Pan",
+                "Type": "Number"
+              }
+            ]
+          }
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/StereoMixerPlugin/StereoMixerPlugin.C",
+        "SHA256": "16d616c912c7b3711e26905650c5e75d7f06166d8ef386e1849337c9cfefde80",
+        "Symbol": "StereoMixerPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/StereoMixerPlugin/StereoMixerPlugin.C",
+        "SHA256": "16d616c912c7b3711e26905650c5e75d7f06166d8ef386e1849337c9cfefde80",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "Stream": {
+      "PluginID": 281,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Volume",
+          "Type": "Number"
+        },
+        {
+          "Name": "PitchMod",
+          "Type": "Number"
+        },
+        {
+          "Name": "FileName",
+          "Type": "ByteString"
+        },
+        {
+          "Name": "Position",
+          "Type": "Number"
+        },
+        {
+          "Name": "StreamPosition",
+          "Type": "Integer"
+        },
+        {
+          "Name": "GlobalPosition",
+          "Type": "Number"
+        },
+        {
+          "Name": "Pitch",
+          "Type": "Number"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/StreamPlugin/StreamPlugin.C",
+        "SHA256": "fefbe6720fbdf21552042b6a71215935cb2b6fca71eaef54691d035200bf0e25",
+        "Symbol": "StreamPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/StreamPlugin/StreamPlugin.C",
+        "SHA256": "fefbe6720fbdf21552042b6a71215935cb2b6fca71eaef54691d035200bf0e25",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      },
+      "Notes": "FileName refers to an external path; decoding must not open it."
+    },
+    "Switch": {
+      "PluginID": 47,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Mix",
+          "Type": "Number"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/SwitchPlugin/SwitchPlugin.C",
+        "SHA256": "99d4a7a06a74852a0e2b2c8ebe68ee8a34bbec0132e38a82db267f0d9954713c",
+        "Symbol": "SwitchPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/SwitchPlugin/SwitchPlugin.C",
+        "SHA256": "99d4a7a06a74852a0e2b2c8ebe68ee8a34bbec0132e38a82db267f0d9954713c",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "Transpose": {
+      "PluginID": 122,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Amount",
+          "Type": "Integer"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/TransposePlugin/TransposePlugin.C",
+        "SHA256": "eba5df127ccb4bf5e458db697b72ff4c444e5d9e4edc3759b2db2c756715528b",
+        "Symbol": "TransposePlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/TransposePlugin/TransposePlugin.C",
+        "SHA256": "eba5df127ccb4bf5e458db697b72ff4c444e5d9e4edc3759b2db2c756715528b",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "Trig": {
+      "PluginID": 53,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Operator",
+          "Type": "Integer"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/TrigPlugin/TrigPlugin.C",
+        "SHA256": "a4e42ce1ebc380205f6ffa2ac40a278a80dbca1d97720372ab6b481231c2510c",
+        "Symbol": "TrigPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/TrigPlugin/TrigPlugin.C",
+        "SHA256": "a4e42ce1ebc380205f6ffa2ac40a278a80dbca1d97720372ab6b481231c2510c",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/TrigPlugin/TrigPlugin.C",
+        "SHA256": "a4e42ce1ebc380205f6ffa2ac40a278a80dbca1d97720372ab6b481231c2510c",
+        "Symbol": "TrigPlugin::TrigPlugin"
+      }
+    },
+    "WaveShaper": {
+      "PluginID": 50,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Wave",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Coefficients",
+          "Type": "Array",
+          "Count": {
+            "Type": "FixedValue",
+            "Value": 6,
+            "PropertyName": null
+          },
+          "Items": {
+            "Type": "Number"
+          }
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/WaveShaperPlugin/WaveShaperPlugin.C",
+        "SHA256": "e1e73e1c2f2523b096754bcc6f6c5f6d285a46f6bc557be2bfc6354e4b51d473",
+        "Symbol": "WaveShaperPlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/WaveShaperPlugin/WaveShaperPlugin.C",
+        "SHA256": "e1e73e1c2f2523b096754bcc6f6c5f6d285a46f6bc557be2bfc6354e4b51d473",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "WaveTable": {
+      "PluginID": 23,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Waveform",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Octave",
+          "Type": "Integer"
+        },
+        {
+          "Name": "FineFrequency",
+          "Type": "Number"
+        },
+        {
+          "Name": "ModAmount",
+          "Type": "Number"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/WaveTablePlugin/WaveTablePlugin.C",
+        "SHA256": "fe2e474632d730cd6812b4cf5bf5e0131c33560887d38c3d6de772524551ae74",
+        "Symbol": "WaveTablePlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/WaveTablePlugin/WaveTablePlugin.C",
+        "SHA256": "fe2e474632d730cd6812b4cf5bf5e0131c33560887d38c3d6de772524551ae74",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "XFade": {
+      "PluginID": 27,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Mix",
+          "Type": "Number"
+        }
+      ],
+      "Source": {
+        "Path": "SpiralSound/Plugins/XFadePlugin/XFadePlugin.C",
+        "SHA256": "bb3fe0ee1762394fbe71c72a54b5348a1bdfae2d8affb5ebed2a40e8068d69ec",
+        "Symbol": "XFadePlugin::StreamOut"
+      },
+      "IdentitySource": {
+        "Path": "SpiralSound/Plugins/XFadePlugin/XFadePlugin.C",
+        "SHA256": "bb3fe0ee1762394fbe71c72a54b5348a1bdfae2d8affb5ebed2a40e8068d69ec",
+        "Symbol": "SpiralPlugin_GetID"
+      },
+      "VersionSource": {
+        "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+        "SHA256": "edcf076a222380c74aacd236b20eb2b49b5051b6b0683d4566ed9e1bb102b758",
+        "Symbol": "SpiralPlugin::SpiralPlugin"
+      }
+    },
+    "Comment": {
+      "PluginID": -1,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 1
+        },
+        {
+          "Name": "Text",
+          "Type": "ByteString"
+        }
+      ],
+      "Source": {
+        "Path": "GUI/Widgets/Fl_CommentGUI.C",
+        "SHA256": "c461204eb08003982d31a3f665801098c4341d05ec4f1270d958a2e99458aac2",
+        "Symbol": "Fl_CommentGUI::StreamOut"
+      }
+    }
+  },
+  "ExternalFiles": {
+    "DirectorySuffix": "_files",
+    "PoshSampler": {
+      "FileNameParts": [
+        "PoshSampler",
+        {
+          "PropertyName": "Device.ID"
+        },
+        "_",
+        {
+          "SampleIndex": {
+            "First": 0,
+            "Count": 8
+          }
+        },
+        ".wav"
+      ]
+    },
+    "SpiralLoop": {
+      "FileName": "SpiralLoopSample26.wav"
+    }
+  },
+  "Rules": [
+    "Fields arrays define byte-stream order. Object member order is not significant. Names label decoded historical fields, not current plugin property names.",
+    "Count uses FixedValue/Value or PropertyValue/PropertyName; exactly the selected value is non-null. PropertyValue resolves an earlier integer field in the containing object. Counts must be nonnegative and bounded by the decoder before allocation.",
+    "PluginState selects exactly one Plugins entry by PluginID in the containing Device. Its version field must match Equals. Empty Fields consumes no bytes, including no version token.",
+    "Until reads the first item field; when it equals the sentinel, consume only that field and finish the array without appending an item.",
+    "ByteString consumes its decimal byte count, exactly one separator byte, then exactly that many bytes including whitespace. Zero length still consumes the separator. Encoding is not guaranteed UTF-8; a JSON conversion must preserve undecodable bytes explicitly.",
+    "Retain source bytes and offsets for lossless decoding. Whitespace tokens alone cannot represent embedded spaces, newlines or the Noise NUL byte.",
+    "Unknown plugin IDs, unexpected versions, truncated strings or arrays and non-whitespace trailing data produce diagnostics and an opaque remainder. Retain complete preceding records; do not guess another layout or discard the entire decoded tree.",
+    "The file header version 4 does not uniquely identify application release 0.2.2. Select this historical profile explicitly until release discrimination is established.",
+    "No port names or topology schema were stored in this file. Wire port indices remain historical indices; mapping them to named modern ports is a separate migration step.",
+    "Comments are serialized in the historical device sequence using plugin ID -1. Moving comments into Patch.GUI and devices into Patch.Devices belongs to translation above the syntax reader."
+  ],
+  "Recovery": {
+    "Statuses": [
+      "Decoded",
+      "Recovered",
+      "Partial",
+      "Unreadable"
+    ],
+    "Validation": "Validation diagnostics do not erase decoded items. Preserve invalid scalar values and unusable wires for inspection; patch construction decides whether a value can be applied or a wire installed.",
+    "EnvelopeCounts": "Treat DeviceCount and WireCount as advisory during recovery. Read complete device records until the -1 wire marker at a record boundary, and complete wire records until EOF. Report the original and observed counts. Never search inside an undecoded body for a marker.",
+    "BodyCounts": "Property-derived array lengths and byte-string lengths determine positional boundaries. Do not guess these lengths when invalid or truncated.",
+    "PartialRecords": "If a record cannot be decoded, preserve preceding complete records and the undecoded source bytes from the start of that record. Do not publish a partially decoded device or wire as complete.",
+    "InvalidBoolean": "Retain the raw numeric value with a diagnostic instead of coercing it to true/false or abandoning the patch.",
+    "WireReferences": "Retain wires with missing or ambiguous device IDs in the item tree and flag them as unusable. Patch construction must not dereference or connect them. Port compatibility requires separate validation.",
+    "Limits": "Recovery retains the same resource limits as ordinary decoding. Hitting a limit yields diagnostics and retained data rather than unbounded parsing.",
+    "NoPatch": "Empty or unrecognizable input has no loadable patch. Return an unreadable result and preserve source evidence; do not report a fabricated empty patch as a successful recovery."
+  }
+}

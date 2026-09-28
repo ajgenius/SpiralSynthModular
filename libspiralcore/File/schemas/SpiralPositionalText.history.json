@@ -1,0 +1,2172 @@
+{
+  "LegacyHistoryVersion": 1,
+  "License": "GPL-2.0-or-later",
+  "Repository": "https://github.com/ajgenius/SpiralSynthModular.git",
+  "Baseline": {
+    "Contract": "SpiralPositionalText-0.2.2.json",
+    "ObservedAt": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+    "Note": "All baseline Source files match this tree byte for byte. This is a source observation, not a claim that this commit introduced every layout or was the release date."
+  },
+  "Commits": {
+    "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+      "Author": {
+        "Name": "edgeeffect",
+        "Email": "edgeeffect"
+      },
+      "AuthorDate": "2004-01-06T19:41:06+00:00",
+      "Committer": {
+        "Name": "edgeeffect",
+        "Email": "edgeeffect"
+      },
+      "CommitDate": "2004-01-06T19:41:06+00:00",
+      "Parents": [
+        "b3574461da00fb876f04df09d5745901bb9554c4"
+      ],
+      "Subject": "Getting ready for release"
+    },
+    "b28fc01c02823add5089b120ef503d4211caa157": {
+      "Author": {
+        "Name": "nebogeo",
+        "Email": "nebogeo"
+      },
+      "AuthorDate": "2002-07-28T23:18:14+00:00",
+      "Committer": {
+        "Name": "nebogeo",
+        "Email": "nebogeo"
+      },
+      "CommitDate": "2002-07-28T23:18:14+00:00",
+      "Parents": [],
+      "Subject": "Initial revision"
+    },
+    "3136ef52eb2c2941981e325e252a7cc9a94ea3b4": {
+      "Author": {
+        "Name": "edgeeffect",
+        "Email": "edgeeffect"
+      },
+      "AuthorDate": "2003-04-26T07:39:17+00:00",
+      "Committer": {
+        "Name": "edgeeffect",
+        "Email": "edgeeffect"
+      },
+      "CommitDate": "2003-04-26T07:39:17+00:00",
+      "Parents": [
+        "f88d775dda740ca6c86cd07e64868564445f432f"
+      ],
+      "Subject": "Lot's of GUI updates - New Echo/Delay GUI - New Echo Functionality"
+    },
+    "1273045107df6155cde4ea988530e019c2d210c5": {
+      "Author": {
+        "Name": "waxfrenzy",
+        "Email": "waxfrenzy"
+      },
+      "AuthorDate": "2003-02-04T22:18:12+00:00",
+      "Committer": {
+        "Name": "waxfrenzy",
+        "Email": "waxfrenzy"
+      },
+      "CommitDate": "2003-02-04T22:18:12+00:00",
+      "Parents": [
+        "12c4d684cd5d58876fb1503ac6e394f6ed0650da"
+      ],
+      "Subject": "CV Plugin now works properly - settings restored correctly on load"
+    },
+    "92d9190a6265747a480718e1316766ce387b085a": {
+      "Author": {
+        "Name": "waxfrenzy",
+        "Email": "waxfrenzy"
+      },
+      "AuthorDate": "2003-03-02T18:20:33+00:00",
+      "Committer": {
+        "Name": "waxfrenzy",
+        "Email": "waxfrenzy"
+      },
+      "CommitDate": "2003-03-02T18:20:33+00:00",
+      "Parents": [
+        "84de86450fece334d40420a8dc26738600ed5982"
+      ],
+      "Subject": "Fixed braindead name-reading code (my fault :) - added length value for name"
+    },
+    "9eca0ac62e9699e4630750eb3cff2c8b1ebd7d79": {
+      "Author": {
+        "Name": "waxfrenzy",
+        "Email": "waxfrenzy"
+      },
+      "AuthorDate": "2002-11-17T11:13:56+00:00",
+      "Committer": {
+        "Name": "waxfrenzy",
+        "Email": "waxfrenzy"
+      },
+      "CommitDate": "2002-11-17T11:13:56+00:00",
+      "Parents": [
+        "5d50c28a592b7352830c81d70f439240cc49c579"
+      ],
+      "Subject": "Control knobs added + cleanup"
+    },
+    "63f7f0e8fc68a4f776a4d96337d1e1e6d08ab256": {
+      "Author": {
+        "Name": "waxfrenzy",
+        "Email": "waxfrenzy"
+      },
+      "AuthorDate": "2003-06-28T19:22:47+00:00",
+      "Committer": {
+        "Name": "waxfrenzy",
+        "Email": "waxfrenzy"
+      },
+      "CommitDate": "2003-06-28T19:22:47+00:00",
+      "Parents": [
+        "91b299ccb451fff16710ca123f28c80cd84370ac"
+      ],
+      "Subject": "Log controls now support asymptote. Knobs and Sliders. Window size to fit. SHM now uses PID."
+    },
+    "86715e53155992c41d9dcd7d92ab7603452fe546": {
+      "Author": {
+        "Name": "aj_genius",
+        "Email": "113943+ajgenius@users.noreply.github.com"
+      },
+      "AuthorDate": "2004-01-31T13:02:53+00:00",
+      "Committer": {
+        "Name": "aj_genius",
+        "Email": "113943+ajgenius@users.noreply.github.com"
+      },
+      "CommitDate": "2004-01-31T13:02:53+00:00",
+      "Parents": [
+        "e4a15cbb2ee1a35b5660150c5de1d53badedc023"
+      ],
+      "Subject": "Added Streaming code too version and save state, and update GUI on load"
+    },
+    "e86637549cd5309743f479cb2bac0914fb8fe9d2": {
+      "Author": {
+        "Name": "aj_genius",
+        "Email": "113943+ajgenius@users.noreply.github.com"
+      },
+      "AuthorDate": "2003-12-05T06:12:44+00:00",
+      "Committer": {
+        "Name": "aj_genius",
+        "Email": "113943+ajgenius@users.noreply.github.com"
+      },
+      "CommitDate": "2003-12-05T06:12:44+00:00",
+      "Parents": [
+        "4665353bf12a70b3757a79f34b99805e836cccf9"
+      ],
+      "Subject": "fix streaming bug caused by uninitialized m_VUMode variable"
+    },
+    "85419fb35c6c3c7ad9b6f33902726daa40e87788": {
+      "Author": {
+        "Name": "edgeeffect",
+        "Email": "edgeeffect"
+      },
+      "AuthorDate": "2004-09-06T18:52:39+00:00",
+      "Committer": {
+        "Name": "edgeeffect",
+        "Email": "edgeeffect"
+      },
+      "CommitDate": "2004-09-06T18:52:39+00:00",
+      "Parents": [
+        "842134de5c2aee136419e67b308cccc24ff21f46"
+      ],
+      "Subject": "ReTrig button for PoshSampler"
+    },
+    "e9ef653a5b5048d068686b1edbb4bf5f4177c7c5": {
+      "Author": {
+        "Name": "edgeeffect",
+        "Email": "edgeeffect"
+      },
+      "AuthorDate": "2004-09-07T18:48:39+00:00",
+      "Committer": {
+        "Name": "edgeeffect",
+        "Email": "edgeeffect"
+      },
+      "CommitDate": "2004-09-07T18:48:39+00:00",
+      "Parents": [
+        "fb99cd78c38d8cc315ae3a61ad4a873eddefd791"
+      ],
+      "Subject": "PoshSampler Fixes, (Wave) File Chooser improvements"
+    },
+    "edd622f19b271bb5d2bdbc79286d521837ed8f02": {
+      "Author": {
+        "Name": "aj_genius",
+        "Email": "113943+ajgenius@users.noreply.github.com"
+      },
+      "AuthorDate": "2004-01-31T13:04:03+00:00",
+      "Committer": {
+        "Name": "aj_genius",
+        "Email": "113943+ajgenius@users.noreply.github.com"
+      },
+      "CommitDate": "2004-01-31T13:04:03+00:00",
+      "Parents": [
+        "86715e53155992c41d9dcd7d92ab7603452fe546"
+      ],
+      "Subject": "Added Streaming code to properly save # of ports, and version for future changes"
+    },
+    "f48de78eccdab799cb224f8533bf6101f5239538": {
+      "Author": {
+        "Name": "aj_genius",
+        "Email": "113943+ajgenius@users.noreply.github.com"
+      },
+      "AuthorDate": "2004-03-07T22:53:46+00:00",
+      "Committer": {
+        "Name": "aj_genius",
+        "Email": "113943+ajgenius@users.noreply.github.com"
+      },
+      "CommitDate": "2004-03-07T22:53:46+00:00",
+      "Parents": [
+        "bdbc7d553c055c22b4bfab1b1d4da56aa03fd4ca"
+      ],
+      "Subject": "Add Distributer GUI with the ability to change number of channels, fix Distributer save/version information Add Reset CV to Distributer to reset to first channel to eg. keep in sync with a matrix"
+    },
+    "caf00146b135475bd510bc66d64a347ce577522a": {
+      "Author": {
+        "Name": "aj_genius",
+        "Email": "113943+ajgenius@users.noreply.github.com"
+      },
+      "AuthorDate": "2004-03-07T22:55:11+00:00",
+      "Committer": {
+        "Name": "aj_genius",
+        "Email": "113943+ajgenius@users.noreply.github.com"
+      },
+      "CommitDate": "2004-03-07T22:55:11+00:00",
+      "Parents": [
+        "f48de78eccdab799cb224f8533bf6101f5239538"
+      ],
+      "Subject": "Add Splitter GUI with the ability to change number of outs Fix Save/Version information"
+    },
+    "37829d464f9b1bb75bfcdb2e87848a26a0cfb276": {
+      "Author": {
+        "Name": "edgeeffect",
+        "Email": "edgeeffect"
+      },
+      "AuthorDate": "2004-03-14T08:20:05+00:00",
+      "Committer": {
+        "Name": "edgeeffect",
+        "Email": "edgeeffect"
+      },
+      "CommitDate": "2004-03-14T08:20:05+00:00",
+      "Parents": [
+        "9bc9a288f5a434d6ff33e0802bbe8762b647e059"
+      ],
+      "Subject": "MousePlugin Updates"
+    },
+    "a470e1403c2f09d304a0600d6b6aaa1b6b910bf0": {
+      "Author": {
+        "Name": "edgeeffect",
+        "Email": "edgeeffect"
+      },
+      "AuthorDate": "2004-04-05T17:51:16+00:00",
+      "Committer": {
+        "Name": "edgeeffect",
+        "Email": "edgeeffect"
+      },
+      "CommitDate": "2004-04-05T17:51:16+00:00",
+      "Parents": [
+        "05fc7959b67dfc85fc0a04b7a904b35d3dbe919f"
+      ],
+      "Subject": "Translate Plugin, Misc Fixes"
+    }
+  },
+  "Plugins": {
+    "Amp": {
+      "PluginID": 9,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Amp"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/AmpPlugin/AmpPlugin.C",
+            "Blob": "488df3ef0a67e05635095e048995f26cd940cc74",
+            "SHA256": "8a12beabae748de8c04dbb44befc2de6587ed16808ca2c81e7dadf16c63dcf26",
+            "Symbol": "AmpPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "AnotherFilter": {
+      "PluginID": 43,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/AnotherFilter"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/AnotherFilterPlugin/AnotherFilterPlugin.C",
+            "Blob": "887265e446e317a8bec9c4348e461f2034b1793e",
+            "SHA256": "9d9c9a7c02e8a9dc22ed7cff32e510359641c14ba0527a73d4a7dd003d2beac2",
+            "Symbol": "AnotherFilterPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "BeatMatch": {
+      "PluginID": 48,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/BeatMatch"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/BeatMatchPlugin/BeatMatchPlugin.C",
+            "Blob": "081be394f4520798823f2aa0508c51a0958726a6",
+            "SHA256": "80b29f4d965807feb1a1ee34e37aca7fc7744e68ccb40dec153d58662998cae2",
+            "Symbol": "BeatMatchPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Controller": {
+      "PluginID": 3,
+      "BaselineRevision": "92d9190a6265747a480718e1316766ce387b085a",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": "92d9190a6265747a480718e1316766ce387b085a",
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Controller"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/ControllerPlugin/ControllerPlugin.C",
+            "Blob": "b924e681dfad6006f70ba0504bbc1ca1821073c2",
+            "SHA256": "44ab9a2ea3268ce0230274f08d943b2ac41d02588be3d4a6c821962486ece52a",
+            "Symbol": "ControllerPlugin::StreamOut"
+          }
+        },
+        "1273045107df6155cde4ea988530e019c2d210c5": {
+          "Kind": "Introduced",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 4
+            },
+            {
+              "Name": "ChannelCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Channels",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "ChannelCount"
+              },
+              "Items": {
+                "Type": "Object",
+                "Fields": [
+                  {
+                    "Name": "Name",
+                    "Type": "Token"
+                  },
+                  {
+                    "Name": "Minimum",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Maximum",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Value",
+                    "Type": "Number"
+                  }
+                ]
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "1273045107df6155cde4ea988530e019c2d210c5",
+            "Path": "SpiralSound/Plugins/ControllerPlugin/ControllerPlugin.C",
+            "Blob": "62b0680e530df6f8ace5cd38824a9279cbc96e34",
+            "SHA256": "f0fad7b97a6354027d4c3ec12d0c6b6c404fc326552030f759902a0f8ca08643",
+            "Symbol": "ControllerPlugin::StreamOut"
+          },
+          "FieldChanges": [
+            {
+              "Field": "Version",
+              "Before": 3,
+              "After": 4
+            }
+          ],
+          "Notes": "Version 3 ancestry is not yet represented. Version 4 writes channel names without byte lengths: names with whitespace cannot be decoded unambiguously."
+        },
+        "92d9190a6265747a480718e1316766ce387b085a": {
+          "Kind": "Introduced",
+          "ParentRevision": "1273045107df6155cde4ea988530e019c2d210c5",
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 5
+            },
+            {
+              "Name": "ChannelCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Channels",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "ChannelCount"
+              },
+              "Items": {
+                "Type": "Object",
+                "Fields": [
+                  {
+                    "Name": "Name",
+                    "Type": "ByteString"
+                  },
+                  {
+                    "Name": "Minimum",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Maximum",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Value",
+                    "Type": "Number"
+                  }
+                ]
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "92d9190a6265747a480718e1316766ce387b085a",
+            "Path": "SpiralSound/Plugins/ControllerPlugin/ControllerPlugin.C",
+            "Blob": "3feac72fe2766aed6a85ce670e216a66834ba987",
+            "SHA256": "97dd4b5a3d340a3e890c1c6ab2ec3d280fe16175d43e387b916d353f2a00da91",
+            "Symbol": "ControllerPlugin::StreamOut"
+          },
+          "FieldChanges": [
+            {
+              "Field": "Version",
+              "Before": 4,
+              "After": 5
+            },
+            {
+              "Field": "Channels.Name",
+              "Change": "Encoding",
+              "Before": "Token",
+              "After": "ByteString"
+            }
+          ]
+        }
+      }
+    },
+    "Counter": {
+      "PluginID": 45,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Counter"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/CounterPlugin/CounterPlugin.C",
+            "Blob": "ad5e25a6132b1789bb504ace169fb816a43e2830",
+            "SHA256": "915c47d0aef04c2ef1a44fe632958f4a15552a474ea4486327aa0ef62c617221",
+            "Symbol": "CounterPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Delay": {
+      "PluginID": 15,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Delay"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/DelayPlugin/DelayPlugin.C",
+            "Blob": "54389d1123c6fbbb3073062197f719f7137ddfb0",
+            "SHA256": "e4c5027c1b63b2aa8f48278548f2bc799eb2b0bd64bd792cd27ab8d3ed984819",
+            "Symbol": "DelayPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "DiskWriter": {
+      "PluginID": 41,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/DiskWriter"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/DiskWriterPlugin/DiskWriterPlugin.h",
+            "Blob": "4b9a93b468256e68e1d6d66036ea9e9e907a39c3",
+            "SHA256": "fda2262180f1e67ab76e88d77701ec184826010a8ea9200dd655124ce6f9b8b6",
+            "Symbol": "DiskWriterPlugin::StreamOut"
+          }
+        },
+        "86715e53155992c41d9dcd7d92ab7603452fe546": {
+          "Kind": "Introduced",
+          "ParentRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 2
+            },
+            {
+              "Name": "BitsPerSample",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Stereo",
+              "Type": "Boolean"
+            }
+          ],
+          "Source": {
+            "Commit": "86715e53155992c41d9dcd7d92ab7603452fe546",
+            "Path": "SpiralSound/Plugins/DiskWriterPlugin/DiskWriterPlugin.C",
+            "Blob": "d949c54fce2372984b5e184d3882e65bacd23319",
+            "SHA256": "bd5dcfce127c9e6ab68ca4470ffd8078c5090861d1e635f82db7db08fd0beaba",
+            "Symbol": "DiskWriterPlugin::StreamOut"
+          },
+          "FieldChanges": [
+            {
+              "Field": "Version",
+              "Change": "Append",
+              "Value": 2
+            },
+            {
+              "Field": "BitsPerSample",
+              "Change": "Append",
+              "Type": "Integer"
+            },
+            {
+              "Field": "Stereo",
+              "Change": "Append",
+              "Type": "Boolean"
+            }
+          ],
+          "Notes": "Earlier output is empty, not a literal version-1 token. Explicit version 2 distinguishes this layout from a following Device marker or the -1 wire marker. Other numeric tokens are not an empty layout."
+        }
+      }
+    },
+    "Distributor": {
+      "PluginID": 86,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Distributor"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/DistributorPlugin/DistributorPlugin.h",
+            "Blob": "72167c42c69f33557ba54a62f5dda54c45ff7c49",
+            "SHA256": "edce6eaf6912b75e40c8d90b7b12a98717d7be400e276ba12306281086eec310",
+            "Symbol": "DistributorPlugin::StreamOut"
+          }
+        },
+        "f48de78eccdab799cb224f8533bf6101f5239538": {
+          "Kind": "Introduced",
+          "ParentRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 2
+            },
+            {
+              "Name": "ChannelCount",
+              "Type": "Integer"
+            }
+          ],
+          "Source": {
+            "Commit": "f48de78eccdab799cb224f8533bf6101f5239538",
+            "Path": "SpiralSound/Plugins/DistributorPlugin/DistributorPlugin.C",
+            "Blob": "8bb35bd7b2eaeffc462a42ac782bdb7d8582ee50",
+            "SHA256": "cb07c70abe7cf40aee66dff96fac5ffda7d4153e1de469b692c4929d298f98a2",
+            "Symbol": "DistributorPlugin::StreamOut"
+          },
+          "Notes": "Previous state output was empty, without a literal version-1 token. Explicit version 2 introduces these stored port counts.",
+          "FieldChanges": [
+            {
+              "Field": "Version",
+              "Change": "Append",
+              "Value": 2
+            },
+            {
+              "Field": "ChannelCount",
+              "Change": "Append",
+              "Type": "Integer"
+            }
+          ]
+        }
+      }
+    },
+    "Echo": {
+      "PluginID": 14,
+      "BaselineRevision": "3136ef52eb2c2941981e325e252a7cc9a94ea3b4",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": "3136ef52eb2c2941981e325e252a7cc9a94ea3b4",
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Echo"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/EchoPlugin/EchoPlugin.C",
+            "Blob": "99de91e44328802dc82a38109d11c0e242fd5426",
+            "SHA256": "5095588bfc0d896e0ed4603f93bedd25bf1e9413ea4fbd7f0d04b31b6f838cd8",
+            "Symbol": "EchoPlugin::StreamOut"
+          }
+        },
+        "b28fc01c02823add5089b120ef503d4211caa157": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 1
+            },
+            {
+              "Name": "Delay",
+              "Type": "Number"
+            },
+            {
+              "Name": "Feedback",
+              "Type": "Number"
+            }
+          ],
+          "Source": {
+            "Commit": "b28fc01c02823add5089b120ef503d4211caa157",
+            "Path": "SpiralSound/Plugins/EchoPlugin/EchoPlugin.C",
+            "Blob": "21738dd5ae1a04b9e581c1f3cb2fda2a842d3c61",
+            "SHA256": "ba0baa4567b5668dabcf5d96ad2e8a5ff5039a54266acab6b764a6df145daec5",
+            "Symbol": "EchoPlugin::StreamOut"
+          },
+          "Notes": "Earliest recovered tree already has this layout; original introduction is not established."
+        },
+        "3136ef52eb2c2941981e325e252a7cc9a94ea3b4": {
+          "Kind": "Introduced",
+          "ParentRevision": "b28fc01c02823add5089b120ef503d4211caa157",
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 2
+            },
+            {
+              "Name": "Delay",
+              "Type": "Number"
+            },
+            {
+              "Name": "Feedback",
+              "Type": "Number"
+            },
+            {
+              "Name": "Bounce",
+              "Type": "Boolean"
+            }
+          ],
+          "Source": {
+            "Commit": "3136ef52eb2c2941981e325e252a7cc9a94ea3b4",
+            "Path": "SpiralSound/Plugins/EchoPlugin/EchoPlugin.C",
+            "Blob": "d3c813b48431c8efef592a87c2b32ee1a5b951d2",
+            "SHA256": "f75c3c2486eece5ae5e6f95c4cf04f47ef9be1742720bd5c1efe8d30637e9dc3",
+            "Symbol": "EchoPlugin::StreamOut"
+          },
+          "FieldChanges": [
+            {
+              "Field": "Version",
+              "Before": 1,
+              "After": 2
+            },
+            {
+              "Field": "Bounce",
+              "Change": "Append",
+              "Type": "Boolean"
+            }
+          ],
+          "Notes": "The same commit changes output topology from one mono output to left/mono and right outputs. Port migration must account for that change."
+        }
+      }
+    },
+    "EnvFollower": {
+      "PluginID": 19,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/EnvFollower"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/EnvFollowerPlugin/EnvFollowerPlugin.C",
+            "Blob": "2311cdc6135512414dddfc9e828528dd08575447",
+            "SHA256": "fddc89c4bf2110aa024f7d4b46a17e94b1d4292e37dd750d14ab368da4b1349f",
+            "Symbol": "EnvFollowerPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Envelope": {
+      "PluginID": 5,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Envelope"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/EnvelopePlugin/EnvelopePlugin.C",
+            "Blob": "9770b396c443aa5c4c290411cbaafc9587b76e76",
+            "SHA256": "795b8fe47810981398681700bad2e4dbc233998c5a049dc1e46113c3af8ddb46",
+            "Symbol": "EnvelopePlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Filter": {
+      "PluginID": 11,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Filter"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/FilterPlugin/FilterPlugin.C",
+            "Blob": "ad1835b1b3ad297f005d2dad13d77923f8d5c6dc",
+            "SHA256": "5ae621845a11a2b93459150e6ec30d7d56a337c2a60513d471b18622f0fe34c1",
+            "Symbol": "FilterPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Flipflop": {
+      "PluginID": 46,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Flipflop"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/FlipflopPlugin/FlipflopPlugin.C",
+            "Blob": "ceca9b1ac5cbc207f23c2df5e6f910987ccafaaa",
+            "SHA256": "064d25bbaf66b0db84961560006a229e367d21d6d1f978ffd607f2abd57364e9",
+            "Symbol": "FlipflopPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "FormantFilter": {
+      "PluginID": 42,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/FormantFilter"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/FormantFilterPlugin/FormantFilterPlugin.C",
+            "Blob": "eee48d3009a720fdd05dea84526ae77905b5cb16",
+            "SHA256": "d85f2941d8e27f8601b6f654f886dcbebf9b77814c2c19da563192d0093800cb",
+            "Symbol": "FormantFilterPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Jack": {
+      "PluginID": 31,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Jack"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/JackPlugin/JackPlugin.h",
+            "Blob": "bf8b3944b2d66ceb5b4c91ebe6b258e13df4d574",
+            "SHA256": "7b069e59f59d8879f58989647ca0972383ae72f14284c76faab9051597cd3001",
+            "Symbol": "JackPlugin::StreamOut"
+          }
+        },
+        "edd622f19b271bb5d2bdbc79286d521837ed8f02": {
+          "Kind": "Introduced",
+          "ParentRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 2
+            },
+            {
+              "Name": "InputCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "OutputCount",
+              "Type": "Integer"
+            }
+          ],
+          "Source": {
+            "Commit": "edd622f19b271bb5d2bdbc79286d521837ed8f02",
+            "Path": "SpiralSound/Plugins/JackPlugin/JackPlugin.C",
+            "Blob": "53d6dceccd950b0ff704a876ff833eb80e57255b",
+            "SHA256": "630f6577e11014a89ebdaaccb3328542bd436c5afff0aaee8d3fe6e80e7cc7bb",
+            "Symbol": "JackPlugin::StreamOut"
+          },
+          "Notes": "Previous state output was empty, without a literal version-1 token. Explicit version 2 introduces these stored port counts.",
+          "FieldChanges": [
+            {
+              "Field": "Version",
+              "Change": "Append",
+              "Value": 2
+            },
+            {
+              "Field": "InputCount",
+              "Change": "Append",
+              "Type": "Integer"
+            },
+            {
+              "Field": "OutputCount",
+              "Change": "Append",
+              "Type": "Integer"
+            }
+          ]
+        }
+      }
+    },
+    "Keyboard": {
+      "PluginID": 40,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Keyboard"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/KeyboardPlugin/KeyboardPlugin.C",
+            "Blob": "be3454912496808e138ba9ee84841d5f11e49f69",
+            "SHA256": "008bc8dbd8a293687c563f513f95765d86219b12858e4583a43ef5568ecb9b91",
+            "Symbol": "KeyboardPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "LADSPA": {
+      "PluginID": 22,
+      "BaselineRevision": "63f7f0e8fc68a4f776a4d96337d1e1e6d08ab256",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": "63f7f0e8fc68a4f776a4d96337d1e1e6d08ab256",
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/LADSPA"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/LADSPAPlugin/LADSPAPlugin.C",
+            "Blob": "28ac0acf9d255597b7241cc624c905d2a787b148",
+            "SHA256": "181ade4f70f8a00f1d960387070271f975bcd32497d303035c88cb7149e54098",
+            "Symbol": "LADSPAPlugin::StreamOut"
+          }
+        },
+        "9eca0ac62e9699e4630750eb3cff2c8b1ebd7d79": {
+          "Kind": "Introduced",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 8
+            },
+            {
+              "Name": "Page",
+              "Type": "Integer"
+            },
+            {
+              "Name": "UpdateInputs",
+              "Type": "Boolean"
+            },
+            {
+              "Name": "Identifier",
+              "Type": "Integer"
+            },
+            {
+              "Name": "PortCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Minimum",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "Maximum",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "Clamp",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Boolean"
+              }
+            },
+            {
+              "Name": "Default",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "9eca0ac62e9699e4630750eb3cff2c8b1ebd7d79",
+            "Path": "SpiralSound/Plugins/LADSPAPlugin/LADSPAPlugin.C",
+            "Blob": "174c930aeedda9b065ef65a4ecd6a6a2c8ad7ad2",
+            "SHA256": "87ad972dc4f3a917253afe3688a35768ea30abc3b7edc7d140feca54c8f9304d",
+            "Symbol": "LADSPAPlugin::StreamOut"
+          },
+          "FieldChanges": [
+            {
+              "Field": "Version",
+              "Before": 7,
+              "After": 8
+            }
+          ],
+          "Notes": "Version 7 ancestry is not yet represented. Page is the old TabIndex; the Setup page is 1 in this revision."
+        },
+        "63f7f0e8fc68a4f776a4d96337d1e1e6d08ab256": {
+          "Kind": "Introduced",
+          "ParentRevision": "9eca0ac62e9699e4630750eb3cff2c8b1ebd7d79",
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 9
+            },
+            {
+              "Name": "Page",
+              "Type": "Integer"
+            },
+            {
+              "Name": "UpdateInputs",
+              "Type": "Boolean"
+            },
+            {
+              "Name": "Identifier",
+              "Type": "Integer"
+            },
+            {
+              "Name": "PortCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "UnconnectedInputCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Minimum",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "Maximum",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "Clamp",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Boolean"
+              }
+            },
+            {
+              "Name": "Default",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "63f7f0e8fc68a4f776a4d96337d1e1e6d08ab256",
+            "Path": "SpiralSound/Plugins/LADSPAPlugin/LADSPAPlugin.C",
+            "Blob": "4bfcd0af49e1a1e9006e09980ef8db8480010ac4",
+            "SHA256": "2ba5d12822272e4a14dec42ddaa554fa04903838923745ee2af45b5db41e08af",
+            "Symbol": "LADSPAPlugin::StreamOut"
+          },
+          "FieldChanges": [
+            {
+              "Field": "Version",
+              "Before": 8,
+              "After": 9
+            },
+            {
+              "Field": "UnconnectedInputCount",
+              "Change": "InsertAfter",
+              "AfterField": "PortCount",
+              "Type": "Integer"
+            },
+            {
+              "Field": "Page",
+              "Change": "Meaning",
+              "Before": "Setup=1",
+              "After": "Setup=2"
+            }
+          ]
+        }
+      }
+    },
+    "LFO": {
+      "PluginID": 124,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/LFO"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/LFOPlugin/LFOPlugin.C",
+            "Blob": "a8579fd818d7add114f077e48529036b82fb4bff",
+            "SHA256": "6343eb16c95d75fe3f898c5809a5b28464b610d108581e270c4436562df9c2c2",
+            "Symbol": "LFOPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Logic": {
+      "PluginID": 52,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Logic"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/LogicPlugin/LogicPlugin.C",
+            "Blob": "229fb1badea21cf612eeb373af3f6fa8f5da39e4",
+            "SHA256": "baa68c2d348cc338b858d111959324adb2c940304000c09ee803e88ccc4d0bc6",
+            "Symbol": "LogicPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Masher": {
+      "PluginID": 54,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Masher"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/MasherPlugin/MasherPlugin.C",
+            "Blob": "77d5cb464fbf3cf0f951c0ad5af3feb0d843c71f",
+            "SHA256": "09df8a41a2466249018fdf6b6a7e7156e856dbf04de814f164143a9ad52b9193",
+            "Symbol": "MasherPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Matrix": {
+      "PluginID": 18,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Matrix"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/MatrixPlugin/MatrixPlugin.C",
+            "Blob": "ba07d7ad4d71298ce61dbc12511c82fa82653b15",
+            "SHA256": "00fee877f12854c1c213fc59cbdbf62356498101f7c0364fa45e7dbc330aca43",
+            "Symbol": "MatrixPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Meter": {
+      "PluginID": 123,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Meter"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/MeterPlugin/MeterPlugin.C",
+            "Blob": "501e3b7f9e1af7fdeb4e55b4c3d68efca8bba728",
+            "SHA256": "07b3937cf101bfbeec440c5ac8550d26ac8deda46d456ae76d50942f675cb568",
+            "Symbol": "MeterPlugin::StreamOut"
+          }
+        }
+      },
+      "KnownDefects": [
+        {
+          "Field": "VUMode",
+          "FixedBy": "e86637549cd5309743f479cb2bac0914fb8fe9d2",
+          "SourcePath": "SpiralSound/Plugins/MeterPlugin/MeterPlugin.C",
+          "Description": "Before this initialization fix, the bool could be uninitialized when saved. Corpus values such as 248 are consistent with the documented streaming bug, but do not identify the writer commit. Preserve the raw value for diagnostics; do not silently coerce it into a valid Boolean or claim strict validation passed."
+        }
+      ]
+    },
+    "Midi": {
+      "PluginID": 2,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Midi"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/MidiPlugin/MidiPlugin.C",
+            "Blob": "d87ad3695e695573aca9443a6888d188fb2da256",
+            "SHA256": "f4823078f0811968714bf11b1f14e1b57169dc0792cb299fd263215d06b3a91f",
+            "Symbol": "MidiPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "MixSwitch": {
+      "PluginID": 126,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/MixSwitch"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/MixSwitchPlugin/MixSwitchPlugin.C",
+            "Blob": "5f15bd70a84460f915323a5cdb9eeb4be23ff9b9",
+            "SHA256": "a0402490385b61f4975aa2dc2acb72b0d9da4b9e6c7213463c32cd9f079e156b",
+            "Symbol": "MixSwitchPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Mixer": {
+      "PluginID": 7,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Mixer"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/MixerPlugin/MixerPlugin.C",
+            "Blob": "03d0ddcd206ee8dea7acb88e2c9db1cf436cca80",
+            "SHA256": "1d66d58532f0262879f1bf23dacdae8eb9a42458f0ce7fbbe04189aec260f76d",
+            "Symbol": "MixerPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "MoogFilter": {
+      "PluginID": 13,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/MoogFilter"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/MoogFilterPlugin/MoogFilterPlugin.C",
+            "Blob": "97e0e727716a7f3a35af06c538bcd4d9f8ff4b9d",
+            "SHA256": "1ee3091cedbd5b68657680283740c533ab4b0c802dbf1dc43d7b28026c2707e1",
+            "Symbol": "MoogFilterPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Noise": {
+      "PluginID": 49,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Noise"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/NoisePlugin/NoisePlugin.C",
+            "Blob": "ceeabc573b5dd23429559f8b0e04bcf7646cd15c",
+            "SHA256": "04a60ce7f51774903138d04b30096fc8b8b378a60314fe1a37b478b582aac118",
+            "Symbol": "NoisePlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "NoteSnap": {
+      "PluginID": 24,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/NoteSnap"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/NoteSnapPlugin/NoteSnapPlugin.C",
+            "Blob": "542030f416963a3acb320ea16463f06bb76329e6",
+            "SHA256": "5bb7ae3211ae1ebbeb1568513dcaf1f0a15aab5a29f8cff4455958e147214bf0",
+            "Symbol": "NoteSnapPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Operator": {
+      "PluginID": 44,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Operator"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/OperatorPlugin/OperatorPlugin.C",
+            "Blob": "0e3c7fbe2c51a029618f22eaadfa2ff0e3d182af",
+            "SHA256": "2dca58c65f6878f8a25ed279b00b842e2cedb89be46ea4a59b702e0bdc4d95d8",
+            "Symbol": "OperatorPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Oscillator": {
+      "PluginID": 4,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Oscillator"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/OscillatorPlugin/OscillatorPlugin.C",
+            "Blob": "19d6738c7ebe47b2a04ba74617cbfbb513d1be33",
+            "SHA256": "ac2e587a6fbe53f731641780c7667eaf9e387c086f095dbfff5e23497d585aae",
+            "Symbol": "OscillatorPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Output": {
+      "PluginID": 0,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Output"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/OutputPlugin/OutputPlugin.h",
+            "Blob": "3725808e4bcb0cbca66a8f1a64b2af938afbfe23",
+            "SHA256": "769d25b06b6512ea6768bdc73aac601b53ad89568c07aae33eac719374532acb",
+            "Symbol": "OutputPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "PoshSampler": {
+      "PluginID": 32,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/PoshSampler"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/PoshSamplerPlugin/PoshSamplerPlugin.C",
+            "Blob": "32111e7520adabb8d7b421794faf74c6dd52533e",
+            "SHA256": "1c8aeae790b68fae9e38b18b8f6d00df6e6ea0041772e7d496e38f9141d697ae",
+            "Symbol": "PoshSamplerPlugin::StreamOut"
+          }
+        },
+        "85419fb35c6c3c7ad9b6f33902726daa40e87788": {
+          "Kind": "Introduced",
+          "ParentRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 4
+            },
+            {
+              "Name": "Samples",
+              "Type": "Array",
+              "Count": {
+                "Type": "FixedValue",
+                "Value": 8,
+                "PropertyName": null
+              },
+              "Items": {
+                "Type": "Object",
+                "Fields": [
+                  {
+                    "Name": "Volume",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "PitchMod",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Loop",
+                    "Type": "Boolean"
+                  },
+                  {
+                    "Name": "PingPong",
+                    "Type": "Boolean"
+                  },
+                  {
+                    "Name": "Note",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Octave",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "SamplePosition",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "PlayStart",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "LoopStart",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "LoopEnd",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "NoteRepeated",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "ReTrig",
+                    "Type": "Boolean"
+                  }
+                ]
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "85419fb35c6c3c7ad9b6f33902726daa40e87788",
+            "Path": "SpiralSound/Plugins/PoshSamplerPlugin/PoshSamplerPlugin.C",
+            "Blob": "4f12c5fb68406457eb910e101a990409fd0acefe",
+            "SHA256": "3d8b3af89b8464a486b022850c66e83013c376ba7d64acfde10b619b8dbcc1d2",
+            "Symbol": "PoshSamplerPlugin::StreamOut"
+          },
+          "Notes": "Eight sample records retain their duplicate Note slot and append ReTrig individually. The historical reader defaults ReTrig to true for versions below 4; this migration default is not an extra field in a version-3 stream.",
+          "FieldChanges": [
+            {
+              "Field": "Version",
+              "Before": 3,
+              "After": 4
+            },
+            {
+              "Field": "Samples.ReTrig",
+              "Change": "Append",
+              "Type": "Boolean"
+            }
+          ]
+        },
+        "e9ef653a5b5048d068686b1edbb4bf5f4177c7c5": {
+          "Kind": "Observed",
+          "ParentRevision": "85419fb35c6c3c7ad9b6f33902726daa40e87788",
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 4
+            },
+            {
+              "Name": "Samples",
+              "Type": "Array",
+              "Count": {
+                "Type": "FixedValue",
+                "Value": 8,
+                "PropertyName": null
+              },
+              "Items": {
+                "Type": "Object",
+                "Fields": [
+                  {
+                    "Name": "Volume",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "PitchMod",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Loop",
+                    "Type": "Boolean"
+                  },
+                  {
+                    "Name": "PingPong",
+                    "Type": "Boolean"
+                  },
+                  {
+                    "Name": "Note",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Octave",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "SamplePosition",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "PlayStart",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "LoopStart",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "LoopEnd",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "NoteRepeated",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "ReTrig",
+                    "Type": "Boolean"
+                  }
+                ]
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "e9ef653a5b5048d068686b1edbb4bf5f4177c7c5",
+            "Path": "SpiralSound/Plugins/PoshSamplerPlugin/PoshSamplerPlugin.C",
+            "Blob": "83df4a48407a521c86b05213be09e94deb819d20",
+            "SHA256": "cfce593a950b41ab02dd0af66b4d492f6b886ffe1dcb3a3094dd52f75c24aaa0",
+            "Symbol": "PoshSamplerPlugin::StreamOut"
+          },
+          "Notes": "September 7 fixes retain exactly the September 6 version-4 wire layout. Sample initialization and GUI updates change, but sidecar names remain PoshSampler<device ID>_<sample index>.wav. Asset existence is outside decoding."
+        }
+      }
+    },
+    "RingMod": {
+      "PluginID": 10,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/RingMod"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/RingModPlugin/RingModPlugin.C",
+            "Blob": "9376d9f9c9f30f5adea69fb913677f1977010dc8",
+            "SHA256": "95c02e682af6f43b969c87a12c787436535e175e118c2cb15f8ef2df84952008",
+            "Symbol": "RingModPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "SVFilter": {
+      "PluginID": 12,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/SVFilter"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/SVFilterPlugin/SVFilterPlugin.C",
+            "Blob": "c37d7584094c40fea920f95bc5a588545ee41cd4",
+            "SHA256": "fac9272bfb8646fc68dd70b790cb91014f22f4ef20709c1f79576f60bc3117b8",
+            "Symbol": "SVFilterPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "SampleHold": {
+      "PluginID": 51,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/SampleHold"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/SampleHoldPlugin/SampleHoldPlugin.h",
+            "Blob": "3229bd60c55445c547abd1c666cffd1fd89d93ca",
+            "SHA256": "b2b83f58fbfcefe58472a6813539852139dbdb12c324b6fdd53ef348ab8b7af3",
+            "Symbol": "SampleHoldPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Scope": {
+      "PluginID": 1,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Scope"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/ScopePlugin/ScopePlugin.h",
+            "Blob": "8da071d5eaad8dd2836d3e6251b6097aa8ab08c0",
+            "SHA256": "88bdf83d54fd4d5e9772bba57ff36da213031d720d42bab7687031b2cf6b1f43",
+            "Symbol": "ScopePlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "SeqSelector": {
+      "PluginID": 21,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/SeqSelector"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/SeqSelectorPlugin/SeqSelectorPlugin.C",
+            "Blob": "f9fd8b6ac9ec242b30387b3063258c05555ce4cd",
+            "SHA256": "8a415fbaae6d976e688e97c9806dbc1dfbdb69ac16547a8c498d3726d12a5550",
+            "Symbol": "SeqSelectorPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Smooth": {
+      "PluginID": 20,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Smooth"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/SmoothPlugin/SmoothPlugin.C",
+            "Blob": "23d0d94dc584c70d170308b401fea5ae33f00084",
+            "SHA256": "a7867753c45169abab498131dacecb73ba627139ec66a253ec6b8472fdac51a0",
+            "Symbol": "SmoothPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "SpiralLoop": {
+      "PluginID": 26,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/SpiralLoop"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/SpiralLoopPlugin/SpiralLoopPlugin.C",
+            "Blob": "4d870b486dafc000108d1c7d98f260a0901c936d",
+            "SHA256": "da54975a3f844c818f0827a3d618a6064eac3a4bbfc4340e8b78e9d8c183945f",
+            "Symbol": "SpiralLoopPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "SplitSwitch": {
+      "PluginID": 125,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/SplitSwitch"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/SplitSwitchPlugin/SplitSwitchPlugin.C",
+            "Blob": "5b113694d5d6e3792f706226a21b1d14d7ea8291",
+            "SHA256": "39dd37662fa629720d1319a1e23d763511f7c6aa1ebe7e37500507b5f4ab92a3",
+            "Symbol": "SplitSwitchPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Splitter": {
+      "PluginID": 6,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Splitter"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/SplitterPlugin/SplitterPlugin.h",
+            "Blob": "72444dd519299e8fb17e0d50ac101a4c7f3d1d7a",
+            "SHA256": "d4aa5a81eaaf3813d9d1d09e1e714909043fedfd5688ce306e41f174887ac129",
+            "Symbol": "SplitterPlugin::StreamOut"
+          }
+        },
+        "caf00146b135475bd510bc66d64a347ce577522a": {
+          "Kind": "Introduced",
+          "ParentRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 2
+            },
+            {
+              "Name": "ChannelCount",
+              "Type": "Integer"
+            }
+          ],
+          "Source": {
+            "Commit": "caf00146b135475bd510bc66d64a347ce577522a",
+            "Path": "SpiralSound/Plugins/SplitterPlugin/SplitterPlugin.C",
+            "Blob": "c902d560dc6e286d47991b275ae3d54c9c729129",
+            "SHA256": "7532512afc0848a09d4657a93841b6a5c11dca4a5f85d07fa42478b11800119e",
+            "Symbol": "SplitterPlugin::StreamOut"
+          },
+          "Notes": "Previous state output was empty, without a literal version-1 token. Explicit version 2 introduces these stored port counts.",
+          "FieldChanges": [
+            {
+              "Field": "Version",
+              "Change": "Append",
+              "Value": 2
+            },
+            {
+              "Field": "ChannelCount",
+              "Change": "Append",
+              "Type": "Integer"
+            }
+          ]
+        }
+      }
+    },
+    "StereoMixer": {
+      "PluginID": 8,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/StereoMixer"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/StereoMixerPlugin/StereoMixerPlugin.C",
+            "Blob": "c30ae8b01827c20a6fe53f8576b40ddf74003921",
+            "SHA256": "16d616c912c7b3711e26905650c5e75d7f06166d8ef386e1849337c9cfefde80",
+            "Symbol": "StereoMixerPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Stream": {
+      "PluginID": 281,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Stream"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/StreamPlugin/StreamPlugin.C",
+            "Blob": "b77d68e2f73cec66d8b15364ae9f60c691e60522",
+            "SHA256": "fefbe6720fbdf21552042b6a71215935cb2b6fca71eaef54691d035200bf0e25",
+            "Symbol": "StreamPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Switch": {
+      "PluginID": 47,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Switch"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/SwitchPlugin/SwitchPlugin.C",
+            "Blob": "4c237c7fa7097158d9acc177c24f1d91d6fda2f2",
+            "SHA256": "99d4a7a06a74852a0e2b2c8ebe68ee8a34bbec0132e38a82db267f0d9954713c",
+            "Symbol": "SwitchPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Transpose": {
+      "PluginID": 122,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Transpose"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/TransposePlugin/TransposePlugin.C",
+            "Blob": "990403802c25a7b5588473ceb3d9e720dd04314a",
+            "SHA256": "eba5df127ccb4bf5e458db697b72ff4c444e5d9e4edc3759b2db2c756715528b",
+            "Symbol": "TransposePlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Trig": {
+      "PluginID": 53,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Trig"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/TrigPlugin/TrigPlugin.C",
+            "Blob": "214b352b73783b7f86b90483e3a1c10a6c374fee",
+            "SHA256": "a4e42ce1ebc380205f6ffa2ac40a278a80dbca1d97720372ab6b481231c2510c",
+            "Symbol": "TrigPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "WaveShaper": {
+      "PluginID": 50,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/WaveShaper"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/WaveShaperPlugin/WaveShaperPlugin.C",
+            "Blob": "5167f3525986b42e8ff2cd5c3c281c92ec68d099",
+            "SHA256": "e1e73e1c2f2523b096754bcc6f6c5f6d285a46f6bc557be2bfc6354e4b51d473",
+            "Symbol": "WaveShaperPlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "WaveTable": {
+      "PluginID": 23,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/WaveTable"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/WaveTablePlugin/WaveTablePlugin.C",
+            "Blob": "d49778d3e68cadb4285d0af4d518fd68991e788d",
+            "SHA256": "fe2e474632d730cd6812b4cf5bf5e0131c33560887d38c3d6de772524551ae74",
+            "Symbol": "WaveTablePlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "XFade": {
+      "PluginID": 27,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/XFade"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/XFadePlugin/XFadePlugin.C",
+            "Blob": "cb59df3290cb2b805289a5bda89fb2aa2eb2b923",
+            "SHA256": "bb3fe0ee1762394fbe71c72a54b5348a1bdfae2d8affb5ebed2a40e8068d69ec",
+            "Symbol": "XFadePlugin::StreamOut"
+          }
+        }
+      }
+    },
+    "Comment": {
+      "PluginID": -1,
+      "BaselineRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Definition": {
+            "File": "SpiralPositionalText-0.2.2.json",
+            "Pointer": "/Plugins/Comment"
+          },
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "GUI/Widgets/Fl_CommentGUI.C",
+            "Blob": "99ec8411a54fb04b6a6582bd7613cbc2aea3fbfe",
+            "SHA256": "c461204eb08003982d31a3f665801098c4341d05ec4f1270d958a2e99458aac2",
+            "Symbol": "Fl_CommentGUI::StreamOut"
+          }
+        }
+      }
+    },
+    "Joystick": {
+      "PluginID": 112,
+      "BaselineRevision": null,
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Fields": [],
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/JoystickPlugin/JoystickPlugin.h",
+            "Blob": "605b28bac67f1b55c9729dc6e4a365dbcad11c16",
+            "SHA256": "c92cb32ae278b0c813a6dc13044ed27788ea7ff8466fb6c0c3de538a12f4aff9",
+            "Symbol": "JoystickPlugin::StreamOut"
+          },
+          "Notes": "Source-only observation outside the 0.2.2 archive profile. Both StreamOut and StreamIn are empty; this definition does not require a working joystick plugin."
+        }
+      }
+    },
+    "Mouse": {
+      "PluginID": 300,
+      "BaselineRevision": null,
+      "Revisions": {
+        "ed107de063d6d4fd66b3c00ea49d617c53843938": {
+          "Kind": "Observed",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 1
+            }
+          ],
+          "Source": {
+            "Commit": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+            "Path": "SpiralSound/Plugins/MousePlugin/MousePlugin.C",
+            "Blob": "35e7611737852759198b51778b9ce938d8db7038",
+            "SHA256": "0f1a8ca620ee234e212dd0fabfcb5da55d59f211bad48b624fa02384b745374c",
+            "Symbol": "MousePlugin::StreamOut"
+          },
+          "Notes": "Available in recovered source, outside the 0.2.2 archive profile. This writer emits only the version token."
+        },
+        "37829d464f9b1bb75bfcdb2e87848a26a0cfb276": {
+          "Kind": "Introduced",
+          "ParentRevision": "ed107de063d6d4fd66b3c00ea49d617c53843938",
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 2
+            },
+            {
+              "Name": "Port",
+              "Type": "Byte"
+            }
+          ],
+          "Source": {
+            "Commit": "37829d464f9b1bb75bfcdb2e87848a26a0cfb276",
+            "Path": "SpiralSound/Plugins/MousePlugin/MousePlugin.C",
+            "Blob": "e61f1b476355761a79aad02735dcf9e48c080d51",
+            "SHA256": "ae5a796daccfb0b86a4c8980b23bb91ea4b912a144b1353c40b161dd962608dc",
+            "Symbol": "MousePlugin::StreamOut"
+          },
+          "Notes": "Port is a char, initialized to ASCII '0'. Preserve its byte value (48 for '0'), not the numeric port 0; interpretation belongs to migration.",
+          "FieldChanges": [
+            {
+              "Field": "Version",
+              "Before": 1,
+              "After": 2
+            },
+            {
+              "Field": "Port",
+              "Change": "Append",
+              "Type": "Byte"
+            }
+          ]
+        }
+      }
+    },
+    "Translate": {
+      "PluginID": 121,
+      "BaselineRevision": null,
+      "Revisions": {
+        "a470e1403c2f09d304a0600d6b6aaa1b6b910bf0": {
+          "Kind": "Introduced",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 1
+            },
+            {
+              "Name": "Method",
+              "Type": "Integer"
+            }
+          ],
+          "Source": {
+            "Commit": "a470e1403c2f09d304a0600d6b6aaa1b6b910bf0",
+            "Path": "SpiralSound/Plugins/TranslatePlugin/TranslatePlugin.C",
+            "Blob": "b88b6dd97a09683b8b581cdaf15cd8754fd4ce96",
+            "SHA256": "6c9310d5238f97ed5cf780bc28b63e8d500d12e9dce802d6aad78ad010df77cb",
+            "Symbol": "TranslatePlugin::StreamOut"
+          },
+          "Notes": "New Translate plugin. Method enum is Pass=0, NoteToFreq=1, FreqToNote=2, NoteToVolt=3, VoltToNote=4. Version 1 is inherited from SpiralPlugin.",
+          "VersionSource": {
+            "Commit": "a470e1403c2f09d304a0600d6b6aaa1b6b910bf0",
+            "Path": "SpiralSound/Plugins/SpiralPlugin.C",
+            "Symbol": "SpiralPlugin::SpiralPlugin"
+          }
+        }
+      }
+    }
+  },
+  "Rules": [
+    "This history is only for legacy interpretation. It does not version native plugin identities or the modern savepoint contract.",
+    "Revision keys are full Git commit IDs within each plugin. Serialized Version fields are historical data, not unique revision identifiers.",
+    "Observed records prove a layout existed at a commit. Introduced records identify a reviewed layout-changing commit. Neither an author date nor a commit date is implicitly a release date.",
+    "ParentRevision links known layout ancestry within one plugin. Null means ancestry is not yet catalogued, not that no older layout existed. Never order revisions by timestamp or combine divergent Git branches.",
+    "Definition references select complete layouts from the baseline. Inline Fields are complete alternate layouts using the baseline Types and Rules. Do not mix fields from different revisions.",
+    "FieldChanges describes the difference for review and provenance; it is not an executable patch. Stable fields have no independent version counter.",
+    "Historical port changes and defects are retained as notes. Decoding a layout does not imply runtime support for its plugin.",
+    "Unknown or ambiguous layout selection stops decoding that positional record, with diagnostics, preceding items and an opaque remainder retained. A bare file version or plugin version does not identify a Git commit.",
+    "This catalogue is incremental. Missing commits or revisions are not evidence of compatibility. The baseline archive remains the release authority; recovered Git metadata is preserved as recorded without author-alias substitution."
+  ]
+}
