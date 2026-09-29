@@ -64,52 +64,14 @@ namespace Spumoni
 		return true;
 	}
 
-	string Zip::ErrnoText(const string &what)
+	const char *Zip::Kind() const
 	{
-		return what+": "+strerror(errno);
+		return "zip";
 	}
 
-	string Zip::BaseName(const string &path)
+	Container::Writer *Zip::NewWriter() const
 	{
-		size_t end=path.size();
-		while(end && path[end-1]=='/') --end;
-		size_t slash=path.rfind('/',end ? end-1 : 0);
-		return path.substr(slash==string::npos ? 0 : slash+1,
-			end-(slash==string::npos ? 0 : slash+1));
-	}
-
-	string Zip::SafeName(const string &value, const string &fallback)
-	{
-		string result;
-		for(size_t i=0;i<value.size();++i)
-		{
-			unsigned char c=(unsigned char)value[i];
-			if((c>='a'&&c<='z')||(c>='A'&&c<='Z')||(c>='0'&&c<='9')||
-				c=='-'||c=='_'||c=='.') result+=(char)c;
-			else result+='_';
-		}
-		while(!result.empty() && result[0]=='.') result.erase(0,1);
-		return result.empty() ? fallback : result;
-	}
-
-	bool Zip::SafeArchivePath(const string &name)
-	{
-		if(name.empty() || name[0]=='/' || name.find('\\')!=string::npos ||
-			name.find('\0')!=string::npos) return false;
-		size_t length=name.size();
-		if(name[length-1]=='/') --length;
-		if(!length) return false;
-		size_t start=0;
-		while(start<length)
-		{
-			size_t slash=name.find('/',start);
-			if(slash>=length) slash=string::npos;
-			string part=name.substr(start,slash==string::npos ? length-start : slash-start);
-			if(part.empty() || part=="." || part=="..") return false;
-			if(slash==string::npos) break;
-			start=slash+1;
-		}
-		return true;
+		return new Writer;
 	}
 
 	Zip::Writer::Writer():m_File(NULL){}
@@ -262,60 +224,9 @@ namespace Spumoni
 		return true;
 	}
 
-	bool Zip::AddTree(Writer &zip, const string &diskPath,
-		const string &archivePath, bool root, string &error)
+	bool Zip::Extract(const string &path, const string &folder, string &error) const
 	{
-		struct stat st;
-		if((root ? stat(diskPath.c_str(),&st) : lstat(diskPath.c_str(),&st))!=0)
-		{error=ErrnoText("Cannot inspect asset "+diskPath);return false;}
-		if(S_ISREG(st.st_mode)) return zip.AddFile(archivePath,diskPath,error);
-		if(!S_ISDIR(st.st_mode))
-		{if(root) error="Referenced asset is not a regular file or directory: "+diskPath;return !root;}
-		DIR *dir=opendir(diskPath.c_str());
-		if(!dir){error=ErrnoText("Cannot read asset directory "+diskPath);return false;}
-		vector<string> names; struct dirent *item;
-		while((item=readdir(dir))!=NULL)
-			if(strcmp(item->d_name,".")&&strcmp(item->d_name,"..")) names.push_back(item->d_name);
-		closedir(dir); sort(names.begin(),names.end());
-		if(!zip.AddDirectory(archivePath,error)) return false;
-		for(size_t i=0;i<names.size();++i)
-			if(!AddTree(zip,diskPath+"/"+names[i],archivePath+"/"+SafeName(names[i],"asset"),false,error)) return false;
-		return true;
-	}
-
-
-	bool Zip::AddTreeExact(Writer &zip, const string &diskPath,
-		const string &archivePath, string &error)
-	{
-		struct stat st;
-		if(lstat(diskPath.c_str(),&st)!=0)
-		{error=ErrnoText("Cannot inspect "+diskPath);return false;}
-		if(S_ISREG(st.st_mode)) return zip.AddFile(archivePath,diskPath,error);
-		if(!S_ISDIR(st.st_mode)) return true;
-		if(!SafeArchivePath(archivePath[archivePath.size()-1]=='/'?archivePath:archivePath+"/"))
-		{error="Unsafe archive path: "+archivePath;return false;}
-		DIR *dir=opendir(diskPath.c_str());
-		if(!dir){error=ErrnoText("Cannot read "+diskPath);return false;}
-		vector<string> names; struct dirent *item;
-		while((item=readdir(dir))!=NULL)
-			if(strcmp(item->d_name,".")&&strcmp(item->d_name,".."))
-				names.push_back(item->d_name);
-		closedir(dir); sort(names.begin(),names.end());
-		if(!zip.AddDirectory(archivePath,error)) return false;
-		for(size_t i=0;i<names.size();++i)
-		{
-			string child=names[i];
-			if(child.empty()||child=="."||child==".."||child.find('/')!=string::npos)
-				continue;
-			if(!AddTreeExact(zip,diskPath+"/"+child,archivePath+"/"+child,error))
-				return false;
-		}
-		return true;
-	}
-
-	bool Zip::ExtractTo(const char *path, const string &folder, string &error)
-	{
-		FILE *file=fopen(path,"rb");
+		FILE *file=fopen(path.c_str(),"rb");
 		if(!file){error=ErrnoText("Cannot open patch archive");return false;}
 		vector<Entry> entries;
 		if(!ReadCentralDirectory(file,entries,error)){fclose(file);return false;}
