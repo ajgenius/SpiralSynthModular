@@ -3,6 +3,7 @@
 // is refused a newer package format at the package level.
 #include "Package.h"
 #include "Folder.h"
+#include "MemoryFolder.h"
 #include "Zip.h"
 #include "Directory.h"
 #include "Tar.h"
@@ -188,8 +189,121 @@ static int Story(const Container &container, const char *extension)
 	return 0;
 }
 
+// The same package opened into memory: nothing on disk until PathFor asks,
+// and then only that one entry, in a scratch the folder removes with itself.
+static int MemoryStory()
+{
+	std::string error;
+	Package::Layout layout;
+	layout.ManifestName = "toy.manifest.json";
+	layout.Payload.push_back("toy.json");
+	layout.WorkPrefix = "spumoni-test-";
+	ToyApplication application;
+	Zip zip;
+	Package package(zip, layout, application);
+
+	DiskFolder scratch;
+	if (!scratch.Create("spumoni-test-scratch-", error))
+		return Fail(error);
+	const std::string path = scratch.Root() + "/toy.zip";
+
+	Identity identity;
+	identity.Begin();
+	identity.ActiveBranchName = "first";
+	identity.EnsureActiveListed();
+	ToyPayload first("{\"toy\": 1}");
+	if (!package.Write(path, identity, SaveRequest(), first, error))
+		return Fail("write: " + error);
+
+	MemoryFolder work;
+	Identity read;
+	std::string branchRoot;
+	if (!package.Open(path, std::string(), work, read, branchRoot, error))
+		return Fail("open into memory: " + error);
+	std::string body;
+	if (!work.Read(branchRoot + "toy.json", body, error) || body != "{\"toy\": 1}")
+		return Fail("memory payload did not round trip");
+	if (!work.IsDirectory("branches") || !work.IsFile("toy.manifest.json") || work.IsFile("branches"))
+		return Fail("memory tree shape");
+	std::vector<std::string> names;
+	if (!work.List(std::string(), names) || names.size() != 2 || names[0] != "branches")
+		return Fail("memory root listing");
+	if (work.Bytes() == 0)
+		return Fail("Bytes() should count the tree");
+
+	// Streaming in and out of memory.
+	FILE *out = work.OpenWrite(branchRoot + "big.bin", error);
+	if (!out) return Fail(error);
+	for (int i = 0; i < 100000; ++i) std::fputc('x', out);
+	if (!work.CloseWrite(out, error)) return Fail(error);
+	if (!work.Read(branchRoot + "big.bin", body, error) || body.size() != 100000)
+		return Fail("streamed entry size");
+	FILE *in = work.OpenRead(branchRoot + "big.bin", error);
+	if (!in) return Fail(error);
+	char buffer[16];
+	if (std::fread(buffer, 1, sizeof(buffer), in) != sizeof(buffer) || buffer[0] != 'x')
+		return Fail("streamed read");
+	std::fclose(in);
+
+	// Nothing on disk yet; PathFor puts exactly one entry there.
+	std::string realPath;
+	if (!work.PathFor(branchRoot + "toy.json", realPath, error))
+		return Fail("PathFor: " + error);
+	if (!Path::IsFile(realPath))
+		return Fail("PathFor must give a real file");
+	std::string onDisk;
+	if (!Path::ReadFile(realPath, onDisk, error) || onDisk != "{\"toy\": 1}")
+		return Fail("materialised bytes");
+	std::string scratchRoot = realPath.substr(0, realPath.rfind('/' + branchRoot));
+	std::vector<std::string> disk;
+	if (!Path::List(scratchRoot, disk) || disk.size() != 1 || disk[0] != "branches")
+		return Fail("the scratch must hold only what PathFor asked for");
+	if (Path::IsFile(scratchRoot + "/toy.manifest.json") || Path::IsFile(scratchRoot + "/" + branchRoot + "big.bin"))
+		return Fail("other entries must stay in memory");
+
+	// A save point written from the memory workspace preserves the first
+	// branch and carries an extra forward, all from memory.
+	if (!work.Write(branchRoot + "notes.txt", "kept", error))
+		return Fail(error);
+	Identity second = read;
+	const std::string firstID = second.ActiveBranchID;
+	if (!second.Fork("second", error))
+		return Fail(error);
+	SaveRequest again;
+	again.Mode = SaveNewBranch;
+	again.Workspace = &work;
+	again.SourceBranchID = firstID;
+	ToyPayload two("{\"toy\": 2}");
+	if (!package.Write(path, second, again, two, error))
+		return Fail("write from memory: " + error);
+	MemoryFolder work2;
+	Identity read2;
+	std::string root2;
+	if (!package.Open(path, std::string(), work2, read2, root2, error))
+		return Fail("reopen: " + error);
+	if (!work2.Read(root2 + "notes.txt", body, error) || body != "kept")
+		return Fail("extras from memory were not carried");
+	if (!work2.Read(Package::BranchRoot(firstID) + "big.bin", body, error) || body.size() != 100000)
+		return Fail("first branch from memory was not preserved");
+
+	// Removing an entry drops its materialised copy; removing the folder
+	// drops the scratch.
+	work.RemoveEntry(branchRoot + "toy.json");
+	if (Path::IsFile(realPath))
+		return Fail("RemoveEntry must drop the materialised copy");
+	work.Remove();
+	if (Path::IsDirectory(scratchRoot))
+		return Fail("Remove must drop the scratch");
+	if (work.IsOpen() || work.Bytes() != 0)
+		return Fail("Remove must empty the folder");
+
+	std::puts("spumoni package OK (memory)");
+	return 0;
+}
+
 int main()
 {
+	if (int failed = MemoryStory()) return failed;
 	Zip zip;
 	Directory directory;
 	Tar tar;

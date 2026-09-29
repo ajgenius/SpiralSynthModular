@@ -145,6 +145,8 @@ namespace Spumoni
 		static std::string BranchRoot(const std::string &id) { return "branches/" + id + "/"; }
 
 	private:
+		class View;
+
 		Package(const Package &);
 		Package &operator=(const Package &);
 
