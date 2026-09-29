@@ -95,6 +95,8 @@ namespace Spumoni
 		static bool ReadFile(const std::string &path, std::string &data, std::string &error);
 		static bool WriteFile(const std::string &path, const std::string &data, std::string &error);
 		static std::string Join(const std::string &root, const std::string &relative);
+		static unsigned long long FileBytes(const std::string &path);
+		static unsigned long long TreeBytes(const std::string &path);
 	};
 
 	// A private temporary tree on disk.
