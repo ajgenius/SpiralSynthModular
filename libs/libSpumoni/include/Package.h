@@ -33,11 +33,12 @@
 #include <string>
 #include <vector>
 
+#include "Folder.h"
+
 namespace Slick { class JSONValue; }
 
 namespace Spumoni
 {
-	class Folder;
 
 	class Package
 	{
@@ -74,6 +75,10 @@ namespace Spumoni
 			std::string ManifestName;
 			std::vector<std::string> Payload;
 			std::string WorkPrefix;
+			// The kind of working folder Package makes for itself (a source
+			// package extracted for a look, a manifest rewrite). NULL: disk.
+			Folder *(*MakeFolder)();
+			Layout() : MakeFolder(NULL) {}
 		};
 
 		// * The application's part of the manifest: its own stamp and
@@ -102,10 +107,11 @@ namespace Spumoni
 
 		const Layout &Files() const { return m_Layout; }
 
-		// * Read. Unpack the whole package at `path` into a fresh working
-		//   folder, read the manifest, choose the branch (an empty id selects
-		//   the active one). `branchRoot` receives "branches/<uuid>/". On
-		//   failure the folder is removed with everything in it.
+		// * Read. Unpack the whole package at `path` into the given, not yet
+		//   created, working folder (the caller picks its kind), read the
+		//   manifest, choose the branch (an empty id selects the active one).
+		//   `branchRoot` receives "branches/<uuid>/". On failure the folder is
+		//   removed with everything in it.
 		bool Open(const std::string &path, const std::string &branchId,
 			Folder &folder, Identity &identity, std::string &branchRoot, std::string &error) const;
 
@@ -125,12 +131,16 @@ namespace Spumoni
 		// * Manifest text for an identity, as Write and WriteManifest emit it.
 		std::string ManifestJSON(const Identity &identity) const;
 
-		// * Read a manifest file: both stamps checked, the identity filled,
-		//   the active branch root returned.
-		bool ReadManifest(const std::string &path, Identity &identity, std::string &branchRoot, std::string &error) const;
+		// * Read the manifest of an unpacked package, or manifest text: both
+		//   stamps checked, the identity filled, the active branch root returned.
+		bool ReadManifest(const Folder &folder, Identity &identity, std::string &branchRoot, std::string &error) const;
+		bool ReadManifestText(const std::string &text, Identity &identity, std::string &branchRoot, std::string &error) const;
 
-		// * The branch folders under a package root on disk.
-		static std::vector<std::string> ListBranches(const std::string &sourceRoot);
+		// * The branch folders in an unpacked package.
+		static std::vector<std::string> ListBranches(const Folder &source);
+
+		// * A working folder of the layout's kind; the caller owns it.
+		Folder *NewFolder() const;
 
 		static std::string BranchRoot(const std::string &id) { return "branches/" + id + "/"; }
 
@@ -138,9 +148,10 @@ namespace Spumoni
 		Package(const Package &);
 		Package &operator=(const Package &);
 
-		bool OpenPreserveSource(const SaveRequest &request, std::string &sourceRoot, Folder &ownedTemp, std::string &error) const;
-		bool CopyPreservedBranches(Container::Writer &writer, const std::string &sourceRoot, const std::string &rewriteID, std::string &error) const;
-		bool CopyActiveExtras(Container::Writer &writer, const std::string &sourceRoot, const std::string &sourceID, const std::string &activeID, std::string &error) const;
+		// The source a write preserves from, or NULL when there is none.
+		bool OpenPreserveSource(const SaveRequest &request, Folder *&source, std::string &error) const;
+		bool CopyPreservedBranches(Container::Writer &writer, const Folder &source, const std::string &rewriteID, std::string &error) const;
+		bool CopyActiveExtras(Container::Writer &writer, const Folder &source, const std::string &sourceID, const std::string &activeID, std::string &error) const;
 		static bool ReadActiveBranch(const Slick::JSONValue &root, const std::string &activeBranch, std::string &activePath, std::string &error);
 		static std::string SaveTimeUTC();
 

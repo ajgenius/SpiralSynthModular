@@ -15,8 +15,6 @@
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <time.h>
 
 using namespace std;
@@ -48,33 +46,34 @@ namespace Spumoni
 	}
 
 	/* Branch folders present in a source package or workspace. */
-	std::vector<std::string> Package::ListBranches(const string &sourceRoot)
+	std::vector<std::string> Package::ListBranches(const Folder &source)
 	{
 		vector<string> ids;
-		if(sourceRoot.empty()) return ids;
-		string branchesPath=sourceRoot+"/branches";
 		vector<string> names;
-		if(!Folder::List(branchesPath,names)) return ids;
+		if(!source.List("branches",names)) return ids;
 		for(size_t i=0;i<names.size();++i)
 		{
 			const string &id=names[i];
 			if(!IsUUID(id)) continue;
-			if(Folder::IsDirectory(branchesPath+"/"+id))
+			if(source.IsDirectory("branches/"+id))
 				ids.push_back(id);
 		}
 		return ids;
 	}
 
-	bool Package::CopyPreservedBranches(Container::Writer &writer, const string &sourceRoot,
+	Folder *Package::NewFolder() const
+	{
+		return m_Layout.MakeFolder ? m_Layout.MakeFolder() : new DiskFolder;
+	}
+
+	bool Package::CopyPreservedBranches(Container::Writer &writer, const Folder &source,
 		const string &rewriteID, string &error) const
 	{
-		if(sourceRoot.empty()) return true;
-		string branchesPath=sourceRoot+"/branches";
-		vector<string> ids=ListBranches(sourceRoot);
+		vector<string> ids=ListBranches(source);
 		for(size_t i=0;i<ids.size();++i)
 		{
 			if(ids[i]==rewriteID) continue;
-			if(!Container::AddTreeExact(writer,branchesPath+"/"+ids[i],"branches/"+ids[i],error))
+			if(!source.ExportTree(writer,"branches/"+ids[i],"branches/"+ids[i],error))
 				return false;
 		}
 		return true;
@@ -82,14 +81,14 @@ namespace Spumoni
 
 	/* Anything in the source branch beside the application's payload files
 	   carries over to the active branch as it is. */
-	bool Package::CopyActiveExtras(Container::Writer &writer, const string &sourceRoot,
+	bool Package::CopyActiveExtras(Container::Writer &writer, const Folder &source,
 		const string &sourceID, const string &activeID, string &error) const
 	{
-		if(sourceRoot.empty()||sourceID.empty()) return true;
-		string branchPath=sourceRoot+"/branches/"+sourceID;
-		if(!Folder::IsDirectory(branchPath)) return true;
+		if(sourceID.empty()) return true;
+		string branchPath="branches/"+sourceID;
+		if(!source.IsDirectory(branchPath)) return true;
 		vector<string> names;
-		if(!Folder::List(branchPath,names)){error=Container::ErrnoText("Cannot preserve branch metadata");return false;}
+		if(!source.List(branchPath,names)){error="Cannot preserve branch metadata";return false;}
 		for(size_t i=0;i<names.size();++i)
 		{
 			const string &name=names[i];
@@ -97,42 +96,36 @@ namespace Spumoni
 			for(size_t p=0;p<m_Layout.Payload.size();++p)
 				if(m_Layout.Payload[p]==name){payload=true;break;}
 			if(payload) continue;
-			string disk=branchPath+"/"+name;
-			string archive="branches/"+activeID+"/"+name;
-			struct stat st;
-			if(lstat(disk.c_str(),&st)!=0){error=Container::ErrnoText("Cannot inspect branch metadata");return false;}
-			if(S_ISDIR(st.st_mode))
-			{
-				if(!Container::AddTreeExact(writer,disk,archive,error)) return false;
-			}
-			else if(S_ISREG(st.st_mode))
-			{
-				if(!writer.AddFile(archive,disk,error)) return false;
-			}
+			if(!source.ExportTree(writer,branchPath+"/"+name,"branches/"+activeID+"/"+name,error))
+				return false;
 		}
 		return true;
 	}
 
+	/* The source a write preserves from: the request's package, unpacked for
+	   the look by whatever container it is, or its live workspace adopted in
+	   place. The caller owns what comes back. */
 	bool Package::OpenPreserveSource(const SaveRequest &request,
-		string &sourceRoot, Folder &ownedTemp, string &error) const
+		Folder *&source, string &error) const
 	{
-		sourceRoot.clear();
+		source=NULL;
 		if(!request.ExistingPackage.empty())
 		{
-			if(Folder::IsFile(request.ExistingPackage))
+			if(const Container *kind=Container::Sniff(request.ExistingPackage))
 			{
-				if(!ownedTemp.Create(m_Layout.WorkPrefix,error)||
-					!m_Container.Extract(request.ExistingPackage,ownedTemp.Path(),error))
+				std::auto_ptr<Folder> unpacked(NewFolder());
+				if(!unpacked->Create(m_Layout.WorkPrefix,error)||
+					!kind->Extract(request.ExistingPackage,*unpacked,error))
 					return false;
-				sourceRoot=ownedTemp.Path();
+				source=unpacked.release();
 				return true;
 			}
 		}
 		if(!request.ExistingWorkspace.empty())
 		{
-			if(Folder::IsDirectory(request.ExistingWorkspace))
+			if(Path::IsDirectory(request.ExistingWorkspace))
 			{
-				sourceRoot=request.ExistingWorkspace;
+				source=DiskFolder::Adopt(request.ExistingWorkspace);
 				return true;
 			}
 		}
@@ -217,11 +210,19 @@ namespace Spumoni
 		return true;
 	}
 
-	bool Package::ReadManifest(const string &path,
+	bool Package::ReadManifest(const Folder &folder,
+		Identity &identity, string &branchRoot, string &error) const
+	{
+		string text;
+		if(!folder.Read(m_Layout.ManifestName,text,error)) return false;
+		return ReadManifestText(text,identity,branchRoot,error);
+	}
+
+	bool Package::ReadManifestText(const string &text,
 		Identity &identity, string &branchRoot, string &error) const
 	{
 		string parseError;
-		Slick::JSONOwner storage(Slick::ParseJSON(path.c_str(),false,&parseError));
+		Slick::JSONOwner storage(Slick::ParseJSONText(text.c_str(),false,&parseError));
 		if(!storage.get()){error=parseError.empty()?"Cannot read package manifest":parseError;return false;}
 		const J &root=*storage.get();
 		if(root.GetType()!=J::Object){error="Not a package manifest";return false;}
@@ -282,14 +283,14 @@ namespace Spumoni
 		if(path.empty()){error="No package filename";return false;}
 		if(!IsUUID(identity.PackageID)||!IsUUID(identity.ActiveBranchID))
 		{error="Invalid package or active branch UUID";return false;}
-		string preserveRoot;
-		Folder ownedTemp;
-		if(!OpenPreserveSource(request,preserveRoot,ownedTemp,error))
+		Folder *sourceFolder=NULL;
+		if(!OpenPreserveSource(request,sourceFolder,error))
 			return false;
+		std::auto_ptr<Folder> source(sourceFolder);
 		bool needPreserve=false;
 		for(size_t i=0;i<identity.Branches.size();++i)
 			if(identity.Branches[i].ID!=identity.ActiveBranchID){needPreserve=true;break;}
-		if(needPreserve && preserveRoot.empty())
+		if(needPreserve && !source.get())
 		{
 			error="Cannot preserve existing branches without the previous package";
 			return false;
@@ -300,8 +301,9 @@ namespace Spumoni
 
 		std::auto_ptr<Container::Writer> writer(m_Container.NewWriter());
 		if(!writer->Open(path,error)) return false;
-		if(!CopyPreservedBranches(*writer,preserveRoot,identity.ActiveBranchID,error)||
-			!CopyActiveExtras(*writer,preserveRoot,request.SourceBranchID,identity.ActiveBranchID,error))
+		if(source.get() &&
+			(!CopyPreservedBranches(*writer,*source,identity.ActiveBranchID,error)||
+			!CopyActiveExtras(*writer,*source,request.SourceBranchID,identity.ActiveBranchID,error)))
 			return false;
 		if(!writer->AddMemory(m_Layout.ManifestName,manifest,error)) return false;
 		if(!payload.Write(*writer,branchRoot,error)) return false;
@@ -313,12 +315,12 @@ namespace Spumoni
 	   deciding the identity, so folders the manifest never listed are kept too. */
 	std::vector<std::string> Package::BranchesIn(const SaveRequest &request, string &error) const
 	{
-		string preserveRoot;
-		Folder ownedTemp;
+		Folder *sourceFolder=NULL;
 		vector<string> ids;
-		if(!OpenPreserveSource(request,preserveRoot,ownedTemp,error))
+		if(!OpenPreserveSource(request,sourceFolder,error))
 			return ids;
-		ids=ListBranches(preserveRoot);
+		std::auto_ptr<Folder> source(sourceFolder);
+		if(source.get()) ids=ListBranches(*source);
 		return ids;
 	}
 
@@ -327,18 +329,16 @@ namespace Spumoni
 	{
 		error.clear();
 		if(path.empty()){error="No package filename";return false;}
-		if(!folder.Path().empty()){error="Package working folder is not empty";return false;}
+		if(folder.IsOpen()){error="Package working folder is not empty";return false;}
 		if(!folder.Create(m_Layout.WorkPrefix,error)) return false;
-		const string workspace=folder.Path();
 		Identity nextIdentity;string nextRoot;
-		bool ok=m_Container.Extract(path,workspace,error);
+		bool ok=m_Container.Extract(path,folder,error);
 		if(ok)
 		{
-			const string manifestPath=workspace+"/"+m_Layout.ManifestName;
-			if(!Folder::IsFile(manifestPath))
+			if(!folder.IsFile(m_Layout.ManifestName))
 			{error="Not a package: no "+m_Layout.ManifestName+" in it";ok=false;}
 			else
-				ok=ReadManifest(manifestPath,nextIdentity,nextRoot,error);
+				ok=ReadManifest(folder,nextIdentity,nextRoot,error);
 		}
 		if(ok && !branchId.empty())
 		{
@@ -355,7 +355,7 @@ namespace Spumoni
 			}
 			if(!found){error="Save point is no longer available";ok=false;}
 		}
-		if(ok && !Folder::IsDirectory(workspace+"/"+nextRoot))
+		if(ok && !folder.IsDirectory(nextRoot.substr(0,nextRoot.size()-1)))
 		{error="Active branch has no folder in the package";ok=false;}
 		if(!ok){folder.Remove();return false;}
 		identity=nextIdentity;branchRoot=nextRoot;return true;
@@ -368,38 +368,19 @@ namespace Spumoni
 		if(identity.PackageID.empty()||identity.ActiveBranchID.empty())
 		{error="WriteManifest requires package and branch identity";return false;}
 
-		Folder folder;
-		if(!folder.Create(m_Layout.WorkPrefix,error)||!m_Container.Extract(path,folder.Path(),error))
+		std::auto_ptr<Folder> folder(NewFolder());
+		if(!folder->Create(m_Layout.WorkPrefix,error)||!m_Container.Extract(path,*folder,error))
 			return false;
-		const string workspace=folder.Path();
 
 		string manifest=ManifestJSON(identity);
 		if(manifest.empty()){error="Cannot serialize the package manifest";return false;}
-		if(!Folder::WriteFile(workspace+"/"+m_Layout.ManifestName,manifest,error))
+		if(!folder->Write(m_Layout.ManifestName,manifest,error))
 			return false;
 
-		// Re-pack the whole workspace so branch files are byte-copied.
+		// Re-pack the whole tree so branch files are byte-copied.
 		std::auto_ptr<Container::Writer> writer(m_Container.NewWriter());
 		if(!writer->Open(path,error)) return false;
-
-		vector<string> names;
-		if(!Folder::List(workspace,names))
-		{error=Container::ErrnoText("Cannot read package workspace");return false;}
-		for(size_t i=0;i<names.size();++i)
-		{
-			string disk=workspace+"/"+names[i];
-			struct stat st;
-			if(lstat(disk.c_str(),&st)!=0)
-			{error=Container::ErrnoText("Cannot inspect "+disk);return false;}
-			if(S_ISREG(st.st_mode))
-			{
-				if(!writer->AddFile(names[i],disk,error)) return false;
-			}
-			else if(S_ISDIR(st.st_mode))
-			{
-				if(!Container::AddTreeExact(*writer,disk,names[i],error)) return false;
-			}
-		}
+		if(!folder->ExportTree(*writer,string(),string(),error)) return false;
 		return writer->Finish(path,error);
 	}
 
