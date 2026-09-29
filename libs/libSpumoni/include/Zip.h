@@ -48,8 +48,6 @@ namespace Spumoni
 		static std::string BaseName(const std::string &path);
 		static std::string SafeName(const std::string &value, const std::string &fallback);
 		static bool SafeArchivePath(const std::string &name);
-		static bool MakeDirectories(const std::string &path, std::string &error);
-		static bool RemoveTree(const std::string &path);
 
 		class Writer
 		{
@@ -80,10 +78,10 @@ namespace Spumoni
 		static bool AddTreeExact(Writer &zip, const std::string &diskPath,
 			const std::string &archivePath, std::string &error);
 
-		// * Reading. ExtractArchiveTo unpacks into a fresh private temporary
-		//   folder and returns its path; the pieces are exposed for callers
-		//   that want to stop between them.
-		static bool ExtractArchiveTo(const char *path, std::string &workspace, std::string &error);
+		// * Reading. ExtractTo unpacks every entry into an existing folder (a
+		//   Spumoni::Folder, usually); the pieces are exposed for callers that
+		//   want to stop between them. On failure the folder is left as it is.
+		static bool ExtractTo(const char *path, const std::string &folder, std::string &error);
 		static bool ReadCentralDirectory(FILE *file, std::vector<Entry> &entries, std::string &error);
 		static bool ExtractEntry(FILE *archive, const Entry &entry,
 			const std::string &workspace, std::string &error);

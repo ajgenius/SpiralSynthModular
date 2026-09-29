@@ -7,6 +7,7 @@
 // Lifted out of Spiral::File::Archive by Claude (moved from PatchArchiveContainer.h).
 
 #include "Zip.h"
+#include "Folder.h"
 
 #include <zlib.h>
 
@@ -107,24 +108,6 @@ namespace Spumoni
 			if(part.empty() || part=="." || part=="..") return false;
 			if(slash==string::npos) break;
 			start=slash+1;
-		}
-		return true;
-	}
-
-	bool Zip::MakeDirectories(const string &path, string &error)
-	{
-		for(size_t slash=1;(slash=path.find('/',slash))!=string::npos;++slash)
-		{
-			string dir=path.substr(0,slash);
-			struct stat st;
-			if(stat(dir.c_str(),&st)==0)
-			{
-				if(!S_ISDIR(st.st_mode)){error="Archive path is not a directory: "+dir;return false;}
-			}
-			else if(errno!=ENOENT || mkdir(dir.c_str(),0700)!=0)
-			{
-				error=ErrnoText("Cannot create "+dir); return false;
-			}
 		}
 		return true;
 	}
@@ -330,36 +313,18 @@ namespace Spumoni
 		return true;
 	}
 
-	bool Zip::ExtractArchiveTo(const char *path, string &workspace, string &error)
+	bool Zip::ExtractTo(const char *path, const string &folder, string &error)
 	{
-		workspace.clear();
 		FILE *file=fopen(path,"rb");
 		if(!file){error=ErrnoText("Cannot open patch archive");return false;}
 		vector<Entry> entries;
 		if(!ReadCentralDirectory(file,entries,error)){fclose(file);return false;}
-		char temp[]="/tmp/spiralsynthmodular-ssmp-XXXXXX";
-		char *made=mkdtemp(temp);
-		if(!made){fclose(file);error=ErrnoText("Cannot create patch workspace");return false;}
-		string next=made;
 		for(size_t i=0;i<entries.size();++i)
-			if(!ExtractEntry(file,entries[i],next,error))
+			if(!ExtractEntry(file,entries[i],folder,error))
 			{
-				fclose(file);RemoveTree(next);return false;
+				fclose(file);return false;
 			}
-		fclose(file);workspace=next;return true;
-	}
-
-	bool Zip::RemoveTree(const string &path)
-	{
-		struct stat st;if(lstat(path.c_str(),&st)!=0) return errno==ENOENT;
-		if(S_ISDIR(st.st_mode))
-		{
-			DIR *dir=opendir(path.c_str());if(!dir)return false;struct dirent *item;bool ok=true;
-			while((item=readdir(dir))!=NULL) if(strcmp(item->d_name,".")&&strcmp(item->d_name,".."))
-				ok=RemoveTree(path+"/"+item->d_name)&&ok;
-			closedir(dir);return rmdir(path.c_str())==0&&ok;
-		}
-		return unlink(path.c_str())==0;
+		fclose(file);return true;
 	}
 
 	bool Zip::ReadCentralDirectory(FILE *file, vector<Entry> &entries, string &error)
@@ -418,7 +383,7 @@ namespace Spumoni
 		uint64_t dataOffset=(uint64_t)entry.Offset+30+nameLen+extraLen;
 		if(!Seek(archive,dataOffset)){error="Invalid patch archive data offset";return false;}
 		string outputPath=workspace+"/"+entry.Name;
-		if(!MakeDirectories(outputPath,error)) return false;
+		if(!Folder::MakeDirectories(outputPath,error)) return false;
 		if(entry.Name[entry.Name.size()-1]=='/')
 		{
 			if(entry.Size||entry.Compressed)
