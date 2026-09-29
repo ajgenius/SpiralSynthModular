@@ -43,6 +43,14 @@ namespace Spumoni
 		//   folder. On failure the folder is left as it is.
 		virtual bool Extract(const std::string &path, const std::string &folder, std::string &error) const = 0;
 
+		// * Which kind a path is. Sniff looks at what is there (a directory, a
+		//   ZIP or gzip signature, a ustar header) and returns NULL when none
+		//   of ours; ForPath falls back to the extension (.zip, .tar, .tgz,
+		//   .tar.gz, a trailing slash) and then to ZIP, so a new file can be
+		//   written. Both return shared instances; never delete them.
+		static const Container *Sniff(const std::string &path);
+		static const Container &ForPath(const std::string &path);
+
 		// * Whole trees into any Writer: AddTree sanitises child names (assets
 		//   from anywhere on disk), AddTreeExact keeps them (our own layout).
 		static bool AddTree(Writer &writer, const std::string &diskPath,
