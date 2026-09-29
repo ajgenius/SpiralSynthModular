@@ -69,12 +69,12 @@ namespace Spumoni
 		// * The Container interface.
 		virtual const char *Kind() const;
 		virtual Container::Writer *NewWriter() const;
-		virtual bool Extract(const std::string &path, const std::string &folder, std::string &error) const;
+		virtual bool Extract(const std::string &path, Folder &folder, std::string &error) const;
 
 		// * The pieces of Extract, for callers that want to stop between them.
 		static bool ReadCentralDirectory(FILE *file, std::vector<Entry> &entries, std::string &error);
 		static bool ExtractEntry(FILE *archive, const Entry &entry,
-			const std::string &workspace, std::string &error);
+			Folder &folder, std::string &error);
 	};
 
 } // namespace Spumoni

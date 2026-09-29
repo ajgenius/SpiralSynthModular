@@ -46,7 +46,7 @@ namespace Spumoni
 
 		virtual const char *Kind() const;
 		virtual Container::Writer *NewWriter() const;
-		virtual bool Extract(const std::string &path, const std::string &folder, std::string &error) const;
+		virtual bool Extract(const std::string &path, Folder &folder, std::string &error) const;
 
 		// * Whether a path names a compressed tarball.
 		static bool Compressed(const std::string &path);

@@ -224,7 +224,7 @@ namespace Spumoni
 		return true;
 	}
 
-	bool Zip::Extract(const string &path, const string &folder, string &error) const
+	bool Zip::Extract(const string &path, Folder &folder, string &error) const
 	{
 		FILE *file=fopen(path.c_str(),"rb");
 		if(!file){error=ErrnoText("Cannot open patch archive");return false;}
@@ -285,7 +285,7 @@ namespace Spumoni
 	}
 
 	bool Zip::ExtractEntry(FILE *archive, const Entry &entry,
-		const string &workspace, string &error)
+		Folder &folder, string &error)
 	{
 		if(!Seek(archive,entry.Offset)){error="Invalid patch archive offset";return false;}
 		unsigned char h[30];if(fread(h,1,sizeof(h),archive)!=sizeof(h)||Read32(h)!=0x04034b50)
@@ -293,18 +293,14 @@ namespace Spumoni
 		uint16_t nameLen=Read16(h+26),extraLen=Read16(h+28);
 		uint64_t dataOffset=(uint64_t)entry.Offset+30+nameLen+extraLen;
 		if(!Seek(archive,dataOffset)){error="Invalid patch archive data offset";return false;}
-		string outputPath=workspace+"/"+entry.Name;
-		if(!Folder::MakeDirectories(outputPath,error)) return false;
 		if(entry.Name[entry.Name.size()-1]=='/')
 		{
 			if(entry.Size||entry.Compressed)
 			{error="Invalid compressed directory entry: "+entry.Name;return false;}
-			if(mkdir(outputPath.c_str(),0700)!=0&&errno!=EEXIST)
-			{error=ErrnoText("Cannot extract directory "+entry.Name);return false;}
-			return true;
+			return folder.MakeDirectory(entry.Name.substr(0,entry.Name.size()-1),error);
 		}
-		FILE *output=fopen(outputPath.c_str(),"wb");
-		if(!output){error=ErrnoText("Cannot extract "+entry.Name);return false;}
+		FILE *output=folder.OpenWrite(entry.Name,error);
+		if(!output) return false;
 		unsigned char in[65536],out[65536];uint64_t remaining=entry.Compressed,total=0;
 		uLong crc=crc32(0L,Z_NULL,0);bool ok=true;
 		if(entry.Method==0)
@@ -337,9 +333,10 @@ namespace Spumoni
 			if(ok&&(ret!=Z_STREAM_END||remaining!=0)) ok=false;
 			inflateEnd(&z);
 		}
-		if(fclose(output)!=0)ok=false;
+		string closeError;
+		if(!folder.CloseWrite(output,closeError))ok=false;
 		if(!ok||total!=entry.Size||(uint32_t)crc!=entry.CRC)
-		{unlink(outputPath.c_str());error="Damaged compressed data for "+entry.Name;return false;}
+		{folder.RemoveEntry(entry.Name);error="Damaged compressed data for "+entry.Name;return false;}
 		return true;
 	}
 

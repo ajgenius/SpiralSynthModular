@@ -38,10 +38,10 @@ namespace Spumoni
 		return new Writer;
 	}
 
-	bool Directory::Extract(const string &path, const string &folder, string &error) const
+	bool Directory::Extract(const string &path, Folder &folder, string &error) const
 	{
-		if(!Folder::IsDirectory(path)){error="Not a package folder: "+path;return false;}
-		return CopyTree(path,folder,error);
+		if(!Path::IsDirectory(path)){error="Not a package folder: "+path;return false;}
+		return folder.ImportTree(path,string(),error);
 	}
 
 	bool Directory::CopyFile(const string &from, const string &to, string &error)
@@ -68,7 +68,7 @@ namespace Spumoni
 	bool Directory::CopyTree(const string &from, const string &to, string &error)
 	{
 		vector<string> names;
-		if(!Folder::List(from,names)){error=ErrnoText("Cannot read "+from);return false;}
+		if(!Path::List(from,names)){error=ErrnoText("Cannot read "+from);return false;}
 		for(size_t i=0;i<names.size();++i)
 		{
 			string source=from+"/"+names[i],target=to+"/"+names[i];
@@ -94,7 +94,7 @@ namespace Spumoni
 
 	Directory::Writer::~Writer()
 	{
-		if(!m_Path.empty()) Folder::RemoveTree(m_Path);
+		if(!m_Path.empty()) Path::RemoveTree(m_Path);
 	}
 
 	// Build beside the target, swap in on Finish.
@@ -114,13 +114,13 @@ namespace Spumoni
 		if(!m_Names.insert(name).second)
 		{error="Two bundled assets map to the same archive path: "+name;return false;}
 		target=m_Path+"/"+name;
-		return Folder::MakeDirectories(target,error);
+		return Path::MakeDirectories(target,error);
 	}
 
 	bool Directory::Writer::AddMemory(const string &name, const string &data, string &error)
 	{
 		string target;
-		return Place(name,target,error) && Folder::WriteFile(target,data,error);
+		return Place(name,target,error) && Path::WriteFile(target,data,error);
 	}
 
 	bool Directory::Writer::AddFile(const string &name, const string &path, string &error)
@@ -143,7 +143,7 @@ namespace Spumoni
 	{
 		const string path=Trimmed(given);
 		string previous;
-		if(Folder::IsDirectory(path))
+		if(Path::IsDirectory(path))
 		{
 			string pattern=path+".old-XXXXXX";
 			vector<char> name(pattern.begin(),pattern.end()); name.push_back(0);
@@ -160,7 +160,7 @@ namespace Spumoni
 			return false;
 		}
 		m_Path.clear();
-		if(!previous.empty()) Folder::RemoveTree(previous);
+		if(!previous.empty()) Path::RemoveTree(previous);
 		return true;
 	}
 

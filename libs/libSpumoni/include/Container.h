@@ -15,6 +15,7 @@
 
 namespace Spumoni
 {
+	class Folder;
 
 	class Container
 	{
@@ -39,9 +40,9 @@ namespace Spumoni
 		// * A new Writer for this kind; the caller owns it.
 		virtual Writer *NewWriter() const = 0;
 
-		// * Unpack every entry of the container at `path` into an existing
-		//   folder. On failure the folder is left as it is.
-		virtual bool Extract(const std::string &path, const std::string &folder, std::string &error) const = 0;
+		// * Unpack every entry of the container at `path` into an open folder.
+		//   On failure the folder is left as it is.
+		virtual bool Extract(const std::string &path, Folder &folder, std::string &error) const = 0;
 
 		// * Which kind a path is. Sniff looks at what is there (a directory, a
 		//   ZIP or gzip signature, a ustar header) and returns NULL when none
