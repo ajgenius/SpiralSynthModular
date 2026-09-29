@@ -63,8 +63,11 @@ namespace Spumoni
 	public:
 		virtual ~Project();
 
-		// * Clear workspace and identity, adopt a path (empty = new). The
-		//   application's content is cleared through OnReset.
+		// * Clear content and identity, adopt a path (empty = new), and give
+		//   the project a fresh working folder: a new project has no backing
+		//   file yet, but it has a workspace laid out as a package, with its
+		//   identity begun, from the start. The application's content is
+		//   cleared through OnReset.
 		void Reset(const std::string &path = std::string());
 
 		// * Unpack the package at SourcePath and load the parts (an empty id
@@ -87,8 +90,11 @@ namespace Spumoni
 		Identity &GetIdentity() { return m_Identity; }
 		const std::string &SourcePath() const { return m_SourcePath; }
 
-		// * The unpacked package while one is open (memory unless large);
-		//   NULL for a new project or one opened from something else.
+		// * The working folder: the unpacked package while one is open
+		//   (memory unless large), refreshed from the file after every save
+		//   so it always mirrors it; a laid-out empty package for a new
+		//   project. NULL only after ReleaseWorkspace, until the next open,
+		//   save or Reset.
 		const Folder *Workspace() const { return m_Workspace; }
 		Folder *Workspace() { return m_Workspace; }
 		Folder *ReleaseWorkspace();
@@ -128,6 +134,8 @@ namespace Spumoni
 		Project &operator=(const Project &);
 
 		void CloseWorkspace();
+		void NewWorkspace();
+		void RefreshWorkspace();
 		static std::string DirNameOf(const std::string &path);
 		static std::string ResolvePath(const std::string &path);
 		static void AsciiPathToLower(std::string &value);

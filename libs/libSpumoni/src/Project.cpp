@@ -41,6 +41,7 @@ namespace Spumoni
 		, m_Workspace(NULL)
 		, m_Identity()
 	{
+		NewWorkspace();
 	}
 
 	Project::~Project()
@@ -77,6 +78,40 @@ namespace Spumoni
 		CloseWorkspace();
 		OnReset();
 		m_SourcePath = path;
+		NewWorkspace();
+	}
+
+	/* A new project's working folder: in memory, laid out as a package with
+	   one branch, the identity begun so the first save keeps it. */
+	void Project::NewWorkspace()
+	{
+		m_Identity.Begin();
+		std::string error;
+		std::auto_ptr<Folder> folder(new MemoryFolder);
+		if (!folder->Create(m_Format.WorkPrefix, error)
+		    || !folder->MakeDirectory(Package::BranchRoot(m_Identity.ActiveBranchID), error))
+			return;
+		m_Workspace = folder.release();
+	}
+
+	/* After a write the file is the truth; unpack it again so the workspace
+	   mirrors it (the branch just written included) and the next save point
+	   preserves from something complete. The parts are not reloaded. Paths
+	   materialised from the old workspace may still be in use, so it is
+	   retired rather than destroyed. */
+	void Project::RefreshWorkspace()
+	{
+		if (m_Workspace)
+		{
+			m_Retired.push_back(m_Workspace);
+			m_Workspace = NULL;
+		}
+		Package package(Container::ForPath(m_SourcePath), Layout(), *m_Format.Application);
+		std::auto_ptr<Folder> workspace(NewWorkspaceFor(m_SourcePath));
+		Identity ignored;
+		std::string branchRoot, error;
+		if (package.Open(m_SourcePath, m_Identity.ActiveBranchID, *workspace, ignored, branchRoot, error))
+			m_Workspace = workspace.release();
 	}
 
 	Folder *Project::ReleaseWorkspace()
@@ -275,28 +310,25 @@ namespace Spumoni
 			return CreateSavePoint(BranchNameFromPath(path), true, error);
 		}
 
-		// Different filename → fresh identity; sole branch named from basename.
+		// Different filename → a package of its own. A project saved before
+		// gets a fresh identity (a copy is not the original); one never saved
+		// keeps the identity it was born with, and whatever its working
+		// folder holds beside the parts comes along. Either way no other
+		// branches are carried into the new package.
 		Identity previous = m_Identity;
-		m_Identity.Clear();
 		SaveRequest request;
 		request.Mode = SaveReplace;
-		// No ExistingPackage — do not carry prior branches into a new package.
+		if (LooksLikePackage(m_SourcePath))
+			m_Identity.Clear();
+		else if (m_Workspace)
+			request.Workspace = m_Workspace;
 
 		if (!WritePackage(path, request, error))
 		{
 			m_Identity = previous;
 			return false;
 		}
-
-		// The old workspace is not destroyed: paths materialised from it may
-		// still be live. It is retired so CreateSavePoint prefers the new
-		// package over an extract whose branch IDs no longer match; a
-		// document usually took it already through ReleaseWorkspace.
-		if (m_Workspace)
-		{
-			m_Retired.push_back(m_Workspace);
-			m_Workspace = NULL;
-		}
+		RefreshWorkspace();
 		error.clear();
 		return true;
 	}
@@ -336,7 +368,10 @@ namespace Spumoni
 
 		// Replace activates the named branch inside WritePackage; new forks.
 		// Identity updates only on WritePackage success.
-		return WritePackage(m_SourcePath, request, error);
+		if (!WritePackage(m_SourcePath, request, error))
+			return false;
+		RefreshWorkspace();
+		return true;
 	}
 
 	bool Project::UpdateManifest(std::string &error)
