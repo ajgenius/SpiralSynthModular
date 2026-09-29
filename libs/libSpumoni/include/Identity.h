@@ -13,6 +13,8 @@
 
 namespace Spumoni
 {
+	class Folder;
+
 	enum SaveMode
 	{
 		/* Overwrite the named branch's working files (active moves to that
@@ -84,13 +86,15 @@ namespace Spumoni
 		   branch folders (and anything else in them) into the replacement.
 		   Not used for SaveAs-to-a-different-filename (fresh package). */
 		std::string ExistingPackage;
-		/* Live extract for a same-package save point when a workspace is open. */
+		/* Live extract for a same-package save point when a workspace is open:
+		   the Folder itself (any kind, not owned), or a directory path. */
+		const Folder *Workspace;
 		std::string ExistingWorkspace;
 		/* The branch whose extras (anything beside the patch, contract and
 		   assets) carry over to the active branch; set by the application. */
 		std::string SourceBranchID;
 		SaveRequest()
-			: Mode(SaveReplace)
+			: Mode(SaveReplace), Workspace(NULL)
 		{
 		}
 	};
