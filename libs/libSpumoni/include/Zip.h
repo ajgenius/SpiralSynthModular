@@ -12,6 +12,8 @@
 #ifndef SPUMONI_ZIP_H
 #define SPUMONI_ZIP_H
 
+#include "Container.h"
+
 #include <cstdio>
 #include <set>
 #include <stdint.h>
@@ -21,7 +23,7 @@
 namespace Spumoni
 {
 
-	class Zip
+	class Zip : public Container
 	{
 	public:
 		static const uint64_t kMaxEntrySize = uint64_t(2) * 1024 * 1024 * 1024;
@@ -42,24 +44,17 @@ namespace Spumoni
 		static bool Seek(FILE *file, uint64_t offset);
 		static bool Tell(FILE *file, uint32_t &offset);
 
-		// * Path helpers. SafeArchivePath admits only relative, normalised,
-		//   forward-slash names; SafeName folds anything else to [-_.A-Za-z0-9].
-		static std::string ErrnoText(const std::string &what);
-		static std::string BaseName(const std::string &path);
-		static std::string SafeName(const std::string &value, const std::string &fallback);
-		static bool SafeArchivePath(const std::string &name);
-
-		class Writer
+		class Writer : public Container::Writer
 		{
 		public:
 			Writer();
-			~Writer();
+			virtual ~Writer();
 
-			bool Open(const std::string &path, std::string &error);
-			bool AddMemory(const std::string &name, const std::string &data, std::string &error);
-			bool AddFile(const std::string &name, const std::string &path, std::string &error);
-			bool AddDirectory(const std::string &name, std::string &error);
-			bool Finish(const std::string &path, std::string &error);
+			virtual bool Open(const std::string &path, std::string &error);
+			virtual bool AddMemory(const std::string &name, const std::string &data, std::string &error);
+			virtual bool AddFile(const std::string &name, const std::string &path, std::string &error);
+			virtual bool AddDirectory(const std::string &name, std::string &error);
+			virtual bool Finish(const std::string &path, std::string &error);
 
 		private:
 			bool Add(const std::string &name, const unsigned char *memory, size_t memorySize,
@@ -71,17 +66,12 @@ namespace Spumoni
 			std::set<std::string> m_Names;
 		};
 
-		// * Whole trees into a Writer: AddTree sanitises child names (assets
-		//   from anywhere on disk), AddTreeExact keeps them (our own layout).
-		static bool AddTree(Writer &zip, const std::string &diskPath,
-			const std::string &archivePath, bool root, std::string &error);
-		static bool AddTreeExact(Writer &zip, const std::string &diskPath,
-			const std::string &archivePath, std::string &error);
+		// * The Container interface.
+		virtual const char *Kind() const;
+		virtual Container::Writer *NewWriter() const;
+		virtual bool Extract(const std::string &path, const std::string &folder, std::string &error) const;
 
-		// * Reading. ExtractTo unpacks every entry into an existing folder (a
-		//   Spumoni::Folder, usually); the pieces are exposed for callers that
-		//   want to stop between them. On failure the folder is left as it is.
-		static bool ExtractTo(const char *path, const std::string &folder, std::string &error);
+		// * The pieces of Extract, for callers that want to stop between them.
 		static bool ReadCentralDirectory(FILE *file, std::vector<Entry> &entries, std::string &error);
 		static bool ExtractEntry(FILE *archive, const Entry &entry,
 			const std::string &workspace, std::string &error);
