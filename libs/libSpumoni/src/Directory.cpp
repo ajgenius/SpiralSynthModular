@@ -17,6 +17,16 @@ using namespace std;
 
 namespace Spumoni
 {
+	namespace
+	{
+		// "pkg/" names the same folder as "pkg"; the sibling names need the bare form.
+		string Trimmed(const string &path)
+		{
+			string result=path;
+			while(result.size()>1 && result[result.size()-1]=='/') result.erase(result.size()-1);
+			return result;
+		}
+	}
 
 	const char *Directory::Kind() const
 	{
@@ -88,8 +98,9 @@ namespace Spumoni
 	}
 
 	// Build beside the target, swap in on Finish.
-	bool Directory::Writer::Open(const string &path, string &error)
+	bool Directory::Writer::Open(const string &given, string &error)
 	{
+		const string path=Trimmed(given);
 		string pattern=path+".tmp-XXXXXX";
 		vector<char> name(pattern.begin(),pattern.end()); name.push_back(0);
 		if(!mkdtemp(&name[0])){error=ErrnoText("Cannot create package folder");return false;}
@@ -128,8 +139,9 @@ namespace Spumoni
 		return true;
 	}
 
-	bool Directory::Writer::Finish(const string &path, string &error)
+	bool Directory::Writer::Finish(const string &given, string &error)
 	{
+		const string path=Trimmed(given);
 		string previous;
 		if(Folder::IsDirectory(path))
 		{
