@@ -10,6 +10,7 @@ noinst_LTLIBRARIES = libSpumoni.la
 libSpumoni_la_SOURCES = \
 	include/Container.h src/Container.cpp \
 	include/Folder.h src/Folder.cpp \
+	include/Identity.h src/Identity.cpp \
 	include/Package.h src/Package.cpp \
 	include/Zip.h src/Zip.cpp
 libSpumoni_la_LIBADD = $(ZLIB_LIBS)
