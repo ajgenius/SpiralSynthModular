@@ -19,6 +19,8 @@ libSpumoni_la_SOURCES = \
 	include/Zip.h src/Zip.cpp
 libSpumoni_la_LIBADD = $(top_builddir)/Foundation/libSlick++/libSlick++.la $(ZLIB_LIBS)
 
+EXTRA_DIST = README.md
+
 
 check_PROGRAMS = spumoni-package-test
 TESTS = spumoni-package-test
