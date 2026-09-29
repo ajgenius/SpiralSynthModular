@@ -125,6 +125,25 @@ namespace Spumoni
 		return root+"/"+relative;
 	}
 
+	unsigned long long Path::FileBytes(const string &path)
+	{
+		struct stat st;
+		return stat(path.c_str(),&st)==0 && S_ISREG(st.st_mode) ? (unsigned long long)st.st_size : 0;
+	}
+
+	unsigned long long Path::TreeBytes(const string &path)
+	{
+		struct stat st;
+		if(lstat(path.c_str(),&st)!=0) return 0;
+		if(S_ISREG(st.st_mode)) return (unsigned long long)st.st_size;
+		if(!S_ISDIR(st.st_mode)) return 0;
+		vector<string> names;
+		if(!List(path,names)) return 0;
+		unsigned long long total=0;
+		for(size_t i=0;i<names.size();++i) total+=TreeBytes(path+"/"+names[i]);
+		return total;
+	}
+
 	// ---- Folder: the walkers -------------------------------------------
 
 	// A disk tree's children into this folder under `relative`, streamed,
