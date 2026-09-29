@@ -4,6 +4,7 @@
 #include "Package.h"
 #include "Folder.h"
 #include "Zip.h"
+#include "Directory.h"
 #include "JSONParser.h"
 
 #include <cstdio>
@@ -56,7 +57,7 @@ struct ToyPayload : Package::Payload
 	}
 };
 
-int main()
+static int Story(const Container &container)
 {
 	std::string error;
 	Package::Layout layout;
@@ -64,8 +65,7 @@ int main()
 	layout.Payload.push_back("toy.json");
 	layout.WorkPrefix = "spumoni-test-";
 	ToyApplication application;
-	Zip zip;
-	Package package(zip, layout, application);
+	Package package(container, layout, application);
 
 	Folder scratch;
 	if (!scratch.Create("spumoni-test-scratch-", error))
@@ -187,6 +187,15 @@ int main()
 	if (Folder::IsDirectory(wrong))
 		return Fail("the owning prefix must remove the folder");
 
-	std::puts("spumoni package OK");
+	std::printf("spumoni package OK (%s)\n", container.Kind());
+	return 0;
+}
+
+int main()
+{
+	Zip zip;
+	Directory directory;
+	if (int failed = Story(zip)) return failed;
+	if (int failed = Story(directory)) return failed;
 	return 0;
 }
