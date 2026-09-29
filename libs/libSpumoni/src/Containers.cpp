@@ -37,7 +37,7 @@ namespace Spumoni
 
 	const Container *Container::Sniff(const string &path)
 	{
-		if(Folder::IsDirectory(path)) return &TheDirectory();
+		if(Path::IsDirectory(path)) return &TheDirectory();
 		FILE *file=fopen(path.c_str(),"rb");
 		if(!file) return NULL;
 		unsigned char head[512+8];

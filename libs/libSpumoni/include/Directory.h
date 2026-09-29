@@ -41,7 +41,7 @@ namespace Spumoni
 
 		virtual const char *Kind() const;
 		virtual Container::Writer *NewWriter() const;
-		virtual bool Extract(const std::string &path, const std::string &folder, std::string &error) const;
+		virtual bool Extract(const std::string &path, Folder &folder, std::string &error) const;
 
 		// * Copy one file or a whole tree; used by Extract and by anyone
 		//   moving a package between folders.

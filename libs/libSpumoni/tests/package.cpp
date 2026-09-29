@@ -10,7 +10,6 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <fstream>
 #include <string>
 #include <unistd.h>
 
@@ -21,12 +20,6 @@ static int Fail(const std::string &why)
 {
 	std::fprintf(stderr, "FAIL: %s\n", why.c_str());
 	return 1;
-}
-
-static std::string Slurp(const std::string &path)
-{
-	std::ifstream in(path.c_str(), std::ios::binary);
-	return std::string((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
 }
 
 // The toy application: one stamp, one file per branch.
@@ -68,10 +61,10 @@ static int Story(const Container &container, const char *extension)
 	ToyApplication application;
 	Package package(container, layout, application);
 
-	Folder scratch;
+	DiskFolder scratch;
 	if (!scratch.Create("spumoni-test-scratch-", error))
 		return Fail(error);
-	const std::string path = scratch.Path() + "/toy" + extension;
+	const std::string path = scratch.Root() + "/toy" + extension;
 
 	// First save: a fresh identity.
 	Identity identity;
@@ -84,7 +77,7 @@ static int Story(const Container &container, const char *extension)
 		return Fail("write: " + error);
 
 	// Read it back.
-	Folder work;
+	DiskFolder work;
 	Identity read;
 	std::string branchRoot;
 	if (!package.Open(path, std::string(), work, read, branchRoot, error))
@@ -95,9 +88,12 @@ static int Story(const Container &container, const char *extension)
 		return Fail("branch name or list did not round trip");
 	if (branchRoot != Package::BranchRoot(identity.ActiveBranchID))
 		return Fail("branch root: " + branchRoot);
-	if (Slurp(work.Path() + "/" + branchRoot + "toy.json") != "{\"toy\": 1}")
+	std::string body;
+	if (!work.Read(branchRoot + "toy.json", body, error) || body != "{\"toy\": 1}")
 		return Fail("payload did not round trip");
-	std::string manifest = Slurp(work.Path() + "/toy.manifest.json");
+	std::string manifest;
+	if (!work.Read("toy.manifest.json", manifest, error))
+		return Fail(error);
 	if (manifest.find("\"package\": \"Spumoni Package Ver 1\"") == std::string::npos)
 		return Fail("manifest lacks the package stamp: " + manifest);
 	if (manifest.find("\"format\": \"Toy File Ver 1\"") == std::string::npos)
@@ -105,7 +101,7 @@ static int Story(const Container &container, const char *extension)
 
 	// An extra file in the branch is carried forward by the next save;
 	// the payload file is not (the new payload replaces it).
-	if (!Folder::WriteFile(work.Path() + "/" + branchRoot + "notes.txt", "kept", error))
+	if (!work.Write(branchRoot + "notes.txt", "kept", error))
 		return Fail(error);
 
 	// Second save point in the same package, preserving the first.
@@ -115,7 +111,7 @@ static int Story(const Container &container, const char *extension)
 		return Fail("fork second: " + error);
 	SaveRequest again;
 	again.Mode = SaveNewBranch;
-	again.ExistingWorkspace = work.Path();
+	again.ExistingWorkspace = work.Root();
 	again.SourceBranchID = firstID;
 	std::vector<std::string> present = package.BranchesIn(again, error);
 	if (present.size() != 1 || present[0] != firstID)
@@ -124,22 +120,22 @@ static int Story(const Container &container, const char *extension)
 	if (!package.Write(path, second, again, two, error))
 		return Fail("second write: " + error);
 
-	Folder work2;
+	DiskFolder work2;
 	Identity read2;
 	std::string root2;
 	if (!package.Open(path, std::string(), work2, read2, root2, error))
 		return Fail("open second: " + error);
 	if (read2.Branches.size() != 2 || read2.ActiveBranchName != "second")
 		return Fail("second save point not recorded");
-	if (Slurp(work2.Path() + "/" + root2 + "toy.json") != "{\"toy\": 2}")
+	if (!work2.Read(root2 + "toy.json", body, error) || body != "{\"toy\": 2}")
 		return Fail("second payload wrong");
-	if (Slurp(work2.Path() + "/" + root2 + "notes.txt") != "kept")
+	if (!work2.Read(root2 + "notes.txt", body, error) || body != "kept")
 		return Fail("extras were not carried to the new branch");
-	if (Slurp(work2.Path() + "/" + Package::BranchRoot(firstID) + "toy.json") != "{\"toy\": 1}")
+	if (!work2.Read(Package::BranchRoot(firstID) + "toy.json", body, error) || body != "{\"toy\": 1}")
 		return Fail("first branch was not preserved");
 
 	// Opening the first save point by id.
-	Folder work3;
+	DiskFolder work3;
 	Identity read3;
 	std::string root3;
 	if (!package.Open(path, firstID, work3, read3, root3, error))
@@ -150,14 +146,14 @@ static int Story(const Container &container, const char *extension)
 	// A newer package format is refused at the package level, whatever the
 	// application stamp says.
 	{
-		std::string text = Slurp(work2.Path() + "/toy.manifest.json");
+		std::string text;
+		if (!work2.Read("toy.manifest.json", text, error))
+			return Fail(error);
 		size_t at = text.find("Spumoni Package Ver 1");
 		text.replace(at, std::string("Spumoni Package Ver 1").size(), "Spumoni Package Ver 2");
-		if (!Folder::WriteFile(work2.Path() + "/toy.manifest.json", text, error))
-			return Fail(error);
 		Identity ignored;
 		std::string ignoredRoot;
-		if (package.ReadManifest(work2.Path() + "/toy.manifest.json", ignored, ignoredRoot, error) ||
+		if (package.ReadManifestText(text, ignored, ignoredRoot, error) ||
 			error.find("package format 2 is newer") == std::string::npos)
 			return Fail("newer package format must be refused with a package reason: " + error);
 	}
@@ -168,24 +164,24 @@ static int Story(const Container &container, const char *extension)
 	if (active) active->Name = "renamed";
 	if (!package.WriteManifest(path, read2, error))
 		return Fail("WriteManifest: " + error);
-	Folder work4;
+	DiskFolder work4;
 	Identity read4;
 	std::string root4;
 	if (!package.Open(path, std::string(), work4, read4, root4, error))
 		return Fail("open after manifest rewrite: " + error);
 	if (read4.ActiveBranchName != "renamed")
 		return Fail("manifest rewrite did not take");
-	if (Slurp(work4.Path() + "/" + Package::BranchRoot(firstID) + "toy.json") != "{\"toy\": 1}")
+	if (!work4.Read(Package::BranchRoot(firstID) + "toy.json", body, error) || body != "{\"toy\": 1}")
 		return Fail("manifest rewrite lost a branch");
 
 	// A released folder is removed only through its own prefix.
 	std::string released = work4.Release();
 	std::string wrong = released;
-	Folder::RemoveReleased(wrong, "some-other-prefix-");
-	if (!Folder::IsDirectory(released))
+	DiskFolder::RemoveReleased(wrong, "some-other-prefix-");
+	if (!Path::IsDirectory(released))
 		return Fail("a foreign prefix must not remove a folder");
-	Folder::RemoveReleased(released, layout.WorkPrefix);
-	if (Folder::IsDirectory(wrong))
+	DiskFolder::RemoveReleased(released, layout.WorkPrefix);
+	if (Path::IsDirectory(wrong))
 		return Fail("the owning prefix must remove the folder");
 
 	std::printf("spumoni package OK (%s %s)\n", container.Kind(), extension);

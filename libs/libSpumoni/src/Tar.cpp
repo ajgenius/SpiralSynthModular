@@ -107,7 +107,7 @@ namespace Spumoni
 	}
 
 	// gzread reads plain files transparently, so one reader serves both.
-	bool Tar::Extract(const string &path, const string &folder, string &error) const
+	bool Tar::Extract(const string &path, Folder &folder, string &error) const
 	{
 		gzFile file=gzopen(path.c_str(),"rb");
 		if(!file){error=ErrnoText("Cannot open tarball");return false;}
@@ -140,16 +140,13 @@ namespace Spumoni
 				if(gzseek(file,(z_off_t)padded,SEEK_CUR)<0){error="Damaged tarball";ok=false;break;}
 				continue;
 			}
-			string outputPath=folder+"/"+name;
-			if(!Folder::MakeDirectories(outputPath,error)){ok=false;break;}
 			if(directory)
 			{
-				if(mkdir(outputPath.c_str(),0700)!=0&&errno!=EEXIST)
-				{error=ErrnoText("Cannot extract directory "+name);ok=false;break;}
+				if(!folder.MakeDirectory(name.substr(0,name.size()-1),error)){ok=false;break;}
 				continue;
 			}
-			FILE *output=fopen(outputPath.c_str(),"wb");
-			if(!output){error=ErrnoText("Cannot extract "+name);ok=false;break;}
+			FILE *output=folder.OpenWrite(name,error);
+			if(!output){ok=false;break;}
 			unsigned char buffer[65536];unsigned long long remaining=size;
 			while(remaining)
 			{
@@ -157,8 +154,9 @@ namespace Spumoni
 				if(gzread(file,buffer,n)!=(int)n||fwrite(buffer,1,n,output)!=n){ok=false;break;}
 				remaining-=n;
 			}
-			if(fclose(output)!=0) ok=false;
-			if(!ok){unlink(outputPath.c_str());error="Damaged data for "+name;break;}
+			string closeError;
+			if(!folder.CloseWrite(output,closeError)) ok=false;
+			if(!ok){folder.RemoveEntry(name);error="Damaged data for "+name;break;}
 			unsigned long long slack=padded-size;
 			if(slack && gzseek(file,(z_off_t)slack,SEEK_CUR)<0){error="Damaged tarball";ok=false;break;}
 		}
