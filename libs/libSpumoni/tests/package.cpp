@@ -5,6 +5,7 @@
 #include "Folder.h"
 #include "Zip.h"
 #include "Directory.h"
+#include "Tar.h"
 #include "JSONParser.h"
 
 #include <cstdio>
@@ -57,7 +58,7 @@ struct ToyPayload : Package::Payload
 	}
 };
 
-static int Story(const Container &container)
+static int Story(const Container &container, const char *extension)
 {
 	std::string error;
 	Package::Layout layout;
@@ -70,7 +71,7 @@ static int Story(const Container &container)
 	Folder scratch;
 	if (!scratch.Create("spumoni-test-scratch-", error))
 		return Fail(error);
-	const std::string path = scratch.Path() + "/toy.pkg";
+	const std::string path = scratch.Path() + "/toy" + extension;
 
 	// First save: a fresh identity.
 	Identity identity;
@@ -187,7 +188,7 @@ static int Story(const Container &container)
 	if (Folder::IsDirectory(wrong))
 		return Fail("the owning prefix must remove the folder");
 
-	std::printf("spumoni package OK (%s)\n", container.Kind());
+	std::printf("spumoni package OK (%s %s)\n", container.Kind(), extension);
 	return 0;
 }
 
@@ -195,7 +196,10 @@ int main()
 {
 	Zip zip;
 	Directory directory;
-	if (int failed = Story(zip)) return failed;
-	if (int failed = Story(directory)) return failed;
+	Tar tar;
+	if (int failed = Story(zip, ".zip")) return failed;
+	if (int failed = Story(directory, ".pkg")) return failed;
+	if (int failed = Story(tar, ".tar")) return failed;
+	if (int failed = Story(tar, ".tgz")) return failed;
 	return 0;
 }
