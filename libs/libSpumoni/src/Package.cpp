@@ -38,6 +38,33 @@ namespace Spumoni
 		}
 	}
 
+	// A read-only look at a Folder someone else owns, so OpenPreserveSource
+	// can hand every source back the same way.
+	class Package::View : public Folder
+	{
+	public:
+		explicit View(const Folder &folder) : m_Folder(folder) {}
+		virtual const char *Kind() const { return m_Folder.Kind(); }
+		virtual bool Create(const string &, string &error) { error="A view is not created"; return false; }
+		virtual bool IsOpen() const { return m_Folder.IsOpen(); }
+		virtual void Remove() {}
+		virtual bool IsDirectory(const string &relative) const { return m_Folder.IsDirectory(relative); }
+		virtual bool IsFile(const string &relative) const { return m_Folder.IsFile(relative); }
+		virtual bool List(const string &relative, vector<string> &names) const { return m_Folder.List(relative,names); }
+		virtual bool MakeDirectory(const string &, string &error) { error="Read-only view"; return false; }
+		virtual bool Read(const string &relative, string &data, string &error) const { return m_Folder.Read(relative,data,error); }
+		virtual bool Write(const string &, const string &, string &error) { error="Read-only view"; return false; }
+		virtual bool RemoveEntry(const string &) { return false; }
+		virtual FILE *OpenWrite(const string &, string &error) { error="Read-only view"; return NULL; }
+		virtual bool CloseWrite(FILE *, string &error) { error="Read-only view"; return false; }
+		virtual FILE *OpenRead(const string &relative, string &error) const { return m_Folder.OpenRead(relative,error); }
+		virtual bool PathFor(const string &, string &, string &error) { error="Read-only view"; return false; }
+		virtual bool AddTo(Container::Writer &writer, const string &relative, const string &archiveName, string &error) const
+		{ return m_Folder.AddTo(writer,relative,archiveName,error); }
+	private:
+		const Folder &m_Folder;
+	};
+
 	Package::Package(const Container &container, const Layout &layout, const Application &application)
 		: m_Container(container)
 		, m_Layout(layout)
@@ -121,6 +148,11 @@ namespace Spumoni
 				return true;
 			}
 		}
+		if(request.Workspace && request.Workspace->IsOpen())
+		{
+			source=new View(*request.Workspace);
+			return true;
+		}
 		if(!request.ExistingWorkspace.empty())
 		{
 			if(Path::IsDirectory(request.ExistingWorkspace))
@@ -129,7 +161,7 @@ namespace Spumoni
 				return true;
 			}
 		}
-		if(!request.ExistingPackage.empty() || !request.ExistingWorkspace.empty())
+		if(!request.ExistingPackage.empty() || !request.ExistingWorkspace.empty() || request.Workspace)
 		{
 			error="Previous package/workspace is unavailable; cannot preserve its history"; return false;
 		}

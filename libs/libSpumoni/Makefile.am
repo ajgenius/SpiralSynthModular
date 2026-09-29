@@ -12,6 +12,7 @@ libSpumoni_la_SOURCES = \
 	include/Directory.h src/Directory.cpp \
 	include/Folder.h src/Folder.cpp \
 	include/Identity.h src/Identity.cpp \
+	include/MemoryFolder.h src/MemoryFolder.cpp \
 	include/Package.h src/Package.cpp src/PackageVersion.cpp \
 	include/Tar.h src/Tar.cpp \
 	include/Zip.h src/Zip.cpp
