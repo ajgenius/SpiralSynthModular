@@ -13,6 +13,7 @@ libSpumoni_la_SOURCES = \
 	include/Folder.h src/Folder.cpp \
 	include/Identity.h src/Identity.cpp \
 	include/Package.h src/Package.cpp src/PackageVersion.cpp \
+	include/Tar.h src/Tar.cpp \
 	include/Zip.h src/Zip.cpp
 libSpumoni_la_LIBADD = $(top_builddir)/Foundation/libSlick++/libSlick++.la $(ZLIB_LIBS)
 
