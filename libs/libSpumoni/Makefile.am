@@ -9,6 +9,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 noinst_LTLIBRARIES = libSpumoni.la
 libSpumoni_la_SOURCES = \
 	include/Container.h src/Container.cpp \
+	include/Directory.h src/Directory.cpp \
 	include/Folder.h src/Folder.cpp \
 	include/Identity.h src/Identity.cpp \
 	include/Package.h src/Package.cpp src/PackageVersion.cpp \
