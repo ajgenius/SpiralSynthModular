@@ -1,4 +1,6 @@
 {
+  "format": "SpiralSynthModular Schema File Ver 1",
+  "Type": "Positional",
   "License": "GPL-2.0-or-later",
   "Release": "0.2.2",
   "Syntax": "SpiralPositionalText",
