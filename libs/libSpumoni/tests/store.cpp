@@ -58,6 +58,16 @@ int main()
 	assert(!Spumoni::Store::ValidAddress("sha256:deadbeef"));
 	assert(!store.Verify("sha256:0000000000000000000000000000000000000000000000000000000000000000", error));
 
+	// PutBytes / ReadBytes: the same object whichever way the bytes arrive.
+	{
+		std::string fromBytes, back;
+		assert(store.PutBytes("content for store test", fromBytes, error));
+		assert(fromBytes == addr);
+		assert(store.ReadBytes(fromBytes, back, error));
+		assert(back == "content for store test");
+		assert(!store.ReadBytes("sha256:" + std::string(64, '0'), back, error));
+	}
+
 	// Clean
 	unlink(src.c_str());
 	unlink(dst.c_str());
