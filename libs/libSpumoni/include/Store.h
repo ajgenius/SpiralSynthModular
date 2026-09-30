@@ -39,6 +39,13 @@ public:
 
 	bool Verify(const std::string &address, std::string &error) const;
 
+	// Is the object present? Existence only; Verify checks the bytes.
+	bool Has(const std::string &address) const;
+
+	// The stored object's own path, for reading in place. Empty when the
+	// store is not open or the object is absent. Never write through it.
+	std::string ObjectPath(const std::string &address) const;
+
 	// Materialise a verified independent copy at a *new* destination path.
 	// No hard links escape the store. Existing destinations are never overwritten.
 	// On failure the incomplete destination is removed. Caller keeps dest private

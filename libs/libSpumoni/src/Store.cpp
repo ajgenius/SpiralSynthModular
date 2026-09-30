@@ -360,6 +360,21 @@ bool Spumoni::Store::Verify(const std::string &address, std::string &error) cons
 	return true;
 }
 
+bool Spumoni::Store::Has(const std::string &address) const
+{
+	std::string ignored;
+	Descriptor input(OpenObject(m_Root, address, ignored));
+	return input.Value >= 0;
+}
+
+std::string Spumoni::Store::ObjectPath(const std::string &address) const
+{
+	if (!Has(address))
+		return std::string();
+	return m_RootPath + "/sha256/" + address.substr(7, 2) + "/" + address.substr(9, 2)
+		+ "/" + address.substr(11);
+}
+
 bool Spumoni::Store::CopyFile(const std::string &address,
 			      const std::string &destination, std::string &error) const
 {
