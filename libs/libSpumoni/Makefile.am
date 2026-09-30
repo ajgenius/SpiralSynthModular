@@ -13,12 +13,15 @@ libSpumoni_a_SOURCES = \
 	include/Package.h src/Package.cpp src/PackageVersion.cpp \
 	include/Project.h src/Project.cpp \
 	include/SourcePart.h src/SourcePart.cpp \
+	include/Store.h include/StoreSHA256.h src/Store.cpp src/StoreSHA256.cpp \
 	include/Tar.h src/Tar.cpp \
 	include/Zip.h src/Zip.cpp
 
-check_PROGRAMS = json-test
+check_PROGRAMS = json-test store-test
 TESTS = $(check_PROGRAMS)
 json_test_SOURCES = tests/json.cpp
 json_test_LDADD = libSpumoni.a
+store_test_SOURCES = tests/store.cpp
+store_test_LDADD = libSpumoni.a
 
 EXTRA_DIST = README.md
