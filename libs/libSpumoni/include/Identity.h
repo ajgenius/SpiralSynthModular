@@ -97,8 +97,12 @@ namespace Spumoni
 		/* The branch whose extras (anything beside the application's payload)
 		   carry over to the active branch; set by the application. */
 		std::string SourceBranchID;
+		/* Ver 2: the store whose objects go out at the package root, when
+		   it is not the preserve source's own (a fresh package from a
+		   saved one carries no branches, but its objects still). */
+		class Store *SharedStore;
 		SaveRequest()
-			: Mode(SaveReplace), Workspace(NULL)
+			: Mode(SaveReplace), Workspace(NULL), SharedStore(NULL)
 		{
 		}
 	};

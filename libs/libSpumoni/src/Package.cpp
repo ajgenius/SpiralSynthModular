@@ -7,6 +7,7 @@
 // Save-time named branches generated/modified by GROK (Grok Build).
 
 #include "Package.h"
+#include "Store.h"
 #include "Folder.h"
 #include "JSON.h"
 
@@ -61,6 +62,10 @@ namespace Spumoni
 		virtual bool PathFor(const string &, string &, string &error) { error="Read-only view"; return false; }
 		virtual bool AddTo(Container::Writer &writer, const string &relative, const string &archiveName, string &error) const
 		{ return m_Folder.AddTo(writer,relative,archiveName,error); }
+
+		// Ver 2: forward the store so Package::Write can export shared assets
+		// from a preservation View of the current workspace.
+		virtual Store *GetStore() { return const_cast<Folder&>(m_Folder).GetStore(); }
 	private:
 		const Folder &m_Folder;
 	};
@@ -389,6 +394,21 @@ namespace Spumoni
 			&& !writer->AddMemory(m_Layout.MetadataName, MetadataJSON(identity), error))
 			return false;
 		if(!payload.Write(*writer,branchRoot,error)) return false;
+
+		// Ver 2: the shared objects at the package root, outside any branch:
+		// the request's store, else the preserve source's own. The store is
+		// owned by the workspace folder.
+		Store *shared=request.SharedStore;
+		if(!shared && source.get()) shared=source->GetStore();
+		if(shared)
+		{
+			std::string serr;
+			if(!shared->ExportObjects(*writer,AssetsDir(),serr))
+			{
+				error=serr.empty()?"Failed to export shared assets":serr;
+				return false;
+			}
+		}
 		return writer->Finish(path,error);
 	}
 
