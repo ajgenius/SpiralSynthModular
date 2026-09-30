@@ -3,6 +3,8 @@
 
 #include "MemoryFolder.h"
 
+#include <memory>
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -32,10 +34,11 @@ namespace Spumoni
 
 	void MemoryFolder::Remove()
 	{
-		for(map<FILE *,Pending>::iterator i=m_Pending.begin();i!=m_Pending.end();++i)
+		for(map<FILE *,Pending *>::iterator i=m_Pending.begin();i!=m_Pending.end();++i)
 		{
 			fclose(i->first);
-			free(i->second.Buffer);
+			free(i->second->Buffer);
+			delete i->second;
 		}
 		m_Pending.clear();
 		m_Entries.clear();
@@ -205,26 +208,29 @@ namespace Spumoni
 		string key=Normalise(relative);
 		if(key.empty()||!ValidRelative(key)){error="Unsafe path: "+relative;return NULL;}
 		if(!MakeParents(key,error)) return NULL;
-		Pending pending; pending.Relative=key; pending.Buffer=NULL; pending.Size=0;
-		FILE *file=open_memstream(&pending.Buffer,&pending.Size);
-		if(!file){error="Cannot open memory stream";return NULL;}
+		// open_memstream keeps the addresses it is given until fclose, so the
+		// record must live on the heap, not in a local or a map node that moves.
+		Pending *pending=new Pending;
+		pending->Relative=key; pending->Buffer=NULL; pending->Size=0;
+		FILE *file=open_memstream(&pending->Buffer,&pending->Size);
+		if(!file){delete pending;error="Cannot open memory stream";return NULL;}
 		m_Pending[file]=pending;
 		return file;
 	}
 
 	bool MemoryFolder::CloseWrite(FILE *file, string &error)
 	{
-		map<FILE *,Pending>::iterator found=m_Pending.find(file);
+		map<FILE *,Pending *>::iterator found=m_Pending.find(file);
 		if(found==m_Pending.end()){error="Not a stream of this folder";return false;}
-		Pending pending=found->second;
+		std::auto_ptr<Pending> pending(found->second);
 		m_Pending.erase(found);
 		// The buffer and size are final only after fclose.
 		bool closed=fclose(file)==0;
 		string data;
-		if(closed && pending.Buffer) data.assign(pending.Buffer,pending.Size);
-		free(pending.Buffer);
+		if(closed && pending->Buffer) data.assign(pending->Buffer,pending->Size);
+		free(pending->Buffer);
 		if(!closed){error="Error closing memory stream";return false;}
-		return Write(pending.Relative,data,error);
+		return Write(pending->Relative,data,error);
 	}
 
 	FILE *MemoryFolder::OpenRead(const string &relative, string &error) const
