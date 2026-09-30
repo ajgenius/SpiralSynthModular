@@ -69,7 +69,7 @@ namespace Spumoni
 		bool m_Open;
 		std::string m_Prefix;
 		std::map<std::string, Entry> m_Entries;
-		std::map<FILE *, Pending> m_Pending;
+		std::map<FILE *, Pending *> m_Pending;
 		DiskFolder *m_Scratch;
 		unsigned long long m_Bytes;
 	};
