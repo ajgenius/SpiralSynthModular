@@ -75,10 +75,9 @@ namespace Spumoni
 			if (!m_Parts[i]->LegacyName().empty())
 				layout.Payload.push_back(m_Parts[i]->LegacyName());
 		}
-		// The parts' bundled files beside them; written with the parts, never
-		// carried over as an extra. (The Ver 2 shared store is the package's,
-		// at its root, not a branch member.)
-		layout.Payload.push_back("assets");
+		// Ver 2: "assets" is package-root content-addressed storage (shared across
+		// branches), not a per-branch payload member. Handled via Folder::GetStore()
+		// and exported by Package::Write at the package root level.
 		layout.WorkPrefix = m_Format.WorkPrefix;
 		return layout;
 	}

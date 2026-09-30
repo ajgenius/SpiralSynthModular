@@ -41,10 +41,12 @@ namespace Spumoni
 	{
 	public:
 		// ---- The package format's own clock. ----------------------------
-		// This build writes Ver 1: per-branch files only. Shared content-addressed
-		// stores and journals are not part of this tree. Layout::MetadataName, when
-		// set, still writes an optional application file beside the manifest.
-		static const long FormatVersion = 1;
+		// Ver 1: per-branch assets/ only.
+		// Ver 2: package-wide content-addressed assets via Store (shared across
+		//        branches). Payload versions and app format are independent.
+		// Journals are not part of this tree. Layout::MetadataName, when set,
+		// still writes an optional application file beside the manifest.
+		static const long FormatVersion = 2;
 
 		// * "Spumoni Package Ver 1": the manifest's "package" member.
 		static std::string FormatName();
@@ -147,6 +149,9 @@ namespace Spumoni
 		Folder *NewFolder() const;
 
 		static std::string BranchRoot(const std::string &id) { return "branches/" + id + "/"; }
+
+		// Ver 2: package-root content-addressed assets (shared, outside any branch).
+		static std::string AssetsDir() { return "assets"; }
 
 		// Now, as a manifest stamps it: "YYYY-MM-DDTHH:MM:SSZ".
 		static std::string SaveTimeUTC();
