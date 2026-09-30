@@ -27,9 +27,16 @@ int main()
 	// Open
 	assert(store.Open(root, error));
 
-	// SHA256 helper
+	// SHA256 helper, against FIPS 180-4's own vectors: "", "abc", and the
+	// two-block "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq".
 	std::string h = Spumoni::StoreSHA256::hash_bytes("hello", 5);
 	assert(h.size() == 64);
+	assert(Spumoni::StoreSHA256::hash_bytes("", 0)
+		== "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+	assert(Spumoni::StoreSHA256::hash_bytes("abc", 3)
+		== "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+	assert(Spumoni::StoreSHA256::hash_bytes("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", 56)
+		== "248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1");
 
 	// PutFile
 	std::string src = root + "/input.bin";
