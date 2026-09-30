@@ -37,6 +37,11 @@ public:
 	// address is unchanged; a partial object may remain if the fsync failed.
 	bool PutFile(const std::string &source, std::string &address, std::string &error) const;
 
+	// The same for bytes already in memory (a checkpoint's files), and
+	// the way back: the whole object, verified against its address.
+	bool PutBytes(const std::string &bytes, std::string &address, std::string &error) const;
+	bool ReadBytes(const std::string &address, std::string &bytes, std::string &error) const;
+
 	bool Verify(const std::string &address, std::string &error) const;
 
 	// Is the object present? Existence only; Verify checks the bytes.

@@ -298,6 +298,56 @@ bool Spumoni::Store::ValidAddress(const std::string &address)
 	return true;
 }
 
+namespace
+{
+	bool VerifyAt(int root, const std::string &address, std::string &error)
+	{
+		Descriptor input(OpenObject(root, address, error));
+		std::string actual;
+
+		if (input.Value < 0 || !Transfer(input.Value, -1, actual, error))
+			return false;
+
+		if (actual != address)
+			return Fail("Object bytes do not match their SHA-256 address", error);
+
+		error.clear();
+		return true;
+	}
+
+	// The staged bytes, hashed to `next`, become the object at that address.
+	bool Publish(int root, StagingFile &staged, const std::string &next,
+		     std::string &address, std::string &error)
+	{
+		if (fchmod(staged.File, 0400) != 0 || fsync(staged.File) != 0)
+			return SystemError("Cannot sync staged object", error);
+
+		Descriptor directory(ObjectDirectory(root, next, true, error));
+
+		if (directory.Value < 0)
+			return false;
+
+		// POSIX linkat publishes without replacing an existing object. Concurrent
+		// writers can share a verified winner; no lock or stale-lock recovery is
+		// needed. The temporary hard link stays private and is removed on return.
+		if (linkat(root, staged.Name.c_str(), directory.Value, next.substr(11).c_str(), 0) != 0)
+		{
+			if (errno != EEXIST)
+				return SystemError("Cannot publish object", error);
+
+			if (!VerifyAt(root, next, error))
+				return false;
+		}
+
+		if (fsync(directory.Value) != 0)
+			return SystemError("Cannot sync published object", error);
+
+		address = next;
+		error.clear();
+		return true;
+	}
+}
+
 bool Spumoni::Store::PutFile(const std::string &source, std::string &address, std::string &error) const
 {
 	if (m_Root < 0 || !ValidPath(source))
@@ -317,47 +367,60 @@ bool Spumoni::Store::PutFile(const std::string &source, std::string &address, st
 	if (!staged.Create(error) || !Transfer(input.Value, staged.File, next, error))
 		return false;
 
-	if (fchmod(staged.File, 0400) != 0 || fsync(staged.File) != 0)
-		return SystemError("Cannot sync staged object", error);
+	return Publish(m_Root, staged, next, address, error);
+}
 
-	Descriptor directory(ObjectDirectory(m_Root, next, true, error));
+bool Spumoni::Store::PutBytes(const std::string &bytes, std::string &address, std::string &error) const
+{
+	if (m_Root < 0)
+		return Fail("Store is not open", error);
 
-	if (directory.Value < 0)
+	StagingFile staged(m_Root);
+
+	if (!staged.Create(error) || !WriteAll(staged.File, bytes.data(), bytes.size(), error))
 		return false;
 
-	// POSIX linkat publishes without replacing an existing object. Concurrent
-	// writers can share a verified winner; no lock or stale-lock recovery is
-	// needed. The temporary hard link stays private and is removed on return.
-	if (linkat(m_Root, staged.Name.c_str(), directory.Value, next.substr(11).c_str(), 0) != 0)
-	{
-		if (errno != EEXIST)
-			return SystemError("Cannot publish object", error);
+	const std::string next = "sha256:" + StoreSHA256::hash_bytes(bytes.data(), bytes.size());
+	return Publish(m_Root, staged, next, address, error);
+}
 
-		if (!Verify(next, error))
-			return false;
+bool Spumoni::Store::ReadBytes(const std::string &address, std::string &bytes, std::string &error) const
+{
+	Descriptor input(OpenObject(m_Root, address, error));
+
+	if (input.Value < 0)
+		return false;
+
+	std::string collected;
+	char chunk[65536];
+
+	for (;;)
+	{
+		ssize_t count = read(input.Value, chunk, sizeof chunk);
+
+		if (count < 0 && errno == EINTR)
+			continue;
+
+		if (count < 0)
+			return SystemError("Cannot read object bytes", error);
+
+		if (!count)
+			break;
+
+		collected.append(chunk, count);
 	}
 
-	if (fsync(directory.Value) != 0)
-		return SystemError("Cannot sync published object", error);
+	if ("sha256:" + StoreSHA256::hash_bytes(collected.data(), collected.size()) != address)
+		return Fail("Object bytes do not match their SHA-256 address", error);
 
-	address = next;
+	bytes.swap(collected);
 	error.clear();
 	return true;
 }
 
 bool Spumoni::Store::Verify(const std::string &address, std::string &error) const
 {
-	Descriptor input(OpenObject(m_Root, address, error));
-	std::string actual;
-
-	if (input.Value < 0 || !Transfer(input.Value, -1, actual, error))
-		return false;
-
-	if (actual != address)
-		return Fail("Object bytes do not match their SHA-256 address", error);
-
-	error.clear();
-	return true;
+	return VerifyAt(m_Root, address, error);
 }
 
 bool Spumoni::Store::Has(const std::string &address) const
