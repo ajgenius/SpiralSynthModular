@@ -20,7 +20,7 @@ namespace Spumoni
 		return folder.Read(branchRoot + m_Name, m_Staged, error);
 	}
 
-	bool SourcePart::Store(Container::Writer &writer, const string &branchRoot, string &error)
+	bool SourcePart::Store(Container::Writer &writer, const string &branchRoot, class Store *, string &error)
 	{
 		if (m_Live.empty()) return true;
 		return writer.AddMemory(branchRoot + m_Name, m_Live, error);

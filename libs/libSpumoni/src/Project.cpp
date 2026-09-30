@@ -23,16 +23,17 @@ namespace Spumoni
 	class Project::Parts : public Package::Payload
 	{
 	public:
-		explicit Parts(const std::vector<Part *> &parts) : m_Parts(parts) {}
+		Parts(const std::vector<Part *> &parts, Store *shared) : m_Parts(parts), m_Shared(shared) {}
 		virtual bool Write(Container::Writer &writer, const std::string &branchRoot, std::string &error)
 		{
 			for (size_t i = 0; i < m_Parts.size(); ++i)
-				if (!m_Parts[i]->Store(writer, branchRoot, error))
+				if (!m_Parts[i]->Store(writer, branchRoot, m_Shared, error))
 					return false;
 			return true;
 		}
 	private:
 		const std::vector<Part *> &m_Parts;
+		Store *m_Shared;
 	};
 
 	Project::Project(const Format &format)
@@ -299,7 +300,11 @@ namespace Spumoni
 			request.SourceBranchID.clear();
 		}
 
-		Parts payload(m_Parts);
+		// Ver 2: the parts may put bundled files into the workspace's store;
+		// Package::Write then exports the store at the package root.
+		Store *store = m_Workspace ? m_Workspace->GetStore() : NULL;
+		request.SharedStore = store;
+		Parts payload(m_Parts, store);
 		if (!package.Write(path, next, request, payload, error))
 			return false;
 
