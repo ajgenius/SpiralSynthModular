@@ -15,7 +15,7 @@ namespace Spumoni
 {
 
 	MemoryFolder::MemoryFolder()
-		: m_Open(false), m_Scratch(NULL), m_Bytes(0)
+		: m_Open(false), m_Scratch(NULL), m_Bytes(0), m_Store(NULL)
 	{
 	}
 
@@ -44,6 +44,11 @@ namespace Spumoni
 		m_Entries.clear();
 		m_Bytes=0;
 		delete m_Scratch; m_Scratch=NULL;
+
+		// Ver 2: tear down any owned store and its backing directory.
+		delete m_Store; m_Store=NULL;
+		if(!m_StoreDir.empty()){Path::RemoveTree(m_StoreDir);m_StoreDir.clear();}
+
 		m_Open=false;
 	}
 
@@ -269,6 +274,22 @@ namespace Spumoni
 		map<string,Entry>::const_iterator found=m_Entries.find(Normalise(relative));
 		if(found==m_Entries.end()||found->second.Directory){error="Missing "+relative;return false;}
 		return writer.AddMemory(archiveName,found->second.Data,error);
+	}
+
+	// Ver 2: a store under a private scratch directory, made on first ask.
+	// The directory outlives the DiskFolder that made it (Release) and is
+	// removed with the folder.
+	Store *MemoryFolder::GetStore()
+	{
+		if(!m_Open) return NULL;
+		if(m_Store) return m_Store;
+		string error;
+		DiskFolder scratch;
+		if(!scratch.Create(m_Prefix+"store-",error)) return NULL;
+		m_StoreDir=scratch.Release();
+		m_Store=new Store;
+		if(!m_Store->Open(m_StoreDir,error)){delete m_Store;m_Store=NULL;return NULL;}
+		return m_Store;
 	}
 
 } // namespace Spumoni

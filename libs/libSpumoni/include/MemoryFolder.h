@@ -46,6 +46,10 @@ namespace Spumoni
 		virtual bool AddTo(Container::Writer &writer, const std::string &relative,
 			const std::string &archiveName, std::string &error) const;
 
+		// Ver 2: MemoryFolder can own a Store for shared assets.
+		// Lazily creates one under a private scratch when first requested.
+		virtual Store *GetStore();
+
 	private:
 		struct Entry
 		{
@@ -72,6 +76,10 @@ namespace Spumoni
 		std::map<FILE *, Pending *> m_Pending;
 		DiskFolder *m_Scratch;
 		unsigned long long m_Bytes;
+
+		// Ver 2: optional owned store for shared content-addressed assets.
+		Store *m_Store;
+		std::string m_StoreDir; // scratch dir we own when we created the store
 	};
 
 } // namespace Spumoni

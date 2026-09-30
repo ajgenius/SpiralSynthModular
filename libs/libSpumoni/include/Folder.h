@@ -19,6 +19,7 @@
 #define SPUMONI_FOLDER_H
 
 #include "Container.h"
+#include "Store.h"
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -72,6 +73,12 @@ namespace Spumoni
 		bool ImportTree(const std::string &diskPath, const std::string &relative, std::string &error);
 		bool ExportTree(Container::Writer &writer, const std::string &relative,
 			const std::string &archivePath, std::string &error) const;
+
+		// * Ver 2: content-addressed store access for shared assets.
+		//   A folder that owns a Store (or can materialise one) returns it.
+		//   Default returns NULL (Ver 1 behaviour). The returned Store is
+		//   owned by the Folder (or lives as long as the workspace).
+		virtual Store *GetStore() { return NULL; }
 
 	protected:
 		Folder() {}
@@ -137,9 +144,15 @@ namespace Spumoni
 		virtual bool AddTo(Container::Writer &writer, const std::string &relative,
 			const std::string &archiveName, std::string &error) const;
 
+		// * Ver 2: content-addressed store for assets shared across branches.
+		//   Lazily creates a Store under <root>/assets when first requested.
+		virtual Store *GetStore();
+
 	private:
 		std::string m_Path;
 		bool m_Owned;
+		Store *m_Store;
+		std::string m_StoreRoot; // the dir we passed to Store::Open
 	};
 
 } // namespace Spumoni
