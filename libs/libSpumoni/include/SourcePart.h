@@ -29,7 +29,7 @@ namespace Spumoni
 		virtual void Commit() { m_Live.swap(m_Staged); m_Staged.clear(); }
 		virtual void Discard() { m_Staged.clear(); }
 		virtual bool Store(Container::Writer &writer, const std::string &branchRoot,
-			std::string &error);
+			class Store *, std::string &error);
 
 	private:
 		std::string m_Name;

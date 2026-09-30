@@ -45,8 +45,11 @@ namespace Spumoni
 			const std::string &packagePath, std::string &error) = 0;
 		virtual void Commit() = 0;
 		virtual void Discard() = 0;
+		// shared is the workspace's Store when it has one (Ver 2): a part may
+		// put its bundled files there and write their addresses instead of
+		// copying them under the branch. NULL keeps everything in the branch.
 		virtual bool Store(Container::Writer &writer, const std::string &branchRoot,
-			std::string &error) = 0;
+			class Store *shared, std::string &error) = 0;
 	};
 
 	// * What makes a package this application's: shared by all its projects.
