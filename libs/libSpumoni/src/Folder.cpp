@@ -203,13 +203,14 @@ namespace Spumoni
 
 	// ---- DiskFolder -------------------------------------------------------
 
-	DiskFolder::DiskFolder():m_Owned(false)
+	DiskFolder::DiskFolder():m_Owned(false),m_Store(NULL)
 	{
 	}
 
 	DiskFolder::~DiskFolder()
 	{
 		if(m_Owned) Remove();
+		delete m_Store;
 	}
 
 	DiskFolder *DiskFolder::Adopt(const string &path)
@@ -249,6 +250,7 @@ namespace Spumoni
 
 	void DiskFolder::Remove()
 	{
+		delete m_Store; m_Store=NULL; m_StoreRoot.clear();
 		if(m_Owned && !m_Path.empty()) Path::RemoveTree(m_Path);
 		m_Path.clear(); m_Owned=false;
 	}
@@ -327,6 +329,32 @@ namespace Spumoni
 			const string &archiveName, string &error) const
 	{
 		return writer.AddFile(archiveName,Path::Join(m_Path,relative),error);
+	}
+
+	// Ver 2: lazily create (or return) a Store under <root>/assets.
+	Store *DiskFolder::GetStore()
+	{
+		if (m_Path.empty())
+			return NULL;
+		if (m_Store)
+			return m_Store;
+
+		// assets/ lives at the root of this working tree.
+		std::string assetRoot = Path::Join(m_Path, "assets");
+		std::string err;
+		if (!Path::MakeDirectories(assetRoot + "/", err))
+			return NULL;
+
+		m_StoreRoot = assetRoot;
+		m_Store = new Store;
+		if (!m_Store->Open(m_StoreRoot, err))
+		{
+			delete m_Store;
+			m_Store = NULL;
+			m_StoreRoot.clear();
+			return NULL;
+		}
+		return m_Store;
 	}
 
 	} // namespace Spumoni
