@@ -370,6 +370,11 @@ bool Spumoni::Store::PutFile(const std::string &source, std::string &address, st
 	return Publish(m_Root, staged, next, address, error);
 }
 
+std::string Spumoni::Store::AddressOf(const std::string &bytes)
+{
+	return "sha256:" + StoreSHA256::hash_bytes(bytes.data(), bytes.size());
+}
+
 bool Spumoni::Store::PutBytes(const std::string &bytes, std::string &address, std::string &error) const
 {
 	if (m_Root < 0)
@@ -380,8 +385,7 @@ bool Spumoni::Store::PutBytes(const std::string &bytes, std::string &address, st
 	if (!staged.Create(error) || !WriteAll(staged.File, bytes.data(), bytes.size(), error))
 		return false;
 
-	const std::string next = "sha256:" + StoreSHA256::hash_bytes(bytes.data(), bytes.size());
-	return Publish(m_Root, staged, next, address, error);
+	return Publish(m_Root, staged, AddressOf(bytes), address, error);
 }
 
 bool Spumoni::Store::ReadBytes(const std::string &address, std::string &bytes, std::string &error) const
@@ -410,7 +414,7 @@ bool Spumoni::Store::ReadBytes(const std::string &address, std::string &bytes, s
 		collected.append(chunk, count);
 	}
 
-	if ("sha256:" + StoreSHA256::hash_bytes(collected.data(), collected.size()) != address)
+	if (AddressOf(collected) != address)
 		return Fail("Object bytes do not match their SHA-256 address", error);
 
 	bytes.swap(collected);

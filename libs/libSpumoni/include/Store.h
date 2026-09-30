@@ -32,6 +32,9 @@ public:
 
 	static bool ValidAddress(const std::string &address);
 
+	// The address these bytes would have, without storing them.
+	static std::string AddressOf(const std::string &bytes);
+
 	// Capture a regular file. Hashing + copy use the same stream.
 	// On success, address receives "sha256:..." (lowercase). On failure the
 	// address is unchanged; a partial object may remain if the fsync failed.
