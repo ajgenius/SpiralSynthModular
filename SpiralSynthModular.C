@@ -338,6 +338,8 @@ void SynthModular::UpdatePluginGUIs()
 
 			// Audio is walking this graph on another thread. Hold the same
 			// gate RenderAudio uses, then drop it before destroying widgets.
+			// ~SpiralPluginGUI calls Fl::check(), and Update() will erase this
+			// map node as soon as the gate drops, so finish with the iterator first.
 			pthread_mutex_lock(&m_CycleLock);
 
 			//Stop processing of audio if any
@@ -359,18 +361,18 @@ void SynthModular::UpdatePluginGUIs()
 			//Remove Device GUI from canvas
 			m_Canvas->RemoveDevice(i->second->m_DeviceGUI);
 
+			Fl_DeviceGUI *gui = i->second->m_DeviceGUI;
+			i->second->m_DeviceGUI = NULL;
+			if (erase)
+				m_DeviceWinMap.erase(i++);
+			else
+				++i;
+
 			pthread_mutex_unlock(&m_CycleLock);
 
 			//Delete Device GUI - must delete here or sometimes plugin will randomly crash
-			delete i->second->m_DeviceGUI;
-			i->second->m_DeviceGUI = NULL;
-
-			//Erase from winmap if no audio to do it
-			if (erase)
-			{
-				m_DeviceWinMap.erase(i++);
-				continue;
-			}
+			delete gui;
+			continue;
 		}
 
 		i++;
