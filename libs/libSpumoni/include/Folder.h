@@ -19,7 +19,6 @@
 #define SPUMONI_FOLDER_H
 
 #include "Container.h"
-
 #include <cstdio>
 #include <string>
 #include <vector>

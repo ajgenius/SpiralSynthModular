@@ -8,7 +8,7 @@
 
 #include "Package.h"
 #include "Folder.h"
-#include "JSONParser.h"
+#include "JSON.h"
 
 #include <memory>
 
@@ -21,7 +21,7 @@ using namespace std;
 
 namespace Spumoni
 {
-	typedef Slick::JSONValue J;
+	typedef JSON J;
 
 	namespace
 	{
@@ -182,13 +182,19 @@ namespace Spumoni
 	   application adds (its own stamp first among them). */
 	string Package::ManifestJSON(const Identity &identity) const
 	{
-		Slick::JSONOwner root(J::MakeObject());
-		root->Retain();
-		root->Set("package",J::MakeString(Stamp()));
-		m_Application.Describe(*root.get(),identity);
-		root->Set("package_id",J::MakeString(identity.PackageID));
-		root->Set("saved_at",J::MakeString(SaveTimeUTC()));
-		root->Set("current_branch",J::MakeString(identity.ActiveBranchID));
+		JSONOwner root(J::MakeObject());
+		root->SetOwned("package",J::MakeString(Stamp()));
+		if (m_Layout.MetadataName.empty())
+			m_Application.Describe(*root.get(),identity);
+		else
+		{
+			J *metadata = J::MakeObject();
+			metadata->SetOwned(m_Layout.MetadataKey, J::MakeString(m_Layout.MetadataName));
+			root->SetOwned("metadata", metadata);
+		}
+		root->SetOwned("package_id",J::MakeString(identity.PackageID));
+		root->SetOwned("saved_at",J::MakeString(SaveTimeUTC()));
+		root->SetOwned("current_branch",J::MakeString(identity.ActiveBranchID));
 
 		J *branchNames=J::MakeObject();
 		J *branches=J::MakeArray();
@@ -198,27 +204,34 @@ namespace Spumoni
 			string name=item.Name;
 			if(name.empty() && item.ID==identity.ActiveBranchID)
 				name=identity.ActiveBranchName;
-			branchNames->Set(item.ID,J::MakeString(name));
+			branchNames->SetOwned(item.ID,J::MakeString(name));
 			J *branch=J::MakeObject();
-			branch->Set("id",J::MakeString(item.ID));
-			branch->Set("kind",J::MakeString(item.Kind.empty()?"named":item.Kind));
-			branch->Set("path",J::MakeString(BranchRoot(item.ID)));
+			branch->SetOwned("id",J::MakeString(item.ID));
+			branch->SetOwned("kind",J::MakeString(item.Kind.empty()?"named":item.Kind));
+			branch->SetOwned("path",J::MakeString(BranchRoot(item.ID)));
 			if(item.ParentID.empty())
-				branch->Set("parent_id",J::MakeNull());
+				branch->SetOwned("parent_id",J::MakeNull());
 			else
-				branch->Set("parent_id",J::MakeString(item.ParentID));
+				branch->SetOwned("parent_id",J::MakeString(item.ParentID));
 			if(item.ForkSaveID.empty())
-				branch->Set("fork_save_id",J::MakeNull());
+				branch->SetOwned("fork_save_id",J::MakeNull());
 			else
-				branch->Set("fork_save_id",J::MakeString(item.ForkSaveID));
-			branches->Append(branch);
+				branch->SetOwned("fork_save_id",J::MakeString(item.ForkSaveID));
+			branches->AppendOwned(branch);
 		}
 		J *names=J::MakeObject();
-		names->Set("project",J::MakeString(identity.ActiveBranchName));
-		names->Set("branches",branchNames);
-		root->Set("names",names);
-		root->Set("branches",branches);
+		names->SetOwned("project",J::MakeString(identity.ActiveBranchName));
+		names->SetOwned("branches",branchNames);
+		root->SetOwned("names",names);
+		root->SetOwned("branches",branches);
 
+		return root->Stringify(true);
+	}
+
+	string Package::MetadataJSON(const Identity &identity) const
+	{
+		JSONOwner root(J::MakeObject());
+		m_Application.Describe(*root.get(), identity);
 		return root->Stringify(true);
 	}
 
@@ -245,16 +258,37 @@ namespace Spumoni
 	bool Package::ReadManifest(const Folder &folder,
 		Identity &identity, string &branchRoot, string &error) const
 	{
+		string name = m_Layout.ManifestName;
+		if (!folder.IsFile(name) && !m_Layout.LegacyManifestName.empty())
+			name = m_Layout.LegacyManifestName;
+
 		string text;
-		if(!folder.Read(m_Layout.ManifestName,text,error)) return false;
-		return ReadManifestText(text,identity,branchRoot,error);
+		if (!folder.Read(name, text, error) || !ReadManifestText(text, identity, branchRoot, error))
+			return false;
+
+		if (name == m_Layout.LegacyManifestName || m_Layout.MetadataName.empty())
+			return true;
+
+		string metadata;
+		if (!folder.Read(m_Layout.MetadataName, metadata, error))
+			return false;
+		JSONOwner root(ParseJSON(metadata.c_str(), &error));
+		if (!root.get() || root->GetType() != J::Object)
+		{
+			error = "Invalid application metadata: " + m_Layout.MetadataName;
+			return false;
+		}
+		if (!m_Application.Accept(*root.get(), identity, error))
+			return false;
+		identity.ApplicationMetadata = metadata;
+		return true;
 	}
 
 	bool Package::ReadManifestText(const string &text,
 		Identity &identity, string &branchRoot, string &error) const
 	{
 		string parseError;
-		Slick::JSONOwner storage(Slick::ParseJSONText(text.c_str(),false,&parseError));
+		JSONOwner storage(ParseJSON(text.c_str(), &parseError));
 		if(!storage.get()){error=parseError.empty()?"Cannot read package manifest":parseError;return false;}
 		const J &root=*storage.get();
 		if(root.GetType()!=J::Object){error="Not a package manifest";return false;}
@@ -265,13 +299,26 @@ namespace Spumoni
 		if(const J *package=Member(root,"package",J::String))
 		{
 			long found=0;
-			Status status=Check(package->Text(),found);
+			VersionStatus status=Check(package->Text(),found);
 			if(status==Newer||status==Foreign)
 			{error=m_Layout.ManifestName+": "+Reason(status,found);return false;}
 		}
 
 		// Then the application's part: its own stamp and members.
-		if(!m_Application.Accept(root,identity,error)) return false;
+		const J *metadata = Member(root, "metadata", J::Object);
+		if (!m_Layout.MetadataName.empty() && metadata)
+		{
+			if (StringOr(metadata, m_Layout.MetadataKey.c_str()) != m_Layout.MetadataName)
+			{
+				error = "Package does not register the expected application metadata";
+				return false;
+			}
+		}
+		else
+		{
+			if (!m_Application.Accept(root,identity,error)) return false;
+			identity.ApplicationMetadata = text;
+		}
 
 		const string packageID=StringOr(&root,"package_id");
 		const string activeBranch=StringOr(&root,"current_branch");
@@ -338,6 +385,9 @@ namespace Spumoni
 			!CopyActiveExtras(*writer,*source,request.SourceBranchID,identity.ActiveBranchID,error)))
 			return false;
 		if(!writer->AddMemory(m_Layout.ManifestName,manifest,error)) return false;
+		if (!m_Layout.MetadataName.empty()
+			&& !writer->AddMemory(m_Layout.MetadataName, MetadataJSON(identity), error))
+			return false;
 		if(!payload.Write(*writer,branchRoot,error)) return false;
 		return writer->Finish(path,error);
 	}
@@ -367,7 +417,8 @@ namespace Spumoni
 		bool ok=m_Container.Extract(path,folder,error);
 		if(ok)
 		{
-			if(!folder.IsFile(m_Layout.ManifestName))
+			if(!folder.IsFile(m_Layout.ManifestName)
+				&& (m_Layout.LegacyManifestName.empty() || !folder.IsFile(m_Layout.LegacyManifestName)))
 			{error="Not a package: no "+m_Layout.ManifestName+" in it";ok=false;}
 			else
 				ok=ReadManifest(folder,nextIdentity,nextRoot,error);
@@ -408,6 +459,11 @@ namespace Spumoni
 		if(manifest.empty()){error="Cannot serialize the package manifest";return false;}
 		if(!folder->Write(m_Layout.ManifestName,manifest,error))
 			return false;
+		if (!m_Layout.MetadataName.empty()
+			&& !folder->Write(m_Layout.MetadataName, MetadataJSON(identity), error))
+			return false;
+		if (!m_Layout.LegacyManifestName.empty())
+			folder->RemoveEntry(m_Layout.LegacyManifestName);
 
 		// Re-pack the whole tree so branch files are byte-copied.
 		std::auto_ptr<Container::Writer> writer(m_Container.NewWriter());

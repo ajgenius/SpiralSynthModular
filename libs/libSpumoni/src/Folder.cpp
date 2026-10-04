@@ -324,9 +324,9 @@ namespace Spumoni
 	}
 
 	bool DiskFolder::AddTo(Container::Writer &writer, const string &relative,
-		const string &archiveName, string &error) const
+			const string &archiveName, string &error) const
 	{
 		return writer.AddFile(archiveName,Path::Join(m_Path,relative),error);
 	}
 
-} // namespace Spumoni
+	} // namespace Spumoni
