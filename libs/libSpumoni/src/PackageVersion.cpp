@@ -29,7 +29,7 @@ namespace Spumoni
 		return text.str();
 	}
 
-	Package::Status Package::Check(const string &stamp, long &found)
+	Package::VersionStatus Package::Check(const string &stamp, long &found)
 	{
 		found = 0;
 		const string prefix = FormatName() + " Ver ";
@@ -50,7 +50,7 @@ namespace Spumoni
 		return value < FormatVersion ? Older : Newer;
 	}
 
-	string Package::Reason(Status status, long found)
+	string Package::Reason(VersionStatus status, long found)
 	{
 		ostringstream text;
 		switch (status)

@@ -22,7 +22,8 @@ namespace Spumoni
 		SaveReplace = 0,
 		/* Keep prior branches and write the current patch as a new named
 		   branch in the same package. The filename does not change. */
-		SaveNewBranch
+		SaveNewBranch,
+		SaveImportedBranch
 	};
 
 	struct Branch
@@ -40,6 +41,8 @@ namespace Spumoni
 		std::string PackageID;
 		std::string ActiveBranchID;
 		std::string AuthorUsername;
+		// Opaque application metadata, interpreted only by its registered handler.
+		std::string ApplicationMetadata;
 		std::string ActiveBranchName;
 		std::vector<Branch> Branches;
 		void Clear()
@@ -47,6 +50,7 @@ namespace Spumoni
 			PackageID.clear();
 			ActiveBranchID.clear();
 			AuthorUsername.clear();
+			ApplicationMetadata.clear();
 			ActiveBranchName.clear();
 			Branches.clear();
 		}
@@ -90,8 +94,8 @@ namespace Spumoni
 		   the Folder itself (any kind, not owned), or a directory path. */
 		const Folder *Workspace;
 		std::string ExistingWorkspace;
-		/* The branch whose extras (anything beside the patch, contract and
-		   assets) carry over to the active branch; set by the application. */
+		/* The branch whose extras (anything beside the application's payload)
+		   carry over to the active branch; set by the application. */
 		std::string SourceBranchID;
 		SaveRequest()
 			: Mode(SaveReplace), Workspace(NULL)

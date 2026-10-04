@@ -18,8 +18,12 @@ libspiralcore_la_SOURCES = \
     src/RiffWav.cpp \
     include/GraphSort.h \
     src/GraphSort.cpp
-libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 2:0:0
-libspiralcore_la_LIBADD = $(SFLIBS) $(JACK_LIBS) -lm
+libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 2:0:0 \
+	$(SPUMONI_WHOLE_ARCHIVE)
+libspiralcore_la_DEPENDENCIES = $(top_builddir)/libs/libSpumoni/libSpumoni.a
+# libSpumoni.a is linked in full. Nothing in the loader calls it yet.
+libspiralcore_la_LIBADD = $(SFLIBS) $(JACK_LIBS) -lm \
+	$(ZLIB_LIBS)
 
 check_PROGRAMS = compatibility-test
 TESTS = $(check_PROGRAMS)

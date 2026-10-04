@@ -532,6 +532,23 @@ AC_SEARCH_LIBS([clock_gettime], [rt])
 AC_SEARCH_LIBS([pthread_create], [pthread], [],
     [AC_MSG_ERROR([POSIX threads are required])])
 
+dnl libSpumoni (ZIP/tar) needs zlib. The static archive is linked into libspiralcore.
+AC_CHECK_HEADER([zlib.h], [], [AC_MSG_ERROR([zlib.h is required to build libSpumoni])])
+AC_CHECK_LIB([z], [deflate], [ZLIB_LIBS="-lz"], [AC_MSG_ERROR([libz is required to build libSpumoni])])
+AC_SUBST([ZLIB_LIBS])
+
+dnl Pull every Spumoni object into libspiralcore. GNU ld and Apple ld
+dnl spell that differently.
+case "$host_os" in
+  darwin*)
+    SPUMONI_WHOLE_ARCHIVE='-Wl,-force_load,$(top_builddir)/libs/libSpumoni/libSpumoni.a'
+    ;;
+  *)
+    SPUMONI_WHOLE_ARCHIVE='-Wl,--whole-archive,$(top_builddir)/libs/libSpumoni/libSpumoni.a -Wl,--no-whole-archive'
+    ;;
+esac
+AC_SUBST([SPUMONI_WHOLE_ARCHIVE])
+
 dnl The existing Apple MIDI implementation uses these system frameworks.
 MIDI_LIBS=""
 case "$host_os" in
@@ -572,6 +589,7 @@ AC_SUBST(PLUGINLIST)
 dnl Modify the output files.
 AC_OUTPUT(
 JSON/Makefile
+libs/libSpumoni/Makefile
 SpiralSynthPluginLocation.h
 Makefile
 GUI/Makefile

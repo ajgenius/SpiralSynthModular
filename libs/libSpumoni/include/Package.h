@@ -15,10 +15,8 @@
 //       ├── <payload files>       the application's, written through Payload
 //       └── <anything else>       carried forward from the branch it came from
 //
-// Ver 2 adds package-wide content-addressed assets; Ver 3 checkpoints and a
-// replayable journal. The application's payload versions never move for any
-// of that, and a package bump never moves them. A reader refuses a newer
-// stamp at its own level and says which level.
+// A reader refuses a newer package stamp and says which level. Shared stores
+// and journals are not in this build.
 //
 // Package knows nothing of the application: Layout names its files,
 // Application writes and checks its part of the manifest, Payload writes a
@@ -34,8 +32,7 @@
 #include <vector>
 
 #include "Folder.h"
-
-namespace Slick { class JSONValue; }
+#include "JSON.h"
 
 namespace Spumoni
 {
@@ -44,6 +41,9 @@ namespace Spumoni
 	{
 	public:
 		// ---- The package format's own clock. ----------------------------
+		// This build writes Ver 1: per-branch files only. Shared content-addressed
+		// stores and journals are not part of this tree. Layout::MetadataName, when
+		// set, still writes an optional application file beside the manifest.
 		static const long FormatVersion = 1;
 
 		// * "Spumoni Package Ver 1": the manifest's "package" member.
@@ -51,7 +51,7 @@ namespace Spumoni
 		static std::string Stamp();
 		static std::string Stamp(long version);
 
-		enum Status
+		enum VersionStatus
 		{
 			Current,	// exactly the version this build writes
 			Older,		// an earlier version this build still reads
@@ -60,10 +60,10 @@ namespace Spumoni
 		};
 
 		// * Parse a stamp; `found` receives N when it is one of ours.
-		static Status Check(const std::string &stamp, long &found);
+		static VersionStatus Check(const std::string &stamp, long &found);
 
 		// * User-facing reason for a non-Current status.
-		static std::string Reason(Status status, long found);
+		static std::string Reason(VersionStatus status, long found);
 
 		// ---- What the application supplies. ------------------------------
 
@@ -73,6 +73,9 @@ namespace Spumoni
 		struct Layout
 		{
 			std::string ManifestName;
+			std::string MetadataName;
+			std::string MetadataKey;
+			std::string LegacyManifestName;
 			std::vector<std::string> Payload;
 			std::string WorkPrefix;
 			// The kind of working folder Package makes for itself (a source
@@ -89,8 +92,8 @@ namespace Spumoni
 		{
 		public:
 			virtual ~Application() {}
-			virtual void Describe(Slick::JSONValue &root, const Identity &identity) const = 0;
-			virtual bool Accept(const Slick::JSONValue &root, Identity &identity, std::string &error) const = 0;
+			virtual void Describe(JSON &root, const Identity &identity) const = 0;
+			virtual bool Accept(const JSON &root, Identity &identity, std::string &error) const = 0;
 		};
 
 		// * What goes into the active branch on a write. `branchRoot` is
@@ -130,6 +133,7 @@ namespace Spumoni
 
 		// * Manifest text for an identity, as Write and WriteManifest emit it.
 		std::string ManifestJSON(const Identity &identity) const;
+		std::string MetadataJSON(const Identity &identity) const;
 
 		// * Read the manifest of an unpacked package, or manifest text: both
 		//   stamps checked, the identity filled, the active branch root returned.
@@ -144,6 +148,9 @@ namespace Spumoni
 
 		static std::string BranchRoot(const std::string &id) { return "branches/" + id + "/"; }
 
+		// Now, as a manifest stamps it: "YYYY-MM-DDTHH:MM:SSZ".
+		static std::string SaveTimeUTC();
+
 	private:
 		class View;
 
@@ -154,8 +161,7 @@ namespace Spumoni
 		bool OpenPreserveSource(const SaveRequest &request, Folder *&source, std::string &error) const;
 		bool CopyPreservedBranches(Container::Writer &writer, const Folder &source, const std::string &rewriteID, std::string &error) const;
 		bool CopyActiveExtras(Container::Writer &writer, const Folder &source, const std::string &sourceID, const std::string &activeID, std::string &error) const;
-		static bool ReadActiveBranch(const Slick::JSONValue &root, const std::string &activeBranch, std::string &activePath, std::string &error);
-		static std::string SaveTimeUTC();
+		static bool ReadActiveBranch(const JSON &root, const std::string &activeBranch, std::string &activePath, std::string &error);
 
 		const Container &m_Container;
 		Layout m_Layout;

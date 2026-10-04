@@ -37,6 +37,7 @@ namespace Spumoni
 		virtual ~Part() {}
 
 		virtual std::string Name() const = 0;
+		virtual std::string LegacyName() const { return std::string(); }
 		virtual bool Required() const { return true; }
 
 		// The folder is not const: a part may ask it for real paths.
@@ -44,13 +45,17 @@ namespace Spumoni
 			const std::string &packagePath, std::string &error) = 0;
 		virtual void Commit() = 0;
 		virtual void Discard() = 0;
-		virtual bool Store(Container::Writer &writer, const std::string &branchRoot, std::string &error) = 0;
+		virtual bool Store(Container::Writer &writer, const std::string &branchRoot,
+			std::string &error) = 0;
 	};
 
 	// * What makes a package this application's: shared by all its projects.
 	struct Format
 	{
 		std::string ManifestName;
+		std::string MetadataName;
+		std::string MetadataKey;
+		std::string LegacyManifestName;
 		const Package::Application *Application;
 		std::vector<std::string> Extensions;	// ".ssmp", lower case, with the dot
 		std::string WorkPrefix;
@@ -78,7 +83,7 @@ namespace Spumoni
 		bool SwitchBranch(const std::string &branchId, std::string &error);
 
 		bool SaveAs(const std::string &path, std::string &error);
-		bool CreateSavePoint(const std::string &branchName, bool replaceIfExists, std::string &error);
+		bool CreateSavePoint(const std::string &branchName, bool replaceIfExists, std::string &error, bool independent = false);
 		bool UpdateManifest(std::string &error);
 
 		// * Write the parts into a package at `path` with the given request,
