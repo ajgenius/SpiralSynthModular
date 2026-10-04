@@ -43,6 +43,7 @@
 #include "OutputPluginGUI.h"
 #include "PatchProject.h"
 #include <FL/fl_ask.H>
+#include "UnavailablePlugin.h"
 #include "SpiralInfo.h"
 #include "SpiralPluginGUI.h"
 #ifdef HAVE_YAJL
@@ -828,22 +829,122 @@ DeviceGUIInfo SynthModular::BuildDeviceGUIInfo(PluginInfo &PInfo)
 
 //////////////////////////////////////////////////////////
 
+static string SavedDeviceName(DeviceWin *win)
+{
+	if (win && win->m_Device)
+	{
+		UnavailablePlugin *missing = dynamic_cast<UnavailablePlugin*>(win->m_Device);
+		if (missing)
+			return missing->SavedName();
+	}
+	if (win && win->m_DeviceGUI)
+		return win->m_DeviceGUI->GetName();
+	return "";
+}
+
+static int RemapLoadedId(bool remap, map<int,int> &ids, int id)
+{
+	if (!remap)
+		return id;
+	map<int,int>::iterator found = ids.find(id);
+	if (found == ids.end())
+		return id;
+	return found->second;
+}
+
+static void NoteUnavailablePort(map<int,DeviceWin*> &devs, int id, bool input, int port)
+{
+	map<int,DeviceWin*>::iterator found;
+	UnavailablePlugin *missing;
+	int inputs;
+	int outputs;
+
+	if (port < 0)
+		return;
+	found = devs.find(id);
+	if (found == devs.end() || !found->second->m_Device)
+		return;
+	missing = dynamic_cast<UnavailablePlugin*>(found->second->m_Device);
+	if (!missing)
+		return;
+
+	inputs = missing->InputCount();
+	outputs = missing->OutputCount();
+	if (input)
+	{
+		if (port + 1 > inputs)
+			inputs = port + 1;
+	}
+	else if (port + 1 > outputs)
+		outputs = port + 1;
+	missing->EnsurePorts(inputs, outputs);
+}
+
+static void GrowUnavailablePorts(iostream &s, bool paste, bool merge, map<int,DeviceWin*> &devs, map<int,int> &remap)
+{
+	streampos mark = s.tellg();
+	int num = 0;
+	bool eight;
+	int n;
+
+	if (mark < streampos(0))
+		return;
+
+	s >> num;
+	if (!s)
+	{
+		s.clear();
+		s.seekg(mark);
+		return;
+	}
+
+	eight = paste || num == -1;
+	if (eight && !paste)
+	{
+		int version = 0;
+		s >> version >> num;
+	}
+	if (num < 0)
+		num = 0;
+
+	for (n = 0; n < num; n++)
+	{
+		int outId, inId, outPort, inPort, dummy;
+		int outTerm = 0, inTerm = 0;
+
+		s >> outId >> dummy >> outPort;
+		if (eight)
+			s >> outTerm;
+		s >> inId >> dummy >> inPort;
+		if (eight)
+			s >> inTerm;
+		if (!s)
+			break;
+
+		outId = RemapLoadedId(paste || merge, remap, outId);
+		inId = RemapLoadedId(paste || merge, remap, inId);
+		NoteUnavailablePort(devs, outId, false, outPort);
+		NoteUnavailablePort(devs, inId, true, inPort);
+	}
+
+	s.clear();
+	s.seekg(mark);
+}
+
 DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 {
 	DeviceWin *nlw = new DeviceWin;
 	const spiralcore::DeviceClass* Plugin=spiralcore::DeviceClassRegistry::Get()->Find(n);
+	bool missing = false;
 
-	if (!Plugin)
+	nlw->m_Device = NULL;
+	if (Plugin)
+		nlw->m_Device=Plugin->CreateInstance();
+	if (!nlw->m_Device)
 	{
-		char t[256];
-		sprintf(t,"%d",n);
-		SpiralInfo::Alert("Plugin "+string(t)+" not found.");
-		return NULL;
+		missing = true;
+		nlw->m_Device = new UnavailablePlugin(n);
 	}
-
-	nlw->m_Device=Plugin->CreateInstance();
-
-	if (!nlw->m_Device) return NULL;
 
 	nlw->m_Device->SetUpdateCallback(cb_Update);
 	nlw->m_Device->SetParent((void*)this);
@@ -860,11 +961,12 @@ DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 	   during the click handler — crash or a window that cannot expand. */
 	Fl_Group *prev = Fl_Group::current();
 	Fl_Group::current(0);
-	// A device with no editor gets a bare device window.
-	const spiralcore::EditorClass *Editor=spiralcore::EditorClassRegistry::Get()->Find(n);
+	// A device with no editor gets a bare device window; a missing plugin
+	// gets no editor and no icon.
+	const spiralcore::EditorClass *Editor = missing ? NULL : spiralcore::EditorClassRegistry::Get()->Find(n);
 	SpiralGUIType *temp = Editor ? Editor->CreateEditor(nlw->m_Device) : NULL;
 	if (temp) temp->end();
-	Fl_Pixmap *Pix      = new Fl_Pixmap(Plugin->Icon);
+	Fl_Pixmap *Pix      = (!missing && Plugin) ? new Fl_Pixmap(Plugin->Icon) : NULL;
 	nlw->m_PluginID     = n;
 
 	if (temp) temp->position(x+10,y);
@@ -1181,6 +1283,15 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 					temp->m_DeviceGUI->SetName(Name);
 				}
 
+				if (UnavailablePlugin *missingDevice = dynamic_cast<UnavailablePlugin*>(temp->m_Device))
+				{
+					missingDevice->SetSavedName(Name);
+					string label = Name.empty() ? string("Plugin") : Name;
+					temp->m_DeviceGUI->SetName(label + " (unavailable)");
+					cerr << "SSM: Missing plugin " << label << " (" << PluginID
+						<< "); preserving its state and wires.\n";
+				}
+
 				temp->m_Device->SetUpdateInfoCallback(ID,cb_UpdatePluginInfo);
 				m_DeviceWinMap[ID]=temp;
 				if (!ApplyDeviceState(s, text, PluginID, m_DeviceWinMap[ID]->m_Device)) // load the plugin
@@ -1222,19 +1333,21 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 					if (paste || merge)
 						Fl_Canvas::AppendSelection(ID, m_Canvas);
 				}
+				else if (paste || merge)
+					Fl_Canvas::AppendSelection(ID, m_Canvas);
 
 				if (!paste && !merge)
 					if (m_NextID<=ID) m_NextID=ID+1;
 			}
 			else
 			{
-				// can't really recover if the plugin ID doesn't match a plugin, as
-			    // we have no idea how much data in the stream belongs to this plugin
 				SpiralInfo::Alert("Error in stream, can't really recover data from here on.");
 				return s;
 			}
 		}
 	}
+
+	GrowUnavailablePorts(s, paste, merge, m_DeviceWinMap, m_Copied.m_DeviceIds);
 
 	if (!paste && !merge)
 	{
@@ -1288,8 +1401,9 @@ spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o)
 			d.Value(i->second->m_PluginID).Line();
 			d.Value(i->second->m_DeviceGUI->x()).Separator(" ");
 			d.Value(i->second->m_DeviceGUI->y()).Separator(" ");
-			d.Value(i->second->m_DeviceGUI->GetName().size()).Separator(" ");
-			d.Value(i->second->m_DeviceGUI->GetName()).Separator(" ");
+			string savedName = SavedDeviceName(i->second);
+			d.Value(savedName.size()).Separator(" ");
+			d.Value(savedName).Separator(" ");
 
 			if (i->second->m_DeviceGUI->GetPluginWindow())
 			{
@@ -1509,8 +1623,9 @@ inline void SynthModular::cb_Copy_i (Fl_Widget *o, void *v) {
            m_Copied.devices << "Plugin " <<j->second->m_PluginID << endl;
            m_Copied.devices << j->second->m_DeviceGUI->x() << " ";
            m_Copied.devices << j->second->m_DeviceGUI->y() << " ";
-           m_Copied.devices << j->second->m_DeviceGUI->GetName().size() << " ";
-           m_Copied.devices << j->second->m_DeviceGUI->GetName() << " ";
+           string savedName = SavedDeviceName(j->second);
+           m_Copied.devices << savedName.size() << " ";
+           m_Copied.devices << savedName << " ";
            if (j->second->m_DeviceGUI->GetPluginWindow()) {
               m_Copied.devices << j->second->m_DeviceGUI->GetPluginWindow()->visible() << " ";
               m_Copied.devices << j->second->m_DeviceGUI->GetPluginWindow()->x() << " ";
