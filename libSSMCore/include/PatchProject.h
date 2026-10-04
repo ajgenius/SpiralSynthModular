@@ -23,6 +23,7 @@ namespace Spiral
 			virtual ~Project();
 
 			const Spumoni::SourcePart &Source() const { return *m_Source; }
+			Spumoni::SourcePart &Source() { return *m_Source; }
 
 			// Extension (.ssmp, .tar, a directory) or a manifest inside.
 			static bool PathLooksLikePackage(const std::string &path);

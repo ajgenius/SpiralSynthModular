@@ -1518,23 +1518,15 @@ void SynthModular::cb_Load(Fl_Widget *o, void *v) {
 // Save
 
 inline void SynthModular::cb_Save_i (Fl_Widget *o, void *v) {
-       char *fn=fl_file_chooser("Save a patch", "*.ssm", NULL);
+       char *fn=fl_file_chooser("Save a patch",
+          "Spiral patch (*.ssm)\t*.ssm\nPackage (*.ssmp)\t*.ssmp", NULL);
        if (fn && *fn!='\0') {
           ifstream ifl (fn);
           if (ifl) {
              if (!Pawfal_YesNo ("File [%s] exists, overwrite?", fn))
                 return;
           }
-          ofstream of (fn);
-          if (of) {
-             m_FilePath = fn;
-             of << *this;
-             TITLEBAR = LABEL + " " + fn;
-             m_TopWindow->label (TITLEBAR.c_str());
-          }
-          else {
-              fl_message ( "%s", string ("Error saving " + string(fn)).c_str());
-          }
+          SavePatch(fn);
        }
 }
 
@@ -1545,17 +1537,39 @@ void SynthModular::cb_Save (Fl_Widget *o, void *v) {
 // Merge
 
 inline void SynthModular::cb_Merge_i (Fl_Widget *o, void *v) {
-       char *fn = fl_file_chooser ("Merge a patch", "*.ssm", NULL);
+       char *fn = fl_file_chooser ("Merge a patch",
+          "Spiral patch (*.ssm)\t*.ssm\nPackage (*.ssmp)\t*.ssmp", NULL);
        if (fn && *fn!='\0') {
-          ifstream in (fn);
-          if (in) {
-             fstream inf;
-             inf.open (fn, ios::in);
-             m_MergeFilePath = fn;
-             StreamPatchIn (inf, false, true);
-             m_Canvas->StreamSelectionWiresIn (inf, m_Copied.m_DeviceIds, true, false);
-             inf.close();
+          iostream *stream = NULL;
+          ifstream in;
+          fstream inf;
+          std::stringstream packaged;
+          if (Spiral::File::Project::PathLooksLikePackage(fn)) {
+             Spiral::File::Project project(fn);
+             std::string error;
+             if (!project.OpenPackage("", error)) {
+                fl_message("%s", error.c_str());
+                return;
+             }
+             if (project.Source().Empty()) {
+                fl_message("Package has no source.ssm");
+                return;
+             }
+             packaged.str(project.Source().Bytes());
+             stream = &packaged;
           }
+          else {
+             in.open(fn);
+             if (!in)
+                return;
+             inf.open(fn, ios::in);
+             stream = &inf;
+          }
+          m_MergeFilePath = fn;
+          StreamPatchIn(*stream, false, true);
+          m_Canvas->StreamSelectionWiresIn(*stream, m_Copied.m_DeviceIds, true, false);
+          if (stream == &inf)
+             inf.close();
        }
 }
 
@@ -1910,6 +1924,39 @@ void SynthModular::LoadPatch(const char *fn)
 		inf.close();
 
 	TITLEBAR=LABEL+" "+fn;
+	m_TopWindow->label(TITLEBAR.c_str());
+}
+
+void SynthModular::SavePatch(const char *fn)
+{
+	if (Spiral::File::Project::PathLooksLikePackage(fn))
+	{
+		std::ostringstream bytes;
+		bytes << *this;
+		// A fresh project, then SaveAs. Constructing on the destination
+		// would treat a not-yet-opened package as the current file.
+		Spiral::File::Project project("");
+		project.Source().Set(bytes.str());
+		std::string error;
+		if (!project.SaveAs(fn, error))
+		{
+			fl_message("%s", error.empty() ? "Error saving package" : error.c_str());
+			return;
+		}
+	}
+	else
+	{
+		ofstream of(fn);
+		if (!of)
+		{
+			fl_message("%s", string("Error saving " + string(fn)).c_str());
+			return;
+		}
+		of << *this;
+	}
+
+	m_FilePath = fn;
+	TITLEBAR = LABEL + " " + fn;
 	m_TopWindow->label(TITLEBAR.c_str());
 }
 
