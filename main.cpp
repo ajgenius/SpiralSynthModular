@@ -121,7 +121,7 @@ int main(int argc, char **argv)
 			else if (!strcmp(argv[a],"--Realtime")) FIFO = true;
 			else if (!strcmp(argv[a],"-h"))
 			{
-				cout<<"usage: spiralsynthmodular [patch.ssm] [options]"<<endl<<endl
+				cout<<"usage: spiralsynthmodular [patch.ssm|patch.ssmp] [options]"<<endl<<endl
 				<<"options list"<<endl
 				<<"-h : help"<<endl
 				<<"-v : print version"<<endl
