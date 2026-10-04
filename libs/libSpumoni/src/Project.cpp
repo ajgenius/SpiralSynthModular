@@ -66,8 +66,18 @@ namespace Spumoni
 	{
 		Package::Layout layout;
 		layout.ManifestName = m_Format.ManifestName;
+		layout.MetadataName = m_Format.MetadataName;
+		layout.MetadataKey = m_Format.MetadataKey;
+		layout.LegacyManifestName = m_Format.LegacyManifestName;
 		for (size_t i = 0; i < m_Parts.size(); ++i)
+			{
 			layout.Payload.push_back(m_Parts[i]->Name());
+			if (!m_Parts[i]->LegacyName().empty())
+				layout.Payload.push_back(m_Parts[i]->LegacyName());
+		}
+		// The parts' bundled files beside them; written with the parts, never
+		// carried over as an extra. (The Ver 2 shared store is the package's,
+		// at its root, not a branch member.)
 		layout.Payload.push_back("assets");
 		layout.WorkPrefix = m_Format.WorkPrefix;
 		return layout;
@@ -160,6 +170,7 @@ namespace Spumoni
 		std::string branchRoot;
 		if (!package.Open(m_SourcePath, branchId, *workspace, identity, branchRoot, error))
 			return false;
+
 		for (size_t i = 0; i < m_Parts.size(); ++i)
 		{
 			Part &part = *m_Parts[i];
@@ -255,9 +266,10 @@ namespace Spumoni
 				havePrevious = true;
 
 		request.SourceBranchID = next.ActiveBranchID;
-		if (request.Mode == SaveNewBranch)
+		if (request.Mode == SaveNewBranch || request.Mode == SaveImportedBranch)
 		{
-			// The fork's extras come from the branch it forks from.
+			// The fork's extras come from the branch it forks from; where
+			// it forked is the parent's checkpoint the live state came from.
 			std::string name = request.NewBranchName;
 			if (name.empty() && havePrevious)
 				name = next.SuggestedName();
@@ -277,6 +289,15 @@ namespace Spumoni
 				return false;
 			next.EnsureActiveListed();
 			request.SourceBranchID = next.ActiveBranchID;
+		}
+
+		if (request.Mode == SaveImportedBranch)
+		{
+			Branch *imported = next.Find(next.ActiveBranchID);
+			imported->Kind = "imported";
+			imported->ParentID.clear();
+			imported->ForkSaveID.clear();
+			request.SourceBranchID.clear();
 		}
 
 		Parts payload(m_Parts);
@@ -319,7 +340,11 @@ namespace Spumoni
 		SaveRequest request;
 		request.Mode = SaveReplace;
 		if (LooksLikePackage(m_SourcePath))
+		{
 			m_Identity.Clear();
+			m_Identity.ApplicationMetadata = previous.ApplicationMetadata;
+			m_Identity.AuthorUsername = previous.AuthorUsername;
+		}
 		else if (m_Workspace)
 			request.Workspace = m_Workspace;
 
@@ -334,7 +359,7 @@ namespace Spumoni
 	}
 
 	bool Project::CreateSavePoint(const std::string &branchName, bool replaceIfExists,
-		std::string &error)
+		std::string &error, bool independent)
 	{
 		error.clear();
 		if (!HasContent())
@@ -364,7 +389,7 @@ namespace Spumoni
 		if (replaceIfExists)
 			request.Mode = SaveReplace;
 		else
-			request.Mode = SaveNewBranch;
+			request.Mode = independent ? SaveImportedBranch : SaveNewBranch;
 
 		// Replace activates the named branch inside WritePackage; new forks.
 		// Identity updates only on WritePackage success.
@@ -424,7 +449,8 @@ namespace Spumoni
 		const Container *container = Container::Sniff(path);
 		if (!container) return false;
 		if (std::strcmp(container->Kind(), "directory") != 0) return true;
-		return Path::IsFile(path + "/" + m_Format.ManifestName);
+		return Path::IsFile(path + "/" + m_Format.ManifestName)
+			|| (!m_Format.LegacyManifestName.empty() && Path::IsFile(path + "/" + m_Format.LegacyManifestName));
 	}
 
 	// Basename without the format's extension (or "Untitled").
