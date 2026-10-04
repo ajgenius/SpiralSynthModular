@@ -43,6 +43,9 @@
 #include "OutputPluginGUI.h"
 #include "PatchProject.h"
 #include <FL/fl_ask.H>
+#include <FL/Fl_Choice.H>
+#include <FL/Fl_Return_Button.H>
+#include <FL/Fl_Window.H>
 #include "UnavailablePlugin.h"
 #include "SpiralInfo.h"
 #include "SpiralPluginGUI.h"
@@ -58,8 +61,9 @@
 #include "GUI/options.xpm"
 #include "GUI/comment.xpm"
 #include "PawfalYesNo.h"
-#ifdef __APPLE__
 #include "MacBundle.h"
+#ifndef SSM_EXAMPLES_DIR
+#define SSM_EXAMPLES_DIR ""
 #endif
 
 //#define DEBUG_PLUGINS
@@ -460,12 +464,11 @@ SpiralWindowType *SynthModular::CreateWindow()
         m_MainMenu->textsize (10);
         m_MainMenu->add ("File/New", 0, cb_New, (void*)(this), FL_MENU_DIVIDER);
         m_MainMenu->add ("File/Load", 0, cb_Load, (void*)(this), 0);
-        m_MainMenu->add ("File/Save As", 0, cb_Save, (void*)(this), 0);
+        m_MainMenu->add ("File/Save", 0, cb_Save, (void*)(this), 0);
+        m_MainMenu->add ("File/Save As", 0, cb_SaveAs, (void*)(this), FL_MENU_DIVIDER);
         m_MainMenu->add ("File/Merge", 0, cb_Merge, (void*)(this), FL_MENU_DIVIDER);
-#ifdef __APPLE__
-        if (!SSMBundleResourceDirectory("Examples").empty())
-            m_MainMenu->add ("File/Examples...", 0, cb_Examples, (void*)(this), FL_MENU_DIVIDER);
-#endif
+        m_MainMenu->add ("File/Save Points", 0, cb_SavePoints, (void*)(this), 0);
+        m_MainMenu->add ("File/Examples", 0, cb_Examples, (void*)(this), FL_MENU_DIVIDER);
         m_MainMenu->add ("File/Exit", 0, cb_Close, (void*)(this), 0);
         m_MainMenu->add ("Edit/Cut", 0, cb_Cut, (void*)(this), 0);
         m_MainMenu->add ("Edit/Copy", 0, cb_Copy, (void*)(this), 0);
@@ -1478,6 +1481,8 @@ inline void SynthModular::cb_New_i (Fl_Widget *o, void *v) {
           return;
        m_TopWindow->label (TITLEBAR.c_str());
        ClearUp();
+       m_FilePath.clear();
+       m_BranchID.clear();
 }
 
 void SynthModular::cb_New (Fl_Widget *o, void *v) {
@@ -1499,17 +1504,24 @@ inline void SynthModular::cb_Load_i (Fl_Widget *o, void *v) {
      ChooseAndLoadPatch(NULL);
 }
 
-#ifdef __APPLE__
+static std::string ExamplesDirectory()
+{
+	struct stat info;
+	if (SSM_EXAMPLES_DIR[0] && stat(SSM_EXAMPLES_DIR, &info) == 0 && S_ISDIR(info.st_mode))
+		return SSM_EXAMPLES_DIR;
+	return SSMBundleResourceDirectory("Examples");
+}
+
 void SynthModular::cb_Examples(Fl_Widget *o, void *v) {
-     std::string directory = SSMBundleResourceDirectory("Examples");
+     std::string directory = ExamplesDirectory();
      if (directory.empty()) {
-          fl_message("The bundled Examples folder is unavailable.");
+          fl_message("Examples were not found under the install prefix or the application bundle.");
           return;
      }
-     directory += "/";
+     if (directory[directory.size() - 1] != '/')
+          directory += "/";
      ((SynthModular*)v)->ChooseAndLoadPatch(directory.c_str());
 }
-#endif
 
 void SynthModular::cb_Load(Fl_Widget *o, void *v) {
      ((SynthModular*)(o->user_data()))->cb_Load_i (o, v);
@@ -1518,6 +1530,21 @@ void SynthModular::cb_Load(Fl_Widget *o, void *v) {
 // Save
 
 inline void SynthModular::cb_Save_i (Fl_Widget *o, void *v) {
+       if (m_FilePath.empty()) {
+          cb_SaveAs_i(o, v);
+          return;
+       }
+       if (Spiral::File::Project::PathLooksLikePackage(m_FilePath))
+          SaveBranch();
+       else
+          SavePatch(m_FilePath.c_str());
+}
+
+void SynthModular::cb_Save (Fl_Widget *o, void *v) {
+     ((SynthModular*)(o->user_data()))->cb_Save_i (o, v);
+}
+
+inline void SynthModular::cb_SaveAs_i (Fl_Widget *o, void *v) {
        char *fn=fl_file_chooser("Save a patch",
           "Spiral patch (*.ssm)\t*.ssm\nPackage (*.ssmp)\t*.ssmp", NULL);
        if (fn && *fn!='\0') {
@@ -1526,12 +1553,18 @@ inline void SynthModular::cb_Save_i (Fl_Widget *o, void *v) {
              if (!Pawfal_YesNo ("File [%s] exists, overwrite?", fn))
                 return;
           }
+          // Same package: overwrite the open branch and keep the others.
+          if (Spiral::File::Project::PathLooksLikePackage(fn)
+              && Spumoni::Project::SameFile(m_FilePath, fn)) {
+             SaveBranch(false);
+             return;
+          }
           SavePatch(fn);
        }
 }
 
-void SynthModular::cb_Save (Fl_Widget *o, void *v) {
-     ((SynthModular*)(o->user_data()))->cb_Save_i (o, v);
+void SynthModular::cb_SaveAs (Fl_Widget *o, void *v) {
+     ((SynthModular*)(o->user_data()))->cb_SaveAs_i (o, v);
 }
 
 // Merge
@@ -1884,20 +1917,24 @@ void SynthModular::cb_UpdatePluginInfo(int ID, void *PInfo)
 
 //////////////////////////////////////////////////////////
 
-void SynthModular::LoadPatch(const char *fn)
+void SynthModular::LoadPatch(const char *fn, const char *branchId)
 {
 	iostream *stream = NULL;
 	ifstream file;
 	fstream inf;
 	std::stringstream packaged;
+	std::string branch;
 
 	if (Spiral::File::Project::PathLooksLikePackage(fn))
 	{
 		Spiral::File::Project project(fn);
 		std::string error;
-		if (!project.OpenPackage("", error))
+		bool opened = (branchId && *branchId)
+			? project.SwitchBranch(branchId, error)
+			: project.OpenPackage("", error);
+		if (!opened)
 		{
-			fl_message("%s", error.c_str());
+			fl_message("%s", error.empty() ? "Error opening package" : error.c_str());
 			return;
 		}
 		if (project.Source().Empty())
@@ -1907,6 +1944,7 @@ void SynthModular::LoadPatch(const char *fn)
 		}
 		packaged.str(project.Source().Bytes());
 		stream = &packaged;
+		branch = project.GetIdentity().ActiveBranchID;
 	}
 	else
 	{
@@ -1918,6 +1956,7 @@ void SynthModular::LoadPatch(const char *fn)
 	}
 
 	m_FilePath=fn;
+	m_BranchID=branch;
 	ClearUp();
 	(*stream)>>*this;
 	if (stream == &inf)
@@ -1956,7 +1995,150 @@ void SynthModular::SavePatch(const char *fn)
 	}
 
 	m_FilePath = fn;
+	m_BranchID.clear();
 	TITLEBAR = LABEL + " " + fn;
 	m_TopWindow->label(TITLEBAR.c_str());
 }
 
+
+static std::string MenuLabel(const std::string &name)
+{
+	std::string label;
+	for (size_t c = 0; c < name.size(); ++c)
+	{
+		if (name[c] == '/' || name[c] == '\\' || name[c] == '&')
+			label += '\\';
+		label += name[c];
+	}
+	return label;
+}
+
+void SynthModular::SaveBranch(bool ask)
+{
+	if (!Spiral::File::Project::PathLooksLikePackage(m_FilePath))
+	{
+		fl_message("Save As an .ssmp package before saving a branch.");
+		return;
+	}
+
+	Spiral::File::Project project(m_FilePath);
+	std::string error;
+	bool opened = m_BranchID.empty()
+		? project.OpenPackage("", error)
+		: project.SwitchBranch(m_BranchID, error);
+	if (!opened)
+	{
+		fl_message("%s", error.empty() ? "Error opening package" : error.c_str());
+		return;
+	}
+
+	const Spumoni::Identity &identity = project.GetIdentity();
+	int choice = 2;
+	if (ask)
+	{
+		choice = fl_choice("Save Patch", "Cancel", "Create New Save Point", "Replace Current Save Point");
+		if (choice == 0)
+			return;
+	}
+
+	bool replace = choice != 1;
+	std::string name;
+	if (!replace)
+	{
+		std::string suggested = Spumoni::Project::SuggestedSavePointName(identity);
+		const char *entered = fl_input("Save Point Name", suggested.c_str());
+		if (!entered)
+			return;
+		name = entered;
+		if (name.find_first_not_of(" \t\r\n") == std::string::npos)
+		{
+			fl_message("A new save point needs a name.");
+			return;
+		}
+	}
+	else if (!identity.ActiveBranchName.empty())
+		name = identity.ActiveBranchName;
+	else
+		name = project.BranchNameFromPath(m_FilePath);
+
+	std::ostringstream bytes;
+	bytes << *this;
+	project.Source().Set(bytes.str());
+	if (!project.CreateSavePoint(name, replace, error))
+	{
+		fl_message("%s", error.empty() ? "Error saving package" : error.c_str());
+		return;
+	}
+
+	m_BranchID = project.GetIdentity().ActiveBranchID;
+	TITLEBAR = LABEL + " " + m_FilePath;
+	m_TopWindow->label(TITLEBAR.c_str());
+}
+
+inline void SynthModular::cb_SavePoints_i (Fl_Widget *o, void *v)
+{
+	if (!Spiral::File::Project::PathLooksLikePackage(m_FilePath))
+	{
+		fl_message("Open an SSMP file to browse save points.");
+		return;
+	}
+
+	Spiral::File::Project project(m_FilePath);
+	std::string error;
+	if (!project.OpenPackage("", error))
+	{
+		fl_message("%s", error.empty() ? "Error opening package" : error.c_str());
+		return;
+	}
+
+	const Spumoni::Identity identity = project.GetIdentity();
+	if (identity.Branches.empty())
+	{
+		fl_message("Open an SSMP file to browse save points.");
+		return;
+	}
+
+	std::string current = m_BranchID.empty() ? identity.ActiveBranchID : m_BranchID;
+	Fl_Window dialog(550, 150, "Save Points");
+	Fl_Box warning(10, 5, 530, 30, "Opening replaces unsaved changes in the current patch.");
+	Fl_Choice points(20, 45, 510, 30);
+	for (size_t i = 0; i < identity.Branches.size(); ++i)
+	{
+		std::string name = identity.Branches[i].Name;
+		if (identity.Branches[i].ID == current)
+			name += " (current)";
+		points.add(MenuLabel(name).c_str());
+		if (identity.Branches[i].ID == current)
+			points.value((int)i);
+	}
+
+	Fl_Return_Button open(220, 100, 190, 30, "Open Save Point");
+	Fl_Button cancel(420, 100, 110, 30, "Cancel");
+	dialog.end();
+	dialog.set_modal();
+	dialog.show();
+	bool accepted = false;
+	while (dialog.shown())
+	{
+		Fl::wait();
+		Fl_Widget *action;
+		while ((action = Fl::readqueue()))
+		{
+			if (action == &open || action == &cancel || action == &dialog)
+			{
+				accepted = action == &open;
+				dialog.hide();
+			}
+		}
+	}
+
+	if (!accepted || points.value() < 0)
+		return;
+
+	std::string id = identity.Branches[points.value()].ID;
+	LoadPatch(m_FilePath.c_str(), id.c_str());
+}
+
+void SynthModular::cb_SavePoints (Fl_Widget *o, void *v) {
+     ((SynthModular*)(o->user_data()))->cb_SavePoints_i (o, v);
+}
