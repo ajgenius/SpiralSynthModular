@@ -336,6 +336,10 @@ void SynthModular::UpdatePluginGUIs()
 		{
 			bool erase = true;
 
+			// Audio is walking this graph on another thread. Hold the same
+			// gate RenderAudio uses, then drop it before destroying widgets.
+			pthread_mutex_lock(&m_CycleLock);
+
 			//Stop processing of audio if any
 			if (i->second->m_Device)
 			{
@@ -354,6 +358,8 @@ void SynthModular::UpdatePluginGUIs()
 
 			//Remove Device GUI from canvas
 			m_Canvas->RemoveDevice(i->second->m_DeviceGUI);
+
+			pthread_mutex_unlock(&m_CycleLock);
 
 			//Delete Device GUI - must delete here or sometimes plugin will randomly crash
 			delete i->second->m_DeviceGUI;
