@@ -813,9 +813,13 @@ void Fl_Canvas::PruneConnections(Fl_DeviceGUI* Device, int inputs, int outputs)
 			if ((i->OutputID==Device->GetID() && i->OutputPort>=outputs) ||
 			    (i->InputID==Device->GetID() && i->InputPort>=inputs))
 			{
-				// Turn off both ports
-				FindDevice(i->OutputID)->RemoveConnection(i->OutputPort+FindDevice(i->OutputID)->GetInfo()->NumInputs);
-				FindDevice(i->InputID)->RemoveConnection(i->InputPort);
+				// Turn off both ports. A missing end must not crash the delete.
+				Fl_DeviceGUI *source = FindDevice(i->OutputID);
+				Fl_DeviceGUI *dest = FindDevice(i->InputID);
+				if (source)
+					source->RemoveConnection(i->OutputPort+source->GetInfo()->NumInputs);
+				if (dest)
+					dest->RemoveConnection(i->InputPort);
 
 				// send the unconnect callback
 				cb_Unconnect(this,(void*)&(*i));

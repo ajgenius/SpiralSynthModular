@@ -278,15 +278,11 @@ void GraphSort::AddConnection(int SID, bool STerminal, int DID, bool DTerminal)
 void GraphSort::RemoveConnection(int SID, int DID)
 {
 	map<int,Node>::iterator si=m_Graph.find(SID);
-	if (si==m_Graph.end())
-	{
-		cerr<<"GraphSort::RemoveConnection - can't find source node"<<endl;
-	}
-
 	map<int,Node>::iterator di=m_Graph.find(DID);
-	if (di==m_Graph.end())
+	if (si==m_Graph.end() || di==m_Graph.end())
 	{
-		cerr<<"GraphSort::RemoveConnection - can't find dest node"<<endl;
+		cerr<<"GraphSort::RemoveConnection - can't find node"<<endl;
+		return;
 	}
 	
 	list<int>::iterator soi = find(si->second.Outputs.begin(), si->second.Outputs.end(), DID);
