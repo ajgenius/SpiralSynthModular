@@ -998,10 +998,20 @@ void Fl_Canvas::StreamWiresIn(istream &s, bool merge, bool paste)
 					NewWire.OutputID = outputID->second;
 				}
 			}
-			// if we can turn on both ports
-			if (FindDevice(NewWire.OutputID)->AddConnection(NewWire.OutputPort+
-					FindDevice(NewWire.OutputID)->GetInfo()->NumInputs) &&
-				FindDevice(NewWire.InputID)->AddConnection(NewWire.InputPort))
+			// A missing end, or a port the stand-in does not have, must not
+			// drop the rest of the wires.
+			Fl_DeviceGUI *source = FindDevice(NewWire.OutputID);
+			Fl_DeviceGUI *destination = FindDevice(NewWire.InputID);
+			if (!source || !destination
+				|| NewWire.OutputPort < 0 || NewWire.OutputPort >= source->GetInfo()->NumOutputs
+				|| NewWire.InputPort < 0 || NewWire.InputPort >= destination->GetInfo()->NumInputs)
+			{
+				std::cerr << "SSM: Skipping unavailable wire "
+					<< NewWire.OutputID << ":" << NewWire.OutputPort << " -> "
+					<< NewWire.InputID << ":" << NewWire.InputPort << ".\n";
+			}
+			else if (source->AddConnection(NewWire.OutputPort + source->GetInfo()->NumInputs) &&
+				destination->AddConnection(NewWire.InputPort))
 			{
 				m_WireVec.push_back(NewWire);
 					// Notify connection by callback
@@ -1036,10 +1046,18 @@ void Fl_Canvas::StreamWiresIn(istream &s, bool merge, bool paste)
 				}
 			}
 
-			// if we can turn on both ports
-			if (FindDevice(NewWire.OutputID)->AddConnection(NewWire.OutputPort+
-					FindDevice(NewWire.OutputID)->GetInfo()->NumInputs) &&
-				FindDevice(NewWire.InputID)->AddConnection(NewWire.InputPort))
+			Fl_DeviceGUI *source = FindDevice(NewWire.OutputID);
+			Fl_DeviceGUI *destination = FindDevice(NewWire.InputID);
+			if (!source || !destination
+				|| NewWire.OutputPort < 0 || NewWire.OutputPort >= source->GetInfo()->NumOutputs
+				|| NewWire.InputPort < 0 || NewWire.InputPort >= destination->GetInfo()->NumInputs)
+			{
+				std::cerr << "SSM: Skipping unavailable wire "
+					<< NewWire.OutputID << ":" << NewWire.OutputPort << " -> "
+					<< NewWire.InputID << ":" << NewWire.InputPort << ".\n";
+			}
+			else if (source->AddConnection(NewWire.OutputPort + source->GetInfo()->NumInputs) &&
+				destination->AddConnection(NewWire.InputPort))
 			{
 				m_WireVec.push_back(NewWire);
 
