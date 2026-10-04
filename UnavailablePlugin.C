@@ -103,47 +103,14 @@ void UnavailablePlugin::ApplyKnownLayout()
 void UnavailablePlugin::Execute()
 {
 	int n;
-	int fallback = -1;
-	int frame;
-	int length;
 
-	// Carry the signal across the hole. A same-numbered input wins; if
-	// that input is not connected (LADSPA audio is often not port 0),
-	// use the first connected input. Outputs with nothing to copy are
-	// silence.
-	for (n = 0; n < m_PluginInfo.NumInputs; n++)
-	{
-		if (GetInput(n))
-		{
-			fallback = n;
-			break;
-		}
-	}
-
+	// Same as Testing's UnavailableDevice::Process: a missing plugin
+	// writes silence. It does not copy audio across the hole.
 	for (n = 0; n < m_PluginInfo.NumOutputs; n++)
 	{
 		Sample *out = GetOutputBuf(n);
-		int inIndex = fallback;
-		const Sample *in;
-
-		if (!out)
-			continue;
-		if (n < m_PluginInfo.NumInputs && GetInput(n))
-			inIndex = n;
-		in = (inIndex >= 0) ? GetInput(inIndex) : NULL;
-		if (!in)
-		{
+		if (out)
 			out->Zero();
-			continue;
-		}
-
-		length = out->GetLength();
-		if (in->GetLength() < length)
-			length = in->GetLength();
-		for (frame = 0; frame < length; frame++)
-			out->Set(frame, (*in)[frame]);
-		for (; frame < out->GetLength(); frame++)
-			out->Set(frame, 0);
 	}
 }
 
