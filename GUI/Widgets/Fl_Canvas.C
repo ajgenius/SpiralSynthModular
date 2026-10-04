@@ -28,6 +28,11 @@
 // to allow the wire (connection currently being made) to be redrawn
 static const int UPDATE_TICKS = 5;
 
+static Fl_DeviceGUI *AsDevice(Fl_Widget *w)
+{
+	return dynamic_cast<Fl_DeviceGUI*>(w);
+}
+
 static int Numbers[512];
 
 ////////////////////////////////////////////////////////////////////////
@@ -100,12 +105,15 @@ void Fl_Canvas::draw()
    	 	for (int i=children(); i--;)
 		{
    			Fl_Widget& o = **a++;
-			if (((Fl_DeviceGUI*)&o)->IsMinimised())
+			Fl_DeviceGUI *device = AsDevice(&o);
+			if (!device)
+				continue;
+			if (device->IsMinimised())
 			{
    	 			draw_child(o);
    				draw_outside_label(o);
 
-				std::vector<int>::iterator sel = std::find( m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), ((Fl_DeviceGUI*)&o)->GetID() );
+				std::vector<int>::iterator sel = std::find( m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), device->GetID() );
 
 				if (sel != m_Selection.m_DeviceIds.end())
 				{
@@ -122,12 +130,15 @@ void Fl_Canvas::draw()
 		for (int i=children(); i--;)
 		{
    			Fl_Widget& o = **a++;
-			if (!((Fl_DeviceGUI*)&o)->IsMinimised())
+			Fl_DeviceGUI *device = AsDevice(&o);
+			if (!device)
+				continue;
+			if (!device->IsMinimised())
 			{
    	 			draw_child(o);
    				draw_outside_label(o);
 
-				std::vector<int>::iterator sel = std::find( m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), ((Fl_DeviceGUI*)&o)->GetID() );
+				std::vector<int>::iterator sel = std::find( m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), device->GetID() );
 
 				if (sel != m_Selection.m_DeviceIds.end())
 				{
@@ -265,11 +276,14 @@ void Fl_Canvas::CalculateSelection()
  	for (int i=0; i<children(); i++)
 	{
 		Fl_Widget& o = **a++;
-		if (widget_intersects_rectangle(&o, X, Y, W, H))
+		Fl_DeviceGUI *device = AsDevice(&o);
+		if (!device)
+			continue;
+		if (widget_intersects_rectangle(device, X, Y, W, H))
 		{
 			m_HaveSelection = true;
-			m_Selection.m_DeviceIds.push_back(((Fl_DeviceGUI*)&o)->GetID());
-			((Fl_DeviceGUI*)&o)->SetOnDragCallback(cb_OnDrag_s, this);
+			m_Selection.m_DeviceIds.push_back(device->GetID());
+			device->SetOnDragCallback(cb_OnDrag_s, this);
 		}
 	}
 }

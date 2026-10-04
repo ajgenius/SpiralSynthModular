@@ -1458,13 +1458,17 @@ inline void SynthModular::cb_Cut_i(Fl_Widget *o, void *v) {
        cb_Copy_i (o, v);  // should we be calling an inline function here??????
        for (unsigned int i=0; i<m_Canvas->Selection().m_DeviceIds.size(); i++) {
            int ID = m_Canvas->Selection().m_DeviceIds[i];
-           Fl_DeviceGUI::Kill(m_DeviceWinMap[ID]->m_DeviceGUI);
+           std::map<int,DeviceWin*>::iterator found = m_DeviceWinMap.find(ID);
+           if (found == m_DeviceWinMap.end() || !found->second || !found->second->m_DeviceGUI)
+              continue;
+           Fl_DeviceGUI::Kill(found->second->m_DeviceGUI);
        }
        Fl_Canvas::ClearSelection(m_Canvas);
 }
 
 void SynthModular::cb_Cut (Fl_Widget *o, void *v) {
-     ((SynthModular*)(o->parent()->user_data()))->cb_Cut_i (o, v);
+     if (!v) return;
+     ((SynthModular*)v)->cb_Cut_i (o, v);
 }
 
 // Copy
@@ -1481,6 +1485,10 @@ inline void SynthModular::cb_Copy_i (Fl_Widget *o, void *v) {
        for (unsigned int i=0; i<m_Canvas->Selection().m_DeviceIds.size(); i++) {
            int ID = m_Canvas->Selection().m_DeviceIds[i];
            std::map<int,DeviceWin*>::iterator j = m_DeviceWinMap.find(ID);
+           if (j == m_DeviceWinMap.end() || !j->second || !j->second->m_DeviceGUI)
+              continue;
+           if (j->second->m_PluginID != COMMENT_ID && !j->second->m_Device)
+              continue;
            m_Copied.m_DeviceIds[ID] = ID;
            m_Copied.devicecount += 1;
            m_Copied.devices << "Device " << j->first << " " ; // save the id
@@ -1512,7 +1520,8 @@ inline void SynthModular::cb_Copy_i (Fl_Widget *o, void *v) {
 }
 
 void SynthModular::cb_Copy (Fl_Widget *o, void *v) {
-     ((SynthModular*)(o->parent()->user_data()))->cb_Copy_i (o, v);
+     if (!v) return;
+     ((SynthModular*)v)->cb_Copy_i (o, v);
 }
 
 // Paste
@@ -1526,7 +1535,8 @@ inline void SynthModular::cb_Paste_i (Fl_Widget *o, void *v) {
 }
 
 void SynthModular::cb_Paste (Fl_Widget *o, void *v) {
-     ((SynthModular*)(o->parent()->user_data()))->cb_Paste_i (o, v);
+     if (!v) return;
+     ((SynthModular*)v)->cb_Paste_i (o, v);
 }
 
 // Delete
