@@ -41,6 +41,7 @@ SpiralSynthModular_SOURCES = MacBundle.h \
 		main.cpp
 
 AM_CPPFLAGS += -DPLUGIN_PATH_LOCATION=\"$(ssm_plugindir)/\"
+AM_CPPFLAGS += -DSSM_EXAMPLES_DIR=\"$(pkgdatadir)/Examples\"
 ssm_plugindir = @PLUGINDIR@
 
 # Widgets and loadable plugins resolve host symbols from the executable.
@@ -148,3 +149,11 @@ check_PROGRAMS += hub-clock-test
 TESTS += hub-clock-test
 hub_clock_test_SOURCES = tests/hub-clock.cpp
 hub_clock_test_LDADD = libspiralcore/libspiralcore.la
+
+# Example patches, including the sampler's sibling folder of waves.
+install-data-local:
+	$(MKDIR_P) "$(DESTDIR)$(pkgdatadir)/Examples"
+	cp -R "$(srcdir)/Examples/." "$(DESTDIR)$(pkgdatadir)/Examples"
+
+uninstall-local:
+	rm -rf "$(DESTDIR)$(pkgdatadir)/Examples"
