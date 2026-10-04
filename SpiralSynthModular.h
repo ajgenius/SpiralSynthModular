@@ -95,6 +95,7 @@ public:
 	void UpdateHostInfo();
 	void UpdatePluginGUIs();
 	void LoadPatch(const char *fn);
+	void SavePatch(const char *fn);
 
 	void FreezeAll()
 	{
