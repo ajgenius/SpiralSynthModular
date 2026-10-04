@@ -41,6 +41,8 @@
 #include "EditorClassRegistry.h"
 #include "OutputPlugin.h"
 #include "OutputPluginGUI.h"
+#include "PatchProject.h"
+#include <FL/fl_ask.H>
 #include "SpiralInfo.h"
 #include "SpiralPluginGUI.h"
 #ifdef HAVE_YAJL
@@ -1373,20 +1375,10 @@ void SynthModular::cb_New (Fl_Widget *o, void *v) {
 void SynthModular::ChooseAndLoadPatch(const char *directory) {
        if (m_DeviceWinMap.size()>0 && !Pawfal_YesNo ("Load - Lose changes to current patch?"))
           return;
-       char *fn=fl_file_chooser (directory ? "Load an example patch" : "Load a patch", "*.ssm", directory);
-       if (fn && *fn!='\0') {
-          ifstream in (fn);
-          if (in) {
-             fstream inf;
-             inf.open (fn, ios::in);
-             m_FilePath = fn;
-             ClearUp();
-             inf >> *this;
-             inf.close();
-             TITLEBAR = LABEL + " " + fn;
-             m_TopWindow->label (TITLEBAR.c_str());
-          }
-       }
+       char *fn=fl_file_chooser (directory ? "Load an example patch" : "Load a patch",
+          "Spiral patch (*.ssm)\t*.ssm\nPackage (*.ssmp)\t*.ssmp", directory);
+       if (fn && *fn!='\0')
+          LoadPatch(fn);
 }
 
 inline void SynthModular::cb_Load_i (Fl_Widget *o, void *v) {
@@ -1765,22 +1757,44 @@ void SynthModular::cb_UpdatePluginInfo(int ID, void *PInfo)
 
 void SynthModular::LoadPatch(const char *fn)
 {
-	ifstream in(fn);
+	iostream *stream = NULL;
+	ifstream file;
+	fstream inf;
+	std::stringstream packaged;
 
-	if (in)
+	if (Spiral::File::Project::PathLooksLikePackage(fn))
 	{
-		fstream	inf;
+		Spiral::File::Project project(fn);
+		std::string error;
+		if (!project.OpenPackage("", error))
+		{
+			fl_message("%s", error.c_str());
+			return;
+		}
+		if (project.Source().Empty())
+		{
+			fl_message("Package has no source.ssm");
+			return;
+		}
+		packaged.str(project.Source().Bytes());
+		stream = &packaged;
+	}
+	else
+	{
+		file.open(fn);
+		if (!file)
+			return;
 		inf.open(fn, std::ios::in);
+		stream = &inf;
+	}
 
-		m_FilePath=fn;
-
-		ClearUp();
-		inf>>*this;
-
+	m_FilePath=fn;
+	ClearUp();
+	(*stream)>>*this;
+	if (stream == &inf)
 		inf.close();
 
-		TITLEBAR=LABEL+" "+fn;
-		m_TopWindow->label(TITLEBAR.c_str());
-	}
+	TITLEBAR=LABEL+" "+fn;
+	m_TopWindow->label(TITLEBAR.c_str());
 }
 
