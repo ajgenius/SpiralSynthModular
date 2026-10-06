@@ -65,6 +65,12 @@ stereo_mixer_signal_test_SOURCES = tests/mixer-signal.cpp Plugins/DSP/StereoMixe
 stereo_mixer_signal_test_CPPFLAGS = $(AM_CPPFLAGS) -DTEST_STEREO -I$(srcdir)/Plugins/DSP/StereoMixerPlugin
 stereo_mixer_signal_test_LDADD = $(mixer_signal_test_LDADD)
 
+check_PROGRAMS += plugin-classes-test
+plugin_classes_test_SOURCES = tests/plugin-classes.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
+plugin_classes_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
+plugin_classes_test_LDADD = $(SpiralSynthModular_LDADD)
+plugin_classes_test_LDFLAGS = -export-dynamic
+
 check_PROGRAMS += waveshaper-editor-test
 waveshaper_editor_test_SOURCES = tests/waveshaper-editor.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
 waveshaper_editor_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
