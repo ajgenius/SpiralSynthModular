@@ -55,6 +55,10 @@ public:
 
 	int GetOutputCount() const { return m_OutputCount; }
 	unsigned GetDrift() const { return m_Drift; }
+	// Stamps ride beside the rings: frames the client has pushed in, and
+	// the frame the last period delivered to the graph started at.
+	unsigned long GetClientFrame() const { return m_ClientFrame; }
+	unsigned long GetCaptureFrame() const { return m_CaptureFrame; }
 
 	JackClient *GetJackClient()           { return m_JackClient; }
 
@@ -111,6 +115,8 @@ private:
 	std::vector<float> m_Period;
 	unsigned m_RingFrames;
 	volatile unsigned m_Drift;
+	volatile unsigned long m_ClientFrame;
+	unsigned long m_CaptureFrame;
 	void BuildRings();
 	void DropRings();
 	static void ProcessCallback(void *context, unsigned int frames);

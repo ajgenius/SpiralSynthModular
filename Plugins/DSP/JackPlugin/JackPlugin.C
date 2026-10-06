@@ -84,6 +84,8 @@ m_Capture(NULL),
 m_Playback(NULL),
 m_RingFrames(0),
 m_Drift(0),
+m_ClientFrame(0),
+m_CaptureFrame(0),
 m_InputCount(4),
 m_OutputCount(4)
 {
@@ -201,6 +203,7 @@ void JackPlugin::BuildRings()
 	m_Capture = new RingBuffer(period * m_InputCount * RING_PERIODS);
 	m_Playback = new RingBuffer(period * m_OutputCount * RING_PERIODS);
 	m_Period.assign(m_RingFrames * std::max(m_InputCount, m_OutputCount), 0);
+	m_ClientFrame = m_CaptureFrame = 0;
 }
 
 void JackPlugin::DropRings()
@@ -219,7 +222,8 @@ void JackPlugin::ProcessCallback(void *context, unsigned int frames)
 	float *scratch = &plugin->m_Period[0];
 	const unsigned in = frames * plugin->m_InputCount * sizeof(float);
 	plugin->m_JackClient->Read(scratch, frames);
-	if (!plugin->m_Capture->Write((char *)scratch, in)) ++plugin->m_Drift;
+	if (plugin->m_Capture->Write((char *)scratch, in)) plugin->m_ClientFrame += frames;
+	else ++plugin->m_Drift;
 
 	// Playback comes out, or silence when the engine has not caught up.
 	const unsigned out = frames * plugin->m_OutputCount * sizeof(float);
@@ -334,6 +338,7 @@ void JackPlugin::ProcessAudio()
 	std::vector<float> period(frames * std::max(m_InputCount, m_OutputCount));
 	const unsigned in = frames * m_InputCount * sizeof(float);
 	const bool captured = !silent && m_Capture->Read((char *)&period[0], in);
+	if (captured) m_CaptureFrame += frames;
 	if (!silent && !captured) ++m_Drift;
 
 	for (unsigned frame = 0; frame < frames; ++frame)
