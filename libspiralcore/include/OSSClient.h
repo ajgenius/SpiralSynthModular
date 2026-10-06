@@ -20,6 +20,12 @@ public:
 	bool Attach(const std::string &device, const AudioClientOptions &opt);
 	void Detach();
 	bool IsAttached() const { return m_Fd >= 0; }
+	unsigned long GetBufferSize() const { return m_Frames; }
+	unsigned long GetSampleRate() const { return m_Samplerate; }
+	int WaitForCycle(unsigned milliseconds);
+	bool GetCycleTiming(AudioCycleTiming &timing) const { timing = m_Timing; return timing.Valid; }
+	double GetInputLatency() const { return m_Latency; }
+	double GetOutputLatency() const { return m_Latency; }
 	bool Write(const float *interleaved, unsigned int nframes);
 	bool Read(float *interleaved, unsigned int nframes);
 
@@ -38,6 +44,11 @@ private:
 	static OSSClient *m_Singleton;
 	int m_Fd;
 	int m_Channels;
+	unsigned m_Frames;
+	bool m_Input, m_Output;
+	uint64_t m_Frame;
+	double m_Latency;
+	AudioCycleTiming m_Timing;
 	unsigned int m_Samplerate;
 	int m_NumBuffers;
 	unsigned int m_FragSize;

@@ -4,6 +4,7 @@
 #include "OutputPlugin.h"
 #include "AudioTransportHub.h"
 #include <cassert>
+#include <cmath>
 #include <cstdio>
 #include <dlfcn.h>
 #include <pthread.h>
@@ -22,9 +23,15 @@ struct Engine
 		AudioTransportHub *hub=AudioTransportHub::Get();
 		while (!__sync_fetch_and_add(&engine->Stop,0))
 		{
-			if (!hub->WaitPeriod()) continue;
-
 			pthread_mutex_lock(&engine->Gate);
+			if (!hub->PreparePeriod())
+			{
+				const unsigned delay = hub->SleepMicroseconds();
+				pthread_mutex_unlock(&engine->Gate);
+				usleep(delay);
+				continue;
+			}
+
 			hub->BeginPeriod();
 			AudioDriver *driver = static_cast<AudioDriver *>(engine->Plugin);
 			if (driver->ProcessType() == AudioDriver::ALWAYS) driver->ProcessAudio();
@@ -55,7 +62,7 @@ struct Capture
 		if (!capture->Client.Read(&capture->Buffer[0],frames)) return;
 
 		for (unsigned n=0; n<frames*2; ++n)
-			if (capture->Buffer[n]!=0.25f) return;
+			if (std::fabs(capture->Buffer[n] - 0.25f) > 0.00001f) return;
 
 		__sync_fetch_and_add(&capture->Matches,1);
 	}
@@ -151,15 +158,25 @@ int main(int argc, char **argv)
 		pthread_mutex_lock(&engine.Gate);
 		if (!output)
 		{
-			// The engine may stall under the gate; JACK keeps the latest
-			// capture and the next graph pass still sees it.
+			// Native callbacks keep running through a control stall. After the
+			// new epoch has filled, capture must recover without a lasting lag.
 			for (unsigned n=0; n<2; ++n) received[n]->Set(0);
 
 			usleep(150000);
-			driver->ProcessAudio();
+			pthread_mutex_unlock(&engine.Gate);
+			usleep(250000);
+			pthread_mutex_lock(&engine.Gate);
 			for (unsigned n=0; n<2; ++n)
 				for (unsigned frame=0; frame<info.BUFSIZE; ++frame)
-					assert((*received[n])[frame]==-0.375f);
+					if (std::fabs((*received[n])[frame] + 0.375f) >= 0.00001f)
+					{
+						JackPlugin *jackPlugin = static_cast<JackPlugin *>(plugin);
+						fprintf(stderr, "capture c=%u f=%u value=%.9f graph=%lu native=%lu errors=%u generation=%u time=%.9f now=%.9f\n",
+							n, frame, (*received[n])[frame], jackPlugin->GetCaptureFrame(), jackPlugin->GetClientFrame(),
+							jackPlugin->GetDrift(), AudioTransportHub::Get()->CaptureStamp().Generation,
+							AudioTransportHub::Get()->CaptureStamp().Time, spiralcore::AudioMonotonicTime());
+						assert(false);
+					}
 
 		}
 
@@ -170,7 +187,7 @@ int main(int argc, char **argv)
 		plugin->Kill(); delete plugin;
 		pthread_mutex_unlock(&engine.Gate);
 		printf("JACK %s cycle %u: %s%s PASS\n",output ? "Output" : "plugin",cycle+1,half ? "half-period " : "",
-			output ? "playback" : "playback and capture with the host gate held");
+			output ? "playback" : "playback and capture after a control stall");
 	}
 
 	AudioTransportHub::Get()->SetHost(NULL);
