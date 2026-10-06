@@ -139,7 +139,6 @@ public:
 	iostream &StreamPatchIn(iostream &s, bool paste, bool merge);
 private:
 
-	vector<string> BuildPluginList(const string &Path);
 
 	DeviceWin* NewDeviceWin(int n, int x, int y);
 	DeviceWin* NewComment(int n, int x, int y);
