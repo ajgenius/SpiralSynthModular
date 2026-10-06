@@ -18,7 +18,7 @@
 
 #include "SpiralPlugin.h"
 #include "JackClient.h"
-#include <pthread.h>
+#include "AudioStream.h"
 using spiralcore::JackClient;
 
 using namespace std;
@@ -49,12 +49,15 @@ public:
 	virtual AudioProcessType	ProcessType() { return AudioDriver::ALWAYS; }		
 	virtual void			ProcessAudio();
 	virtual void ServiceAudio();
-	virtual bool IsCallbackDriver() const { return true; }
 
 	/* Jack Plugin Specific Functions */
 	int GetInputCount() const { return m_InputCount; }
 
 	int GetOutputCount() const { return m_OutputCount; }
+	unsigned GetDrift() const { return m_Stream.Errors(); }
+	// Native callback position and the monotonic graph capture position.
+	unsigned long GetClientFrame() { spiralcore::AudioCycleTiming timing; return m_Stream.Timing(timing) ? timing.Frame : 0; }
+	unsigned long GetCaptureFrame() const { return m_CaptureFrame; }
 
 	JackClient *GetJackClient()           { return m_JackClient; }
 
@@ -102,10 +105,13 @@ private:
 	
 	//clunky work-around for unique ID
 	static int JackInstanceCount;
-	// Exchange with JACK independently of the host graph/control gate.
-	pthread_mutex_t m_TransferLock;
-	std::vector<float> m_Capture, m_Playback;
-	static void ProcessCallback(void *context, unsigned int frames);
+	spiralcore::AudioStream m_Stream;
+	std::vector<float> m_EnginePeriod;
+	unsigned m_RingFrames;
+	unsigned m_NativeRate;
+	unsigned long m_CaptureFrame;
+	void BuildRings();
+	void DropRings();
 	int m_InputCount;
 
 	int m_OutputCount;

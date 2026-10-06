@@ -50,18 +50,24 @@ public:
 
 	// Zero frames reports shutdown; engine/patch policy belongs to the caller.
 	void SetCallback(void (*run)(void *, unsigned int), void *context);
-	unsigned long GetBufferSize() const { return m_BufferSize; }
+	unsigned long GetBufferSize() const { return __sync_fetch_and_add(&m_BufferSize, 0); }
 
-	unsigned long GetSampleRate() const { return m_SampleRate; }
+	unsigned long GetSampleRate() const { return __sync_fetch_and_add(&m_SampleRate, 0); }
+
+	bool GetCycleTiming(AudioCycleTiming &timing) const;
+	double GetChannelTime(bool input, unsigned channel) const;
+	double GetInputLatency() const;
+	double GetOutputLatency() const;
 
 	// Transport is optional application policy; attaching never starts it.
 	bool QueryTransport(jack_transport_state_t &state, jack_position_t &position) const;
+	virtual bool GetTransport(unsigned long &frame, bool &rolling) const;
 
-	bool StartTransport();
+	virtual bool StartTransport();
 
-	bool StopTransport();
+	virtual bool StopTransport();
 
-	bool LocateTransport(jack_nframes_t frame);
+	virtual bool LocateTransport(unsigned long frame);
 
 	int AddInputPort();
 
@@ -118,15 +124,23 @@ private:
 	jack_client_t *m_Client;
 	PortMap m_InputPortMap;
 	PortMap m_OutputPortMap;
-	unsigned long m_BufferSize;
+	mutable unsigned long m_BufferSize;
 
-	unsigned long m_SampleRate;
+	mutable unsigned long m_SampleRate;
 	mutable int m_Attached;
 	bool m_AutoActivate;
 
 	bool m_Active;
 
 	unsigned int m_ProcessFrames;
+
+	AudioCycleTiming m_Timing;
+	uint64_t m_NativeFrame;
+	jack_nframes_t m_LastFrame;
+	bool m_HaveFrame;
+	double m_CycleTime;
+	double PortLatency(const JackPort &port, bool input) const;
+	double MaximumLatency(const PortMap &ports, bool input) const;
 
 	int m_NextInputID;
 
