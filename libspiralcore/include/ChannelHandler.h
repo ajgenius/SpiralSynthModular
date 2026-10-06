@@ -55,7 +55,9 @@ public:
 		{ RegisterData(ID, t,(char*)pData,sizeof(char)*4096); }
     void     Register(const std::string &ID, void** pData, Type t=ChannelHandler::INPUT)    
 		{ RegisterData(ID, t,(void**)pData,sizeof(void*)); }
-	void     UpdateDataNow();
+	// The frame stamps the snapshot the gui thread will read next.
+	void     UpdateDataNow(unsigned long frame=0);
+	unsigned long GetFrame() const { return m_Frame; }
 		
 	bool     IsCommandWaiting() { return m_Command[0]; }
 	char     GetCommand() { return m_Command[0]; }
@@ -131,6 +133,7 @@ private:
 
     std::map<std::string,Channel*> m_ChannelMap;
 	char m_Command[2];
+	unsigned long m_Frame;
 	
 	bool m_UpdateIndicator;
 	

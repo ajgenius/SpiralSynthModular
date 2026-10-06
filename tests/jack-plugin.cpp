@@ -2,7 +2,9 @@
 #include "SpiralPlugin.h"
 #include "JackPlugin.h"
 #include "OutputPlugin.h"
+#include "AudioTransportHub.h"
 #include <cassert>
+#include <cmath>
 #include <cstdio>
 #include <dlfcn.h>
 #include <pthread.h>
@@ -11,14 +13,35 @@
 struct Engine
 {
 	pthread_mutex_t Gate;
-	static void Run(void *context, AudioDriver *driver, unsigned frames)
+	// The engine thread: one graph pass per period, paced by the hub's
+	// stream or the platform clock when only the Jack device is open.
+	SpiralPlugin *Plugin;
+	volatile int Stop;
+	static void *Run(void *context)
 	{
 		Engine *engine=static_cast<Engine *>(context);
-		if (!frames || pthread_mutex_trylock(&engine->Gate)) return;
+		AudioTransportHub *hub=AudioTransportHub::Get();
+		while (!__sync_fetch_and_add(&engine->Stop,0))
+		{
+			pthread_mutex_lock(&engine->Gate);
+			if (!hub->PreparePeriod())
+			{
+				const unsigned delay = hub->SleepMicroseconds();
+				pthread_mutex_unlock(&engine->Gate);
+				usleep(delay);
+				continue;
+			}
 
-		driver->ProcessAudio();
-		driver->Execute();
-		pthread_mutex_unlock(&engine->Gate);
+			hub->BeginPeriod();
+			AudioDriver *driver = static_cast<AudioDriver *>(engine->Plugin);
+			if (driver->ProcessType() == AudioDriver::ALWAYS) driver->ProcessAudio();
+
+			engine->Plugin->Execute();
+			hub->CommitPeriod();
+			pthread_mutex_unlock(&engine->Gate);
+		}
+
+		return NULL;
 	}
 
 };
@@ -39,7 +62,7 @@ struct Capture
 		if (!capture->Client.Read(&capture->Buffer[0],frames)) return;
 
 		for (unsigned n=0; n<frames*2; ++n)
-			if (capture->Buffer[n]!=0.25f) return;
+			if (std::fabs(capture->Buffer[n] - 0.25f) > 0.00001f) return;
 
 		__sync_fetch_and_add(&capture->Matches,1);
 	}
@@ -50,7 +73,10 @@ int main(int argc, char **argv)
 {
 	if (argc!=2 && argc!=3) return 77;
 
-	const bool output=argc==3;
+	// "out" exercises the Output device on jack; "half" runs the Jack
+	// device with a host period half of jack's, as a slave port must allow.
+	const bool output=argc==3 && std::string(argv[2])=="out";
+	const bool half=argc==3 && std::string(argv[2])=="half";
 	alarm(20);
 	void *module=dlopen((std::string(argv[1])+(output ? "/dsp/OutputPlugin/OutputPlugin_DSP.so" : "/dsp/JackPlugin/JackPlugin_DSP.so")).c_str(),RTLD_NOW|RTLD_GLOBAL);
 	if (!module) { puts(dlerror()); return 1; }
@@ -68,22 +94,24 @@ int main(int argc, char **argv)
 	capture.Client.SetCallback(Capture::Run,&capture);
 	assert(capture.Client.Start());
 	HostInfo info=HostInfo();
-	info.BUFSIZE=capture.Client.GetBufferSize();
+	info.BUFSIZE=capture.Client.GetBufferSize()/(half ? 2 : 1);
 	info.SAMPLERATE=capture.Client.GetSampleRate();
 	info.AUDIOCLIENT="jack";
 	info.OUTPUTFILE=std::string(name)+"-output";
+	AudioTransportHub::Get()->SetHost(&info);
 	Engine engine;
 	pthread_mutex_init(&engine.Gate,NULL);
 	for (unsigned cycle=0; cycle<3; ++cycle)
 	{
 		SpiralPlugin *plugin=create();
-		plugin->SetBlockingCallback(NULL);
 		plugin->Initialise(&info);
 		plugin->SetParent(&engine);
 		AudioDriver *driver=dynamic_cast<AudioDriver *>(plugin);
-		assert(driver && driver->IsCallbackDriver());
-		driver->SetAudioCycleCallback(Engine::Run);
+		assert(driver);
 		ChannelHandler *channel=plugin->GetChannelHandler();
+		engine.Plugin=plugin; engine.Stop=0;
+		pthread_t thread;
+		assert(!pthread_create(&thread,NULL,Engine::Run,&engine));
 		pthread_mutex_lock(&engine.Gate);
 		if (!output)
 		{
@@ -130,24 +158,39 @@ int main(int argc, char **argv)
 		pthread_mutex_lock(&engine.Gate);
 		if (!output)
 		{
-			// A blocking Output holds the host gate while waiting for its device.
-			// JACK must retain capture without entering the graph during that wait.
+			// Native callbacks keep running through a control stall. After the
+			// new epoch has filled, capture must recover without a lasting lag.
 			for (unsigned n=0; n<2; ++n) received[n]->Set(0);
 
 			usleep(150000);
-			driver->Execute();
+			pthread_mutex_unlock(&engine.Gate);
+			usleep(250000);
+			pthread_mutex_lock(&engine.Gate);
 			for (unsigned n=0; n<2; ++n)
 				for (unsigned frame=0; frame<info.BUFSIZE; ++frame)
-					assert((*received[n])[frame]==-0.375f);
+					if (std::fabs((*received[n])[frame] + 0.375f) >= 0.00001f)
+					{
+						JackPlugin *jackPlugin = static_cast<JackPlugin *>(plugin);
+						fprintf(stderr, "capture c=%u f=%u value=%.9f graph=%lu native=%lu errors=%u generation=%u time=%.9f now=%.9f\n",
+							n, frame, (*received[n])[frame], jackPlugin->GetCaptureFrame(), jackPlugin->GetClientFrame(),
+							jackPlugin->GetDrift(), AudioTransportHub::Get()->CaptureStamp().Generation,
+							AudioTransportHub::Get()->CaptureStamp().Time, spiralcore::AudioMonotonicTime());
+						assert(false);
+					}
 
 		}
 
+		pthread_mutex_unlock(&engine.Gate);
+		__sync_lock_test_and_set(&engine.Stop,1);
+		pthread_join(thread,NULL);
+		pthread_mutex_lock(&engine.Gate);
 		plugin->Kill(); delete plugin;
 		pthread_mutex_unlock(&engine.Gate);
-		printf("JACK %s cycle %u: %s PASS\n",output ? "Output" : "plugin",cycle+1,
-			output ? "playback" : "playback and capture with the host gate held");
+		printf("JACK %s cycle %u: %s%s PASS\n",output ? "Output" : "plugin",cycle+1,half ? "half-period " : "",
+			output ? "playback" : "playback and capture after a control stall");
 	}
 
+	AudioTransportHub::Get()->SetHost(NULL);
 	capture.Client.Detach();
 	pthread_mutex_destroy(&engine.Gate);
 	return 0;

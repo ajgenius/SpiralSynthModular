@@ -34,6 +34,31 @@ namespace
 {
 	pthread_mutex_t ClientLifecycleMutex = PTHREAD_MUTEX_INITIALIZER;
 	vector<JackClient *> Clients;
+	double ClockOffset = 0;
+	bool ClockMapped = false;
+
+	void MapClock()
+	{
+		// One calibration for all clients: independent query jitter must not
+		// introduce phase offsets between ports on the same JACK server.
+		if (ClockMapped) return;
+
+		double best = 1;
+		for (unsigned n = 0; n < 8; ++n)
+		{
+			const double before = AudioMonotonicTime();
+			const double native = jack_get_time() * 1e-6;
+			const double after = AudioMonotonicTime();
+			if (after - before < best)
+			{
+				best = after - before;
+				ClockOffset = (before + after) * 0.5 - native;
+			}
+
+		}
+
+		ClockMapped = true;
+	}
 
 	class ClientLifecycleLock
 	{
@@ -71,6 +96,7 @@ void JackClient::PackUpAndGoHome()
 JackClient::JackClient() :
 	m_Client(NULL), m_BufferSize(0), m_SampleRate(0), m_Attached(false),
 	m_AutoActivate(true), m_Active(false), m_ProcessFrames(0),
+	m_NativeFrame(0), m_LastFrame(0), m_HaveFrame(false), m_CycleTime(0),
 	m_NextInputID(0), m_NextOutputID(0), m_Run(NULL), m_Context(NULL)
 {
 	ClientLifecycleLock lock;
@@ -125,6 +151,8 @@ bool JackClient::Attach(const string &clientName)
 #endif
 	if (!m_Client) return false;
 
+	MapClock();
+	m_HaveFrame = false;
 	m_BufferSize = jack_get_buffer_size(m_Client);
 	m_SampleRate = jack_get_sample_rate(m_Client);
 	if (jack_set_process_callback(m_Client, Process, this) ||
@@ -209,7 +237,36 @@ int JackClient::Process(jack_nframes_t frames, void *context)
 			memset(output, 0, sizeof(float) * frames);
 	}
 
-	client->m_BufferSize = frames;
+	__sync_lock_test_and_set(&client->m_BufferSize, frames);
+	const jack_nframes_t frame = jack_last_frame_time(client->m_Client);
+	client->m_NativeFrame = client->m_HaveFrame
+		? client->m_NativeFrame + jack_nframes_t(frame - client->m_LastFrame) : frame;
+	client->m_LastFrame = frame;
+	client->m_HaveFrame = true;
+	jack_time_t current = jack_frames_to_time(client->m_Client, frame);
+	jack_time_t next = jack_frames_to_time(client->m_Client, frame + frames);
+#ifdef HAVE_JACK_GET_CYCLE_TIMES
+	jack_nframes_t cycleFrame;
+	float periodUsecs;
+	jack_time_t cycleStart, cycleEnd;
+	if (jack_get_cycle_times(client->m_Client, &cycleFrame, &cycleStart, &cycleEnd, &periodUsecs) == 0)
+	{
+		current = cycleStart;
+		next = cycleEnd;
+	}
+
+#endif
+	client->m_CycleTime = current * 1e-6 + ClockOffset;
+	// JACK's DLL maps this entire cycle to system time. Its corrected next
+	// cycle time gives the sample spacing, rather than callback arrival jitter.
+	client->m_Timing.Step = next > current && frames ? double(next - current) * 1e-6 / frames : 0;
+	client->m_Timing.Frame = client->m_NativeFrame;
+	client->m_Timing.Frames = frames;
+	client->m_Timing.SampleRate = client->GetSampleRate();
+	client->m_Timing.CallbackTime = AudioMonotonicTime();
+	client->m_Timing.InputTime = client->m_CycleTime - client->GetInputLatency();
+	client->m_Timing.OutputTime = client->m_CycleTime + client->GetOutputLatency();
+	client->m_Timing.Valid = client->m_Timing.SampleRate > 0;
 	client->m_ProcessFrames = frames;
 	if (client->m_Run) client->m_Run(client->m_Context, frames);
 
@@ -219,13 +276,13 @@ int JackClient::Process(jack_nframes_t frames, void *context)
 
 int JackClient::OnSRateChange(jack_nframes_t rate, void *context)
 {
-	static_cast<JackClient *>(context)->m_SampleRate = rate;
+	__sync_lock_test_and_set(&static_cast<JackClient *>(context)->m_SampleRate, rate);
 	return 0;
 }
 
 int JackClient::OnBufferSizeChange(jack_nframes_t frames, void *context)
 {
-	static_cast<JackClient *>(context)->m_BufferSize = frames;
+	__sync_lock_test_and_set(&static_cast<JackClient *>(context)->m_BufferSize, frames);
 	return 0;
 }
 
@@ -429,6 +486,17 @@ bool JackClient::QueryTransport(jack_transport_state_t &state, jack_position_t &
 	return true;
 }
 
+bool JackClient::GetTransport(unsigned long &frame, bool &rolling) const
+{
+	jack_transport_state_t state;
+	jack_position_t position;
+	if (!QueryTransport(state, position)) return false;
+
+	frame = position.frame;
+	rolling = state == JackTransportRolling;
+	return true;
+}
+
 bool JackClient::StartTransport()
 {
 	if (!IsAttached() || !m_Client)
@@ -447,9 +515,9 @@ bool JackClient::StopTransport()
 	return true;
 }
 
-bool JackClient::LocateTransport(jack_nframes_t frame)
+bool JackClient::LocateTransport(unsigned long frame)
 {
-	return IsAttached() && m_Client && jack_transport_locate(m_Client, frame) == 0;
+	return IsAttached() && m_Client && jack_transport_locate(m_Client, (jack_nframes_t)frame) == 0;
 }
 
 
@@ -535,4 +603,57 @@ bool JackClient::Write(const float *interleaved, unsigned int frames)
 	}
 
 	return true;
+}
+
+
+bool JackClient::GetCycleTiming(AudioCycleTiming &timing) const
+{
+	if (!m_ProcessFrames || !m_Timing.Valid) return false;
+
+	timing = m_Timing;
+	return true;
+}
+
+double JackClient::PortLatency(const JackPort &port, bool input) const
+{
+	if (!port.Port || !GetSampleRate()) return 0;
+
+#ifdef HAVE_JACK_PORT_GET_LATENCY_RANGE
+	jack_latency_range_t range;
+	jack_port_get_latency_range(port.Port, input ? JackCaptureLatency : JackPlaybackLatency, &range);
+	return double(range.max) / GetSampleRate();
+#else
+	return double(jack_port_get_total_latency(m_Client, port.Port)) / GetSampleRate();
+#endif
+}
+
+double JackClient::MaximumLatency(const PortMap &ports, bool input) const
+{
+	double latency = 0;
+	for (PortMap::const_iterator i = ports.begin(); i != ports.end(); ++i)
+		latency = std::max(latency, PortLatency(i->second, input));
+
+	return latency;
+}
+
+double JackClient::GetInputLatency() const
+{
+	return MaximumLatency(m_InputPortMap, true);
+}
+
+double JackClient::GetOutputLatency() const
+{
+	return MaximumLatency(m_OutputPortMap, false);
+}
+
+double JackClient::GetChannelTime(bool input, unsigned channel) const
+{
+	const PortMap &ports = input ? m_InputPortMap : m_OutputPortMap;
+	PortMap::const_iterator i = ports.begin();
+	while (channel && i != ports.end()) { --channel; ++i; }
+
+	if (!m_ProcessFrames || i == ports.end()) return 0;
+
+	const double latency = PortLatency(i->second, input);
+	return m_CycleTime + (input ? -latency : latency);
 }

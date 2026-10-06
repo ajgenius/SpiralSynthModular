@@ -20,10 +20,15 @@
 
 using namespace std;
 
-CommandRingBuffer::Command::Command(const char *name, const char *types, const char *data, unsigned int datasize)
+CommandRingBuffer::Command::Command(const char *name, const char *types, const char *data, unsigned int datasize) :
+m_NumArgs(0)
 {
-	strcpy(Name,name);
-	strcpy(Types,types);
+	// Over-long names and type strings are cut, not written past the field.
+	strncpy(Name,name,sizeof(Name)-1);
+	Name[sizeof(Name)-1]=0;
+	strncpy(Types,types,sizeof(Types)-1);
+	Types[sizeof(Types)-1]=0;
+	if (datasize>sizeof(Data)) datasize=sizeof(Data);
 	memcpy(Data,data,datasize);
 	
 	m_NumArgs=strlen(Types);
@@ -52,19 +57,26 @@ CommandRingBuffer::Command::Command(const char *name, const char *types, const c
 
 int CommandRingBuffer::Command::GetInt(unsigned int index)
 {
-	if (m_Offsets[index]!=-1 && Types[index]=='i') return *((int*)(Data+m_Offsets[index]));
+	if (index<m_NumArgs && m_Offsets[index]!=-1 && Types[index]=='i') return *((int*)(Data+m_Offsets[index]));
 	return 0;
 }
 
 float CommandRingBuffer::Command::GetFloat(unsigned int index)
 {
-	if (m_Offsets[index]!=-1 && Types[index]=='f') return *((float*)(Data+m_Offsets[index]));
+	if (index<m_NumArgs && m_Offsets[index]!=-1 && Types[index]=='f') return *((float*)(Data+m_Offsets[index]));
 	return 0;
 }
 
 char *CommandRingBuffer::Command::GetString(unsigned int index)
 {
-	if (m_Offsets[index]!=-1 && Types[index]=='s') return ((char*)(Data+m_Offsets[index]));
+	if (index<m_NumArgs && m_Offsets[index]!=-1 && Types[index]=='s') return ((char*)(Data+m_Offsets[index]));
+	return 0;
+}
+
+// A blob argument carries the pointer itself, not the bytes.
+char *CommandRingBuffer::Command::GetBlob(unsigned int index)
+{
+	if (index<m_NumArgs && m_Offsets[index]!=-1 && Types[index]=='b') return *((char**)(Data+m_Offsets[index]));
 	return 0;
 }
 

@@ -1,4 +1,5 @@
 #include "OutputPlugin.h"
+#include "AudioTransportHub.h"
 #include <cassert>
 #include <cstdio>
 #include <cstring>
@@ -27,19 +28,33 @@ struct Engine
 
 	}
 
-	static void Run(void *context, AudioDriver *driver, unsigned frames)
+	// The engine thread: one graph pass per transport period.
+	AudioDriver *Driver;
+	volatile int Stop;
+	static void *Run(void *context)
 	{
 		Engine *engine=static_cast<Engine *>(context);
-		if (!frames || pthread_mutex_trylock(&engine->Gate)) return;
-
-		if (frames==unsigned(engine->Info.BUFSIZE))
+		AudioTransportHub *hub=AudioTransportHub::Get();
+		while (!__sync_fetch_and_add(&engine->Stop,0))
 		{
-			driver->ProcessAudio();
-			driver->Execute();
-			__sync_fetch_and_add(&engine->Cycles,1);
+			pthread_mutex_lock(&engine->Gate);
+			if (!hub->PreparePeriod())
+			{
+				const unsigned delay = hub->SleepMicroseconds();
+				pthread_mutex_unlock(&engine->Gate);
+				usleep(delay);
+				continue;
+			}
+
+			hub->BeginPeriod();
+			engine->Driver->Execute();
+			if (hub->GetMode()==AudioTransportHub::OUTPUT) __sync_fetch_and_add(&engine->Cycles,1);
+
+			hub->CommitPeriod();
+			pthread_mutex_unlock(&engine->Gate);
 		}
 
-		pthread_mutex_unlock(&engine->Gate);
+		return NULL;
 	}
 
 };
@@ -57,11 +72,12 @@ int main(int argc, char **argv)
 	for (unsigned cycle=0; cycle<3; ++cycle)
 	{
 		OutputPlugin plugin;
-		plugin.SetBlockingCallback(NULL);
 		plugin.SetParent(&engine);
-		plugin.SetAudioCycleCallback(Engine::Run);
 		plugin.SetChangeBufferAndSampleRateCallback(Engine::Format);
 		plugin.Initialise(&engine.Info);
+		engine.Driver=&plugin; engine.Stop=0;
+		pthread_t thread;
+		assert(!pthread_create(&thread,NULL,Engine::Run,&engine));
 		unsigned before=__sync_fetch_and_add(&engine.Cycles,0);
 		for (unsigned wait=0; wait<200 && __sync_fetch_and_add(&engine.Cycles,0)<before+8; ++wait)
 		{
@@ -84,6 +100,8 @@ int main(int argc, char **argv)
 		plugin.ServiceAudio();
 		assert(plugin.GetMode()==OutputPlugin::CLOSED);
 		assert(__sync_fetch_and_add(&engine.Cycles,0)==stopped);
+		__sync_lock_test_and_set(&engine.Stop,1);
+		pthread_join(thread,NULL);
 		printf("CoreAudio Output cycle %u: format negotiation, callbacks and explicit close PASS\n",cycle+1);
 	}
 

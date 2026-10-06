@@ -94,10 +94,6 @@ public:
 	void AddComment(int n);
 	void ClearUp(bool synchronize = true);
 	void UpdateHostInfo();
-	bool CallbackMode() { return __sync_val_compare_and_swap(&m_CallbackOwner, (AudioDriver *)NULL, (AudioDriver *)NULL) != NULL; }
-
-	bool IsBlockingOutputPluginReady() { return m_BlockingOutputPluginIsReady; }
-
 	void UpdatePluginGUIs();
 	void LoadPatch(const char *fn);
 
@@ -149,12 +145,8 @@ private:
 	DeviceWin* NewDeviceWin(int n, int x, int y);
 	DeviceWin* NewComment(int n, int x, int y);
 
-	void RenderAudio(bool callback);
-	static void cb_AudioCycle(void *context, AudioDriver *driver, unsigned int frames);
+	void RenderAudio();
 	pthread_mutex_t m_CycleLock;
-	AudioDriver *m_CallbackOwner;
-	volatile unsigned m_ControlEpoch;
-	unsigned m_LastControlEpoch;
 	HostInfo m_Info;
 	bool m_ResetingAudioThread, m_HostNeedsUpdate, m_Frozen;
 
@@ -167,7 +159,6 @@ private:
 
         int m_NextID;
 	static bool m_CallbackUpdateMode;
-	static bool m_BlockingOutputPluginIsReady;
 	string m_FilePath, m_MergeFilePath;
 
 	// Main GUI stuff
@@ -236,7 +227,6 @@ private:
 	inline void cb_GroupTab_i(Fl_Tabs* o, void* v);
 	static void cb_GroupTab(Fl_Tabs* o, void* v);
 	static void cb_Update(void* o, bool Mode);
-	static void cb_Blocking(void* o, bool Mode);
 	static void cb_UpdatePluginInfo(int ID, void *PluginInfo);
         void cb_ChangeBufferAndSampleRate_i(long int NewBufferSize, long int NewSamplerate);
 	static void cb_ChangeBufferAndSampleRate(long unsigned int NewBufferSize, long unsigned int NewSamplerate, void *o)
