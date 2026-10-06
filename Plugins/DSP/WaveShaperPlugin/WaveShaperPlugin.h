@@ -32,8 +32,6 @@ class WaveShaperPlugin : public SpiralPlugin {
     virtual void ExecuteCommands();
     virtual void StreamOut(std::ostream &s);
     virtual void StreamIn(std::istream &s);
-    float GetCoef(int);
-    int GetWaveType(void);
     enum GUICommands { NONE, SETWAVETYPE, SETCOEF };
     struct GUIArgs {
       int WaveType, CoefNum;
