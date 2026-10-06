@@ -85,6 +85,9 @@ WaveShaperPlugin::WaveShaperPlugin () {
   m_AudioCH->Register ("CoefNum", &m_GUIArgs.CoefNum);
   m_AudioCH->Register ("CoefVal", &m_GUIArgs.CoefVal);
   m_AudioCH->RegisterData ("WT", ChannelHandler::OUTPUT, m_GUIArgs.FuncPlot, 256 * sizeof (float));
+  // The state the GUI shows after a load, read through the channel.
+  m_AudioCH->Register ("Wave", &m_Wave, ChannelHandler::OUTPUT);
+  m_AudioCH->RegisterData ("Coefs", ChannelHandler::OUTPUT, m_Coefs, sizeof (m_Coefs));
 }
 
 WaveShaperPlugin::~WaveShaperPlugin() {
@@ -135,17 +138,6 @@ void WaveShaperPlugin::Execute () {
     // v = (short)(k1*(wt[index]-wt[index+1])+wt[index+1]);
     SetOutput (0, i, m_wt[index]);
   }
-}
-
-// Functions used by GUI.UpdateValues
-
-float WaveShaperPlugin::GetCoef (int index) {
-  if ((index < 0) || (index > 5)) return 0;
-  return m_Coefs[index];
-}
-
-int WaveShaperPlugin::GetWaveType(){
-  return m_Wave;
 }
 
 // Internal private functions
