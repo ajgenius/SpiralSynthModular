@@ -103,3 +103,11 @@ jack_output_timing_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
 jack_output_timing_test_LDADD = $(SpiralSynthModular_LDADD) $(JACK_LIBS)
 jack_output_timing_test_LDFLAGS = -export-dynamic
 endif
+
+if HAVE_JACK_CLIENT
+check_PROGRAMS += jack-periods-test
+TESTS += jack-periods-test
+jack_periods_test_SOURCES = tests/jack-periods.cpp Plugins/DSP/JackPlugin/JackPlugin.C libspiralcore/src/JackClient.cpp
+jack_periods_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/JackPlugin
+jack_periods_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la
+endif

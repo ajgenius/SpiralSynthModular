@@ -108,11 +108,13 @@ private:
 	static int JackInstanceCount;
 	// A slave port: the jack callback moves its own period each way
 	// through these sample rings, the engine reads and writes host
-	// periods in Execute; the two period sizes need not match. Nothing
+	// periods in ProcessAudio (capture) and Execute (playback). The two
+	// period sizes need not match. Nothing
 	// waits; a ring with less than a period to give yields silence and
 	// a ring with no room drops the period, counted as drift.
 	RingBuffer *m_Capture, *m_Playback;
 	std::vector<float> m_Period;
+	std::vector<float> m_EnginePeriod;
 	unsigned m_RingFrames;
 	volatile unsigned m_Drift;
 	volatile unsigned long m_ClientFrame;

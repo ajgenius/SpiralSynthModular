@@ -177,9 +177,12 @@ void JackPlugin::Attach()
 	spiralcore::AudioClientOptions options;
 	options.InChannels = m_InputCount;
 	options.OutChannels = m_OutputCount;
-	if (!m_Capture) BuildRings();
 	if (m_JackClient->Attach(name, options))
+	{
+		// Attach negotiates the native period before any callback can run.
+		BuildRings();
 		m_JackClient->Start();
+	}
 
 }
 
@@ -203,6 +206,7 @@ void JackPlugin::BuildRings()
 	m_Capture = new RingBuffer(period * m_InputCount * RING_PERIODS);
 	m_Playback = new RingBuffer(period * m_OutputCount * RING_PERIODS);
 	m_Period.assign(m_RingFrames * std::max(m_InputCount, m_OutputCount), 0);
+	m_EnginePeriod.assign(m_Period.size(), 0);
 	m_ClientFrame = m_CaptureFrame = 0;
 }
 
@@ -237,7 +241,20 @@ void JackPlugin::ProcessCallback(void *context, unsigned int frames)
 
 void JackPlugin::Execute()
 {
-	ProcessAudio();
+	if (m_IsDead || !m_Playback || !m_JackClient->IsAttached()) return;
+
+	const unsigned frames = m_HostInfo->BUFSIZE;
+	if (frames > m_RingFrames) return;
+
+	// The graph has now produced this period's inputs. Enqueue it once;
+	// ProcessAudio only supplies capture before the graph is evaluated.
+	for (unsigned frame = 0; frame < frames; ++frame)
+		for (int channel = 0; channel < m_OutputCount; ++channel)
+			m_EnginePeriod[frame * m_OutputCount + channel] = !m_HostInfo->PAUSED && InputExists(channel)
+				? (*GetInput(channel))[frame] : 0;
+
+	const unsigned bytes = frames * m_OutputCount * sizeof(float);
+	if (!m_Playback->Write((char *)&m_EnginePeriod[0], bytes)) ++m_Drift;
 }
 
 void JackPlugin::ExecuteCommands()
@@ -335,7 +352,7 @@ void JackPlugin::ProcessAudio()
 	const bool silent = m_HostInfo->PAUSED || !m_JackClient->IsAttached();
 
 	// Engine-side scratch, separate from the one the callback uses.
-	std::vector<float> period(frames * std::max(m_InputCount, m_OutputCount));
+	float *period = &m_EnginePeriod[0];
 	const unsigned in = frames * m_InputCount * sizeof(float);
 	const bool captured = !silent && m_Capture->Read((char *)&period[0], in);
 	if (captured) m_CaptureFrame += frames;
@@ -346,13 +363,6 @@ void JackPlugin::ProcessAudio()
 			if (OutputExists(channel))
 				GetOutputBuf(channel)->Set(frame, captured ? period[frame * m_InputCount + channel] : 0);
 
-	for (unsigned frame = 0; frame < frames; ++frame)
-		for (int channel = 0; channel < m_OutputCount; ++channel)
-			period[frame * m_OutputCount + channel] = !silent && InputExists(channel)
-				? (*GetInput(channel))[frame] : 0;
-
-	const unsigned out = frames * m_OutputCount * sizeof(float);
-	if (!m_Playback->Write((char *)&period[0], out)) ++m_Drift;
 }
 
 void  JackPlugin::SetNumberPorts (int nInputs, int nOutputs) {
