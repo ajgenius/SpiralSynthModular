@@ -155,6 +155,8 @@ bool PortAudioClient::Attach(const string &device, const AudioClientOptions &opt
 	                            paNoFlag,
 	                            Process, this);
 	if (!Check(err, "open")) { Detach(); return false; }
+	if (!Check(Pa_SetStreamFinishedCallback(m_Stream, Finished), "finished callback")) { Detach(); return false; }
+
 	const PaStreamInfo *info = Pa_GetStreamInfo(m_Stream);
 	if (!info || info->sampleRate <= 0) { Detach(); return false; }
 
@@ -274,4 +276,11 @@ bool PortAudioClient::Read(float *interleaved, unsigned int frames)
 
 	memcpy(interleaved, m_Input, size_t(frames) * m_Opt.InChannels * sizeof(float));
 	return true;
+}
+
+
+void PortAudioClient::Finished(void *context)
+{
+	PortAudioClient *client = static_cast<PortAudioClient *>(context);
+	__sync_lock_test_and_set(&client->m_Attached, 0);
 }

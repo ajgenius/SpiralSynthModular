@@ -50,6 +50,10 @@ public:
 
 	virtual bool Start() { return IsAttached(); }
 
+	// Non-callback clients prepare one nonblocking I/O cycle on a dedicated
+	// worker. Return 1 for ready, 0 for timeout, -1 for a failed device.
+	virtual int WaitForCycle(unsigned milliseconds) { return -1; }
+
 	virtual unsigned long GetBufferSize() const { return 0; }
 
 	virtual unsigned long GetSampleRate() const { return 0; }

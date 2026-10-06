@@ -243,7 +243,23 @@ int JackClient::Process(jack_nframes_t frames, void *context)
 		? client->m_NativeFrame + jack_nframes_t(frame - client->m_LastFrame) : frame;
 	client->m_LastFrame = frame;
 	client->m_HaveFrame = true;
-	client->m_CycleTime = jack_frames_to_time(client->m_Client, frame) * 1e-6 + ClockOffset;
+	jack_time_t current = jack_frames_to_time(client->m_Client, frame);
+	jack_time_t next = jack_frames_to_time(client->m_Client, frame + frames);
+#ifdef HAVE_JACK_GET_CYCLE_TIMES
+	jack_nframes_t cycleFrame;
+	float periodUsecs;
+	jack_time_t cycleStart, cycleEnd;
+	if (jack_get_cycle_times(client->m_Client, &cycleFrame, &cycleStart, &cycleEnd, &periodUsecs) == 0)
+	{
+		current = cycleStart;
+		next = cycleEnd;
+	}
+
+#endif
+	client->m_CycleTime = current * 1e-6 + ClockOffset;
+	// JACK's DLL maps this entire cycle to system time. Its corrected next
+	// cycle time gives the sample spacing, rather than callback arrival jitter.
+	client->m_Timing.Step = next > current && frames ? double(next - current) * 1e-6 / frames : 0;
 	client->m_Timing.Frame = client->m_NativeFrame;
 	client->m_Timing.Frames = frames;
 	client->m_Timing.SampleRate = client->GetSampleRate();

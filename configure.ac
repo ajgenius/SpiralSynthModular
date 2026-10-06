@@ -8,7 +8,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT([SpiralSynthModular], [0.3.1])
 AC_CONFIG_SRCDIR([SpiralSynthModular.C])
 
-AC_DEFINE([SSM_HOST_ABI], ["ssm-fltk-audio-5"], [SSM plugin host ABI])
+AC_DEFINE([SSM_HOST_ABI], ["ssm-fltk-audio-6"], [SSM plugin host ABI])
 
 AM_INIT_AUTOMAKE
 
@@ -261,6 +261,8 @@ if test "$build_jack" = "y" ; then
       [AC_DEFINE([HAVE_JACK_CLIENT_OPEN], [1], [Define if JACK provides jack_client_open])])
    AC_CHECK_LIB(jack, jack_free,
       [AC_DEFINE([HAVE_JACK_FREE], [1], [Define if JACK provides jack_free])])
+   AC_CHECK_LIB(jack, jack_get_cycle_times,
+      [AC_DEFINE([HAVE_JACK_GET_CYCLE_TIMES], [1], [Define if JACK provides native cycle timing])])
    AC_CHECK_LIB(jack, jack_port_get_latency_range,
       [AC_DEFINE([HAVE_JACK_PORT_GET_LATENCY_RANGE], [1], [Define if JACK provides latency ranges])])
    PLUGINLIST="JackPlugin $PLUGINLIST"
