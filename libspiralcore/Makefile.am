@@ -30,7 +30,6 @@ EXTRA_DIST = \
     README \
     SConstruct \
     include/AsyncSampleLoader.h \
-    include/AlsaAtomicClock.h \
     include/CommandRingBuffer.h \
     include/Event.h \
     include/EventQueue.h \
@@ -42,7 +41,6 @@ EXTRA_DIST = \
     include/Trace.h \
     include/Tuna.h \
     src/AsyncSampleLoader.cpp \
-    src/AlsaAtomicClock.cpp \
     src/CommandRingBuffer.cpp \
     src/Event.cpp \
     src/EventQueue.cpp \
@@ -56,6 +54,15 @@ EXTRA_DIST = \
 EXTRA_DIST += README.ssm
 
 libspiralcore_la_SOURCES += include/AudioClient.h
+
+libspiralcore_la_SOURCES += include/AtomicClock.h
+if ATOMIC_CLOCK_MACH
+libspiralcore_la_SOURCES += src/MachAtomicClock.cpp
+endif
+if ATOMIC_CLOCK_ALSA
+libspiralcore_la_SOURCES += src/AlsaAtomicClock.cpp include/AlsaAtomicClock.h
+endif
+EXTRA_DIST += src/AlsaAtomicClock.cpp include/AlsaAtomicClock.h src/MachAtomicClock.cpp
 if HAVE_OUTPUT_PORTAUDIO
 libspiralcore_la_SOURCES += src/PortAudioClient.cpp include/PortAudioClient.h
 endif
