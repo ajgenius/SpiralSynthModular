@@ -142,10 +142,3 @@ void OutputPlugin::ServiceAudio()
 	m_Hub->Service();
 	if (opening) m_NotifyOpenOut=GetMode()==OUTPUT;
 }
-
-void OutputPlugin::ProcessAudio()
-{
-	if (m_IsDead || !m_Hub->IsRepresentative(this)) return;
-
-	m_Hub->Process();
-}

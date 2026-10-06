@@ -40,10 +40,10 @@ public:
 	virtual void Reset();
 
 	virtual bool IsAudioDriver() { return true; }
-	virtual AudioProcessType ProcessType() { return AudioDriver::ALWAYS; }
-	virtual void ProcessAudio();
+	// The hub moves the periods; this device only mixes in Execute.
+	virtual AudioProcessType ProcessType() { return AudioDriver::NEVER; }
+	virtual void ProcessAudio() {}
 	virtual void ServiceAudio();
-	virtual bool IsCallbackDriver() const { return m_Hub->IsCallbackDriven(); }
 	virtual void TransportModeChanged(int mode) { m_ReportedMode=mode; }
 
 	enum GUICommands {NONE, OPENREAD, OPENWRITE, OPENDUPLEX, CLOSE, SET_VOLUME, CLEAR_NOTIFY};

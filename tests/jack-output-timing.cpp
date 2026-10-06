@@ -23,7 +23,6 @@ struct Host
 		while (!__sync_fetch_and_add(&host->Stop,0))
 		{
 			host->Synth.Update();
-			usleep(1000);
 		}
 
 		return NULL;

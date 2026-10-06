@@ -2,6 +2,7 @@
 #include "SpiralPlugin.h"
 #include "JackPlugin.h"
 #include "OutputPlugin.h"
+#include "AudioTransportHub.h"
 #include <cassert>
 #include <cstdio>
 #include <dlfcn.h>
@@ -11,14 +12,24 @@
 struct Engine
 {
 	pthread_mutex_t Gate;
-	static void Run(void *context, AudioDriver *driver, unsigned frames)
+	// The engine thread: one graph pass per period, paced by the hub's
+	// stream or the platform clock when only the Jack device is open.
+	SpiralPlugin *Plugin;
+	volatile int Stop;
+	static void *Run(void *context)
 	{
 		Engine *engine=static_cast<Engine *>(context);
-		if (!frames || pthread_mutex_trylock(&engine->Gate)) return;
+		AudioTransportHub *hub=AudioTransportHub::Get();
+		while (!__sync_fetch_and_add(&engine->Stop,0))
+		{
+			hub->WaitPeriod();
+			pthread_mutex_lock(&engine->Gate);
+			engine->Plugin->Execute();
+			hub->CommitPeriod();
+			pthread_mutex_unlock(&engine->Gate);
+		}
 
-		driver->ProcessAudio();
-		driver->Execute();
-		pthread_mutex_unlock(&engine->Gate);
+		return NULL;
 	}
 
 };
@@ -77,13 +88,14 @@ int main(int argc, char **argv)
 	for (unsigned cycle=0; cycle<3; ++cycle)
 	{
 		SpiralPlugin *plugin=create();
-		plugin->SetBlockingCallback(NULL);
 		plugin->Initialise(&info);
 		plugin->SetParent(&engine);
 		AudioDriver *driver=dynamic_cast<AudioDriver *>(plugin);
-		assert(driver && driver->IsCallbackDriver());
-		driver->SetAudioCycleCallback(Engine::Run);
+		assert(driver);
 		ChannelHandler *channel=plugin->GetChannelHandler();
+		engine.Plugin=plugin; engine.Stop=0;
+		pthread_t thread;
+		assert(!pthread_create(&thread,NULL,Engine::Run,&engine));
 		pthread_mutex_lock(&engine.Gate);
 		if (!output)
 		{
@@ -130,8 +142,8 @@ int main(int argc, char **argv)
 		pthread_mutex_lock(&engine.Gate);
 		if (!output)
 		{
-			// A blocking Output holds the host gate while waiting for its device.
-			// JACK must retain capture without entering the graph during that wait.
+			// The engine may stall under the gate; JACK keeps the latest
+			// capture and the next graph pass still sees it.
 			for (unsigned n=0; n<2; ++n) received[n]->Set(0);
 
 			usleep(150000);
@@ -142,6 +154,10 @@ int main(int argc, char **argv)
 
 		}
 
+		pthread_mutex_unlock(&engine.Gate);
+		__sync_lock_test_and_set(&engine.Stop,1);
+		pthread_join(thread,NULL);
+		pthread_mutex_lock(&engine.Gate);
 		plugin->Kill(); delete plugin;
 		pthread_mutex_unlock(&engine.Gate);
 		printf("JACK %s cycle %u: %s PASS\n",output ? "Output" : "plugin",cycle+1,
