@@ -60,12 +60,9 @@ acoustic paths; mixed hardware still needs loopback measurement.
 
 ## Backend extraction boundary
 
-The host's Output facade still selects compiled-in native implementations.
-Backend module extraction should move those adapters and their native link flags,
-leaving `AudioClient`, `AudioTiming`, `AudioStream`, `TimedAudioBuffer`, and
-`PresentationClock` in the shared core. Named JACK devices and Output must keep
-using that one transport contract. The private stack can use Spicy for ownership
-and control scheduling without changing the timestamps or queue semantics.
+`PluginLoader` owns library handles and discovery. `AudioBackendRegistry` validates descriptors, selects clients and tracks their lifetime; it refuses unload while clients remain live and removes module descriptors before `dlclose`. PortAudio and CoreAudio are loadable modules. JACK, ALSA, OSS and Dummy currently register through the same interface as built-ins. Each factory creates an independent native client.
+
+`AudioTimeline` coordinates one engine's presentation clock, stream membership, capture lookback and pacing. The public hub supplies host/session policy; the private host supplies Spicy ownership and control scheduling. `AudioClient`, `AudioTiming`, `AudioStream`, `TimedAudioBuffer`, `PresentationClock`, `AudioTimeline`, loader and registry sources can therefore remain identical between hosts. Named JACK devices and Output use this same transport contract.
 
 Automated regressions exercise unequal rates and periods, fractional callback
 phases, per-channel latency, positive/negative clock drift, capture alignment,
