@@ -87,6 +87,8 @@ m_NextID(0)
 	m_Info.BUFSIZE = SpiralInfo::BUFSIZE;
 	m_Info.SAMPLERATE = SpiralInfo::SAMPLERATE;
 	m_Info.PAUSED = false;
+	m_Info.FRAME = 0;
+	m_Info.ROLLING = true;
 
 	/* obsolete - REMOVE SOON  */
 	m_Info.FRAGSIZE = SpiralInfo::FRAGSIZE;
@@ -173,7 +175,7 @@ void SynthModular::Update()
 	{
 		// Control owns the devices while frozen: only watch for the thaw.
 		pthread_mutex_lock(&m_CycleLock);
-		m_CH.UpdateDataNow();
+		m_CH.UpdateDataNow(m_Info.FRAME);
 		pthread_mutex_unlock(&m_CycleLock);
 		usleep(1000);
 		return;
@@ -183,12 +185,16 @@ void SynthModular::Update()
 	const bool render=hub->WaitPeriod();
 
 	pthread_mutex_lock(&m_CycleLock);
-	m_CH.UpdateDataNow();
+	m_CH.UpdateDataNow(m_Info.FRAME);
 	if (m_Frozen)
 	{
 		pthread_mutex_unlock(&m_CycleLock);
 		return;
 	}
+
+	hub->BeginPeriod();
+	m_Info.FRAME = hub->Frame();
+	m_Info.ROLLING = hub->Rolling();
 
 	for (map<int,DeviceWin*>::iterator i = m_DeviceWinMap.begin(); i != m_DeviceWinMap.end(); )
 	{
@@ -268,6 +274,7 @@ void SynthModular::RenderAudio()
 			else
 			{
 				di->second->m_Device->Execute();
+				di->second->m_Device->StampOutputs(m_Info.FRAME);
 
 				// If this is an audio device see if we need to ProcessAudio here
 				if (di->second->m_Device->IsAudioDriver())

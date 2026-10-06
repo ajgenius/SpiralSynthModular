@@ -42,6 +42,8 @@ m_Mode(NO_MODE),
 m_RequestedMode(OUTPUT),
 m_IOFailed(false),
 m_NextRetry(0),
+m_Frame(0),
+m_Rolling(true),
 m_ThreadRunning(false),
 m_ThreadStop(false),
 m_Clock(NULL)
@@ -181,11 +183,15 @@ unsigned AudioTransportHub::PeriodMicroseconds() const
 
 // * Engine side
 
+bool AudioTransportHub::Streaming() const
+{
+	return m_Mode!=CLOSED && m_Mode!=NO_MODE && OUTPUTCLIENT::Get()->IsAttached();
+}
+
 bool AudioTransportHub::WaitPeriod()
 {
 	const unsigned period=PeriodMicroseconds();
-	const bool streaming=m_Mode!=CLOSED && m_Mode!=NO_MODE && OUTPUTCLIENT::Get()->IsAttached();
-	if (streaming)
+	if (Streaming())
 	{
 		if (m_Clock) { delete m_Clock; m_Clock=NULL; }
 		return OUTPUTCLIENT::Get()->WaitPeriod(period*4);
@@ -203,9 +209,32 @@ bool AudioTransportHub::WaitPeriod()
 	return true;
 }
 
+void AudioTransportHub::BeginPeriod()
+{
+	// The stream's transport, when it has one, says where this period is.
+	unsigned long frame; bool rolling;
+	if (Streaming() && OUTPUTCLIENT::Get()->GetTransport(frame, rolling)) { m_Frame=frame; m_Rolling=rolling; }
+}
+
 void AudioTransportHub::CommitPeriod()
 {
 	if (m_Mode!=CLOSED && m_Mode!=NO_MODE) OUTPUTCLIENT::Get()->CommitPeriod();
+	if (m_Rolling && m_Host) m_Frame+=m_Host->BUFSIZE;
+}
+
+void AudioTransportHub::Start()
+{
+	if (!(Streaming() && OUTPUTCLIENT::Get()->StartTransport())) m_Rolling=true;
+}
+
+void AudioTransportHub::Stop()
+{
+	if (!(Streaming() && OUTPUTCLIENT::Get()->StopTransport())) m_Rolling=false;
+}
+
+void AudioTransportHub::Locate(unsigned long frame)
+{
+	if (!(Streaming() && OUTPUTCLIENT::Get()->LocateTransport(frame))) m_Frame=frame;
 }
 
 void AudioTransportHub::Service()

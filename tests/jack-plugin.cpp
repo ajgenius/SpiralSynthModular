@@ -25,6 +25,7 @@ struct Engine
 			if (!hub->WaitPeriod()) continue;
 
 			pthread_mutex_lock(&engine->Gate);
+			hub->BeginPeriod();
 			engine->Plugin->Execute();
 			hub->CommitPeriod();
 			pthread_mutex_unlock(&engine->Gate);

@@ -72,12 +72,24 @@ public:
 	// Control thread, representative only.
 	void Service();
 
-	// Engine thread: block until the next period may be rendered, then
-	// hand the rendered period to the transport.
-	// WaitPeriod reports whether the engine owns a period slot: false
-	// means the transport is still on it and the graph must not run.
+	// Engine thread: block until the next period may be rendered, take
+	// the period's position under the gate, hand the rendered period to
+	// the transport. Only WaitPeriod runs outside the gate, so nothing
+	// here touches the device while control may be closing it. WaitPeriod
+	// reports whether the engine owns a period slot: false means the
+	// transport is still on it and the graph must not run.
 	bool WaitPeriod();
+	void BeginPeriod();
 	void CommitPeriod();
+
+	// Engine position: the frame the period being rendered starts at.
+	// Slaved to the stream's transport when it has one (JACK), free
+	// running otherwise; start, stop and locate ride the same clock.
+	unsigned long Frame() const { return m_Frame; }
+	bool Rolling() const { return m_Rolling; }
+	void Start();
+	void Stop();
+	void Locate(unsigned long frame);
 
 private:
 	AudioTransportHub();
@@ -99,6 +111,10 @@ private:
 	Mode m_RequestedMode;
 	bool m_IOFailed;
 	time_t m_NextRetry;
+
+	unsigned long m_Frame;
+	bool m_Rolling;
+	bool Streaming() const;
 
 	pthread_t m_Thread;
 	volatile bool m_ThreadRunning;
