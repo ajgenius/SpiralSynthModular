@@ -19,9 +19,12 @@
 #include <stdio.h>
 #include <limits.h>
 #include <math.h>
+#include <string.h>
+#include <algorithm>
 
 #include "config.h"
 #include "JackPlugin.h"
+#include "RingBuffer.h"
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -77,10 +80,13 @@ string SpiralPlugin_GetGroupName()
 JackPlugin::JackPlugin() :
 m_UpdateNames(false),
 m_Connected(false),
+m_Capture(NULL),
+m_Playback(NULL),
+m_RingFrames(0),
+m_Drift(0),
 m_InputCount(4),
 m_OutputCount(4)
 {
-	pthread_mutex_init(&m_TransferLock, NULL);
         m_JackClient=new JackClient;
 
 	//clunky way to ensure unique JackID - JackInstanceCount is never dec 
@@ -148,7 +154,7 @@ JackPlugin::~JackPlugin()
 		m_JackClient=NULL;
 	}
 
-	pthread_mutex_destroy(&m_TransferLock);
+	DropRings();
 }
 
 PluginInfo &JackPlugin::Initialise(const HostInfo *Host)
@@ -169,6 +175,7 @@ void JackPlugin::Attach()
 	spiralcore::AudioClientOptions options;
 	options.InChannels = m_InputCount;
 	options.OutChannels = m_OutputCount;
+	if (!m_Capture) BuildRings();
 	if (m_JackClient->Attach(name, options))
 		m_JackClient->Start();
 
@@ -179,33 +186,52 @@ void JackPlugin::Detach()
 	m_JackClient->Detach();
 }
 
+// Rings hold a few periods each way. The rings are rebuilt only while
+// the client is detached, so the callback never sees them change.
+static const unsigned RING_PERIODS = 4;
+
+void JackPlugin::BuildRings()
+{
+	DropRings();
+	if (!m_HostInfo || m_HostInfo->BUFSIZE <= 0) return;
+
+	m_RingFrames = m_HostInfo->BUFSIZE;
+	const unsigned period = m_RingFrames * sizeof(float);
+	m_Capture = new RingBuffer(period * m_InputCount * RING_PERIODS);
+	m_Playback = new RingBuffer(period * m_OutputCount * RING_PERIODS);
+	m_Period.assign(m_RingFrames * std::max(m_InputCount, m_OutputCount), 0);
+}
+
+void JackPlugin::DropRings()
+{
+	delete m_Capture; m_Capture = NULL;
+	delete m_Playback; m_Playback = NULL;
+	m_RingFrames = 0;
+}
+
 void JackPlugin::ProcessCallback(void *context, unsigned int frames)
 {
 	JackPlugin *plugin = static_cast<JackPlugin *>(context);
-	// This client only exchanges buffers; the engine runs the graph on its
-	// own clock and moves them in Execute, a period behind at most.
-	if (frames && !pthread_mutex_trylock(&plugin->m_TransferLock))
+	if (!frames || frames != plugin->m_RingFrames || !plugin->m_Capture) return;
+
+	// Capture goes in through the jack-side scratch; a full ring drops it.
+	float *scratch = &plugin->m_Period[0];
+	const unsigned in = frames * plugin->m_InputCount * sizeof(float);
+	plugin->m_JackClient->Read(scratch, frames);
+	if (!plugin->m_Capture->Write((char *)scratch, in)) ++plugin->m_Drift;
+
+	// Playback comes out, or silence when the engine has not caught up.
+	const unsigned out = frames * plugin->m_OutputCount * sizeof(float);
+	if (!plugin->m_Playback->Read((char *)scratch, out))
 	{
-		if (plugin->m_Capture.size() == frames * plugin->m_InputCount)
-			plugin->m_JackClient->Read(&plugin->m_Capture[0], frames);
-
-		pthread_mutex_unlock(&plugin->m_TransferLock);
+		memset(scratch, 0, out);
+		++plugin->m_Drift;
 	}
-
-	if (frames && !pthread_mutex_trylock(&plugin->m_TransferLock))
-	{
-		if (plugin->m_Playback.size() == frames * plugin->m_OutputCount)
-			plugin->m_JackClient->Write(&plugin->m_Playback[0], frames);
-
-		pthread_mutex_unlock(&plugin->m_TransferLock);
-	}
-
+	plugin->m_JackClient->Write(scratch, frames);
 }
 
 void JackPlugin::Execute()
 {
-	// A blocking output may drive the graph while JACK callbacks only fill
-	// the exchange buffers. Deliver that capture when this node executes.
 	ProcessAudio();
 }
 
@@ -279,10 +305,10 @@ void JackPlugin::Reset()
 	ResetPorts();
 	if (!m_HostInfo) return;
 
-	pthread_mutex_lock(&m_TransferLock);
-	m_Capture.assign(m_InputCount * m_HostInfo->BUFSIZE, 0);
-	m_Playback.assign(m_OutputCount * m_HostInfo->BUFSIZE, 0);
-	pthread_mutex_unlock(&m_TransferLock);
+	const bool reconnect = m_JackClient->IsAttached();
+	if (reconnect) Detach();
+	BuildRings();
+	if (reconnect) Attach();
 }
 
 void JackPlugin::ServiceAudio()
@@ -298,25 +324,31 @@ void JackPlugin::ServiceAudio()
 
 void JackPlugin::ProcessAudio()
 {
-	if (m_IsDead || m_Capture.empty() || m_Playback.empty()) return;
+	if (m_IsDead || !m_Capture || !m_Playback) return;
 
 	const unsigned frames = m_HostInfo->BUFSIZE;
-	if (m_Capture.size() != frames * m_InputCount || m_Playback.size() != frames * m_OutputCount) return;
+	if (frames != m_RingFrames) return;
 
-	pthread_mutex_lock(&m_TransferLock);
 	const bool silent = m_HostInfo->PAUSED || !m_JackClient->IsAttached();
+
+	// Engine-side scratch, separate from the one the callback uses.
+	std::vector<float> period(frames * std::max(m_InputCount, m_OutputCount));
+	const unsigned in = frames * m_InputCount * sizeof(float);
+	const bool captured = !silent && m_Capture->Read((char *)&period[0], in);
+	if (!silent && !captured) ++m_Drift;
+
 	for (unsigned frame = 0; frame < frames; ++frame)
-	{
 		for (int channel = 0; channel < m_InputCount; ++channel)
 			if (OutputExists(channel))
-				GetOutputBuf(channel)->Set(frame, silent ? 0 : m_Capture[frame * m_InputCount + channel]);
+				GetOutputBuf(channel)->Set(frame, captured ? period[frame * m_InputCount + channel] : 0);
 
+	for (unsigned frame = 0; frame < frames; ++frame)
 		for (int channel = 0; channel < m_OutputCount; ++channel)
-			m_Playback[frame * m_OutputCount + channel] = !silent && InputExists(channel)
+			period[frame * m_OutputCount + channel] = !silent && InputExists(channel)
 				? (*GetInput(channel))[frame] : 0;
-	}
 
-	pthread_mutex_unlock(&m_TransferLock);
+	const unsigned out = frames * m_OutputCount * sizeof(float);
+	if (!m_Playback->Write((char *)&period[0], out)) ++m_Drift;
 }
 
 void  JackPlugin::SetNumberPorts (int nInputs, int nOutputs) {

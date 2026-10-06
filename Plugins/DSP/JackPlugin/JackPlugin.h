@@ -18,7 +18,7 @@
 
 #include "SpiralPlugin.h"
 #include "JackClient.h"
-#include <pthread.h>
+class RingBuffer;
 using spiralcore::JackClient;
 
 using namespace std;
@@ -54,6 +54,7 @@ public:
 	int GetInputCount() const { return m_InputCount; }
 
 	int GetOutputCount() const { return m_OutputCount; }
+	unsigned GetDrift() const { return m_Drift; }
 
 	JackClient *GetJackClient()           { return m_JackClient; }
 
@@ -101,9 +102,16 @@ private:
 	
 	//clunky work-around for unique ID
 	static int JackInstanceCount;
-	// Exchange with JACK independently of the host graph/control gate.
-	pthread_mutex_t m_TransferLock;
-	std::vector<float> m_Capture, m_Playback;
+	// A slave port: the jack callback only moves one period each way
+	// through these rings, the engine reads and writes them in Execute.
+	// Nothing waits; a ring with no period to give yields silence and
+	// a ring with no room drops the period, counted as drift.
+	RingBuffer *m_Capture, *m_Playback;
+	std::vector<float> m_Period;
+	unsigned m_RingFrames;
+	volatile unsigned m_Drift;
+	void BuildRings();
+	void DropRings();
 	static void ProcessCallback(void *context, unsigned int frames);
 	int m_InputCount;
 
