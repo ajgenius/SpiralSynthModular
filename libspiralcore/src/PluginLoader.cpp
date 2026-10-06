@@ -22,6 +22,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <iostream>
+#include <algorithm>
 #include "PluginLoader.h"
 
 using namespace std;
@@ -36,6 +37,33 @@ PluginLoader::PluginLoader()
 PluginLoader::~PluginLoader()
 {
 	UnloadAll();
+}
+
+void PluginLoader::PackUpAndGoHome()
+{
+	if (m_Singleton && !m_Singleton->UnloadAll())
+		return;
+
+	delete m_Singleton;
+	m_Singleton = NULL;
+}
+
+bool PluginLoader::UnregisterKind(PluginKind *kind)
+{
+	if (!kind || !kind->CanUnload())
+		return false;
+
+	for (size_t n = m_Modules.size(); n > 0; --n)
+	{
+		if (m_Modules[n - 1].Kind != kind)
+			continue;
+
+		ReleaseModule(m_Modules[n - 1]);
+		m_Modules.erase(m_Modules.begin() + n - 1);
+	}
+
+	m_Kinds.erase(remove(m_Kinds.begin(), m_Kinds.end(), kind), m_Kinds.end());
+	return true;
 }
 
 void PluginLoader::RegisterKind(PluginKind *kind)
@@ -123,16 +151,27 @@ bool PluginLoader::LoadModule(PluginKind &kind, const string &path)
 		return false;
 	}
 
-	m_Modules.push_back(handle);
+	Module module = { &kind, handle, entry, path };
+	m_Modules.push_back(module);
 	return true;
 }
 
-void PluginLoader::UnloadAll()
+void PluginLoader::ReleaseModule(const Module &module)
 {
-	for (vector<void*>::iterator i=m_Modules.begin();
-	     i!=m_Modules.end(); i++)
-	{
-		dlclose(*i);
-	}
+	module.Kind->Release(module.Entry, module.Path);
+	dlclose(module.Handle);
+}
+
+bool PluginLoader::UnloadAll()
+{
+	// Check the whole set before releasing any descriptor or library.
+	for (size_t n = 0; n < m_Modules.size(); ++n)
+		if (!m_Modules[n].Kind->CanUnload())
+			return false;
+
+	for (size_t n = m_Modules.size(); n > 0; --n)
+		ReleaseModule(m_Modules[n - 1]);
+
 	m_Modules.clear();
+	return true;
 }
