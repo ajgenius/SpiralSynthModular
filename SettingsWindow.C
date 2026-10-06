@@ -23,6 +23,7 @@
 #include "config.h"
 #include "SettingsWindow.h"
 #include "SpiralInfo.h"
+#include "AudioBackend.h"
 #include "GUI/options.xpm"
 
 SettingsWindow::SettingsWindow() :
@@ -140,40 +141,8 @@ m_App(NULL)
 	Line->add(Name);
 	m_AudioClient = new Fl_Choice(0,0,80,20,"");
 	m_AudioClient->labelsize(10);
-	m_AudioClient->tooltip("OutputPlugin backend (compiled-in clients only)");
-	{
-		int idx = 0, active = 0;
-#ifdef HAVE_CORE_AUDIO_CLIENT
-		m_AudioClient->add("coreaudio");
-		if (SpiralInfo::AUDIOCLIENT == "coreaudio") active = idx;
-
-		++idx;
-#endif
-#ifdef HAVE_JACK_CLIENT
-		m_AudioClient->add("jack");
-		if (SpiralInfo::AUDIOCLIENT == "jack") active = idx;
-
-		++idx;
-#endif
-#ifdef HAVE_OUTPUT_PORTAUDIO
-		m_AudioClient->add("portaudio");
-		if (SpiralInfo::AUDIOCLIENT == "portaudio") active = idx;
-		idx++;
-#endif
-#ifdef HAVE_OUTPUT_ALSA
-		m_AudioClient->add("alsa");
-		if (SpiralInfo::AUDIOCLIENT == "alsa") active = idx;
-		idx++;
-#endif
-#ifdef HAVE_OUTPUT_OSS
-		m_AudioClient->add("oss");
-		if (SpiralInfo::AUDIOCLIENT == "oss") active = idx;
-		idx++;
-#endif
-		if (idx == 0)
-			m_AudioClient->add("none");
-		m_AudioClient->value(active);
-	}
+	m_AudioClient->tooltip("OutputPlugin backend");
+	ListAudioClients();
 	Line->add(m_AudioClient);
 	Line->end();
 	m_Options->add(Line);
@@ -217,6 +186,28 @@ m_App(NULL)
 	add(m_Apply);
 
 	end();
+}
+
+void SettingsWindow::show()
+{
+	ListAudioClients();
+	Fl_Double_Window::show();
+}
+
+// Every backend the registry knows, compiled in or loaded, the current
+// one selected.
+void SettingsWindow::ListAudioClients()
+{
+	m_AudioClient->clear();
+	const std::vector<std::string> names = spiralcore::AudioBackendRegistry::Get()->Names();
+	int active = 0;
+	for (size_t n = 0; n < names.size(); ++n)
+	{
+		m_AudioClient->add(names[n].c_str());
+		if (SpiralInfo::AUDIOCLIENT == names[n]) active = n;
+	}
+	if (names.empty()) m_AudioClient->add("none");
+	m_AudioClient->value(active);
 }
 
 SettingsWindow::~SettingsWindow()

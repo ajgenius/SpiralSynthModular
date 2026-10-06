@@ -39,10 +39,23 @@ int main(int argc, char **argv)
 	if (argc!=2 || strcmp(argv[1],"--live")) return 0;
 
 	alarm(20);
+	// Resolve a real UID, then exercise both default and explicit device paths.
+	AudioObjectPropertyAddress address={kAudioHardwarePropertyDefaultOutputDevice,kAudioObjectPropertyScopeGlobal,0};
+	AudioDeviceID device=kAudioObjectUnknown;
+	UInt32 size=sizeof(device);
+	assert(AudioObjectGetPropertyData(kAudioObjectSystemObject,&address,0,NULL,&size,&device)==noErr);
+	CFStringRef uid=NULL;
+	address.mSelector=kAudioDevicePropertyDeviceUID;
+	size=sizeof(uid);
+	assert(AudioObjectGetPropertyData(device,&address,0,NULL,&size,&uid)==noErr);
+	char deviceUID[1024];
+	assert(CFStringGetCString(uid,deviceUID,sizeof(deviceUID),kCFStringEncodingUTF8));
+	CFRelease(uid);
+
 	probe.Client.SetCallback(Probe::Run,&probe);
 	for (unsigned n=0; n<3; ++n)
 	{
-		assert(probe.Client.Attach("default",options));
+		assert(probe.Client.Attach(n ? deviceUID : "default",options));
 		assert(probe.Client.IsCallbackDriven());
 		assert(probe.Client.GetSampleRate() && probe.Client.GetBufferSize());
 		unsigned before=__sync_fetch_and_add(&probe.Cycles,0);
