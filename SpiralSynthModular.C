@@ -34,6 +34,7 @@
 #include <FL/Fl_Tooltip.H>
 #include "SpiralSynthModular.h"
 #include "AudioTransportHub.h"
+#include "AudioBackend.h"
 #include "PluginManager.h"
 #include "SpiralInfo.h"
 #include "SpiralPluginGUI.h"
@@ -653,6 +654,10 @@ void SynthModular::LoadPlugins (string pluginPath) {
      }
      string PluginRoot = pluginPath.empty() ? SpiralInfo::PLUGIN_PATH : pluginPath;
      if (!PluginRoot.empty() && PluginRoot[PluginRoot.size()-1] != '/') PluginRoot += '/';
+     // Audio backend modules sit beside the device plugins under audio/;
+     // compiled-in backends are already registered and a module of the
+     // same name yields.
+     spiralcore::AudioBackendRegistry::Get()->LoadModules(PluginRoot);
      vector<string> DSPNames;
      vector<string> GUINames;
      set<string> SeenModules;
