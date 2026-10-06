@@ -1,173 +1,105 @@
-/*
- * PipeWire audio client for Spiral.
- *
- * This preserves the old OSS/ALSA-facing block API used by the engine, while
- * using PipeWire's callback-driven realtime model internally.
- */
-
-#ifndef __PipeWireClient_H_
-#define __PipeWireClient_H_
-
-#ifdef OUTPUT_BACKEND_PIPEWIRE
-
+// SPDX-License-Identifier: GPL-2.0-or-later
+#ifndef SPIRALCORE_PIPEWIRE_CLIENT_H
+#define SPIRALCORE_PIPEWIRE_CLIENT_H
+#include "AudioClient.h"
+#include "TimedAudioBuffer.h"
+#include <pipewire/pipewire.h>
 #include <atomic>
-#include <cstddef>
-#include <cstdint>
-#include <string>
 #include <vector>
 
-#include <pipewire/pipewire.h>
-#include <spa/param/audio/format-utils.h>
-
-#include "Port.h"
-#include "Device.h"
-#include "Patch.h"
-#include "RiffWav.h"
-
-using namespace Spiral;
-
-class PipeWireClient
+namespace spiralcore
 {
-public:
-    static PipeWireClient *Get()
-    {
-        if (!m_Singleton)
-            m_Singleton = new PipeWireClient;
-        return m_Singleton;
-    }
+	class PipeWireClient: public AudioClient
+	{
+	public:
+		PipeWireClient();
+		~PipeWireClient();
+		bool Attach(const std::string &device, const AudioClientOptions &options);
+		void Detach();
 
-    static void PackUpAndGoHome()
-    {
-        if (m_Singleton)
-        {
-            delete m_Singleton;
-            m_Singleton = NULL;
-        }
-    }
+		bool IsAttached() const
+		{
+			return m_Attached.load();
+		}
 
-    ~PipeWireClient();
+		bool IsCallbackDriven() const
+		{
+			return true;
+		}
 
-    void AllocateBuffer();
-    void DeallocateBuffer();
+		void SetCallback(void (*run)(void *, unsigned), void *context);
+		bool Start();
 
-    void SendStereo(InputPort *ldata, InputPort *rdata);
-    void GetStereo(OutputPort *ldata, OutputPort *rdata);
+		unsigned long GetBufferSize() const
+		{
+			return m_Quantum.load();
+		}
 
-    void SetVolume(FloatType s) { m_Amp = s; }
-    void SetNumChannels(int s)  { m_Channels = s; }
-    FloatType GetVolume()       { return m_Amp; }
-    void SetDestination(const std::string &s) { m_Destination = s; }
+		unsigned long GetSampleRate() const
+		{
+			return m_Options.Samplerate;
+		}
 
-    /* Compatibility calls.  These preserve the old engine's timing model:
-       Play() submits one engine block and Read() obtains one engine block. */
-    void Play();
-    void Read();
+		bool GetCycleTiming(AudioCycleTiming &value) const
+		{
+			value = m_Timing;
+			return value.Valid;
+		}
 
-    bool OpenReadWrite();
-    bool OpenWrite();
-    bool OpenRead();
-    bool Close();
+		double GetInputLatency() const
+		{
+			return m_InputDelay.load() / 1000000.0 + (m_Options.OutChannels ?
+		4.0 * m_Quantum.load() / m_Options.Samplerate : 0);
+		}
 
-    void Kill()
-    {
-        m_IsDead.store(true, std::memory_order_release);
-        PackUpAndGoHome();
-    }
+		double GetOutputLatency() const
+		{
+			return m_OutputDelay.load() / 1000000.0;
+		}
 
-    static Patch *host;
-    static void (*RunCallback)(void*, bool);
-    static void *RunContext;
+		bool Read(float *samples, unsigned frames);
+		bool Write(const float *samples, unsigned frames);
 
-    /* Same contract as OSSClient: engine values, not PipeWire quantum size. */
-    inline UnsignedType SampleRate()  { return host->SampleRate(); }
-    inline UnsignedType SampleCount() { return host->SampleCount(); }
+	private:
+		struct Stream
+		{
+			PipeWireClient *Owner;
+			pw_stream *Handle;
+			pw_stream_events Events;
+			std::atomic<int> State;
+			bool Input;
+			uint64_t Frame;
 
-private:
-    PipeWireClient();
-    PipeWireClient(const PipeWireClient &);
-    PipeWireClient &operator=(const PipeWireClient &);
+			Stream():
+			    Owner(NULL),
+			    Handle(NULL),
+			    State(PW_STREAM_STATE_UNCONNECTED),
+			    Input(false),
+			    Frame(0)
+			{
+			}
+		};
 
-    class AudioRingBuffer
-    {
-    public:
-        AudioRingBuffer();
-
-        void Configure(std::size_t capacityFrames, unsigned channels);
-        void Reset();
-
-        std::size_t Read(float *dst, std::size_t frames);
-        std::size_t Write(const float *src, std::size_t frames);
-
-        std::size_t ReadAvailable() const;
-        std::size_t WriteAvailable() const;
-        std::size_t CapacityFrames() const { return m_CapacityFrames; }
-
-    private:
-        std::vector<float> m_Data;
-        std::size_t m_CapacityFrames;
-        unsigned m_Channels;
-        std::atomic<std::uint64_t> m_ReadFrame;
-        std::atomic<std::uint64_t> m_WriteFrame;
-    };
-
-    struct StreamState
-    {
-        StreamState();
-
-        PipeWireClient *owner;
-        pw_stream *stream;
-        spa_hook listener;
-        pw_stream_events events;
-        bool capture;
-        std::atomic<int> state;
-    };
-
-    bool Setup(bool playback, bool capture);
-    bool CreateStream(StreamState &stream, bool capture);
-    bool WaitForReady(StreamState &stream);
-    void DestroyStream(StreamState &stream);
-
-    static void OnStreamStateChanged(void *data,
-                                     enum pw_stream_state oldState,
-                                     enum pw_stream_state state,
-                                     const char *error);
-    static void OnStreamProcess(void *data);
-
-    void ProcessPlayback(StreamState &stream);
-    void ProcessCapture(StreamState &stream);
-
-    bool PlaybackOperational() const;
-    bool CaptureOperational() const;
-
-    static PipeWireClient *m_Singleton;
-
-    pw_thread_loop *m_Loop;
-    pw_context *m_Context;
-    pw_core *m_Core;
-
-    StreamState m_Playback;
-    StreamState m_Capture;
-
-    float *m_Buffer[2];
-    float *m_InBuffer[2];
-
-    AudioRingBuffer m_PlaybackRing;
-    AudioRingBuffer m_CaptureRing;
-
-    FloatType m_Amp;
-    int m_Channels;
-    int m_ReadBufferNum;
-    int m_WriteBufferNum;
-
-    std::atomic<bool> m_IsDead;
-    bool m_Connected;
-    bool m_LoopStarted;
-
-    std::atomic<std::uint64_t> m_PlaybackUnderruns;
-    std::atomic<std::uint64_t> m_CaptureOverruns;
-    std::string m_Destination;
-};
-
-#endif /* OUTPUT_BACKEND_PIPEWIRE */
-
+		bool CreateStream(Stream &stream, bool input, const std::string &device);
+		bool WaitReady(Stream &stream);
+		static void StateChanged(void *, pw_stream_state, pw_stream_state, const char *);
+		static void Process(void *);
+		void Transfer(Stream &stream);
+		bool Timestamp(Stream &stream, unsigned frames, AudioCycleTiming &timing);
+		pw_thread_loop *m_Loop;
+		bool m_LoopStarted;
+		std::atomic<bool> m_Attached;
+		std::atomic<unsigned> m_InputDelay, m_OutputDelay, m_Quantum;
+		AudioClientOptions m_Options;
+		Stream m_Input, m_Output;
+		TimedAudioBuffer m_Capture;
+		AudioCycleTiming m_Timing;
+		float *m_CurrentInput, *m_CurrentOutput;
+		unsigned m_CurrentFrames;
+		void (*m_Run)(void *, unsigned);
+		void *m_Context;
+		PipeWireClient(const PipeWireClient &);
+		PipeWireClient &operator=(const PipeWireClient &);
+	};
+}
 #endif
