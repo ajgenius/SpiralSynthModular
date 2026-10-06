@@ -397,6 +397,7 @@ AC_SUBST(FLTK_LIBS)
 
 AC_CHECK_HEADERS(dlfcn.h)
 AC_SEARCH_LIBS([dlopen], [dl])
+AC_SEARCH_LIBS([clock_gettime], [rt])
 AC_SEARCH_LIBS([pthread_create], [pthread], [],
     [AC_MSG_ERROR([POSIX threads are required])])
 

@@ -1,57 +1,72 @@
-// Copyright (C) 2004 David Griffiths <dave@pawfal.org>
-//
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+// SPDX-License-Identifier: GPL-2.0-or-later
+#ifndef SPIRALCORE_AUDIO_TIMING_H
+#define SPIRALCORE_AUDIO_TIMING_H
 
-#include <sys/time.h>
-#include <iostream>
-#include <limits.h>
-
-using namespace std;
-
-#ifndef SPIRALCORE_TIME
-#define SPIRALCORE_TIME
-
-static const double ONE_OVER_UINT_MAX = 1.0/UINT_MAX;
+#include <stdint.h>
 
 namespace spiralcore
 {
+// Seconds on the system monotonic clock. Native clocks must be mapped to this
+// domain before publishing timestamps; wall time and musical transport are not
+// presentation clocks.
+double AudioMonotonicTime();
 
-class Time
+struct AudioCycleTiming
 {
-public:
-	Time(); 
-	Time(int s, int f) : Seconds(s),Fraction(f) {}
-	void SetToNow();
-	void SetFromPosix(timeval tv);
-	void IncBySample(unsigned long samples, unsigned long samplerate);
-	bool operator<(const Time& other);
-	bool operator>(const Time& other);
-	bool operator<=(const Time& other);
-	bool operator>=(const Time& other);
-	bool operator==(const Time& other);
-	Time &operator+=(double s);
-	void Print() const;
-	double GetFraction() const { return Fraction*ONE_OVER_UINT_MAX; }
-	void SetFraction(double s) { Fraction = (int)(s*(double)UINT_MAX); }
-	bool IsEmpty() { return (!Seconds && !Fraction); }
-	double GetDifference(const Time& other);
-	
-	unsigned long int Seconds;
-	unsigned long int Fraction;
+	uint64_t Frame;
+	double CallbackTime;
+	double InputTime;
+	double OutputTime;
+	double SampleRate;
+	unsigned Frames;
+	bool Valid;
+
+	AudioCycleTiming() : Frame(0), CallbackTime(0), InputTime(0), OutputTime(0),
+		SampleRate(0), Frames(0), Valid(false) {}
 };
 
-}
+struct AudioStamp
+{
+	uint64_t Frame;
+	unsigned Generation;
+	double Time;
+	double Step;
 
+	AudioStamp() : Frame(0), Generation(0), Time(0), Step(0) {}
+};
+
+// A bounded single-writer/single-reader latest-value handoff. Each side owns a
+// different slot; exchanging the middle slot transfers ownership, never a live
+// structure. No reader retries and no callback takes a lock.
+class AudioTimingMailbox
+{
+public:
+	AudioTimingMailbox();
+	void Publish(const AudioCycleTiming &value);
+	bool Read(AudioCycleTiming &value);
+
+private:
+	AudioCycleTiming m_Slots[3];
+	unsigned m_Back, m_Front;
+	unsigned m_Middle;
+	AudioTimingMailbox(const AudioTimingMailbox &);
+	AudioTimingMailbox &operator=(const AudioTimingMailbox &);
+};
+
+// Estimates seconds per native frame. Timestamps drive rate recovery; callback
+// arrival jitter must not be mistaken for hardware clock drift. Discontinuous
+// observations reset the estimate rather than manufacturing a large rate jump.
+class AudioRateEstimator
+{
+public:
+	AudioRateEstimator();
+	void Reset();
+	double Observe(uint64_t frame, double time, double nominalRate);
+
+private:
+	bool m_Ready;
+	uint64_t m_Frame;
+	double m_Time, m_Step;
+};
+}
 #endif
