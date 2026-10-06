@@ -6,8 +6,8 @@
 // startup; the registry hands out clients by name either way, so the
 // host never names a native implementation. The descriptor is shared
 // with the private tree; its Kind lets one shape serve audio and midi.
-#ifndef SSM_BACKEND_MODULE_H
-#define SSM_BACKEND_MODULE_H
+#ifndef SPIRALCORE_AUDIO_BACKEND_H
+#define SPIRALCORE_AUDIO_BACKEND_H
 #include <string>
 #include <vector>
 #include <map>
