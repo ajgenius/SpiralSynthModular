@@ -14,27 +14,27 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-#ifndef ATOMIC_CLOCK
-#define ATOMIC_CLOCK
+#ifndef ALSA_ATOMIC_CLOCK
+#define ALSA_ATOMIC_CLOCK
 
-// A steady periodic clock for pacing the engine when no audio backend
-// does. Tick() blocks until the next period and returns the time since
-// the clock started, in seconds. Configure selects the one platform
-// implementation that is built (AlsaAtomicClock, MachAtomicClock).
-class AtomicClock
+#include "AtomicClock.h"
+#include <alsa/asoundlib.h>
+
+// ALSA global system timer (hw:CLASS=global), ticking at the requested rate.
+struct AtomicClock::Platform
 {
-public:
-	AtomicClock(float frequency);
-	~AtomicClock();
-	double Tick();
-	float Frequency() const { return m_Frequency; }
+	snd_timer_t *m_Handle;
+    snd_timer_info_t *m_Info;
+    snd_timer_params_t *m_Params;	
 	
-private:
-	struct Platform;
-	Platform *m_Platform;
-	
-	double m_Time;
-	float m_Frequency;
+	struct TimerDesc
+	{
+		int Class;
+    	int SClass;
+    	int Card;
+    	int Device;
+    	int Subdevice;
+	};
 };
 
 #endif

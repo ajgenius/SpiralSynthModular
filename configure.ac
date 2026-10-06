@@ -408,6 +408,17 @@ esac
 AC_SUBST([MIDI_LIBS])
 AM_CONDITIONAL([MACOS_BUNDLE], [test "x$MIDI_LIBS" != x])
 
+dnl One AtomicClock implementation per platform; none leaves the class unbuilt.
+atomic_clock="none"
+case "$host_os" in
+    darwin*) atomic_clock="mach" ;;
+    *) if test "x$have_output_alsa" = "xyes"; then atomic_clock="alsa"; fi ;;
+esac
+AM_CONDITIONAL([ATOMIC_CLOCK_MACH], [test "$atomic_clock" = mach])
+AM_CONDITIONAL([ATOMIC_CLOCK_ALSA], [test "$atomic_clock" = alsa])
+AM_CONDITIONAL([HAVE_ATOMIC_CLOCK], [test "$atomic_clock" != none])
+AC_MSG_NOTICE([AtomicClock: $atomic_clock])
+
 dnl Do we need png?????
 dnl AC_CHECK_HEADERS(png.h)
 dnl AC_CHECK_LIB(png, png_get_copyright)
