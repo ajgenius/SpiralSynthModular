@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
-AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include $(PORTAUDIO_CFLAGS) $(ALSA_CFLAGS)
+AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include $(ALSA_CFLAGS)
 lib_LTLIBRARIES = libspiralcore.la
 libspiralcore_la_SOURCES = \
     include/Allocator.h \
@@ -17,7 +17,7 @@ libspiralcore_la_SOURCES = \
     include/RiffWav.h \
     src/RiffWav.cpp
 libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 2:0:0
-libspiralcore_la_LIBADD = $(MIDI_LIBS) $(AMIDILIBS) $(SFLIBS) $(PORTAUDIO_LIBS) $(ALSA_LIBS) $(JACK_LIBS) $(CORE_AUDIO_LIBS) -lm
+libspiralcore_la_LIBADD = $(MIDI_LIBS) $(AMIDILIBS) $(SFLIBS) $(ALSA_LIBS) $(JACK_LIBS) $(CORE_AUDIO_LIBS) -lm
 
 check_PROGRAMS = compatibility-test
 TESTS = $(check_PROGRAMS)
@@ -33,7 +33,6 @@ EXTRA_DIST = \
     include/Event.h \
     include/EventQueue.h \
     include/OSCServer.h \
-    include/PortAudioClient.h \
     include/SearchPaths.h \
     include/SpiralTime.h \
     include/Trace.h \
@@ -42,7 +41,6 @@ EXTRA_DIST = \
     src/Event.cpp \
     src/EventQueue.cpp \
     src/OSCServer.cpp \
-    src/PortAudioClient.cpp \
     src/SearchPaths.cpp \
     src/Time.cpp \
     src/Tuna.cpp
@@ -96,12 +94,6 @@ atomic_clock_test_SOURCES = tests/atomic-clock.cpp
 atomic_clock_test_LDADD = libspiralcore.la
 endif
 EXTRA_DIST += src/AlsaAtomicClock.cpp include/AlsaAtomicClock.h src/MachAtomicClock.cpp
-if HAVE_OUTPUT_PORTAUDIO
-libspiralcore_la_SOURCES += src/PortAudioClient.cpp include/PortAudioClient.h
-check_PROGRAMS += portaudio-client-test
-portaudio_client_test_CPPFLAGS = $(AM_CPPFLAGS)
-portaudio_client_test_SOURCES = tests/portaudio-client.cpp src/PortAudioClient.cpp src/AudioTiming.cpp
-endif
 if HAVE_OUTPUT_ALSA
 libspiralcore_la_SOURCES += src/AlsaClient.cpp include/AlsaClient.h
 check_PROGRAMS += alsa-client-test
