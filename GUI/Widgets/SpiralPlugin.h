@@ -76,6 +76,10 @@ struct HostInfo
 
 	bool   PAUSED;
 	std::string AUDIOCLIENT;
+
+	// Engine position of the period being rendered.
+	unsigned long FRAME;
+	bool   ROLLING;
 };
 
 /////////////////////////////////////////////////////////////////////
@@ -129,6 +133,8 @@ public:
 	void SetParent(void *s) { m_Parent=s; }
 
 	void UpdateChannelHandler();
+	// Host only: mark every output with the period just rendered.
+	void StampOutputs(unsigned long frame);
 	// is the plugin connected to an external device (oss/alsa/jack)
 	bool IsTerminal() { return m_IsTerminal; }
 	bool IsDead() { return m_IsDead; }

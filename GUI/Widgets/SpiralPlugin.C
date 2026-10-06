@@ -103,7 +103,13 @@ bool SpiralPlugin::SetInput(unsigned int n, const Sample *s)
 
 void SpiralPlugin::UpdateChannelHandler()
 {
-    m_AudioCH->UpdateDataNow();
+    m_AudioCH->UpdateDataNow(m_HostInfo ? m_HostInfo->FRAME : 0);
+}
+
+void SpiralPlugin::StampOutputs(unsigned long frame)
+{
+	for (std::vector<Sample*>::iterator i=m_Output.begin(); i!=m_Output.end(); ++i)
+		if (*i) (*i)->Stamp(frame);
 }
 
 void SpiralPlugin::AddOutput()

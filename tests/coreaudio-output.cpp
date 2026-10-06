@@ -40,6 +40,7 @@ struct Engine
 			if (!hub->WaitPeriod()) continue;
 
 			pthread_mutex_lock(&engine->Gate);
+			hub->BeginPeriod();
 			engine->Driver->Execute();
 			if (hub->GetMode()==AudioTransportHub::OUTPUT) __sync_fetch_and_add(&engine->Cycles,1);
 

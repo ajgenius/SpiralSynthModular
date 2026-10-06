@@ -48,6 +48,12 @@ public:
 	bool WaitReady(unsigned microseconds);
 	bool TransportCycle(bool read, bool write);
 	unsigned Underruns() const { return m_Underruns; }
+
+	bool GetTransport(unsigned long &frame, bool &rolling) const
+		{ return m_Client && m_Client->GetTransport(frame, rolling); }
+	bool StartTransport() { return m_Client && m_Client->StartTransport(); }
+	bool StopTransport() { return m_Client && m_Client->StopTransport(); }
+	bool LocateTransport(unsigned long frame) { return m_Client && m_Client->LocateTransport(frame); }
 	bool OpenReadWrite();
 	bool OpenWrite();
 	bool OpenRead();

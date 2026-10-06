@@ -66,6 +66,13 @@ int main(int argc, char **argv)
 		host.Synth.UpdateHostInfo();
 		usleep(200000);
 		assert(hub->GetMode()==AudioTransportHub::OUTPUT && !hub->IsCallbackDriven());
+
+		// The engine frame advances one period per cycle and reaches every snapshot.
+		const unsigned long before=hub->Frame();
+		usleep(100000);
+		const unsigned long advanced=hub->Frame()-before;
+		printf("CoreAudio host switch %u: engine advanced %lu frames in 100 ms\n",cycle+1,advanced);
+		assert(advanced>=SpiralInfo::BUFSIZE*4 && advanced%SpiralInfo::BUFSIZE==0);
 	}
 
 	host.Synth.ClearUp();
