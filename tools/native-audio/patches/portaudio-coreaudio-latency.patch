@@ -1,0 +1,401 @@
+From 6b95bfe39a06259cb7def4f37f72be390c262050 Mon Sep 17 00:00:00 2001
+From: Codex / ajgenius <113943+ajgenius@users.noreply.github.com>
+Date: Tue, 6 Oct 2026 17:11:50 -0400
+Subject: [PATCH] [Codex] Include cached CoreAudio stream latency in PortAudio
+ timestamps
+
+---
+ qa/paqa_mac_core_latency.c                   | 152 ++++++++++++++++++
+ src/hostapi/coreaudio/pa_mac_core.c          | 153 +++++++++++++++----
+ src/hostapi/coreaudio/pa_mac_core_internal.h |   3 +-
+ 3 files changed, 279 insertions(+), 29 deletions(-)
+ create mode 100644 qa/paqa_mac_core_latency.c
+
+diff --git a/qa/paqa_mac_core_latency.c b/qa/paqa_mac_core_latency.c
+new file mode 100644
+index 0000000..ce391b7
+--- /dev/null
++++ b/qa/paqa_mac_core_latency.c
+@@ -0,0 +1,152 @@
++/* SPDX-License-Identifier: MIT
++ * Exercise the production timestamp/listener code with synthetic HAL properties.
++ * Link against libportaudio.a for the unused backend's supporting functions. */
++#include "../src/hostapi/coreaudio/pa_mac_core.c"
++#include <assert.h>
++
++static AudioStreamID outputStream = 202;
++static UInt32 outputFrames = 928, outputDeviceFrames = 66;
++static AudioObjectID failRead, failListen;
++static unsigned queries;
++struct ListenerRecord
++{
++    AudioObjectID object;
++    AudioObjectPropertyAddress address;
++    AudioObjectPropertyListenerProc callback;
++    void *context;
++};
++static struct ListenerRecord listeners[32];
++static unsigned listenerCount;
++
++OSStatus AudioObjectGetPropertyData(AudioObjectID object, const AudioObjectPropertyAddress *address,
++        UInt32 qualifierSize, const void *qualifier, UInt32 *size, void *data)
++{
++    UInt32 value = 0;
++    (void)qualifierSize; (void)qualifier;
++    ++queries;
++    if( object == failRead ) return kAudioHardwareBadObjectError;
++
++    if( object >= 200 )
++    {
++        assert(address->mScope == kAudioObjectPropertyScopeGlobal);
++        assert(address->mSelector == kAudioStreamPropertyLatency);
++        value = object == 201 ? 1439 : outputFrames;
++    }
++    else switch( address->mSelector )
++    {
++    case kAudioDevicePropertyStreams:
++        value = object == 101 ? 201 : outputStream;
++        if( !value ) { *size = 0; return noErr; }
++        break;
++    case kAudioDevicePropertyLatency:
++        value = object == 101 ? 0 : outputDeviceFrames;
++        break;
++    case kAudioDevicePropertySafetyOffset: value = 114; break;
++    case kAudioDevicePropertyBufferFrameSize: value = 512; break;
++    default: assert(0);
++    }
++
++    assert(*size >= sizeof(value));
++    memcpy(data, &value, sizeof(value));
++    *size = sizeof(value);
++    return noErr;
++}
++
++OSStatus AudioObjectAddPropertyListener(AudioObjectID object, const AudioObjectPropertyAddress *address,
++        AudioObjectPropertyListenerProc callback, void *context)
++{
++    struct ListenerRecord *record;
++    if( object == failListen ) return kAudioHardwareIllegalOperationError;
++
++    assert(listenerCount < 32);
++    record = &listeners[listenerCount++];
++    record->object = object; record->address = *address;
++    record->callback = callback; record->context = context;
++    return noErr;
++}
++
++OSStatus AudioObjectRemovePropertyListener(AudioObjectID object, const AudioObjectPropertyAddress *address,
++        AudioObjectPropertyListenerProc callback, void *context)
++{
++    unsigned n;
++    for( n = 0; n < listenerCount; ++n )
++    {
++        struct ListenerRecord *record = &listeners[n];
++        if( record->object == object && record->address.mSelector == address->mSelector &&
++                record->address.mScope == address->mScope && record->callback == callback && record->context == context )
++        {
++            listeners[n] = listeners[--listenerCount];
++            return noErr;
++        }
++    }
++    return kAudioHardwareBadObjectError;
++}
++
++static OSStatus Notify(AudioObjectID object, AudioObjectPropertySelector selector)
++{
++    unsigned n;
++    for( n = 0; n < listenerCount; ++n )
++    {
++        struct ListenerRecord record = listeners[n];
++        if( record.object == object && record.address.mSelector == selector )
++            return record.callback(object, 1, &record.address, record.context);
++    }
++    assert(0);
++    return -1;
++}
++
++int main(void)
++{
++    PaMacCoreStream stream;
++    unsigned before;
++    AudioObjectPropertyAddress batch[2] = {
++        {kAudioDevicePropertyStreams, kAudioDevicePropertyScopeOutput, 0},
++        {kAudioDevicePropertyLatency, kAudioDevicePropertyScopeOutput, 0}
++    };
++    memset(&stream, 0, sizeof(stream));
++    stream.streamRepresentation.magic = PA_STREAM_MAGIC;
++    stream.inputDevice = 101; stream.outputDevice = 102;
++    stream.inputUnit = stream.outputUnit = (AudioUnit)1;
++    pthread_mutex_init(&stream.timingInformationMutex, NULL);
++    InitializeDeviceProperties(&stream.inputProperties);
++    InitializeDeviceProperties(&stream.outputProperties);
++    stream.inputProperties.samplePeriod = stream.outputProperties.samplePeriod = 1.0 / 48000;
++    assert(SetupDevicePropertyListeners(&stream, 101, TRUE) == noErr);
++    assert(SetupDevicePropertyListeners(&stream, 102, FALSE) == noErr);
++    assert(listenerCount == 12);
++    before = queries;
++    UpdateTimeStampOffsets(&stream);
++    assert(queries == before); /* Timestamp arithmetic must use the cached properties. */
++    assert(fabs(stream.timestampOffsetInputDevice - 1439.0 / 48000) < 1e-12);
++    assert(fabs(stream.timestampOffsetOutputDevice - 994.0 / 48000) < 1e-12);
++    assert(fabs(stream.timestampOffsetCombined - 1318.0 / 48000) < 1e-12);
++
++    outputFrames = 1024;
++    assert(Notify(202, kAudioStreamPropertyLatency) == noErr);
++    assert(fabs(stream.timestampOffsetOutputDevice - 1090.0 / 48000) < 1e-12);
++    outputStream = 203; outputFrames = 300; outputDeviceFrames = 100;
++    assert(AudioDevicePropertyGenericListenerProc(102, 2, batch, &stream) == noErr);
++    assert(listenerCount == 12 && stream.outputProperties.latencyStream == 203);
++    assert(fabs(stream.timestampOffsetOutputDevice - 400.0 / 48000) < 1e-12);
++    stream.outputProperties.samplePeriod = 1.0 / 44100;
++    UpdateTimeStampOffsets(&stream);
++    assert(fabs(stream.timestampOffsetOutputDevice - 400.0 / 44100) < 1e-12);
++
++    failRead = outputStream;
++    assert(Notify(outputStream, kAudioStreamPropertyLatency) != noErr);
++    assert(stream.outputProperties.streamLatency == 300 && listenerCount == 12);
++    failRead = 0; failListen = outputStream = 204;
++    assert(Notify(102, kAudioDevicePropertyStreams) != noErr);
++    assert(stream.outputProperties.latencyStream == 203 && listenerCount == 12);
++    failListen = 0; outputStream = 0;
++    assert(Notify(102, kAudioDevicePropertyStreams) == noErr);
++    assert(stream.outputProperties.streamLatency == 0 && listenerCount == 11);
++    CleanupDevicePropertyListeners(&stream, 101, TRUE);
++    CleanupDevicePropertyListeners(&stream, 102, FALSE);
++    assert(listenerCount == 0);
++    CleanupDevicePropertyListeners(&stream, 102, FALSE);
++    assert(listenerCount == 0);
++    pthread_mutex_destroy(&stream.timingInformationMutex);
++    puts("CoreAudio ADC/DAC offsets, notifications, stream replacement and cleanup PASS");
++    return 0;
++}
+diff --git a/src/hostapi/coreaudio/pa_mac_core.c b/src/hostapi/coreaudio/pa_mac_core.c
+index 63d318a..101ac16 100644
+--- a/src/hostapi/coreaudio/pa_mac_core.c
++++ b/src/hostapi/coreaudio/pa_mac_core.c
+@@ -998,7 +998,8 @@ static Float64 CalculateSoftwareLatencyFromProperties( PaMacCoreStream *stream,
+ 
+ static Float64 CalculateHardwareLatencyFromProperties( PaMacCoreStream *stream, PaMacCoreDeviceProperties *deviceProperties )
+ {
+-    return deviceProperties->deviceLatency * deviceProperties->samplePeriod; // same as dividing by sampleRate but faster
++    return ((Float64)deviceProperties->deviceLatency + deviceProperties->streamLatency)
++            * deviceProperties->samplePeriod;
+ }
+ 
+ /* Calculate values used to convert Apple timestamps into PA timestamps
+@@ -1080,41 +1081,119 @@ static OSStatus QueryUInt32DeviceProperty( AudioDeviceID deviceID, Boolean isInp
+     return osErr;
+ }
+ 
+-static OSStatus AudioDevicePropertyGenericListenerProc( AudioObjectID inDevice, UInt32 inNumberAddresses,
+-                                                        const AudioObjectPropertyAddress * inAddresses, void * inClientData )
++static OSStatus AudioStreamLatencyListenerProc( AudioObjectID object, UInt32 count,
++        const AudioObjectPropertyAddress *addresses, void *context );
++
++static const AudioObjectPropertyAddress streamLatencyAddress = {
++    kAudioStreamPropertyLatency, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMaster
++};
++
++/* PaStreamInfo currently describes the first device stream. Use that same stream
++ * for the single ADC/DAC timestamp, and cache its latency outside the IO proc. */
++static OSStatus UpdateStreamLatency( PaMacCoreStream *stream, AudioDeviceID device, Boolean isInput )
+ {
+-    OSStatus osErr = noErr;
+-    PaMacCoreStream *stream = (PaMacCoreStream*)inClientData;
+-    bool isInput = inAddresses->mScope == kAudioDevicePropertyScopeInput;
+-    AudioDevicePropertyID inPropertyID = inAddresses->mSelector;
++    PaMacCoreDeviceProperties *properties = isInput ? &stream->inputProperties : &stream->outputProperties;
++    AudioStreamID first = kAudioObjectUnknown;
++    UInt32 frames = 0, size = sizeof(first);
++    OSStatus error = PaMacCore_AudioDeviceGetProperty( device, 0, isInput,
++            kAudioDevicePropertyStreams, &size, &first );
++    if( error != noErr ) return error;
+ 
+-    // Make sure the callback is operating on a stream that is still valid!
+-    assert( stream->streamRepresentation.magic == PA_STREAM_MAGIC );
++    if( size == 0 ) first = kAudioObjectUnknown;
++    else if( size != sizeof(first) ) return kAudioHardwareBadPropertySizeError;
+ 
+-    PaMacCoreDeviceProperties *deviceProperties = isInput ? &stream->inputProperties : &stream->outputProperties;
+-    UInt32 *valuePtr = NULL;
+-    switch( inPropertyID )
++    if( first != kAudioObjectUnknown )
+     {
+-    case kAudioDevicePropertySafetyOffset:
+-        valuePtr = &deviceProperties->safetyOffset;
+-        break;
++        size = sizeof(frames);
++        error = AudioObjectGetPropertyData( first, &streamLatencyAddress, 0, NULL, &size, &frames );
++        if( error != noErr ) return error;
++    }
+ 
+-    case kAudioDevicePropertyLatency:
+-        valuePtr = &deviceProperties->deviceLatency;
+-        break;
++    if( first != properties->latencyStream )
++    {
++        if( first != kAudioObjectUnknown )
++        {
++            error = AudioObjectAddPropertyListener( first, &streamLatencyAddress,
++                    AudioStreamLatencyListenerProc, stream );
++            if( error != noErr ) return error;
++        }
+ 
+-    case kAudioDevicePropertyBufferFrameSize:
+-        valuePtr = &deviceProperties->bufferFrameSize;
+-        break;
++        if( properties->latencyStream != kAudioObjectUnknown )
++            AudioObjectRemovePropertyListener( properties->latencyStream, &streamLatencyAddress,
++                    AudioStreamLatencyListenerProc, stream );
++
++        properties->latencyStream = first;
++    }
++
++    properties->streamLatency = frames;
++    return noErr;
++}
++
++static OSStatus AudioStreamLatencyListenerProc( AudioObjectID object, UInt32 count,
++        const AudioObjectPropertyAddress *addresses, void *context )
++{
++    PaMacCoreStream *stream = (PaMacCoreStream *)context;
++    UInt32 n;
++    OSStatus error = noErr;
++    (void)count;
++    (void)addresses;
++    assert( stream->streamRepresentation.magic == PA_STREAM_MAGIC );
++
++    for( n = 0; n < 2; ++n )
++    {
++        PaMacCoreDeviceProperties *properties = n ? &stream->outputProperties : &stream->inputProperties;
++        if( properties->latencyStream == object )
++        {
++            UInt32 frames = 0, size = sizeof(frames);
++            error = AudioObjectGetPropertyData( object, &streamLatencyAddress, 0, NULL, &size, &frames );
++            if( error != noErr ) return error;
++
++            properties->streamLatency = frames;
++        }
+     }
+-    if( valuePtr != NULL )
++
++    UpdateTimeStampOffsets( stream );
++    return error;
++}
++
++static OSStatus AudioDevicePropertyGenericListenerProc( AudioObjectID inDevice, UInt32 inNumberAddresses,
++                                                        const AudioObjectPropertyAddress * inAddresses, void * inClientData )
++{
++    OSStatus osErr = noErr;
++    UInt32 n;
++    PaMacCoreStream *stream = (PaMacCoreStream*)inClientData;
++    assert( stream->streamRepresentation.magic == PA_STREAM_MAGIC );
++
++    /* A notification may carry more than one property and direction. */
++    for( n = 0; n < inNumberAddresses; ++n )
+     {
+-        osErr = QueryUInt32DeviceProperty( inDevice, isInput, inPropertyID, valuePtr );
+-        if( osErr == noErr )
++        Boolean isInput = inAddresses[n].mScope == kAudioDevicePropertyScopeInput;
++        AudioDevicePropertyID property = inAddresses[n].mSelector;
++        PaMacCoreDeviceProperties *properties = isInput ? &stream->inputProperties : &stream->outputProperties;
++        UInt32 *value = NULL;
++        switch( property )
+         {
+-            UpdateTimeStampOffsets( stream );
++        case kAudioDevicePropertyStreams:
++            osErr = UpdateStreamLatency( stream, inDevice, isInput );
++            break;
++        case kAudioDevicePropertySafetyOffset:
++            value = &properties->safetyOffset;
++            break;
++        case kAudioDevicePropertyLatency:
++            value = &properties->deviceLatency;
++            break;
++        case kAudioDevicePropertyBufferFrameSize:
++            value = &properties->bufferFrameSize;
++            break;
+         }
++
++        if( value != NULL )
++            osErr = QueryUInt32DeviceProperty( inDevice, isInput, property, value );
++
++        if( osErr != noErr ) return osErr;
+     }
++
++    UpdateTimeStampOffsets( stream );
+     return osErr;
+ }
+ 
+@@ -1133,10 +1212,15 @@ static OSStatus SetupDevicePropertyListeners( PaMacCoreStream *stream, AudioDevi
+     if( (osErr = QueryUInt32DeviceProperty( deviceID, isInput,
+                                             kAudioDevicePropertySafetyOffset, &deviceProperties->safetyOffset )) != noErr ) return osErr;
+ 
++    if( (osErr = UpdateStreamLatency( stream, deviceID, isInput )) != noErr ) return osErr;
++
++    PaMacCore_AudioDeviceAddPropertyListener( deviceID, 0, isInput, kAudioDevicePropertyStreams,
++            AudioDevicePropertyGenericListenerProc, stream );
++
+     PaMacCore_AudioDeviceAddPropertyListener( deviceID, 0, isInput, kAudioDevicePropertyActualSampleRate,
+             AudioDevicePropertyActualSampleRateListenerProc, stream );
+ 
+-    PaMacCore_AudioDeviceAddPropertyListener( deviceID, 0, isInput, kAudioStreamPropertyLatency,
++    PaMacCore_AudioDeviceAddPropertyListener( deviceID, 0, isInput, kAudioDevicePropertyLatency,
+             AudioDevicePropertyGenericListenerProc, stream );
+     PaMacCore_AudioDeviceAddPropertyListener( deviceID, 0, isInput, kAudioDevicePropertyBufferFrameSize,
+             AudioDevicePropertyGenericListenerProc, stream );
+@@ -1148,6 +1232,17 @@ static OSStatus SetupDevicePropertyListeners( PaMacCoreStream *stream, AudioDevi
+ 
+ static void CleanupDevicePropertyListeners( PaMacCoreStream *stream, AudioDeviceID deviceID, Boolean isInput )
+ {
++    PaMacCoreDeviceProperties *properties = isInput ? &stream->inputProperties : &stream->outputProperties;
++    if( properties->latencyStream != kAudioObjectUnknown )
++    {
++        AudioObjectRemovePropertyListener( properties->latencyStream, &streamLatencyAddress,
++                AudioStreamLatencyListenerProc, stream );
++        properties->latencyStream = kAudioObjectUnknown;
++    }
++
++    PaMacCore_AudioDeviceRemovePropertyListener( deviceID, 0, isInput, kAudioDevicePropertyStreams,
++            AudioDevicePropertyGenericListenerProc, stream );
++
+     PaMacCore_AudioDeviceRemovePropertyListener( deviceID, 0, isInput, kAudioDevicePropertyActualSampleRate,
+             AudioDevicePropertyActualSampleRateListenerProc, stream );
+ 
+@@ -2058,7 +2153,8 @@ static PaError OpenStream( struct PaUtilHostApiRepresentation *hostApi,
+ 
+         UpdateSampleRateFromDeviceProperty( stream, stream->outputDevice, isInput, kAudioDevicePropertyActualSampleRate );
+ 
+-        SetupDevicePropertyListeners( stream, stream->outputDevice, isInput );
++        result = ERR( SetupDevicePropertyListeners( stream, stream->outputDevice, isInput ) );
++        if( result ) goto error;
+     }
+     if( stream->inputUnit )
+     {
+@@ -2072,7 +2168,8 @@ static PaError OpenStream( struct PaUtilHostApiRepresentation *hostApi,
+ 
+         UpdateSampleRateFromDeviceProperty( stream, stream->inputDevice, isInput, kAudioDevicePropertyActualSampleRate );
+ 
+-        SetupDevicePropertyListeners( stream, stream->inputDevice, isInput );
++        result = ERR( SetupDevicePropertyListeners( stream, stream->inputDevice, isInput ) );
++        if( result ) goto error;
+     }
+     UpdateTimeStampOffsets( stream );
+     // Setup timestamp copies to be used by audio callback.
+diff --git a/src/hostapi/coreaudio/pa_mac_core_internal.h b/src/hostapi/coreaudio/pa_mac_core_internal.h
+index d4a97e0..6113bf9 100644
+--- a/src/hostapi/coreaudio/pa_mac_core_internal.h
++++ b/src/hostapi/coreaudio/pa_mac_core_internal.h
+@@ -118,7 +118,8 @@ typedef struct PaMacCoreDeviceProperties
+     /* Values in Frames from property queries. */
+     UInt32 safetyOffset;
+     UInt32 bufferFrameSize;
+-    // UInt32 streamLatency; // Seems to be the same as deviceLatency!?
++    UInt32 streamLatency;
++    AudioStreamID latencyStream; /* First device stream, as in PaStreamInfo. */
+     UInt32 deviceLatency;
+     /* Current device sample rate. May change!
+        These are initialized to the nominal device sample rate,
+-- 
+2.39.5 (Apple Git-154)
+
