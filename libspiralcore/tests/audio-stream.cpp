@@ -9,8 +9,14 @@
 #include <new>
 #include <cstdlib>
 using namespace spiralcore;
+#if __cplusplus >= 201103L
+#define ALLOCATION_THROWS noexcept(false)
+#else
+#define ALLOCATION_THROWS throw(std::bad_alloc)
+#endif
+
 static bool insideCallback = false;
-void *operator new(std::size_t bytes) throw(std::bad_alloc)
+void *operator new(std::size_t bytes) ALLOCATION_THROWS
 {
 	assert(!insideCallback);
 	void *value = std::malloc(bytes ? bytes : 1);
@@ -18,7 +24,7 @@ void *operator new(std::size_t bytes) throw(std::bad_alloc)
 
 	return value;
 }
-void *operator new[](std::size_t bytes) throw(std::bad_alloc) { return ::operator new(bytes); }
+void *operator new[](std::size_t bytes) ALLOCATION_THROWS { return ::operator new(bytes); }
 void operator delete(void *value) throw() { std::free(value); }
 void operator delete[](void *value) throw() { std::free(value); }
 
