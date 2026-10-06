@@ -32,6 +32,15 @@ int main()
 	for (size_t n = 0; n < names.size(); ++n) printf(" %s", names[n].c_str());
 	printf("\n");
 
+	for (size_t n = 0; n < names.size(); ++n)
+	{
+		AudioClient *first = registry->Create(names[n]);
+		AudioClient *second = registry->Create(names[n]);
+		assert(first && second && first != second);
+		registry->Destroy(names[n], first);
+		registry->Destroy(names[n], second);
+	}
+
 	const BackendDescriptor null = { SPIRAL_AUDIO_PLUGIN_ABI, "audio", "null", Create, Destroy };
 	registry->Register(&null);
 	assert(registry->Find("null") == &null);
