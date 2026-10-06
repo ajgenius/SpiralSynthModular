@@ -23,7 +23,7 @@
 #include "OutputAudioClient.h"
 #include <vector>
 #include <ctime>
-#include "PresentationClock.h"
+#include "AudioTimeline.h"
 
 class AtomicClock;
 
@@ -81,14 +81,14 @@ public:
 	bool WaitPeriod();
 	void BeginPeriod();
 	void CommitPeriod();
-	const spiralcore::AudioStamp &PlaybackStamp() const { return m_PlaybackStamp; }
-	const spiralcore::AudioStamp &CaptureStamp() const { return m_CaptureStamp; }
+	const spiralcore::AudioStamp &PlaybackStamp() const { return m_Timeline.PlaybackStamp(); }
+	const spiralcore::AudioStamp &CaptureStamp() const { return m_Timeline.CaptureStamp(); }
 
 	// Engine position: the frame the period being rendered starts at.
 	// Slaved to the stream's transport when it has one (JACK), free
 	// running otherwise; start, stop and locate ride the same clock.
-	unsigned long Frame() const { return m_Frame; }
-	bool Rolling() const { return m_Rolling; }
+	unsigned long Frame() const { return m_Timeline.Frame(); }
+	bool Rolling() const { return m_Timeline.Rolling(); }
 	void Start();
 	void Stop();
 	void Locate(unsigned long frame);
@@ -105,15 +105,9 @@ private:
 	Mode m_RequestedMode;
 	time_t m_NextRetry;
 
-	unsigned long m_Frame;
-	bool m_Rolling;
 	bool Streaming() const;
 
-	std::vector<spiralcore::AudioStream *> m_Streams;
-	spiralcore::AudioStream *m_Master;
-	spiralcore::PresentationClock m_Presentation;
-	spiralcore::AudioStamp m_PlaybackStamp, m_CaptureStamp;
-	spiralcore::AudioClient *MasterClient() const;
+	spiralcore::AudioTimeline m_Timeline;
 };
 
 #endif

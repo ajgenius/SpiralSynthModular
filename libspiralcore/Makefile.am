@@ -127,3 +127,8 @@ libspiralcore_la_SOURCES += include/AudioStream.h src/AudioStream.cpp include/Pr
 check_PROGRAMS += audio-stream-test
 audio_stream_test_SOURCES = tests/audio-stream.cpp
 audio_stream_test_LDADD = libspiralcore.la
+
+libspiralcore_la_SOURCES += include/AudioTimeline.h src/AudioTimeline.cpp
+check_PROGRAMS += audio-coordinator-test
+audio_coordinator_test_SOURCES = tests/audio-coordinator.cpp
+audio_coordinator_test_LDADD = libspiralcore.la
