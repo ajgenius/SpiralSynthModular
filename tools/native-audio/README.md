@@ -30,11 +30,14 @@ Pinned bases:
 - PortAudio: `88ab584e7bf4358599744cd662cfbc978f41efbf`
 
 Source `env.sh` in a fresh shell before configuring and running SSM. It sets
-`PKG_CONFIG_PATH`, `DYLD_LIBRARY_PATH`, `PATH` and `JACK_DRIVER_DIR` for that shell.
+`PKG_CONFIG_PATH`, `CPPFLAGS`, `LDFLAGS`, `DYLD_LIBRARY_PATH`, `PATH` and
+`JACK_DRIVER_DIR` for that shell. Add other dependency paths before sourcing it,
+so the patched libraries take precedence over an existing installation.
 Build the core and audio modules from the same SSM branch. PortAudio must load the
 patched library; JACK must run the patched server and CoreAudio driver. Existing
 applications and JACK servers do not change when this file is sourced. Select a
-separate named JACK server for testing, or stop and replace your own server when
+separate named JACK server for testing (use a short name such as `ssmn` to avoid
+JACK's macOS semaphore-name limit), or stop and replace your own server when
 appropriate; the script does neither.
 
 Use the opt-in `native-loopback` and `jack-alignment-live` tests documented in
