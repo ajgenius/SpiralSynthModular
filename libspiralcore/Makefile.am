@@ -52,6 +52,10 @@ EXTRA_DIST += README.ssm AUDIO-TRANSPORT.md
 libspiralcore_la_SOURCES += include/AudioClient.h
 
 libspiralcore_la_SOURCES += include/PluginLoader.h src/PluginLoader.cpp
+libspiralcore_la_SOURCES += include/AudioBackend.h src/AudioBackend.cpp src/AudioBackends.cpp
+check_PROGRAMS += audio-backend-test
+audio_backend_test_SOURCES = tests/audio-backend.cpp
+audio_backend_test_LDADD = libspiralcore.la
 check_PROGRAMS += plugin-loader-test
 plugin_loader_test_SOURCES = tests/plugin-loader.cpp
 plugin_loader_test_LDADD = libspiralcore.la
