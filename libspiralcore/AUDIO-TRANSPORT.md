@@ -60,7 +60,7 @@ acoustic paths; mixed hardware still needs loopback measurement.
 
 ## Backend extraction boundary
 
-`PluginLoader` owns library handles and discovery. `AudioBackendRegistry` validates descriptors, selects clients and tracks their lifetime; it refuses unload while clients remain live and removes module descriptors before `dlclose`. PortAudio and CoreAudio are loadable modules. JACK, ALSA, OSS and Dummy currently register through the same interface as built-ins. Each factory creates an independent native client.
+`PluginLoader` owns library handles and discovery. `AudioBackendRegistry` validates descriptors, selects clients and tracks their lifetime; it refuses unload while clients remain live and removes module descriptors before `dlclose`. PortAudio, CoreAudio, ALSA and OSS are loadable modules. JACK and Dummy currently register through the same interface as built-ins. The legacy ALSA timer and its focused test live with the ALSA module; the presentation scheduler does not use that timer. Each factory creates an independent native client.
 
 `AudioTimeline` coordinates one engine's presentation clock, stream membership, capture lookback and pacing. The public hub supplies host/session policy; the private host supplies Spicy ownership and control scheduling. `AudioClient`, `AudioTiming`, `AudioStream`, `TimedAudioBuffer`, `PresentationClock`, `AudioTimeline`, loader and registry sources can therefore remain identical between hosts. Named JACK devices and Output use this same transport contract.
 

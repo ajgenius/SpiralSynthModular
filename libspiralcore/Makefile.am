@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
-AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include $(ALSA_CFLAGS)
+AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include
 lib_LTLIBRARIES = libspiralcore.la
 libspiralcore_la_SOURCES = \
     include/Allocator.h \
@@ -17,7 +17,7 @@ libspiralcore_la_SOURCES = \
     include/RiffWav.h \
     src/RiffWav.cpp
 libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 2:0:0
-libspiralcore_la_LIBADD = $(MIDI_LIBS) $(AMIDILIBS) $(SFLIBS) $(ALSA_LIBS) $(JACK_LIBS) -lm
+libspiralcore_la_LIBADD = $(MIDI_LIBS) $(AMIDILIBS) $(SFLIBS) $(JACK_LIBS) -lm
 
 check_PROGRAMS = compatibility-test
 TESTS = $(check_PROGRAMS)
@@ -88,24 +88,12 @@ libspiralcore_la_SOURCES += include/AtomicClock.h
 if ATOMIC_CLOCK_MACH
 libspiralcore_la_SOURCES += src/MachAtomicClock.cpp
 endif
-if ATOMIC_CLOCK_ALSA
-libspiralcore_la_SOURCES += src/AlsaAtomicClock.cpp include/AlsaAtomicClock.h
-endif
-if HAVE_ATOMIC_CLOCK
+if ATOMIC_CLOCK_MACH
 check_PROGRAMS += atomic-clock-test
 atomic_clock_test_SOURCES = tests/atomic-clock.cpp
 atomic_clock_test_LDADD = libspiralcore.la
 endif
-EXTRA_DIST += src/AlsaAtomicClock.cpp include/AlsaAtomicClock.h src/MachAtomicClock.cpp
-if HAVE_OUTPUT_ALSA
-libspiralcore_la_SOURCES += src/AlsaClient.cpp include/AlsaClient.h
-check_PROGRAMS += alsa-client-test
-alsa_client_test_SOURCES = tests/alsa-client.cpp
-alsa_client_test_LDADD = libspiralcore.la
-endif
-if HAVE_OUTPUT_OSS
-libspiralcore_la_SOURCES += src/OSSClient.cpp include/OSSClient.h
-endif
+EXTRA_DIST += src/MachAtomicClock.cpp
 
 if HAVE_JACK_CLIENT
 libspiralcore_la_SOURCES += src/JackClient.cpp include/JackClient.h

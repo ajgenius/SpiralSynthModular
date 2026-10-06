@@ -60,9 +60,7 @@ if test "$have_yajl" = no; then
 fi
 AM_CONDITIONAL([HAVE_YAJL], [test "$have_yajl" = yes])
 
-dnl ---- OutputPlugin audio backends (in libspiralcore) ----
-dnl Blocking device-paced I/O: PortAudio Pa_WriteStream, ALSA writei, OSS
-dnl write().  Not the original callback PortAudioClient, not PipeWire/ESD.
+dnl ---- Optional loadable audio backends ----
 
 AC_ARG_ENABLE([portaudio],
     [AS_HELP_STRING([--disable-portaudio], [Do not build PortAudio output support])],
@@ -89,7 +87,7 @@ if test "x$enable_output_portaudio" = "xyes"; then
     fi
 fi
 if test "x$have_output_portaudio" = "xyes"; then
-    AC_DEFINE([HAVE_OUTPUT_PORTAUDIO], [1], [Build PortAudio output support in libspiralcore])
+    AC_DEFINE([HAVE_OUTPUT_PORTAUDIO], [1], [Build PortAudio audio backend module])
 fi
 AC_SUBST([PORTAUDIO_CFLAGS])
 AC_SUBST([PORTAUDIO_LIBS])
@@ -120,7 +118,7 @@ if test "x$enable_output_alsa" = "xyes"; then
     fi
 fi
 if test "x$have_output_alsa" = "xyes"; then
-    AC_DEFINE([HAVE_OUTPUT_ALSA], [1], [Build ALSA PCM output support in libspiralcore])
+    AC_DEFINE([HAVE_OUTPUT_ALSA], [1], [Build ALSA PCM audio backend module])
 fi
 AC_SUBST([ALSA_CFLAGS])
 AC_SUBST([ALSA_LIBS])
@@ -145,7 +143,7 @@ if test "x$enable_output_oss" = "xyes"; then
     fi
 fi
 if test "x$have_output_oss" = "xyes"; then
-    AC_DEFINE([HAVE_OUTPUT_OSS], [1], [Build OSS output support in libspiralcore])
+    AC_DEFINE([HAVE_OUTPUT_OSS], [1], [Build OSS audio backend module])
 fi
 AM_CONDITIONAL([HAVE_OUTPUT_OSS], [test "x$have_output_oss" = "xyes"])
 
@@ -409,6 +407,7 @@ case "$host_os" in
     cygwin*|mingw*) plugin_module_ext=".dll" ;;
     *) plugin_module_ext=".so" ;;
 esac
+AC_SUBST([plugin_module_ext])
 AC_DEFINE_UNQUOTED([PLUGIN_MODULE_EXT], ["$plugin_module_ext"], [Loadable plugin module extension])
 AC_SEARCH_LIBS([clock_gettime], [rt])
 AC_SEARCH_LIBS([pthread_create], [pthread], [],
@@ -422,17 +421,16 @@ esac
 AC_SUBST([MIDI_LIBS])
 AM_CONDITIONAL([MACOS_BUNDLE], [test "x$MIDI_LIBS" != x])
 
-dnl One AtomicClock implementation per platform; none leaves the class unbuilt.
+dnl The legacy ALSA timer is supplied by its module, Mach remains in core.
 atomic_clock="none"
 case "$host_os" in
     darwin*) atomic_clock="mach" ;;
     *) if test "x$have_output_alsa" = "xyes"; then atomic_clock="alsa"; fi ;;
 esac
 AM_CONDITIONAL([ATOMIC_CLOCK_MACH], [test "$atomic_clock" = mach])
-AM_CONDITIONAL([ATOMIC_CLOCK_ALSA], [test "$atomic_clock" = alsa])
-AM_CONDITIONAL([HAVE_ATOMIC_CLOCK], [test "$atomic_clock" != none])
-if test "$atomic_clock" != none; then
-    AC_DEFINE([HAVE_ATOMIC_CLOCK], [1], [A platform AtomicClock is built])
+AM_CONDITIONAL([HAVE_ATOMIC_CLOCK], [test "$atomic_clock" = mach])
+if test "$atomic_clock" = mach; then
+    AC_DEFINE([HAVE_ATOMIC_CLOCK], [1], [The core provides a platform AtomicClock])
 fi
 AC_MSG_NOTICE([AtomicClock: $atomic_clock])
 
@@ -464,6 +462,8 @@ Plugins/Makefile
 Plugins/Audio/Makefile
 Plugins/Audio/PortAudio/Makefile
 Plugins/Audio/CoreAudio/Makefile
+Plugins/Audio/ALSA/Makefile
+Plugins/Audio/OSS/Makefile
 Plugins/DSP/Makefile
 Plugins/GUI/Makefile
 Plugins/GUI/AmpPlugin/Makefile
