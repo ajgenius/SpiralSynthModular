@@ -26,6 +26,9 @@ struct Engine
 
 			pthread_mutex_lock(&engine->Gate);
 			hub->BeginPeriod();
+			AudioDriver *driver = static_cast<AudioDriver *>(engine->Plugin);
+			if (driver->ProcessType() == AudioDriver::ALWAYS) driver->ProcessAudio();
+
 			engine->Plugin->Execute();
 			hub->CommitPeriod();
 			pthread_mutex_unlock(&engine->Gate);
@@ -152,7 +155,7 @@ int main(int argc, char **argv)
 			for (unsigned n=0; n<2; ++n) received[n]->Set(0);
 
 			usleep(150000);
-			driver->Execute();
+			driver->ProcessAudio();
 			for (unsigned n=0; n<2; ++n)
 				for (unsigned frame=0; frame<info.BUFSIZE; ++frame)
 					assert((*received[n])[frame]==-0.375f);

@@ -191,6 +191,8 @@ int jack_connect(jack_client_t *c, const char *source, const char *destination)
 
 }
 
+// The plugin period tests reuse this server without running the client suite.
+#ifndef JACK_CLIENT_TEST_FIXTURE
 struct Notifications
 {
 	unsigned int Frames;
@@ -364,3 +366,5 @@ int main()
 	JackClient::PackUpAndGoHome();
 	return 0;
 }
+
+#endif
