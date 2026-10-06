@@ -17,15 +17,9 @@
 */
 
 #include "OutputPlugin.h"
-#include <algorithm>
 #include "SpiralIcon.xpm"
 
 using namespace std;
-
-static const HostInfo* host;
-std::vector<OutputPlugin *> OutputPlugin::m_Members;
-bool OutputPlugin::m_Configured=false;
-OutputPlugin::Mode OutputPlugin::m_Mode=NO_MODE;
 
 #include <config.h>
 
@@ -59,15 +53,13 @@ string SpiralPlugin_GetGroupName() { return "InputOutput"; }
 }
 
 OutputPlugin::OutputPlugin() :
-m_IOFailed(false),
-m_NextRetry(0),
 m_Volume(1.0f),
-m_Registered(false),
-m_RequestedMode(OUTPUT)
+m_Hub(AudioTransportHub::Get()),
+m_Registered(false)
 {
 	m_IsTerminal=true;
 	m_NotifyOpenOut=false;
-	m_ReportedMode=(int)m_Mode;
+	m_ReportedMode=(int)m_Hub->GetMode();
 	m_AudioCH->Register("Mode",&m_ReportedMode,ChannelHandler::OUTPUT);
 	m_PluginInfo.Name="Output";
 	m_PluginInfo.Width=100;
@@ -90,18 +82,8 @@ OutputPlugin::~OutputPlugin()
 PluginInfo &OutputPlugin::Initialise(const HostInfo *Host)
 {
 	PluginInfo& Info= SpiralPlugin::Initialise(Host);
-	if (!m_Registered) m_Members.push_back(this);
-
+	m_Hub->Attach(this,Host);
 	m_Registered=true;
-	host=Host;
-	OUTPUTCLIENT::host = Host;
-	string client = Host->AUDIOCLIENT;
-	string dest   = Host->OUTPUTFILE;
-	if (!m_Configured) {
-		m_Configured = OUTPUTCLIENT::Get()->Configure(client, dest);
-		if (!m_Configured) m_Mode=CLOSED;
-	}
-	OUTPUTCLIENT::Get()->AllocateBuffer();
 	return Info;
 }
 
@@ -112,63 +94,16 @@ bool OutputPlugin::Kill()
 	m_IsDead=true;
 	if (!m_Registered) return true;
 
-	// Replace the callback context only after its client has stopped.
-	const bool wasOwner = !m_Members.empty() && m_Members.front() == this;
-	if (wasOwner && IsCallbackDriver())
-	{
-		OUTPUTCLIENT::Get()->Close();
-		if (m_Mode != CLOSED) m_Mode = NO_MODE;
-
-	}
-
 	m_Registered=false;
-	m_Members.erase(std::remove(m_Members.begin(),m_Members.end(),this),m_Members.end());
-	if (m_Members.empty()) {
-		if (cb_Blocking) cb_Blocking(m_Parent,false);
-		OUTPUTCLIENT::PackUpAndGoHome();
-		m_Mode=NO_MODE;
-		m_Configured=false;
-	}
+	m_Hub->Detach(this);
 	return true;
-}
-
-void OutputPlugin::ReportMode()
-{
-	for (size_t i=0;i<m_Members.size();++i)
-		m_Members[i]->m_ReportedMode=(int)m_Mode;
-}
-
-void OutputPlugin::OpenMode(Mode mode)
-{
-	for (size_t i=0;i<m_Members.size();++i) m_Members[i]->m_RequestedMode=mode;
-
-	bool opened=false;
-	m_IOFailed=false;
-	m_NextRetry=time(NULL)+1;
-	m_Mode=CLOSED;
-	if (m_Configured) {
-		OUTPUTCLIENT::Get()->SetCallback(ProcessCallback, m_Members.empty() ? this : m_Members.front());
-		if (mode==INPUT) opened=OUTPUTCLIENT::Get()->OpenRead();
-
-		if (mode==OUTPUT) opened=OUTPUTCLIENT::Get()->OpenWrite();
-		if (mode==DUPLEX) opened=OUTPUTCLIENT::Get()->OpenReadWrite();
-	}
-	if (opened) m_Mode=mode;
-	ReportMode();
-	if (cb_Blocking) cb_Blocking(m_Parent,opened && !IsCallbackDriver());
-
 }
 
 void OutputPlugin::Reset()
 {
 	if (m_IsDead) return;
 	ResetPorts();
-	const Mode previous=m_Mode;
-	m_Configured=host && OUTPUTCLIENT::Get()->Configure(
-		host->AUDIOCLIENT,
-		host->OUTPUTFILE);
-	OUTPUTCLIENT::Get()->AllocateBuffer();
-	OpenMode(previous==NO_MODE ? OUTPUT : previous);
+	m_Hub->Reconfigure();
 }
 
 void OutputPlugin::Execute()
@@ -177,86 +112,40 @@ void OutputPlugin::Execute()
 		return;
 
 
-	if (m_Mode==OUTPUT || m_Mode==DUPLEX)
-		OUTPUTCLIENT::Get()->SendStereo(GetInput(0),GetInput(1));
+	const Mode mode=GetMode();
+	if (mode==OUTPUT || mode==DUPLEX)
+		m_Hub->Transport()->SendStereo(GetInput(0),GetInput(1));
 
-	if (m_Mode==INPUT || m_Mode==DUPLEX)
-		OUTPUTCLIENT::Get()->GetStereo(GetOutputBuf(0),GetOutputBuf(1));
+	if (mode==INPUT || mode==DUPLEX)
+		m_Hub->Transport()->GetStereo(GetOutputBuf(0),GetOutputBuf(1));
 }
 
 void OutputPlugin::ExecuteCommands()
 {
 	if (m_IsDead || !m_AudioCH->IsCommandWaiting()) return;
 	switch(m_AudioCH->GetCommand()) {
-		case OPENREAD: OpenMode(INPUT); break;
-		case OPENWRITE: OpenMode(OUTPUT); break;
-		case OPENDUPLEX: OpenMode(DUPLEX); break;
-		case CLOSE:
-			for (size_t i=0;i<m_Members.size();++i) m_Members[i]->m_RequestedMode=CLOSED;
-
-			OUTPUTCLIENT::Get()->Close();
-			m_Mode=CLOSED;
-			ReportMode();
-			if (cb_Blocking) cb_Blocking(m_Parent,false);
-			break;
-		case SET_VOLUME: OUTPUTCLIENT::Get()->SetVolume(m_Volume); break;
+		case OPENREAD: m_Hub->OpenMode(AudioTransportHub::INPUT); break;
+		case OPENWRITE: m_Hub->OpenMode(AudioTransportHub::OUTPUT); break;
+		case OPENDUPLEX: m_Hub->OpenMode(AudioTransportHub::DUPLEX); break;
+		case CLOSE: m_Hub->Close(); break;
+		case SET_VOLUME: m_Hub->Transport()->SetVolume(m_Volume); break;
 		case CLEAR_NOTIFY: m_NotifyOpenOut=false; break;
 		default: break;
 	}
 }
 
-void OutputPlugin::ProcessCallback(void *context, unsigned int frames)
-{
-	static_cast<OutputPlugin *>(context)->RunAudioCycle(frames);
-}
-
 void OutputPlugin::ServiceAudio()
 {
-	if (m_IsDead || m_Members.empty() || m_Members.front()!=this) return;
-	if (m_Mode==NO_MODE) {
-		OpenMode(OUTPUT);
-		m_NotifyOpenOut=m_Mode==OUTPUT;
-	}
+	if (m_IsDead || !m_Hub->IsRepresentative(this)) return;
 
-	if (m_IOFailed)
-	{
-		OUTPUTCLIENT::Get()->Close();
-		m_Mode=CLOSED;
-		ReportMode();
-		if (cb_Blocking) cb_Blocking(m_Parent,false);
-
-		m_IOFailed=false;
-	}
-
-	// Server shutdown removes the native ports without another audio callback.
-	// Keep the requested mode, but reopen only here on the control thread.
-	if (IsCallbackDriver() && !OUTPUTCLIENT::Get()->IsAttached() &&
-		m_RequestedMode!=CLOSED && m_RequestedMode!=NO_MODE)
-	{
-		if (m_Mode!=CLOSED)
-		{
-			OUTPUTCLIENT::Get()->Close();
-			m_Mode=CLOSED;
-			ReportMode();
-		}
-
-		if (time(NULL)>=m_NextRetry) OpenMode(m_RequestedMode);
-
-	}
-
-	if (IsCallbackDriver() && OUTPUTCLIENT::Get()->IsAttached() && OUTPUTCLIENT::Get()->BufferSize() && ChangeBufferAndSampleRate)
-		ChangeBufferAndSampleRate(OUTPUTCLIENT::Get()->BufferSize(), OUTPUTCLIENT::Get()->SampleRate(), m_Parent);
-
+	const bool opening=GetMode()==NO_MODE;
+	m_Hub->Service();
+	if (opening) m_NotifyOpenOut=GetMode()==OUTPUT;
 }
 
 void OutputPlugin::ProcessAudio()
 {
-	if (m_IsDead || m_Members.empty() || m_Members.front()!=this) return;
+	if (m_IsDead || !m_Hub->IsRepresentative(this)) return;
 
-	bool ok=true;
-	if (m_Mode==INPUT || m_Mode==DUPLEX) ok=OUTPUTCLIENT::Get()->Read();
-
-	if (ok && (m_Mode==OUTPUT || m_Mode==DUPLEX)) ok=OUTPUTCLIENT::Get()->Play();
-
-	m_IOFailed = !ok;
+	m_Hub->Process();
 }
