@@ -29,7 +29,7 @@ public:
 	bool Write(const float *interleaved, unsigned int nframes);
 	bool Read(float *interleaved, unsigned int nframes);
 
-protected:
+public:
 	AlsaClient();
 	~AlsaClient();
 
