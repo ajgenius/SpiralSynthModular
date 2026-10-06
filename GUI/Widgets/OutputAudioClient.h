@@ -36,11 +36,13 @@ public:
 
 	// Two period slots between the engine and the transport. The engine
 	// mixes into one while the transport plays the other: WaitPeriod
-	// blocks until the mix slot is free, CommitPeriod hands it over.
-	// TransportCycle plays the ready slot and captures into it, from the
-	// device callback or the blocking thread; without a ready slot it
-	// plays silence and reports an underrun. Neither side ever waits on
-	// the other inside a device call.
+	// blocks until the mix slot is free and reports whether it is; the
+	// engine must not touch the slot otherwise. CommitPeriod hands it
+	// over. TransportCycle plays the ready slot and captures into it,
+	// from the device callback or the blocking thread; without a ready
+	// slot it plays silence and reports an underrun. GetStereo reads the
+	// capture of the engine's own slot. Neither side ever waits on the
+	// other inside a device call.
 	bool WaitPeriod(unsigned microseconds);
 	void CommitPeriod();
 	bool WaitReady(unsigned microseconds);

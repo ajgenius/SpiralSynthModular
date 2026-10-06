@@ -22,7 +22,8 @@ struct Engine
 		AudioTransportHub *hub=AudioTransportHub::Get();
 		while (!__sync_fetch_and_add(&engine->Stop,0))
 		{
-			hub->WaitPeriod();
+			if (!hub->WaitPeriod()) continue;
+
 			pthread_mutex_lock(&engine->Gate);
 			engine->Plugin->Execute();
 			hub->CommitPeriod();

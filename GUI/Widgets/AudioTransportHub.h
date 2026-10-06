@@ -74,7 +74,9 @@ public:
 
 	// Engine thread: block until the next period may be rendered, then
 	// hand the rendered period to the transport.
-	void WaitPeriod();
+	// WaitPeriod reports whether the engine owns a period slot: false
+	// means the transport is still on it and the graph must not run.
+	bool WaitPeriod();
 	void CommitPeriod();
 
 private:
