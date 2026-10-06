@@ -62,6 +62,11 @@ endif
 if ATOMIC_CLOCK_ALSA
 libspiralcore_la_SOURCES += src/AlsaAtomicClock.cpp include/AlsaAtomicClock.h
 endif
+if HAVE_ATOMIC_CLOCK
+check_PROGRAMS += atomic-clock-test
+atomic_clock_test_SOURCES = tests/atomic-clock.cpp
+atomic_clock_test_LDADD = libspiralcore.la
+endif
 EXTRA_DIST += src/AlsaAtomicClock.cpp include/AlsaAtomicClock.h src/MachAtomicClock.cpp
 if HAVE_OUTPUT_PORTAUDIO
 libspiralcore_la_SOURCES += src/PortAudioClient.cpp include/PortAudioClient.h
