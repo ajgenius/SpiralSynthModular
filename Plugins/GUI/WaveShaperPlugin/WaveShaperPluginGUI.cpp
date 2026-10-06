@@ -93,7 +93,7 @@ float FunctionPlot::get(const int index) const {
 
 ////////////////////////////////////////////
 
-WaveShaperPluginGUI::WaveShaperPluginGUI (int w, int h, WaveShaperPlugin *o, ChannelHandler *ch, const HostInfo *Info) :
+WaveShaperPluginGUI::WaveShaperPluginGUI (int w, int h, SpiralPlugin *o, ChannelHandler *ch, const HostInfo *Info) :
 SpiralPluginGUI(w, h, o, ch)
 {
   fplot = new FunctionPlot(3, 20, 268, 195);
@@ -153,12 +153,16 @@ SpiralPluginGUI(w, h, o, ch)
   end();
 }
 
+// The device's state after a load, through the channel: a flush copies
+// it to the GUI side, so nothing here depends on the device's class.
 void WaveShaperPluginGUI::UpdateValues (SpiralPlugin *o) {
-  WaveShaperPlugin* Plugin = (WaveShaperPlugin*) o;
-  int wt = Plugin->GetWaveType ();
+  m_GUICH->FlushChannels ();
+  int wt = m_GUICH->GetInt ("Wave");
   radio_polynomial->value (wt);
   radio_sines->value (!wt);
-  for (int j=0; j<6; j++) knob[j]->value (Plugin->GetCoef (j));
+  float coefs[6];
+  m_GUICH->GetData ("Coefs", coefs);
+  for (int j=0; j<6; j++) knob[j]->value (coefs[j]);
   Update ();
 }
 
@@ -232,9 +236,8 @@ const char **SpiralPlugin_GetIcon()
 
 SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
 {
-	WaveShaperPlugin *p = (WaveShaperPlugin *)plugin;
-	if (!p) return 0;
-	return new WaveShaperPluginGUI (p->GetPluginInfo().Width, p->GetPluginInfo().Height, p, p->GetChannelHandler(), p->GetHostInfo());
+	if (!plugin) return 0;
+	return new WaveShaperPluginGUI (plugin->GetPluginInfo().Width, plugin->GetPluginInfo().Height, plugin, plugin->GetChannelHandler(), plugin->GetHostInfo());
 }
 
 }
