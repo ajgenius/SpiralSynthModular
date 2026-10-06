@@ -6,29 +6,13 @@
 #include "AudioBackend.h"
 #include "config.h"
 
-#ifdef HAVE_OUTPUT_ALSA
-#include "AlsaClient.h"
-#endif
-#ifdef HAVE_OUTPUT_OSS
-#include "OSSClient.h"
-#endif
 #ifdef HAVE_JACK_CLIENT
 #include "JackClient.h"
 #endif
 
 using namespace spiralcore;
 
-#ifdef HAVE_OUTPUT_ALSA
-static void *CreateAlsa(void *) { return static_cast<AudioClient *>(new AlsaClient); }
-static void DestroyAlsa(void *client) { delete static_cast<AudioClient *>(client); }
-static const BackendDescriptor AlsaBackend = { SPIRAL_AUDIO_PLUGIN_ABI, "audio", "alsa", CreateAlsa, DestroyAlsa };
-#endif
 
-#ifdef HAVE_OUTPUT_OSS
-static void *CreateOSS(void *) { return static_cast<AudioClient *>(new OSSClient); }
-static void DestroyOSS(void *client) { delete static_cast<AudioClient *>(client); }
-static const BackendDescriptor OSSBackend = { SPIRAL_AUDIO_PLUGIN_ABI, "audio", "oss", CreateOSS, DestroyOSS };
-#endif
 
 #ifdef HAVE_JACK_CLIENT
 static void *CreateJack(void *) { return static_cast<AudioClient *>(new JackClient); }
@@ -41,12 +25,6 @@ namespace spiralcore { void RegisterBuiltinAudioBackends(AudioBackendRegistry *r
 
 void spiralcore::RegisterBuiltinAudioBackends(AudioBackendRegistry *registry)
 {
-#ifdef HAVE_OUTPUT_ALSA
-	registry->Register(&AlsaBackend);
-#endif
-#ifdef HAVE_OUTPUT_OSS
-	registry->Register(&OSSBackend);
-#endif
 #ifdef HAVE_JACK_CLIENT
 	registry->Register(&JackBackend);
 #endif
