@@ -62,7 +62,10 @@ int main(int argc, char **argv)
 {
 	if (argc!=2 && argc!=3) return 77;
 
-	const bool output=argc==3;
+	// "out" exercises the Output device on jack; "half" runs the Jack
+	// device with a host period half of jack's, as a slave port must allow.
+	const bool output=argc==3 && std::string(argv[2])=="out";
+	const bool half=argc==3 && std::string(argv[2])=="half";
 	alarm(20);
 	void *module=dlopen((std::string(argv[1])+(output ? "/dsp/OutputPlugin/OutputPlugin_DSP.so" : "/dsp/JackPlugin/JackPlugin_DSP.so")).c_str(),RTLD_NOW|RTLD_GLOBAL);
 	if (!module) { puts(dlerror()); return 1; }
@@ -80,7 +83,7 @@ int main(int argc, char **argv)
 	capture.Client.SetCallback(Capture::Run,&capture);
 	assert(capture.Client.Start());
 	HostInfo info=HostInfo();
-	info.BUFSIZE=capture.Client.GetBufferSize();
+	info.BUFSIZE=capture.Client.GetBufferSize()/(half ? 2 : 1);
 	info.SAMPLERATE=capture.Client.GetSampleRate();
 	info.AUDIOCLIENT="jack";
 	info.OUTPUTFILE=std::string(name)+"-output";
@@ -161,7 +164,7 @@ int main(int argc, char **argv)
 		pthread_mutex_lock(&engine.Gate);
 		plugin->Kill(); delete plugin;
 		pthread_mutex_unlock(&engine.Gate);
-		printf("JACK %s cycle %u: %s PASS\n",output ? "Output" : "plugin",cycle+1,
+		printf("JACK %s cycle %u: %s%s PASS\n",output ? "Output" : "plugin",cycle+1,half ? "half-period " : "",
 			output ? "playback" : "playback and capture with the host gate held");
 	}
 
