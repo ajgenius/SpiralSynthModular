@@ -6,9 +6,6 @@
 #include "AudioBackend.h"
 #include "config.h"
 
-#ifdef HAVE_OUTPUT_PORTAUDIO
-#include "PortAudioClient.h"
-#endif
 #ifdef HAVE_OUTPUT_ALSA
 #include "AlsaClient.h"
 #endif
@@ -23,12 +20,6 @@
 #endif
 
 using namespace spiralcore;
-
-#ifdef HAVE_OUTPUT_PORTAUDIO
-static void *CreatePortAudio(void *) { return static_cast<AudioClient *>(PortAudioClient::Get()); }
-static void DestroyPortAudio(void *) { PortAudioClient::PackUpAndGoHome(); }
-static const BackendDescriptor PortAudioBackend = { SPIRAL_AUDIO_PLUGIN_ABI, "audio", "portaudio", CreatePortAudio, DestroyPortAudio };
-#endif
 
 #ifdef HAVE_OUTPUT_ALSA
 static void *CreateAlsa(void *) { return static_cast<AudioClient *>(AlsaClient::Get()); }
@@ -59,9 +50,6 @@ namespace spiralcore { void RegisterBuiltinAudioBackends(AudioBackendRegistry *r
 
 void spiralcore::RegisterBuiltinAudioBackends(AudioBackendRegistry *registry)
 {
-#ifdef HAVE_OUTPUT_PORTAUDIO
-	registry->Register(&PortAudioBackend);
-#endif
 #ifdef HAVE_CORE_AUDIO_CLIENT
 	registry->Register(&CoreAudioBackend);
 #endif

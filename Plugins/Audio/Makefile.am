@@ -1,0 +1,4 @@
+SUBDIRS =
+if HAVE_OUTPUT_PORTAUDIO
+SUBDIRS += PortAudio
+endif
