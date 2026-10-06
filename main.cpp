@@ -88,15 +88,9 @@ void *audioloop(void* o)
 {
 	while(!AudioStopRequested())
 	{
-		// Commands and lifecycle work continue on the original host thread even
-		// when a device callback owns audio processing.
+		// Update paces itself on the transport, or the platform clock when
+		// no stream is open; there is nothing to sleep for here.
 		synth->Update();
-		if (synth->CallbackMode())
-			usleep(1000);
-
-		else if (!synth->IsBlockingOutputPluginReady() || synth->IsFrozen())
-			usleep(10000);
-
 		watchdog_check = 1;
 	}
 	return NULL;

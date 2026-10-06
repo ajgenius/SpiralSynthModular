@@ -17,7 +17,13 @@
 */
 
 #include "AudioTransportHub.h"
+#include "AtomicClock.h"
 #include <algorithm>
+#include <unistd.h>
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 using namespace std;
 
@@ -35,7 +41,10 @@ m_Configured(false),
 m_Mode(NO_MODE),
 m_RequestedMode(OUTPUT),
 m_IOFailed(false),
-m_NextRetry(0)
+m_NextRetry(0),
+m_ThreadRunning(false),
+m_ThreadStop(false),
+m_Clock(NULL)
 {
 }
 
@@ -57,26 +66,13 @@ void AudioTransportHub::Detach(AudioEndpoint *endpoint)
 {
 	if (find(m_Members.begin(),m_Members.end(),endpoint)==m_Members.end()) return;
 
-	// Replace the callback context only after its client has stopped.
-	if (IsRepresentative(endpoint) && IsCallbackDriven())
-	{
-		OUTPUTCLIENT::Get()->Close();
-		if (m_Mode != CLOSED) m_Mode = NO_MODE;
-	}
-
 	m_Members.erase(std::remove(m_Members.begin(),m_Members.end(),endpoint),m_Members.end());
 	if (m_Members.empty()) {
-		Blocking(endpoint,false);
+		StopTransportThread();
 		OUTPUTCLIENT::PackUpAndGoHome();
 		m_Mode=NO_MODE;
 		m_Configured=false;
 	}
-}
-
-void AudioTransportHub::Blocking(AudioEndpoint *endpoint, bool mode)
-{
-	if (!m_Members.empty()) endpoint=m_Members.front();
-	if (endpoint) endpoint->Blocking(mode);
 }
 
 void AudioTransportHub::ReportMode()
@@ -93,31 +89,35 @@ void AudioTransportHub::OpenMode(Mode mode)
 	m_IOFailed=false;
 	m_NextRetry=time(NULL)+1;
 	m_Mode=CLOSED;
+	StopTransportThread();
 	if (m_Configured && !m_Members.empty()) {
-		OUTPUTCLIENT::Get()->SetCallback(ProcessCallback, m_Members.front());
+		OUTPUTCLIENT::Get()->SetCallback(TransportCallback, this);
 		if (mode==INPUT) opened=OUTPUTCLIENT::Get()->OpenRead();
 
 		if (mode==OUTPUT) opened=OUTPUTCLIENT::Get()->OpenWrite();
 		if (mode==DUPLEX) opened=OUTPUTCLIENT::Get()->OpenReadWrite();
 	}
 	if (opened) m_Mode=mode;
+	// A blocking device is fed from our own thread so it paces nothing
+	// but itself; a callback device feeds itself.
+	if (opened && !IsCallbackDriven()) StartTransportThread();
 	ReportMode();
-	Blocking(NULL,opened && !IsCallbackDriven());
 }
 
 void AudioTransportHub::Close()
 {
 	m_RequestedMode=CLOSED;
 
+	StopTransportThread();
 	OUTPUTCLIENT::Get()->Close();
 	m_Mode=CLOSED;
 	ReportMode();
-	Blocking(NULL,false);
 }
 
 void AudioTransportHub::Reconfigure()
 {
 	const Mode previous=m_Mode;
+	StopTransportThread();
 	m_Configured=m_Host && OUTPUTCLIENT::Get()->Configure(
 		m_Host->AUDIOCLIENT,
 		m_Host->OUTPUTFILE);
@@ -125,9 +125,86 @@ void AudioTransportHub::Reconfigure()
 	OpenMode(previous==NO_MODE ? OUTPUT : previous);
 }
 
-void AudioTransportHub::ProcessCallback(void *context, unsigned int frames)
+// * Transport side
+
+void AudioTransportHub::TransportCallback(void *context, unsigned int frames)
 {
-	static_cast<AudioEndpoint *>(context)->RunAudioCycle(frames);
+	if (frames) static_cast<AudioTransportHub *>(context)->TransportCycle();
+}
+
+void AudioTransportHub::TransportCycle()
+{
+	const bool read=m_Mode==INPUT || m_Mode==DUPLEX;
+	const bool write=m_Mode==OUTPUT || m_Mode==DUPLEX;
+	if (!OUTPUTCLIENT::Get()->TransportCycle(read, write)) m_IOFailed=true;
+}
+
+void *AudioTransportHub::TransportThread(void *context)
+{
+	AudioTransportHub *hub=static_cast<AudioTransportHub *>(context);
+	const unsigned period=hub->PeriodMicroseconds();
+	while (!hub->m_ThreadStop)
+	{
+		if (!OUTPUTCLIENT::Get()->WaitReady(period*4)) continue;
+		hub->TransportCycle();
+		if (hub->m_IOFailed) break;
+	}
+	hub->m_ThreadRunning=false;
+	return NULL;
+}
+
+void AudioTransportHub::StartTransportThread()
+{
+	if (m_ThreadRunning) return;
+	m_ThreadStop=false;
+	m_ThreadRunning=true;
+	if (pthread_create(&m_Thread, NULL, TransportThread, this)) m_ThreadRunning=false;
+}
+
+void AudioTransportHub::StopTransportThread()
+{
+	if (!m_ThreadRunning && !m_ThreadStop) return;
+	// A blocking Write returns within one period and WaitReady within a
+	// few, so the thread leaves on its own before the device closes.
+	m_ThreadStop=true;
+	pthread_join(m_Thread, NULL);
+	m_ThreadRunning=false;
+	m_ThreadStop=false;
+}
+
+unsigned AudioTransportHub::PeriodMicroseconds() const
+{
+	if (!m_Host || m_Host->SAMPLERATE<=0 || m_Host->BUFSIZE<=0) return 10000;
+	return (unsigned)((unsigned long long)m_Host->BUFSIZE*1000000ULL/m_Host->SAMPLERATE);
+}
+
+// * Engine side
+
+void AudioTransportHub::WaitPeriod()
+{
+	const unsigned period=PeriodMicroseconds();
+	const bool streaming=m_Mode!=CLOSED && m_Mode!=NO_MODE && OUTPUTCLIENT::Get()->IsAttached();
+	if (streaming)
+	{
+		if (m_Clock) { delete m_Clock; m_Clock=NULL; }
+		OUTPUTCLIENT::Get()->WaitPeriod(period*4);
+		return;
+	}
+
+	// No stream: the platform clock keeps the engine at the same rate.
+#ifdef HAVE_ATOMIC_CLOCK
+	const float frequency=1000000.f/period;
+	if (m_Clock && m_Clock->Frequency()!=frequency) { delete m_Clock; m_Clock=NULL; }
+	if (!m_Clock) m_Clock=new AtomicClock(frequency);
+	m_Clock->Tick();
+#else
+	usleep(period);
+#endif
+}
+
+void AudioTransportHub::CommitPeriod()
+{
+	if (m_Mode!=CLOSED && m_Mode!=NO_MODE) OUTPUTCLIENT::Get()->CommitPeriod();
 }
 
 void AudioTransportHub::Service()
@@ -137,10 +214,10 @@ void AudioTransportHub::Service()
 
 	if (m_IOFailed)
 	{
+		StopTransportThread();
 		OUTPUTCLIENT::Get()->Close();
 		m_Mode=CLOSED;
 		ReportMode();
-		Blocking(NULL,false);
 
 		m_IOFailed=false;
 	}
@@ -152,6 +229,7 @@ void AudioTransportHub::Service()
 	{
 		if (m_Mode!=CLOSED)
 		{
+			StopTransportThread();
 			OUTPUTCLIENT::Get()->Close();
 			m_Mode=CLOSED;
 			ReportMode();
@@ -166,14 +244,3 @@ void AudioTransportHub::Service()
 
 }
 
-void AudioTransportHub::Process()
-{
-	if (m_Members.empty()) return;
-
-	bool ok=true;
-	if (m_Mode==INPUT || m_Mode==DUPLEX) ok=OUTPUTCLIENT::Get()->Read();
-
-	if (ok && (m_Mode==OUTPUT || m_Mode==DUPLEX)) ok=OUTPUTCLIENT::Get()->Play();
-
-	m_IOFailed = !ok;
-}

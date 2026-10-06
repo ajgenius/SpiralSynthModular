@@ -33,6 +33,7 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Tooltip.H>
 #include "SpiralSynthModular.h"
+#include "AudioTransportHub.h"
 #include "PluginManager.h"
 #include "SpiralInfo.h"
 #include "SpiralPluginGUI.h"
@@ -66,7 +67,6 @@ using namespace std;
 
 map<int,DeviceWin*> SynthModular::m_DeviceWinMap;
 bool SynthModular::m_CallbackUpdateMode = false;
-bool SynthModular::m_BlockingOutputPluginIsReady = false;
 
 //////////////////////////////////////////////////////////
 
@@ -77,9 +77,6 @@ DeviceWin::~DeviceWin()
 //////////////////////////////////////////////////////////
 
 SynthModular::SynthModular():
-m_CallbackOwner(NULL),
-m_ControlEpoch(0),
-m_LastControlEpoch(0),
 m_ResetingAudioThread(false),
 m_HostNeedsUpdate(false),
 m_Frozen(false),
@@ -165,18 +162,14 @@ void SynthModular::ClearUp(bool synchronize)
 }
 
 //////////////////////////////////////////////////////////
+// One engine period: wait for the transport to want the next block,
+// run control work and the graph under the gate, hand the block over.
+// This is the only thread that runs the graph; device callbacks and the
+// blocking transport thread only move finished periods.
 void SynthModular::Update()
 {
-	// Routine control polling belongs just after a completed audio block.
-	// Repeated polling between callbacks otherwise takes the graph gate at
-	// arbitrary points and makes the device drop otherwise healthy blocks.
-	if (CallbackMode())
-	{
-		const unsigned epoch=__sync_fetch_and_add(&m_ControlEpoch,0);
-		if (epoch==m_LastControlEpoch) return;
-
-		m_LastControlEpoch=epoch;
-	}
+	AudioTransportHub *hub=AudioTransportHub::Get();
+	hub->WaitPeriod();
 
 	pthread_mutex_lock(&m_CycleLock);
 	m_CH.UpdateDataNow();
@@ -217,48 +210,15 @@ void SynthModular::Update()
 		m_HostNeedsUpdate = false;
 	}
 
-	if (m_ResetingAudioThread || !CallbackMode())
-		RenderAudio(false);
+	RenderAudio();
+	hub->CommitPeriod();
 
 	pthread_mutex_unlock(&m_CycleLock);
 }
 
-void SynthModular::cb_AudioCycle(void *context, AudioDriver *driver, unsigned int frames)
+void SynthModular::RenderAudio()
 {
-	SynthModular *synth = static_cast<SynthModular *>(context);
-	if (!frames)
-	{
-		__sync_bool_compare_and_swap(&synth->m_CallbackOwner, driver, (AudioDriver *)NULL);
-		return;
-	}
-
-	// Control operations can close this client while holding the gate. A
-	// callback must skip a cycle, never wait for control or join itself.
-	if (pthread_mutex_trylock(&synth->m_CycleLock))
-		return;
-
-	if (!synth->m_Frozen && !synth->m_ResetingAudioThread && frames == unsigned(synth->m_Info.BUFSIZE))
-	{
-		if (!m_BlockingOutputPluginIsReady)
-			__sync_bool_compare_and_swap(&synth->m_CallbackOwner, (AudioDriver *)NULL, driver);
-
-		if (driver->ProcessType() == AudioDriver::ALWAYS)
-			driver->ProcessAudio();
-
-		if (__sync_val_compare_and_swap(&synth->m_CallbackOwner, driver, driver) == driver)
-			synth->RenderAudio(true);
-
-	}
-
-	pthread_mutex_unlock(&synth->m_CycleLock);
-	if (__sync_val_compare_and_swap(&synth->m_CallbackOwner, driver, driver)==driver)
-		__sync_fetch_and_add(&synth->m_ControlEpoch,1);
-
-}
-
-void SynthModular::RenderAudio(bool callback)
-{
-	if (!m_ResetingAudioThread && !callback)
+	if (!m_ResetingAudioThread)
 	{
 		for (map<int,DeviceWin*>::iterator i = m_DeviceWinMap.begin(); i != m_DeviceWinMap.end(); ++i)
 		{
@@ -266,7 +226,7 @@ void SynthModular::RenderAudio(bool callback)
 			if (plugin && !plugin->IsDead() && plugin->IsAudioDriver())
 			{
 				AudioDriver *driver = static_cast<AudioDriver *>(plugin);
-				if (!driver->IsCallbackDriver() && driver->ProcessType() == AudioDriver::ALWAYS)
+				if (driver->ProcessType() == AudioDriver::ALWAYS)
 					driver->ProcessAudio();
 
 			}
@@ -300,8 +260,7 @@ void SynthModular::RenderAudio(bool callback)
 				{
 					AudioDriver *driver = ((AudioDriver *)di->second->m_Device);
 
-					if (driver->ProcessType() == AudioDriver::MANUAL &&
-						(!driver->IsCallbackDriver() || (callback && m_CallbackOwner == driver)))
+					if (driver->ProcessType() == AudioDriver::MANUAL)
 					{
 						driver->ProcessAudio();
 					}
@@ -845,7 +804,6 @@ DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 
 	if (!nlw->m_Device) return NULL;
 
-        nlw->m_Device->SetBlockingCallback(cb_Blocking);
 	nlw->m_Device->SetUpdateCallback(cb_Update);
 	nlw->m_Device->SetParent((void*)this);
 
@@ -853,7 +811,6 @@ DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 	{
 		AudioDriver *driver = ((AudioDriver*)nlw->m_Device);
 		driver->SetChangeBufferAndSampleRateCallback(cb_ChangeBufferAndSampleRate);
-		driver->SetAudioCycleCallback(cb_AudioCycle);
 	}
 
 	PluginInfo PInfo    = nlw->m_Device->Initialise(&m_Info);
@@ -1003,16 +960,6 @@ void SynthModular::cb_Update(void* o, bool mode)
 {
 	m_CallbackUpdateMode=mode;
 	((SynthModular*)o)->Update();
-}
-
-// called by a blocking output plugin to notify the engine its ready to
-// take control of the update timing (so take the brakes off)
-void SynthModular::cb_Blocking(void* o, bool mode)
-{
-	m_BlockingOutputPluginIsReady=mode;
-	if (mode && o)
-		__sync_lock_test_and_set(&static_cast<SynthModular *>(o)->m_CallbackOwner, (AudioDriver *)NULL);
-
 }
 
 //////////////////////////////////////////////////////////

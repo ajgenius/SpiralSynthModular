@@ -49,7 +49,6 @@ public:
 	virtual AudioProcessType	ProcessType() { return AudioDriver::ALWAYS; }		
 	virtual void			ProcessAudio();
 	virtual void ServiceAudio();
-	virtual bool IsCallbackDriver() const { return true; }
 
 	/* Jack Plugin Specific Functions */
 	int GetInputCount() const { return m_InputCount; }

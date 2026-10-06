@@ -182,9 +182,8 @@ void JackPlugin::Detach()
 void JackPlugin::ProcessCallback(void *context, unsigned int frames)
 {
 	JackPlugin *plugin = static_cast<JackPlugin *>(context);
-	// Capture cannot depend on entering the host: a blocking output can
-	// hold its gate for an entire device period. Retain the latest block,
-	// then let either the callback or host loop deliver it to the graph.
+	// This client only exchanges buffers; the engine runs the graph on its
+	// own clock and moves them in Execute, a period behind at most.
 	if (frames && !pthread_mutex_trylock(&plugin->m_TransferLock))
 	{
 		if (plugin->m_Capture.size() == frames * plugin->m_InputCount)
@@ -192,8 +191,6 @@ void JackPlugin::ProcessCallback(void *context, unsigned int frames)
 
 		pthread_mutex_unlock(&plugin->m_TransferLock);
 	}
-
-	plugin->RunAudioCycle(frames);
 
 	if (frames && !pthread_mutex_trylock(&plugin->m_TransferLock))
 	{

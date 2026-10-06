@@ -8,7 +8,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT([SpiralSynthModular], [0.3.1])
 AC_CONFIG_SRCDIR([SpiralSynthModular.C])
 
-AC_DEFINE([SSM_HOST_ABI], ["ssm-fltk-audio-2"], [SSM plugin host ABI])
+AC_DEFINE([SSM_HOST_ABI], ["ssm-fltk-audio-3"], [SSM plugin host ABI])
 
 AM_INIT_AUTOMAKE
 
@@ -417,6 +417,9 @@ esac
 AM_CONDITIONAL([ATOMIC_CLOCK_MACH], [test "$atomic_clock" = mach])
 AM_CONDITIONAL([ATOMIC_CLOCK_ALSA], [test "$atomic_clock" = alsa])
 AM_CONDITIONAL([HAVE_ATOMIC_CLOCK], [test "$atomic_clock" != none])
+if test "$atomic_clock" != none; then
+    AC_DEFINE([HAVE_ATOMIC_CLOCK], [1], [A platform AtomicClock is built])
+fi
 AC_MSG_NOTICE([AtomicClock: $atomic_clock])
 
 dnl Do we need png?????

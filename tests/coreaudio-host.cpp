@@ -1,5 +1,6 @@
 // Exercise backend changes through the real host control and callback loops.
 #include "SpiralSynthModular.h"
+#include "AudioTransportHub.h"
 #include "SpiralInfo.h"
 #include <cassert>
 #include <cstdio>
@@ -19,7 +20,6 @@ struct Host
 		while (!__sync_fetch_and_add(&host->Stop,0))
 		{
 			host->Synth.Update();
-			usleep(1000);
 		}
 
 		return NULL;
@@ -50,20 +50,22 @@ int main(int argc, char **argv)
 		SpiralInfo::AUDIOCLIENT="coreaudio";
 		host.Synth.UpdateHostInfo();
 		usleep(300000);
-		unsigned callbacks=0;
+		AudioTransportHub *hub=AudioTransportHub::Get();
+		unsigned streaming=0;
+		const unsigned underruns=hub->Underruns();
 		for (unsigned n=0; n<100; ++n)
 		{
-			if (host.Synth.CallbackMode()) ++callbacks;
+			if (hub->GetMode()==AudioTransportHub::OUTPUT && hub->IsCallbackDriven()) ++streaming;
 
 			usleep(10000);
 		}
 
-		printf("CoreAudio host switch %u: callback clock active %u/100 polls\n",cycle+1,callbacks);
-		assert(callbacks>=95);
+		printf("CoreAudio host switch %u: callback transport streaming %u/100 polls, %u underruns\n",cycle+1,streaming,hub->Underruns()-underruns);
+		assert(streaming>=95);
 		SpiralInfo::AUDIOCLIENT="portaudio";
 		host.Synth.UpdateHostInfo();
 		usleep(200000);
-		assert(!host.Synth.CallbackMode());
+		assert(hub->GetMode()==AudioTransportHub::OUTPUT && !hub->IsCallbackDriven());
 	}
 
 	host.Synth.ClearUp();

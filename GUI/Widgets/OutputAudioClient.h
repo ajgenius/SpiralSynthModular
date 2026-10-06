@@ -9,6 +9,7 @@
 #define __OUTPUT_AUDIO_CLIENT_H__
 
 #include <string>
+#include <pthread.h>
 #include "SpiralPlugin.h"
 #include "Sample.h"
 using spiralcore::Sample;
@@ -32,8 +33,19 @@ public:
 	void SetVolume(float s) { m_Volume = s; }
 	void SetNumChannels(int s) { m_Channels = s; }
 	float GetVolume() const { return m_Volume; }
-	bool Play();
-	bool Read();
+
+	// Two period slots between the engine and the transport. The engine
+	// mixes into one while the transport plays the other: WaitPeriod
+	// blocks until the mix slot is free, CommitPeriod hands it over.
+	// TransportCycle plays the ready slot and captures into it, from the
+	// device callback or the blocking thread; without a ready slot it
+	// plays silence and reports an underrun. Neither side ever waits on
+	// the other inside a device call.
+	bool WaitPeriod(unsigned microseconds);
+	void CommitPeriod();
+	bool WaitReady(unsigned microseconds);
+	bool TransportCycle(bool read, bool write);
+	unsigned Underruns() const { return m_Underruns; }
 	bool OpenReadWrite();
 	bool OpenWrite();
 	bool OpenRead();
@@ -68,8 +80,13 @@ private:
 	float m_Volume;
 	int m_Channels;
 	int m_Frames;
-	int m_WriteBuf;
-	int m_ReadBuf;
+	int m_Mix;
+	int m_Send;
+	volatile bool m_Ready[2];
+	volatile unsigned m_Underruns;
+	pthread_mutex_t m_PeriodLock;
+	pthread_cond_t m_PeriodFree;
+	pthread_cond_t m_PeriodReady;
 	bool m_IsDead;
 	float *m_Out[2];
 	float *m_In[2];
