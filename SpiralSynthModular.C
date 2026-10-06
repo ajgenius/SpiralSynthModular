@@ -37,7 +37,8 @@
 #include "AudioTransportHub.h"
 #include "AudioBackend.h"
 #include "Midi.h"
-#include "PluginManager.h"
+#include "DeviceClassRegistry.h"
+#include "EditorClassRegistry.h"
 #include "SpiralInfo.h"
 #include "SpiralPluginGUI.h"
 #include "GUI/SSM.xpm"
@@ -127,7 +128,9 @@ SynthModular::~SynthModular()
 	AudioTransportHub::Get()->SetHost(NULL);
 	delete m_SettingsWindow;
 	delete m_TopWindow;
-	PluginManager::Get()->PackUpAndGoHome();
+	// Editors before devices, the reverse of loading.
+	EditorClassRegistry::PackUpAndGoHome();
+	DeviceClassRegistry::PackUpAndGoHome();
 	// The MidiPlugin instances are gone with the devices, so the
 	// backend they shared is too; its module can leave now.
 	spiralcore::MidiBackendRegistry::PackUpAndGoHome();
@@ -572,58 +575,17 @@ SpiralWindowType *SynthModular::CreateWindow()
 
 //////////////////////////////////////////////////////////
 
-static void CollectSo(const string &dir, const string &rel, vector<string> &ret)
+// A preference list names modules the way the preferences file always
+// has: by file name, with or without the _DSP/_GUI split.
+static bool ListedModule(const string &module)
 {
-	DIR *directory = opendir(dir.c_str());
-	if (!directory) return;
-	struct dirent *entry;
-	while ((entry = readdir(directory)))
-	{
-		string name = entry->d_name;
-		if (name.size() < 3 || name.substr(name.size()-3) != ".so") continue;
-		string full = dir + "/" + name;
-		struct stat info;
-		if (!stat(full.c_str(), &info) && S_ISREG(info.st_mode))
-			ret.push_back(rel.empty() ? name : rel + "/" + name);
-	}
-	closedir(directory);
-}
-
-static void CollectPluginDirs(const string &root, const char *kind, vector<string> &ret)
-{
-	string base = root + "/" + kind;
-	DIR *directory = opendir(base.c_str());
-	if (!directory) return;
-	struct dirent *entry;
-	while ((entry = readdir(directory)))
-	{
-		string name = entry->d_name;
-		if (name == "." || name == "..") continue;
-		string dir = base + "/" + name;
-		struct stat info;
-		if (!stat(dir.c_str(), &info) && S_ISDIR(info.st_mode))
-			CollectSo(dir, string(kind) + "/" + name, ret);
-	}
-	closedir(directory);
-}
-
-vector<string> SynthModular::BuildPluginList (const string &Path)
-{
-	vector<string> ret;
-	string root = Path;
-	if (!root.empty() && root[root.size()-1] == '/') root.erase(root.size()-1);
-	DIR *directory = opendir(root.c_str());
-	if (!directory)
-	{
-		cerr << "WARNING: Could not open path " << Path << endl;
-		return ret;
-	}
-	closedir(directory);
-	CollectSo(root, "", ret);
-	CollectPluginDirs(root, "dsp", ret);
-	CollectPluginDirs(root, "gui", ret);
-	sort(ret.begin(), ret.end());
-	return ret;
+	string stem = module.substr(module.rfind('/') + 1);
+	stem = stem.substr(0, stem.find('.'));
+	string::size_type split = stem.rfind('_');
+	if (split != string::npos) stem.erase(split);
+	for (vector<string>::const_iterator i = SpiralInfo::PLUGINVEC.begin(); i != SpiralInfo::PLUGINVEC.end(); ++i)
+		if (i->compare(0, stem.size(), stem) == 0) return true;
+	return false;
 }
 
 void SynthModular::LoadPlugins (string pluginPath) {
@@ -645,18 +607,6 @@ void SynthModular::LoadPlugins (string pluginPath) {
      Splash->add (pbut);
      Splash->add (splashtext);
      Splash->show();
-     int ID=-1;
-     vector<string> PluginVector;
-     set<int> ShownDSP;
-     if (SpiralInfo::USEPLUGINLIST) PluginVector = SpiralInfo::PLUGINVEC;
-     else {
-        if (pluginPath.empty()) PluginVector = BuildPluginList (SpiralInfo::PLUGIN_PATH);
-        else {
-           string::iterator i = pluginPath.end() - 1;
-           if (*i != '/') pluginPath += '/';
-           PluginVector = BuildPluginList (pluginPath);
-        }
-     }
      string PluginRoot = pluginPath.empty() ? SpiralInfo::PLUGIN_PATH : pluginPath;
      if (!PluginRoot.empty() && PluginRoot[PluginRoot.size()-1] != '/') PluginRoot += '/';
      // Audio backend modules sit beside the device plugins under audio/;
@@ -667,48 +617,27 @@ void SynthModular::LoadPlugins (string pluginPath) {
      // first that is not the dummy. MidiPlugin opens the device itself.
      spiralcore::MidiBackendRegistry::Get()->LoadModules(PluginRoot);
      spiralcore::MidiDevice::SetBackendName(SpiralInfo::MIDIBACKEND);
-     vector<string> DSPNames;
-     vector<string> GUINames;
-     set<string> SeenModules;
-     for (vector<string>::const_iterator i = PluginVector.begin(); i != PluginVector.end(); ++i)
-     {
-         string name = *i;
-         if (name.size() > 3 && name.substr(name.size()-3) == ".so" &&
-             name.find("_DSP.so") == string::npos && name.find("_GUI.so") == string::npos)
+     // Devices under dsp/, editors under gui/; an editor needs no device
+     // module to load, it pairs by ID when a device is made.
+     DeviceClassRegistry::Get()->LoadModules(PluginRoot);
+     EditorClassRegistry::Get()->LoadModules(PluginRoot);
+     const vector<DeviceClass*> &Devices = DeviceClassRegistry::Get()->Classes();
+     for (vector<DeviceClass*>::const_iterator i=Devices.begin(); i!=Devices.end(); i++) {
+         const DeviceClass *info = *i;
+         int ID = info->ID;
+         if (SpiralInfo::USEPLUGINLIST && !ListedModule(info->Module)) continue;
          {
-             // Preferences written before the split name the combined module.
-             string stem = name.substr(0, name.size()-3);
-             name = stem + "_DSP.so";
-             string gui = stem + "_GUI.so";
-             struct stat info;
-             if (!stat((PluginRoot+gui).c_str(), &info) && SeenModules.insert(gui).second)
-                 GUINames.push_back(gui);
-         }
-         if (!SeenModules.insert(name).second) continue;
-         if (name.size() >= 7 && name.substr(name.size()-7) == "_GUI.so")
-             GUINames.push_back(name);
-         else
-             DSPNames.push_back(name);
-     }
-     PluginVector = DSPNames;
-     PluginVector.insert(PluginVector.end(), GUINames.begin(), GUINames.end());
-     for (vector<string>::iterator i=PluginVector.begin(); i!=PluginVector.end(); i++) {
-         string Fullpath;
-         Fullpath = PluginRoot + *i;
-         ID = PluginManager::Get()->LoadPlugin (Fullpath.c_str());
-         const HostsideInfo *info = (ID!=PluginError) ? PluginManager::Get()->GetPlugin(ID) : NULL;
-         if (info && info->HasDSP() && ShownDSP.insert(ID).second) {
             #ifdef DEBUG_PLUGINS
-            cerr << ID << " = Plugin [" << *i << "]" << endl;
+            cerr << ID << " = Plugin [" << info->Module << "]" << endl;
             #endif
             Fl_ToolButton *NewButton = new Fl_ToolButton (0, 0, Width, Height, "");
             // we can't set user data, because the callback uses it
             // NewButton->user_data ((void*)(this));
             NewButton->labelsize (1);
-            Fl_Pixmap *tPix = new Fl_Pixmap (info->Icon());
+            Fl_Pixmap *tPix = new Fl_Pixmap (info->Icon);
             NewButton->image(tPix->copy(tPix->w(),tPix->h()));
             delete tPix;
-            string GroupName = info->GroupName();
+            string GroupName = info->Category;
             Fl_Pack* the_group=NULL;
             // find or create this group, and add an icon
             map<string,Fl_Pack*>::iterator gi = m_PluginGroupMap.find (GroupName);
@@ -835,11 +764,17 @@ DeviceGUIInfo SynthModular::BuildDeviceGUIInfo(PluginInfo &PInfo)
 DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 {
 	DeviceWin *nlw = new DeviceWin;
-	const HostsideInfo* Plugin=PluginManager::Get()->GetPlugin(n);
+	const DeviceClass* Plugin=DeviceClassRegistry::Get()->Find(n);
 
-	if (!Plugin) return NULL;
+	if (!Plugin)
+	{
+		char t[256];
+		sprintf(t,"%d",n);
+		SpiralInfo::Alert("Plugin "+string(t)+" not found.");
+		return NULL;
+	}
 
-	nlw->m_Device=Plugin->CreateDSPInstance();
+	nlw->m_Device=Plugin->CreateInstance();
 
 	if (!nlw->m_Device) return NULL;
 
@@ -858,9 +793,11 @@ DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 	   during the click handler — crash or a window that cannot expand. */
 	Fl_Group *prev = Fl_Group::current();
 	Fl_Group::current(0);
-	SpiralGUIType *temp = Plugin->CreateGUI(nlw->m_Device);
+	// A device with no editor gets a bare device window.
+	const EditorClass *Editor=EditorClassRegistry::Get()->Find(n);
+	SpiralGUIType *temp = Editor ? Editor->CreateEditor(nlw->m_Device) : NULL;
 	if (temp) temp->end();
-	Fl_Pixmap *Pix      = new Fl_Pixmap(Plugin->Icon());
+	Fl_Pixmap *Pix      = new Fl_Pixmap(Plugin->Icon);
 	nlw->m_PluginID     = n;
 
 	if (temp) temp->position(x+10,y);
