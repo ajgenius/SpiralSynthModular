@@ -31,24 +31,20 @@ EXTRA_DIST = \
     SConstruct \
     include/AsyncSampleLoader.h \
     include/AtomicClock.h \
-    include/CommandRingBuffer.h \
     include/Event.h \
     include/EventQueue.h \
     include/OSCServer.h \
     include/PortAudioClient.h \
-    include/RingBuffer.h \
     include/SearchPaths.h \
     include/SpiralTime.h \
     include/Trace.h \
     include/Tuna.h \
     src/AsyncSampleLoader.cpp \
     src/AtomicClock.cpp \
-    src/CommandRingBuffer.cpp \
     src/Event.cpp \
     src/EventQueue.cpp \
     src/OSCServer.cpp \
     src/PortAudioClient.cpp \
-    src/RingBuffer.cpp \
     src/SearchPaths.cpp \
     src/Time.cpp \
     src/Tuna.cpp
@@ -56,6 +52,11 @@ EXTRA_DIST = \
 EXTRA_DIST += README.ssm
 
 libspiralcore_la_SOURCES += include/AudioClient.h
+
+libspiralcore_la_SOURCES += src/RingBuffer.cpp include/RingBuffer.h src/CommandRingBuffer.cpp include/CommandRingBuffer.h
+check_PROGRAMS += ring-buffer-test
+ring_buffer_test_SOURCES = tests/ring-buffer.cpp
+ring_buffer_test_LDADD = libspiralcore.la
 if HAVE_OUTPUT_PORTAUDIO
 libspiralcore_la_SOURCES += src/PortAudioClient.cpp include/PortAudioClient.h
 endif
