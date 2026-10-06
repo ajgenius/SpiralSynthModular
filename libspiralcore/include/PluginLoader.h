@@ -16,91 +16,60 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#ifndef SPIRAL_PLUGIN_MANAGER_H
-#define SPIRAL_PLUGIN_MANAGER_H
+#ifndef SPIRAL_PLUGIN_LOADER_H
+#define SPIRAL_PLUGIN_LOADER_H
 
 #include <string>
 #include <vector>
-#include "SpiralPlugin.h"
 
-class SpiralGUIType;
-
-/* Paired DSP+GUI plugin (0.3.1 split). type is SPIRAL_PLUGIN_TYPE_DSP/GUI
-   while only one side is loaded, SPIRAL_PLUGIN_TYPE_PAIRED once both .so
-   files for the same ID are in. GUI<->DSP traffic stays on ChannelHandler
-   (libspiralcore mutex trylock); this is not master's Device/Property
-   split and not the lock-free queues from PR #11. */
-struct HostsideInfo
+namespace spiralcore
 {
-	int   ID;
-	int   type;
-	std::string Name;
 
-	struct {
-		void *Handle;
-		SpiralPlugin *(*CreateInstance)(void);
-		const char **(*GetIcon)(void);
-		std::string (*GetGroupName)(void);
-	} dsp;
+/* A plugin kind says what to look for under the plugin root and what to
+   do with a module once its entry symbol resolves. The loader knows
+   nothing else: no tables, no devices, no GUI. A kind registers itself
+   the first time it is used, and built-in members of a kind never pass
+   through the loader at all. */
+class PluginKind
+{
+public:
+	virtual ~PluginKind() {}
 
-	struct {
-		void *Handle;
-		SpiralGUIType *(*CreateGUI)(SpiralPlugin *);
-		const char **(*GetIcon)(void);
-	} gui;
+	virtual const char *Name() const = 0;
+	// Under the plugin root; modules are <root>/<subdirectory>/*<suffix>
+	// and one level of directories below that.
+	virtual const char *Subdirectory() const = 0;
+	virtual const char *Suffix() const = 0;
+	virtual const char *EntrySymbol() const = 0;
 
-	SpiralPlugin *CreateDSPInstance() const
-	{
-		return (dsp.CreateInstance) ? dsp.CreateInstance() : NULL;
-	}
-
-	SpiralGUIType *CreateGUI(SpiralPlugin *plugin) const
-	{
-		return (gui.CreateGUI && plugin) ? gui.CreateGUI(plugin) : NULL;
-	}
-
-	const char **Icon() const
-	{
-		if (dsp.GetIcon) return dsp.GetIcon();
-		if (gui.GetIcon) return gui.GetIcon();
-		return NULL;
-	}
-
-	std::string GroupName() const
-	{
-		return dsp.GetGroupName ? dsp.GetGroupName() : std::string();
-	}
-
-	bool HasDSP() const { return dsp.Handle != NULL && dsp.CreateInstance != NULL; }
+	// The resolved entry; return true to keep the module loaded.
+	virtual bool Accept(void *entry, const std::string &path) = 0;
 };
 
 //////////////////////////////////////////////////////////
 
-typedef int PluginID;
-#define     PluginError -1
-
-class PluginManager
+class PluginLoader
 {
 public:
-	static PluginManager *Get() { if(!m_Singleton) m_Singleton=new PluginManager; return m_Singleton; }
-	static void         PackUpAndGoHome() { if(m_Singleton) delete m_Singleton; }
+	static PluginLoader *Get() { if(!m_Singleton) m_Singleton=new PluginLoader; return m_Singleton; }
+	static void         PackUpAndGoHome() { if(m_Singleton) delete m_Singleton; m_Singleton=NULL; }
 
-	PluginID            LoadPlugin(const char *PluginName);
-	void                UnLoadPlugin(PluginID ID);
+	void                RegisterKind(PluginKind *kind);
+	unsigned            Load(PluginKind &kind, const std::string &root);
+	unsigned            LoadAll(const std::string &root);
 	void                UnloadAll();
-	const HostsideInfo* GetPlugin(PluginID ID);
-	bool                IsValid(PluginID ID);
-	int                 GetIdByName(std::string Name);
 
 private:
 
-	PluginManager();
-	~PluginManager();
-	HostsideInfo *GetPlugin_i(PluginID ID);
-	HostsideInfo *NewSlot(int ID);
+	PluginLoader();
+	~PluginLoader();
+	bool LoadModule(PluginKind &kind, const std::string &path);
 
-	std::vector<HostsideInfo*> m_PluginVec;
-	static PluginManager *m_Singleton;
+	std::vector<PluginKind*> m_Kinds;
+	std::vector<void*> m_Modules;
+	static PluginLoader *m_Singleton;
 };
+
+}
 
 #endif
