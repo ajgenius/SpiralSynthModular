@@ -111,3 +111,8 @@ jack_periods_test_SOURCES = tests/jack-periods.cpp Plugins/DSP/JackPlugin/JackPl
 jack_periods_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/JackPlugin
 jack_periods_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la
 endif
+
+check_PROGRAMS += hub-clock-test
+TESTS += hub-clock-test
+hub_clock_test_SOURCES = tests/hub-clock.cpp
+hub_clock_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la

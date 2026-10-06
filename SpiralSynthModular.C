@@ -111,6 +111,7 @@ m_NextID(0)
         for (int n=0; n<512; n++) Numbers[n]=n;
 
 	m_CH.Register("Frozen",&m_Frozen);
+	AudioTransportHub::Get()->SetHost(&m_Info);
 }
 
 //////////////////////////////////////////////////////////
@@ -120,6 +121,7 @@ SynthModular::~SynthModular()
 	// main has stopped the engine; no channel handshake can run now.
 	m_Frozen = true;
 	ClearUp(false);
+	AudioTransportHub::Get()->SetHost(NULL);
 	delete m_SettingsWindow;
 	delete m_TopWindow;
 	PluginManager::Get()->PackUpAndGoHome();

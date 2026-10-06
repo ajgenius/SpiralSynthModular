@@ -53,6 +53,10 @@ public:
 
 	static AudioTransportHub *Get();
 
+	// The engine supplies its format even when no Output endpoint exists.
+	// Set or clear it before starting the engine, or while it is stopped.
+	void SetHost(const HostInfo *host);
+
 	void Attach(AudioEndpoint *endpoint, const HostInfo *host);
 	void Detach(AudioEndpoint *endpoint);
 	bool IsRepresentative(const AudioEndpoint *endpoint) const

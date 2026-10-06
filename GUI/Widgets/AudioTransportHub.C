@@ -50,6 +50,14 @@ m_Clock(NULL)
 {
 }
 
+void AudioTransportHub::SetHost(const HostInfo *host)
+{
+	m_Host = host;
+	OUTPUTCLIENT::host = host;
+	delete m_Clock;
+	m_Clock = NULL;
+}
+
 void AudioTransportHub::Attach(AudioEndpoint *endpoint, const HostInfo *host)
 {
 	if (find(m_Members.begin(),m_Members.end(),endpoint)==m_Members.end())
@@ -199,7 +207,10 @@ bool AudioTransportHub::WaitPeriod()
 
 	// No stream: the platform clock keeps the engine at the same rate.
 #ifdef HAVE_ATOMIC_CLOCK
-	const float frequency=1000000.f/period;
+	// Derive the clock from frames/rate directly; truncating a period to
+	// whole microseconds introduces a persistent frequency error.
+	const float frequency = m_Host && m_Host->BUFSIZE > 0 && m_Host->SAMPLERATE > 0
+		? float(m_Host->SAMPLERATE) / m_Host->BUFSIZE : 100.f;
 	if (m_Clock && m_Clock->Frequency()!=frequency) { delete m_Clock; m_Clock=NULL; }
 	if (!m_Clock) m_Clock=new AtomicClock(frequency);
 	m_Clock->Tick();
