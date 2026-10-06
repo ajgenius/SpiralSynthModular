@@ -30,7 +30,7 @@ EXTRA_DIST = \
     README \
     SConstruct \
     include/AsyncSampleLoader.h \
-    include/AtomicClock.h \
+    include/AlsaAtomicClock.h \
     include/CommandRingBuffer.h \
     include/Event.h \
     include/EventQueue.h \
@@ -42,7 +42,7 @@ EXTRA_DIST = \
     include/Trace.h \
     include/Tuna.h \
     src/AsyncSampleLoader.cpp \
-    src/AtomicClock.cpp \
+    src/AlsaAtomicClock.cpp \
     src/CommandRingBuffer.cpp \
     src/Event.cpp \
     src/EventQueue.cpp \
