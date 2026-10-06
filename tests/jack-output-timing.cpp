@@ -1,5 +1,6 @@
 // Check callback output continuity while the real host polls many controls.
 #include "SpiralSynthModular.h"
+#include "AudioTransportHub.h"
 #include "SpiralInfo.h"
 #include "SpiralPluginGUI.h"
 #include "JackClient.h"
@@ -23,7 +24,6 @@ struct Host
 		while (!__sync_fetch_and_add(&host->Stop,0))
 		{
 			host->Synth.Update();
-			usleep(1000);
 		}
 
 		return NULL;
@@ -87,7 +87,15 @@ int main(int argc, char **argv)
 	usleep(300000);
 	observer.ConnectInput(0,std::string(name)+":Out0");
 	observer.ConnectInput(1,std::string(name)+":Out1");
-	usleep(300000);
+	// Complete native format negotiation through the normal GUI/control path
+	// before measuring steady playback. A new presentation epoch deliberately
+	// primes its lookahead with silence; that is separate from steady underruns.
+	for (unsigned n = 0; n < 100; ++n)
+	{
+		host.Synth.UpdatePluginGUIs();
+		usleep(10000);
+	}
+
 	const unsigned good=__sync_fetch_and_add(&probe.Good,0);
 
 	const unsigned silent=__sync_fetch_and_add(&probe.Silent,0);
@@ -102,6 +110,20 @@ int main(int argc, char **argv)
 	const unsigned gaps=__sync_fetch_and_add(&probe.Silent,0)-silent;
 	printf("JACK constant output: %u signal blocks, %u silent gaps\n",received,gaps);
 	assert(received>100 && gaps==0);
+
+	// The engine frame is jack's transport frame: locate moves it, start rolls it.
+	AudioTransportHub *hub=AudioTransportHub::Get();
+	host.Synth.FreezeAll(); hub->Stop(); host.Synth.ThawAll(); usleep(100000);
+	host.Synth.FreezeAll(); hub->Locate(100000); host.Synth.ThawAll(); usleep(100000);
+	host.Synth.FreezeAll();
+	const unsigned long located=hub->Frame();
+	hub->Start(); host.Synth.ThawAll(); usleep(200000);
+	host.Synth.FreezeAll();
+	const unsigned long rolled=hub->Frame();
+	const bool rolling=hub->Rolling();
+	host.Synth.ThawAll();
+	printf("JACK transport: located %lu, rolled to %lu, rolling %d\n",located,rolled,int(rolling));
+	assert(located==100000 && rolled>located+4000 && rolling);
 	host.Synth.ClearUp();
 	__sync_lock_test_and_set(&host.Stop,1);
 	pthread_join(thread,NULL);

@@ -1,5 +1,6 @@
 // Exercise the Output buttons through the real host and inspect JACK ports.
 #include "SpiralSynthModular.h"
+#include "AudioTransportHub.h"
 #include "SpiralInfo.h"
 #include "SpiralPluginGUI.h"
 #include "JackClient.h"
@@ -23,7 +24,6 @@ struct Host
 		while (!__sync_fetch_and_add(&host->Stop,0))
 		{
 			host->Synth.Update();
-			usleep(1000);
 		}
 
 		return NULL;
@@ -100,7 +100,7 @@ int main(int argc, char **argv)
 
 		printf("Output %s: %u inputs, %u outputs\n",step==4 ? "Close" : buttons[step],ins,outs);
 		assert(ins==expectedInputs[step] && outs==expectedOutputs[step]);
-		assert(host.Synth.CallbackMode()==(step!=4));
+		assert((AudioTransportHub::Get()->GetMode()!=AudioTransportHub::CLOSED)==(step!=4));
 	}
 
 	host.Synth.ClearUp();

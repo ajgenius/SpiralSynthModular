@@ -8,7 +8,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT([SpiralSynthModular], [0.3.1])
 AC_CONFIG_SRCDIR([SpiralSynthModular.C])
 
-AC_DEFINE([SSM_HOST_ABI], ["ssm-fltk-audio-2"], [SSM plugin host ABI])
+AC_DEFINE([SSM_HOST_ABI], ["ssm-fltk-audio-6"], [SSM plugin host ABI])
 
 AM_INIT_AUTOMAKE
 
@@ -60,9 +60,7 @@ if test "$have_yajl" = no; then
 fi
 AM_CONDITIONAL([HAVE_YAJL], [test "$have_yajl" = yes])
 
-dnl ---- OutputPlugin audio backends (in libspiralcore) ----
-dnl Blocking device-paced I/O: PortAudio Pa_WriteStream, ALSA writei, OSS
-dnl write().  Not the original callback PortAudioClient, not PipeWire/ESD.
+dnl ---- Optional loadable audio backends ----
 
 AC_ARG_ENABLE([portaudio],
     [AS_HELP_STRING([--disable-portaudio], [Do not build PortAudio output support])],
@@ -89,7 +87,7 @@ if test "x$enable_output_portaudio" = "xyes"; then
     fi
 fi
 if test "x$have_output_portaudio" = "xyes"; then
-    AC_DEFINE([HAVE_OUTPUT_PORTAUDIO], [1], [Build PortAudio output support in libspiralcore])
+    AC_DEFINE([HAVE_OUTPUT_PORTAUDIO], [1], [Build PortAudio audio backend module])
 fi
 AC_SUBST([PORTAUDIO_CFLAGS])
 AC_SUBST([PORTAUDIO_LIBS])
@@ -120,10 +118,12 @@ if test "x$enable_output_alsa" = "xyes"; then
     fi
 fi
 if test "x$have_output_alsa" = "xyes"; then
-    AC_DEFINE([HAVE_OUTPUT_ALSA], [1], [Build ALSA PCM output support in libspiralcore])
+    AC_DEFINE([HAVE_OUTPUT_ALSA], [1], [Build ALSA PCM audio backend module])
 fi
 AC_SUBST([ALSA_CFLAGS])
 AC_SUBST([ALSA_LIBS])
+AC_CHECK_LIB(asound, snd_pcm_sw_params_set_tstamp_type,
+   [AC_DEFINE([HAVE_ALSA_MONOTONIC_TIMESTAMP], [1], [ALSA supports monotonic PCM timestamps])])
 AM_CONDITIONAL([HAVE_OUTPUT_ALSA], [test "x$have_output_alsa" = "xyes"])
 
 AC_ARG_ENABLE([oss-output],
@@ -143,7 +143,7 @@ if test "x$enable_output_oss" = "xyes"; then
     fi
 fi
 if test "x$have_output_oss" = "xyes"; then
-    AC_DEFINE([HAVE_OUTPUT_OSS], [1], [Build OSS output support in libspiralcore])
+    AC_DEFINE([HAVE_OUTPUT_OSS], [1], [Build OSS audio backend module])
 fi
 AM_CONDITIONAL([HAVE_OUTPUT_OSS], [test "x$have_output_oss" = "xyes"])
 
@@ -182,6 +182,53 @@ AC_SUBST([CORE_AUDIO_LIBS])
 AM_CONDITIONAL([HAVE_CORE_AUDIO_CLIENT], [test "$have_coreaudio" = yes])
 AC_MSG_NOTICE([Native CoreAudio client: $have_coreaudio])
 
+AC_ARG_ENABLE([pipewire],
+    AS_HELP_STRING([--disable-pipewire], [Do not build the optional C++11 PipeWire audio module]),
+    [enable_output_pipewire="$enableval"], [enable_output_pipewire="yes"])
+have_output_pipewire="no"
+pipewire_message="manually disabled"
+if test "x$enable_output_pipewire" = "xyes"; then
+    PKG_CHECK_MODULES([PIPEWIRE], [libpipewire-0.3 >= 0.3.50], [
+        ssm_saved_CPPFLAGS="$CPPFLAGS"
+        ssm_saved_CXXFLAGS="$CXXFLAGS"
+        ssm_saved_LIBS="$LIBS"
+        CPPFLAGS="$CPPFLAGS $PIPEWIRE_CFLAGS"
+        CXXFLAGS="$CXXFLAGS -std=c++11"
+        LIBS="$PIPEWIRE_LIBS $LIBS"
+        AC_LANG_PUSH([C++])
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+            #include <pipewire/pipewire.h>
+        ]], [[
+            struct pw_time timing;
+            pw_init(0, 0);
+            pw_stream_get_time_n(0, &timing, sizeof(timing));
+        ]])], [have_output_pipewire="yes"; pipewire_message="found"],
+            [pipewire_message="C++11 headers or native symbols unavailable"])
+        AC_LANG_POP([C++])
+        CPPFLAGS="$ssm_saved_CPPFLAGS"
+        CXXFLAGS="$ssm_saved_CXXFLAGS"
+        LIBS="$ssm_saved_LIBS"
+    ], [pipewire_message="libpipewire-0.3 >= 0.3.50 not found"])
+fi
+if test "x$have_output_pipewire" = "xyes"; then
+    AC_DEFINE([HAVE_OUTPUT_PIPEWIRE], [1], [Build the PipeWire audio module])
+fi
+AM_CONDITIONAL([HAVE_OUTPUT_PIPEWIRE], [test "x$have_output_pipewire" = "xyes"])
+AC_MSG_NOTICE([PipeWire audio module: $pipewire_message])
+
+AC_ARG_ENABLE([esd],
+    AS_HELP_STRING([--disable-esd], [Do not build the ESD compatibility audio module]),
+    [enable_output_esd="$enableval"], [enable_output_esd="yes"])
+have_output_esd="no"
+if test "x$enable_output_esd" = "xyes"; then
+    PKG_CHECK_MODULES([ESOUND], [esound], [have_output_esd="yes"], [have_output_esd="no"])
+fi
+if test "x$have_output_esd" = "xyes"; then
+    AC_DEFINE([HAVE_OUTPUT_ESD], [1], [Build the ESD compatibility audio module])
+fi
+AM_CONDITIONAL([HAVE_OUTPUT_ESD], [test "x$have_output_esd" = "xyes"])
+AC_MSG_NOTICE([ESD compatibility module: $have_output_esd])
+
 default_output_audio_client="none"
 if test "x$have_output_portaudio" = "xyes"; then
     default_output_audio_client="portaudio"
@@ -191,11 +238,15 @@ elif test "x$have_output_alsa" = "xyes"; then
     default_output_audio_client="alsa"
 elif test "x$have_output_oss" = "xyes"; then
     default_output_audio_client="oss"
+elif test "x$have_output_pipewire" = "xyes"; then
+    default_output_audio_client="pipewire"
+elif test "x$have_output_esd" = "xyes"; then
+    default_output_audio_client="esd"
 fi
 AC_DEFINE_UNQUOTED([DEFAULT_OUTPUT_AUDIO_CLIENT], ["$default_output_audio_client"],
     [Default OutputPlugin audio client])
 if test "x$default_output_audio_client" = "xnone"; then
-    AC_MSG_WARN([No OutputPlugin audio backend found (PortAudio, CoreAudio, ALSA, or OSS)])
+    AC_MSG_WARN([No OutputPlugin audio backend found (PortAudio, CoreAudio, ALSA, OSS, PipeWire, or ESD)])
 fi
 
 
@@ -261,6 +312,10 @@ if test "$build_jack" = "y" ; then
       [AC_DEFINE([HAVE_JACK_CLIENT_OPEN], [1], [Define if JACK provides jack_client_open])])
    AC_CHECK_LIB(jack, jack_free,
       [AC_DEFINE([HAVE_JACK_FREE], [1], [Define if JACK provides jack_free])])
+   AC_CHECK_LIB(jack, jack_get_cycle_times,
+      [AC_DEFINE([HAVE_JACK_GET_CYCLE_TIMES], [1], [Define if JACK provides native cycle timing])])
+   AC_CHECK_LIB(jack, jack_port_get_latency_range,
+      [AC_DEFINE([HAVE_JACK_PORT_GET_LATENCY_RANGE], [1], [Define if JACK provides latency ranges])])
    PLUGINLIST="JackPlugin $PLUGINLIST"
 fi
 
@@ -397,6 +452,15 @@ AC_SUBST(FLTK_LIBS)
 
 AC_CHECK_HEADERS(dlfcn.h)
 AC_SEARCH_LIBS([dlopen], [dl])
+
+dnl Loadable module extension as libtool builds it for this host (-module).
+case "$host_os" in
+    cygwin*|mingw*) plugin_module_ext=".dll" ;;
+    *) plugin_module_ext=".so" ;;
+esac
+AC_SUBST([plugin_module_ext])
+AC_DEFINE_UNQUOTED([PLUGIN_MODULE_EXT], ["$plugin_module_ext"], [Loadable plugin module extension])
+AC_SEARCH_LIBS([clock_gettime], [rt])
 AC_SEARCH_LIBS([pthread_create], [pthread], [],
     [AC_MSG_ERROR([POSIX threads are required])])
 
@@ -407,6 +471,19 @@ case "$host_os" in
 esac
 AC_SUBST([MIDI_LIBS])
 AM_CONDITIONAL([MACOS_BUNDLE], [test "x$MIDI_LIBS" != x])
+
+dnl The legacy ALSA timer is supplied by its module, Mach remains in core.
+atomic_clock="none"
+case "$host_os" in
+    darwin*) atomic_clock="mach" ;;
+    *) if test "x$have_output_alsa" = "xyes"; then atomic_clock="alsa"; fi ;;
+esac
+AM_CONDITIONAL([ATOMIC_CLOCK_MACH], [test "$atomic_clock" = mach])
+AM_CONDITIONAL([HAVE_ATOMIC_CLOCK], [test "$atomic_clock" = mach])
+if test "$atomic_clock" = mach; then
+    AC_DEFINE([HAVE_ATOMIC_CLOCK], [1], [The core provides a platform AtomicClock])
+fi
+AC_MSG_NOTICE([AtomicClock: $atomic_clock])
 
 dnl Do we need png?????
 dnl AC_CHECK_HEADERS(png.h)
@@ -433,6 +510,13 @@ GUI/Makefile
 GUI/Widgets/Makefile
 libspiralcore/Makefile
 Plugins/Makefile
+Plugins/Audio/Makefile
+Plugins/Audio/PortAudio/Makefile
+Plugins/Audio/CoreAudio/Makefile
+Plugins/Audio/ALSA/Makefile
+Plugins/Audio/OSS/Makefile
+Plugins/Audio/PipeWire/Makefile
+Plugins/Audio/ESD/Makefile
 Plugins/DSP/Makefile
 Plugins/GUI/Makefile
 Plugins/GUI/AmpPlugin/Makefile

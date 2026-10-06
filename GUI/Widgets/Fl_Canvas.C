@@ -28,6 +28,11 @@
 // to allow the wire (connection currently being made) to be redrawn
 static const int UPDATE_TICKS = 5;
 
+static Fl_DeviceGUI *AsDevice(Fl_Widget *w)
+{
+	return dynamic_cast<Fl_DeviceGUI*>(w);
+}
+
 static int Numbers[512];
 
 ////////////////////////////////////////////////////////////////////////
@@ -100,12 +105,15 @@ void Fl_Canvas::draw()
    	 	for (int i=children(); i--;)
 		{
    			Fl_Widget& o = **a++;
-			if (((Fl_DeviceGUI*)&o)->IsMinimised())
+			Fl_DeviceGUI *device = AsDevice(&o);
+			if (!device)
+				continue;
+			if (device->IsMinimised())
 			{
    	 			draw_child(o);
    				draw_outside_label(o);
 
-				std::vector<int>::iterator sel = std::find( m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), ((Fl_DeviceGUI*)&o)->GetID() );
+				std::vector<int>::iterator sel = std::find( m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), device->GetID() );
 
 				if (sel != m_Selection.m_DeviceIds.end())
 				{
@@ -122,12 +130,15 @@ void Fl_Canvas::draw()
 		for (int i=children(); i--;)
 		{
    			Fl_Widget& o = **a++;
-			if (!((Fl_DeviceGUI*)&o)->IsMinimised())
+			Fl_DeviceGUI *device = AsDevice(&o);
+			if (!device)
+				continue;
+			if (!device->IsMinimised())
 			{
    	 			draw_child(o);
    				draw_outside_label(o);
 
-				std::vector<int>::iterator sel = std::find( m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), ((Fl_DeviceGUI*)&o)->GetID() );
+				std::vector<int>::iterator sel = std::find( m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), device->GetID() );
 
 				if (sel != m_Selection.m_DeviceIds.end())
 				{
@@ -265,11 +276,14 @@ void Fl_Canvas::CalculateSelection()
  	for (int i=0; i<children(); i++)
 	{
 		Fl_Widget& o = **a++;
-		if (widget_intersects_rectangle(&o, X, Y, W, H))
+		Fl_DeviceGUI *device = AsDevice(&o);
+		if (!device)
+			continue;
+		if (widget_intersects_rectangle(device, X, Y, W, H))
 		{
 			m_HaveSelection = true;
-			m_Selection.m_DeviceIds.push_back(((Fl_DeviceGUI*)&o)->GetID());
-			((Fl_DeviceGUI*)&o)->SetOnDragCallback(cb_OnDrag_s, this);
+			m_Selection.m_DeviceIds.push_back(device->GetID());
+			device->SetOnDragCallback(cb_OnDrag_s, this);
 		}
 	}
 }
@@ -799,9 +813,13 @@ void Fl_Canvas::PruneConnections(Fl_DeviceGUI* Device, int inputs, int outputs)
 			if ((i->OutputID==Device->GetID() && i->OutputPort>=outputs) ||
 			    (i->InputID==Device->GetID() && i->InputPort>=inputs))
 			{
-				// Turn off both ports
-				FindDevice(i->OutputID)->RemoveConnection(i->OutputPort+FindDevice(i->OutputID)->GetInfo()->NumInputs);
-				FindDevice(i->InputID)->RemoveConnection(i->InputPort);
+				// Turn off both ports. A missing end must not crash the delete.
+				Fl_DeviceGUI *source = FindDevice(i->OutputID);
+				Fl_DeviceGUI *dest = FindDevice(i->InputID);
+				if (source)
+					source->RemoveConnection(i->OutputPort+source->GetInfo()->NumInputs);
+				if (dest)
+					dest->RemoveConnection(i->InputPort);
 
 				// send the unconnect callback
 				cb_Unconnect(this,(void*)&(*i));

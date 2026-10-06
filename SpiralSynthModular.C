@@ -16,6 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
+#include <unistd.h>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -33,6 +34,8 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Tooltip.H>
 #include "SpiralSynthModular.h"
+#include "AudioTransportHub.h"
+#include "AudioBackend.h"
 #include "PluginManager.h"
 #include "SpiralInfo.h"
 #include "SpiralPluginGUI.h"
@@ -66,7 +69,6 @@ using namespace std;
 
 map<int,DeviceWin*> SynthModular::m_DeviceWinMap;
 bool SynthModular::m_CallbackUpdateMode = false;
-bool SynthModular::m_BlockingOutputPluginIsReady = false;
 
 //////////////////////////////////////////////////////////
 
@@ -77,9 +79,6 @@ DeviceWin::~DeviceWin()
 //////////////////////////////////////////////////////////
 
 SynthModular::SynthModular():
-m_CallbackOwner(NULL),
-m_ControlEpoch(0),
-m_LastControlEpoch(0),
 m_ResetingAudioThread(false),
 m_HostNeedsUpdate(false),
 m_Frozen(false),
@@ -90,6 +89,8 @@ m_NextID(0)
 	m_Info.BUFSIZE = SpiralInfo::BUFSIZE;
 	m_Info.SAMPLERATE = SpiralInfo::SAMPLERATE;
 	m_Info.PAUSED = false;
+	m_Info.FRAME = 0;
+	m_Info.ROLLING = true;
 
 	/* obsolete - REMOVE SOON  */
 	m_Info.FRAGSIZE = SpiralInfo::FRAGSIZE;
@@ -112,6 +113,7 @@ m_NextID(0)
         for (int n=0; n<512; n++) Numbers[n]=n;
 
 	m_CH.Register("Frozen",&m_Frozen);
+	AudioTransportHub::Get()->SetHost(&m_Info);
 }
 
 //////////////////////////////////////////////////////////
@@ -121,6 +123,7 @@ SynthModular::~SynthModular()
 	// main has stopped the engine; no channel handshake can run now.
 	m_Frozen = true;
 	ClearUp(false);
+	AudioTransportHub::Get()->SetHost(NULL);
 	delete m_SettingsWindow;
 	delete m_TopWindow;
 	PluginManager::Get()->PackUpAndGoHome();
@@ -165,21 +168,25 @@ void SynthModular::ClearUp(bool synchronize)
 }
 
 //////////////////////////////////////////////////////////
+// One engine period: wait for the transport to want the next block,
+// run control work and the graph under the gate, hand the block over.
+// This is the only thread that runs the graph; device callbacks and the
+// blocking transport thread only move finished periods.
 void SynthModular::Update()
 {
-	// Routine control polling belongs just after a completed audio block.
-	// Repeated polling between callbacks otherwise takes the graph gate at
-	// arbitrary points and makes the device drop otherwise healthy blocks.
-	if (CallbackMode())
+	AudioTransportHub *hub=AudioTransportHub::Get();
+	if (m_Frozen)
 	{
-		const unsigned epoch=__sync_fetch_and_add(&m_ControlEpoch,0);
-		if (epoch==m_LastControlEpoch) return;
-
-		m_LastControlEpoch=epoch;
+		// Control owns the devices while frozen: only watch for the thaw.
+		pthread_mutex_lock(&m_CycleLock);
+		m_CH.UpdateDataNow(m_Info.FRAME);
+		pthread_mutex_unlock(&m_CycleLock);
+		usleep(1000);
+		return;
 	}
 
 	pthread_mutex_lock(&m_CycleLock);
-	m_CH.UpdateDataNow();
+	m_CH.UpdateDataNow(m_Info.FRAME);
 	if (m_Frozen)
 	{
 		pthread_mutex_unlock(&m_CycleLock);
@@ -217,48 +224,27 @@ void SynthModular::Update()
 		m_HostNeedsUpdate = false;
 	}
 
-	if (m_ResetingAudioThread || !CallbackMode())
-		RenderAudio(false);
+	const bool render = hub->PreparePeriod();
+	if (render)
+	{
+		hub->BeginPeriod();
+		m_Info.FRAME = hub->Frame();
+		m_Info.ROLLING = hub->Rolling();
+		RenderAudio();
+		hub->CommitPeriod();
+	}
 
+	// Only the scalar delay crosses the gate. Control may now detach, destroy
+	// or replace any native client while the engine sleeps.
+	const unsigned delay = render ? 0 : hub->SleepMicroseconds();
 	pthread_mutex_unlock(&m_CycleLock);
-}
-
-void SynthModular::cb_AudioCycle(void *context, AudioDriver *driver, unsigned int frames)
-{
-	SynthModular *synth = static_cast<SynthModular *>(context);
-	if (!frames)
-	{
-		__sync_bool_compare_and_swap(&synth->m_CallbackOwner, driver, (AudioDriver *)NULL);
-		return;
-	}
-
-	// Control operations can close this client while holding the gate. A
-	// callback must skip a cycle, never wait for control or join itself.
-	if (pthread_mutex_trylock(&synth->m_CycleLock))
-		return;
-
-	if (!synth->m_Frozen && !synth->m_ResetingAudioThread && frames == unsigned(synth->m_Info.BUFSIZE))
-	{
-		if (!m_BlockingOutputPluginIsReady)
-			__sync_bool_compare_and_swap(&synth->m_CallbackOwner, (AudioDriver *)NULL, driver);
-
-		if (driver->ProcessType() == AudioDriver::ALWAYS)
-			driver->ProcessAudio();
-
-		if (__sync_val_compare_and_swap(&synth->m_CallbackOwner, driver, driver) == driver)
-			synth->RenderAudio(true);
-
-	}
-
-	pthread_mutex_unlock(&synth->m_CycleLock);
-	if (__sync_val_compare_and_swap(&synth->m_CallbackOwner, driver, driver)==driver)
-		__sync_fetch_and_add(&synth->m_ControlEpoch,1);
+	if (delay) usleep(delay);
 
 }
 
-void SynthModular::RenderAudio(bool callback)
+void SynthModular::RenderAudio()
 {
-	if (!m_ResetingAudioThread && !callback)
+	if (!m_ResetingAudioThread)
 	{
 		for (map<int,DeviceWin*>::iterator i = m_DeviceWinMap.begin(); i != m_DeviceWinMap.end(); ++i)
 		{
@@ -266,7 +252,7 @@ void SynthModular::RenderAudio(bool callback)
 			if (plugin && !plugin->IsDead() && plugin->IsAudioDriver())
 			{
 				AudioDriver *driver = static_cast<AudioDriver *>(plugin);
-				if (!driver->IsCallbackDriver() && driver->ProcessType() == AudioDriver::ALWAYS)
+				if (driver->ProcessType() == AudioDriver::ALWAYS)
 					driver->ProcessAudio();
 
 			}
@@ -294,14 +280,14 @@ void SynthModular::RenderAudio(bool callback)
 			else
 			{
 				di->second->m_Device->Execute();
+				di->second->m_Device->StampOutputs(m_Info.FRAME);
 
 				// If this is an audio device see if we need to ProcessAudio here
 				if (di->second->m_Device->IsAudioDriver())
 				{
 					AudioDriver *driver = ((AudioDriver *)di->second->m_Device);
 
-					if (driver->ProcessType() == AudioDriver::MANUAL &&
-						(!driver->IsCallbackDriver() || (callback && m_CallbackOwner == driver)))
+					if (driver->ProcessType() == AudioDriver::MANUAL)
 					{
 						driver->ProcessAudio();
 					}
@@ -336,6 +322,12 @@ void SynthModular::UpdatePluginGUIs()
 		{
 			bool erase = true;
 
+			// Audio is walking this graph on another thread. Hold the same
+			// gate RenderAudio uses, then drop it before destroying widgets.
+			// ~SpiralPluginGUI calls Fl::check(), and Update() will erase this
+			// map node as soon as the gate drops, so finish with the iterator first.
+			pthread_mutex_lock(&m_CycleLock);
+
 			//Stop processing of audio if any
 			if (i->second->m_Device)
 			{
@@ -355,16 +347,18 @@ void SynthModular::UpdatePluginGUIs()
 			//Remove Device GUI from canvas
 			m_Canvas->RemoveDevice(i->second->m_DeviceGUI);
 
-			//Delete Device GUI - must delete here or sometimes plugin will randomly crash
-			delete i->second->m_DeviceGUI;
+			Fl_DeviceGUI *gui = i->second->m_DeviceGUI;
 			i->second->m_DeviceGUI = NULL;
-
-			//Erase from winmap if no audio to do it
 			if (erase)
-			{
 				m_DeviceWinMap.erase(i++);
-				continue;
-			}
+			else
+				++i;
+
+			pthread_mutex_unlock(&m_CycleLock);
+
+			//Delete Device GUI - must delete here or sometimes plugin will randomly crash
+			delete gui;
+			continue;
 		}
 
 		i++;
@@ -661,6 +655,10 @@ void SynthModular::LoadPlugins (string pluginPath) {
      }
      string PluginRoot = pluginPath.empty() ? SpiralInfo::PLUGIN_PATH : pluginPath;
      if (!PluginRoot.empty() && PluginRoot[PluginRoot.size()-1] != '/') PluginRoot += '/';
+     // Audio backend modules sit beside the device plugins under audio/;
+     // compiled-in backends are already registered and a module of the
+     // same name yields.
+     spiralcore::AudioBackendRegistry::Get()->LoadModules(PluginRoot);
      vector<string> DSPNames;
      vector<string> GUINames;
      set<string> SeenModules;
@@ -837,7 +835,6 @@ DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 
 	if (!nlw->m_Device) return NULL;
 
-        nlw->m_Device->SetBlockingCallback(cb_Blocking);
 	nlw->m_Device->SetUpdateCallback(cb_Update);
 	nlw->m_Device->SetParent((void*)this);
 
@@ -845,7 +842,6 @@ DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 	{
 		AudioDriver *driver = ((AudioDriver*)nlw->m_Device);
 		driver->SetChangeBufferAndSampleRateCallback(cb_ChangeBufferAndSampleRate);
-		driver->SetAudioCycleCallback(cb_AudioCycle);
 	}
 
 	PluginInfo PInfo    = nlw->m_Device->Initialise(&m_Info);
@@ -995,16 +991,6 @@ void SynthModular::cb_Update(void* o, bool mode)
 {
 	m_CallbackUpdateMode=mode;
 	((SynthModular*)o)->Update();
-}
-
-// called by a blocking output plugin to notify the engine its ready to
-// take control of the update timing (so take the brakes off)
-void SynthModular::cb_Blocking(void* o, bool mode)
-{
-	m_BlockingOutputPluginIsReady=mode;
-	if (mode && o)
-		__sync_lock_test_and_set(&static_cast<SynthModular *>(o)->m_CallbackOwner, (AudioDriver *)NULL);
-
 }
 
 //////////////////////////////////////////////////////////
@@ -1458,13 +1444,17 @@ inline void SynthModular::cb_Cut_i(Fl_Widget *o, void *v) {
        cb_Copy_i (o, v);  // should we be calling an inline function here??????
        for (unsigned int i=0; i<m_Canvas->Selection().m_DeviceIds.size(); i++) {
            int ID = m_Canvas->Selection().m_DeviceIds[i];
-           Fl_DeviceGUI::Kill(m_DeviceWinMap[ID]->m_DeviceGUI);
+           std::map<int,DeviceWin*>::iterator found = m_DeviceWinMap.find(ID);
+           if (found == m_DeviceWinMap.end() || !found->second || !found->second->m_DeviceGUI)
+              continue;
+           Fl_DeviceGUI::Kill(found->second->m_DeviceGUI);
        }
        Fl_Canvas::ClearSelection(m_Canvas);
 }
 
 void SynthModular::cb_Cut (Fl_Widget *o, void *v) {
-     ((SynthModular*)(o->parent()->user_data()))->cb_Cut_i (o, v);
+     if (!v) return;
+     ((SynthModular*)v)->cb_Cut_i (o, v);
 }
 
 // Copy
@@ -1481,6 +1471,10 @@ inline void SynthModular::cb_Copy_i (Fl_Widget *o, void *v) {
        for (unsigned int i=0; i<m_Canvas->Selection().m_DeviceIds.size(); i++) {
            int ID = m_Canvas->Selection().m_DeviceIds[i];
            std::map<int,DeviceWin*>::iterator j = m_DeviceWinMap.find(ID);
+           if (j == m_DeviceWinMap.end() || !j->second || !j->second->m_DeviceGUI)
+              continue;
+           if (j->second->m_PluginID != COMMENT_ID && !j->second->m_Device)
+              continue;
            m_Copied.m_DeviceIds[ID] = ID;
            m_Copied.devicecount += 1;
            m_Copied.devices << "Device " << j->first << " " ; // save the id
@@ -1512,7 +1506,8 @@ inline void SynthModular::cb_Copy_i (Fl_Widget *o, void *v) {
 }
 
 void SynthModular::cb_Copy (Fl_Widget *o, void *v) {
-     ((SynthModular*)(o->parent()->user_data()))->cb_Copy_i (o, v);
+     if (!v) return;
+     ((SynthModular*)v)->cb_Copy_i (o, v);
 }
 
 // Paste
@@ -1526,7 +1521,8 @@ inline void SynthModular::cb_Paste_i (Fl_Widget *o, void *v) {
 }
 
 void SynthModular::cb_Paste (Fl_Widget *o, void *v) {
-     ((SynthModular*)(o->parent()->user_data()))->cb_Paste_i (o, v);
+     if (!v) return;
+     ((SynthModular*)v)->cb_Paste_i (o, v);
 }
 
 // Delete

@@ -1,7 +1,8 @@
 AM_CPPFLAGS = -I$(top_srcdir)                                              \
                 $(FLTK_CXXFLAGS)                        \
                 -I$(top_srcdir)/GUI/Widgets           \
-                -I$(top_srcdir)/libspiralcore/include
+                -I$(top_srcdir)/libspiralcore/include \
+                $(PORTAUDIO_CFLAGS) $(ALSA_CFLAGS)
 
 EXTRA_DIST = 				\
 		Fl_DragBar.fld  	\
@@ -63,7 +64,7 @@ libSpiralWidgets_la_LIBADD = 				\
 				 -lm	\
                 $(top_builddir)/libspiralcore/libspiralcore.la
 
-libSpiralPlugin_la_SOURCES = SpiralPlugin.C SpiralPlugin.h
+libSpiralPlugin_la_SOURCES = SpiralPlugin.C SpiralPlugin.h OutputAudioClient.C OutputAudioClient.h AudioTransportHub.C AudioTransportHub.h
 libSpiralPlugin_la_LIBADD = $(top_builddir)/libspiralcore/libspiralcore.la
 libSpiralPlugin_la_LDFLAGS = -shared -no-undefined -version-info $(LT_VERSION_INFO)
 libSpiralWidgets_la_LIBADD += libSpiralPlugin.la
