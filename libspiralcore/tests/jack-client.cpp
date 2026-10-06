@@ -1,5 +1,9 @@
 // Exercise the real JackClient against a deterministic JACK API, without a server.
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include "JackClient.h"
+#include <cmath>
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
@@ -42,6 +46,8 @@ static jack_transport_state_t transportState = JackTransportStopped;
 static jack_nframes_t transportFrame = 0;
 
 static jack_nframes_t cycleFrame = 48000;
+static double cycleTimeOffset = 0;
+static bool preciseCycle = false;
 static bool failOpen = false;
 static bool failActivate = false;
 static bool failRegister = false;
@@ -49,13 +55,25 @@ static bool failCallback = false;
 
 extern "C"
 {
+int jack_get_cycle_times(const jack_client_t *, jack_nframes_t *frame, jack_time_t *start, jack_time_t *end, float *estimate)
+{
+	if (!preciseCycle) return -1;
+
+	*frame = cycleFrame;
+	*start = 10000000;
+	*end = *start + 84;
+	*estimate = 999;
+	return 0;
+}
 jack_time_t jack_get_time() { return jack_time_t(spiralcore::AudioMonotonicTime() * 1e6); }
 jack_nframes_t jack_last_frame_time(const jack_client_t *) { return cycleFrame; }
-jack_time_t jack_frames_to_time(const jack_client_t *, jack_nframes_t frame) { return jack_time_t(double(frame) * 1e6 / 48000); }
+jack_time_t jack_frames_to_time(const jack_client_t *, jack_nframes_t frame) { return jack_time_t((cycleTimeOffset + double(frame) / 48000) * 1e6); }
+#ifdef HAVE_JACK_PORT_GET_LATENCY_RANGE
 void jack_port_get_latency_range(jack_port_t *, jack_latency_callback_mode_t, jack_latency_range_t *range)
 {
 	range->min = range->max = 4;
 }
+#endif
 jack_nframes_t jack_port_get_total_latency(jack_client_t *, jack_port_t *) { return 4; }
 
 jack_transport_state_t jack_transport_query(const jack_client_t *, jack_position_t *position)
@@ -355,6 +373,12 @@ int main()
 		assert(native->Ports[3]->Buffer[frame] == float(frame + 10));
 	}
 
+#ifdef HAVE_JACK_GET_CYCLE_TIMES
+	preciseCycle = true;
+	native->Process(4, native->ProcessContext);
+	assert(std::fabs(cycle.Timing.Step - 21e-6) < 1e-12);
+	preciseCycle = false;
+#endif
 	cycleFrame = 0xfffffffcU;
 	native->Process(4, native->ProcessContext);
 	const uint64_t beforeWrap = cycle.Timing.Frame;
