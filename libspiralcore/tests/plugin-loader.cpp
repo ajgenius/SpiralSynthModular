@@ -14,8 +14,15 @@ using namespace spiralcore;
 struct ProbeKind : public PluginKind
 {
 	std::vector<std::string> Seen;
-	bool Refuse;
-	ProbeKind() : Refuse(false) {}
+	bool Refuse, Busy;
+	unsigned Released;
+	ProbeKind() : Refuse(false), Busy(false), Released(0) {}
+	bool CanUnload() const { return !Busy; }
+	void Release(void *entry, const std::string &)
+	{
+		assert(entry);
+		++Released;
+	}
 	const char *Name() const { return "probe"; }
 	const char *Subdirectory() const { return "probe"; }
 	const char *Suffix() const { return "_Probe"; }
@@ -50,7 +57,16 @@ int main(int argc, char **argv)
 	probe.Seen.clear();
 	assert(loader->Load(probe, root) == 0 && probe.Seen.size() == 2);
 
-	loader->UnloadAll();
+	probe.Busy = true;
+	assert(!loader->UnloadAll() && probe.Released == 0);
+	assert(!loader->UnregisterKind(&probe));
+	PluginLoader::PackUpAndGoHome();
+	assert(PluginLoader::Get() == loader);
+
+	probe.Busy = false;
+	assert(loader->UnregisterKind(&probe) && probe.Released == 2);
+	assert(loader->LoadAll(root) == 0);
+	assert(loader->UnloadAll());
 	PluginLoader::PackUpAndGoHome();
 	printf("PASS\n");
 	return 0;

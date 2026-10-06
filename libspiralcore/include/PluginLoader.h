@@ -45,6 +45,11 @@ public:
 
 	// The resolved entry; return true to keep the module loaded.
 	virtual bool Accept(void *entry, const std::string &path) = 0;
+
+	// Control-thread lifetime boundary. Forget borrowed module data before
+	// dlclose; refuse unloading while instances still execute module code.
+	virtual bool CanUnload() const { return true; }
+	virtual void Release(void *entry, const std::string &path) {}
 };
 
 //////////////////////////////////////////////////////////
@@ -53,12 +58,13 @@ class PluginLoader
 {
 public:
 	static PluginLoader *Get() { if(!m_Singleton) m_Singleton=new PluginLoader; return m_Singleton; }
-	static void         PackUpAndGoHome() { if(m_Singleton) delete m_Singleton; m_Singleton=NULL; }
+	static void         PackUpAndGoHome();
 
 	void                RegisterKind(PluginKind *kind);
+	bool                UnregisterKind(PluginKind *kind);
 	unsigned            Load(PluginKind &kind, const std::string &root);
 	unsigned            LoadAll(const std::string &root);
-	void                UnloadAll();
+	bool                UnloadAll();
 
 private:
 
@@ -67,7 +73,14 @@ private:
 	bool LoadModule(PluginKind &kind, const std::string &path);
 
 	std::vector<PluginKind*> m_Kinds;
-	std::vector<void*> m_Modules;
+	struct Module
+	{
+		PluginKind *Kind;
+		void *Handle, *Entry;
+		std::string Path;
+	};
+	void ReleaseModule(const Module &module);
+	std::vector<Module> m_Modules;
 	static PluginLoader *m_Singleton;
 };
 
