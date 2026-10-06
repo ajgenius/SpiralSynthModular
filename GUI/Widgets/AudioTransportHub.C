@@ -149,7 +149,6 @@ void *AudioTransportHub::TransportThread(void *context)
 		hub->TransportCycle();
 		if (hub->m_IOFailed) break;
 	}
-	hub->m_ThreadRunning=false;
 	return NULL;
 }
 
@@ -163,7 +162,9 @@ void AudioTransportHub::StartTransportThread()
 
 void AudioTransportHub::StopTransportThread()
 {
-	if (!m_ThreadRunning && !m_ThreadStop) return;
+	// m_ThreadRunning means created and not yet joined: a thread that left
+	// on an I/O failure is still joined here.
+	if (!m_ThreadRunning) return;
 	// A blocking Write returns within one period and WaitReady within a
 	// few, so the thread leaves on its own before the device closes.
 	m_ThreadStop=true;
@@ -180,15 +181,14 @@ unsigned AudioTransportHub::PeriodMicroseconds() const
 
 // * Engine side
 
-void AudioTransportHub::WaitPeriod()
+bool AudioTransportHub::WaitPeriod()
 {
 	const unsigned period=PeriodMicroseconds();
 	const bool streaming=m_Mode!=CLOSED && m_Mode!=NO_MODE && OUTPUTCLIENT::Get()->IsAttached();
 	if (streaming)
 	{
 		if (m_Clock) { delete m_Clock; m_Clock=NULL; }
-		OUTPUTCLIENT::Get()->WaitPeriod(period*4);
-		return;
+		return OUTPUTCLIENT::Get()->WaitPeriod(period*4);
 	}
 
 	// No stream: the platform clock keeps the engine at the same rate.
@@ -200,6 +200,7 @@ void AudioTransportHub::WaitPeriod()
 #else
 	usleep(period);
 #endif
+	return true;
 }
 
 void AudioTransportHub::CommitPeriod()

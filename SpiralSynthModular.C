@@ -179,7 +179,8 @@ void SynthModular::Update()
 		return;
 	}
 
-	hub->WaitPeriod();
+	// Without a slot the transport is still on ours: control only, no graph.
+	const bool render=hub->WaitPeriod();
 
 	pthread_mutex_lock(&m_CycleLock);
 	m_CH.UpdateDataNow();
@@ -220,8 +221,11 @@ void SynthModular::Update()
 		m_HostNeedsUpdate = false;
 	}
 
-	RenderAudio();
-	hub->CommitPeriod();
+	if (render)
+	{
+		RenderAudio();
+		hub->CommitPeriod();
+	}
 
 	pthread_mutex_unlock(&m_CycleLock);
 }

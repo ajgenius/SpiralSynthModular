@@ -256,9 +256,9 @@ void OutputAudioClient::SendStereo(const Sample *ldata, const Sample *rdata)
 
 void OutputAudioClient::GetStereo(Sample *ldata, Sample *rdata)
 {
-	// The transport captured into the slot it last played, the one the
-	// engine is not mixing into.
-	const int captured = !m_Mix;
+	// The slot the engine owns is the one the transport has finished with;
+	// its capture is complete. The other slot may still be filling.
+	const int captured = m_Mix;
 	if (m_Channels != 2 || !host || m_Frames != host->BUFSIZE || !m_In[captured] || m_IsDead) return;
 
 	int on = 0;
