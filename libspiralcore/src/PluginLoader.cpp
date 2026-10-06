@@ -16,256 +16,122 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include <config.h>
 #include <cstring>
 #include <dlfcn.h>
-#include <stdio.h>
-#include "SpiralInfo.h"
-#include "PluginManager.h"
-#include "SpiralGUI.H"
+#include <dirent.h>
+#include <sys/stat.h>
+#include <iostream>
+#include "PluginLoader.h"
 
 using namespace std;
+using namespace spiralcore;
 
-PluginManager *PluginManager::m_Singleton = NULL;
+PluginLoader *PluginLoader::m_Singleton = NULL;
 
-PluginManager::PluginManager()
+PluginLoader::PluginLoader()
 {
 }
 
-PluginManager::~PluginManager()
+PluginLoader::~PluginLoader()
 {
 	UnloadAll();
 }
 
-static void ClearDSP(HostsideInfo *p)
+void PluginLoader::RegisterKind(PluginKind *kind)
 {
-	p->dsp.Handle = NULL;
-	p->dsp.CreateInstance = NULL;
-	p->dsp.GetIcon = NULL;
-	p->dsp.GetGroupName = NULL;
+	if (!kind) return;
+	for (vector<PluginKind*>::iterator i=m_Kinds.begin(); i!=m_Kinds.end(); i++)
+		if (*i == kind) return;
+
+	m_Kinds.push_back(kind);
 }
 
-static void ClearGUI(HostsideInfo *p)
+static bool HasSuffix(const string &name, const char *suffix)
 {
-	p->gui.Handle = NULL;
-	p->gui.CreateGUI = NULL;
-	p->gui.GetIcon = NULL;
+	const size_t n = strlen(suffix);
+	return name.size() > n && name.compare(name.size() - n, n, suffix) == 0;
 }
 
-static void UpdatePairedType(HostsideInfo *p)
+unsigned PluginLoader::Load(PluginKind &kind, const string &root)
 {
-	if (p->dsp.Handle && p->gui.Handle)
-		p->type = SPIRAL_PLUGIN_TYPE_PAIRED;
-	else if (p->dsp.Handle)
-		p->type = SPIRAL_PLUGIN_TYPE_DSP;
-	else if (p->gui.Handle)
-		p->type = SPIRAL_PLUGIN_TYPE_GUI;
+	string directory = root;
+	if (!directory.empty() && directory[directory.size()-1] != '/') directory += '/';
+	directory += kind.Subdirectory();
+
+	unsigned loaded = 0;
+	DIR *dir = opendir(directory.c_str());
+	if (!dir) return 0;
+
+	while (struct dirent *entry = readdir(dir))
+	{
+		const string name = entry->d_name;
+		if (name == "." || name == "..") continue;
+
+		const string path = directory + "/" + name;
+		struct stat st;
+		if (stat(path.c_str(), &st)) continue;
+
+		if (S_ISDIR(st.st_mode))
+		{
+			DIR *sub = opendir(path.c_str());
+			if (!sub) continue;
+
+			while (struct dirent *module = readdir(sub))
+				if (HasSuffix(module->d_name, kind.Suffix()) && LoadModule(kind, path + "/" + module->d_name))
+					++loaded;
+
+			closedir(sub);
+		}
+		else if (HasSuffix(name, kind.Suffix()) && LoadModule(kind, path))
+			++loaded;
+	}
+	closedir(dir);
+	return loaded;
 }
 
-HostsideInfo *PluginManager::NewSlot(int ID)
+unsigned PluginLoader::LoadAll(const string &root)
 {
-	HostsideInfo *p = new HostsideInfo;
-	p->ID = ID;
-	p->type = -1;
-	ClearDSP(p);
-	ClearGUI(p);
-	m_PluginVec.push_back(p);
-	return p;
+	unsigned loaded = 0;
+	for (vector<PluginKind*>::iterator i=m_Kinds.begin(); i!=m_Kinds.end(); i++)
+		loaded += Load(**i, root);
+
+	return loaded;
 }
 
-PluginID PluginManager::LoadPlugin(const char *PluginName)
+bool PluginLoader::LoadModule(PluginKind &kind, const string &path)
 {
-	// DSP modules load first so GUI methods resolve immediately.
-	void *handle = dlopen(PluginName, RTLD_NOW | RTLD_GLOBAL);
+	void *handle = dlopen(path.c_str(), RTLD_NOW | RTLD_LOCAL);
 	if (handle == NULL)
 	{
-		SpiralInfo::Alert("Error loading ["+string(PluginName)+"]: \n"+string(dlerror()));
-		return PluginError;
+		cerr << kind.Name() << " plugin " << path << ": " << dlerror() << endl;
+		return false;
 	}
 
-	typedef const char *(*TextFn)();
-	TextFn GetHostABI = (TextFn)dlsym(handle, "SpiralPlugin_GetHostABI");
-	const char *abi = GetHostABI ? GetHostABI() : NULL;
-
-	if (!abi || strcmp(abi, SSM_HOST_ABI) != 0)
+	void *entry = dlsym(handle, kind.EntrySymbol());
+	if (!entry)
 	{
-		SpiralInfo::Alert("Missing or incompatible plugin ABI: " + string(PluginName));
+		cerr << kind.Name() << " plugin " << path << ": no " << kind.EntrySymbol() << endl;
 		dlclose(handle);
-		return PluginError;
+		return false;
 	}
 
-	char *error = NULL;
-	dlerror();
-
-	int (*GetID)(void) = (int(*)()) dlsym(handle, "SpiralPlugin_GetID");
-	if ((error = dlerror()) != NULL)
-	{
-		SpiralInfo::Alert("Error linking to plugin "+string(PluginName)+"\n"+string(error));
-		dlclose(handle);
-		return PluginError;
-	}
-	int ID = GetID();
-	if (ID < 0)
+	// The kind decides; it says why on its own.
+	if (!kind.Accept(entry, path))
 	{
 		dlclose(handle);
-		return PluginError;
+		return false;
 	}
 
-	int type = 0;
-	int (*GetType)(void) = (int(*)()) dlsym(handle, "SpiralPlugin_GetType");
-	if (dlerror() == NULL && GetType)
-		type = GetType();
-
-	if (type != SPIRAL_PLUGIN_TYPE_DSP && type != SPIRAL_PLUGIN_TYPE_GUI)
-	{
-		SpiralInfo::Alert("Obsolete or invalid plugin module: "+string(PluginName));
-		dlclose(handle);
-		return PluginError;
-	}
-
-	HostsideInfo *slot = GetPlugin_i(ID);
-	if (!slot)
-		slot = NewSlot(ID);
-
-	if (type == SPIRAL_PLUGIN_TYPE_GUI)
-	{
-		if (slot->gui.Handle)
-		{
-			dlclose(handle);
-			return ID;
-		}
-
-		SpiralGUIType *(*CreateGUI)(SpiralPlugin *) =
-			(SpiralGUIType *(*)(SpiralPlugin *)) dlsym(handle, "SpiralPlugin_CreateGUI");
-		if ((error = dlerror()) != NULL)
-		{
-			SpiralInfo::Alert("Error linking GUI in "+string(PluginName)+"\n"+string(error));
-			dlclose(handle);
-			return PluginError;
-		}
-
-		const char **(*GetIcon)(void) = (const char **(*)()) dlsym(handle, "SpiralPlugin_GetIcon");
-		if (dlerror() != NULL)
-			GetIcon = NULL;
-
-		slot->gui.Handle = handle;
-		slot->gui.CreateGUI = CreateGUI;
-		slot->gui.GetIcon = GetIcon;
-		UpdatePairedType(slot);
-		return ID;
-	}
-
-	// Resolve the DSP factory and its metadata.
-	if (slot->dsp.Handle)
-	{
-		dlclose(handle);
-		return ID;
-	}
-
-	SpiralPlugin *(*CreateInstance)(void) =
-		(SpiralPlugin *(*)()) dlsym(handle, "SpiralPlugin_CreateInstance");
-	if ((error = dlerror()) != NULL)
-	{
-		SpiralInfo::Alert("Error linking to plugin "+string(PluginName)+"\n"+string(error));
-		dlclose(handle);
-		return PluginError;
-	}
-
-	const char **(*GetIcon)(void) = (const char **(*)()) dlsym(handle, "SpiralPlugin_GetIcon");
-	if ((error = dlerror()) != NULL)
-	{
-		SpiralInfo::Alert("Error linking to plugin "+string(PluginName)+"\n"+string(error));
-		dlclose(handle);
-		return PluginError;
-	}
-
-	std::string (*GetGroupName)(void) =
-		(std::string(*)()) dlsym(handle, "SpiralPlugin_GetGroupName");
-	if ((error = dlerror()) != NULL)
-	{
-		SpiralInfo::Alert("Error linking to plugin "+string(PluginName)+"\n"+string(error));
-		dlclose(handle);
-		return PluginError;
-	}
-
-	std::string (*GetName)(void) = (std::string(*)()) dlsym(handle, "SpiralPlugin_GetName");
-	std::string name = GetName ? GetName() : std::string();
-	if (name.empty())
-	{
-		SpiralInfo::Alert("Missing plugin name: " + string(PluginName));
-		dlclose(handle);
-		return PluginError;
-	}
-
-	slot->Name = name;
-
-	slot->dsp.Handle = handle;
-	slot->dsp.CreateInstance = CreateInstance;
-	slot->dsp.GetIcon = GetIcon;
-	slot->dsp.GetGroupName = GetGroupName;
-	UpdatePairedType(slot);
-	return ID;
+	m_Modules.push_back(handle);
+	return true;
 }
 
-void PluginManager::UnLoadPlugin(PluginID ID)
+void PluginLoader::UnloadAll()
 {
-	HostsideInfo *p = GetPlugin_i(ID);
-	if (!p) return;
-	if (p->gui.Handle) { dlclose(p->gui.Handle); ClearGUI(p); }
-	if (p->dsp.Handle) { dlclose(p->dsp.Handle); ClearDSP(p); }
-	p->type = 0;
-	char *error;
-	if ((error = dlerror()) != NULL)
-		SpiralInfo::Alert("Error unlinking plugin: \n"+string(error));
-}
-
-void PluginManager::UnloadAll()
-{
-	for (vector<HostsideInfo*>::iterator i=m_PluginVec.begin();
-	     i!=m_PluginVec.end(); i++)
+	for (vector<void*>::iterator i=m_Modules.begin();
+	     i!=m_Modules.end(); i++)
 	{
-		if ((*i)->gui.Handle) dlclose((*i)->gui.Handle);
-		if ((*i)->dsp.Handle) dlclose((*i)->dsp.Handle);
-		delete *i;
+		dlclose(*i);
 	}
-	m_PluginVec.clear();
+	m_Modules.clear();
 }
-
-const HostsideInfo *PluginManager::GetPlugin(PluginID ID)
-{
-	HostsideInfo *ret = GetPlugin_i(ID);
-	if (!ret)
-	{
-		char t[256];
-		sprintf(t,"%d",ID);
-		SpiralInfo::Alert("Plugin "+string(t)+" not found.");
-	}
-	return ret;
-}
-
-HostsideInfo *PluginManager::GetPlugin_i(PluginID ID)
-{
-	for (vector<HostsideInfo*>::iterator i=m_PluginVec.begin();
-	     i!=m_PluginVec.end(); i++)
-	{
-		if ((*i)->ID==ID)
-			return *i;
-	}
-	return NULL;
-}
-
-bool PluginManager::IsValid(PluginID ID)
-{
-	const HostsideInfo *t = GetPlugin(ID);
-	return (t && t->HasDSP());
-}
-
-int PluginManager::GetIdByName(string Name)
-{
-	/* Declared on UA PluginManager.h but never defined. Looking up by
-	   PluginInfo.Name would mean constructing a DSP instance at scan
-	   time; the FLTK host never calls this. */
-	(void)Name;
-	return PluginError;
-}
-
