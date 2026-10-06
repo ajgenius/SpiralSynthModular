@@ -461,6 +461,8 @@ GUI/Makefile
 GUI/Widgets/Makefile
 libspiralcore/Makefile
 Plugins/Makefile
+Plugins/Audio/Makefile
+Plugins/Audio/PortAudio/Makefile
 Plugins/DSP/Makefile
 Plugins/GUI/Makefile
 Plugins/GUI/AmpPlugin/Makefile
