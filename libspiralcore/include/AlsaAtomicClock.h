@@ -14,26 +14,18 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-#include <iostream>
+#ifndef ALSA_ATOMIC_CLOCK
+#define ALSA_ATOMIC_CLOCK
+
+#include "AtomicClock.h"
 #include <alsa/asoundlib.h>
 
-using namespace std;
-
-class AtomicClock
+// ALSA global system timer (hw:CLASS=global), ticking at the requested rate.
+struct AtomicClock::Platform
 {
-public:
-	AtomicClock(float frequency);
-	~AtomicClock() {snd_timer_close(m_Handle);}
-	double Tick();
-	
-private:
-
 	snd_timer_t *m_Handle;
     snd_timer_info_t *m_Info;
     snd_timer_params_t *m_Params;	
-	
-	double m_Time;
-	float m_Frequency;
 	
 	struct TimerDesc
 	{
@@ -43,4 +35,6 @@ private:
     	int Device;
     	int Subdevice;
 	};
-};	
+};
+
+#endif
