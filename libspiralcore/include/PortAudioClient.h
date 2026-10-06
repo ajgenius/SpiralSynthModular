@@ -65,6 +65,7 @@ private:
 	AudioCycleTiming m_Timing;
 	void (*m_Run)(void *, unsigned);
 	void *m_Context;
+	static void Finished(void *context);
 	static int Process(const void *, void *, unsigned long, const PaStreamCallbackTimeInfo *, PaStreamCallbackFlags, void *);
 };
 

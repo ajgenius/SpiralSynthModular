@@ -34,6 +34,9 @@ private:
 	mutable unsigned m_Read, m_Write;
 	unsigned m_Search;
 	double m_Cutoff;
+	unsigned m_LastGeneration;
+	uint64_t m_EndFrame;
+	double m_LastTime;
 	std::vector<float> m_Samples, m_Filter;
 	std::vector<Position> m_Positions;
 	bool Covered(unsigned index, unsigned read, unsigned write, unsigned generation) const;

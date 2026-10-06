@@ -16,7 +16,7 @@ libspiralcore_la_SOURCES = \
     src/Sample.cpp \
     include/RiffWav.h \
     src/RiffWav.cpp
-libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 1:0:0
+libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 2:0:0
 libspiralcore_la_LIBADD = $(MIDI_LIBS) $(AMIDILIBS) $(SFLIBS) $(PORTAUDIO_LIBS) $(ALSA_LIBS) $(JACK_LIBS) $(CORE_AUDIO_LIBS) -lm
 
 check_PROGRAMS = compatibility-test
@@ -102,3 +102,9 @@ libspiralcore_la_SOURCES += include/AudioTiming.h src/AudioTiming.cpp include/Ti
 check_PROGRAMS += audio-timeline-test
 audio_timeline_test_SOURCES = tests/audio-timeline.cpp
 audio_timeline_test_LDADD = libspiralcore.la
+
+libspiralcore_la_SOURCES += include/AudioStream.h src/AudioStream.cpp include/PresentationClock.h src/PresentationClock.cpp
+
+check_PROGRAMS += audio-stream-test
+audio_stream_test_SOURCES = tests/audio-stream.cpp
+audio_stream_test_LDADD = libspiralcore.la
