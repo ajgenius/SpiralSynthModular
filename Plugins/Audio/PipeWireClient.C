@@ -193,7 +193,9 @@ bool PipeWireClient::Timestamp(Stream &stream, unsigned frames, AudioCycleTiming
 	timing = AudioCycleTiming();
 	timing.Frame = stream.Frame;
 	timing.CallbackTime = AudioMonotonicTime();
-	timing.Step = step;
+	// Let AudioStream estimate sample-clock drift from successive timestamps.
+	// The negotiated rate alone is not a measured monotonic-clock slope.
+	timing.Step = 0;
 	timing.SampleRate = m_Options.Samplerate;
 	timing.Frames = frames;
 	// pw_time.now is CLOCK_MONOTONIC. Playback follows PipeWire's documented
@@ -263,7 +265,7 @@ void PipeWireClient::Transfer(Stream &stream)
 			stamp.Frame = timing.Frame;
 			stamp.Generation = 1;
 			stamp.Time = timing.InputTime;
-			stamp.Step = timing.Step;
+			stamp.Step = 1.0 / m_Options.Samplerate;
 			m_Capture.Write(samples, frames, stamp);
 		}
 		else
@@ -297,7 +299,7 @@ bool PipeWireClient::Read(float *samples, unsigned frames)
 	if (m_CurrentInput)
 		std::memcpy(samples, m_CurrentInput, frames * m_Options.InChannels * sizeof(float));
 	else if (m_Options.OutChannels)
-		m_Capture.Read(samples, frames, m_Timing.InputTime, m_Timing.Step, 1);
+		m_Capture.Read(samples, frames, m_Timing.InputTime, 1.0 / m_Options.Samplerate, 1);
 	else
 		return false;
 	return true;
