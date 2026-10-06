@@ -37,9 +37,15 @@ struct Engine
 		AudioTransportHub *hub=AudioTransportHub::Get();
 		while (!__sync_fetch_and_add(&engine->Stop,0))
 		{
-			if (!hub->WaitPeriod()) continue;
-
 			pthread_mutex_lock(&engine->Gate);
+			if (!hub->PreparePeriod())
+			{
+				const unsigned delay = hub->SleepMicroseconds();
+				pthread_mutex_unlock(&engine->Gate);
+				usleep(delay);
+				continue;
+			}
+
 			hub->BeginPeriod();
 			engine->Driver->Execute();
 			if (hub->GetMode()==AudioTransportHub::OUTPUT) __sync_fetch_and_add(&engine->Cycles,1);

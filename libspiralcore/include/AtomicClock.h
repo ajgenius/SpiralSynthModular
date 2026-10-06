@@ -20,7 +20,8 @@
 // A steady periodic clock for pacing the engine when no audio backend
 // does. Tick() blocks until the next period and returns the time since
 // the clock started, in seconds. Configure selects the one platform
-// implementation that is built (AlsaAtomicClock, MachAtomicClock).
+// implementation: Mach in core, or AlsaAtomicClock in the ALSA module.
+// The active audio scheduler uses AudioTimeline and does not depend on it.
 class AtomicClock
 {
 public:

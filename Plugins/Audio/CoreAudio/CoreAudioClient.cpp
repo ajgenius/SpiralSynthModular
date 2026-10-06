@@ -1,4 +1,5 @@
 #include "CoreAudioClient.h"
+#include "AudioBackend.h"
 #include <algorithm>
 #include <CoreAudio/HostTime.h>
 #include <cstring>
@@ -69,12 +70,12 @@ namespace
 		CFStringRef uid=CFStringCreateWithCString(NULL,name.c_str(),kCFStringEncodingUTF8);
 		if (!uid) return false;
 
-		AudioValueTranslation translation={&uid,sizeof(uid),&device,sizeof(device)};
-
 		AudioObjectPropertyAddress address=Address(kAudioHardwarePropertyTranslateUIDToDevice);
-		UInt32 size=sizeof(translation);
+		UInt32 size=sizeof(device);
+		device=kAudioObjectUnknown;
 
-		OSStatus result=AudioObjectGetPropertyData(kAudioObjectSystemObject,&address,0,NULL,&size,&translation);
+		// AudioObject uses the UID as qualifier data and returns the device ID.
+		OSStatus result=AudioObjectGetPropertyData(kAudioObjectSystemObject,&address,sizeof(uid),&uid,&size,&device);
 		CFRelease(uid);
 		return result==noErr && device!=kAudioObjectUnknown;
 	}
@@ -430,3 +431,11 @@ double CoreAudioClient::GetOutputLatency() const
 	return double(__sync_fetch_and_add(&m_OutputSoftware, 0) +
 		std::max(__sync_fetch_and_add(&m_OutputHardware[0], 0), __sync_fetch_and_add(&m_OutputHardware[1], 0))) / GetSampleRate();
 }
+
+// * Backend module entry
+
+static void *CreateCoreAudio(void *) { return static_cast<AudioClient *>(new CoreAudioClient); }
+static void DestroyCoreAudio(void *client) { delete static_cast<AudioClient *>(client); }
+static const BackendDescriptor CoreAudioBackend = { SPIRAL_AUDIO_PLUGIN_ABI, "audio", "coreaudio", CreateCoreAudio, DestroyCoreAudio };
+
+extern "C" const BackendDescriptor *SpiralPlugin_GetAudioBackend() { return &CoreAudioBackend; }

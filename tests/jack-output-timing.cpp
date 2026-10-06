@@ -87,7 +87,15 @@ int main(int argc, char **argv)
 	usleep(300000);
 	observer.ConnectInput(0,std::string(name)+":Out0");
 	observer.ConnectInput(1,std::string(name)+":Out1");
-	usleep(300000);
+	// Complete native format negotiation through the normal GUI/control path
+	// before measuring steady playback. A new presentation epoch deliberately
+	// primes its lookahead with silence; that is separate from steady underruns.
+	for (unsigned n = 0; n < 100; ++n)
+	{
+		host.Synth.UpdatePluginGUIs();
+		usleep(10000);
+	}
+
 	const unsigned good=__sync_fetch_and_add(&probe.Good,0);
 
 	const unsigned silent=__sync_fetch_and_add(&probe.Silent,0);
@@ -105,12 +113,15 @@ int main(int argc, char **argv)
 
 	// The engine frame is jack's transport frame: locate moves it, start rolls it.
 	AudioTransportHub *hub=AudioTransportHub::Get();
-	hub->Stop(); usleep(100000);
-	hub->Locate(100000); usleep(100000);
+	host.Synth.FreezeAll(); hub->Stop(); host.Synth.ThawAll(); usleep(100000);
+	host.Synth.FreezeAll(); hub->Locate(100000); host.Synth.ThawAll(); usleep(100000);
+	host.Synth.FreezeAll();
 	const unsigned long located=hub->Frame();
-	hub->Start(); usleep(200000);
+	hub->Start(); host.Synth.ThawAll(); usleep(200000);
+	host.Synth.FreezeAll();
 	const unsigned long rolled=hub->Frame();
 	const bool rolling=hub->Rolling();
+	host.Synth.ThawAll();
 	printf("JACK transport: located %lu, rolled to %lu, rolling %d\n",located,rolled,int(rolling));
 	assert(located==100000 && rolled>located+4000 && rolling);
 	host.Synth.ClearUp();
