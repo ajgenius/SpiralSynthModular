@@ -94,3 +94,8 @@ check_PROGRAMS += coreaudio-client-test
 coreaudio_client_test_SOURCES = tests/coreaudio-client.cpp
 coreaudio_client_test_LDADD = libspiralcore.la
 endif
+
+libspiralcore_la_SOURCES += include/AudioTiming.h src/AudioTiming.cpp include/TimedAudioBuffer.h src/TimedAudioBuffer.cpp
+check_PROGRAMS += audio-timeline-test
+audio_timeline_test_SOURCES = tests/audio-timeline.cpp
+audio_timeline_test_LDADD = libspiralcore.la
