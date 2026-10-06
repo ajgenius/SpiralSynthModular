@@ -38,8 +38,12 @@ public:
 	~SettingsWindow();
 		
 	void RegisterApp(SynthModular *s) { m_App=s; }
+	// The backend list is read from the registry each time the window
+	// opens: modules load after this window exists.
+	virtual void show();
 	
 private:
+	void ListAudioClients();
 	SynthModular *m_App;
 	
 	Fl_Pack      *m_Options;
