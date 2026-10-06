@@ -31,6 +31,7 @@ Add `--pairs 120` for a two-minute run (8–300 pairs, one pair per second).
 devices using each backend's device identifier. JACK output always uses the
 selected server and its `system:playback_1/2` ports; its device overrides are
 rejected. Use explicit capture selection for a line input or independent interface.
+Capture requires a callback backend (CoreAudio, PortAudio, PipeWire or JACK).
 
 Use a cabled loopback for precise hardware validation. Speaker-to-microphone
 capture can identify relative offsets when both outputs use the same speaker and
@@ -49,7 +50,10 @@ and every accepted pair within the requested tolerance. Silence, unrelated noise
 and recordings that do not cover the requested interval cannot pass. The report
 includes a fitted relative-offset slope in ppm; this describes the measured
 residual alignment, not the devices' raw oscillator drift. Exit status 1 means
-the alignment/quality requirement was not met. Validate the analyzer itself with:
+the alignment/quality requirement was not met. Capture callback failures during
+warmup are reported separately; any failure at or after the first measured search
+window fails the run. Older recordings without error timing remain strict.
+Validate the analyzer itself with:
 
 ```sh
 python3 tests/analyze-loopback.py --self-test
