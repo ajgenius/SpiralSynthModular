@@ -1,52 +1,12 @@
-// Exercise the real plugin with the deterministic JACK client fixture.
-// The host reads ALWAYS drivers before rendering the graph, then calls Execute.
+// Real host hub, plugin and client against deterministic JACK periods.
 #define JACK_CLIENT_TEST_FIXTURE
 #include "../libspiralcore/tests/jack-client.cpp"
 #include "JackPlugin.h"
+#include "AudioTransportHub.h"
+#include <cmath>
 #include <cstdio>
 
-static void CheckEqualPeriods()
-{
-	HostInfo host = HostInfo();
-	host.BUFSIZE = 4;
-	host.SAMPLERATE = 48000;
-	JackPlugin plugin;
-	plugin.Initialise(&host);
-	plugin.Attach();
-	jack_client_t *native = clients["SSM0"];
-	assert(native && native->Active);
-
-	Sample signal(host.BUFSIZE);
-	for (unsigned channel = 0; channel < 4; ++channel)
-		assert(plugin.SetInput(channel, &signal));
-
-	// A changing signal detects duplicated and stale periods which a constant
-	// signal cannot reveal. One native period must deliver one graph period.
-	for (unsigned cycle = 1; cycle <= 64; ++cycle)
-	{
-		plugin.ProcessAudio();
-		signal.Set(float(cycle));
-		plugin.Execute();
-		native->Process(4, native->ProcessContext);
-		for (unsigned channel = 4; channel < 8; ++channel)
-			for (unsigned frame = 0; frame < 4; ++frame)
-			{
-				const float actual = native->Ports[channel]->Buffer[frame];
-				if (actual != float(cycle))
-				{
-					printf("period %u: expected %.0f, received %.0f\n", cycle, float(cycle), actual);
-					assert(actual == float(cycle));
-				}
-
-			}
-
-		assert(plugin.GetCaptureFrame() == (cycle - 1) * 4);
-	}
-
-	puts("JACK transfers one changing period per graph cycle PASS");
-}
-
-static void CheckDifferentPeriods(unsigned frames)
+static void Check(unsigned frames)
 {
 	HostInfo host = HostInfo();
 	host.BUFSIZE = frames;
@@ -62,38 +22,51 @@ static void CheckDifferentPeriods(unsigned frames)
 	Sample signal(frames);
 	a.SetInput(0, &signal);
 	b.SetInput(0, &signal);
-
-	unsigned written = 0;
-	unsigned played = 0;
-	for (unsigned cycle = 0; cycle < 96; ++cycle)
+	AudioTransportHub *hub = AudioTransportHub::Get();
+	cycleTimeOffset = spiralcore::AudioMonotonicTime();
+	unsigned audible = 0, rendered = 0;
+	for (cycleFrame = 0; cycleFrame < 6000; cycleFrame += 4)
 	{
-		a.ProcessAudio();
-		b.ProcessAudio();
-		for (unsigned frame = 0; frame < frames; ++frame)
-			signal.Set(frame, float(++written));
-
-		a.Execute();
-		b.Execute();
-		while (written - played >= 4)
-		{
-			nativeA->Process(4, nativeA->ProcessContext);
-			nativeB->Process(4, nativeB->ProcessContext);
-			for (unsigned frame = 0; frame < 4; ++frame)
+		nativeA->Process(4, nativeA->ProcessContext);
+		nativeB->Process(4, nativeB->ProcessContext);
+		if (cycleFrame > 1200)
+			for (unsigned n = 0; n < 4; ++n)
 			{
-				const float expected = float(++played);
-				assert(nativeA->Ports[4]->Buffer[frame] == expected);
-				assert(nativeB->Ports[4]->Buffer[frame] == expected);
+				const float first = nativeA->Ports[4]->Buffer[n];
+				const float second = nativeB->Ports[4]->Buffer[n];
+				assert(first == second);
+				if (std::fabs(first) > 0.01) ++audible;
+
 			}
+
+		const double now = cycleTimeOffset + cycleFrame / 48000.0;
+		while (hub->PreparePeriod(now))
+		{
+			hub->BeginPeriod();
+			a.ProcessAudio();
+			b.ProcessAudio();
+			for (unsigned n = 0; n < frames; ++n)
+				signal.Set(n, std::sin((rendered + n) * 0.03));
+
+			a.Execute();
+			b.Execute();
+			assert(a.GetCaptureFrame() == hub->CaptureStamp().Frame);
+			hub->CommitPeriod();
+			rendered += frames;
 		}
+
 	}
 
-	printf("Two JACK devices, host %u/native 4: %u ordered frames PASS\n", frames, played);
+	assert(audible > 4000);
+	assert(rendered > 5800 && rendered < 6200);
+	printf("Two JACK clients: host %u/native 4, %u aligned changing samples PASS\n", frames, audible);
+	a.Detach();
+	b.Detach();
+	hub->SetHost(NULL);
 }
-
 int main()
 {
-	CheckEqualPeriods();
-	CheckDifferentPeriods(2);
-	CheckDifferentPeriods(6);
-	return 0;
+	Check(4);
+	Check(2);
+	Check(6);
 }

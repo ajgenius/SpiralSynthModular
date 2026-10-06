@@ -23,7 +23,7 @@
 #include "OutputAudioClient.h"
 #include <vector>
 #include <ctime>
-#include <pthread.h>
+#include "PresentationClock.h"
 
 class AtomicClock;
 
@@ -38,14 +38,9 @@ public:
 		{ if (ChangeBufferAndSampleRate) ChangeBufferAndSampleRate(frames, rate, m_Parent); }
 };
 
-// Owns the one running audio stream on behalf of every attached endpoint,
-// and paces the engine with it: the engine thread runs the graph once per
-// period between WaitPeriod and CommitPeriod, and the stream's own thread
-// or device callback moves each committed period to the device. Without
-// an open stream the platform clock paces the engine at the same rate.
-// The first endpoint attached is the representative that services the
-// stream once per control cycle; the stream is configured on first attach
-// and released on last detach.
+// One engine timeline shared by Output and named JACK clients. Control and
+// engine access require the host cycle gate. Native callbacks touch only their
+// AudioStream; no device pointer is retained across an engine sleep.
 class AudioTransportHub
 {
 public:
@@ -76,15 +71,18 @@ public:
 	// Control thread, representative only.
 	void Service();
 
-	// Engine thread: block until the next period may be rendered, take
-	// the period's position under the gate, hand the rendered period to
-	// the transport. Only WaitPeriod runs outside the gate, so nothing
-	// here touches the device while control may be closing it. WaitPeriod
-	// reports whether the engine owns a period slot: false means the
-	// transport is still on it and the graph must not run.
+	void RegisterStream(spiralcore::AudioStream *stream);
+	void UnregisterStream(spiralcore::AudioStream *stream);
+	bool PreparePeriod();
+	bool PreparePeriod(double monotonicNow);
+	unsigned SleepMicroseconds() const;
+	// Convenience for single-threaded clients; the host uses PreparePeriod
+	// under its gate and sleeps afterwards using a copied scalar duration.
 	bool WaitPeriod();
 	void BeginPeriod();
 	void CommitPeriod();
+	const spiralcore::AudioStamp &PlaybackStamp() const { return m_PlaybackStamp; }
+	const spiralcore::AudioStamp &CaptureStamp() const { return m_CaptureStamp; }
 
 	// Engine position: the frame the period being rendered starts at.
 	// Slaved to the stream's transport when it has one (JACK), free
@@ -97,14 +95,6 @@ public:
 
 private:
 	AudioTransportHub();
-	// The transport side of one period, from the device callback or the
-	// blocking thread. Zero frames reports a device shutdown.
-	static void TransportCallback(void *context, unsigned int frames);
-	static void *TransportThread(void *context);
-	void TransportCycle();
-	void StartTransportThread();
-	void StopTransportThread();
-	unsigned PeriodMicroseconds() const;
 	void ReportMode();
 
 	static AudioTransportHub *m_Singleton;
@@ -113,17 +103,17 @@ private:
 	bool m_Configured;
 	Mode m_Mode;
 	Mode m_RequestedMode;
-	bool m_IOFailed;
 	time_t m_NextRetry;
 
 	unsigned long m_Frame;
 	bool m_Rolling;
 	bool Streaming() const;
 
-	pthread_t m_Thread;
-	volatile bool m_ThreadRunning;
-	volatile bool m_ThreadStop;
-	AtomicClock *m_Clock;
+	std::vector<spiralcore::AudioStream *> m_Streams;
+	spiralcore::AudioStream *m_Master;
+	spiralcore::PresentationClock m_Presentation;
+	spiralcore::AudioStamp m_PlaybackStamp, m_CaptureStamp;
+	spiralcore::AudioClient *MasterClient() const;
 };
 
 #endif
