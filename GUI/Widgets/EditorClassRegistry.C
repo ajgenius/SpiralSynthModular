@@ -20,252 +20,126 @@
 #include <cstring>
 #include <dlfcn.h>
 #include <stdio.h>
-#include "SpiralInfo.h"
-#include "PluginManager.h"
+#include <iostream>
+#include "EditorClassRegistry.h"
 #include "SpiralGUI.H"
 
 using namespace std;
 
-PluginManager *PluginManager::m_Singleton = NULL;
+EditorClassRegistry *EditorClassRegistry::m_Singleton = NULL;
 
-PluginManager::PluginManager()
+EditorClassRegistry::EditorClassRegistry()
 {
 }
 
-PluginManager::~PluginManager()
+EditorClassRegistry::~EditorClassRegistry()
 {
-	UnloadAll();
+	for (vector<EditorClass*>::iterator i=m_PluginVec.begin();
+	     i!=m_PluginVec.end(); i++)
+	{
+		delete *i;
+	}
+	m_PluginVec.clear();
 }
 
-static void ClearDSP(HostsideInfo *p)
+EditorClassRegistry *EditorClassRegistry::Get()
 {
-	p->dsp.Handle = NULL;
-	p->dsp.CreateInstance = NULL;
-	p->dsp.GetIcon = NULL;
-	p->dsp.GetGroupName = NULL;
+	if (!m_Singleton)
+	{
+		m_Singleton = new EditorClassRegistry;
+		spiralcore::PluginLoader::Get()->RegisterKind(m_Singleton);
+	}
+	return m_Singleton;
 }
 
-static void ClearGUI(HostsideInfo *p)
+void EditorClassRegistry::PackUpAndGoHome()
 {
-	p->gui.Handle = NULL;
-	p->gui.CreateGUI = NULL;
-	p->gui.GetIcon = NULL;
+	if (!m_Singleton) return;
+	// Releases every module of this kind first.
+	spiralcore::PluginLoader::Get()->UnregisterKind(m_Singleton);
+	delete m_Singleton;
+	m_Singleton = NULL;
 }
 
-static void UpdatePairedType(HostsideInfo *p)
+unsigned EditorClassRegistry::LoadModules(const string &root)
 {
-	if (p->dsp.Handle && p->gui.Handle)
-		p->type = SPIRAL_PLUGIN_TYPE_PAIRED;
-	else if (p->dsp.Handle)
-		p->type = SPIRAL_PLUGIN_TYPE_DSP;
-	else if (p->gui.Handle)
-		p->type = SPIRAL_PLUGIN_TYPE_GUI;
+	return spiralcore::PluginLoader::Get()->Load(*this, root);
 }
 
-HostsideInfo *PluginManager::NewSlot(int ID)
+bool EditorClassRegistry::Accept(void *entry, const string &path)
 {
-	HostsideInfo *p = new HostsideInfo;
-	p->ID = ID;
-	p->type = -1;
-	ClearDSP(p);
-	ClearGUI(p);
-	m_PluginVec.push_back(p);
-	return p;
-}
-
-PluginID PluginManager::LoadPlugin(const char *PluginName)
-{
-	// DSP modules load first so GUI methods resolve immediately.
-	void *handle = dlopen(PluginName, RTLD_NOW | RTLD_GLOBAL);
+	// The loader holds the module; this is its handle counted once more
+	// while the old exports beside the entry are read.
+	void *handle = dlopen(path.c_str(), RTLD_NOW | RTLD_NOLOAD);
 	if (handle == NULL)
 	{
-		SpiralInfo::Alert("Error loading ["+string(PluginName)+"]: \n"+string(dlerror()));
-		return PluginError;
+		cerr << "Error loading [" << path << "]: " << dlerror() << endl;
+		return false;
 	}
 
 	typedef const char *(*TextFn)();
 	TextFn GetHostABI = (TextFn)dlsym(handle, "SpiralPlugin_GetHostABI");
 	const char *abi = GetHostABI ? GetHostABI() : NULL;
 
+	int (*GetID)(void) = (int(*)()) dlsym(handle, "SpiralPlugin_GetID");
+	int (*GetType)(void) = (int(*)()) dlsym(handle, "SpiralPlugin_GetType");
+	const char **(*GetIcon)(void) = (const char **(*)()) dlsym(handle, "SpiralPlugin_GetIcon");
+	dlclose(handle);
+
 	if (!abi || strcmp(abi, SSM_HOST_ABI) != 0)
 	{
-		SpiralInfo::Alert("Missing or incompatible plugin ABI: " + string(PluginName));
-		dlclose(handle);
-		return PluginError;
+		cerr << "Missing or incompatible plugin ABI: " << path << endl;
+		return false;
 	}
 
-	char *error = NULL;
-	dlerror();
-
-	int (*GetID)(void) = (int(*)()) dlsym(handle, "SpiralPlugin_GetID");
-	if ((error = dlerror()) != NULL)
+	if (!GetID || !GetType || GetType() != SPIRAL_PLUGIN_TYPE_GUI)
 	{
-		SpiralInfo::Alert("Error linking to plugin "+string(PluginName)+"\n"+string(error));
-		dlclose(handle);
-		return PluginError;
-	}
-	int ID = GetID();
-	if (ID < 0)
-	{
-		dlclose(handle);
-		return PluginError;
+		cerr << "Obsolete or invalid plugin module: " << path << endl;
+		return false;
 	}
 
-	int type = 0;
-	int (*GetType)(void) = (int(*)()) dlsym(handle, "SpiralPlugin_GetType");
-	if (dlerror() == NULL && GetType)
-		type = GetType();
+	EditorClass editor;
+	editor.ForDevice = GetID();
+	editor.Toolkit = "fltk";
+	editor.Icon = GetIcon ? GetIcon() : NULL;
+	editor.Create = (SpiralGUIType *(*)(SpiralPlugin *)) entry;
+	editor.Module = path;
 
-	if (type != SPIRAL_PLUGIN_TYPE_DSP && type != SPIRAL_PLUGIN_TYPE_GUI)
-	{
-		SpiralInfo::Alert("Obsolete or invalid plugin module: "+string(PluginName));
-		dlclose(handle);
-		return PluginError;
-	}
+	if (editor.ForDevice < 0)
+		return false;
 
-	HostsideInfo *slot = GetPlugin_i(ID);
-	if (!slot)
-		slot = NewSlot(ID);
-
-	if (type == SPIRAL_PLUGIN_TYPE_GUI)
-	{
-		if (slot->gui.Handle)
-		{
-			dlclose(handle);
-			return ID;
-		}
-
-		SpiralGUIType *(*CreateGUI)(SpiralPlugin *) =
-			(SpiralGUIType *(*)(SpiralPlugin *)) dlsym(handle, "SpiralPlugin_CreateGUI");
-		if ((error = dlerror()) != NULL)
-		{
-			SpiralInfo::Alert("Error linking GUI in "+string(PluginName)+"\n"+string(error));
-			dlclose(handle);
-			return PluginError;
-		}
-
-		const char **(*GetIcon)(void) = (const char **(*)()) dlsym(handle, "SpiralPlugin_GetIcon");
-		if (dlerror() != NULL)
-			GetIcon = NULL;
-
-		slot->gui.Handle = handle;
-		slot->gui.CreateGUI = CreateGUI;
-		slot->gui.GetIcon = GetIcon;
-		UpdatePairedType(slot);
-		return ID;
-	}
-
-	// Resolve the DSP factory and its metadata.
-	if (slot->dsp.Handle)
-	{
-		dlclose(handle);
-		return ID;
-	}
-
-	SpiralPlugin *(*CreateInstance)(void) =
-		(SpiralPlugin *(*)()) dlsym(handle, "SpiralPlugin_CreateInstance");
-	if ((error = dlerror()) != NULL)
-	{
-		SpiralInfo::Alert("Error linking to plugin "+string(PluginName)+"\n"+string(error));
-		dlclose(handle);
-		return PluginError;
-	}
-
-	const char **(*GetIcon)(void) = (const char **(*)()) dlsym(handle, "SpiralPlugin_GetIcon");
-	if ((error = dlerror()) != NULL)
-	{
-		SpiralInfo::Alert("Error linking to plugin "+string(PluginName)+"\n"+string(error));
-		dlclose(handle);
-		return PluginError;
-	}
-
-	std::string (*GetGroupName)(void) =
-		(std::string(*)()) dlsym(handle, "SpiralPlugin_GetGroupName");
-	if ((error = dlerror()) != NULL)
-	{
-		SpiralInfo::Alert("Error linking to plugin "+string(PluginName)+"\n"+string(error));
-		dlclose(handle);
-		return PluginError;
-	}
-
-	std::string (*GetName)(void) = (std::string(*)()) dlsym(handle, "SpiralPlugin_GetName");
-	std::string name = GetName ? GetName() : std::string();
-	if (name.empty())
-	{
-		SpiralInfo::Alert("Missing plugin name: " + string(PluginName));
-		dlclose(handle);
-		return PluginError;
-	}
-
-	slot->Name = name;
-
-	slot->dsp.Handle = handle;
-	slot->dsp.CreateInstance = CreateInstance;
-	slot->dsp.GetIcon = GetIcon;
-	slot->dsp.GetGroupName = GetGroupName;
-	UpdatePairedType(slot);
-	return ID;
+	// A second editor for this device is not an error; it is just not kept.
+	return Register(editor);
 }
 
-void PluginManager::UnLoadPlugin(PluginID ID)
+void EditorClassRegistry::Release(void *, const string &path)
 {
-	HostsideInfo *p = GetPlugin_i(ID);
-	if (!p) return;
-	if (p->gui.Handle) { dlclose(p->gui.Handle); ClearGUI(p); }
-	if (p->dsp.Handle) { dlclose(p->dsp.Handle); ClearDSP(p); }
-	p->type = 0;
-	char *error;
-	if ((error = dlerror()) != NULL)
-		SpiralInfo::Alert("Error unlinking plugin: \n"+string(error));
+	for (vector<EditorClass*>::iterator i=m_PluginVec.begin();
+	     i!=m_PluginVec.end();)
+	{
+		if ((*i)->Module == path)
+		{
+			delete *i;
+			i = m_PluginVec.erase(i);
+		}
+		else i++;
+	}
 }
 
-void PluginManager::UnloadAll()
+bool EditorClassRegistry::Register(const EditorClass &editor)
 {
-	for (vector<HostsideInfo*>::iterator i=m_PluginVec.begin();
+	if (editor.ForDevice < 0 || Find(editor.ForDevice, editor.Toolkit)) return false;
+	m_PluginVec.push_back(new EditorClass(editor));
+	return true;
+}
+
+const EditorClass *EditorClassRegistry::Find(int ForDevice, const string &Toolkit) const
+{
+	for (vector<EditorClass*>::const_iterator i=m_PluginVec.begin();
 	     i!=m_PluginVec.end(); i++)
 	{
-		if ((*i)->gui.Handle) dlclose((*i)->gui.Handle);
-		if ((*i)->dsp.Handle) dlclose((*i)->dsp.Handle);
-		delete *i;
-	}
-	m_PluginVec.clear();
-}
-
-const HostsideInfo *PluginManager::GetPlugin(PluginID ID)
-{
-	HostsideInfo *ret = GetPlugin_i(ID);
-	if (!ret)
-	{
-		char t[256];
-		sprintf(t,"%d",ID);
-		SpiralInfo::Alert("Plugin "+string(t)+" not found.");
-	}
-	return ret;
-}
-
-HostsideInfo *PluginManager::GetPlugin_i(PluginID ID)
-{
-	for (vector<HostsideInfo*>::iterator i=m_PluginVec.begin();
-	     i!=m_PluginVec.end(); i++)
-	{
-		if ((*i)->ID==ID)
+		if ((*i)->ForDevice==ForDevice && (*i)->Toolkit==Toolkit)
 			return *i;
 	}
 	return NULL;
 }
-
-bool PluginManager::IsValid(PluginID ID)
-{
-	const HostsideInfo *t = GetPlugin(ID);
-	return (t && t->HasDSP());
-}
-
-int PluginManager::GetIdByName(string Name)
-{
-	/* Declared on UA PluginManager.h but never defined. Looking up by
-	   PluginInfo.Name would mean constructing a DSP instance at scan
-	   time; the FLTK host never calls this. */
-	(void)Name;
-	return PluginError;
-}
-
