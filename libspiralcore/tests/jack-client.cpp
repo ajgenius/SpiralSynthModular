@@ -41,6 +41,7 @@ static std::map<std::string, jack_client_t *> clients;
 static jack_transport_state_t transportState = JackTransportStopped;
 static jack_nframes_t transportFrame = 0;
 
+static jack_nframes_t cycleFrame = 48000;
 static bool failOpen = false;
 static bool failActivate = false;
 static bool failRegister = false;
@@ -48,6 +49,15 @@ static bool failCallback = false;
 
 extern "C"
 {
+jack_time_t jack_get_time() { return jack_time_t(spiralcore::AudioMonotonicTime() * 1e6); }
+jack_nframes_t jack_last_frame_time(const jack_client_t *) { return cycleFrame; }
+jack_time_t jack_frames_to_time(const jack_client_t *, jack_nframes_t frame) { return jack_time_t(double(frame) * 1e6 / 48000); }
+void jack_port_get_latency_range(jack_port_t *, jack_latency_callback_mode_t, jack_latency_range_t *range)
+{
+	range->min = range->max = 4;
+}
+jack_nframes_t jack_port_get_total_latency(jack_client_t *, jack_port_t *) { return 4; }
+
 jack_transport_state_t jack_transport_query(const jack_client_t *, jack_position_t *position)
 {
 	memset(position, 0, sizeof(*position));
@@ -214,6 +224,7 @@ struct AudioCycle
 {
 	spiralcore::AudioClient *Client;
 	float Captured[8];
+	spiralcore::AudioCycleTiming Timing;
 	static void Run(void *context, unsigned int frames)
 	{
 		if (!frames)
@@ -221,6 +232,10 @@ struct AudioCycle
 
 		AudioCycle *cycle = static_cast<AudioCycle *>(context);
 		assert(frames == 4);
+		assert(cycle->Client->GetCycleTiming(cycle->Timing));
+		assert(cycle->Timing.Frame >= cycleFrame);
+		assert(cycle->Timing.OutputTime > cycle->Timing.InputTime);
+		assert(cycle->Client->GetChannelTime(false, 0) == cycle->Timing.OutputTime);
 		assert(cycle->Client->Read(cycle->Captured, frames));
 		assert(cycle->Client->Write(cycle->Captured, frames));
 	}
@@ -340,6 +355,14 @@ int main()
 		assert(native->Ports[3]->Buffer[frame] == float(frame + 10));
 	}
 
+	cycleFrame = 0xfffffffcU;
+	native->Process(4, native->ProcessContext);
+	const uint64_t beforeWrap = cycle.Timing.Frame;
+	cycleFrame = 0;
+	native->Process(4, native->ProcessContext);
+	assert(cycle.Timing.Frame == beforeWrap + 4);
+	spiralcore::AudioCycleTiming outsideCallback;
+	assert(!audio->GetCycleTiming(outsideCallback));
 	audio->Detach();
 	assert(!audio->Start());
 	options.InChannels = 0;

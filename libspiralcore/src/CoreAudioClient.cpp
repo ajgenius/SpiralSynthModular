@@ -1,5 +1,6 @@
 #include "CoreAudioClient.h"
 #include <algorithm>
+#include <CoreAudio/HostTime.h>
 #include <cstring>
 #include <iostream>
 
@@ -18,6 +19,42 @@ namespace
 		AudioObjectPropertyAddress address = {selector, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMaster};
 
 		return address;
+	}
+
+	unsigned PropertyFrames(AudioObjectID object, AudioObjectPropertySelector selector, AudioObjectPropertyScope scope)
+	{
+		AudioObjectPropertyAddress address = {selector, scope, kAudioObjectPropertyElementMaster};
+		UInt32 value = 0, size = sizeof(value);
+		AudioObjectGetPropertyData(object, &address, 0, NULL, &size, &value);
+		return value;
+	}
+
+	void HardwareLatency(AudioDeviceID device, bool input, unsigned result[2])
+	{
+		const AudioObjectPropertyScope scope = input ? kAudioDevicePropertyScopeInput : kAudioDevicePropertyScopeOutput;
+		const unsigned deviceLatency = PropertyFrames(device, kAudioDevicePropertyLatency, scope);
+		result[0] = result[1] = deviceLatency;
+		AudioObjectPropertyAddress address = {kAudioDevicePropertyStreams, scope, kAudioObjectPropertyElementMaster};
+		UInt32 size = 0;
+		if (AudioObjectGetPropertyDataSize(device, &address, 0, NULL, &size) != noErr || !size) return;
+
+		std::vector<AudioStreamID> streams(size / sizeof(AudioStreamID));
+		if (AudioObjectGetPropertyData(device, &address, 0, NULL, &size, &streams[0]) != noErr) return;
+
+		for (unsigned n = 0; n < streams.size(); ++n)
+		{
+			const unsigned first = PropertyFrames(streams[n], kAudioStreamPropertyStartingChannel, kAudioObjectPropertyScopeGlobal);
+			AudioStreamBasicDescription format;
+			address = Address(kAudioStreamPropertyVirtualFormat);
+			size = sizeof(format);
+			if (!first || AudioObjectGetPropertyData(streams[n], &address, 0, NULL, &size, &format) != noErr) continue;
+
+			const unsigned latency = deviceLatency + PropertyFrames(streams[n], kAudioStreamPropertyLatency, kAudioObjectPropertyScopeGlobal);
+			for (unsigned c = first - 1; c < 2 && c < first - 1 + format.mChannelsPerFrame; ++c)
+				result[c] = latency;
+
+		}
+
 	}
 
 	bool GetDevice(const std::string &name, bool input, AudioDeviceID &device)
@@ -47,8 +84,11 @@ namespace
 CoreAudioClient::CoreAudioClient() :
 	m_Unit(NULL), m_Device(kAudioObjectUnknown), m_Inputs(0), m_Outputs(0),
 	m_Capacity(0), m_ProcessFrames(0), m_Frames(0), m_Rate(0), m_Attached(0),
-	m_Started(false), m_Listeners(0), m_Playback(NULL), m_Run(NULL), m_Context(NULL)
+	m_Started(false), m_Listeners(0), m_InputSoftware(0), m_OutputSoftware(0),
+	m_HostTime(0), m_Frame(0), m_Playback(NULL), m_Run(NULL), m_Context(NULL)
 {
+	m_InputHardware[0] = m_InputHardware[1] = 0;
+	m_OutputHardware[0] = m_OutputHardware[1] = 0;
 }
 
 CoreAudioClient::~CoreAudioClient()
@@ -76,6 +116,21 @@ void CoreAudioClient::RefreshFormat()
 	if (AudioObjectGetPropertyData(m_Device,&address,0,NULL,&size,&rate)==noErr)
 		__sync_lock_test_and_set(&m_Rate,unsigned(rate));
 
+	unsigned input[2], output[2];
+	HardwareLatency(m_Device, true, input);
+	HardwareLatency(m_Device, false, output);
+	for (unsigned c = 0; c < 2; ++c)
+	{
+		__sync_lock_test_and_set(&m_InputHardware[c], input[c]);
+		__sync_lock_test_and_set(&m_OutputHardware[c], output[c]);
+	}
+
+	__sync_lock_test_and_set(&m_InputSoftware, frames +
+		PropertyFrames(m_Device, kAudioDevicePropertySafetyOffset, kAudioDevicePropertyScopeInput) +
+		PropertyFrames(m_Device, kAudioDevicePropertyLatency, kAudioDevicePropertyScopeInput));
+	__sync_lock_test_and_set(&m_OutputSoftware, frames +
+		PropertyFrames(m_Device, kAudioDevicePropertySafetyOffset, kAudioDevicePropertyScopeOutput) +
+		PropertyFrames(m_Device, kAudioDevicePropertyLatency, kAudioDevicePropertyScopeOutput));
 }
 
 bool CoreAudioClient::SetFormat(AudioUnitScope scope, AudioUnitElement element, unsigned channels)
@@ -166,6 +221,25 @@ bool CoreAudioClient::Attach(const std::string &device, const AudioClientOptions
 		++m_Listeners;
 	}
 
+	// Optional properties vary across drivers. Register only supported scopes;
+	// all queries and allocation happen off the render callback.
+	const AudioObjectPropertySelector timingProperties[] = {
+		kAudioDevicePropertyLatency, kAudioDevicePropertySafetyOffset, kAudioDevicePropertyStreams
+	};
+	for (unsigned direction = 0; direction < 2; ++direction)
+		for (unsigned n = 0; n < 3; ++n)
+		{
+			AudioObjectPropertyAddress address = Address(timingProperties[n]);
+			address.mScope = direction ? kAudioDevicePropertyScopeInput : kAudioDevicePropertyScopeOutput;
+			if (AudioObjectHasProperty(m_Device, &address) &&
+				AudioObjectAddPropertyListener(m_Device, &address, DeviceChanged, this) == noErr)
+				m_TimingListeners.push_back(address);
+
+		}
+
+	AudioMonotonicTime();
+	AudioGetCurrentHostTime();
+	m_Frame = 0;
 	__sync_lock_test_and_set(&m_Attached,1);
 	return true;
 }
@@ -201,6 +275,10 @@ void CoreAudioClient::Detach()
 			AudioObjectRemovePropertyListener(m_Device,&address,DeviceChanged,this);
 		}
 
+		for (unsigned n = 0; n < m_TimingListeners.size(); ++n)
+			AudioObjectRemovePropertyListener(m_Device, &m_TimingListeners[n], DeviceChanged, this);
+
+		m_TimingListeners.clear();
 		AudioUnitUninitialize(m_Unit);
 		AudioComponentInstanceDispose(m_Unit);
 		m_Unit=NULL;
@@ -273,9 +351,20 @@ OSStatus CoreAudioClient::Process(void *context, AudioUnitRenderActionFlags *fla
 
 	}
 
+	client->m_HostTime = AudioConvertHostTimeToNanos(time->mHostTime) * 1e-9;
+	client->m_Timing.Frame = (time->mFlags & kAudioTimeStampSampleTimeValid) && time->mSampleTime >= 0
+		? uint64_t(time->mSampleTime) : client->m_Frame;
+	client->m_Timing.Frames = frames;
+	client->m_Timing.SampleRate = client->GetSampleRate();
+	client->m_Timing.CallbackTime = AudioMonotonicTime();
+	client->m_Timing.Valid = (time->mFlags & kAudioTimeStampHostTimeValid) && client->GetSampleRate();
 	client->m_Playback=output;
 	client->m_ProcessFrames=frames;
+	client->m_Timing.InputTime = client->GetChannelTime(true, 0);
+	client->m_Timing.OutputTime = client->GetChannelTime(false, 0);
 	if (client->m_Run) client->m_Run(client->m_Context,frames);
+
+	client->m_Frame += frames;
 
 	client->m_ProcessFrames=0;
 	client->m_Playback=NULL;
@@ -300,4 +389,44 @@ bool CoreAudioClient::Write(const float *interleaved, unsigned int frames)
 
 	memcpy(buffer.mData,interleaved,bytes);
 	return true;
+}
+
+
+bool CoreAudioClient::GetCycleTiming(AudioCycleTiming &timing) const
+{
+	if (!m_ProcessFrames || !m_Timing.Valid) return false;
+
+	timing = m_Timing;
+	return true;
+}
+
+double CoreAudioClient::GetChannelTime(bool input, unsigned channel) const
+{
+	if (channel >= 2 || !m_ProcessFrames || !GetSampleRate()) return 0;
+
+	const double rate = GetSampleRate();
+	if (!input)
+		return m_HostTime + __sync_fetch_and_add(&m_OutputHardware[channel], 0) / rate;
+
+	// HAL's output timestamp already includes its software buffer and safety
+	// offset. Duplex input is older by both sides' software pipelines.
+	const unsigned software = m_Outputs ? __sync_fetch_and_add(&m_InputSoftware, 0) +
+		__sync_fetch_and_add(&m_OutputSoftware, 0) : 0;
+	return m_HostTime - (software + __sync_fetch_and_add(&m_InputHardware[channel], 0)) / rate;
+}
+
+double CoreAudioClient::GetInputLatency() const
+{
+	if (!GetSampleRate()) return 0;
+
+	return double(__sync_fetch_and_add(&m_InputSoftware, 0) +
+		std::max(__sync_fetch_and_add(&m_InputHardware[0], 0), __sync_fetch_and_add(&m_InputHardware[1], 0))) / GetSampleRate();
+}
+
+double CoreAudioClient::GetOutputLatency() const
+{
+	if (!GetSampleRate()) return 0;
+
+	return double(__sync_fetch_and_add(&m_OutputSoftware, 0) +
+		std::max(__sync_fetch_and_add(&m_OutputHardware[0], 0), __sync_fetch_and_add(&m_OutputHardware[1], 0))) / GetSampleRate();
 }
