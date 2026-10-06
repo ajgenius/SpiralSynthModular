@@ -80,6 +80,12 @@ coreaudio_output_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/OutputPl
 coreaudio_output_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la
 endif
 
+check_PROGRAMS += dummy-host-test
+dummy_host_test_SOURCES = tests/dummy-host.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
+dummy_host_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
+dummy_host_test_LDADD = $(SpiralSynthModular_LDADD)
+dummy_host_test_LDFLAGS = -export-dynamic
+
 if HAVE_CORE_AUDIO_CLIENT
 check_PROGRAMS += coreaudio-host-test
 coreaudio_host_test_SOURCES = tests/coreaudio-host.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
