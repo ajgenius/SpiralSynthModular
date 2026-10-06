@@ -10,23 +10,7 @@
 #include <iostream>
 #include <sys/time.h>
 
-#ifdef HAVE_CORE_AUDIO_CLIENT
-#include "CoreAudioClient.h"
-#endif
-
-#ifdef HAVE_JACK_CLIENT
-#include "JackClient.h"
-#endif
-
-#ifdef HAVE_OUTPUT_PORTAUDIO
-#include "PortAudioClient.h"
-#endif
-#ifdef HAVE_OUTPUT_ALSA
-#include "AlsaClient.h"
-#endif
-#ifdef HAVE_OUTPUT_OSS
-#include "OSSClient.h"
-#endif
+#include "AudioBackend.h"
 
 using namespace std;
 using namespace spiralcore;
@@ -70,24 +54,7 @@ OutputAudioClient::~OutputAudioClient()
 void OutputAudioClient::DestroyBackend()
 {
 	DeallocateBuffer();
-#ifdef HAVE_OUTPUT_PORTAUDIO
-	if (m_ClientName == "portaudio") PortAudioClient::PackUpAndGoHome();
-#endif
-#ifdef HAVE_OUTPUT_ALSA
-	if (m_ClientName == "alsa") AlsaClient::PackUpAndGoHome();
-#endif
-#ifdef HAVE_OUTPUT_OSS
-	if (m_ClientName == "oss") OSSClient::PackUpAndGoHome();
-
-#endif
-#ifdef HAVE_JACK_CLIENT
-	if (m_ClientName == "jack") delete m_Client;
-
-#endif
-#ifdef HAVE_CORE_AUDIO_CLIENT
-	if (m_ClientName == "coreaudio") delete m_Client;
-
-#endif
+	if (m_Client) AudioBackendRegistry::Get()->Destroy(m_ClientName, m_Client);
 	m_Client = NULL;
 	m_ClientName.clear();
 }
@@ -95,66 +62,19 @@ void OutputAudioClient::DestroyBackend()
 bool OutputAudioClient::Select(const string &client)
 {
 	DestroyBackend();
-#ifdef HAVE_CORE_AUDIO_CLIENT
-	if (client == "coreaudio")
-	{
-		m_Client = new CoreAudioClient;
-		m_ClientName = "coreaudio";
-		return true;
-	}
-
-#endif
-#ifdef HAVE_JACK_CLIENT
-	if (client == "jack")
-	{
-		m_Client = new JackClient;
-		m_ClientName = "jack";
-		return true;
-	}
-
-#endif
-#ifdef HAVE_OUTPUT_PORTAUDIO
-	if (client == "portaudio")
-	{
-		m_Client = PortAudioClient::Get();
-		m_ClientName = "portaudio";
-		return true;
-	}
-#endif
-#ifdef HAVE_OUTPUT_ALSA
-	if (client == "alsa")
-	{
-		m_Client = AlsaClient::Get();
-		m_ClientName = "alsa";
-		return true;
-	}
-#endif
-#ifdef HAVE_OUTPUT_OSS
-	if (client == "oss")
-	{
-		m_Client = OSSClient::Get();
-		m_ClientName = "oss";
-		return true;
-	}
-#endif
-	return false;
+	m_Client = AudioBackendRegistry::Get()->Create(client);
+	if (m_Client) m_ClientName = client;
+	return m_Client != NULL;
 }
 
 bool OutputAudioClient::SelectFirstAvailable()
 {
-#ifdef HAVE_OUTPUT_PORTAUDIO
-	if (Select("portaudio")) return true;
-#endif
-#ifdef HAVE_CORE_AUDIO_CLIENT
-	if (Select("coreaudio")) return true;
+	// Registry order is the build's preference. JACK is an external
+	// stack: chosen by name, never as a fallback.
+	const vector<string> names = AudioBackendRegistry::Get()->Names();
+	for (vector<string>::const_iterator i = names.begin(); i != names.end(); ++i)
+		if (*i != "jack" && Select(*i)) return true;
 
-#endif
-#ifdef HAVE_OUTPUT_ALSA
-	if (Select("alsa")) return true;
-#endif
-#ifdef HAVE_OUTPUT_OSS
-	if (Select("oss")) return true;
-#endif
 	return false;
 }
 
