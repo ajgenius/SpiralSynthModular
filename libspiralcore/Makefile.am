@@ -30,7 +30,6 @@ EXTRA_DIST = \
     README \
     SConstruct \
     include/AsyncSampleLoader.h \
-    include/AtomicClock.h \
     include/Event.h \
     include/EventQueue.h \
     include/OSCServer.h \
@@ -40,7 +39,6 @@ EXTRA_DIST = \
     include/Trace.h \
     include/Tuna.h \
     src/AsyncSampleLoader.cpp \
-    src/AtomicClock.cpp \
     src/Event.cpp \
     src/EventQueue.cpp \
     src/OSCServer.cpp \
@@ -57,6 +55,20 @@ libspiralcore_la_SOURCES += src/RingBuffer.cpp include/RingBuffer.h src/CommandR
 check_PROGRAMS += ring-buffer-test
 ring_buffer_test_SOURCES = tests/ring-buffer.cpp
 ring_buffer_test_LDADD = libspiralcore.la
+
+libspiralcore_la_SOURCES += include/AtomicClock.h
+if ATOMIC_CLOCK_MACH
+libspiralcore_la_SOURCES += src/MachAtomicClock.cpp
+endif
+if ATOMIC_CLOCK_ALSA
+libspiralcore_la_SOURCES += src/AlsaAtomicClock.cpp include/AlsaAtomicClock.h
+endif
+if HAVE_ATOMIC_CLOCK
+check_PROGRAMS += atomic-clock-test
+atomic_clock_test_SOURCES = tests/atomic-clock.cpp
+atomic_clock_test_LDADD = libspiralcore.la
+endif
+EXTRA_DIST += src/AlsaAtomicClock.cpp include/AlsaAtomicClock.h src/MachAtomicClock.cpp
 if HAVE_OUTPUT_PORTAUDIO
 libspiralcore_la_SOURCES += src/PortAudioClient.cpp include/PortAudioClient.h
 endif

@@ -14,16 +14,22 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-#include "AtomicClock.h"
+#include "AlsaAtomicClock.h"
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <poll.h>
 
 AtomicClock::AtomicClock(float frequency) :
+m_Platform(new Platform),
 m_Time(0),
 m_Frequency(frequency)
 {
 	int err;
-	char timername[64];
+	char timername[128];
 	
-	TimerDesc timer;
+	Platform::TimerDesc timer;
 	timer.Class = SND_TIMER_CLASS_GLOBAL;
     timer.SClass = SND_TIMER_CLASS_NONE;
     timer.Card = 0;
@@ -38,15 +44,31 @@ m_Frequency(frequency)
     snd_timer_info_alloca(&info);
     snd_timer_params_alloca(&params);
  		
-    sprintf(timername, "hw:CLASS=%i,SCLASS=%i,CARD=%i,DEV=%i,SUBDEV=%i", timer.Class, timer.SClass, timer.Card, timer.Device, timer.Subdevice);
+	// The card must be an integer node: as a string in "hw:CARD=0" it is
+	// looked up as a sound card, which fails on a machine without one, and
+	// the global system timer is exactly for that machine.
+	snprintf(timername, sizeof(timername),
+		"timer.ssm { type hw class %i sclass %i card %i device %i subdevice %i }",
+		timer.Class, timer.SClass, timer.Card, timer.Device, timer.Subdevice);
+	snd_input_t *input;
+	snd_config_t *config;
+	if (snd_input_buffer_open(&input, timername, strlen(timername)) < 0 ||
+		snd_config_top(&config) < 0 || snd_config_load(config, input) < 0)
+	{
+		fprintf(stderr, "timer config failed\n");
+		assert(0);
+	}
+	snd_input_close(input);
 	
-	if ((err = snd_timer_open(&m_Handle, timername, SND_TIMER_OPEN_NONBLOCK))<0) 
+	err = snd_timer_open_lconf(&m_Platform->m_Handle, "ssm", SND_TIMER_OPEN_NONBLOCK, config);
+	snd_config_delete(config);
+	if (err<0) 
 	{
     	fprintf(stderr, "timer open %i (%s)\n", err, snd_strerror(err));
         assert(0);
     }
 		
-	if ((err = snd_timer_info(m_Handle, info)) < 0) 
+	if ((err = snd_timer_info(m_Platform->m_Handle, info)) < 0) 
 	{
 		fprintf(stderr, "timer info %i (%s)\n", err, snd_strerror(err));
 		assert(0);
@@ -55,27 +77,33 @@ m_Frequency(frequency)
 	snd_timer_params_set_auto_start(params, 1);  
     snd_timer_params_set_ticks(params, (int)((1000000000 / snd_timer_info_get_resolution(info)) / frequency)); /* in Hz */
     //cerr<<snd_timer_info_is_slave(info)<<endl;
-	if ((err = snd_timer_params(m_Handle, params)) < 0) 
+	if ((err = snd_timer_params(m_Platform->m_Handle, params)) < 0) 
 	{
 		fprintf(stderr, "timer params %i (%s)\n", err, snd_strerror(err));
  		exit(0);
     } 
 		
-	if ((err = snd_timer_start(m_Handle)) < 0) 
+	if ((err = snd_timer_start(m_Platform->m_Handle)) < 0) 
 	{
 		fprintf(stderr, "timer start %i (%s)\n", err, snd_strerror(err));
 		exit(EXIT_FAILURE);
 	}
 }
 
+AtomicClock::~AtomicClock()
+{
+	snd_timer_close(m_Platform->m_Handle);
+	delete m_Platform;
+}
+
 double AtomicClock::Tick()
 {
 	struct pollfd *fds;
-	int count = snd_timer_poll_descriptors_count(m_Handle);
+	int count = snd_timer_poll_descriptors_count(m_Platform->m_Handle);
     fds = (pollfd *) calloc(count, sizeof(struct pollfd));
 	int err;
 	
-	if ((err = snd_timer_poll_descriptors(m_Handle, fds, count)) < 0) 
+	if ((err = snd_timer_poll_descriptors(m_Platform->m_Handle, fds, count)) < 0) 
 	{
         fprintf(stderr, "snd_timer_poll_descriptors error: %s\n", snd_strerror(err));
         return m_Time;
@@ -92,13 +120,14 @@ double AtomicClock::Tick()
     	fprintf(stderr, "timer time out!!\n");   
     }  
 	
+	// Time comes from what the timer delivered: a late wake-up brings one
+	// event spanning several ticks, not one tick.
 	snd_timer_read_t tr;
-	while (snd_timer_read(m_Handle, &tr, sizeof(tr)) == sizeof(tr)) 
+	while (snd_timer_read(m_Platform->m_Handle, &tr, sizeof(tr)) == sizeof(tr)) 
 	{
     	//printf("TIMER: resolution = %uns, ticks = %u\n",tr.resolution, tr.ticks);
+		m_Time+=(double)tr.ticks*tr.resolution/1e9;
     }
-	
-	m_Time+=1/m_Frequency;
 	
 	return m_Time;
 }
