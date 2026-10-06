@@ -46,7 +46,7 @@ class FunctionPlot :  public Fl_Widget {
 
 class WaveShaperPluginGUI : public SpiralPluginGUI {
   public:
-    WaveShaperPluginGUI (int w, int h, WaveShaperPlugin *o, ChannelHandler *ch, const HostInfo *Info);
+    WaveShaperPluginGUI (int w, int h, SpiralPlugin *o, ChannelHandler *ch, const HostInfo *Info);
     virtual void UpdateValues (SpiralPlugin *o);
     virtual void Update ();
   protected:
