@@ -70,12 +70,12 @@ namespace
 		CFStringRef uid=CFStringCreateWithCString(NULL,name.c_str(),kCFStringEncodingUTF8);
 		if (!uid) return false;
 
-		AudioValueTranslation translation={&uid,sizeof(uid),&device,sizeof(device)};
-
 		AudioObjectPropertyAddress address=Address(kAudioHardwarePropertyTranslateUIDToDevice);
-		UInt32 size=sizeof(translation);
+		UInt32 size=sizeof(device);
+		device=kAudioObjectUnknown;
 
-		OSStatus result=AudioObjectGetPropertyData(kAudioObjectSystemObject,&address,0,NULL,&size,&translation);
+		// AudioObject uses the UID as qualifier data and returns the device ID.
+		OSStatus result=AudioObjectGetPropertyData(kAudioObjectSystemObject,&address,sizeof(uid),&uid,&size,&device);
 		CFRelease(uid);
 		return result==noErr && device!=kAudioObjectUnknown;
 	}
