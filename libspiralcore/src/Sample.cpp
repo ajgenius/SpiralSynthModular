@@ -29,7 +29,8 @@ m_DataGranularity(1),
 m_PluginSpecificData(NULL),
 m_Data(NULL),
 m_Length(0),
-m_SampleType(AUDIO)
+m_SampleType(AUDIO),
+m_Frame(0)
 {	
 	if (Len) 
 	{
@@ -44,7 +45,8 @@ m_DataGranularity(512),
 m_PluginSpecificData(NULL),
 m_Data(NULL),
 m_Length(0),
-m_SampleType(AUDIO)
+m_SampleType(AUDIO),
+m_Frame(0)
 {
 	*this=rhs;
 }
@@ -56,7 +58,8 @@ m_DataGranularity(512),
 m_PluginSpecificData(NULL),
 m_Data(NULL),
 m_Length(0),
-m_SampleType(AUDIO)
+m_SampleType(AUDIO),
+m_Frame(0)
 {
 	assert(S);
 	Allocate(Len);		
