@@ -1,0 +1,74 @@
+# Audio transport contract
+
+`AudioClient` is a native I/O adapter. `AudioStream` moves already rendered audio
+between its native callback (or a bounded polling worker) and the engine.
+`PresentationClock` supplies one engine timeline. These classes have no GUI or
+Spicy dependency and remain C++03 compatible.
+
+## Time and ownership
+
+`AudioCycleTiming` describes the first native sample's ADC and DAC times, in
+seconds on `AudioMonotonicTime()`. `GetChannelTime` accounts for different port
+latencies. Callback arrival, musical transport position, and physical playback
+time are distinct. Drivers without hardware timestamps identify their queue-depth
+estimate with `Estimated`; a native timestamp source takes precedence as master.
+
+`AudioStamp` gives a graph block's monotonically increasing frame, generation,
+first presentation time, and seconds per sample. A musical locate never rewinds
+this frame counter. A new stream, clock switch, format change, native clock
+discontinuity, or long engine stall establishes a new generation. Readers reject
+expired generations and preserve future ones until the engine selects them.
+
+The host cycle gate protects stream registration, graph execution, control,
+configuration, and destruction. The host copies only a scalar sleep duration
+before releasing that gate. A native callback touches its own `AudioStream` and
+native buffers; it never enters the graph or host gate. Each audio queue has one
+producer and one consumer. A bounded triple-buffer mailbox publishes clock
+snapshots without retry loops or locks.
+
+`Attach` prepares a client. Configure queues and install the callback before
+`Start`. Stop the polling worker, then detach the native client before freeing or
+reconfiguring its queues. Callback I/O allocates nothing. Non-callback clients
+must bound `WaitForCycle` and use nonblocking reads/writes; short I/O fails the
+stream so control can reopen it. No callback closes its own device.
+
+## Alignment and rate conversion
+
+The host renders ahead of the maximum attached output latency, native/engine
+periods, and resampler lookahead. All outputs receive the same presentation stamp.
+A callback reads the samples for its own DAC time, including per-channel latency,
+using a windowed-sinc converter. Different rates and callback phases therefore do
+not acquire separate FIFO delays. Native timestamps estimate sample-clock drift;
+phase correction is bounded to 500 ppm, while a discontinuity starts a new epoch.
+
+Capture uses the same timeline with a common explicit input-to-output delay. Its
+lookback includes render-ahead, maximum input latency, native periods and filter
+lookahead. This favors coherent routing over minimum latency for one endpoint.
+
+An underrun produces silence for missing time. Late audio is discarded, rather
+than played late forever. Queues retain bounded filter history and reject
+repeated/reordered frames. Storage is fixed while running; configuration rejects
+formats exceeding a 128 MiB queue/scratch budget per stream.
+
+JACK supplies cycle time and connected-port latency. CoreAudio supplies HAL host
+time plus hardware/stream latency. PortAudio supplies ADC/DAC callback times
+mapped from its stream clock. ALSA uses monotonic status timestamps and reported
+PCM delay when available; older ALSA and OSS use query-time delay estimates. OSS
+drivers without playback-delay reporting cannot attach to this transport.
+Driver-reported latency cannot account for unreported external converters or
+acoustic paths; mixed hardware still needs loopback measurement.
+
+## Backend extraction boundary
+
+The host's Output facade still selects compiled-in native implementations.
+Backend module extraction should move those adapters and their native link flags,
+leaving `AudioClient`, `AudioTiming`, `AudioStream`, `TimedAudioBuffer`, and
+`PresentationClock` in the shared core. Named JACK devices and Output must keep
+using that one transport contract. The private stack can use Spicy for ownership
+and control scheduling without changing the timestamps or queue semantics.
+
+Automated regressions exercise unequal rates and periods, fractional callback
+phases, per-channel latency, positive/negative clock drift, capture alignment,
+queue overflow and recovery, generation changes, native frame wrap, allocation
+freedom inside transfer callbacks, and bounded worker shutdown. Physical loopback
+and listening tests remain separate from these deterministic checks.

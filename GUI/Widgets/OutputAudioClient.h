@@ -1,8 +1,7 @@
 /*
  * Runtime audio backend facade for OutputPlugin.
  *
- * Device I/O lives in libspiralcore (blocking AudioClient: PortAudio,
- * ALSA, OSS).  This facade keeps Sample mix / volume / HostInfo and
+ * Device I/O and timestamped transport live in libspiralcore.  This facade keeps Sample mix / volume / HostInfo and
  * picks a compiled-in client from SpiralInfo / HostInfo.AUDIOCLIENT.
  */
 #ifndef __OUTPUT_AUDIO_CLIENT_H__
@@ -13,7 +12,7 @@
 #include "SpiralPlugin.h"
 #include "Sample.h"
 using spiralcore::Sample;
-#include "AudioClient.h"
+#include "AudioStream.h"
 
 class OutputAudioClient
 {
@@ -34,20 +33,10 @@ public:
 	void SetNumChannels(int s) { m_Channels = s; }
 	float GetVolume() const { return m_Volume; }
 
-	// Two period slots between the engine and the transport. The engine
-	// mixes into one while the transport plays the other: WaitPeriod
-	// blocks until the mix slot is free and reports whether it is; the
-	// engine must not touch the slot otherwise. CommitPeriod hands it
-	// over. TransportCycle plays the ready slot and captures into it,
-	// from the device callback or the blocking thread; without a ready
-	// slot it plays silence and reports an underrun. GetStereo reads the
-	// capture of the engine's own slot. Neither side ever waits on the
-	// other inside a device call.
-	bool WaitPeriod(unsigned microseconds);
-	void CommitPeriod();
-	bool WaitReady(unsigned microseconds);
-	bool TransportCycle(bool read, bool write);
-	unsigned Underruns() const { return m_Underruns; }
+	void BeginPeriod(const spiralcore::AudioStamp &capture);
+	void CommitPeriod(const spiralcore::AudioStamp &playback);
+	spiralcore::AudioStream *Stream() { return &m_Stream; }
+	unsigned Underruns() const { return m_Stream.Errors(); }
 
 	bool GetTransport(unsigned long &frame, bool &rolling) const
 		{ return m_Client && m_Client->GetTransport(frame, rolling); }
@@ -88,16 +77,10 @@ private:
 	float m_Volume;
 	int m_Channels;
 	int m_Frames;
-	int m_Mix;
-	int m_Send;
-	volatile bool m_Ready[2];
-	volatile unsigned m_Underruns;
-	pthread_mutex_t m_PeriodLock;
-	pthread_cond_t m_PeriodFree;
-	pthread_cond_t m_PeriodReady;
 	bool m_IsDead;
-	float *m_Out[2];
-	float *m_In[2];
+	std::vector<float> m_Out, m_In;
+	spiralcore::AudioStream m_Stream;
+
 };
 
 #define OUTPUTCLIENT OutputAudioClient

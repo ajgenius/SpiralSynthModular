@@ -1,10 +1,12 @@
 #include "OutputAudioClient.h"
+#include "AudioTransportHub.h"
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
 #include <cstring>
+#include <algorithm>
 #include <iostream>
 #include <sys/time.h>
 
@@ -54,25 +56,15 @@ OutputAudioClient::OutputAudioClient() :
 	m_Volume(0.5f),
 	m_Channels(2),
 	m_Frames(0),
-	m_Mix(0),
-	m_Send(0),
-	m_Underruns(0),
 	m_IsDead(false)
 {
-	m_Out[0] = m_Out[1] = m_In[0] = m_In[1] = NULL;
-	m_Ready[0] = m_Ready[1] = false;
-	pthread_mutex_init(&m_PeriodLock, NULL);
-	pthread_cond_init(&m_PeriodFree, NULL);
-	pthread_cond_init(&m_PeriodReady, NULL);
+
 }
 
 OutputAudioClient::~OutputAudioClient()
 {
 	Close();
 	DestroyBackend();
-	pthread_cond_destroy(&m_PeriodReady);
-	pthread_cond_destroy(&m_PeriodFree);
-	pthread_mutex_destroy(&m_PeriodLock);
 }
 
 void OutputAudioClient::DestroyBackend()
@@ -211,36 +203,23 @@ AudioClientOptions OutputAudioClient::MakeOptions(unsigned int inChans, unsigned
 
 void OutputAudioClient::AllocateBuffer()
 {
-	if (!host) return;
-	const int frames = host->BUFSIZE;
-	if (m_Out[0] && m_Frames == frames) return;
-	DeallocateBuffer();
-	if (frames <= 0) return;
-	m_Mix = m_Send = 0;
-	m_Ready[0] = m_Ready[1] = false;
-	m_Frames = frames;
-	const int samples = frames * m_Channels;
-	m_Out[0] = new float[samples];
-	m_Out[1] = new float[samples];
-	m_In[0] = new float[samples];
-	m_In[1] = new float[samples];
-	memset(m_Out[0], 0, samples * sizeof(float));
-	memset(m_Out[1], 0, samples * sizeof(float));
-	memset(m_In[0], 0, samples * sizeof(float));
-	memset(m_In[1], 0, samples * sizeof(float));
+	if (!host || host->BUFSIZE <= 0) return;
+
+	m_Frames = host->BUFSIZE;
+	m_Out.assign(m_Frames * m_Channels, 0);
+	m_In.assign(m_Frames * m_Channels, 0);
 }
 
 void OutputAudioClient::DeallocateBuffer()
 {
-	delete [] m_Out[0]; delete [] m_Out[1];
-	delete [] m_In[0]; delete [] m_In[1];
-	m_Out[0] = m_Out[1] = m_In[0] = m_In[1] = NULL;
+	m_Out.clear();
+	m_In.clear();
 	m_Frames = 0;
 }
 
 void OutputAudioClient::SendStereo(const Sample *ldata, const Sample *rdata)
 {
-	if (m_Channels != 2 || !host || m_Frames != host->BUFSIZE || !m_Out[m_Mix] || m_IsDead) return;
+	if (m_Channels != 2 || !host || m_Frames != host->BUFSIZE || m_Out.empty() || m_IsDead) return;
 
 	int on = 0;
 	for (int n = 0; n < host->BUFSIZE; ++n)
@@ -249,113 +228,39 @@ void OutputAudioClient::SendStereo(const Sample *ldata, const Sample *rdata)
 		float l = ldata ? (*ldata)[n] * m_Volume : 0.f;
 		float r = rdata ? (*rdata)[n] * m_Volume : 0.f;
 
-		m_Out[m_Mix][on++] += l;
-		m_Out[m_Mix][on++] += r;
+		m_Out[on++] += l;
+		m_Out[on++] += r;
 	}
 }
 
 void OutputAudioClient::GetStereo(Sample *ldata, Sample *rdata)
 {
-	// The slot the engine owns is the one the transport has finished with;
-	// its capture is complete. The other slot may still be filling.
-	const int captured = m_Mix;
-	if (m_Channels != 2 || !host || m_Frames != host->BUFSIZE || !m_In[captured] || m_IsDead) return;
+	if (m_Channels != 2 || !host || m_Frames != host->BUFSIZE || m_In.empty() || m_IsDead) return;
 
 	int on = 0;
 	for (int n = 0; n < host->BUFSIZE; ++n)
 	{
 		if (m_IsDead) return;
-		if (ldata) ldata->Set(n, m_In[captured][on] * m_Volume);
+		if (ldata) ldata->Set(n, m_In[on] * m_Volume);
 		on++;
-		if (rdata) rdata->Set(n, m_In[captured][on] * m_Volume);
+		if (rdata) rdata->Set(n, m_In[on] * m_Volume);
 		on++;
 	}
 }
 
-static void Deadline(struct timespec &deadline, unsigned microseconds)
+void OutputAudioClient::BeginPeriod(const AudioStamp &capture)
 {
-	struct timeval now;
-	gettimeofday(&now, NULL);
-	unsigned long long nanoseconds = (unsigned long long)now.tv_usec * 1000 + (unsigned long long)microseconds * 1000;
-	deadline.tv_sec = now.tv_sec + nanoseconds / 1000000000ULL;
-	deadline.tv_nsec = nanoseconds % 1000000000ULL;
+	if (m_Out.empty()) return;
+
+	std::fill(m_Out.begin(), m_Out.end(), 0);
+	std::fill(m_In.begin(), m_In.end(), 0);
+	m_Stream.Capture(&m_In[0], m_Frames, capture);
 }
 
-bool OutputAudioClient::WaitPeriod(unsigned microseconds)
+void OutputAudioClient::CommitPeriod(const AudioStamp &playback)
 {
-	struct timespec deadline;
-	Deadline(deadline, microseconds);
-	pthread_mutex_lock(&m_PeriodLock);
-	while (m_Ready[m_Mix] && !m_IsDead)
-		if (pthread_cond_timedwait(&m_PeriodFree, &m_PeriodLock, &deadline)) break;
-	const bool free = !m_Ready[m_Mix];
-	pthread_mutex_unlock(&m_PeriodLock);
-	return free;
-}
+	if (!m_Out.empty() && IsAttached()) m_Stream.Playback(&m_Out[0], m_Frames, playback);
 
-void OutputAudioClient::CommitPeriod()
-{
-	if (!m_Out[0]) return;
-	pthread_mutex_lock(&m_PeriodLock);
-	__sync_synchronize();
-	m_Ready[m_Mix] = true;
-	m_Mix = !m_Mix;
-	pthread_cond_signal(&m_PeriodReady);
-	pthread_mutex_unlock(&m_PeriodLock);
-}
-
-bool OutputAudioClient::WaitReady(unsigned microseconds)
-{
-	struct timespec deadline;
-	Deadline(deadline, microseconds);
-	pthread_mutex_lock(&m_PeriodLock);
-	while (!m_Ready[m_Send] && !m_IsDead)
-		if (pthread_cond_timedwait(&m_PeriodReady, &m_PeriodLock, &deadline)) break;
-	const bool ready = m_Ready[m_Send];
-	pthread_mutex_unlock(&m_PeriodLock);
-	return ready;
-}
-
-bool OutputAudioClient::TransportCycle(bool read, bool write)
-{
-	if (!host || m_Frames != host->BUFSIZE || !m_Out[0] || !m_Client) return false;
-
-	const int slot = m_Send;
-	const int samples = host->BUFSIZE * m_Channels;
-	if (!m_Ready[slot])
-	{
-		// The engine is late: keep the device fed with silence.
-		++m_Underruns;
-		if (write)
-		{
-			memset(m_In[slot], 0, samples * sizeof(float));
-			m_Client->Write(m_In[slot], (unsigned int)host->BUFSIZE);
-		}
-		return true;
-	}
-
-	bool ok = true;
-	if (write)
-	{
-		ok = m_Client->Write(m_Out[slot], (unsigned int)host->BUFSIZE);
-		memset(m_Out[slot], 0, samples * sizeof(float));
-	}
-	if (read)
-	{
-		memset(m_In[slot], 0, samples * sizeof(float));
-		ok = m_Client->Read(m_In[slot], (unsigned int)host->BUFSIZE) && ok;
-	}
-
-	// Hand the slot back only after the device has it.
-	__sync_synchronize();
-	m_Ready[slot] = false;
-	m_Send = !slot;
-	if (!pthread_mutex_trylock(&m_PeriodLock))
-	{
-		pthread_cond_signal(&m_PeriodFree);
-		pthread_mutex_unlock(&m_PeriodLock);
-	}
-	return ok;
 }
 
 bool OutputAudioClient::AttachMode(unsigned int inChans, unsigned int outChans)
@@ -363,10 +268,22 @@ bool OutputAudioClient::AttachMode(unsigned int inChans, unsigned int outChans)
 	if (!m_Client) return false;
 	DeallocateBuffer();
 	AllocateBuffer();
-	if (!m_Out[0]) return false;
+	if (m_Out.empty()) return false;
 	m_IsDead = false;
-	return m_Client->Attach(m_ClientName == "jack" && m_Destination == "default" ? "SSM-Output" : m_Destination,
-		MakeOptions(inChans, outChans)) && m_Client->Start();
+	if (!m_Client->Attach(m_ClientName == "jack" && m_Destination == "default" ? "SSM-Output" : m_Destination,
+		MakeOptions(inChans, outChans))) return false;
+
+	if (!m_Stream.Configure(m_Client, inChans, outChans, m_Frames, host->SAMPLERATE))
+	{
+		m_Client->Detach();
+		return false;
+	}
+
+	m_Client->SetCallback(AudioStream::Callback, &m_Stream);
+	AudioTransportHub::Get()->RegisterStream(&m_Stream);
+	if (!m_Stream.Start()) { Close(); return false; }
+
+	return true;
 }
 
 bool OutputAudioClient::OpenWrite()     { Close(); return AttachMode(0, (unsigned int)m_Channels); }
@@ -375,7 +292,10 @@ bool OutputAudioClient::OpenReadWrite() { Close(); return AttachMode((unsigned i
 
 bool OutputAudioClient::Close()
 {
+	AudioTransportHub::Get()->UnregisterStream(&m_Stream);
+	m_Stream.Stop();
 	if (m_Client) m_Client->Detach();
+
 	return true;
 }
 
