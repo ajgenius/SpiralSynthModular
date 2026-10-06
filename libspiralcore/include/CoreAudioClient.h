@@ -27,6 +27,11 @@ public:
 
 	unsigned long GetSampleRate() const { return __sync_fetch_and_add(&m_Rate, 0); }
 
+	bool GetCycleTiming(AudioCycleTiming &timing) const;
+	double GetChannelTime(bool input, unsigned channel) const;
+	double GetInputLatency() const;
+	double GetOutputLatency() const;
+
 	bool Read(float *interleaved, unsigned int frames);
 
 	bool Write(const float *interleaved, unsigned int frames);
@@ -47,6 +52,12 @@ private:
 	bool m_Started;
 
 	unsigned m_Listeners;
+	std::vector<AudioObjectPropertyAddress> m_TimingListeners;
+	mutable unsigned m_InputHardware[2], m_OutputHardware[2];
+	mutable unsigned m_InputSoftware, m_OutputSoftware;
+	AudioCycleTiming m_Timing;
+	double m_HostTime;
+	uint64_t m_Frame;
 
 	std::vector<float> m_Capture;
 	AudioBufferList *m_Playback;

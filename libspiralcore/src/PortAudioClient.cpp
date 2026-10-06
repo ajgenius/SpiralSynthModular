@@ -1,5 +1,5 @@
 // Copyright (C) 2003 David Griffiths <dave@pawfal.org>
-// SSM blocking Pa_WriteStream adaptation (PortAudio 2.0 / v19).
+// PortAudio v19 transport with native ADC/DAC presentation timestamps.
 
 #include <cctype>
 #include <cstdlib>
@@ -35,7 +35,9 @@ PortAudioClient::PortAudioClient() :
 	m_HasInput(false),
 	m_HasOutput(false),
 	m_Channels(2),
-	m_Device("default")
+	m_Device("default"),
+	m_Started(false), m_Input(NULL), m_Output(NULL), m_ProcessFrames(0), m_Frame(0),
+	m_ClockOffset(0), m_InputLatency(0), m_OutputLatency(0), m_Run(NULL), m_Context(NULL)
 {
 }
 
@@ -75,7 +77,7 @@ PaDeviceIndex PortAudioClient::FindDevice(bool input) const
 		if (value >= 0 && value < count)
 		{
 			const PaDeviceInfo *info = Pa_GetDeviceInfo((PaDeviceIndex)value);
-			if (info && (input ? info->maxInputChannels : info->maxOutputChannels) >= m_Channels)
+			if (info && (input ? info->maxInputChannels : info->maxOutputChannels) >= int(input ? m_Opt.InChannels : m_Opt.OutChannels))
 				return (PaDeviceIndex)value;
 		}
 		return paNoDevice;
@@ -86,7 +88,7 @@ PaDeviceIndex PortAudioClient::FindDevice(bool input) const
 	{
 		const PaDeviceInfo *info = Pa_GetDeviceInfo(i);
 		if (!info || !info->name) continue;
-		if ((input ? info->maxInputChannels : info->maxOutputChannels) < m_Channels)
+		if ((input ? info->maxInputChannels : info->maxOutputChannels) < int(input ? m_Opt.InChannels : m_Opt.OutChannels))
 			continue;
 		if (m_Device == info->name) return i;
 		if (partial == paNoDevice && string(info->name).find(m_Device) != string::npos)
@@ -107,7 +109,7 @@ bool PortAudioClient::FillParameters(PaStreamParameters &params, bool input) con
 	}
 	const PaDeviceInfo *info = Pa_GetDeviceInfo(params.device);
 	if (!info) return false;
-	params.channelCount = m_Channels;
+	params.channelCount = input ? m_Opt.InChannels : m_Opt.OutChannels;
 	params.sampleFormat = paFloat32;
 	params.suggestedLatency = input ? info->defaultLowInputLatency
 	                                : info->defaultLowOutputLatency;
@@ -118,6 +120,8 @@ bool PortAudioClient::FillParameters(PaStreamParameters &params, bool input) con
 bool PortAudioClient::Attach(const string &device, const AudioClientOptions &opt)
 {
 	Detach();
+	if ((!opt.InChannels && !opt.OutChannels) || !opt.BufferSize || !opt.Samplerate) return false;
+
 	m_Opt = opt;
 	m_Device = device.empty() ? "default" : device;
 	m_Channels = opt.OutChannels ? (int)opt.OutChannels
@@ -145,19 +149,50 @@ bool PortAudioClient::Attach(const string &device, const AudioClientOptions &opt
 		m_HasOutput = true;
 	}
 
-	/* NULL callback — Pa_WriteStream / Pa_ReadStream block, pacing the engine. */
+	// Prepare first; the owner allocates its queues before Start enables callbacks.
 	PaError err = Pa_OpenStream(&m_Stream, in, out,
 	                            opt.Samplerate, opt.BufferSize,
 	                            paNoFlag,
-	                            NULL, NULL);
+	                            Process, this);
 	if (!Check(err, "open")) { Detach(); return false; }
-	if (!Check(Pa_StartStream(m_Stream), "start")) { Detach(); return false; }
+	const PaStreamInfo *info = Pa_GetStreamInfo(m_Stream);
+	if (!info || info->sampleRate <= 0) { Detach(); return false; }
 
-	m_Attached = true;
-	cerr << "PortAudio: attached (blocking) dest=" << m_Device
+	m_Opt.Samplerate = (unsigned)info->sampleRate;
+	m_InputLatency = info->inputLatency;
+	m_OutputLatency = info->outputLatency;
+	// Choose the shortest clock-query interval, avoiding scheduler delays.
+	double best = 1;
+	for (unsigned n = 0; n < 8; ++n)
+	{
+		const double before = AudioMonotonicTime();
+		const double native = Pa_GetStreamTime(m_Stream);
+		const double after = AudioMonotonicTime();
+		if (after - before < best)
+		{
+			best = after - before;
+			m_ClockOffset = (before + after) * 0.5 - native;
+		}
+	}
+
+	m_Frame = 0;
+	__sync_lock_test_and_set(&m_Attached, 1);
+	cerr << "PortAudio: attached (callback) dest=" << m_Device
 	     << " sr=" << opt.Samplerate
 	     << " buf=" << opt.BufferSize
 	     << " ch=" << m_Channels << endl;
+	return true;
+}
+
+bool PortAudioClient::Start()
+{
+	if (!IsAttached() || !m_Stream) return false;
+
+	if (m_Started) return true;
+
+	if (!Check(Pa_StartStream(m_Stream), "start")) { Detach(); return false; }
+
+	m_Started = true;
 	return true;
 }
 
@@ -168,7 +203,7 @@ void PortAudioClient::Detach()
 		const PaError active = Pa_IsStreamActive(m_Stream);
 		if (active == 1)
 		{
-			const PaError err = Pa_StopStream(m_Stream);
+			const PaError err = Pa_AbortStream(m_Stream);
 			if (err != paNoError && err != paStreamIsStopped)
 				Check(err, "stop");
 		}
@@ -180,23 +215,63 @@ void PortAudioClient::Detach()
 		Check(Pa_Terminate(), "terminate");
 		m_Initialized = false;
 	}
-	m_Attached = m_HasInput = m_HasOutput = false;
+	__sync_lock_test_and_set(&m_Attached, 0);
+	m_Started = m_HasInput = m_HasOutput = false;
+	m_Input = NULL;
+	m_Output = NULL;
+	m_ProcessFrames = 0;
+	m_Timing.Valid = false;
 }
 
-bool PortAudioClient::Write(const float *interleaved, unsigned int nframes)
+int PortAudioClient::Process(const void *input, void *output, unsigned long frames,
+	const PaStreamCallbackTimeInfo *time, PaStreamCallbackFlags, void *context)
 {
-	if (!m_Attached || !m_HasOutput || !m_Stream || !interleaved) return false;
-	PaError err = Pa_WriteStream(m_Stream, interleaved, nframes);
-	if (err != paNoError && err != paOutputUnderflowed)
-		return Check(err, "write");
+	PortAudioClient &client = *static_cast<PortAudioClient *>(context);
+	if (output) memset(output, 0, frames * client.m_Opt.OutChannels * sizeof(float));
+
+	if (!client.IsAttached()) return paAbort;
+
+	client.m_Input = static_cast<const float *>(input);
+	client.m_Output = static_cast<float *>(output);
+	client.m_ProcessFrames = frames;
+	client.m_Timing.Frame = client.m_Frame;
+	client.m_Timing.Frames = frames;
+	client.m_Timing.SampleRate = client.m_Opt.Samplerate;
+	client.m_Timing.CallbackTime = time->currentTime + client.m_ClockOffset;
+	client.m_Timing.InputTime = time->inputBufferAdcTime + client.m_ClockOffset;
+	client.m_Timing.OutputTime = time->outputBufferDacTime + client.m_ClockOffset;
+	client.m_Timing.Valid = client.m_Opt.Samplerate &&
+		(!client.m_HasOutput || time->outputBufferDacTime > 0) &&
+		(!client.m_HasInput || time->inputBufferAdcTime > 0);
+	if (client.m_Run) client.m_Run(client.m_Context, frames);
+
+	client.m_Frame += frames;
+	client.m_Input = NULL;
+	client.m_Output = NULL;
+	client.m_ProcessFrames = 0;
+	return paContinue;
+}
+
+bool PortAudioClient::GetCycleTiming(AudioCycleTiming &timing) const
+{
+	if (!m_ProcessFrames || !m_Timing.Valid) return false;
+
+	timing = m_Timing;
 	return true;
 }
 
-bool PortAudioClient::Read(float *interleaved, unsigned int nframes)
+bool PortAudioClient::Write(const float *interleaved, unsigned int frames)
 {
-	if (!m_Attached || !m_HasInput || !m_Stream || !interleaved) return false;
-	PaError err = Pa_ReadStream(m_Stream, interleaved, nframes);
-	if (err != paNoError && err != paInputOverflowed)
-		return Check(err, "read");
+	if (!m_Output || !interleaved || frames != m_ProcessFrames) return false;
+
+	memcpy(m_Output, interleaved, size_t(frames) * m_Opt.OutChannels * sizeof(float));
+	return true;
+}
+
+bool PortAudioClient::Read(float *interleaved, unsigned int frames)
+{
+	if (!m_Input || !interleaved || frames != m_ProcessFrames) return false;
+
+	memcpy(interleaved, m_Input, size_t(frames) * m_Opt.InChannels * sizeof(float));
 	return true;
 }

@@ -16,7 +16,7 @@ libspiralcore_la_SOURCES = \
     src/Sample.cpp \
     include/RiffWav.h \
     src/RiffWav.cpp
-libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 0:0:0
+libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 1:0:0
 libspiralcore_la_LIBADD = $(MIDI_LIBS) $(AMIDILIBS) $(SFLIBS) $(PORTAUDIO_LIBS) $(ALSA_LIBS) $(JACK_LIBS) $(CORE_AUDIO_LIBS) -lm
 
 check_PROGRAMS = compatibility-test
@@ -71,6 +71,9 @@ endif
 EXTRA_DIST += src/AlsaAtomicClock.cpp include/AlsaAtomicClock.h src/MachAtomicClock.cpp
 if HAVE_OUTPUT_PORTAUDIO
 libspiralcore_la_SOURCES += src/PortAudioClient.cpp include/PortAudioClient.h
+check_PROGRAMS += portaudio-client-test
+portaudio_client_test_CPPFLAGS = $(AM_CPPFLAGS)
+portaudio_client_test_SOURCES = tests/portaudio-client.cpp src/PortAudioClient.cpp src/AudioTiming.cpp
 endif
 if HAVE_OUTPUT_ALSA
 libspiralcore_la_SOURCES += src/AlsaClient.cpp include/AlsaClient.h
@@ -82,7 +85,7 @@ endif
 if HAVE_JACK_CLIENT
 libspiralcore_la_SOURCES += src/JackClient.cpp include/JackClient.h
 check_PROGRAMS += jack-client-test
-jack_client_test_SOURCES = tests/jack-client.cpp src/JackClient.cpp
+jack_client_test_SOURCES = tests/jack-client.cpp src/JackClient.cpp src/AudioTiming.cpp
 jack_client_test_CPPFLAGS = $(AM_CPPFLAGS)
 endif
 
