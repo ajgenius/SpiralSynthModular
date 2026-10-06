@@ -47,7 +47,7 @@ EXTRA_DIST = \
     src/Time.cpp \
     src/Tuna.cpp
 
-EXTRA_DIST += README.ssm
+EXTRA_DIST += README.ssm AUDIO-TRANSPORT.md
 
 libspiralcore_la_SOURCES += include/AudioClient.h
 
@@ -77,6 +77,9 @@ portaudio_client_test_SOURCES = tests/portaudio-client.cpp src/PortAudioClient.c
 endif
 if HAVE_OUTPUT_ALSA
 libspiralcore_la_SOURCES += src/AlsaClient.cpp include/AlsaClient.h
+check_PROGRAMS += alsa-client-test
+alsa_client_test_SOURCES = tests/alsa-client.cpp
+alsa_client_test_LDADD = libspiralcore.la
 endif
 if HAVE_OUTPUT_OSS
 libspiralcore_la_SOURCES += src/OSSClient.cpp include/OSSClient.h

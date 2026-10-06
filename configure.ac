@@ -124,6 +124,8 @@ if test "x$have_output_alsa" = "xyes"; then
 fi
 AC_SUBST([ALSA_CFLAGS])
 AC_SUBST([ALSA_LIBS])
+AC_CHECK_LIB(asound, snd_pcm_sw_params_set_tstamp_type,
+   [AC_DEFINE([HAVE_ALSA_MONOTONIC_TIMESTAMP], [1], [ALSA supports monotonic PCM timestamps])])
 AM_CONDITIONAL([HAVE_OUTPUT_ALSA], [test "x$have_output_alsa" = "xyes"])
 
 AC_ARG_ENABLE([oss-output],

@@ -183,9 +183,6 @@ void SynthModular::Update()
 		return;
 	}
 
-	// Without a slot the transport is still on ours: control only, no graph.
-	const bool render=hub->WaitPeriod();
-
 	pthread_mutex_lock(&m_CycleLock);
 	m_CH.UpdateDataNow(m_Info.FRAME);
 	if (m_Frozen)
@@ -193,10 +190,6 @@ void SynthModular::Update()
 		pthread_mutex_unlock(&m_CycleLock);
 		return;
 	}
-
-	hub->BeginPeriod();
-	m_Info.FRAME = hub->Frame();
-	m_Info.ROLLING = hub->Rolling();
 
 	for (map<int,DeviceWin*>::iterator i = m_DeviceWinMap.begin(); i != m_DeviceWinMap.end(); )
 	{
@@ -229,13 +222,22 @@ void SynthModular::Update()
 		m_HostNeedsUpdate = false;
 	}
 
+	const bool render = hub->PreparePeriod();
 	if (render)
 	{
+		hub->BeginPeriod();
+		m_Info.FRAME = hub->Frame();
+		m_Info.ROLLING = hub->Rolling();
 		RenderAudio();
 		hub->CommitPeriod();
 	}
 
+	// Only the scalar delay crosses the gate. Control may now detach, destroy
+	// or replace any native client while the engine sleeps.
+	const unsigned delay = render ? 0 : hub->SleepMicroseconds();
 	pthread_mutex_unlock(&m_CycleLock);
+	if (delay) usleep(delay);
+
 }
 
 void SynthModular::RenderAudio()

@@ -24,7 +24,7 @@
 
 #include "config.h"
 #include "JackPlugin.h"
-#include "RingBuffer.h"
+#include "AudioTransportHub.h"
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -80,11 +80,8 @@ string SpiralPlugin_GetGroupName()
 JackPlugin::JackPlugin() :
 m_UpdateNames(false),
 m_Connected(false),
-m_Capture(NULL),
-m_Playback(NULL),
 m_RingFrames(0),
-m_Drift(0),
-m_ClientFrame(0),
+m_NativeRate(0),
 m_CaptureFrame(0),
 m_InputCount(4),
 m_OutputCount(4)
@@ -151,7 +148,7 @@ JackPlugin::~JackPlugin()
 {
 	if (m_JackClient)
 	{
-		m_JackClient->Detach();
+		Detach();
 		delete m_JackClient; 
 		m_JackClient=NULL;
 	}
@@ -163,7 +160,7 @@ PluginInfo &JackPlugin::Initialise(const HostInfo *Host)
 {	
 	PluginInfo& Info= SpiralPlugin::Initialise(Host);
 
-	m_JackClient->SetCallback(ProcessCallback, this);
+	AudioTransportHub::Get()->SetHost(Host);
 	Reset();
 	return Info;
 }
@@ -181,70 +178,45 @@ void JackPlugin::Attach()
 	{
 		// Attach negotiates the native period before any callback can run.
 		BuildRings();
-		m_JackClient->Start();
+		if (!m_Stream.Configure(m_JackClient, m_InputCount, m_OutputCount,
+			m_HostInfo->BUFSIZE, m_HostInfo->SAMPLERATE)) { Detach(); return; }
+
+		m_JackClient->SetCallback(spiralcore::AudioStream::Callback, &m_Stream);
+		AudioTransportHub::Get()->RegisterStream(&m_Stream);
+		if (!m_JackClient->Start()) Detach();
 	}
 
 }
 
 void JackPlugin::Detach()
 {
+	AudioTransportHub::Get()->UnregisterStream(&m_Stream);
 	m_JackClient->Detach();
 }
 
-// Rings hold a few host periods each way, or jack's period when that is
-// larger. The rings are rebuilt only while the client is detached, so the
-// callback never sees them change.
-static const unsigned RING_PERIODS = 4;
-
+// Engine scratch is rebuilt only under the host gate. AudioStream owns its
+// separate native scratch and queues, configured before callbacks start.
 void JackPlugin::BuildRings()
 {
-	DropRings();
 	if (!m_HostInfo || m_HostInfo->BUFSIZE <= 0) return;
 
-	m_RingFrames = std::max((unsigned)m_HostInfo->BUFSIZE, (unsigned)m_JackClient->GetBufferSize());
-	const unsigned period = m_RingFrames * sizeof(float);
-	m_Capture = new RingBuffer(period * m_InputCount * RING_PERIODS);
-	m_Playback = new RingBuffer(period * m_OutputCount * RING_PERIODS);
-	m_Period.assign(m_RingFrames * std::max(m_InputCount, m_OutputCount), 0);
-	m_EnginePeriod.assign(m_Period.size(), 0);
-	m_ClientFrame = m_CaptureFrame = 0;
+	m_RingFrames = m_JackClient->GetBufferSize();
+	m_NativeRate = m_JackClient->GetSampleRate();
+	m_EnginePeriod.assign(m_HostInfo->BUFSIZE * std::max(m_InputCount, m_OutputCount), 0);
+	m_CaptureFrame = 0;
 }
 
 void JackPlugin::DropRings()
 {
-	delete m_Capture; m_Capture = NULL;
-	delete m_Playback; m_Playback = NULL;
+	m_EnginePeriod.clear();
 	m_RingFrames = 0;
-}
-
-void JackPlugin::ProcessCallback(void *context, unsigned int frames)
-{
-	JackPlugin *plugin = static_cast<JackPlugin *>(context);
-	if (!frames || frames > plugin->m_RingFrames || !plugin->m_Capture) return;
-
-	// Capture goes in through the jack-side scratch; a full ring drops it.
-	float *scratch = &plugin->m_Period[0];
-	const unsigned in = frames * plugin->m_InputCount * sizeof(float);
-	plugin->m_JackClient->Read(scratch, frames);
-	if (plugin->m_Capture->Write((char *)scratch, in)) plugin->m_ClientFrame += frames;
-	else ++plugin->m_Drift;
-
-	// Playback comes out, or silence when the engine has not caught up.
-	const unsigned out = frames * plugin->m_OutputCount * sizeof(float);
-	if (!plugin->m_Playback->Read((char *)scratch, out))
-	{
-		memset(scratch, 0, out);
-		++plugin->m_Drift;
-	}
-	plugin->m_JackClient->Write(scratch, frames);
 }
 
 void JackPlugin::Execute()
 {
-	if (m_IsDead || !m_Playback || !m_JackClient->IsAttached()) return;
+	if (m_IsDead || m_EnginePeriod.empty() || !m_JackClient->IsAttached()) return;
 
 	const unsigned frames = m_HostInfo->BUFSIZE;
-	if (frames > m_RingFrames) return;
 
 	// The graph has now produced this period's inputs. Enqueue it once;
 	// ProcessAudio only supplies capture before the graph is evaluated.
@@ -253,8 +225,7 @@ void JackPlugin::Execute()
 			m_EnginePeriod[frame * m_OutputCount + channel] = !m_HostInfo->PAUSED && InputExists(channel)
 				? (*GetInput(channel))[frame] : 0;
 
-	const unsigned bytes = frames * m_OutputCount * sizeof(float);
-	if (!m_Playback->Write((char *)&m_EnginePeriod[0], bytes)) ++m_Drift;
+	m_Stream.Playback(&m_EnginePeriod[0], frames, AudioTransportHub::Get()->PlaybackStamp());
 }
 
 void JackPlugin::ExecuteCommands()
@@ -314,7 +285,7 @@ void JackPlugin::ExecuteCommands()
 bool JackPlugin::Kill()
 {
 	m_IsDead=true;
-	if (m_JackClient) m_JackClient->Detach();
+	if (m_JackClient) Detach();
 
 	// The host may already have removed neighboring devices during a patch
 	// replacement. Stop callbacks here; leave port and canvas disposal to the
@@ -339,29 +310,24 @@ void JackPlugin::ServiceAudio()
 	// A jack period larger than the rings were built for needs new rings.
 	if (m_IsDead || !m_JackClient->IsAttached()) return;
 
-	if (m_JackClient->GetBufferSize() > m_RingFrames) Reset();
+	if (m_JackClient->GetBufferSize() != m_RingFrames ||
+		m_JackClient->GetSampleRate() != m_NativeRate || m_Stream.Failed()) Reset();
 }
 
 void JackPlugin::ProcessAudio()
 {
-	if (m_IsDead || !m_Capture || !m_Playback) return;
+	if (m_IsDead || m_EnginePeriod.empty()) return;
 
 	const unsigned frames = m_HostInfo->BUFSIZE;
-	if (frames > m_RingFrames) return;
-
 	const bool silent = m_HostInfo->PAUSED || !m_JackClient->IsAttached();
+	const spiralcore::AudioStamp &stamp = AudioTransportHub::Get()->CaptureStamp();
+	if (!silent) m_Stream.Capture(&m_EnginePeriod[0], frames, stamp);
 
-	// Engine-side scratch, separate from the one the callback uses.
-	float *period = &m_EnginePeriod[0];
-	const unsigned in = frames * m_InputCount * sizeof(float);
-	const bool captured = !silent && m_Capture->Read((char *)&period[0], in);
-	if (captured) m_CaptureFrame += frames;
-	if (!silent && !captured) ++m_Drift;
-
+	m_CaptureFrame = stamp.Frame;
 	for (unsigned frame = 0; frame < frames; ++frame)
 		for (int channel = 0; channel < m_InputCount; ++channel)
 			if (OutputExists(channel))
-				GetOutputBuf(channel)->Set(frame, captured ? period[frame * m_InputCount + channel] : 0);
+				GetOutputBuf(channel)->Set(frame, silent ? 0 : m_EnginePeriod[frame * m_InputCount + channel]);
 
 }
 

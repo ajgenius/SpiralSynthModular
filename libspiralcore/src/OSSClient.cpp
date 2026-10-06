@@ -27,6 +27,8 @@
 #include <endian.h>
 #endif
 #include <iostream>
+#include <algorithm>
+#include <poll.h>
 
 #include "OSSClient.h"
 
@@ -60,6 +62,7 @@ void OSSClient::PackUpAndGoHome()
 OSSClient::OSSClient() :
 	m_Fd(-1),
 	m_Channels(2),
+	m_Frames(512), m_Input(false), m_Output(false), m_Frame(0), m_Latency(0),
 	m_Samplerate(44100),
 	m_NumBuffers(8),
 	m_FragSize(256),
@@ -108,7 +111,7 @@ bool OSSClient::OpenDevice(int flags)
 	int result, val;
 	const char *path = m_Device.c_str();
 	cerr << "Opening dsp " << path << endl;
-	m_Fd = open(path, flags);
+	m_Fd = open(path, flags | O_NONBLOCK);
 	if (m_Fd < 0)
 	{
 		fprintf(stderr, "Can't open audio driver.\n");
@@ -147,6 +150,7 @@ bool OSSClient::OpenDevice(int flags)
 		val = (int)m_Samplerate;
 		result = ioctl(m_Fd, SNDCTL_DSP_SPEED, &val);
 		CHECK_AND_REPORT_ERROR;
+		m_Samplerate = val;
 	}
 	else
 	{
@@ -162,6 +166,7 @@ bool OSSClient::OpenDevice(int flags)
 		val = (int)m_Samplerate;
 		result = ioctl(m_Fd, SNDCTL_DSP_SPEED, &val);
 		CHECK_AND_REPORT_ERROR;
+		m_Samplerate = val;
 	}
 	return true;
 }
@@ -169,11 +174,22 @@ bool OSSClient::OpenDevice(int flags)
 bool OSSClient::Attach(const string &device, const AudioClientOptions &opt)
 {
 	Detach();
+	if ((!opt.InChannels && !opt.OutChannels) ||
+		(opt.InChannels && opt.OutChannels && opt.InChannels != opt.OutChannels)) return false;
+
+	if (opt.InChannels > 2 || opt.OutChannels > 2) return false;
+
+
 	if (device.empty() || device == "default")
 		m_Device = "/dev/dsp";
 	else
 		m_Device = device;
 	m_Samplerate = opt.Samplerate;
+	m_Frames = opt.BufferSize;
+	m_Input = opt.InChannels != 0;
+	m_Output = opt.OutChannels != 0;
+	m_Frame = 0;
+	m_Timing.Valid = false;
 	m_NumBuffers = opt.NumBuffers;
 	m_FragSize = opt.FragSize;
 	m_Channels = opt.OutChannels ? (int)opt.OutChannels
@@ -185,59 +201,97 @@ bool OSSClient::Attach(const string &device, const AudioClientOptions &opt)
 	if (opt.InChannels && !opt.OutChannels) flags = O_RDONLY;
 
 	if (!OpenDevice(flags)) return false;
+
+	audio_buf_info space;
+	if (ioctl(m_Fd, m_Output ? SNDCTL_DSP_GETOSPACE : SNDCTL_DSP_GETISPACE, &space) < 0 ||
+		space.fragsize <= 0 || !m_Samplerate) { Detach(); return false; }
+
+	m_Frames = std::max(1U, unsigned(space.fragsize / (m_Channels * sizeof(short))));
+	m_Latency = double(space.fragstotal * space.fragsize) / (m_Channels * sizeof(short) * m_Samplerate);
+	if (m_Output)
+	{
+#ifdef SNDCTL_DSP_GETODELAY
+		int delay = 0;
+		if (ioctl(m_Fd, SNDCTL_DSP_GETODELAY, &delay) < 0) { Detach(); return false; }
+
+#else
+		std::cerr << "OSS: driver cannot report playback delay for presentation alignment" << std::endl;
+		Detach();
+		return false;
+#endif
+	}
+
+	m_ConvSamples = m_Frames * m_Channels;
+	m_Conv = new short[m_ConvSamples];
 	return true;
 }
 
-bool OSSClient::Write(const float *interleaved, unsigned int nframes)
+int OSSClient::WaitForCycle(unsigned milliseconds)
 {
-	if (m_Fd < 0 || !interleaved) return false;
-	const unsigned int nsamp = nframes * (unsigned int)m_Channels;
-	if (!m_Conv || m_ConvSamples < nsamp)
+	const unsigned bytes = m_Frames * m_Channels * sizeof(short);
+	audio_buf_info input, output;
+	memset(&input, 0, sizeof(input));
+	memset(&output, 0, sizeof(output));
+	if ((m_Input && ioctl(m_Fd, SNDCTL_DSP_GETISPACE, &input) < 0) ||
+		(m_Output && ioctl(m_Fd, SNDCTL_DSP_GETOSPACE, &output) < 0)) return -1;
+
+	if ((m_Input && unsigned(input.bytes) < bytes) || (m_Output && unsigned(output.bytes) < bytes))
 	{
-		FreeConv();
-		m_Conv = new short[nsamp];
-		m_ConvSamples = nsamp;
+		struct pollfd descriptor;
+		descriptor.fd = m_Fd;
+		descriptor.events = (m_Input ? POLLIN : 0) | (m_Output ? POLLOUT : 0);
+		descriptor.revents = 0;
+		const int result = poll(&descriptor, 1, std::min(milliseconds, 10U));
+		return result < 0 && errno != EINTR ? -1 : 0;
 	}
-	for (unsigned int i = 0; i < nsamp; ++i)
-	{
-		float t = interleaved[i];
-		if (t > 1) t = 1;
-		if (t < -1) t = -1;
-		m_Conv[i] = (short)lrintf(t * (float)SHRT_MAX);
-	}
-	Byteswap(m_Conv, nsamp);
-	const ssize_t bytes = (ssize_t)(nsamp * sizeof(short));
-	ssize_t done=0;
-	while (done<bytes) {
-		ssize_t n=write(m_Fd,(const char *)m_Conv+done,bytes-done);
-		if (n<0 && errno==EINTR) continue;
-		if (n<=0) return false;
-		done+=n;
-	}
-	return true;
+
+	int delay = 0;
+#ifdef SNDCTL_DSP_GETODELAY
+	if (m_Output && ioctl(m_Fd, SNDCTL_DSP_GETODELAY, &delay) < 0) return -1;
+
+#endif
+	const double now = AudioMonotonicTime();
+	const double bytesPerSecond = double(m_Channels * sizeof(short)) * m_Samplerate;
+	m_Timing.Frame = m_Frame;
+	m_Frame += m_Frames;
+	m_Timing.Frames = m_Frames;
+	m_Timing.SampleRate = m_Samplerate;
+	m_Timing.CallbackTime = now;
+	// OSS exposes queue depth rather than hardware timestamps. This is a
+	// query-time estimate; its accuracy is limited by the device's reporting.
+	m_Timing.OutputTime = now + std::max(0, delay) / bytesPerSecond;
+	m_Timing.InputTime = now - input.bytes / bytesPerSecond;
+	m_Timing.Valid = true;
+	m_Timing.Estimated = true;
+	return 1;
 }
 
-bool OSSClient::Read(float *interleaved, unsigned int nframes)
+bool OSSClient::Write(const float *interleaved, unsigned int frames)
 {
-	if (m_Fd < 0 || !interleaved) return false;
-	const unsigned int nsamp = nframes * (unsigned int)m_Channels;
-	if (!m_Conv || m_ConvSamples < nsamp)
+	const unsigned samples = frames * m_Channels;
+	if (m_Fd < 0 || !interleaved || samples > m_ConvSamples) return false;
+
+	for (unsigned n = 0; n < samples; ++n)
 	{
-		FreeConv();
-		m_Conv = new short[nsamp];
-		m_ConvSamples = nsamp;
+		const float value = std::max(-1.f, std::min(1.f, interleaved[n]));
+		m_Conv[n] = (short)lrintf(value * SHRT_MAX);
 	}
-	const ssize_t bytes = (ssize_t)(nsamp * sizeof(short));
-	memset(m_Conv, 0, bytes);
-	ssize_t done=0;
-	while (done<bytes) {
-		ssize_t n=read(m_Fd,(char *)m_Conv+done,bytes-done);
-		if (n<0 && errno==EINTR) continue;
-		if (n<=0) return false;
-		done+=n;
-	}
-	Byteswap(m_Conv, nsamp);
-	for (unsigned int i = 0; i < nsamp; ++i)
-		interleaved[i] = m_Conv[i] / (float)SHRT_MAX;
+
+	Byteswap(m_Conv, samples);
+	const ssize_t bytes = samples * sizeof(short);
+	return write(m_Fd, m_Conv, bytes) == bytes;
+}
+
+bool OSSClient::Read(float *interleaved, unsigned int frames)
+{
+	const unsigned samples = frames * m_Channels;
+	if (m_Fd < 0 || !interleaved || samples > m_ConvSamples) return false;
+
+	const ssize_t bytes = samples * sizeof(short);
+	if (read(m_Fd, m_Conv, bytes) != bytes) return false;
+
+	Byteswap(m_Conv, samples);
+	for (unsigned n = 0; n < samples; ++n) interleaved[n] = m_Conv[n] / float(SHRT_MAX);
+
 	return true;
 }
