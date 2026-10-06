@@ -16,6 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
+#include <unistd.h>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -34,6 +35,7 @@
 #include <FL/Fl_Tooltip.H>
 #include "SpiralSynthModular.h"
 #include "AudioTransportHub.h"
+#include "AudioBackend.h"
 #include "PluginManager.h"
 #include "SpiralInfo.h"
 #include "SpiralPluginGUI.h"
@@ -183,9 +185,6 @@ void SynthModular::Update()
 		return;
 	}
 
-	// Without a slot the transport is still on ours: control only, no graph.
-	const bool render=hub->WaitPeriod();
-
 	pthread_mutex_lock(&m_CycleLock);
 	m_CH.UpdateDataNow(m_Info.FRAME);
 	if (m_Frozen)
@@ -193,10 +192,6 @@ void SynthModular::Update()
 		pthread_mutex_unlock(&m_CycleLock);
 		return;
 	}
-
-	hub->BeginPeriod();
-	m_Info.FRAME = hub->Frame();
-	m_Info.ROLLING = hub->Rolling();
 
 	for (map<int,DeviceWin*>::iterator i = m_DeviceWinMap.begin(); i != m_DeviceWinMap.end(); )
 	{
@@ -229,13 +224,22 @@ void SynthModular::Update()
 		m_HostNeedsUpdate = false;
 	}
 
+	const bool render = hub->PreparePeriod();
 	if (render)
 	{
+		hub->BeginPeriod();
+		m_Info.FRAME = hub->Frame();
+		m_Info.ROLLING = hub->Rolling();
 		RenderAudio();
 		hub->CommitPeriod();
 	}
 
+	// Only the scalar delay crosses the gate. Control may now detach, destroy
+	// or replace any native client while the engine sleeps.
+	const unsigned delay = render ? 0 : hub->SleepMicroseconds();
 	pthread_mutex_unlock(&m_CycleLock);
+	if (delay) usleep(delay);
+
 }
 
 void SynthModular::RenderAudio()
@@ -651,6 +655,10 @@ void SynthModular::LoadPlugins (string pluginPath) {
      }
      string PluginRoot = pluginPath.empty() ? SpiralInfo::PLUGIN_PATH : pluginPath;
      if (!PluginRoot.empty() && PluginRoot[PluginRoot.size()-1] != '/') PluginRoot += '/';
+     // Audio backend modules sit beside the device plugins under audio/;
+     // compiled-in backends are already registered and a module of the
+     // same name yields.
+     spiralcore::AudioBackendRegistry::Get()->LoadModules(PluginRoot);
      vector<string> DSPNames;
      vector<string> GUINames;
      set<string> SeenModules;

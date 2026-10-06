@@ -65,7 +65,7 @@ int main(int argc, char **argv)
 		SpiralInfo::AUDIOCLIENT="portaudio";
 		host.Synth.UpdateHostInfo();
 		usleep(200000);
-		assert(hub->GetMode()==AudioTransportHub::OUTPUT && !hub->IsCallbackDriven());
+		assert(hub->GetMode()==AudioTransportHub::OUTPUT && hub->IsCallbackDriven());
 
 		// The engine frame advances one period per cycle and reaches every snapshot.
 		const unsigned long before=hub->Frame();
