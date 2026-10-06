@@ -182,6 +182,53 @@ AC_SUBST([CORE_AUDIO_LIBS])
 AM_CONDITIONAL([HAVE_CORE_AUDIO_CLIENT], [test "$have_coreaudio" = yes])
 AC_MSG_NOTICE([Native CoreAudio client: $have_coreaudio])
 
+AC_ARG_ENABLE([pipewire],
+    AS_HELP_STRING([--disable-pipewire], [Do not build the optional C++11 PipeWire audio module]),
+    [enable_output_pipewire="$enableval"], [enable_output_pipewire="yes"])
+have_output_pipewire="no"
+pipewire_message="manually disabled"
+if test "x$enable_output_pipewire" = "xyes"; then
+    PKG_CHECK_MODULES([PIPEWIRE], [libpipewire-0.3 >= 0.3.50], [
+        ssm_saved_CPPFLAGS="$CPPFLAGS"
+        ssm_saved_CXXFLAGS="$CXXFLAGS"
+        ssm_saved_LIBS="$LIBS"
+        CPPFLAGS="$CPPFLAGS $PIPEWIRE_CFLAGS"
+        CXXFLAGS="$CXXFLAGS -std=c++11"
+        LIBS="$PIPEWIRE_LIBS $LIBS"
+        AC_LANG_PUSH([C++])
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+            #include <pipewire/pipewire.h>
+        ]], [[
+            struct pw_time timing;
+            pw_init(0, 0);
+            pw_stream_get_time_n(0, &timing, sizeof(timing));
+        ]])], [have_output_pipewire="yes"; pipewire_message="found"],
+            [pipewire_message="C++11 headers or native symbols unavailable"])
+        AC_LANG_POP([C++])
+        CPPFLAGS="$ssm_saved_CPPFLAGS"
+        CXXFLAGS="$ssm_saved_CXXFLAGS"
+        LIBS="$ssm_saved_LIBS"
+    ], [pipewire_message="libpipewire-0.3 >= 0.3.50 not found"])
+fi
+if test "x$have_output_pipewire" = "xyes"; then
+    AC_DEFINE([HAVE_OUTPUT_PIPEWIRE], [1], [Build the PipeWire audio module])
+fi
+AM_CONDITIONAL([HAVE_OUTPUT_PIPEWIRE], [test "x$have_output_pipewire" = "xyes"])
+AC_MSG_NOTICE([PipeWire audio module: $pipewire_message])
+
+AC_ARG_ENABLE([esd],
+    AS_HELP_STRING([--disable-esd], [Do not build the ESD compatibility audio module]),
+    [enable_output_esd="$enableval"], [enable_output_esd="yes"])
+have_output_esd="no"
+if test "x$enable_output_esd" = "xyes"; then
+    PKG_CHECK_MODULES([ESOUND], [esound], [have_output_esd="yes"], [have_output_esd="no"])
+fi
+if test "x$have_output_esd" = "xyes"; then
+    AC_DEFINE([HAVE_OUTPUT_ESD], [1], [Build the ESD compatibility audio module])
+fi
+AM_CONDITIONAL([HAVE_OUTPUT_ESD], [test "x$have_output_esd" = "xyes"])
+AC_MSG_NOTICE([ESD compatibility module: $have_output_esd])
+
 default_output_audio_client="none"
 if test "x$have_output_portaudio" = "xyes"; then
     default_output_audio_client="portaudio"
@@ -191,11 +238,15 @@ elif test "x$have_output_alsa" = "xyes"; then
     default_output_audio_client="alsa"
 elif test "x$have_output_oss" = "xyes"; then
     default_output_audio_client="oss"
+elif test "x$have_output_pipewire" = "xyes"; then
+    default_output_audio_client="pipewire"
+elif test "x$have_output_esd" = "xyes"; then
+    default_output_audio_client="esd"
 fi
 AC_DEFINE_UNQUOTED([DEFAULT_OUTPUT_AUDIO_CLIENT], ["$default_output_audio_client"],
     [Default OutputPlugin audio client])
 if test "x$default_output_audio_client" = "xnone"; then
-    AC_MSG_WARN([No OutputPlugin audio backend found (PortAudio, CoreAudio, ALSA, or OSS)])
+    AC_MSG_WARN([No OutputPlugin audio backend found (PortAudio, CoreAudio, ALSA, OSS, PipeWire, or ESD)])
 fi
 
 
@@ -464,6 +515,8 @@ Plugins/Audio/PortAudio/Makefile
 Plugins/Audio/CoreAudio/Makefile
 Plugins/Audio/ALSA/Makefile
 Plugins/Audio/OSS/Makefile
+Plugins/Audio/PipeWire/Makefile
+Plugins/Audio/ESD/Makefile
 Plugins/DSP/Makefile
 Plugins/GUI/Makefile
 Plugins/GUI/AmpPlugin/Makefile
