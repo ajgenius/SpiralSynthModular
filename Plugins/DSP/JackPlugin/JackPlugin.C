@@ -186,8 +186,9 @@ void JackPlugin::Detach()
 	m_JackClient->Detach();
 }
 
-// Rings hold a few periods each way. The rings are rebuilt only while
-// the client is detached, so the callback never sees them change.
+// Rings hold a few host periods each way, or jack's period when that is
+// larger. The rings are rebuilt only while the client is detached, so the
+// callback never sees them change.
 static const unsigned RING_PERIODS = 4;
 
 void JackPlugin::BuildRings()
@@ -195,7 +196,7 @@ void JackPlugin::BuildRings()
 	DropRings();
 	if (!m_HostInfo || m_HostInfo->BUFSIZE <= 0) return;
 
-	m_RingFrames = m_HostInfo->BUFSIZE;
+	m_RingFrames = std::max((unsigned)m_HostInfo->BUFSIZE, (unsigned)m_JackClient->GetBufferSize());
 	const unsigned period = m_RingFrames * sizeof(float);
 	m_Capture = new RingBuffer(period * m_InputCount * RING_PERIODS);
 	m_Playback = new RingBuffer(period * m_OutputCount * RING_PERIODS);
@@ -212,7 +213,7 @@ void JackPlugin::DropRings()
 void JackPlugin::ProcessCallback(void *context, unsigned int frames)
 {
 	JackPlugin *plugin = static_cast<JackPlugin *>(context);
-	if (!frames || frames != plugin->m_RingFrames || !plugin->m_Capture) return;
+	if (!frames || frames > plugin->m_RingFrames || !plugin->m_Capture) return;
 
 	// Capture goes in through the jack-side scratch; a full ring drops it.
 	float *scratch = &plugin->m_Period[0];
@@ -313,13 +314,11 @@ void JackPlugin::Reset()
 
 void JackPlugin::ServiceAudio()
 {
-	if (m_IsDead) return;
+	// A slave port does not set the host format; the master port does.
+	// A jack period larger than the rings were built for needs new rings.
+	if (m_IsDead || !m_JackClient->IsAttached()) return;
 
-	if (!m_JackClient->IsAttached()) return;
-
-	if (ChangeBufferAndSampleRate)
-		ChangeBufferAndSampleRate(m_JackClient->GetBufferSize(), m_JackClient->GetSampleRate(), m_Parent);
-
+	if (m_JackClient->GetBufferSize() > m_RingFrames) Reset();
 }
 
 void JackPlugin::ProcessAudio()
@@ -327,7 +326,7 @@ void JackPlugin::ProcessAudio()
 	if (m_IsDead || !m_Capture || !m_Playback) return;
 
 	const unsigned frames = m_HostInfo->BUFSIZE;
-	if (frames != m_RingFrames) return;
+	if (frames > m_RingFrames) return;
 
 	const bool silent = m_HostInfo->PAUSED || !m_JackClient->IsAttached();
 
