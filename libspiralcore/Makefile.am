@@ -102,7 +102,16 @@ jack_client_test_SOURCES = tests/jack-client.cpp src/JackClient.cpp src/AudioTim
 jack_client_test_CPPFLAGS = $(AM_CPPFLAGS)
 endif
 
-EXTRA_DIST += tests/jack-live.cpp
+EXTRA_DIST += tests/jack-live.cpp tests/analyze-loopback.py tests/LOOPBACK.md
+
+# Build these explicitly; live routing and microphone tests are opt-in.
+if HAVE_JACK_CLIENT
+EXTRA_PROGRAMS = jack-alignment-live native-loopback
+jack_alignment_live_SOURCES = tests/jack-alignment-live.cpp
+jack_alignment_live_LDADD = libspiralcore.la $(JACK_LIBS)
+native_loopback_SOURCES = tests/native-loopback.cpp
+native_loopback_LDADD = libspiralcore.la $(JACK_LIBS)
+endif
 
 
 libspiralcore_la_SOURCES += include/AudioTiming.h src/AudioTiming.cpp include/TimedAudioBuffer.h src/TimedAudioBuffer.cpp
