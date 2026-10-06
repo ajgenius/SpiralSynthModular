@@ -30,6 +30,7 @@ m_UpdateIndicator(false)
 	m_Mutex = new pthread_mutex_t;
 	m_Command[0]=0;
 	m_Command[1]=0;
+	m_Frame=0;
 	m_BulkSrc=NULL;
 	m_BulkSize=0;
 	m_BulkPos=-1;
@@ -51,7 +52,7 @@ ChannelHandler::~ChannelHandler()
 
 ///////////////////////////////////////////////////////////////
 
-void ChannelHandler::UpdateDataNow()
+void ChannelHandler::UpdateDataNow(unsigned long frame)
 {
 	#ifdef CHANNEL_DEBUG
 	cerr<<"Started update"<<endl;
@@ -142,6 +143,7 @@ void ChannelHandler::UpdateDataNow()
 		m_Command[0]=m_Command[1];
 		// make sure the command only lasts one update
 		m_Command[1]=0;
+		m_Frame=frame;
 		
         pthread_mutex_unlock(m_Mutex);
 			//cerr<<"audio out mutex"<<endl;

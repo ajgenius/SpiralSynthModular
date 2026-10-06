@@ -76,6 +76,10 @@ struct HostInfo
 
 	bool   PAUSED;
 	std::string AUDIOCLIENT;
+
+	// Engine position of the period being rendered.
+	unsigned long FRAME;
+	bool   ROLLING;
 };
 
 /////////////////////////////////////////////////////////////////////
@@ -126,10 +130,11 @@ public:
 	// Callbacks to main engine. Should only called by plugin hosts.
 	void SetUpdateInfoCallback(int ID, void(*s)(int, void *));
 	void SetUpdateCallback(void (*s)(void*,bool m)) { cb_Update=s; }
-	void SetBlockingCallback(void (*s)(void*,bool m)) { cb_Blocking=s; }
 	void SetParent(void *s) { m_Parent=s; }
 
 	void UpdateChannelHandler();
+	// Host only: mark every output with the period just rendered.
+	void StampOutputs(unsigned long frame);
 	// is the plugin connected to an external device (oss/alsa/jack)
 	bool IsTerminal() { return m_IsTerminal; }
 	bool IsDead() { return m_IsDead; }
@@ -182,10 +187,6 @@ protected:
 	void (*cb_Update)(void*o ,bool m);	
 	void  *m_Parent;
 
-	// tell the engine that we are taking control of the 
-	// timing for output.
-	void (*cb_Blocking)(void*o ,bool m);
-
 	bool   m_IsTerminal;
 	bool   m_IsDead;
 	
@@ -218,18 +219,12 @@ public:
 	 */  
 	enum AudioProcessType { ALWAYS, MANUAL, NEVER };
 	
-	AudioDriver() : m_AudioCycle(NULL), ChangeBufferAndSampleRate(NULL) {}
+	AudioDriver() : ChangeBufferAndSampleRate(NULL) {}
 
 	virtual bool IsAudioDriver() { return true; }
 
-	virtual bool IsCallbackDriver() const { return false; }
-
 	// Lifecycle and format work belongs to the host control loop.
 	virtual void ServiceAudio() {}
-
-	void SetAudioCycleCallback(void (*run)(void *, AudioDriver *, unsigned int)) { m_AudioCycle = run; }
-
-	void RunAudioCycle(unsigned int frames) { if (m_AudioCycle) m_AudioCycle(m_Parent, this, frames); }
 
 	virtual void ProcessAudio()=0;
 	
@@ -239,7 +234,6 @@ public:
 	void SetChangeBufferAndSampleRateCallback(void(*s)(long unsigned int, long unsigned int, void *)) { ChangeBufferAndSampleRate = s; } ;
 
 protected:
-	void (*m_AudioCycle)(void *, AudioDriver *, unsigned int);
 	void (*ChangeBufferAndSampleRate)(long unsigned int BufferSize, long unsigned int SampleRate, void *);	
 };
 

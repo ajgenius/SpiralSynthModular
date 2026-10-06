@@ -77,6 +77,11 @@ public:
 	void setSampleType(SampleType t) { m_SampleType=t; }
 	SampleType getSampleType() { return m_SampleType; }
 
+	// Engine frame of the period this buffer holds, set by whoever
+	// filled it, so every reader agrees on position.
+	void Stamp(unsigned long frame) { m_Frame=frame; }
+	unsigned long GetFrame() const { return m_Frame; }
+
 	AudioType &operator[](unsigned int i) const
 	{
 		#ifdef DEBUG
@@ -121,6 +126,7 @@ public:
 		if (GetLength()!=rhs.GetLength()) Allocate(rhs.GetLength());
 		if (m_Length) memcpy(m_Data,rhs.GetBuffer(),GetLengthInBytes());
 		m_IsEmpty=rhs.m_IsEmpty;
+		m_Frame=rhs.m_Frame;
 		return *this;
 	}
 
@@ -134,6 +140,7 @@ private:
 	long  int  m_Length;
 
     SampleType m_SampleType;
+    unsigned long m_Frame;
 	static Allocator *m_Allocator;
 };
 }

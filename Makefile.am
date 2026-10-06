@@ -15,6 +15,9 @@ SpiralSynthModular_LDADD = 							\
 
 
 EXTRA_DIST = autogen.sh build-aux/macos-bundle.sh GUI/SpiralSynthModular.icns Examples
+EXTRA_DIST += tools/native-audio/README.md tools/native-audio/build-macos.sh \
+	tools/native-audio/patches/jack2-coreaudio-latency.patch \
+	tools/native-audio/patches/portaudio-coreaudio-latency.patch
 SpiralPlugins = $(libdir)/SpiralPlugins
 
 bin_PROGRAMS = SpiralSynthModular
@@ -75,10 +78,16 @@ endif
 
 if HAVE_CORE_AUDIO_CLIENT
 check_PROGRAMS += coreaudio-output-test
-coreaudio_output_test_SOURCES = tests/coreaudio-output.cpp Plugins/DSP/OutputPlugin/OutputPlugin.C Plugins/DSP/OutputPlugin/OutputAudioClient.C
+coreaudio_output_test_SOURCES = tests/coreaudio-output.cpp Plugins/DSP/OutputPlugin/OutputPlugin.C
 coreaudio_output_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/OutputPlugin
 coreaudio_output_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la
 endif
+
+check_PROGRAMS += dummy-host-test
+dummy_host_test_SOURCES = tests/dummy-host.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
+dummy_host_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
+dummy_host_test_LDADD = $(SpiralSynthModular_LDADD)
+dummy_host_test_LDFLAGS = -export-dynamic
 
 if HAVE_CORE_AUDIO_CLIENT
 check_PROGRAMS += coreaudio-host-test
@@ -103,3 +112,16 @@ jack_output_timing_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
 jack_output_timing_test_LDADD = $(SpiralSynthModular_LDADD) $(JACK_LIBS)
 jack_output_timing_test_LDFLAGS = -export-dynamic
 endif
+
+if HAVE_JACK_CLIENT
+check_PROGRAMS += jack-periods-test
+TESTS += jack-periods-test
+jack_periods_test_SOURCES = tests/jack-periods.cpp Plugins/DSP/JackPlugin/JackPlugin.C libspiralcore/src/JackClient.cpp
+jack_periods_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/JackPlugin
+jack_periods_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la
+endif
+
+check_PROGRAMS += hub-clock-test
+TESTS += hub-clock-test
+hub_clock_test_SOURCES = tests/hub-clock.cpp
+hub_clock_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la

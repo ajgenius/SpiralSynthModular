@@ -1,0 +1,434 @@
+From 3d42162e8ad72d0d403a0e9b572ce37f7a2f9bda Mon Sep 17 00:00:00 2001
+From: Codex / ajgenius <113943+ajgenius@users.noreply.github.com>
+Date: Tue, 6 Oct 2026 17:11:49 -0400
+Subject: [PATCH] [Codex] Report CoreAudio stream latency for each mapped JACK
+ port
+
+---
+ macosx/coreaudio/JackCoreAudioDriver.h  |   3 +-
+ macosx/coreaudio/JackCoreAudioDriver.mm | 101 +++++----------------
+ macosx/coreaudio/JackCoreAudioLatency.h | 116 ++++++++++++++++++++++++
+ tests/testCoreAudioLatency.cpp          |  98 ++++++++++++++++++++
+ tests/wscript                           |   4 +
+ 5 files changed, 244 insertions(+), 78 deletions(-)
+ create mode 100644 macosx/coreaudio/JackCoreAudioLatency.h
+ create mode 100644 tests/testCoreAudioLatency.cpp
+
+diff --git a/macosx/coreaudio/JackCoreAudioDriver.h b/macosx/coreaudio/JackCoreAudioDriver.h
+index a7dad2e..0999cbb 100644
+--- a/macosx/coreaudio/JackCoreAudioDriver.h
++++ b/macosx/coreaudio/JackCoreAudioDriver.h
+@@ -80,6 +80,8 @@ class JackCoreAudioDriver : public JackAudioDriver
+         float fComputationGrain;
+         bool fClockDriftCompensate;
+         bool fDigitalPlayback;
++        vector<int> fCaptureChannelMap;
++        vector<int> fPlaybackChannelMap;
+    
+         static OSStatus Render(void *inRefCon,
+                                AudioUnitRenderActionFlags *ioActionFlags,
+@@ -114,7 +116,6 @@ class JackCoreAudioDriver : public JackAudioDriver
+         OSStatus GetDefaultOutputDevice(AudioDeviceID* id);
+         OSStatus GetDeviceNameFromID(AudioDeviceID id, char* name);
+         OSStatus GetTotalChannels(AudioDeviceID device, int& channelCount, bool isInput);
+-        OSStatus GetStreamLatencies(AudioDeviceID device, bool isInput, vector<int>& latencies);
+ 
+         // Setup
+         OSStatus CreateAggregateDevice(AudioDeviceID captureDeviceID, AudioDeviceID playbackDeviceID, jack_nframes_t samplerate, AudioDeviceID* outAggregateDevice);
+diff --git a/macosx/coreaudio/JackCoreAudioDriver.mm b/macosx/coreaudio/JackCoreAudioDriver.mm
+index 5fbaab7..c0b93a3 100644
+--- a/macosx/coreaudio/JackCoreAudioDriver.mm
++++ b/macosx/coreaudio/JackCoreAudioDriver.mm
+@@ -18,6 +18,7 @@
+ */
+ 
+ #include "JackCoreAudioDriver.h"
++#include "JackCoreAudioLatency.h"
+ #include "JackEngineControl.h"
+ #include "JackMachThread.h"
+ #include "JackGraphManager.h"
+@@ -659,71 +660,7 @@ static void ParseChannelList(const string& list, vector<int>& result, int max_ch
+ 
+ OSStatus JackCoreAudioDriver::GetTotalChannels(AudioDeviceID device, int& channelCount, bool isInput)
+ {
+-    OSStatus err = noErr;
+-    UInt32 outSize;
+-    Boolean	outWritable;
+-
+-    channelCount = 0;
+-    err = AudioDeviceGetPropertyInfo(device, 0, isInput, kAudioDevicePropertyStreamConfiguration, &outSize, &outWritable);
+-    if (err == noErr) {
+-        int stream_count = outSize / sizeof(AudioBufferList);
+-        jack_log("JackCoreAudioDriver::GetTotalChannels stream_count = %d", stream_count);
+-        AudioBufferList bufferList[stream_count];
+-        err = AudioDeviceGetProperty(device, 0, isInput, kAudioDevicePropertyStreamConfiguration, &outSize, bufferList);
+-        if (err == noErr) {
+-            for (uint i = 0; i < bufferList->mNumberBuffers; i++) {
+-                channelCount += bufferList->mBuffers[i].mNumberChannels;
+-                jack_log("JackCoreAudioDriver::GetTotalChannels stream = %d channels = %d", i, bufferList->mBuffers[i].mNumberChannels);
+-            }
+-        }
+-    }
+-    return err;
+-}
+-
+-OSStatus JackCoreAudioDriver::GetStreamLatencies(AudioDeviceID device, bool isInput, vector<int>& latencies)
+-{
+-    OSStatus err = noErr;
+-    UInt32 outSize1, outSize2, outSize3;
+-    Boolean	outWritable;
+-
+-    err = AudioDeviceGetPropertyInfo(device, 0, isInput, kAudioDevicePropertyStreams, &outSize1, &outWritable);
+-    if (err == noErr) {
+-        int stream_count = outSize1 / sizeof(UInt32);
+-        AudioStreamID streamIDs[stream_count];
+-        AudioBufferList bufferList[stream_count];
+-        UInt32 streamLatency;
+-        outSize2 = sizeof(UInt32);
+-
+-        err = AudioDeviceGetProperty(device, 0, isInput, kAudioDevicePropertyStreams, &outSize1, streamIDs);
+-        if (err != noErr) {
+-            jack_error("GetStreamLatencies kAudioDevicePropertyStreams err = %d", err);
+-            return err;
+-        }
+-
+-        err = AudioDeviceGetPropertyInfo(device, 0, isInput, kAudioDevicePropertyStreamConfiguration, &outSize3, &outWritable);
+-        if (err != noErr) {
+-            jack_error("GetStreamLatencies kAudioDevicePropertyStreamConfiguration err = %d", err);
+-            return err;
+-        }
+-
+-        for (int i = 0; i < stream_count; i++) {
+-            err = AudioStreamGetProperty(streamIDs[i], 0, kAudioStreamPropertyLatency, &outSize2, &streamLatency);
+-            if (err != noErr) {
+-                jack_error("GetStreamLatencies kAudioStreamPropertyLatency err = %d", err);
+-                return err;
+-            }
+-            err = AudioDeviceGetProperty(device, 0, isInput, kAudioDevicePropertyStreamConfiguration, &outSize3, bufferList);
+-            if (err != noErr) {
+-                jack_error("GetStreamLatencies kAudioDevicePropertyStreamConfiguration err = %d", err);
+-                return err;
+-            }
+-            // Push 'channel' time the stream latency
+-            for (uint k = 0; k < bufferList->mBuffers[i].mNumberChannels; k++) {
+-                latencies.push_back(streamLatency);
+-            }
+-        }
+-    }
+-    return err;
++    return CoreAudioChannelCount(device, isInput, channelCount);
+ }
+ 
+ bool JackCoreAudioDriver::IsDigitalDevice(AudioDeviceID device)
+@@ -2088,12 +2025,14 @@ static void ParseChannelList(const string& list, vector<int>& result, int max_ch
+     }
+     
+     ParseChannelList(chan_in_list, parsed_chan_in_list, in_maxChannels);
++    fCaptureChannelMap = parsed_chan_in_list;
+     if (parsed_chan_in_list.size() > 0) {
+         jack_info("Explicit input channel list size = %d", parsed_chan_in_list.size());
+         inchannels = parsed_chan_in_list.size();
+     }
+ 
+     ParseChannelList(chan_out_list, parsed_chan_out_list, out_maxChannels);
++    fPlaybackChannelMap = parsed_chan_out_list;
+     if (parsed_chan_out_list.size() > 0) {
+         jack_info("Explicit output channel list size = %d", parsed_chan_out_list.size());
+         outchannels = parsed_chan_out_list.size();
+@@ -2207,15 +2146,16 @@ static void ParseChannelList(const string& list, vector<int>& result, int max_ch
+     input_range.min = input_range.max = fEngineControl->fBufferSize + value1 + value2 + fCaptureLatency;
+ 
+     // Get input stream latencies
+-    vector<int> input_latencies;
+-    err = GetStreamLatencies(fDeviceID, true, input_latencies);
++    vector<UInt32> input_latencies;
++    err = CoreAudioStreamLatencies(fDeviceID, true, input_latencies);
+ 
+     for (int i = 0; i < fCaptureChannels; i++) {
+-        if (err != noErr) {
+-            input_range.min += input_latencies[i];
+-            input_range.max += input_latencies[i];
++        jack_latency_range_t channel_range = input_range;
++        if (err == noErr) {
++            channel_range.min = channel_range.max = CoreAudioPortLatency(
++                input_range.max, input_latencies, fCaptureChannelMap, i);
+         }
+-        fGraphManager->GetPort(fCapturePortList[i])->SetLatencyRange(JackCaptureLatency, &input_range);
++        fGraphManager->GetPort(fCapturePortList[i])->SetLatencyRange(JackCaptureLatency, &channel_range);
+     }
+ 
+     // Get Output latency
+@@ -2232,19 +2172,26 @@ static void ParseChannelList(const string& list, vector<int>& result, int max_ch
+     }
+ 
+     // Get output stream latencies
+-    vector<int> output_latencies;
+-    err = GetStreamLatencies(fDeviceID, false, output_latencies);
++    vector<UInt32> output_latencies;
++    err = CoreAudioStreamLatencies(fDeviceID, false, output_latencies);
+ 
+     // Add more latency if "async" mode is used...
+     output_range.min = output_range.max = fEngineControl->fBufferSize + ((fEngineControl->fSyncMode)
+         ? 0 : fEngineControl->fBufferSize * fIOUsage) + value1 + value2 + fPlaybackLatency;
+ 
+     for (int i = 0; i < fPlaybackChannels; i++) {
+-        if (err != noErr) {
+-            output_range.min += output_latencies[i];
+-            output_range.max += output_latencies[i];
++        jack_latency_range_t channel_range = output_range;
++        if (err == noErr) {
++            channel_range.min = channel_range.max = CoreAudioPortLatency(
++                output_range.max, output_latencies, fPlaybackChannelMap, i);
++            // AC3's logical channels share the two encoded physical channels.
++            if (fAC3Encoder) {
++                channel_range.min = channel_range.max = std::max(
++                    CoreAudioPortLatency(output_range.max, output_latencies, fPlaybackChannelMap, 0),
++                    CoreAudioPortLatency(output_range.max, output_latencies, fPlaybackChannelMap, 1));
++            }
+         }
+-        fGraphManager->GetPort(fPlaybackPortList[i])->SetLatencyRange(JackPlaybackLatency, &output_range);
++        fGraphManager->GetPort(fPlaybackPortList[i])->SetLatencyRange(JackPlaybackLatency, &channel_range);
+ 
+         // Monitor port
+         if (fWithMonitorPorts) {
+diff --git a/macosx/coreaudio/JackCoreAudioLatency.h b/macosx/coreaudio/JackCoreAudioLatency.h
+new file mode 100644
+index 0000000..1fbd9a2
+--- /dev/null
++++ b/macosx/coreaudio/JackCoreAudioLatency.h
+@@ -0,0 +1,116 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
++#ifndef JACK_CORE_AUDIO_LATENCY_H
++#define JACK_CORE_AUDIO_LATENCY_H
++
++#include <CoreAudio/CoreAudio.h>
++#include <cstddef>
++#include <climits>
++#include <vector>
++
++namespace Jack
++{
++inline OSStatus CoreAudioChannelCount(AudioDeviceID device, bool input, int &channels)
++{
++	channels = 0;
++	AudioObjectPropertyAddress address = {kAudioDevicePropertyStreamConfiguration,
++		input ? kAudioObjectPropertyScopeInput : kAudioObjectPropertyScopeOutput, 0};
++	UInt32 size = 0;
++	OSStatus error = AudioObjectGetPropertyDataSize(device, &address, 0, NULL, &size);
++	if (error != noErr) return error;
++
++	if (size < offsetof(AudioBufferList, mBuffers)) return kAudioHardwareBadPropertySizeError;
++
++	std::vector<char> storage(size);
++	error = AudioObjectGetPropertyData(device, &address, 0, NULL, &size, &storage[0]);
++	if (error != noErr) return error;
++
++	const AudioBufferList *buffers = reinterpret_cast<const AudioBufferList *>(&storage[0]);
++	if (size < offsetof(AudioBufferList, mBuffers) ||
++		buffers->mNumberBuffers > (size - offsetof(AudioBufferList, mBuffers)) / sizeof(AudioBuffer))
++		return kAudioHardwareBadPropertySizeError;
++
++	for (UInt32 n = 0; n < buffers->mNumberBuffers; ++n)
++	{
++		if (buffers->mBuffers[n].mNumberChannels > unsigned(INT_MAX - channels))
++			return kAudioHardwareIllegalOperationError;
++
++		channels += buffers->mBuffers[n].mNumberChannels;
++	}
++
++	return noErr;
++}
++
++inline OSStatus CoreAudioStreamLatencies(AudioDeviceID device, bool input, std::vector<UInt32> &latencies)
++{
++	latencies.clear();
++	int channels = 0;
++	OSStatus error = CoreAudioChannelCount(device, input, channels);
++	if (error != noErr || !channels) return error;
++
++	AudioObjectPropertyAddress address = {kAudioDevicePropertyStreams,
++		input ? kAudioObjectPropertyScopeInput : kAudioObjectPropertyScopeOutput, 0};
++	UInt32 size = 0;
++	error = AudioObjectGetPropertyDataSize(device, &address, 0, NULL, &size);
++	if (error != noErr) return error;
++
++	if (!size || size % sizeof(AudioStreamID)) return kAudioHardwareBadPropertySizeError;
++
++	std::vector<AudioStreamID> streams(size / sizeof(AudioStreamID));
++	error = AudioObjectGetPropertyData(device, &address, 0, NULL, &size, &streams[0]);
++	if (error != noErr) return error;
++
++	if (size % sizeof(AudioStreamID) || size / sizeof(AudioStreamID) > streams.size())
++		return kAudioHardwareBadPropertySizeError;
++
++	std::vector<UInt32> result(channels, 0);
++	std::vector<bool> assigned(channels, false);
++	for (unsigned n = 0; n < size / sizeof(AudioStreamID); ++n)
++	{
++		UInt32 first = 0, latency = 0, bytes = sizeof(first);
++		AudioStreamBasicDescription format;
++		address.mScope = kAudioObjectPropertyScopeGlobal;
++		address.mSelector = kAudioStreamPropertyStartingChannel;
++		error = AudioObjectGetPropertyData(streams[n], &address, 0, NULL, &bytes, &first);
++		if (error != noErr) return error;
++
++		address.mSelector = kAudioStreamPropertyVirtualFormat;
++		bytes = sizeof(format);
++		error = AudioObjectGetPropertyData(streams[n], &address, 0, NULL, &bytes, &format);
++		if (error != noErr) return error;
++
++		if (!first || first > unsigned(channels) || format.mChannelsPerFrame > unsigned(channels) - first + 1)
++			return kAudioHardwareIllegalOperationError;
++
++		address.mSelector = kAudioStreamPropertyLatency;
++		bytes = sizeof(latency);
++		error = AudioObjectGetPropertyData(streams[n], &address, 0, NULL, &bytes, &latency);
++		if (error != noErr) return error;
++
++		for (unsigned c = first - 1; c < first - 1 + format.mChannelsPerFrame; ++c)
++		{
++			if (assigned[c]) return kAudioHardwareIllegalOperationError;
++
++			result[c] = latency;
++			assigned[c] = true;
++		}
++
++	}
++
++	for (unsigned c = 0; c < assigned.size(); ++c)
++		if (!assigned[c]) return kAudioHardwareIllegalOperationError;
++
++	latencies.swap(result);
++	return noErr;
++}
++
++inline UInt32 CoreAudioPortLatency(UInt32 base, const std::vector<UInt32> &latencies,
++	const std::vector<int> &map, unsigned port)
++{
++	const int channel = map.empty() ? int(port) : (port < map.size() ? map[port] : -1);
++	if (channel < 0 || unsigned(channel) >= latencies.size()) return base;
++
++	const UInt32 extra = latencies[channel];
++	return extra > UINT_MAX - base ? UINT_MAX : base + extra;
++}
++}
++#endif
+diff --git a/tests/testCoreAudioLatency.cpp b/tests/testCoreAudioLatency.cpp
+new file mode 100644
+index 0000000..6fece44
+--- /dev/null
++++ b/tests/testCoreAudioLatency.cpp
+@@ -0,0 +1,98 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
++// Exercise the real property reader without opening hardware.
++#include "../macosx/coreaudio/JackCoreAudioLatency.h"
++#include <cassert>
++#include <cstring>
++#include <cstdio>
++
++static bool failStream, malformed, noChannels;
++static UInt32 firstChannel = 3, lateFrames = 900;
++
++extern "C" OSStatus AudioObjectGetPropertyDataSize(AudioObjectID,
++	const AudioObjectPropertyAddress *address, UInt32, const void *, UInt32 *size)
++{
++	*size = address->mSelector == kAudioDevicePropertyStreams ? 3 * sizeof(AudioStreamID) :
++		offsetof(AudioBufferList, mBuffers) + 3 * sizeof(AudioBuffer);
++	return noErr;
++}
++
++extern "C" OSStatus AudioObjectGetPropertyData(AudioObjectID object,
++	const AudioObjectPropertyAddress *address, UInt32, const void *, UInt32 *size, void *data)
++{
++	if (address->mSelector == kAudioDevicePropertyStreamConfiguration)
++	{
++		std::memset(data, 0, *size);
++		AudioBufferList *list = static_cast<AudioBufferList *>(data);
++		list->mNumberBuffers = malformed ? 4 : (noChannels ? 0 : 3);
++		list->mBuffers[0].mNumberChannels = 2;
++		list->mBuffers[1].mNumberChannels = 2;
++		list->mBuffers[2].mNumberChannels = 1;
++		return noErr;
++	}
++
++	if (address->mSelector == kAudioDevicePropertyStreams)
++	{
++		const AudioStreamID streams[] = {10, 11, 12};
++		std::memcpy(data, streams, sizeof(streams));
++		return noErr;
++	}
++
++	assert(address->mScope == kAudioObjectPropertyScopeGlobal);
++	if (object == 12 && failStream) return kAudioHardwareBadObjectError;
++
++	if (address->mSelector == kAudioStreamPropertyVirtualFormat)
++	{
++		AudioStreamBasicDescription *format = static_cast<AudioStreamBasicDescription *>(data);
++		std::memset(format, 0, sizeof(*format));
++		format->mChannelsPerFrame = object == 12 ? 1 : 2;
++	}
++	else
++	{
++		UInt32 &value = *static_cast<UInt32 *>(data);
++		value = address->mSelector == kAudioStreamPropertyStartingChannel ?
++			(object == 10 ? firstChannel : (object == 11 ? 1 : 5)) :
++			(object == 10 ? lateFrames : (object == 11 ? 100 : 1000));
++	}
++
++	return noErr;
++}
++
++int main()
++{
++	std::vector<UInt32> latencies;
++	std::vector<int> map;
++	assert(Jack::CoreAudioStreamLatencies(1, false, latencies) == noErr);
++	assert(latencies.size() == 5);
++	assert(latencies[0] == 100 && latencies[1] == 100 && latencies[2] == 900 &&
++		latencies[3] == 900 && latencies[4] == 1000);
++	assert(Jack::CoreAudioPortLatency(512, latencies, map, 0) == 612);
++	assert(Jack::CoreAudioPortLatency(512, latencies, map, 1) == 612);
++	map.push_back(4);
++	map.push_back(0);
++	map.push_back(3);
++	assert(Jack::CoreAudioPortLatency(512, latencies, map, 0) == 1512);
++	assert(Jack::CoreAudioPortLatency(512, latencies, map, 1) == 612);
++	assert(Jack::CoreAudioPortLatency(512, latencies, map, 2) == 1412);
++	assert(Jack::CoreAudioPortLatency(512, latencies, map, 3) == 512);
++	assert(Jack::CoreAudioPortLatency(UINT_MAX - 1, latencies, map, 0) == UINT_MAX);
++
++	lateFrames = 950;
++	assert(Jack::CoreAudioStreamLatencies(1, true, latencies) == noErr && latencies[2] == 950);
++
++	failStream = true;
++	assert(Jack::CoreAudioStreamLatencies(1, true, latencies) != noErr && latencies.empty());
++	assert(Jack::CoreAudioPortLatency(512, latencies, map, 0) == 512);
++	failStream = false;
++	firstChannel = 0;
++	assert(Jack::CoreAudioStreamLatencies(1, true, latencies) != noErr && latencies.empty());
++	firstChannel = 4;
++	assert(Jack::CoreAudioStreamLatencies(1, true, latencies) != noErr && latencies.empty());
++	firstChannel = 5;
++	assert(Jack::CoreAudioStreamLatencies(1, true, latencies) != noErr && latencies.empty());
++	malformed = true;
++	assert(Jack::CoreAudioStreamLatencies(1, true, latencies) != noErr && latencies.empty());
++	malformed = false;
++	noChannels = true;
++	assert(Jack::CoreAudioStreamLatencies(1, true, latencies) == noErr && latencies.empty());
++	std::puts("CoreAudio channel layout, remapping, independent latency and failed queries PASS");
++}
+diff --git a/tests/wscript b/tests/wscript
+index 721c0c1..cec6e5d 100644
+--- a/tests/wscript
++++ b/tests/wscript
+@@ -30,3 +30,7 @@ def build(bld):
+             prog.uselib = 'RT'
+         prog.use = 'clientlib'
+         prog.target = test_program
++
++    if bld.env['IS_MACOSX']:
++        bld(features='cxx cxxprogram', source='testCoreAudioLatency.cpp',
++            target='jack_coreaudio_latency_test')
+-- 
+2.39.5 (Apple Git-154)
+
