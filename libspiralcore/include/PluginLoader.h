@@ -36,8 +36,9 @@ public:
 	virtual ~PluginKind() {}
 
 	virtual const char *Name() const = 0;
-	// Under the plugin root; modules are <root>/<subdirectory>/*<suffix>
-	// and one level of directories below that.
+	// Under the plugin root; modules are <root>/<subdirectory>/*<suffix><ext>
+	// and one level of directories below that, where the extension is the
+	// host's loadable module extension and never part of the suffix.
 	virtual const char *Subdirectory() const = 0;
 	virtual const char *Suffix() const = 0;
 	virtual const char *EntrySymbol() const = 0;
