@@ -16,91 +16,66 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#ifndef SPIRAL_PLUGIN_MANAGER_H
-#define SPIRAL_PLUGIN_MANAGER_H
+#ifndef SPIRAL_DEVICE_CLASS_REGISTRY_H
+#define SPIRAL_DEVICE_CLASS_REGISTRY_H
 
 #include <string>
 #include <vector>
 #include "SpiralPlugin.h"
+#include "PluginLoader.h"
 
-class SpiralGUIType;
-
-/* Paired DSP+GUI plugin (0.3.1 split). type is SPIRAL_PLUGIN_TYPE_DSP/GUI
-   while only one side is loaded, SPIRAL_PLUGIN_TYPE_PAIRED once both .so
-   files for the same ID are in. GUI<->DSP traffic stays on ChannelHandler
-   (libspiralcore mutex trylock); this is not master's Device/Property
-   split and not the lock-free queues from PR #11. */
-struct HostsideInfo
+/* The DSP half of the paired slot (0.3.1 split), one per plugin ID. A
+   module's is read from its exports when the loader accepts it; a
+   compiled-in device registers one with no module. An editor pairs with
+   it by ID through the EditorClassRegistry. GUI<->DSP traffic stays on
+   ChannelHandler (libspiralcore mutex trylock). */
+struct DeviceClass
 {
 	int   ID;
-	int   type;
 	std::string Name;
+	std::string Category;
+	const char **Icon;
+	SpiralPlugin *(*Create)(void);
+	std::string Module;
 
-	struct {
-		void *Handle;
-		SpiralPlugin *(*CreateInstance)(void);
-		const char **(*GetIcon)(void);
-		std::string (*GetGroupName)(void);
-	} dsp;
-
-	struct {
-		void *Handle;
-		SpiralGUIType *(*CreateGUI)(SpiralPlugin *);
-		const char **(*GetIcon)(void);
-	} gui;
-
-	SpiralPlugin *CreateDSPInstance() const
+	SpiralPlugin *CreateInstance() const
 	{
-		return (dsp.CreateInstance) ? dsp.CreateInstance() : NULL;
+		return (Create) ? Create() : NULL;
 	}
-
-	SpiralGUIType *CreateGUI(SpiralPlugin *plugin) const
-	{
-		return (gui.CreateGUI && plugin) ? gui.CreateGUI(plugin) : NULL;
-	}
-
-	const char **Icon() const
-	{
-		if (dsp.GetIcon) return dsp.GetIcon();
-		if (gui.GetIcon) return gui.GetIcon();
-		return NULL;
-	}
-
-	std::string GroupName() const
-	{
-		return dsp.GetGroupName ? dsp.GetGroupName() : std::string();
-	}
-
-	bool HasDSP() const { return dsp.Handle != NULL && dsp.CreateInstance != NULL; }
 };
 
 //////////////////////////////////////////////////////////
 
-typedef int PluginID;
-#define     PluginError -1
-
-class PluginManager
+/* The device kind: modules are <plugins>/dsp/<X>/<X>_DSP<ext>, the entry
+   is the instance factory, and the identity beside it (ID, type, name,
+   category, icon, host ABI) is the old export set, read back through the
+   module until modules carry a descriptor. */
+class DeviceClassRegistry : public spiralcore::PluginKind
 {
 public:
-	static PluginManager *Get() { if(!m_Singleton) m_Singleton=new PluginManager; return m_Singleton; }
-	static void         PackUpAndGoHome() { if(m_Singleton) delete m_Singleton; }
+	static DeviceClassRegistry *Get();
+	static void         PackUpAndGoHome();
 
-	PluginID            LoadPlugin(const char *PluginName);
-	void                UnLoadPlugin(PluginID ID);
-	void                UnloadAll();
-	const HostsideInfo* GetPlugin(PluginID ID);
-	bool                IsValid(PluginID ID);
-	int                 GetIdByName(std::string Name);
+	virtual const char *Name() const { return "device"; }
+	virtual const char *Subdirectory() const { return "dsp"; }
+	virtual const char *Suffix() const { return "_DSP"; }
+	virtual const char *EntrySymbol() const { return "SpiralPlugin_CreateInstance"; }
+	virtual bool        Accept(void *entry, const std::string &path);
+	virtual void        Release(void *entry, const std::string &path);
+
+	unsigned            LoadModules(const std::string &root);
+	// The first registration of an ID keeps its place.
+	bool                Register(const DeviceClass &device);
+	const DeviceClass*  Find(int ID) const;
+	const std::vector<DeviceClass*> &Classes() const { return m_PluginVec; }
 
 private:
 
-	PluginManager();
-	~PluginManager();
-	HostsideInfo *GetPlugin_i(PluginID ID);
-	HostsideInfo *NewSlot(int ID);
+	DeviceClassRegistry();
+	~DeviceClassRegistry();
 
-	std::vector<HostsideInfo*> m_PluginVec;
-	static PluginManager *m_Singleton;
+	std::vector<DeviceClass*> m_PluginVec;
+	static DeviceClassRegistry *m_Singleton;
 };
 
 #endif
