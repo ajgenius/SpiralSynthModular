@@ -403,6 +403,13 @@ AC_SUBST(FLTK_LIBS)
 
 AC_CHECK_HEADERS(dlfcn.h)
 AC_SEARCH_LIBS([dlopen], [dl])
+
+dnl Loadable module extension as libtool builds it for this host (-module).
+case "$host_os" in
+    cygwin*|mingw*) plugin_module_ext=".dll" ;;
+    *) plugin_module_ext=".so" ;;
+esac
+AC_DEFINE_UNQUOTED([PLUGIN_MODULE_EXT], ["$plugin_module_ext"], [Loadable plugin module extension])
 AC_SEARCH_LIBS([clock_gettime], [rt])
 AC_SEARCH_LIBS([pthread_create], [pthread], [],
     [AC_MSG_ERROR([POSIX threads are required])])
