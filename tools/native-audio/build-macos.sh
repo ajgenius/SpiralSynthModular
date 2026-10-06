@@ -72,6 +72,8 @@ printf 'PortAudio build and latency regression passed.\n'
 	cat <<'ENV'
 export PATH="$ssm_native_prefix/jack/bin:$PATH"
 export PKG_CONFIG_PATH="$ssm_native_prefix/jack/lib/pkgconfig:$ssm_native_prefix/portaudio/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+export CPPFLAGS="-I$ssm_native_prefix/jack/include -I$ssm_native_prefix/portaudio/include${CPPFLAGS:+ $CPPFLAGS}"
+export LDFLAGS="-L$ssm_native_prefix/jack/lib -L$ssm_native_prefix/portaudio/lib${LDFLAGS:+ $LDFLAGS}"
 export DYLD_LIBRARY_PATH="$ssm_native_prefix/jack/lib:$ssm_native_prefix/portaudio/lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
 export JACK_DRIVER_DIR="$ssm_native_prefix/jack/lib/jack"
 unset ssm_native_prefix
