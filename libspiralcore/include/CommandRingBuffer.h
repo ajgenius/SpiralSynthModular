@@ -27,7 +27,7 @@ public:
 	class Command
 	{
 	public:
-		Command() {}
+		Command() : m_NumArgs(0) {}
 		Command(const char *name, const char *types, const char *data, unsigned int datasize);
 		~Command() {}
 		
