@@ -58,6 +58,13 @@ public:
 
 	virtual bool Write(const float *interleaved, unsigned int nframes) = 0;
 	virtual bool Read(float *interleaved, unsigned int nframes) = 0;
+
+	// A device that carries a transport (JACK) reports its position and the
+	// engine slaves to it; otherwise the engine keeps its own.
+	virtual bool GetTransport(unsigned long &frame, bool &rolling) const { return false; }
+	virtual bool StartTransport() { return false; }
+	virtual bool StopTransport() { return false; }
+	virtual bool LocateTransport(unsigned long frame) { return false; }
 };
 
 }

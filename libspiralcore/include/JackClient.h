@@ -56,12 +56,13 @@ public:
 
 	// Transport is optional application policy; attaching never starts it.
 	bool QueryTransport(jack_transport_state_t &state, jack_position_t &position) const;
+	virtual bool GetTransport(unsigned long &frame, bool &rolling) const;
 
-	bool StartTransport();
+	virtual bool StartTransport();
 
-	bool StopTransport();
+	virtual bool StopTransport();
 
-	bool LocateTransport(jack_nframes_t frame);
+	virtual bool LocateTransport(unsigned long frame);
 
 	int AddInputPort();
 

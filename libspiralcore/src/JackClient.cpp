@@ -429,6 +429,17 @@ bool JackClient::QueryTransport(jack_transport_state_t &state, jack_position_t &
 	return true;
 }
 
+bool JackClient::GetTransport(unsigned long &frame, bool &rolling) const
+{
+	jack_transport_state_t state;
+	jack_position_t position;
+	if (!QueryTransport(state, position)) return false;
+
+	frame = position.frame;
+	rolling = state == JackTransportRolling;
+	return true;
+}
+
 bool JackClient::StartTransport()
 {
 	if (!IsAttached() || !m_Client)
@@ -447,9 +458,9 @@ bool JackClient::StopTransport()
 	return true;
 }
 
-bool JackClient::LocateTransport(jack_nframes_t frame)
+bool JackClient::LocateTransport(unsigned long frame)
 {
-	return IsAttached() && m_Client && jack_transport_locate(m_Client, frame) == 0;
+	return IsAttached() && m_Client && jack_transport_locate(m_Client, (jack_nframes_t)frame) == 0;
 }
 
 
