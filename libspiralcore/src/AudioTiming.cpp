@@ -1,121 +1,91 @@
-// Copyright (C) 2004 David Griffiths <dave@pawfal.org>
-//
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+// SPDX-License-Identifier: GPL-2.0-or-later
+#include "AudioTiming.h"
+#include <cmath>
+#ifdef __APPLE__
+#include <mach/mach_time.h>
+#include <pthread.h>
+#else
+#include <time.h>
+#endif
 
-#include <assert.h>
-#include <math.h>
-#include "SpiralTime.h"
-
-using namespace spiralcore;
-
-// got this and usec2ntp from http://www.openmash.org/lxr/source/rtp/ntp-time.h
-static const unsigned long GETTIMEOFDAY_TO_NTP_OFFSET = 2208988800UL;
-
-// convert microseconds to fraction of second * 2^32 (i.e., the lsw of
-// a 64-bit ntp timestamp).  This routine uses the factorization
-// 2^32/10^6 = 4096 + 256 - 1825/32 which results in a max conversion
-// error of 3 * 10^-7 and an average error of half that.
-unsigned int usec2ntp(unsigned int usec)
+namespace spiralcore
 {
-	unsigned int t = (usec * 1825) >> 5;
-	return ((usec << 12) + (usec << 8) - t);
-}
-  
-Time::Time() :
-Seconds(0),
-Fraction(0)
-{	
-	
-}
-
-void Time::SetToNow()
+#ifdef __APPLE__
+namespace
 {
-	timeval tv;
-	gettimeofday(&tv,0);
-	SetFromPosix(tv);
+	pthread_once_t TimebaseOnce = PTHREAD_ONCE_INIT;
+	double TimebaseSeconds;
+	void InitializeTimebase()
+	{
+		mach_timebase_info_data_t info;
+		mach_timebase_info(&info);
+		TimebaseSeconds = double(info.numer) / info.denom / 1e9;
+	}
 }
+#endif
 
-void Time::SetFromPosix(timeval tv) 
+double AudioMonotonicTime()
 {
-	// gettimeofday epoch is 00:00:00 UTC, January 1, 1970
-	// ntp (what we're basing time on for OSC compat) epoch is 
-	// 00:00:00 UTC, January 1, 1900, so we need to convert...
-	Seconds = (unsigned int)tv.tv_sec + GETTIMEOFDAY_TO_NTP_OFFSET;
-	Fraction = usec2ntp(tv.tv_usec);
+#ifdef __APPLE__
+	pthread_once(&TimebaseOnce, InitializeTimebase);
+	return mach_absolute_time() * TimebaseSeconds;
+#else
+	struct timespec now;
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	return now.tv_sec + now.tv_nsec / 1e9;
+#endif
 }
 
-void Time::IncBySample(unsigned long samples, unsigned long samplerate)
+AudioTimingMailbox::AudioTimingMailbox() : m_Back(0), m_Front(1), m_Middle(2) {}
+
+void AudioTimingMailbox::Publish(const AudioCycleTiming &value)
 {
-	(*this)+=samples/(double)samplerate;
+	m_Slots[m_Back] = value;
+	__sync_synchronize();
+	m_Back = __sync_lock_test_and_set(&m_Middle, m_Back | 4) & 3;
+	__sync_synchronize();
 }
 
-Time &Time::operator+=(double s)
+bool AudioTimingMailbox::Read(AudioCycleTiming &value)
 {
-	unsigned int Secs = (unsigned int)floor(s);
-	Seconds += Secs;
-	double Frac = s-Secs;
-	// overflow? (must do this better)
-	if (Frac+Fraction*ONE_OVER_UINT_MAX>1.0f) Seconds++;	
-	Fraction += (unsigned int)(Frac*UINT_MAX);
-	return *this;
+	if (!(__sync_fetch_and_add(&m_Middle, 0) & 4)) return false;
+
+	m_Front = __sync_lock_test_and_set(&m_Middle, m_Front) & 3;
+	__sync_synchronize();
+	value = m_Slots[m_Front];
+	return true;
 }
 
-double Time::GetDifference(const Time& other)
+AudioRateEstimator::AudioRateEstimator() { Reset(); }
+
+void AudioRateEstimator::Reset()
 {
-	double SecsDiff = (long)Seconds-(long)other.Seconds;
-	double SecsFrac = Fraction*ONE_OVER_UINT_MAX;
-	SecsFrac-=other.Fraction*ONE_OVER_UINT_MAX;
-	return SecsDiff+SecsFrac;
+	m_Ready = false;
+	m_Frame = 0;
+	m_Time = m_Step = 0;
 }
 
-bool Time::operator<(const Time& other)
+double AudioRateEstimator::Observe(uint64_t frame, double time, double nominalRate)
 {
-	if (Seconds<other.Seconds) return true;
-	else if (Seconds==other.Seconds && Fraction<other.Fraction) return true;
-	return false;
-}
+	if (!(nominalRate > 0) || !(time >= 0)) return 0;
 
-bool Time::operator>(const Time& other)
-{
-	if (Seconds>other.Seconds) return true;
-	else if (Seconds==other.Seconds && Fraction>other.Fraction) return true;
-	return false;
-}
+	const double nominalStep = 1 / nominalRate;
+	if (!m_Ready || frame <= m_Frame || time <= m_Time || time - m_Time > 1)
+	{
+		m_Step = nominalStep;
+	}
+	else
+	{
+		const double observed = (time - m_Time) / double(frame - m_Frame);
+		if (std::fabs(observed / nominalStep - 1) < 0.01)
+			m_Step += (observed - m_Step) * 0.02;
+		else
+			m_Step = nominalStep;
+	}
 
-bool Time::operator<=(const Time& other)
-{
-	if (Seconds<other.Seconds|| (Seconds==other.Seconds && Fraction==other.Fraction)) return true;
-	else if (Seconds==other.Seconds && Fraction<other.Fraction) return true;
-	return false;
+	m_Ready = true;
+	m_Frame = frame;
+	m_Time = time;
+	return m_Step;
 }
-
-bool Time::operator>=(const Time& other)
-{
-	if (Seconds>other.Seconds || (Seconds==other.Seconds && Fraction==other.Fraction)) return true;
-	else if (Seconds==other.Seconds && Fraction>other.Fraction) return true;
-	return false;
 }
-
-bool Time::operator==(const Time& other)
-{
-	if (Seconds==other.Seconds && Fraction==other.Fraction) return true;
-	return false;
-}
-
-void Time::Print() const
-{
-	cerr<<Seconds<<":"<<GetFraction()<<" ("<<Fraction<<")"<<endl;
-}
-
