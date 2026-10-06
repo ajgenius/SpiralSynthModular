@@ -15,6 +15,9 @@ SpiralSynthModular_LDADD = 							\
 
 
 EXTRA_DIST = autogen.sh build-aux/macos-bundle.sh GUI/SpiralSynthModular.icns Examples
+EXTRA_DIST += tools/native-audio/README.md tools/native-audio/build-macos.sh \
+	tools/native-audio/patches/jack2-coreaudio-latency.patch \
+	tools/native-audio/patches/portaudio-coreaudio-latency.patch
 SpiralPlugins = $(libdir)/SpiralPlugins
 
 bin_PROGRAMS = SpiralSynthModular
