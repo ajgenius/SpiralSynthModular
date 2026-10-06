@@ -15,6 +15,9 @@ SpiralSynthModular_LDADD = 							\
 
 
 EXTRA_DIST = autogen.sh build-aux/macos-bundle.sh GUI/SpiralSynthModular.icns Examples
+EXTRA_DIST += tools/native-audio/README.md tools/native-audio/build-macos.sh \
+	tools/native-audio/patches/jack2-coreaudio-latency.patch \
+	tools/native-audio/patches/portaudio-coreaudio-latency.patch
 SpiralPlugins = $(libdir)/SpiralPlugins
 
 bin_PROGRAMS = SpiralSynthModular
@@ -79,6 +82,12 @@ coreaudio_output_test_SOURCES = tests/coreaudio-output.cpp Plugins/DSP/OutputPlu
 coreaudio_output_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/OutputPlugin
 coreaudio_output_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la
 endif
+
+check_PROGRAMS += dummy-host-test
+dummy_host_test_SOURCES = tests/dummy-host.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
+dummy_host_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
+dummy_host_test_LDADD = $(SpiralSynthModular_LDADD)
+dummy_host_test_LDFLAGS = -export-dynamic
 
 if HAVE_CORE_AUDIO_CLIENT
 check_PROGRAMS += coreaudio-host-test

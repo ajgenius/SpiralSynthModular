@@ -7,6 +7,9 @@
 #include <cstdio>
 #include <cmath>
 #include <sys/time.h>
+#ifdef __linux__
+#include <unistd.h>
+#endif
 
 static double Now()
 {
@@ -17,6 +20,10 @@ static double Now()
 
 int main()
 {
+#ifdef __linux__
+	// The optional ALSA timer requires a usable kernel timer device.
+	if (access("/dev/snd/timer", R_OK | W_OK) != 0) return 77;
+#endif
 	const float frequency = 250.f;
 	const unsigned ticks = 100;
 	AtomicClock clock(frequency);

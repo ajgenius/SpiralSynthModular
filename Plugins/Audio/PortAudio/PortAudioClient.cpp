@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "PortAudioClient.h"
+#include "AudioBackend.h"
 
 using namespace std;
 using namespace spiralcore;
@@ -284,3 +285,11 @@ void PortAudioClient::Finished(void *context)
 	PortAudioClient *client = static_cast<PortAudioClient *>(context);
 	__sync_lock_test_and_set(&client->m_Attached, 0);
 }
+
+// * Backend module entry
+
+static void *CreatePortAudio(void *) { return static_cast<AudioClient *>(new PortAudioClient); }
+static void DestroyPortAudio(void *client) { delete static_cast<AudioClient *>(client); }
+static const BackendDescriptor PortAudioBackend = { SPIRAL_AUDIO_PLUGIN_ABI, "audio", "portaudio", CreatePortAudio, DestroyPortAudio };
+
+extern "C" const BackendDescriptor *SpiralPlugin_GetAudioBackend() { return &PortAudioBackend; }

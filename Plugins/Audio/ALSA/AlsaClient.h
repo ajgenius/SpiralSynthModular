@@ -20,10 +20,16 @@ public:
 	bool Attach(const std::string &device, const AudioClientOptions &opt);
 	void Detach();
 	bool IsAttached() const { return m_Playback != NULL || m_Capture != NULL; }
+	unsigned long GetBufferSize() const { return m_Frames; }
+	unsigned long GetSampleRate() const { return m_Samplerate; }
+	int WaitForCycle(unsigned milliseconds);
+	bool GetCycleTiming(AudioCycleTiming &timing) const { timing = m_Timing; return timing.Valid; }
+	double GetInputLatency() const { return m_Latency; }
+	double GetOutputLatency() const { return m_Latency; }
 	bool Write(const float *interleaved, unsigned int nframes);
 	bool Read(float *interleaved, unsigned int nframes);
 
-protected:
+public:
 	AlsaClient();
 	~AlsaClient();
 
@@ -37,6 +43,11 @@ private:
 	snd_pcm_t *m_Playback;
 	snd_pcm_t *m_Capture;
 	int m_Channels;
+	unsigned m_Frames;
+	uint64_t m_Written, m_Read;
+	double m_Latency;
+	AudioCycleTiming m_Timing;
+	bool Timestamp(snd_pcm_t *stream, bool input, double &time);
 	unsigned int m_Samplerate;
 	std::string m_Device;
 };
