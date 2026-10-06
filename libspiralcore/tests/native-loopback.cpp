@@ -67,10 +67,13 @@ struct Capture
 	std::vector<double> Times;
 	unsigned Written;
 	unsigned Errors;
+	double FirstErrorTime, LastErrorTime;
 
 	Capture():
 	    Written(0),
-	    Errors(0)
+	    Errors(0),
+	    FirstErrorTime(0),
+	    LastErrorTime(0)
 	{
 	}
 
@@ -90,6 +93,10 @@ struct Capture
 		if (frames > capture.Scratch.size() || !capture.Input.Client->GetCycleTiming(timing) ||
 			!capture.Input.Client->Read(&capture.Scratch[0], frames))
 		{
+			capture.LastErrorTime = AudioMonotonicTime();
+			if (!capture.Errors)
+				capture.FirstErrorTime = capture.LastErrorTime;
+
 			++capture.Errors;
 			return;
 		}
@@ -126,6 +133,12 @@ static bool Run(const char *firstBackend, const char *secondBackend, const char 
 	if (!capture.Input.Open(options.InputBackend, options.InputDevice, 1, 0))
 	{
 		std::fprintf(stderr, "Cannot open loopback capture device %s\n", options.InputDevice);
+		return false;
+	}
+
+	if (!capture.Input.Client->IsCallbackDriven())
+	{
+		std::fprintf(stderr, "Loopback capture requires a callback-driven backend\n");
 		return false;
 	}
 
@@ -202,7 +215,9 @@ static bool Run(const char *firstBackend, const char *secondBackend, const char 
 	FILE *samples = std::fopen((stem + ".f32").c_str(), "wb");
 	FILE *times = std::fopen((stem + ".f64").c_str(), "wb");
 	FILE *info = std::fopen((stem + ".txt").c_str(), "w");
-	bool ok = samples && times && info && capture.Written > size_t(rate) * options.Pairs && !capture.Errors;
+	// Cycle zero is warmup. The first measured chirp's search window starts at +0.8 s.
+	const bool captureReady = !capture.Errors || capture.LastErrorTime < epoch + .8;
+	bool ok = samples && times && info && capture.Written > size_t(rate) * options.Pairs && captureReady;
 	if (samples)
 	{
 		ok = std::fwrite(&capture.Samples[0], sizeof(float), capture.Written, samples) == capture.Written && ok;
@@ -221,6 +236,7 @@ static bool Run(const char *firstBackend, const char *secondBackend, const char 
 				   "pairs=%u\ncapture_device=%s\nfirst_device=%s\nsecond_device=%s\n",
 			     epoch, rate, capture.Written, capture.Errors, firstBackend, secondBackend, options.InputBackend,
 			     options.Pairs, options.InputDevice, options.OutputDevice[0], options.OutputDevice[1]);
+		std::fprintf(info, "first_error_time=%.9f\nlast_error_time=%.9f\n", capture.FirstErrorTime, capture.LastErrorTime);
 		std::fclose(info);
 	}
 

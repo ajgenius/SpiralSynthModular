@@ -90,6 +90,17 @@ def passes(result, tolerance):
     )
 
 
+def startup_errors(info, epoch):
+    errors = int(info["errors"])
+    # Keep startup diagnostics, but reject any failure in a measured search window.
+    # Older recordings with errors have no timing evidence and remain failures.
+    if errors:
+        last = float(info.get("last_error_time", "inf"))
+        if errors < 0 or not np.isfinite(last) or last >= epoch + .8:
+            raise ValueError("Capture callback reported errors during measurement")
+    return errors
+
+
 def self_test():
     rate = 48000
     times = np.arange(rate * 11) / rate
@@ -130,6 +141,16 @@ def self_test():
     else:
         raise AssertionError("Accepted truncated long capture")
 
+    assert startup_errors(dict(errors="3", last_error_time="1.7"), 1) == 3
+    for info in (dict(errors="1"), dict(errors="1", last_error_time="1.8"),
+                 dict(errors="1", last_error_time="nan")):
+        try:
+            startup_errors(info, 1)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("Accepted capture errors without a clean measurement interval")
+
     times[rate] = times[rate - 1]
     try:
         measure(samples, times, rate, 1)
@@ -155,17 +176,18 @@ def main():
 
     stem = args.prefix
     info = dict(line.split("=", 1) for line in Path(stem + ".txt").read_text().splitlines())
-    if int(info["errors"]):
-        raise ValueError("Capture callback reported errors")
+    epoch = float(info["epoch"])
+    warmup_errors = startup_errors(info, epoch)
 
     samples = np.fromfile(stem + ".f32", dtype=np.float32).astype(float)
     times = np.fromfile(stem + ".f64", dtype=np.float64)
     if len(samples) != int(info["frames"]):
         raise ValueError("Capture file length differs from metadata")
 
-    result = measure(samples, times, int(info["rate"]), float(info["epoch"]), int(info.get("pairs", 8)))
+    result = measure(samples, times, int(info["rate"]), epoch, int(info.get("pairs", 8)))
     result.update(first=info["first"], second=info["second"],
                   capture=info.get("capture", "coreaudio"),
+                  startup_capture_errors=warmup_errors,
                   tolerance_ms=args.tolerance_ms, passed=passes(result, args.tolerance_ms))
     print(json.dumps(result, indent=2))
     return 0 if result["passed"] else 1
