@@ -26,6 +26,9 @@ struct AtomicClock::Platform
 	snd_timer_t *m_Handle;
     snd_timer_info_t *m_Info;
     snd_timer_params_t *m_Params;	
+	// Poll descriptors, taken once at setup.
+	struct pollfd *m_Fds;
+	int m_FdCount;
 	
 	struct TimerDesc
 	{
