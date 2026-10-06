@@ -13,7 +13,7 @@ namespace
 }
 
 TimedAudioBuffer::TimedAudioBuffer() : m_Capacity(0), m_Mask(0), m_Channels(0),
-	m_Taps(64), m_Read(0), m_Write(0), m_Search(0), m_Cutoff(1) {}
+	m_Taps(64), m_Read(0), m_Write(0), m_Search(0), m_Cutoff(1), m_LastGeneration(0), m_EndFrame(0), m_LastTime(0) {}
 
 bool TimedAudioBuffer::Configure(unsigned capacity, unsigned channels, double inputRate, double outputRate)
 {
@@ -29,6 +29,7 @@ bool TimedAudioBuffer::Configure(unsigned capacity, unsigned channels, double in
 	m_Mask = m_Capacity - 1;
 	m_Channels = channels;
 	m_Read = m_Write = m_Search = 0;
+	m_LastGeneration = 0;
 	m_Positions.resize(m_Capacity);
 	m_Samples.assign(size_t(m_Capacity) * channels, 0);
 	m_Filter.resize((Phases + 1) * m_Taps);
@@ -68,6 +69,11 @@ bool TimedAudioBuffer::Write(const float *samples, unsigned frames, const AudioS
 		!(stamp.Time >= 0 && stamp.Time < 1e12) || !stamp.Generation)
 		return false;
 
+	if (m_LastGeneration == stamp.Generation &&
+		(stamp.Frame < m_EndFrame || stamp.Time <= m_LastTime)) return false;
+
+	if (m_LastGeneration && int32_t(stamp.Generation - m_LastGeneration) < 0) return false;
+
 	const unsigned write = m_Write;
 	const unsigned read = __sync_fetch_and_add(&m_Read, 0);
 	if (frames > m_Capacity - (write - read)) return false;
@@ -84,6 +90,9 @@ bool TimedAudioBuffer::Write(const float *samples, unsigned frames, const AudioS
 			m_Channels * sizeof(float));
 	}
 
+	m_LastGeneration = stamp.Generation;
+	m_EndFrame = stamp.Frame + frames;
+	m_LastTime = stamp.Time + (frames - 1) * stamp.Step;
 	__sync_synchronize();
 	__sync_lock_test_and_set(&m_Write, write + frames);
 	return true;
@@ -117,7 +126,20 @@ unsigned TimedAudioBuffer::Read(float *samples, unsigned frames, double time, do
 			++cursor;
 
 		const Position &center = m_Positions[cursor & m_Mask];
-		const double fraction = (target - center.Time) / center.Step;
+		double interval = center.Step;
+		if (Covered(cursor + 1, read, write, generation))
+		{
+			const Position &next = m_Positions[(cursor + 1) & m_Mask];
+			const double distance = next.Time - center.Time;
+			// Native rate recovery refines each block's timestamp slope. Use
+			// the actual adjoining sample interval at that boundary, otherwise
+			// a small clock correction is mistaken for a missing sample.
+			if (next.Frame == center.Frame + 1 && distance > 0 && distance < center.Step * 2)
+				interval = distance;
+
+		}
+
+		const double fraction = (target - center.Time) / interval;
 		if (center.Generation != generation || fraction < -1e-4 || fraction >= 1 - 1e-6) continue;
 
 		float *output = samples + size_t(frame) * m_Channels;
@@ -137,9 +159,11 @@ unsigned TimedAudioBuffer::Read(float *samples, unsigned frames, double time, do
 			if (!Covered(index, read, write, generation)) continue;
 
 			const Position &position = m_Positions[index & m_Mask];
-			// A dropped block or reset is a hole, not a very slow sample.
+			// Frame/generation gaps identify dropped audio. Native timestamp
+			// quantization and clock corrections can move a contiguous block
+			// by part of a sample; that must not remove half its FIR kernel.
 			if (position.Frame + (m_Taps / 2 - 1) != center.Frame + tap ||
-				std::fabs(position.Time - (center.Time + (int(tap) - int(m_Taps / 2 - 1)) * center.Step)) > center.Step * 0.25)
+				std::fabs(position.Time - (center.Time + (int(tap) - int(m_Taps / 2 - 1)) * center.Step)) > center.Step * 4)
 				continue;
 
 			const float a = m_Filter[lower * m_Taps + tap];

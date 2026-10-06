@@ -30,6 +30,7 @@ PaError Pa_OpenStream(PaStream **stream, const PaStreamParameters *, const PaStr
 }
 const PaStreamInfo *Pa_GetStreamInfo(PaStream *) { assert(!inCallback); return &info; }
 PaTime Pa_GetStreamTime(PaStream *) { assert(!inCallback); return AudioMonotonicTime() - 100; }
+PaError Pa_SetStreamFinishedCallback(PaStream *, PaStreamFinishedCallback *) { return paNoError; }
 PaError Pa_StartStream(PaStream *) { assert(!inCallback); active = true; return paNoError; }
 PaError Pa_IsStreamActive(PaStream *) { return active; }
 PaError Pa_AbortStream(PaStream *) { assert(!inCallback); active = false; return paNoError; }

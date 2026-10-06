@@ -93,6 +93,34 @@ static void HolesAndGenerations()
 	queue.Read(output, 128, stamp.Time, stamp.Step, 1);
 	assert(queue.Read(output, 128, stamp.Time, stamp.Step, 2) == 128);
 	assert(output[0] == 1 && output[127] == 128);
+	assert(!queue.Write(input, 128, stamp));
+	--stamp.Generation;
+	assert(!queue.Write(input, 128, stamp));
+}
+
+static void NativeClockCorrections()
+{
+	TimedAudioBuffer queue;
+	assert(queue.Configure(4096, 1, 48000, 48000));
+	float input[256], output[256];
+	std::fill(input, input + 256, 0.375f);
+	AudioStamp stamp;
+	stamp.Generation = 1;
+	stamp.Step = 1.0 / 48000;
+	for (unsigned block = 0; block < 12; ++block)
+	{
+		stamp.Frame = block * 256;
+		stamp.Time = 10 + (stamp.Frame + (block % 2 ? 0.3 : -0.3)) * stamp.Step;
+		assert(queue.Write(input, 256, stamp));
+	}
+
+	for (unsigned block = 1; block < 10; ++block)
+	{
+		assert(queue.Read(output, 256, 10 + block * 256 * stamp.Step, stamp.Step, 1) == 256);
+		for (unsigned n = 0; n < 256; ++n) assert(std::fabs(output[n] - 0.375f) < 0.000001);
+
+	}
+
 }
 
 static void AntiAlias()
@@ -148,6 +176,7 @@ int main()
 	Rates(48000, 48000 * 0.9998, 384, 512);
 	HolesAndGenerations();
 	AntiAlias();
+	NativeClockCorrections();
 
 	MailboxStress test;
 	pthread_t writer;

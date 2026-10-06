@@ -18,11 +18,14 @@ struct AudioCycleTiming
 	double InputTime;
 	double OutputTime;
 	double SampleRate;
+	double Step;
 	unsigned Frames;
+	unsigned Epoch;
 	bool Valid;
+	bool Estimated;
 
 	AudioCycleTiming() : Frame(0), CallbackTime(0), InputTime(0), OutputTime(0),
-		SampleRate(0), Frames(0), Valid(false) {}
+		SampleRate(0), Step(0), Frames(0), Epoch(0), Valid(false), Estimated(false) {}
 };
 
 struct AudioStamp
