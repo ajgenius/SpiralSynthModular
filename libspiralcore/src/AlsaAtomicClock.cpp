@@ -27,7 +27,7 @@ m_Time(0),
 m_Frequency(frequency)
 {
 	int err;
-	char timername[64];
+	char timername[128];
 	
 	Platform::TimerDesc timer;
 	timer.Class = SND_TIMER_CLASS_GLOBAL;
@@ -44,9 +44,25 @@ m_Frequency(frequency)
     snd_timer_info_alloca(&info);
     snd_timer_params_alloca(&params);
  		
-    sprintf(timername, "hw:CLASS=%i,SCLASS=%i,CARD=%i,DEV=%i,SUBDEV=%i", timer.Class, timer.SClass, timer.Card, timer.Device, timer.Subdevice);
+	// The card must be an integer node: as a string in "hw:CARD=0" it is
+	// looked up as a sound card, which fails on a machine without one, and
+	// the global system timer is exactly for that machine.
+	snprintf(timername, sizeof(timername),
+		"timer.ssm { type hw class %i sclass %i card %i device %i subdevice %i }",
+		timer.Class, timer.SClass, timer.Card, timer.Device, timer.Subdevice);
+	snd_input_t *input;
+	snd_config_t *config;
+	if (snd_input_buffer_open(&input, timername, strlen(timername)) < 0 ||
+		snd_config_top(&config) < 0 || snd_config_load(config, input) < 0)
+	{
+		fprintf(stderr, "timer config failed\n");
+		assert(0);
+	}
+	snd_input_close(input);
 	
-	if ((err = snd_timer_open(&m_Platform->m_Handle, timername, SND_TIMER_OPEN_NONBLOCK))<0) 
+	err = snd_timer_open_lconf(&m_Platform->m_Handle, "ssm", SND_TIMER_OPEN_NONBLOCK, config);
+	snd_config_delete(config);
+	if (err<0) 
 	{
     	fprintf(stderr, "timer open %i (%s)\n", err, snd_strerror(err));
         assert(0);
@@ -104,13 +120,14 @@ double AtomicClock::Tick()
     	fprintf(stderr, "timer time out!!\n");   
     }  
 	
+	// Time comes from what the timer delivered: a late wake-up brings one
+	// event spanning several ticks, not one tick.
 	snd_timer_read_t tr;
 	while (snd_timer_read(m_Platform->m_Handle, &tr, sizeof(tr)) == sizeof(tr)) 
 	{
     	//printf("TIMER: resolution = %uns, ticks = %u\n",tr.resolution, tr.ticks);
+		m_Time+=(double)tr.ticks*tr.resolution/1e9;
     }
-	
-	m_Time+=1/m_Frequency;
 	
 	return m_Time;
 }
