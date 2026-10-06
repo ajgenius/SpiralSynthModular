@@ -88,26 +88,28 @@ m_Frequency(frequency)
 		fprintf(stderr, "timer start %i (%s)\n", err, snd_strerror(err));
 		exit(EXIT_FAILURE);
 	}
+
+	m_Platform->m_FdCount = snd_timer_poll_descriptors_count(m_Platform->m_Handle);
+	m_Platform->m_Fds = (pollfd *) calloc(m_Platform->m_FdCount, sizeof(struct pollfd));
+	if ((err = snd_timer_poll_descriptors(m_Platform->m_Handle, m_Platform->m_Fds, m_Platform->m_FdCount)) < 0) 
+	{
+        fprintf(stderr, "snd_timer_poll_descriptors error: %s\n", snd_strerror(err));
+		exit(EXIT_FAILURE);
+    }
 }
 
 AtomicClock::~AtomicClock()
 {
 	snd_timer_close(m_Platform->m_Handle);
+	free(m_Platform->m_Fds);
 	delete m_Platform;
 }
 
 double AtomicClock::Tick()
 {
-	struct pollfd *fds;
-	int count = snd_timer_poll_descriptors_count(m_Platform->m_Handle);
-    fds = (pollfd *) calloc(count, sizeof(struct pollfd));
+	struct pollfd *fds = m_Platform->m_Fds;
+	int count = m_Platform->m_FdCount;
 	int err;
-	
-	if ((err = snd_timer_poll_descriptors(m_Platform->m_Handle, fds, count)) < 0) 
-	{
-        fprintf(stderr, "snd_timer_poll_descriptors error: %s\n", snd_strerror(err));
-        return m_Time;
-    }
 	
     if ((err = poll(fds, count, 10000000)) < 0) 
 	{
