@@ -10,6 +10,7 @@
 #define SSM_BACKEND_MODULE_H
 #include <string>
 #include <vector>
+#include <map>
 #include "AudioClient.h"
 #include "PluginLoader.h"
 namespace spiralcore
@@ -49,11 +50,14 @@ namespace spiralcore
 		virtual const char *Suffix() const { return "_Audio"; }
 		virtual const char *EntrySymbol() const { return "SpiralPlugin_GetAudioBackend"; }
 		virtual bool Accept(void *entry, const std::string &path);
+		virtual bool CanUnload() const { return clients.empty(); }
+		virtual void Release(void *entry, const std::string &path);
 
 	private:
 		AudioBackendRegistry();
 		~AudioBackendRegistry();
 		std::vector<const BackendDescriptor *> entries;
+		std::map<AudioClient *, const BackendDescriptor *> clients;
 		static AudioBackendRegistry *m_Singleton;
 		AudioBackendRegistry(const AudioBackendRegistry &);
 		AudioBackendRegistry &operator=(const AudioBackendRegistry &);

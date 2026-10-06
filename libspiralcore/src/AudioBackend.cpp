@@ -4,6 +4,7 @@
 #include <config.h>
 #endif
 #include <iostream>
+#include <algorithm>
 namespace spiralcore
 {
 	// Backends still compiled into libspiralcore register here; each moves
@@ -17,12 +18,16 @@ namespace spiralcore
 		{
 			m_Singleton= new AudioBackendRegistry;
 			RegisterBuiltinAudioBackends(m_Singleton);
-			PluginLoader::Get()->RegisterKind(m_Singleton);
 		}
+		PluginLoader::Get()->RegisterKind(m_Singleton);
 		return m_Singleton;
 	}
 	void AudioBackendRegistry::PackUpAndGoHome()
 	{
+		if (!m_Singleton || !m_Singleton->CanUnload())
+			return;
+
+		PluginLoader::Get()->UnregisterKind(m_Singleton);
 		delete m_Singleton;
 		m_Singleton= NULL;
 	}
@@ -56,6 +61,12 @@ namespace spiralcore
 		Register(d);
 		return Find(d->Name) == d;
 	}
+	void AudioBackendRegistry::Release(void *entry, const std::string &)
+	{
+		const BackendDescriptor *d = ((SpiralPlugin_GetAudioBackendFn)entry)();
+		entries.erase(std::remove(entries.begin(), entries.end(), d), entries.end());
+	}
+
 	AudioBackendRegistry::~AudioBackendRegistry()
 	{
 	}
@@ -84,12 +95,20 @@ namespace spiralcore
 	AudioClient *AudioBackendRegistry::Create(const std::string &name)
 	{
 		const BackendDescriptor *d= Find(name);
-		return d ? static_cast<AudioClient *>(d->Create(NULL)) : NULL;
+		AudioClient *client = d ? static_cast<AudioClient *>(d->Create(NULL)) : NULL;
+		if (client)
+			clients[client] = d;
+
+		return client;
 	}
 	void AudioBackendRegistry::Destroy(const std::string &name, AudioClient *client)
 	{
-		const BackendDescriptor *d= Find(name);
-		if(d && client)
-			d->Destroy(client);
+		std::map<AudioClient *, const BackendDescriptor *>::iterator found = clients.find(client);
+		if (found == clients.end() || name != found->second->Name)
+			return;
+
+		const BackendDescriptor *d = found->second;
+		clients.erase(found);
+		d->Destroy(client);
 	}
 } // namespace spiralcore
