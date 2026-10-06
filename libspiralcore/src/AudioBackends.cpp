@@ -19,14 +19,14 @@
 using namespace spiralcore;
 
 #ifdef HAVE_OUTPUT_ALSA
-static void *CreateAlsa(void *) { return static_cast<AudioClient *>(AlsaClient::Get()); }
-static void DestroyAlsa(void *) { AlsaClient::PackUpAndGoHome(); }
+static void *CreateAlsa(void *) { return static_cast<AudioClient *>(new AlsaClient); }
+static void DestroyAlsa(void *client) { delete static_cast<AudioClient *>(client); }
 static const BackendDescriptor AlsaBackend = { SPIRAL_AUDIO_PLUGIN_ABI, "audio", "alsa", CreateAlsa, DestroyAlsa };
 #endif
 
 #ifdef HAVE_OUTPUT_OSS
-static void *CreateOSS(void *) { return static_cast<AudioClient *>(OSSClient::Get()); }
-static void DestroyOSS(void *) { OSSClient::PackUpAndGoHome(); }
+static void *CreateOSS(void *) { return static_cast<AudioClient *>(new OSSClient); }
+static void DestroyOSS(void *client) { delete static_cast<AudioClient *>(client); }
 static const BackendDescriptor OSSBackend = { SPIRAL_AUDIO_PLUGIN_ABI, "audio", "oss", CreateOSS, DestroyOSS };
 #endif
 
