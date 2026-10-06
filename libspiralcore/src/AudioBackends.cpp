@@ -74,4 +74,5 @@ void spiralcore::RegisterBuiltinAudioBackends(AudioBackendRegistry *registry)
 #ifdef HAVE_JACK_CLIENT
 	registry->Register(&JackBackend);
 #endif
+	registry->Register(DummyBackend());
 }
