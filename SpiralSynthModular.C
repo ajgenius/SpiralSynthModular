@@ -169,6 +169,16 @@ void SynthModular::ClearUp(bool synchronize)
 void SynthModular::Update()
 {
 	AudioTransportHub *hub=AudioTransportHub::Get();
+	if (m_Frozen)
+	{
+		// Control owns the devices while frozen: only watch for the thaw.
+		pthread_mutex_lock(&m_CycleLock);
+		m_CH.UpdateDataNow();
+		pthread_mutex_unlock(&m_CycleLock);
+		usleep(1000);
+		return;
+	}
+
 	hub->WaitPeriod();
 
 	pthread_mutex_lock(&m_CycleLock);
