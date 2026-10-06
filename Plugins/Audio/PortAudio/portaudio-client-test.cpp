@@ -1,5 +1,8 @@
 // Native callback timing and lifecycle without opening an audio device.
 #include "PortAudioClient.h"
+#include "AudioBackend.h"
+
+extern "C" const spiralcore::BackendDescriptor *SpiralPlugin_GetAudioBackend();
 #include <cassert>
 #include <cmath>
 #include <cstring>
@@ -56,6 +59,15 @@ static void Run(void *data, unsigned frames)
 }
 int main()
 {
+	// Each engine owns its client even when both use the same loaded module.
+	const BackendDescriptor *backend = SpiralPlugin_GetAudioBackend();
+	AudioClient *first = static_cast<AudioClient *>(backend->Create(NULL));
+	AudioClient *second = static_cast<AudioClient *>(backend->Create(NULL));
+	assert(first && second && first != second);
+	backend->Destroy(first);
+	assert(!second->IsAttached());
+	backend->Destroy(second);
+
 	PortAudioClient *client = PortAudioClient::Get();
 	AudioClientOptions options;
 	options.InChannels = options.OutChannels = 2;
