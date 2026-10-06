@@ -51,6 +51,29 @@ EXTRA_DIST += README.ssm AUDIO-TRANSPORT.md
 
 libspiralcore_la_SOURCES += include/AudioClient.h
 
+libspiralcore_la_SOURCES += include/PluginLoader.h src/PluginLoader.cpp
+check_PROGRAMS += plugin-loader-test
+plugin_loader_test_SOURCES = tests/plugin-loader.cpp
+plugin_loader_test_LDADD = libspiralcore.la
+check_LTLIBRARIES = probe_Probe.la sub_Probe.la stranger_Probe.la
+probe_Probe_la_SOURCES = tests/plugin-loader/probe.cpp
+probe_Probe_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
+sub_Probe_la_SOURCES = tests/plugin-loader/probe.cpp
+sub_Probe_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
+stranger_Probe_la_SOURCES = tests/plugin-loader/stranger.cpp
+stranger_Probe_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
+# The test root: probe/probe_Probe.so, probe/sub/sub_Probe.so, probe/stranger_Probe.so
+plugin-loader-root: $(check_LTLIBRARIES)
+	rm -rf plugin-loader-root
+	$(MKDIR_P) plugin-loader-root/probe/sub
+	cp .libs/probe_Probe.so plugin-loader-root/probe/
+	cp .libs/sub_Probe.so plugin-loader-root/probe/sub/
+	cp .libs/stranger_Probe.so plugin-loader-root/probe/
+check_DATA = plugin-loader-root
+TESTS_ENVIRONMENT = PLUGIN_LOADER_ROOT=$(abs_builddir)/plugin-loader-root
+clean-local:
+	rm -rf plugin-loader-root
+
 libspiralcore_la_SOURCES += src/RingBuffer.cpp include/RingBuffer.h src/CommandRingBuffer.cpp include/CommandRingBuffer.h
 check_PROGRAMS += ring-buffer-test
 ring_buffer_test_SOURCES = tests/ring-buffer.cpp
