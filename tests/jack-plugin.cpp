@@ -91,6 +91,7 @@ int main(int argc, char **argv)
 	info.SAMPLERATE=capture.Client.GetSampleRate();
 	info.AUDIOCLIENT="jack";
 	info.OUTPUTFILE=std::string(name)+"-output";
+	AudioTransportHub::Get()->SetHost(&info);
 	Engine engine;
 	pthread_mutex_init(&engine.Gate,NULL);
 	for (unsigned cycle=0; cycle<3; ++cycle)
@@ -172,6 +173,7 @@ int main(int argc, char **argv)
 			output ? "playback" : "playback and capture with the host gate held");
 	}
 
+	AudioTransportHub::Get()->SetHost(NULL);
 	capture.Client.Detach();
 	pthread_mutex_destroy(&engine.Gate);
 	return 0;
