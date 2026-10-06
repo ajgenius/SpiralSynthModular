@@ -18,7 +18,7 @@ struct ProbeKind : public PluginKind
 	ProbeKind() : Refuse(false) {}
 	const char *Name() const { return "probe"; }
 	const char *Subdirectory() const { return "probe"; }
-	const char *Suffix() const { return "_Probe.so"; }
+	const char *Suffix() const { return "_Probe"; }
 	const char *EntrySymbol() const { return "SpiralProbePlugin_GetTable"; }
 	bool Accept(void *entry, const std::string &path)
 	{

@@ -16,6 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
+#include <config.h>
 #include <cstring>
 #include <dlfcn.h>
 #include <dirent.h>
@@ -48,8 +49,8 @@ void PluginLoader::RegisterKind(PluginKind *kind)
 
 static bool HasSuffix(const string &name, const char *suffix)
 {
-	const size_t n = strlen(suffix);
-	return name.size() > n && name.compare(name.size() - n, n, suffix) == 0;
+	const string ending = string(suffix) + PLUGIN_MODULE_EXT;
+	return name.size() > ending.size() && name.compare(name.size() - ending.size(), ending.size(), ending) == 0;
 }
 
 unsigned PluginLoader::Load(PluginKind &kind, const string &root)
