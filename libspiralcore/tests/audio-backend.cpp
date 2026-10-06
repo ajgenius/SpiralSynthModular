@@ -7,6 +7,7 @@
 #include <cassert>
 #include <cstdio>
 #include <vector>
+#include <vector>
 
 using namespace spiralcore;
 
@@ -34,6 +35,9 @@ int main()
 	const BackendDescriptor null = { SPIRAL_AUDIO_PLUGIN_ABI, "audio", "null", Create, Destroy };
 	registry->Register(&null);
 	assert(registry->Find("null") == &null);
+	// The dummy stays last however late the others register.
+	names = registry->Names();
+	assert(names.size() >= 2 && names.back() == "dummy" && names[names.size() - 2] == "null");
 
 	const BackendDescriptor wrong = { SPIRAL_AUDIO_PLUGIN_ABI + 1, "audio", "wrong", Create, Destroy };
 	registry->Register(&wrong);
@@ -54,6 +58,33 @@ int main()
 	assert(!registry->Create("nonesuch"));
 	assert(registry->LoadModules("/nonexistent/path") == 0);
 	PluginLoader::PackUpAndGoHome();
+
+	// The built-in dummy paces at the nominal rate with no device:
+	// 50 periods of 256 frames at 48 kHz take about 0.267 s.
+	AudioClient *dummy = registry->Create("dummy");
+	assert(dummy);
+	AudioClientOptions options;
+	options.BufferSize = 256; options.Samplerate = 48000; options.InChannels = 2; options.OutChannels = 2;
+	assert(dummy->Attach("", options) && dummy->IsAttached() && !dummy->IsCallbackDriven());
+	std::vector<float> block(256 * 2, 0.5f);
+	const double start = AudioMonotonicTime();
+	unsigned cycles = 0;
+	while (cycles < 50)
+	{
+		const int ready = dummy->WaitForCycle(10);
+		assert(ready >= 0);
+		if (!ready) continue;
+
+		AudioCycleTiming timing;
+		assert(dummy->GetCycleTiming(timing) && timing.Valid && timing.Estimated && timing.Frames == 256);
+		assert(dummy->Write(&block[0], 256) && dummy->Read(&block[0], 256) && block[0] == 0.f);
+		++cycles;
+	}
+	const double elapsed = AudioMonotonicTime() - start;
+	printf("dummy: 50 periods in %.4f s (nominal %.4f)\n", elapsed, 50 * 256 / 48000.0);
+	assert(elapsed > 0.24 && elapsed < 0.40);
+	dummy->Detach();
+	registry->Destroy("dummy", dummy);
 
 	AudioBackendRegistry::PackUpAndGoHome();
 	printf("PASS\n");
