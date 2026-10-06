@@ -14,12 +14,18 @@ def chirp(rate):
     )
 
 
-def measure(samples, times, rate, epoch):
+def measure(samples, times, rate, epoch, pair_count=8):
+    if not 8 <= pair_count <= 300:
+        raise ValueError("Expected 8 through 300 chirp pairs")
+
     template = chirp(rate)
-    if (len(samples) != len(times) or len(samples) < rate * 9
+    if (len(samples) != len(times) or len(samples) < rate * (pair_count + 1)
             or not np.all(np.isfinite(samples)) or not np.all(np.isfinite(times))
             or np.any(np.diff(times) <= 0)):
         raise ValueError("Incomplete capture or invalid sample timestamps")
+
+    if times[0] > epoch + .8 or times[-1] < epoch + pair_count + .7:
+        raise ValueError("Capture does not cover the requested chirp interval")
 
     # Valid cross-correlation lags locate the first sample of each chirp.
     size = 1 << (len(samples) + len(template) - 1).bit_length()
@@ -28,13 +34,17 @@ def measure(samples, times, rate, epoch):
     )[:len(samples) - len(template) + 1]
     power = np.concatenate(([0.], np.cumsum(samples * samples)))
     windows = power[len(template):] - power[:-len(template)]
+    # FFT/cumulative-sum roundoff in a silent window is not a detected chirp.
+    # Without an energy floor, dividing two tiny residuals can exceed unity.
+    audible = windows > max(float(windows.max()) * 1e-12, 1e-30)
     normalized = np.abs(correlation) / np.sqrt(
         np.maximum(windows * np.sum(template * template), 1e-30)
     )
+    normalized[~audible] = 0
 
     pulses = []
     pairs = []
-    for cycle in range(1, 9):
+    for cycle in range(1, pair_count + 1):
         pair = []
         for output in range(2):
             expected = epoch + cycle + .5 * output
@@ -54,7 +64,8 @@ def measure(samples, times, rate, epoch):
             pairs.append(dict(cycle=cycle,
                               relative_ms=pair[1]["delay_ms"] - pair[0]["delay_ms"]))
 
-    result = dict(rate=rate, frames=len(samples), valid_pairs=len(pairs),
+    result = dict(rate=rate, frames=len(samples), requested_pairs=pair_count,
+                  required_pairs=int(np.ceil(.75 * pair_count)), valid_pairs=len(pairs),
                   peak=float(np.max(np.abs(samples))),
                   rms=float(np.sqrt(np.mean(samples * samples))),
                   pulses=pulses, pairs=pairs)
@@ -64,12 +75,17 @@ def measure(samples, times, rate, epoch):
                       min_relative_ms=float(offsets.min()),
                       max_relative_ms=float(offsets.max()),
                       stddev_ms=float(offsets.std()))
+        if len(pairs) >= 2:
+            cycles = np.array([p["cycle"] for p in pairs])
+            # One cycle is one second: milliseconds/second * 1000 gives ppm.
+            slope = np.polyfit(cycles, offsets, 1)[0]
+            result["relative_slope_ppm"] = float(slope * 1000)
 
     return result
 
 
 def passes(result, tolerance):
-    return result["valid_pairs"] >= 6 and all(
+    return result["valid_pairs"] >= result["required_pairs"] and all(
         abs(p["relative_ms"]) <= tolerance for p in result["pairs"]
     )
 
@@ -94,11 +110,31 @@ def self_test():
     assert not passes(silent, 1)
     noise = measure(np.random.default_rng(8).normal(0, .01, len(times)), times, rate, 1)
     assert not passes(noise, 1)
+
+    # A longer recording must expose drift and require proportional coverage.
+    long_times = np.arange(rate * 33) / rate
+    drifting = np.zeros(len(long_times))
+    for cycle in range(1, 31):
+        for output in range(2):
+            start = round((1 + cycle + .5 * output + output * cycle * .0001) * rate)
+            drifting[start:start + len(wave)] += .015 * wave
+
+    result = measure(drifting, long_times, rate, 1, 30)
+    assert result["valid_pairs"] == 30 and result["required_pairs"] == 23
+    assert abs(result["relative_slope_ppm"] - 100) < 1
+    assert not passes(result, 1)
+    try:
+        measure(drifting[:rate * 20], long_times[:rate * 20], rate, 1, 30)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Accepted truncated long capture")
+
     times[rate] = times[rate - 1]
     try:
         measure(samples, times, rate, 1)
     except ValueError:
-        print("Loopback analysis: known signed offsets, silence, noise and invalid timing PASS")
+        print("Loopback analysis: signed offsets, drift, silence, noise and incomplete/invalid timing PASS")
         return
 
     raise AssertionError("Accepted nonmonotonic capture timestamps")
@@ -127,7 +163,7 @@ def main():
     if len(samples) != int(info["frames"]):
         raise ValueError("Capture file length differs from metadata")
 
-    result = measure(samples, times, int(info["rate"]), float(info["epoch"]))
+    result = measure(samples, times, int(info["rate"]), float(info["epoch"]), int(info.get("pairs", 8)))
     result.update(first=info["first"], second=info["second"],
                   capture=info.get("capture", "coreaudio"),
                   tolerance_ms=args.tolerance_ms, passed=passes(result, args.tolerance_ms))
