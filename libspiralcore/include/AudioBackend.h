@@ -58,6 +58,8 @@ namespace spiralcore
 		AudioBackendRegistry(const AudioBackendRegistry &);
 		AudioBackendRegistry &operator=(const AudioBackendRegistry &);
 	};
+	// Built in and always present.
+	const BackendDescriptor *DummyBackend();
 } // namespace spiralcore
 extern "C"
 {
