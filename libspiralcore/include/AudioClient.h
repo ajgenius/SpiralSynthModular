@@ -8,6 +8,7 @@
 #define SPIRALCORE_AUDIO_CLIENT
 
 #include <string>
+#include "AudioTiming.h"
 
 namespace spiralcore
 {
@@ -52,6 +53,19 @@ public:
 	virtual unsigned long GetBufferSize() const { return 0; }
 
 	virtual unsigned long GetSampleRate() const { return 0; }
+
+	// Current native I/O cycle, read only on its callback/transport thread.
+	// Times are mapped to AudioMonotonicTime and refer to ADC/DAC presentation,
+	// not callback arrival or musical transport. False means unavailable.
+	virtual bool GetCycleTiming(AudioCycleTiming &timing) const { return false; }
+	virtual double GetChannelTime(bool input, unsigned channel) const
+	{
+		AudioCycleTiming timing;
+		return GetCycleTiming(timing) ? (input ? timing.InputTime : timing.OutputTime) : 0;
+	}
+
+	virtual double GetInputLatency() const { return 0; }
+	virtual double GetOutputLatency() const { return 0; }
 
 	// Interleaved float32. Blocking clients pace the caller; callback clients
 	// exchange only the current cycle's buffers from inside their callback.
