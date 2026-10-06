@@ -288,8 +288,8 @@ void PortAudioClient::Finished(void *context)
 
 // * Backend module entry
 
-static void *CreatePortAudio(void *) { return static_cast<AudioClient *>(PortAudioClient::Get()); }
-static void DestroyPortAudio(void *) { PortAudioClient::PackUpAndGoHome(); }
+static void *CreatePortAudio(void *) { return static_cast<AudioClient *>(new PortAudioClient); }
+static void DestroyPortAudio(void *client) { delete static_cast<AudioClient *>(client); }
 static const BackendDescriptor PortAudioBackend = { SPIRAL_AUDIO_PLUGIN_ABI, "audio", "portaudio", CreatePortAudio, DestroyPortAudio };
 
 extern "C" const BackendDescriptor *SpiralPlugin_GetAudioBackend() { return &PortAudioBackend; }
