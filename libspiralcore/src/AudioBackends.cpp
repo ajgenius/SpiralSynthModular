@@ -15,9 +15,6 @@
 #ifdef HAVE_JACK_CLIENT
 #include "JackClient.h"
 #endif
-#ifdef HAVE_CORE_AUDIO_CLIENT
-#include "CoreAudioClient.h"
-#endif
 
 using namespace spiralcore;
 
@@ -40,19 +37,10 @@ static const BackendDescriptor JackBackend = { SPIRAL_AUDIO_PLUGIN_ABI, "audio",
 #endif
 
 // Registration order is the fallback preference when no backend is named.
-#ifdef HAVE_CORE_AUDIO_CLIENT
-static void *CreateCoreAudio(void *) { return static_cast<AudioClient *>(new CoreAudioClient); }
-static void DestroyCoreAudio(void *client) { delete static_cast<AudioClient *>(client); }
-static const BackendDescriptor CoreAudioBackend = { SPIRAL_AUDIO_PLUGIN_ABI, "audio", "coreaudio", CreateCoreAudio, DestroyCoreAudio };
-#endif
-
 namespace spiralcore { void RegisterBuiltinAudioBackends(AudioBackendRegistry *registry); }
 
 void spiralcore::RegisterBuiltinAudioBackends(AudioBackendRegistry *registry)
 {
-#ifdef HAVE_CORE_AUDIO_CLIENT
-	registry->Register(&CoreAudioBackend);
-#endif
 #ifdef HAVE_OUTPUT_ALSA
 	registry->Register(&AlsaBackend);
 #endif

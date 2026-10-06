@@ -463,6 +463,7 @@ libspiralcore/Makefile
 Plugins/Makefile
 Plugins/Audio/Makefile
 Plugins/Audio/PortAudio/Makefile
+Plugins/Audio/CoreAudio/Makefile
 Plugins/DSP/Makefile
 Plugins/GUI/Makefile
 Plugins/GUI/AmpPlugin/Makefile

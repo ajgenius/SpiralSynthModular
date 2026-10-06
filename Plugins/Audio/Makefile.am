@@ -2,3 +2,6 @@ SUBDIRS =
 if HAVE_OUTPUT_PORTAUDIO
 SUBDIRS += PortAudio
 endif
+if HAVE_CORE_AUDIO_CLIENT
+SUBDIRS += CoreAudio
+endif

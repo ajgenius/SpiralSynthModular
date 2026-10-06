@@ -1,4 +1,5 @@
 #include "CoreAudioClient.h"
+#include "AudioBackend.h"
 #include <algorithm>
 #include <CoreAudio/HostTime.h>
 #include <cstring>
@@ -430,3 +431,11 @@ double CoreAudioClient::GetOutputLatency() const
 	return double(__sync_fetch_and_add(&m_OutputSoftware, 0) +
 		std::max(__sync_fetch_and_add(&m_OutputHardware[0], 0), __sync_fetch_and_add(&m_OutputHardware[1], 0))) / GetSampleRate();
 }
+
+// * Backend module entry
+
+static void *CreateCoreAudio(void *) { return static_cast<AudioClient *>(new CoreAudioClient); }
+static void DestroyCoreAudio(void *client) { delete static_cast<AudioClient *>(client); }
+static const BackendDescriptor CoreAudioBackend = { SPIRAL_AUDIO_PLUGIN_ABI, "audio", "coreaudio", CreateCoreAudio, DestroyCoreAudio };
+
+extern "C" const BackendDescriptor *SpiralPlugin_GetAudioBackend() { return &CoreAudioBackend; }
