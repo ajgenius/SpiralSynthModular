@@ -40,8 +40,6 @@ libSpiralWidgets_la_SOURCES =					\
 					PawfalInput.C		\
 					PawfalYesNo.h		\
 					PawfalYesNo.C		\
-					PluginManager.h		\
-					PluginManager.C		\
 			                SpiralGUI.H		\
 			                SpiralGUI.C		\
 					SpiralPluginGUI.h	\
