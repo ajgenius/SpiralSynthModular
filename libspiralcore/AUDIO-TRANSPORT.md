@@ -55,12 +55,14 @@ time plus hardware/stream latency. PortAudio supplies ADC/DAC callback times
 mapped from its stream clock. ALSA uses monotonic status timestamps and reported
 PCM delay when available; older ALSA and OSS use query-time delay estimates. OSS
 drivers without playback-delay reporting cannot attach to this transport.
+PipeWire supplies monotonic playback timestamps; capture timing remains estimated. ESD is a compatibility backend with estimated timing because it exposes no server/DAC clock. These two clients share their implementation with private. PipeWire alone requires C++11; its headers and flags stay inside its optional module.
+
 Driver-reported latency cannot account for unreported external converters or
 acoustic paths; mixed hardware still needs loopback measurement.
 
 ## Backend extraction boundary
 
-`PluginLoader` owns library handles and discovery. `AudioBackendRegistry` validates descriptors, selects clients and tracks their lifetime; it refuses unload while clients remain live and removes module descriptors before `dlclose`. PortAudio, CoreAudio, ALSA and OSS are loadable modules. JACK and Dummy currently register through the same interface as built-ins. The legacy ALSA timer and its focused test live with the ALSA module; the presentation scheduler does not use that timer. Each factory creates an independent native client.
+`PluginLoader` owns library handles and discovery. `AudioBackendRegistry` validates descriptors, selects clients and tracks their lifetime; it refuses unload while clients remain live and removes module descriptors before `dlclose`. PortAudio, CoreAudio, ALSA, OSS, PipeWire and ESD are loadable modules. JACK and Dummy currently register through the same interface as built-ins. The legacy ALSA timer and its focused test live with the ALSA module; the presentation scheduler does not use that timer. Each factory creates an independent native client.
 
 `AudioTimeline` coordinates one engine's presentation clock, stream membership, capture lookback and pacing. The public hub supplies host/session policy; the private host supplies Spicy ownership and control scheduling. `AudioClient`, `AudioTiming`, `AudioStream`, `TimedAudioBuffer`, `PresentationClock`, `AudioTimeline`, loader and registry sources can therefore remain identical between hosts. Named JACK devices and Output use this same transport contract.
 
@@ -69,3 +71,5 @@ phases, per-channel latency, positive/negative clock drift, capture alignment,
 queue overflow and recovery, generation changes, native frame wrap, allocation
 freedom inside transfer callbacks, and bounded worker shutdown. Physical loopback
 and listening tests remain separate from these deterministic checks.
+
+Module sources and tests live in `Plugins/Audio/<Backend>`. Configure builds every supported module it detects; `--disable-portaudio`, `--disable-coreaudio`, `--disable-alsa-output`, `--disable-oss-output`, `--disable-pipewire` and `--disable-esd` opt out individually. ESD's socket-pair fixture runs even when libesd is absent. The module loader regression covers independent instances, unload refusal, descriptor removal and reload for every configured module. PipeWire's runtime test starts an isolated server with no hardware nodes.
