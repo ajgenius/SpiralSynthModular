@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // The contract reader consumes a positional patch into a Description whose
 // replay is the file, and reports where each device's state sits in it.
-#include "JSONParser.h"
+#include "JSON.h"
 #include "PositionalReader.h"
 #include <cstdio>
 #include <memory>
@@ -21,8 +21,8 @@ static std::string Replay(const spiralcore::Description &d)
 int main()
 {
 	std::string error;
-	std::auto_ptr<SpiralJSON::JSONValue> contract(SpiralJSON::ParseJSON(SPIRALCORE_SCHEMA_DIR "/SpiralPositionalText-0.2.x.json", false, &error));
-	std::auto_ptr<SpiralJSON::JSONValue> history(SpiralJSON::ParseJSON(SPIRALCORE_SCHEMA_DIR "/SpiralPositionalText.history.json", false, &error));
+	std::auto_ptr<Spumoni::JSON> contract(Spumoni::ParseJSON(SPIRALCORE_SCHEMA_DIR "/SpiralPositionalText-0.2.x.json", &error));
+	std::auto_ptr<Spumoni::JSON> history(Spumoni::ParseJSON(SPIRALCORE_SCHEMA_DIR "/SpiralPositionalText.history.json", &error));
 	CHECK(contract.get() && history.get());
 	if (fails)
 		return 1;

@@ -3,7 +3,7 @@
 // as positional text, JSON() says as values and gaps, and FromJSON() takes
 // back, so either form can feed Apply and either can be written out again.
 #include "Description.h"
-#include "JSONParser.h"
+#include "JSON.h"
 #include "PositionalReader.h"
 #include <cstdio>
 #include <memory>
@@ -50,8 +50,8 @@ int main()
 	CHECK(back.Values().empty() && Replay(back).empty());
 
 	// A patch: positional text -> reader -> JSON -> description -> the same text.
-	std::auto_ptr<SpiralJSON::JSONValue> contract(SpiralJSON::ParseJSON(SPIRALCORE_SCHEMA_DIR "/SpiralPositionalText-0.2.x.json", false, &error));
-	std::auto_ptr<SpiralJSON::JSONValue> history(SpiralJSON::ParseJSON(SPIRALCORE_SCHEMA_DIR "/SpiralPositionalText.history.json", false, &error));
+	std::auto_ptr<Spumoni::JSON> contract(Spumoni::ParseJSON(SPIRALCORE_SCHEMA_DIR "/SpiralPositionalText-0.2.x.json", &error));
+	std::auto_ptr<Spumoni::JSON> history(Spumoni::ParseJSON(SPIRALCORE_SCHEMA_DIR "/SpiralPositionalText.history.json", &error));
 	CHECK(contract.get() && history.get());
 	if (fails)
 		return 1;
