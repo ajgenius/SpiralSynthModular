@@ -3,7 +3,7 @@
 // token stream needs: no item tree is built, the few integers a layout
 // refers back to (counts, the plugin id, a sentinel) live in a scope map.
 #include "PositionalReader.h"
-#include "JSONParser.h"
+#include "JSON.h"
 #include <cerrno>
 #include <cstdlib>
 #include <map>
@@ -12,7 +12,7 @@
 
 namespace
 {
-	typedef SpiralJSON::JSONValue Value;
+	typedef Spumoni::JSON Value;
 	typedef std::map<std::string, long> Scope;
 	const size_t itemLimit = 262144;
 	const size_t byteLimit = 16 * 1024 * 1024;
@@ -447,7 +447,7 @@ namespace
 			if (type == "Number")
 			{
 				// Non-JSON numeric spellings are kept as they are, with a diagnostic.
-				std::auto_ptr<Value> parsed(SpiralJSON::ParseJSONText(token));
+				std::auto_ptr<Value> parsed(Spumoni::ParseJSONText(token));
 				if (!Numeric(token) || !parsed.get() || parsed->GetType() != Value::Number)
 					Warn("InvalidNumber", field, "Retained raw numeric token");
 			}

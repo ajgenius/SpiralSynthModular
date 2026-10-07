@@ -47,8 +47,7 @@ namespace spiralcore
 		// {"values": [...], "between": [...]}, one line.
 		std::string JSON() const;
 		// The same line read back: the JSON form feeds Apply the way the
-		// positional reader does. Needs the JSON reader (HAVE_YAJL); false
-		// with the reason in error, out untouched.
+		// positional reader does. False with the reason in error, out untouched.
 		static bool FromJSON(const std::string &text, Description &out, std::string &error);
 
 		// Reading a description back, value by value, in the order it was

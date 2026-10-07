@@ -49,10 +49,8 @@
 #include "UnavailablePlugin.h"
 #include "SpiralInfo.h"
 #include "SpiralPluginGUI.h"
-#ifdef HAVE_YAJL
-#include "JSONParser.h"
+#include "JSON.h"
 #include "PositionalReader.h"
-#endif
 #include <iterator>
 #include "GUI/SSM.xpm"
 #include "GUI/load.xpm"
@@ -74,7 +72,6 @@ static string TITLEBAR;
 
 static const int FILE_VERSION = 4;
 
-#ifdef HAVE_YAJL
 // The contract the file reader decodes a device's state under: loaded once,
 // from SSM_SCHEMA_DIR or the built tree's schemas. Without it no device's
 // state can be told from the next device's, and a patch cannot be loaded.
@@ -88,8 +85,8 @@ static spiralcore::PositionalReader *ContractReader()
 		const char *env = getenv("SSM_SCHEMA_DIR");
 		string dir = env ? env : SPIRALCORE_SCHEMA_DIR;
 		string error;
-		SpiralJSON::JSONValue *contract = SpiralJSON::ParseJSON((dir + "/SpiralPositionalText-0.2.x.json").c_str(), false, &error);
-		SpiralJSON::JSONValue *history = contract ? SpiralJSON::ParseJSON((dir + "/SpiralPositionalText.history.json").c_str(), false, &error) : NULL;
+		Spumoni::JSON *contract = Spumoni::ParseJSON((dir + "/SpiralPositionalText-0.2.x.json").c_str(), &error);
+		Spumoni::JSON *history = contract ? Spumoni::ParseJSON((dir + "/SpiralPositionalText.history.json").c_str(), &error) : NULL;
 		if (contract)
 			reader = new spiralcore::PositionalReader(*contract, history);
 		else
@@ -97,7 +94,6 @@ static spiralcore::PositionalReader *ContractReader()
 	}
 	return reader;
 }
-#endif
 
 // The device line of a patch: the device's state, as the contract finds it
 // in the file's text, applied to the plugin; the stream carries on after
@@ -105,7 +101,6 @@ static spiralcore::PositionalReader *ContractReader()
 // it, which ends the load: nothing after it can be placed.
 static bool ApplyDeviceState(iostream &s, const string &text, int PluginID, SpiralPlugin *plugin)
 {
-#ifdef HAVE_YAJL
 	spiralcore::PositionalReader *reader = ContractReader();
 	if (reader)
 	{
@@ -124,8 +119,7 @@ static bool ApplyDeviceState(iostream &s, const string &text, int PluginID, Spir
 		SpiralInfo::Alert("Plugin "+string(id)+" state is not under the file contract ("+error+") - aborting load");
 		return false;
 	}
-#endif
-	SpiralInfo::Alert("Built without the file contract (yajl) - cannot load a patch");
+	SpiralInfo::Alert("No file contract - cannot load a patch");
 	return false;
 }
 static int Numbers[512];
