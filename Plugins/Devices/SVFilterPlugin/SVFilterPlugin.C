@@ -165,8 +165,8 @@ void SVFilterPlugin::Randomise()
 {
 }
 
-void SVFilterPlugin::StreamOut (ostream &s) {
-     s << m_Version << " " << Cutoff << " " << Resonance << " ";
+void SVFilterPlugin::Describe(spiralcore::Description &d) {
+     d.Value(m_Version).Separator(" ").Value(Cutoff).Separator(" ").Value(Resonance).Separator(" ");
 }
 
 void SVFilterPlugin::StreamIn (istream &s) {

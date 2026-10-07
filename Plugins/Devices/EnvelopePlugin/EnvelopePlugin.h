@@ -33,7 +33,7 @@ public:
 	virtual void Execute();
 	virtual void Reset();
 
-	virtual void StreamOut(std::ostream &s);
+	virtual void Describe(spiralcore::Description &d);
 	virtual void StreamIn(std::istream &s);
 		
 	float GetAttack()           { return m_Attack;     }
@@ -60,9 +60,9 @@ private:
 	float m_Current;
 	
 	friend std::istream &operator>>(std::istream &s, EnvelopePlugin &o);
-	friend std::ostream &operator<<(std::ostream &s, EnvelopePlugin &o);
+	friend spiralcore::Description &Describe(spiralcore::Description &d, EnvelopePlugin &o);
 };
 std::istream &operator>>(std::istream &s, EnvelopePlugin &o);
-std::ostream &operator<<(std::ostream &s, EnvelopePlugin &o);
+spiralcore::Description &Describe(spiralcore::Description &d, EnvelopePlugin &o);
 
 #endif

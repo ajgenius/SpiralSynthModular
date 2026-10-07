@@ -170,10 +170,10 @@ void FlipflopPlugin::ExecuteCommands()
 {
 }
 	
-void FlipflopPlugin::StreamOut(ostream &s) 
+void FlipflopPlugin::Describe(spiralcore::Description &d) 
 {
-	s<<m_Version<<" ";
-	s<<m_TriggerTime<<" "<<m_Monostable<<" "<<endl;
+	d.Value(m_Version).Separator(" ");
+	d.Value(m_TriggerTime).Separator(" ").Value(m_Monostable).Separator(" ").Line();
 }
 
 void FlipflopPlugin::StreamIn(istream &s) 

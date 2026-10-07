@@ -142,10 +142,10 @@ void CounterPlugin::ExecuteCommands()
 {
 }
 	
-void CounterPlugin::StreamOut(ostream &s) 
+void CounterPlugin::Describe(spiralcore::Description &d) 
 {
-	s<<m_Version<<endl;
-	s<<m_Count<<" "<<m_Current<<" ";
+	d.Value(m_Version).Line();
+	d.Value(m_Count).Separator(" ").Value(m_Current).Separator(" ");
 }
 
 void CounterPlugin::StreamIn(istream &s) 

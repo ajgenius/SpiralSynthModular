@@ -155,9 +155,9 @@ void TranslatePlugin::Execute () {
      }
 }
 
-void TranslatePlugin::StreamOut (ostream &s) {
-     s << m_Version << endl;
-     s << m_Method;
+void TranslatePlugin::Describe(spiralcore::Description &d) {
+     d.Value(m_Version).Line();
+     d.Value(m_Method);
 }
 
 void TranslatePlugin::StreamIn (istream &s) {

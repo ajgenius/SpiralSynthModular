@@ -116,9 +116,9 @@ void XFadePlugin::Randomise()
 {
 }
 	
-void XFadePlugin::StreamOut(ostream &s)
+void XFadePlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<" "<<m_Mix<<" "<<endl;
+	d.Value(m_Version).Separator(" ").Value(m_Mix).Separator(" ").Line();
 }
 
 void XFadePlugin::StreamIn(istream &s)

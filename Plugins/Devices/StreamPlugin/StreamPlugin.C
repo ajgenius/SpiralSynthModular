@@ -253,17 +253,17 @@ float StreamPlugin::GetLength (void) {
                         else return m_File.GetSize() / (float)m_File.GetSamplerate () * 2;
 }
 
-void StreamPlugin::StreamOut (ostream &s) {
-     s << m_Version << " "
-       << m_GUIArgs.Volume << " "
-       << m_GUIArgs.PitchMod << " "
-       << strlen (m_GUIArgs.FileName) << " "
-       << m_GUIArgs.FileName << " "
-       // is it really necessary to save this lot??
-       << m_Pos << " "
-       << m_StreamPos << " "
-       << m_GlobalPos << " "
-       << m_Pitch << " " << endl;
+void StreamPlugin::Describe(spiralcore::Description &d) {
+     d.Value(m_Version).Separator(" ")
+        .Value(m_GUIArgs.Volume).Separator(" ")
+        .Value(m_GUIArgs.PitchMod).Separator(" ")
+        .Value(strlen (m_GUIArgs.FileName)).Separator(" ")
+        .Value(m_GUIArgs.FileName).Separator(" ")
+        // is it really necessary to save this lot??
+        .Value(m_Pos).Separator(" ")
+        .Value(m_StreamPos).Separator(" ")
+        .Value(m_GlobalPos).Separator(" ")
+        .Value(m_Pitch).Separator(" ").Line();
 }
 
 void StreamPlugin::StreamIn(istream &s) {

@@ -146,9 +146,9 @@ void AnotherFilterPlugin::Randomise()
 {
 }
 	
-void AnotherFilterPlugin::StreamOut(ostream &s)
+void AnotherFilterPlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<" "<<Cutoff<<" "<<Resonance<<" ";
+	d.Value(m_Version).Separator(" ").Value(Cutoff).Separator(" ").Value(Resonance).Separator(" ");
 }
 
 void AnotherFilterPlugin::StreamIn(istream &s)

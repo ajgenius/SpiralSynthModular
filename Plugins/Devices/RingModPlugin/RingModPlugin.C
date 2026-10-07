@@ -106,9 +106,9 @@ void RingModPlugin::Randomise()
 {
 }
 	
-void RingModPlugin::StreamOut(ostream &s)
+void RingModPlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<" "<<m_Amount<<" ";
+	d.Value(m_Version).Separator(" ").Value(m_Amount).Separator(" ");
 }
 
 void RingModPlugin::StreamIn(istream &s)

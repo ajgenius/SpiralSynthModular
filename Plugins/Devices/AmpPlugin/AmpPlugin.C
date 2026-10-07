@@ -116,9 +116,9 @@ void AmpPlugin::Randomise()
 {
 }
 	
-void AmpPlugin::StreamOut(ostream &s)
+void AmpPlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<" "<<m_Gain<<" "<<m_DC<<" ";
+	d.Value(m_Version).Separator(" ").Value(m_Gain).Separator(" ").Value(m_DC).Separator(" ");
 }
 
 void AmpPlugin::StreamIn(istream &s)

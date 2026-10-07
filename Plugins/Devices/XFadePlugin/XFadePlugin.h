@@ -29,7 +29,7 @@ public:
 	
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void Execute();
-	virtual void StreamOut(std::ostream &s);
+	virtual void Describe(spiralcore::Description &d);
 	virtual void StreamIn(std::istream &s);
 			
 	float GetMix()        { return m_Mix; }
@@ -40,9 +40,9 @@ private:
 	float m_Mix;
 	
 	friend std::istream &operator>>(std::istream &s, XFadePlugin &o);
-	friend std::ostream &operator<<(std::ostream &s, XFadePlugin &o);
+	friend spiralcore::Description &Describe(spiralcore::Description &d, XFadePlugin &o);
 };
 std::istream &operator>>(std::istream &s, XFadePlugin &o);
-std::ostream &operator<<(std::ostream &s, XFadePlugin &o);
+spiralcore::Description &Describe(spiralcore::Description &d, XFadePlugin &o);
 
 #endif

@@ -115,10 +115,10 @@ void SmoothPlugin::Execute()
 	}
 }
 
-void SmoothPlugin::StreamOut(ostream &s) 
+void SmoothPlugin::Describe(spiralcore::Description &d) 
 {
-	s<<m_Version<<" ";
-	s<<m_Up<<" "<<m_Down;
+	d.Value(m_Version).Separator(" ");
+	d.Value(m_Up).Separator(" ").Value(m_Down);
 }
 
 void SmoothPlugin::StreamIn(istream &s)

@@ -29,7 +29,7 @@ class SplitSwitchPlugin : public SpiralPlugin {
     virtual void Execute ();
     virtual void Reset();
     virtual void ExecuteCommands ();
-    virtual void StreamOut (std::ostream &s);
+    virtual void Describe(spiralcore::Description &d);
     virtual void StreamIn (std::istream &s);
     int GetSwitch (void) { return m_SwitchPos; }
     int GetChans (void) { return m_PluginInfo.NumOutputs - 1; }
@@ -45,10 +45,10 @@ class SplitSwitchPlugin : public SpiralPlugin {
     int m_SwitchPos;
     bool m_Triggered;
     friend std::istream &operator>> (std::istream &s, SplitSwitchPlugin &o);
-    friend std::ostream &operator<< (std::ostream &s, SplitSwitchPlugin &o);
+    friend spiralcore::Description &Describe(spiralcore::Description &d, SplitSwitchPlugin &o);
 };
 
 std::istream &operator>> (std::istream &s, SplitSwitchPlugin &o);
-std::ostream &operator<< (std::ostream &s, SplitSwitchPlugin &o);
+spiralcore::Description &Describe(spiralcore::Description &d, SplitSwitchPlugin &o);
 
 #endif

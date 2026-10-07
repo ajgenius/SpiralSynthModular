@@ -218,10 +218,10 @@ void EnvelopePlugin::Execute()
 	} 	
 }
 
-void EnvelopePlugin::StreamOut(ostream &s)
+void EnvelopePlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<" "<<m_Attack<<" "<<m_Decay<<" "<<m_Sustain<<" "<<
-	m_Release<<" "<<m_Volume<<" "<<m_TrigThresh;
+	d.Value(m_Version).Separator(" ").Value(m_Attack).Separator(" ").Value(m_Decay).Separator(" ").Value(m_Sustain).Separator(" ")
+	.Value(m_Release).Separator(" ").Value(m_Volume).Separator(" ").Value(m_TrigThresh);
 }
 
 void EnvelopePlugin::StreamIn(istream &s)
