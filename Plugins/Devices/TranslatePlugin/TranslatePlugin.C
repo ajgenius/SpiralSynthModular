@@ -40,7 +40,7 @@ SpiralPlugin* SpiralPlugin_CreateInstance () { return new TranslatePlugin; }
 
 int SpiralPlugin_GetType()
 {
-	return SPIRAL_PLUGIN_TYPE_DSP;
+	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
 

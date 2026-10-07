@@ -423,7 +423,7 @@ const char *SpiralPlugin_GetHostABI()
 
 int SpiralPlugin_GetType()
 {
-	return SPIRAL_PLUGIN_TYPE_GUI;
+	return SPIRAL_PLUGIN_TYPE_EDITOR;
 }
 
 int SpiralPlugin_GetID()

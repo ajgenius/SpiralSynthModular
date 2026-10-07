@@ -32,8 +32,8 @@ using spiralcore::feq;
 #include "ChannelHandler.h"
 using spiralcore::ChannelHandler;
 #include "DeviceClassRegistry.h"
-using spiralcore::SPIRAL_PLUGIN_TYPE_DSP;
-using spiralcore::SPIRAL_PLUGIN_TYPE_GUI;
+using spiralcore::SPIRAL_PLUGIN_TYPE_DEVICE;
+using spiralcore::SPIRAL_PLUGIN_TYPE_EDITOR;
 using spiralcore::SPIRAL_PLUGIN_TYPE_PAIRED;
 
 static const float MAX_FREQ = 13000;

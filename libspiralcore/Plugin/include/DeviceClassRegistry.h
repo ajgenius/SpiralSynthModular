@@ -31,8 +31,8 @@ namespace spiralcore
 // What a module's SpiralPlugin_GetType export answers.
 enum
 {
-	SPIRAL_PLUGIN_TYPE_DSP = 1,
-	SPIRAL_PLUGIN_TYPE_GUI = 2,
+	SPIRAL_PLUGIN_TYPE_DEVICE = 1,
+	SPIRAL_PLUGIN_TYPE_EDITOR = 2,
 	SPIRAL_PLUGIN_TYPE_PAIRED = 3
 };
 
