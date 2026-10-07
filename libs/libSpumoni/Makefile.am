@@ -16,4 +16,9 @@ libSpumoni_a_SOURCES = \
 	include/Tar.h src/Tar.cpp \
 	include/Zip.h src/Zip.cpp
 
+check_PROGRAMS = json-test
+TESTS = $(check_PROGRAMS)
+json_test_SOURCES = tests/json.cpp
+json_test_LDADD = libSpumoni.a
+
 EXTRA_DIST = README.md

@@ -2,7 +2,11 @@
 #include "JSON.h"
 
 #include <algorithm>
+#include <cerrno>
+#include <climits>
+#include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <string>
 
 using namespace std;
@@ -82,13 +86,42 @@ namespace Spumoni
 			}
 		}
 
+		const size_t DepthLimit = 64;
+		const size_t SizeLimit = 16 * 1024 * 1024;
+
+		// The bytes of one UTF-8 encoded character at p, or 0 when they are
+		// not one (overlong forms, surrogates and anything past U+10FFFF
+		// included).
+		size_t Utf8Length(const unsigned char *p)
+		{
+			if (p[0] < 0x80) return 1;
+			size_t n;
+			unsigned long code;
+			if ((p[0] & 0xE0) == 0xC0) { n = 2; code = p[0] & 0x1F; }
+			else if ((p[0] & 0xF0) == 0xE0) { n = 3; code = p[0] & 0x0F; }
+			else if ((p[0] & 0xF8) == 0xF0) { n = 4; code = p[0] & 0x07; }
+			else return 0;
+			for (size_t i = 1; i < n; ++i)
+			{
+				if ((p[i] & 0xC0) != 0x80) return 0;
+				code = (code << 6) | (p[i] & 0x3F);
+			}
+			if ((n == 2 && code < 0x80) || (n == 3 && code < 0x800) || (n == 4 && code < 0x10000)) return 0;
+			if ((code >= 0xD800 && code <= 0xDFFF) || code > 0x10FFFF) return 0;
+			return n;
+		}
+
 		class Parser
 		{
 		public:
 			Parser(const char *text, string *error)
-				: m_P(text ? text : ""), m_Error(error)
+				: m_P(text ? text : ""), m_Error(error), m_Depth(0)
 			{
 			}
+
+			// The first byte not consumed, for the caller to check against the
+			// text's length: a NUL byte inside the text ends parsing early.
+			const char *End() const { return m_P; }
 
 			JSON *Parse()
 			{
@@ -108,6 +141,13 @@ namespace Spumoni
 		private:
 			const char *m_P;
 			string *m_Error;
+			size_t m_Depth;
+
+			bool Enter()
+			{
+				if (++m_Depth > DepthLimit) { Fail("JSON nested too deeply"); return false; }
+				return true;
+			}
 
 			bool Fail(const char *message)
 			{
@@ -156,10 +196,10 @@ namespace Spumoni
 				if (*m_P == 't')
 				{
 					if (!Literal("true")) return NULL;
-					return JSON::MakeBool(true);
+					return JSON::MakeBoolean(true);
 				}
 				if (!Literal("false")) return NULL;
-				return JSON::MakeBool(false);
+				return JSON::MakeBoolean(false);
 			}
 
 			JSON *Number()
@@ -215,7 +255,10 @@ namespace Spumoni
 					}
 					if (*m_P != '\\')
 					{
-						text.push_back(*m_P++);
+						size_t n = Utf8Length(reinterpret_cast<const unsigned char *>(m_P));
+						if (!n) { Fail("Invalid UTF-8 in string"); return NULL; }
+						text.append(m_P, n);
+						m_P += n;
 						continue;
 					}
 					++m_P;
@@ -274,10 +317,11 @@ namespace Spumoni
 			JSON *Array()
 			{
 				if (*m_P != '[') { Fail("Expected array"); return NULL; }
+				if (!Enter()) return NULL;
 				++m_P;
 				JSON *array = JSON::MakeArray();
 				Skip();
-				if (*m_P == ']') { ++m_P; return array; }
+				if (*m_P == ']') { ++m_P; --m_Depth; return array; }
 				while (*m_P)
 				{
 					JSON *item = Value();
@@ -285,7 +329,7 @@ namespace Spumoni
 					array->AppendOwned(item);
 					Skip();
 					if (*m_P == ',') { ++m_P; Skip(); continue; }
-					if (*m_P == ']') { ++m_P; return array; }
+					if (*m_P == ']') { ++m_P; --m_Depth; return array; }
 					break;
 				}
 				delete array;
@@ -296,10 +340,11 @@ namespace Spumoni
 			JSON *Object()
 			{
 				if (*m_P != '{') { Fail("Expected object"); return NULL; }
+				if (!Enter()) return NULL;
 				++m_P;
 				JSON *object = JSON::MakeObject();
 				Skip();
-				if (*m_P == '}') { ++m_P; return object; }
+				if (*m_P == '}') { ++m_P; --m_Depth; return object; }
 				while (*m_P)
 				{
 					Skip();
@@ -310,12 +355,13 @@ namespace Spumoni
 					Skip();
 					if (*m_P != ':') { delete object; Fail("Expected ':'"); return NULL; }
 					++m_P;
+					if (object->Get(name)) { delete object; Fail(("Duplicate key \"" + name + "\"").c_str()); return NULL; }
 					JSON *item = Value();
 					if (!item) { delete object; return NULL; }
 					object->SetOwned(name, item);
 					Skip();
 					if (*m_P == ',') { ++m_P; continue; }
-					if (*m_P == '}') { ++m_P; return object; }
+					if (*m_P == '}') { ++m_P; --m_Depth; return object; }
 					break;
 				}
 				delete object;
@@ -337,7 +383,7 @@ namespace Spumoni
 	}
 
 	JSON *JSON::MakeNull() { return new JSON(Null); }
-	JSON *JSON::MakeBool(bool value)
+	JSON *JSON::MakeBoolean(bool value)
 	{
 		JSON *json = new JSON(Boolean);
 		json->m_Bool = value;
@@ -373,6 +419,19 @@ namespace Spumoni
 			copy->m_Members.push_back(member);
 		}
 		return copy;
+	}
+
+	bool JSON::Integer(long &value) const
+	{
+		if (m_Type != Number || m_Text.empty()) return false;
+		for (size_t i = (m_Text[0] == '-') ? 1 : 0; i < m_Text.size(); ++i)
+			if (m_Text[i] < '0' || m_Text[i] > '9') return false;
+		errno = 0;
+		char *end = NULL;
+		long v = strtol(m_Text.c_str(), &end, 10);
+		if (errno == ERANGE || end != m_Text.c_str() + m_Text.size()) return false;
+		value = v;
+		return true;
 	}
 
 	size_t JSON::Size() const
@@ -523,15 +582,55 @@ namespace Spumoni
 		return out;
 	}
 
-	JSON *ParseJSON(const char *text, string *error)
+	JSON *ParseJSONText(const string &text, string *error)
 	{
 		if (error) error->clear();
-		if (!text) 
+		if (text.size() > SizeLimit)
 		{
-			if (error) *error = "No JSON text";
+			if (error) *error = "JSON text exceeds 16 MiB";
 			return NULL;
 		}
-		return Parser(text, error).Parse();
+		string fail;
+		Parser parser(text.c_str(), &fail);
+		JSON *value = parser.Parse();
+		if (value && parser.End() != text.c_str() + text.size())
+		{
+			delete value;
+			value = NULL;
+			fail = "NUL byte in JSON text";
+		}
+		if (!value && error) *error = fail.empty() ? "Invalid JSON" : fail;
+		return value;
+	}
+
+	JSON *ParseJSON(const char *fileName, string *error)
+	{
+		if (error) error->clear();
+		if (!fileName)
+		{
+			if (error) *error = "No JSON file name";
+			return NULL;
+		}
+		ifstream in(fileName, ios::in | ios::binary);
+		if (!in)
+		{
+			if (error) *error = string("Cannot open ") + fileName;
+			return NULL;
+		}
+		string text;
+		char buffer[65536];
+		while (in.read(buffer, sizeof buffer) || in.gcount())
+		{
+			text.append(buffer, static_cast<size_t>(in.gcount()));
+			if (text.size() > SizeLimit)
+			{
+				if (error) *error = string(fileName) + ": JSON file exceeds 16 MiB";
+				return NULL;
+			}
+		}
+		JSON *value = ParseJSONText(text, error);
+		if (!value && error) *error = string(fileName) + ": " + *error;
+		return value;
 	}
 
 }
