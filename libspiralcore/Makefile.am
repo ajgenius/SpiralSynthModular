@@ -1,18 +1,18 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
-AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include -I$(srcdir)/Plugin/include -I$(srcdir)/Audio/include
+AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include -I$(srcdir)/Plugin/include -I$(srcdir)/Audio/include -I$(srcdir)/Midi/include
 lib_LTLIBRARIES = libspiralcore.la
 libspiralcore_la_SOURCES = \
     include/Allocator.h \
     include/Finite.h \
     include/ChannelHandler.h \
-    include/Midi.h \
+    Midi/include/Midi.h \
     include/NoteTable.h \
     include/Sample.h \
     include/Types.h \
     include/NETypes.h \
     src/Allocator.cpp \
     src/ChannelHandler.cpp \
-    src/Midi.cpp \
+    Midi/src/Midi.cpp \
     src/Sample.cpp \
     include/RiffWav.h \
     src/RiffWav.cpp
@@ -43,13 +43,13 @@ libspiralcore_la_SOURCES += Plugin/include/PluginManager.h Plugin/src/PluginMana
 libspiralcore_la_SOURCES += Plugin/include/DeviceClassRegistry.h Plugin/src/DeviceClassRegistry.cpp Plugin/include/EditorClassRegistry.h Plugin/src/EditorClassRegistry.cpp
 libspiralcore_la_SOURCES += Plugin/include/SpiralPlugin.h Plugin/src/SpiralPlugin.cpp Audio/include/OutputAudioClient.h Audio/src/OutputAudioClient.cpp Audio/include/AudioTransportHub.h Audio/src/AudioTransportHub.cpp Plugin/include/OutputPlugin.h Plugin/src/OutputPlugin.cpp Plugin/include/OutputIcon.xpm
 libspiralcore_la_SOURCES += Plugin/include/BackendModule.h Audio/include/AudioBackend.h Audio/src/AudioBackend.cpp Audio/src/AudioBackends.cpp Audio/include/DummyClient.h Audio/src/DummyClient.cpp
-libspiralcore_la_SOURCES += include/MidiBackend.h src/MidiBackend.cpp include/NativeMidi.h src/NativeMidi.cpp include/ThreadCompatibility.h include/Compatibility.h
+libspiralcore_la_SOURCES += Midi/include/MidiBackend.h Midi/src/MidiBackend.cpp Midi/include/NativeMidi.h Midi/src/NativeMidi.cpp include/ThreadCompatibility.h include/Compatibility.h
 check_PROGRAMS += midi-backend-test native-midi-test midi-device-test
-midi_device_test_SOURCES = tests/midi-device.cpp
+midi_device_test_SOURCES = Midi/tests/midi-device.cpp
 midi_device_test_LDADD = libspiralcore.la
-midi_backend_test_SOURCES = tests/midi-backend.cpp
+midi_backend_test_SOURCES = Midi/tests/midi-backend.cpp
 midi_backend_test_LDADD = libspiralcore.la
-native_midi_test_SOURCES = tests/native-midi.cpp
+native_midi_test_SOURCES = Midi/tests/native-midi.cpp
 native_midi_test_LDADD = libspiralcore.la
 check_PROGRAMS += audio-backend-test
 audio_backend_test_SOURCES = Audio/tests/audio-backend.cpp
