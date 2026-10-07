@@ -5,7 +5,7 @@ dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = SmoothPlugin_DSP.la
 SmoothPlugin_DSP_la_SOURCES = SmoothPlugin.h SmoothPlugin.C
 SmoothPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
-SmoothPlugin_DSP_la_LIBADD = $(top_builddir)/GUI/Widgets/libSpiralPlugin.la $(top_builddir)/libspiralcore/libspiralcore.la -lm
+SmoothPlugin_DSP_la_LIBADD = $(top_builddir)/libspiralcore/libspiralcore.la -lm
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/SmoothPlugin_DSP.la"
 uninstall-local:

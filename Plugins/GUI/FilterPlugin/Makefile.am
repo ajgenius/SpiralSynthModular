@@ -4,7 +4,7 @@ dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = FilterPlugin_GUI.la
 FilterPlugin_GUI_la_SOURCES = FilterPluginGUI.cpp FilterPluginGUI.h
 FilterPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared
-FilterPlugin_GUI_la_LIBADD = $(top_builddir)/GUI/Widgets/libSpiralWidgets.la $(top_builddir)/GUI/Widgets/libSpiralPlugin.la $(top_builddir)/libspiralcore/libspiralcore.la $(FLTK_LIBS) -lm
+FilterPlugin_GUI_la_LIBADD = $(top_builddir)/GUI/Widgets/libSpiralWidgets.la $(top_builddir)/libspiralcore/libspiralcore.la $(FLTK_LIBS) -lm
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/FilterPlugin_GUI.la"
 uninstall-local:

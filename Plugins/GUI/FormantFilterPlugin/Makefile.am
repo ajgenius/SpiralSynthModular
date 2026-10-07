@@ -4,7 +4,7 @@ dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = FormantFilterPlugin_GUI.la
 FormantFilterPlugin_GUI_la_SOURCES = FormantFilterPluginGUI.cpp FormantFilterPluginGUI.h
 FormantFilterPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared
-FormantFilterPlugin_GUI_la_LIBADD = $(top_builddir)/GUI/Widgets/libSpiralWidgets.la $(top_builddir)/GUI/Widgets/libSpiralPlugin.la $(top_builddir)/libspiralcore/libspiralcore.la $(FLTK_LIBS) -lm
+FormantFilterPlugin_GUI_la_LIBADD = $(top_builddir)/GUI/Widgets/libSpiralWidgets.la $(top_builddir)/libspiralcore/libspiralcore.la $(FLTK_LIBS) -lm
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/FormantFilterPlugin_GUI.la"
 uninstall-local:
