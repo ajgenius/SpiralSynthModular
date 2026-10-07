@@ -15,7 +15,9 @@ libspiralcore_la_SOURCES = \
     Midi/src/Midi.cpp \
     src/Sample.cpp \
     include/RiffWav.h \
-    src/RiffWav.cpp
+    src/RiffWav.cpp \
+    include/GraphSort.h \
+    src/GraphSort.cpp
 libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 2:0:0
 libspiralcore_la_LIBADD = $(SFLIBS) $(JACK_LIBS) -lm
 
