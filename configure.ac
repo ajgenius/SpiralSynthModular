@@ -187,6 +187,11 @@ dnl add their include directory here, nowhere else.
 SPIRALCORE_CFLAGS='-I$(top_srcdir)/libspiralcore/include -I$(top_srcdir)/libspiralcore/Plugin/include -I$(top_srcdir)/libspiralcore/Audio/include -I$(top_srcdir)/libspiralcore/Midi/include'
 AC_SUBST([SPIRALCORE_CFLAGS])
 
+dnl Where editors and the host find the toolkit-side headers; groups under
+dnl GUI/ add their directory here, nowhere else.
+SPIRALGUI_CFLAGS='-I$(top_srcdir)/GUI/Widgets'
+AC_SUBST([SPIRALGUI_CFLAGS])
+
 AC_ARG_ENABLE([pipewire],
     AS_HELP_STRING([--disable-pipewire], [Do not build the optional C++11 PipeWire audio module]),
     [enable_output_pipewire="$enableval"], [enable_output_pipewire="yes"])
