@@ -44,6 +44,7 @@ public:
 	
 private:
 	void ListAudioClients();
+	void ListMidiBackends();
 	SynthModular *m_App;
 	
 	Fl_Pack      *m_Options;
@@ -53,6 +54,7 @@ private:
 	Fl_Int_Input *m_Samplerate;	
 	Fl_Choice    *m_AudioClient;
 	Fl_Input     *m_OutputDevice;
+	Fl_Choice    *m_MidiBackend;
 	Fl_Input     *m_MidiDevice;
 	Fl_Button    *m_Save;	
 	Fl_Button    *m_Apply;
