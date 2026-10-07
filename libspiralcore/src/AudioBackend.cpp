@@ -19,7 +19,7 @@ namespace spiralcore
 			m_Singleton= new AudioBackendRegistry;
 			RegisterBuiltinAudioBackends(m_Singleton);
 		}
-		PluginLoader::Get()->RegisterKind(m_Singleton);
+		PluginManager::Get()->RegisterKind(m_Singleton);
 		return m_Singleton;
 	}
 	void AudioBackendRegistry::PackUpAndGoHome()
@@ -27,7 +27,7 @@ namespace spiralcore
 		if (!m_Singleton || !m_Singleton->CanUnload())
 			return;
 
-		PluginLoader::Get()->UnregisterKind(m_Singleton);
+		PluginManager::Get()->UnregisterKind(m_Singleton);
 		delete m_Singleton;
 		m_Singleton= NULL;
 	}
@@ -48,7 +48,7 @@ namespace spiralcore
 	}
 	unsigned AudioBackendRegistry::LoadModules(const std::string &root)
 	{
-		return PluginLoader::Get()->Load(*this, root);
+		return PluginManager::Get()->Load(*this, root);
 	}
 	bool AudioBackendRegistry::Accept(void *entry, const std::string &)
 	{

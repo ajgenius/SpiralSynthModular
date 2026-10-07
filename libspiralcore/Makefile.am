@@ -49,7 +49,7 @@ EXTRA_DIST += README.ssm AUDIO-TRANSPORT.md
 
 libspiralcore_la_SOURCES += include/AudioClient.h
 
-libspiralcore_la_SOURCES += include/PluginLoader.h src/PluginLoader.cpp
+libspiralcore_la_SOURCES += include/PluginManager.h src/PluginManager.cpp
 libspiralcore_la_SOURCES += include/BackendModule.h include/AudioBackend.h src/AudioBackend.cpp src/AudioBackends.cpp include/DummyClient.h src/DummyClient.cpp
 libspiralcore_la_SOURCES += include/MidiBackend.h src/MidiBackend.cpp include/NativeMidi.h src/NativeMidi.cpp include/ThreadCompatibility.h include/Compatibility.h
 check_PROGRAMS += midi-backend-test native-midi-test midi-device-test
@@ -62,33 +62,33 @@ native_midi_test_LDADD = libspiralcore.la
 check_PROGRAMS += audio-backend-test
 audio_backend_test_SOURCES = tests/audio-backend.cpp
 audio_backend_test_LDADD = libspiralcore.la
-check_PROGRAMS += plugin-loader-test
-plugin_loader_test_SOURCES = tests/plugin-loader.cpp
-plugin_loader_test_LDADD = libspiralcore.la
+check_PROGRAMS += plugin-manager-test
+plugin_manager_test_SOURCES = tests/plugin-manager.cpp
+plugin_manager_test_LDADD = libspiralcore.la
 check_LTLIBRARIES = probe_Probe.la sub_Probe.la stranger_Probe.la probe_Audio.la probe_Midi.la
-probe_Midi_la_SOURCES = tests/plugin-loader/midi.cpp
+probe_Midi_la_SOURCES = tests/plugin-manager/midi.cpp
 probe_Midi_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
-probe_Audio_la_SOURCES = tests/plugin-loader/audio.cpp
+probe_Audio_la_SOURCES = tests/plugin-manager/audio.cpp
 probe_Audio_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
-probe_Probe_la_SOURCES = tests/plugin-loader/probe.cpp
+probe_Probe_la_SOURCES = tests/plugin-manager/probe.cpp
 probe_Probe_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
-sub_Probe_la_SOURCES = tests/plugin-loader/probe.cpp
+sub_Probe_la_SOURCES = tests/plugin-manager/probe.cpp
 sub_Probe_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
-stranger_Probe_la_SOURCES = tests/plugin-loader/stranger.cpp
+stranger_Probe_la_SOURCES = tests/plugin-manager/stranger.cpp
 stranger_Probe_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
 # The test root: probe/probe_Probe.so, probe/sub/sub_Probe.so, probe/stranger_Probe.so
-plugin-loader-root: $(check_LTLIBRARIES)
-	rm -rf plugin-loader-root
-	$(MKDIR_P) plugin-loader-root/probe/sub plugin-loader-root/audio plugin-loader-root/midi
-	cp .libs/probe_Audio.so plugin-loader-root/audio/
-	cp .libs/probe_Midi.so plugin-loader-root/midi/
-	cp .libs/probe_Probe.so plugin-loader-root/probe/
-	cp .libs/sub_Probe.so plugin-loader-root/probe/sub/
-	cp .libs/stranger_Probe.so plugin-loader-root/probe/
-check_DATA = plugin-loader-root
-TESTS_ENVIRONMENT = PLUGIN_LOADER_ROOT=$(abs_builddir)/plugin-loader-root
+plugin-manager-root: $(check_LTLIBRARIES)
+	rm -rf plugin-manager-root
+	$(MKDIR_P) plugin-manager-root/probe/sub plugin-manager-root/audio plugin-manager-root/midi
+	cp .libs/probe_Audio.so plugin-manager-root/audio/
+	cp .libs/probe_Midi.so plugin-manager-root/midi/
+	cp .libs/probe_Probe.so plugin-manager-root/probe/
+	cp .libs/sub_Probe.so plugin-manager-root/probe/sub/
+	cp .libs/stranger_Probe.so plugin-manager-root/probe/
+check_DATA = plugin-manager-root
+TESTS_ENVIRONMENT = PLUGIN_MANAGER_ROOT=$(abs_builddir)/plugin-manager-root
 clean-local:
-	rm -rf plugin-loader-root
+	rm -rf plugin-manager-root
 
 libspiralcore_la_SOURCES += src/RingBuffer.cpp include/RingBuffer.h src/CommandRingBuffer.cpp include/CommandRingBuffer.h
 check_PROGRAMS += ring-buffer-test

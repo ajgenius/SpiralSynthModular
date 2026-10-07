@@ -12,7 +12,7 @@
 #include <vector>
 #include <map>
 #include "BackendModule.h"
-#include "PluginLoader.h"
+#include "PluginManager.h"
 // Xlib defines Status as a macro, and FLTK's drawing headers bring Xlib
 // in. The MIDI status byte and a backend's status keep their names; the
 // macro is set aside while they are declared and restored after, so the
