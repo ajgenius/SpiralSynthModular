@@ -182,6 +182,11 @@ AC_SUBST([CORE_AUDIO_LIBS])
 AM_CONDITIONAL([HAVE_CORE_AUDIO_CLIENT], [test "$have_coreaudio" = yes])
 AC_MSG_NOTICE([Native CoreAudio client: $have_coreaudio])
 
+dnl Where consumers find libspiralcore's headers. Groups inside the library
+dnl add their include directory here, nowhere else.
+SPIRALCORE_CFLAGS='-I$(top_srcdir)/libspiralcore/include'
+AC_SUBST([SPIRALCORE_CFLAGS])
+
 AC_ARG_ENABLE([pipewire],
     AS_HELP_STRING([--disable-pipewire], [Do not build the optional C++11 PipeWire audio module]),
     [enable_output_pipewire="$enableval"], [enable_output_pipewire="yes"])

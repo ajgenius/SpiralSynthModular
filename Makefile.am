@@ -4,7 +4,7 @@ SUBDIRS = JSON libspiralcore GUI Plugins
 AM_CPPFLAGS =                                              \
                 $(FLTK_CXXFLAGS)                        \
                 -I$(top_srcdir)/GUI/Widgets           \
-                -I$(top_srcdir)/libspiralcore/include
+                $(SPIRALCORE_CFLAGS)
 
 SpiralSynthModular_LDADD = 							\
 	$(FLTK_LIBS) $(MIDI_LIBS)					\

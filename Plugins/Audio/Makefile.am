@@ -26,7 +26,7 @@ SUBDIRS += OSS
 MODULE_DIRS += OSS
 endif
 
-AM_CPPFLAGS = -I$(top_srcdir)/libspiralcore/include
+AM_CPPFLAGS = $(SPIRALCORE_CFLAGS)
 check_PROGRAMS = audio-modules-test
 TESTS = tests/modules.sh
 audio_modules_test_SOURCES = tests/modules.cpp
