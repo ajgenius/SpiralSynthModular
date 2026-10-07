@@ -43,6 +43,11 @@
 #include "OutputPluginGUI.h"
 #include "SpiralInfo.h"
 #include "SpiralPluginGUI.h"
+#ifdef HAVE_YAJL
+#include "JSONParser.h"
+#include "PositionalReader.h"
+#endif
+#include <iterator>
 #include "GUI/SSM.xpm"
 #include "GUI/load.xpm"
 #include "GUI/save.xpm"
@@ -61,6 +66,58 @@ const static string LABEL = "SpiralSynthModular "+VER_STRING;
 static string TITLEBAR;
 
 static const int FILE_VERSION = 4;
+
+#ifdef HAVE_YAJL
+// The contract the file reader decodes a device's state under: loaded once,
+// from SSM_SCHEMA_DIR or the built tree's schemas. Without it a device reads
+// the stream itself, as it always has.
+static spiralcore::PositionalReader *ContractReader()
+{
+	static bool tried = false;
+	static spiralcore::PositionalReader *reader = NULL;
+	if (!tried)
+	{
+		tried = true;
+		const char *env = getenv("SSM_SCHEMA_DIR");
+		string dir = env ? env : SPIRALCORE_SCHEMA_DIR;
+		string error;
+		SpiralJSON::JSONValue *contract = SpiralJSON::ParseJSON((dir + "/SpiralPositionalText-0.2.x.json").c_str(), false, &error);
+		SpiralJSON::JSONValue *history = contract ? SpiralJSON::ParseJSON((dir + "/SpiralPositionalText.history.json").c_str(), false, &error) : NULL;
+		if (contract)
+			reader = new spiralcore::PositionalReader(*contract, history);
+		else
+			cerr << "SpiralSynthModular: no file contract in " << dir << ": " << error << endl;
+	}
+	return reader;
+}
+#endif
+
+// The device line of a patch: the device's state, as the contract finds it
+// in the file's text, replayed to the plugin's StreamIn (its Apply, once it
+// has one); the stream carries on after the state. With no text (paste) or
+// no contract for it, the plugin reads the stream itself as before.
+static void StreamDeviceIn(iostream &s, const string &text, int PluginID, SpiralPlugin *plugin)
+{
+#ifdef HAVE_YAJL
+	spiralcore::PositionalReader *reader = text.empty() ? NULL : ContractReader();
+	if (reader)
+	{
+		spiralcore::Description state;
+		size_t at = s.tellg(), consumed = 0;
+		string error;
+		if (reader->ReadState(PluginID, text, at, state, consumed, error))
+		{
+			stringstream replay;
+			state.Write(replay);
+			plugin->StreamIn(replay);
+			s.seekg(at + consumed);
+			return;
+		}
+		cerr << "Device " << PluginID << " state is not under the contract (" << error << "); the plugin reads it" << endl;
+	}
+#endif
+	plugin->StreamIn(s);
+}
 static int Numbers[512];
 
 static const int MAIN_WIDTH     = 700;
@@ -964,6 +1021,16 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 	string dummy,dummy2;		
 	int ver;
 
+	// The file as text, for the contract to find each device's state in.
+	string text;
+	if (!paste)
+	{
+		streampos here = s.tellg();
+		text.assign(istreambuf_iterator<char>(s), istreambuf_iterator<char>());
+		s.clear();
+		s.seekg(here);
+	}
+
 	if (paste)
 	{
 		m_Copied.devices>>has_file_path;
@@ -1111,7 +1178,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 
 				temp->m_Device->SetUpdateInfoCallback(ID,cb_UpdatePluginInfo);
 				m_DeviceWinMap[ID]=temp;
-				m_DeviceWinMap[ID]->m_Device->StreamIn(s); // load the plugin
+				StreamDeviceIn(s, text, PluginID, m_DeviceWinMap[ID]->m_Device); // load the plugin
 
 				// load external files
 				if (paste || merge)

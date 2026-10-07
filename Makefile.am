@@ -5,6 +5,10 @@ AM_CPPFLAGS =                                              \
                 $(FLTK_CXXFLAGS)                        \
                 $(SPIRALGUI_CFLAGS)           \
                 $(SPIRALCORE_CFLAGS)
+if HAVE_YAJL
+# The file contract: the host hands each device its own state under it.
+AM_CPPFLAGS += -DHAVE_YAJL -I$(top_srcdir)/JSON $(YAJL_CFLAGS) -DSPIRALCORE_SCHEMA_DIR='"$(abs_top_srcdir)/libspiralcore/File/schemas"'
+endif
 
 SpiralSynthModular_LDADD = 							\
 	$(FLTK_LIBS) $(MIDI_LIBS)					\
