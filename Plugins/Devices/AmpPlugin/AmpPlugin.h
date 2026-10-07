@@ -29,7 +29,7 @@ public:
 
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void Execute();
-	virtual void StreamOut(std::ostream &s);
+	virtual void Describe(spiralcore::Description &d);
 	virtual void StreamIn(std::istream &s);
 
 	// has to be defined in the plugin
@@ -42,9 +42,9 @@ public:
 private:
 	float m_Gain, m_DC;
 	friend std::istream &operator>>(std::istream &s, AmpPlugin &o);
-	friend std::ostream &operator<<(std::ostream &s, AmpPlugin &o);
+	friend spiralcore::Description &Describe(spiralcore::Description &d, AmpPlugin &o);
 };
 std::istream &operator>>(std::istream &s, AmpPlugin &o);
-std::ostream &operator<<(std::ostream &s, AmpPlugin &o);
+spiralcore::Description &Describe(spiralcore::Description &d, AmpPlugin &o);
 
 #endif

@@ -238,9 +238,9 @@ void FormantFilterPlugin::Clear()
 	}
 }
 	
-void FormantFilterPlugin::StreamOut(ostream &s)
+void FormantFilterPlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<" "<<m_Vowel<<" ";
+	d.Value(m_Version).Separator(" ").Value(m_Vowel).Separator(" ");
 }
 
 void FormantFilterPlugin::StreamIn(istream &s)

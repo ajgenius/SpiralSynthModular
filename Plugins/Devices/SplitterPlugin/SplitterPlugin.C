@@ -171,9 +171,9 @@ void SplitterPlugin::ExecuteCommands ()
 	}
 }
 
-void SplitterPlugin::StreamOut (ostream &s) 
+void SplitterPlugin::Describe(spiralcore::Description &d) 
 {
-	s << m_Version << " " << GetChannelCount() << " ";
+	d.Value(m_Version).Separator(" ").Value(GetChannelCount()).Separator(" ");
 }
 
 void SplitterPlugin::StreamIn (istream &s) 

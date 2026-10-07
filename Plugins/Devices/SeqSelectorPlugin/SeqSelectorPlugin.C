@@ -194,10 +194,10 @@ void SeqSelectorPlugin::ExecuteCommands()
 	}
 }
 
-void SeqSelectorPlugin::StreamOut(ostream &s)
+void SeqSelectorPlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<" ";
-	s<<m_Lines.size()<<" ";
+	d.Value(m_Version).Separator(" ");
+	d.Value(m_Lines.size()).Separator(" ");
 	
 	if (m_Lines.size()>0)
 	{
@@ -206,7 +206,7 @@ void SeqSelectorPlugin::StreamOut(ostream &s)
 		{
 			for (int n=0; n<NUM_VALUES; n++)
 			{
-				s<<i->Value[n]<<" ";
+				d.Value(i->Value[n]).Separator(" ");
 			}
 		}
 	}

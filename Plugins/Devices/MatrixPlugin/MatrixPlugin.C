@@ -425,28 +425,28 @@ bool MatrixPlugin::CanTransposeUp()
      return true;
 }
 
-void MatrixPlugin::StreamOut(ostream &s)
+void MatrixPlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<" ";
-	s<<m_Current<<" "<<m_Time<<" "<<m_Step<<" "<<m_Loop<<" "<<m_NoteCut<<" "<<endl;
+	d.Value(m_Version).Separator(" ");
+	d.Value(m_Current).Separator(" ").Value(m_Time).Separator(" ").Value(m_Step).Separator(" ").Value(m_Loop).Separator(" ").Value(m_NoteCut).Separator(" ").Line();
 
 	for (int n=0; n<NUM_PATTERNS; n++)
 	{
-		s<<m_Matrix[n].Length<<" "<<m_Matrix[n].Speed<<" "<<m_Matrix[n].Octave<<endl;
+		d.Value(m_Matrix[n].Length).Separator(" ").Value(m_Matrix[n].Speed).Separator(" ").Value(m_Matrix[n].Octave).Line();
 
 		for (int y=0; y<MATY; y++)
 		{
 			for (int x=0; x<MATX; x++)
 			{
-				if (m_Matrix[n].Matrix[x][y]) s<<x<<" "<<y<<"  "<<m_Matrix[n].Volume[x][y]<<" ";
+				if (m_Matrix[n].Matrix[x][y]) d.Value(x).Separator(" ").Value(y).Separator("  ").Value(m_Matrix[n].Volume[x][y]).Separator(" ");
 			}
 		}
-		s<<"-1 ";
+		d.Value("-1").Separator(" ");
 	}
-	s<<endl;
+	d.Line();
 	for (int n=0; n<NUM_PATSEQ; n++)
 	{
-		s<<m_PatSeq[n]<<" ";
+		d.Value(m_PatSeq[n]).Separator(" ");
 	}
 
 }

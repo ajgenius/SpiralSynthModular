@@ -29,7 +29,7 @@ class MeterPlugin : public SpiralPlugin {
     virtual void Execute();
     virtual void Reset();
     virtual void ExecuteCommands();
-    virtual void StreamOut (std::ostream &s);
+    virtual void Describe(spiralcore::Description &d);
     virtual void StreamIn (std::istream &s);
     int GetVUMode (void) { return m_VUMode; }
     enum GUICommands {NONE, SETVU, SETMM, UPDATEDATASIZE};

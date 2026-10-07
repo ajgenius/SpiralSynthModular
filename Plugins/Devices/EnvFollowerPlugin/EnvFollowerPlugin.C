@@ -115,10 +115,10 @@ void EnvFollowerPlugin::Execute()
 	}
 }
 
-void EnvFollowerPlugin::StreamOut(ostream &s) 
+void EnvFollowerPlugin::Describe(spiralcore::Description &d) 
 {
-	s<<m_Version<<" ";
-	s<<m_Attack<<" "<<m_Decay;
+	d.Value(m_Version).Separator(" ");
+	d.Value(m_Attack).Separator(" ").Value(m_Decay);
 }
 
 void EnvFollowerPlugin::StreamIn(istream &s)

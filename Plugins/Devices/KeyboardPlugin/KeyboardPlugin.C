@@ -117,9 +117,9 @@ void  KeyboardPlugin::ExecuteCommands()
 	}
 }
 
-void KeyboardPlugin::StreamOut(ostream &s) 
+void KeyboardPlugin::Describe(spiralcore::Description &d) 
 {
-	s<<m_Version<<endl;
+	d.Value(m_Version).Line();
 }
 
 void KeyboardPlugin::StreamIn(istream &s) 

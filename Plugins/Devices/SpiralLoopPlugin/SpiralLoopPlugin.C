@@ -247,15 +247,15 @@ void SpiralLoopPlugin::ExecuteCommands()
 	}
 }
 
-void SpiralLoopPlugin::StreamOut(ostream &s)
+void SpiralLoopPlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<" "; 
-	s<<m_LoopPoint<<" "<<m_Speed<<" "<<m_Volume<<" "<<m_TicksPerLoop<<" ";
-	s<<m_TriggerVec.size()<<" ";
+	d.Value(m_Version).Separator(" "); 
+	d.Value(m_LoopPoint).Separator(" ").Value(m_Speed).Separator(" ").Value(m_Volume).Separator(" ").Value(m_TicksPerLoop).Separator(" ");
+	d.Value(m_TriggerVec.size()).Separator(" ");
 	for (vector<TriggerInfo>::iterator i=m_TriggerVec.begin();
 		 i!=m_TriggerVec.end(); i++)
 	{
-		s<<i->Channel<<" "<<i->Time<<" ";
+		d.Value(i->Channel).Separator(" ").Value(i->Time).Separator(" ");
 	}
 }
 

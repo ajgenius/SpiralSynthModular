@@ -45,7 +45,7 @@ public:
 	virtual void Execute();
 	virtual void Reset();
 	virtual void ExecuteCommands();
-	virtual void StreamOut(std::ostream &s);
+	virtual void Describe(spiralcore::Description &d);
 	virtual void StreamIn(std::istream &s);
 		
 	bool  GetNoteCut()               { return m_NoteCut; }
