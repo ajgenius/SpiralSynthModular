@@ -1,7 +1,7 @@
 AM_CPPFLAGS = -I$(top_srcdir)                                              \
                 $(FLTK_CXXFLAGS)                        \
                 -I$(top_srcdir)/GUI/Widgets           \
-                -I$(top_srcdir)/libspiralcore/include \
+                $(SPIRALCORE_CFLAGS) \
                 $(PORTAUDIO_CFLAGS) $(ALSA_CFLAGS)
 
 EXTRA_DIST = 				\

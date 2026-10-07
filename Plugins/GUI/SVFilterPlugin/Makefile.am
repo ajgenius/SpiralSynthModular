@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/libspiralcore/include -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/SVFilterPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
+AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/SVFilterPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
 plugindir = @PLUGINDIR@/gui/SVFilterPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = SVFilterPlugin_GUI.la

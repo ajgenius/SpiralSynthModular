@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = subdir-objects
-AM_CPPFLAGS = -I$(top_srcdir)/libspiralcore/include -I$(top_builddir) $(ALSA_CFLAGS)
+AM_CPPFLAGS = $(SPIRALCORE_CFLAGS) -I$(top_builddir) $(ALSA_CFLAGS)
 plugindir = @PLUGINDIR@/audio/ALSA
 plugin_LTLIBRARIES = ALSA_Audio.la
 ALSA_Audio_la_SOURCES = AlsaClient.h AlsaClient.cpp Module.cpp AlsaAtomicClock.cpp AlsaAtomicClock.h

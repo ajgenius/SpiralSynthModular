@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_srcdir)/libspiralcore/include -I$(top_builddir) $(JACK_MIDI_CFLAGS)
+AM_CPPFLAGS = $(SPIRALCORE_CFLAGS) -I$(top_builddir) $(JACK_MIDI_CFLAGS)
 
 plugindir = @PLUGINDIR@/midi/JACK
 plugin_LTLIBRARIES = JACK_Midi.la
