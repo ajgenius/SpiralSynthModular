@@ -21,8 +21,20 @@
 
 #include <string>
 #include <vector>
-#include "SpiralPlugin.h"
 #include "PluginLoader.h"
+
+class SpiralPlugin;
+
+namespace spiralcore
+{
+
+// What a module's SpiralPlugin_GetType export answers.
+enum
+{
+	SPIRAL_PLUGIN_TYPE_DSP = 1,
+	SPIRAL_PLUGIN_TYPE_GUI = 2,
+	SPIRAL_PLUGIN_TYPE_PAIRED = 3
+};
 
 /* The DSP half of the paired slot (0.3.1 split), one per plugin ID. A
    module's is read from its exports when the loader accepts it; a
@@ -50,7 +62,7 @@ struct DeviceClass
    is the instance factory, and the identity beside it (ID, type, name,
    category, icon, host ABI) is the old export set, read back through the
    module until modules carry a descriptor. */
-class DeviceClassRegistry : public spiralcore::PluginKind
+class DeviceClassRegistry : public PluginKind
 {
 public:
 	static DeviceClassRegistry *Get();
@@ -77,5 +89,7 @@ private:
 	std::vector<DeviceClass*> m_PluginVec;
 	static DeviceClassRegistry *m_Singleton;
 };
+
+}
 
 #endif
