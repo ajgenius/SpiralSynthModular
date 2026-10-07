@@ -39,7 +39,7 @@ const char *SpiralPlugin_GetHostABI()
 
 int SpiralPlugin_GetType()
 {
-	return SPIRAL_PLUGIN_TYPE_DSP;
+	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
 

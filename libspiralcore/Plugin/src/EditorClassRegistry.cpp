@@ -92,7 +92,7 @@ bool EditorClassRegistry::Accept(void *entry, const string &path)
 		return false;
 	}
 
-	if (!GetID || !GetType || GetType() != SPIRAL_PLUGIN_TYPE_GUI)
+	if (!GetID || !GetType || GetType() != SPIRAL_PLUGIN_TYPE_EDITOR)
 	{
 		cerr << "Obsolete or invalid plugin module: " << path << endl;
 		return false;
