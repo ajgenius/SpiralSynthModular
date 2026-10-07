@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// A small JSON DOM for Spumoni manifests. C++03. Numbers keep the lexeme
-// they were parsed with; object keys are sorted when stringified.
+// A small JSON DOM, C++03: Spumoni's manifests and whatever else in the
+// tree reads or writes JSON. Numbers keep the lexeme they were parsed
+// with; object keys are sorted when stringified. The reader is strict:
+// duplicate keys, invalid UTF-8, a NUL byte, more than 64 nested
+// containers or more than 16 MiB are refused.
 #ifndef SPUMONI_JSON_H
 #define SPUMONI_JSON_H
 
@@ -25,7 +28,7 @@ namespace Spumoni
 		};
 
 		static JSON *MakeNull();
-		static JSON *MakeBool(bool value);
+		static JSON *MakeBoolean(bool value);
 		static JSON *MakeNumber(const std::string &lexeme);
 		static JSON *MakeString(const std::string &text);
 		static JSON *MakeArray();
@@ -35,13 +38,18 @@ namespace Spumoni
 		JSON *Duplicate() const;
 
 		Type GetType() const { return m_Type; }
-		bool Bool() const { return m_Bool; }
+		bool AsBool() const { return m_Bool; }   // X11's Bool macro breaks Bool() under FLTK
+		// A Number whose lexeme is a whole number long can hold; value is
+		// untouched otherwise.
+		bool Integer(long &value) const;
 		const std::string &Text() const { return m_Text; }
 		size_t Size() const;
 		const JSON *At(size_t index) const;
 		JSON *At(size_t index);
 		const JSON *Get(const char *key) const;
 		JSON *Get(const char *key);
+		const JSON *Get(const std::string &key) const { return Get(key.c_str()); }
+		JSON *Get(const std::string &key) { return Get(key.c_str()); }
 		std::vector<std::string> Keys() const;
 
 		// Takes ownership of value, including when this is not an object
@@ -87,9 +95,12 @@ namespace Spumoni
 		std::auto_ptr<JSON> m_Value;
 	};
 
-	// Parse one JSON value. Trailing whitespace is allowed; anything else
-	// fails. On failure returns NULL and, when error is not NULL, sets it.
-	JSON *ParseJSON(const char *text, std::string *error);
+	// Parse one JSON value, the whole text. Trailing whitespace is allowed;
+	// anything else fails. On failure returns NULL and, when error is not
+	// NULL, sets it. Delete the returned root once; Get and At are borrowed.
+	JSON *ParseJSONText(const std::string &text, std::string *error = NULL);
+	// The same for a file's bytes.
+	JSON *ParseJSON(const char *fileName, std::string *error = NULL);
 
 }
 

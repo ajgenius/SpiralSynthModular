@@ -272,7 +272,7 @@ namespace Spumoni
 		string metadata;
 		if (!folder.Read(m_Layout.MetadataName, metadata, error))
 			return false;
-		JSONOwner root(ParseJSON(metadata.c_str(), &error));
+		JSONOwner root(ParseJSONText(metadata, &error));
 		if (!root.get() || root->GetType() != J::Object)
 		{
 			error = "Invalid application metadata: " + m_Layout.MetadataName;
@@ -288,7 +288,7 @@ namespace Spumoni
 		Identity &identity, string &branchRoot, string &error) const
 	{
 		string parseError;
-		JSONOwner storage(ParseJSON(text.c_str(), &parseError));
+		JSONOwner storage(ParseJSONText(text, &parseError));
 		if(!storage.get()){error=parseError.empty()?"Cannot read package manifest":parseError;return false;}
 		const J &root=*storage.get();
 		if(root.GetType()!=J::Object){error="Not a package manifest";return false;}
