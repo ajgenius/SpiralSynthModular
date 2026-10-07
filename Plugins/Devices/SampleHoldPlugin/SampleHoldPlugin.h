@@ -32,7 +32,7 @@ public:
 	virtual void		Reset();
 
 	virtual void	    Describe(spiralcore::Description &d) {}
-	virtual void	    StreamIn(std::istream &s) {}
+	virtual void	    Apply(spiralcore::Description::Reader &r) {}
 	
 private:
 	float	m_val;

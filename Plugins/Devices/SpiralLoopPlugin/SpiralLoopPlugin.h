@@ -57,7 +57,7 @@ public:
 
 	virtual void ExecuteCommands();
 	virtual void Describe(spiralcore::Description &d);
-	virtual void StreamIn(std::istream &s);
+	virtual void Apply(spiralcore::Description::Reader &r);
 	virtual bool SaveExternalFiles(const std::string &Dir);
 	virtual void LoadExternalFiles(const std::string &Dir, int withID=-1);
 	

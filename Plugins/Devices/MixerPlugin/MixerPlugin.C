@@ -178,15 +178,15 @@ void MixerPlugin::Describe(spiralcore::Description &d) {
      for (int n=0; n<m_NumChannels; n++) d.Value(m_ChannelVal[n]).Separator(" ");
 }
 
-void MixerPlugin::StreamIn (istream &s) {
+void MixerPlugin::Apply(spiralcore::Description::Reader &r) {
      int version, chans;
-     s >> version;
+     r.Value(version);
      switch (version) {
        case 1: // needs default number of channels
                break;
-       case 2: s >> chans;
+       case 2: r.Value(chans);
                SetChannels (chans);
                break;
      }
-     for (int n=0; n<m_NumChannels; n++) s >> m_ChannelVal[n];
+     for (int n=0; n<m_NumChannels; n++) r.Value(m_ChannelVal[n]);
 }

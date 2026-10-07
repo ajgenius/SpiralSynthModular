@@ -176,12 +176,12 @@ void FlipflopPlugin::Describe(spiralcore::Description &d)
 	d.Value(m_TriggerTime).Separator(" ").Value(m_Monostable).Separator(" ").Line();
 }
 
-void FlipflopPlugin::StreamIn(istream &s) 
+void FlipflopPlugin::Apply(spiralcore::Description::Reader &r) 
 {
 	int version;
-	s>>version;
+	r.Value(version);
 	if (version>1)
 	{
-		s>>m_TriggerTime>>m_Monostable;
+		r.Value(m_TriggerTime).Value(m_Monostable);
 	}
 }

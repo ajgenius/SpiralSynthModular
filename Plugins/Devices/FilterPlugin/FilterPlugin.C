@@ -208,11 +208,11 @@ void FilterPlugin::Describe(spiralcore::Description &d)
 	d.Value(m_Version).Separator(" ").Value(fc).Separator(" ").Value(Q).Separator(" ").Value(m_RevCutoffMod).Separator(" ").Value(m_RevResonanceMod).Separator(" ");
 }
 
-void FilterPlugin::StreamIn(istream &s)
+void FilterPlugin::Apply(spiralcore::Description::Reader &r)
 {	
 	int version;
-	s>>version;
-	s>>fc>>Q>>m_RevCutoffMod>>m_RevResonanceMod;
+	r.Value(version);
+	r.Value(fc).Value(Q).Value(m_RevCutoffMod).Value(m_RevResonanceMod);
 }
 
 void FilterPlugin::SetupCoeffs()

@@ -155,9 +155,9 @@ void DelayPlugin::Describe(spiralcore::Description &d)
 	d.Value(m_Version).Separator(" ").Value(m_Delay).Separator(" ").Value(m_Mix).Separator(" ");
 }
 
-void DelayPlugin::StreamIn(istream &s)
+void DelayPlugin::Apply(spiralcore::Description::Reader &r)
 {	
 	int version;
-	s>>version;
-	s>>m_Delay>>m_Mix;
+	r.Value(version);
+	r.Value(m_Delay).Value(m_Mix);
 }

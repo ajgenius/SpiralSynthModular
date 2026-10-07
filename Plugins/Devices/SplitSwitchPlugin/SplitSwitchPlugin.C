@@ -172,9 +172,9 @@ void SplitSwitchPlugin::Describe(spiralcore::Description &d) {
   d.Value(m_Version).Separator(" ").Value(m_PluginInfo.NumOutputs - 1).Separator(" ").Value(m_SwitchPos).Separator(" ");
 }
 
-void SplitSwitchPlugin::StreamIn (istream &s) {
+void SplitSwitchPlugin::Apply(spiralcore::Description::Reader &r) {
   int Version, Chans, SwitchPos;
-  s >> Version >> Chans >> SwitchPos;
+  r.Value(Version).Value(Chans).Value(SwitchPos);
   SetChans (Chans);
   m_SwitchPos = SwitchPos;
 }

@@ -137,11 +137,11 @@ void TrigPlugin::Describe(spiralcore::Description &d)
 	d.Value((int)m_Operator).Separator(" ");
 }
 
-void TrigPlugin::StreamIn(istream &s)
+void TrigPlugin::Apply(spiralcore::Description::Reader &r)
 {
 	int version;
-	s>>version;
+	r.Value(version);
 	int t;
-	s>>t;
+	r.Value(t);
 	m_Operator=(OperatorType)t;
 }

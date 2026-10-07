@@ -169,15 +169,15 @@ void SVFilterPlugin::Describe(spiralcore::Description &d) {
      d.Value(m_Version).Separator(" ").Value(Cutoff).Separator(" ").Value(Resonance).Separator(" ");
 }
 
-void SVFilterPlugin::StreamIn (istream &s) {
+void SVFilterPlugin::Apply(spiralcore::Description::Reader &r) {
      int version;
      double dummy;
-     s >> version;
+     r.Value(version);
      switch (version) {
-       case 1: // s >> fc >> q;
-               s >> dummy >> dummy;
+       case 1: // r.Value(fc).Value(q);
+               r.Value(dummy).Value(dummy);
                break;
-       case 2: s >> Cutoff >> Resonance;
+       case 2: r.Value(Cutoff).Value(Resonance);
                break;
      }
 }

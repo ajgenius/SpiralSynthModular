@@ -239,10 +239,10 @@ void ControllerPlugin::Describe(spiralcore::Description &d)
 	}
 }
 
-void ControllerPlugin::StreamIn(istream &s)
+void ControllerPlugin::Apply(spiralcore::Description::Reader &r)
 {
 	int version;
-	s>>version;
+	r.Value(version);
 
 	switch (version)
 	{
@@ -250,23 +250,16 @@ void ControllerPlugin::StreamIn(istream &s)
 		{
 			Clear();
 
-			s>>m_Num;
+			r.Value(m_Num);
 			string name;
 			for (int n=0; n<m_Num; n++)
 			{
-				char Buf[4096];
 				int size,dummy;
-				s>>size;
-				s.ignore(1);
-				if (size > 0) {
-					s.get(Buf,size+1);
-					m_Names[n]=Buf;
-				} else {
-					m_Names[n] = "";
-				}
-				s>>m_MinVal[n];
-				s>>m_MaxVal[n];
-				s>>m_ChannelVal[n];
+				r.Value(size);
+				r.Value(m_Names[n]);   // the counted bytes, one value, "" for size 0
+				r.Value(m_MinVal[n]);
+				r.Value(m_MaxVal[n]);
+				r.Value(m_ChannelVal[n]);
 			}
 
 		// add the channels one by one
@@ -285,14 +278,14 @@ void ControllerPlugin::StreamIn(istream &s)
 		{
 			Clear();
 
-			s>>m_Num;
+			r.Value(m_Num);
 			string name;
 			for (int n=0; n<m_Num; n++)
 			{
-				s>>m_Names[n];
-				s>>m_MinVal[n];
-				s>>m_MaxVal[n];
-				s>>m_ChannelVal[n];
+				r.Value(m_Names[n]);
+				r.Value(m_MinVal[n]);
+				r.Value(m_MaxVal[n]);
+				r.Value(m_ChannelVal[n]);
 			}
 
 		// add the channels one by one
@@ -311,26 +304,24 @@ void ControllerPlugin::StreamIn(istream &s)
 		{
 			Clear();
 
-			s>>m_Num;
+			r.Value(m_Num);
 
 			for (int n=0; n<m_Num; n++)
 			{
-				s>>m_ChannelVal[n];
+				r.Value(m_ChannelVal[n]);
 			}
 
 			char Buf[4096];
 			int size,dummy;
-			s>>dummy;
-			s>>m_Num;
+			r.Value(dummy);
+			r.Value(m_Num);
 			for (int n=0; n<m_Num; n++)
 			{
-				s>>size;
-				s.ignore(1);
-				s.get(Buf,size+1);
-				m_Names[n]=Buf;
-				s>>m_MinVal[n];
-				s>>m_MaxVal[n];
-				s>>m_ChannelVal[n];
+				r.Value(size);
+				r.Value(m_Names[n]);
+				r.Value(m_MinVal[n]);
+				r.Value(m_MaxVal[n]);
+				r.Value(m_ChannelVal[n]);
 			}
 
 			// add the channels one by one

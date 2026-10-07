@@ -56,7 +56,6 @@ public:
 
 	virtual void Describe(spiralcore::Description &d) {}
 	virtual void Apply(spiralcore::Description::Reader &r) {}
-	virtual void StreamIn(std::istream &s)  {}
 private:
 	AudioTransportHub *m_Hub;
 	bool m_NotifyOpenOut;

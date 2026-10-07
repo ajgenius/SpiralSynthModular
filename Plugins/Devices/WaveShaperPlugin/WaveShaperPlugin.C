@@ -204,10 +204,10 @@ void WaveShaperPlugin::Describe(spiralcore::Description &d) {
   for (int i=0; i<6; i++) d.Separator(" ").Value(m_Coefs[i]);
 }
 
-void WaveShaperPlugin::StreamIn (istream &s) {
+void WaveShaperPlugin::Apply(spiralcore::Description::Reader &r) {
   int version;
-  s >> version >> m_Wave;
-  for (int i=0; i<6; i++) s >> m_Coefs[i];
+  r.Value(version).Value(m_Wave);
+  for (int i=0; i<6; i++) r.Value(m_Coefs[i]);
   calc ();
 }
 

@@ -182,18 +182,18 @@ void LogicPlugin::Describe(spiralcore::Description &d)
 	d.Value(m_Version).Separator(" ").Value(m_PluginInfo.NumInputs).Separator(" ").Value(m_Operator);
 }
 
-void LogicPlugin::StreamIn(istream &s) {
+void LogicPlugin::Apply(spiralcore::Description::Reader &r) {
   int version, datum;
-  s >> version;
+  r.Value(version);
   switch (version) {
     case 1:
-      s >> datum; // Version 1 saved a constant that is not used now
+      r.Value(datum); // Version 1 saved a constant that is not used now
       SetInputs (2);
       break;
     case 2:
-      s >> datum;
+      r.Value(datum);
       SetInputs (datum);
-      s >> datum;
+      r.Value(datum);
       m_Operator = (OperatorType)datum;
       break;
   }

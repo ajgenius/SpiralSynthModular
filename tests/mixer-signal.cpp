@@ -120,13 +120,14 @@ int main()
 	cv.Set(0.0f);
 #endif
 	// Patch representation and finite settings still round-trip.
-	std::stringstream saved;
-	mixer.StreamOut(saved);
-	const std::string original = saved.str();
+	spiralcore::Description saved;
+	mixer.Describe(saved);
 	Mixer restored;
 	restored.Initialise(&host);
-	restored.StreamIn(saved);
-	std::stringstream roundtrip;
-	restored.StreamOut(roundtrip);
-	assert(roundtrip.str() == original);
+	spiralcore::Description::Reader reader(saved);
+	restored.Apply(reader);
+	assert(!reader.Failed() && !reader.More());
+	spiralcore::Description roundtrip;
+	restored.Describe(roundtrip);
+	assert(roundtrip.Values() == saved.Values());
 }

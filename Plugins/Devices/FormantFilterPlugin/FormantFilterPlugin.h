@@ -32,7 +32,7 @@ public:
 	virtual void Reset();
 
 	virtual void Describe(spiralcore::Description &d);
-	virtual void StreamIn(std::istream &s);
+	virtual void Apply(spiralcore::Description::Reader &r);
 	
 	void Randomise();
 	void Clear();
@@ -43,10 +43,10 @@ private:
 		
 	double memory[5][10];
 	
-	friend std::istream &operator>>(std::istream &s, FormantFilterPlugin &o);
+	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, FormantFilterPlugin &o);
 	friend spiralcore::Description &Describe(spiralcore::Description &d, FormantFilterPlugin &o);
 };
-std::istream &operator>>(std::istream &s, FormantFilterPlugin &o);
+spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, FormantFilterPlugin &o);
 spiralcore::Description &Describe(spiralcore::Description &d, FormantFilterPlugin &o);
 
 #endif

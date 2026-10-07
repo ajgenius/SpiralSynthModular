@@ -163,13 +163,13 @@ void StereoMixerPlugin::Describe(spiralcore::Description &d)
 	}
 }
 
-void StereoMixerPlugin::StreamIn(istream &s)
+void StereoMixerPlugin::Apply(spiralcore::Description::Reader &r)
 {	
 	int version;
-	s>>version;
+	r.Value(version);
 	for (int n=0; n<NUM_CHANNELS; n++)
 	{
-		s>>m_ChannelVal[n]>>m_Pan[n];
+		r.Value(m_ChannelVal[n]).Value(m_Pan[n]);
 	}
 }
 
