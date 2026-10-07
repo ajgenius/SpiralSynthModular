@@ -21,6 +21,7 @@
 #include "Fl_Knob.H"
 #include "OutputPlugin.h"
 #include "SpiralPluginGUI.h"
+#include "EditorClassRegistry.h"
 
 #ifndef OUTPUT_GUI_H
 #define OUTPUT_GUI_H
@@ -28,6 +29,9 @@
 class OutputPluginGUI : public SpiralPluginGUI
 {
 public:
+	// Built into the host: registered with the editor registry, no module.
+	static const spiralcore::EditorClass &Class();
+
 	OutputPluginGUI(int w, int h, SpiralPlugin *o, ChannelHandler *ch, const HostInfo *Info);
 
 	virtual void UpdateValues(SpiralPlugin *o);

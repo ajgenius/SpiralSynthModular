@@ -38,6 +38,8 @@
 #include "AudioBackend.h"
 #include "DeviceClassRegistry.h"
 #include "EditorClassRegistry.h"
+#include "OutputPlugin.h"
+#include "OutputPluginGUI.h"
 #include "SpiralInfo.h"
 #include "SpiralPluginGUI.h"
 #include "GUI/SSM.xpm"
@@ -609,6 +611,9 @@ void SynthModular::LoadPlugins (string pluginPath) {
      // compiled-in backends are already registered and a module of the
      // same name yields.
      spiralcore::AudioBackendRegistry::Get()->LoadModules(PluginRoot);
+     // Built-in devices first: a module of the same ID is not loaded.
+     spiralcore::DeviceClassRegistry::Get()->Register(OutputPlugin::Class());
+     spiralcore::EditorClassRegistry::Get()->Register(OutputPluginGUI::Class());
      // Devices under dsp/, editors under gui/; an editor needs no device
      // module to load, it pairs by ID when a device is made.
      spiralcore::DeviceClassRegistry::Get()->LoadModules(PluginRoot);
