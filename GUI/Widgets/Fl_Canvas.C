@@ -1082,25 +1082,33 @@ istream &operator>>(istream &s, Fl_Canvas &o)
 	return s;
 }
 
-ostream &operator<<(ostream &s, Fl_Canvas &o)
+spiralcore::Description &Describe(spiralcore::Description &d, Fl_Canvas &o)
 {
 	int version=0;
-	s<<-1<<" "<<version<<" ";
+	d.Value(-1).Separator(" ").Value(version).Separator(" ");
 
-	s<<o.m_WireVec.size()<<endl;
+	d.Value(o.m_WireVec.size()).Line();
 
 	for(vector<CanvasWire>::iterator i=o.m_WireVec.begin();
 		i!=o.m_WireVec.end(); i++)
 	{
-		s<<i->OutputID<<" ";
-		s<<0<<" ";
-		s<<i->OutputPort<<" ";
-		s<<i->OutputTerminal<<" ";
-		s<<i->InputID<<" ";
-		s<<0<<" ";
-		s<<i->InputPort<<" ";
-		s<<i->InputTerminal<<endl;
+		d.Value(i->OutputID).Separator(" ");
+		d.Value(0).Separator(" ");
+		d.Value(i->OutputPort).Separator(" ");
+		d.Value(i->OutputTerminal).Separator(" ");
+		d.Value(i->InputID).Separator(" ");
+		d.Value(0).Separator(" ");
+		d.Value(i->InputPort).Separator(" ");
+		d.Value(i->InputTerminal).Line();
 	}
 
+	return d;
+}
+
+ostream &operator<<(ostream &s, Fl_Canvas &o)
+{
+	spiralcore::Description d;
+	Describe(d, o);
+	d.Write(s);
 	return s;
 }
