@@ -17,7 +17,7 @@ libspiralcore_la_SOURCES = \
     include/RiffWav.h \
     src/RiffWav.cpp
 libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 2:0:0
-libspiralcore_la_LIBADD = $(MIDI_LIBS) $(AMIDILIBS) $(SFLIBS) $(JACK_LIBS) -lm
+libspiralcore_la_LIBADD = $(SFLIBS) $(JACK_LIBS) -lm
 
 check_PROGRAMS = compatibility-test
 TESTS = $(check_PROGRAMS)
@@ -52,7 +52,9 @@ libspiralcore_la_SOURCES += include/AudioClient.h
 libspiralcore_la_SOURCES += include/PluginLoader.h src/PluginLoader.cpp
 libspiralcore_la_SOURCES += include/BackendModule.h include/AudioBackend.h src/AudioBackend.cpp src/AudioBackends.cpp include/DummyClient.h src/DummyClient.cpp
 libspiralcore_la_SOURCES += include/MidiBackend.h src/MidiBackend.cpp include/NativeMidi.h src/NativeMidi.cpp include/ThreadCompatibility.h include/Compatibility.h
-check_PROGRAMS += midi-backend-test native-midi-test
+check_PROGRAMS += midi-backend-test native-midi-test midi-device-test
+midi_device_test_SOURCES = tests/midi-device.cpp
+midi_device_test_LDADD = libspiralcore.la
 midi_backend_test_SOURCES = tests/midi-backend.cpp
 midi_backend_test_LDADD = libspiralcore.la
 native_midi_test_SOURCES = tests/native-midi.cpp
