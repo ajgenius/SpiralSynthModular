@@ -13,6 +13,16 @@
 #include <map>
 #include "BackendModule.h"
 #include "PluginManager.h"
+// Xlib defines Status as a macro, and FLTK's drawing headers bring Xlib
+// in. The MIDI status byte and a backend's status keep their names; the
+// macro is set aside while they are declared and restored after, so the
+// include order does not matter. A host unit that has Xlib in scope
+// still cannot spell packet.Status or Status() itself.
+#ifdef Status
+#pragma push_macro("Status")
+#undef Status
+#define SSM_MIDI_RESTORE_STATUS
+#endif
 namespace spiralcore
 {
 	struct MidiPacket
@@ -94,4 +104,8 @@ extern "C"
 	// The one symbol a midi backend module exports.
 	typedef const spiralcore::BackendDescriptor *(*SpiralPlugin_GetMidiBackendFn)();
 }
+#ifdef SSM_MIDI_RESTORE_STATUS
+#pragma pop_macro("Status")
+#undef SSM_MIDI_RESTORE_STATUS
+#endif
 #endif
