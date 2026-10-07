@@ -1579,7 +1579,7 @@ inline void SynthModular::cb_Merge_i (Fl_Widget *o, void *v) {
                 return;
              }
              if (project.Source().Empty()) {
-                fl_message("Package has no source.ssm");
+                fl_message("Package has no patch.spiral.legacy.ssm");
                 return;
              }
              packaged.str(project.Source().Bytes());
@@ -1933,7 +1933,7 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 		}
 		if (project.Source().Empty())
 		{
-			fl_message("Package has no source.ssm");
+			fl_message("Package has no patch.spiral.legacy.ssm");
 			return;
 		}
 		packaged.str(project.Source().Bytes());
