@@ -5,7 +5,7 @@ dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = FlipflopPlugin_DSP.la
 FlipflopPlugin_DSP_la_SOURCES = FlipflopPlugin.h FlipflopPlugin.C
 FlipflopPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
-FlipflopPlugin_DSP_la_LIBADD = $(top_builddir)/GUI/Widgets/libSpiralPlugin.la $(top_builddir)/libspiralcore/libspiralcore.la -lm
+FlipflopPlugin_DSP_la_LIBADD = $(top_builddir)/libspiralcore/libspiralcore.la -lm
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/FlipflopPlugin_DSP.la"
 uninstall-local:

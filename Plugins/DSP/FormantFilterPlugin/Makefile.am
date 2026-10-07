@@ -5,7 +5,7 @@ dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = FormantFilterPlugin_DSP.la
 FormantFilterPlugin_DSP_la_SOURCES = FormantFilterPlugin.h FormantFilterPlugin.C
 FormantFilterPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
-FormantFilterPlugin_DSP_la_LIBADD = $(top_builddir)/GUI/Widgets/libSpiralPlugin.la $(top_builddir)/libspiralcore/libspiralcore.la -lm
+FormantFilterPlugin_DSP_la_LIBADD = $(top_builddir)/libspiralcore/libspiralcore.la -lm
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/FormantFilterPlugin_DSP.la"
 uninstall-local:
