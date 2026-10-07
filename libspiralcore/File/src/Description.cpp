@@ -91,6 +91,17 @@ namespace spiralcore
 		return *this;
 	}
 
+	void Description::Reader::Rest(Description &out)
+	{
+		out = Description();
+		out.m_Between[0] = m_Description.m_Between[m_At];
+		for (; m_At < m_End; ++m_At)
+		{
+			out.m_Values.push_back(m_Description.m_Values[m_At]);
+			out.m_Between.push_back(m_Description.m_Between[m_At + 1]);
+		}
+	}
+
 	Description::Reader &Description::Reader::Value(float &x)
 	{
 		double v = x;

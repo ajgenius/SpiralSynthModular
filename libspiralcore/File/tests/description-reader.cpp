@@ -64,6 +64,20 @@ int main()
 	tr.Value(bad);
 	CHECK(bad == 3 && tr.Failed());
 
+	// The rest of a span as a description of its own: the same bytes back.
+	{
+		spiralcore::Description::Reader half(d);
+		int first = 0;
+		half.Value(first);
+		spiralcore::Description rest;
+		half.Rest(rest);
+		std::ostringstream whole, part;
+		d.Write(whole);
+		rest.Write(part);
+		CHECK(first == 4 && !half.More() && rest.Values().size() == d.Values().size() - 1);
+		CHECK(whole.str() == "4" + part.str());
+	}
+
 	// A span: a device reads its own values and no further, whatever it asks.
 	spiralcore::Description::Reader span(d, 3, 6);
 	int p = 0, q = 0;
