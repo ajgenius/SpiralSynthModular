@@ -30,7 +30,6 @@ EXTRA_DIST = \
     include/Event.h \
     include/EventQueue.h \
     include/SpiralTime.h \
-    include/Trace.h \
     src/AsyncSampleLoader.cpp \
     src/Event.cpp \
     src/EventQueue.cpp \
