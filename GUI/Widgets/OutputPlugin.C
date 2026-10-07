@@ -17,39 +17,21 @@
 */
 
 #include "OutputPlugin.h"
-#include "SpiralIcon.xpm"
+#include "OutputIcon.xpm"
 
 using namespace std;
 
-#include <config.h>
+static SpiralPlugin *CreateInstance() { return new OutputPlugin; }
 
-extern "C"
+const spiralcore::DeviceClass &OutputPlugin::Class()
 {
-const char *SpiralPlugin_GetHostVersion()
-{
-	return PACKAGE_VERSION;
-}
-
-const char *SpiralPlugin_GetHostABI()
-{
-	return SSM_HOST_ABI;
-}
-
-SpiralPlugin* SpiralPlugin_CreateInstance() { return new OutputPlugin; }
-
-int SpiralPlugin_GetType()
-{
-	return SPIRAL_PLUGIN_TYPE_DSP;
-}
-
-const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
-int SpiralPlugin_GetID() { return 0x0000; }
-string SpiralPlugin_GetName()
-{
-	return "Output";
-}
-
-string SpiralPlugin_GetGroupName() { return "InputOutput"; }
+	static spiralcore::DeviceClass device;
+	device.ID = 0x0000;
+	device.Name = "Output";
+	device.Category = "InputOutput";
+	device.Icon = SpiralIcon_xpm;
+	device.Create = CreateInstance;
+	return device;
 }
 
 OutputPlugin::OutputPlugin() :

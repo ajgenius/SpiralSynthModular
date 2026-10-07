@@ -163,42 +163,20 @@ const string OutputPluginGUI::GetHelpText(const string &loc){
 	+ "simultaneously.";
 }
 
-#include "SpiralIcon.xpm"
+#include "OutputIcon.xpm"
 
-#include <config.h>
-
-extern "C" {
-const char *SpiralPlugin_GetHostVersion()
+static SpiralGUIType *CreateGUI(SpiralPlugin *plugin)
 {
-	return PACKAGE_VERSION;
+	if (!plugin) return 0;
+	return new OutputPluginGUI(plugin->GetPluginInfo().Width, plugin->GetPluginInfo().Height, plugin, plugin->GetChannelHandler(), plugin->GetHostInfo());
 }
 
-const char *SpiralPlugin_GetHostABI()
+const spiralcore::EditorClass &OutputPluginGUI::Class()
 {
-	return SSM_HOST_ABI;
-}
-
-
-int SpiralPlugin_GetType()
-{
-	return SPIRAL_PLUGIN_TYPE_GUI;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x0000;
-}
-
-const char **SpiralPlugin_GetIcon()
-{
-	return SpiralIcon_xpm;
-}
-
-SpiralGUIType *SpiralPlugin_CreateGUI(SpiralPlugin *plugin)
-{
-	OutputPlugin *p = (OutputPlugin *)plugin;
-	if (!p) return 0;
-	return new OutputPluginGUI(p->GetPluginInfo().Width, p->GetPluginInfo().Height, p, p->GetChannelHandler(), p->GetHostInfo());
-}
-
+	static spiralcore::EditorClass editor;
+	editor.ForDevice = 0x0000;
+	editor.Toolkit = "fltk";
+	editor.Icon = SpiralIcon_xpm;
+	editor.Create = CreateGUI;
+	return editor;
 }
