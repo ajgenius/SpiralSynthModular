@@ -114,10 +114,13 @@ EXTRA_DIST += \
 if HAVE_YAJL
 AM_CPPFLAGS += -I$(top_srcdir)/JSON $(YAJL_CFLAGS) -DSPIRALCORE_SCHEMA_DIR='"$(abs_srcdir)/File/schemas"'
 libspiralcore_la_SOURCES += File/include/PositionalReader.h File/src/PositionalReader.cpp ../JSON/JSONParser.cpp
+libspiralcore_la_SOURCES += File/src/DescriptionJSON.cpp
 libspiralcore_la_LIBADD += $(YAJL_LIBS)
-check_PROGRAMS += positional-reader-test
+check_PROGRAMS += positional-reader-test description-json-test
 positional_reader_test_SOURCES = File/tests/positional-reader.cpp
 positional_reader_test_LDADD = libspiralcore.la
+description_json_test_SOURCES = File/tests/description-json.cpp
+description_json_test_LDADD = libspiralcore.la
 noinst_PROGRAMS = positional-tokens
 positional_tokens_SOURCES = File/tools/positional-tokens.cpp
 positional_tokens_LDADD = libspiralcore.la
