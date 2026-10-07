@@ -28,8 +28,6 @@ SpiralSynthModular_SOURCES = MacBundle.h \
 		SpiralSynthModular.C \
 		SettingsWindow.h \
 		SettingsWindow.C \
-		GraphSort.h \
-		GraphSort.C \
 		main.cpp
 
 AM_CPPFLAGS += -DPLUGIN_PATH_LOCATION=\"$(ssm_plugindir)/\"
@@ -52,7 +50,7 @@ endif
 
 check_PROGRAMS = mixer-ports-test
 TESTS = $(check_PROGRAMS)
-mixer_ports_test_SOURCES = tests/mixer-ports.cpp Plugins/DSP/MixerPlugin/MixerPlugin.C GraphSort.C SpiralInfo.C
+mixer_ports_test_SOURCES = tests/mixer-ports.cpp Plugins/DSP/MixerPlugin/MixerPlugin.C SpiralInfo.C
 mixer_ports_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir) -I$(srcdir)/Plugins/DSP/MixerPlugin
 mixer_ports_test_LDADD = $(SpiralSynthModular_LDADD)
 
@@ -65,20 +63,20 @@ stereo_mixer_signal_test_CPPFLAGS = $(AM_CPPFLAGS) -DTEST_STEREO -I$(srcdir)/Plu
 stereo_mixer_signal_test_LDADD = $(mixer_signal_test_LDADD)
 
 check_PROGRAMS += plugin-classes-test
-plugin_classes_test_SOURCES = tests/plugin-classes.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
+plugin_classes_test_SOURCES = tests/plugin-classes.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C
 plugin_classes_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
 plugin_classes_test_LDADD = $(SpiralSynthModular_LDADD)
 plugin_classes_test_LDFLAGS = -export-dynamic
 
 check_PROGRAMS += waveshaper-editor-test
-waveshaper_editor_test_SOURCES = tests/waveshaper-editor.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
+waveshaper_editor_test_SOURCES = tests/waveshaper-editor.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C
 waveshaper_editor_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
 waveshaper_editor_test_LDADD = $(SpiralSynthModular_LDADD)
 waveshaper_editor_test_LDFLAGS = -export-dynamic
 
 if HAVE_JACK_CLIENT
 check_PROGRAMS += jack-gui-test jack-plugin-test
-jack_gui_test_SOURCES = tests/jack-gui.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
+jack_gui_test_SOURCES = tests/jack-gui.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C
 jack_gui_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
 jack_gui_test_LDADD = $(SpiralSynthModular_LDADD) $(JACK_LIBS)
 jack_gui_test_LDFLAGS = -export-dynamic
@@ -94,19 +92,19 @@ coreaudio_output_test_LDADD = libspiralcore/libspiralcore.la
 endif
 
 check_PROGRAMS += midi-plugin-test
-midi_plugin_test_SOURCES = tests/midi-plugin.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
+midi_plugin_test_SOURCES = tests/midi-plugin.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C
 midi_plugin_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
 midi_plugin_test_LDADD = $(SpiralSynthModular_LDADD) $(MIDI_LIBS)
 midi_plugin_test_LDFLAGS = -export-dynamic
 check_PROGRAMS += dummy-host-test
-dummy_host_test_SOURCES = tests/dummy-host.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
+dummy_host_test_SOURCES = tests/dummy-host.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C
 dummy_host_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
 dummy_host_test_LDADD = $(SpiralSynthModular_LDADD)
 dummy_host_test_LDFLAGS = -export-dynamic
 
 if HAVE_CORE_AUDIO_CLIENT
 check_PROGRAMS += coreaudio-host-test
-coreaudio_host_test_SOURCES = tests/coreaudio-host.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
+coreaudio_host_test_SOURCES = tests/coreaudio-host.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C
 coreaudio_host_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
 coreaudio_host_test_LDADD = $(SpiralSynthModular_LDADD)
 coreaudio_host_test_LDFLAGS = -export-dynamic
@@ -114,7 +112,7 @@ endif
 
 if HAVE_JACK_CLIENT
 check_PROGRAMS += jack-output-host-test
-jack_output_host_test_SOURCES = tests/jack-output-host.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
+jack_output_host_test_SOURCES = tests/jack-output-host.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C
 jack_output_host_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
 jack_output_host_test_LDADD = $(SpiralSynthModular_LDADD) $(JACK_LIBS)
 jack_output_host_test_LDFLAGS = -export-dynamic
@@ -122,7 +120,7 @@ endif
 
 if HAVE_JACK_CLIENT
 check_PROGRAMS += jack-output-timing-test
-jack_output_timing_test_SOURCES = tests/jack-output-timing.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
+jack_output_timing_test_SOURCES = tests/jack-output-timing.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C
 jack_output_timing_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
 jack_output_timing_test_LDADD = $(SpiralSynthModular_LDADD) $(JACK_LIBS)
 jack_output_timing_test_LDFLAGS = -export-dynamic
