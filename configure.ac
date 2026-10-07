@@ -28,37 +28,6 @@ AM_PROG_LIBTOOL
 
 AC_PATH_TOOL([PKG_CONFIG], [pkg-config], [no])
 
-dnl JSON reader. Skip it when YAJL 2 is not installed.
-AC_ARG_VAR([YAJL_CFLAGS], [C preprocessor flags for YAJL 2])
-AC_ARG_VAR([YAJL_LIBS], [Linker flags for YAJL 2])
-have_yajl=no
-if test "$PKG_CONFIG" != no && $PKG_CONFIG --exists 'yajl >= 2.0'; then
-    if test -z "$YAJL_CFLAGS"; then
-        YAJL_CFLAGS=`$PKG_CONFIG --cflags yajl`
-        dnl Some YAJL .pc files advertise include/yajl, although their
-        dnl own headers include <yajl/yajl_common.h>.
-        yajl_includedir=`$PKG_CONFIG --variable=includedir yajl`
-        case "$yajl_includedir" in
-            */yajl) YAJL_CFLAGS="$YAJL_CFLAGS -I${yajl_includedir%/yajl}" ;;
-        esac
-    fi
-    test -n "$YAJL_LIBS" || YAJL_LIBS=`$PKG_CONFIG --libs yajl`
-fi
-if test "$have_yajl" = no; then
-    test -n "$YAJL_LIBS" || YAJL_LIBS="-lyajl"
-    ssm_saved_CPPFLAGS="$CPPFLAGS"
-    ssm_saved_LIBS="$LIBS"
-    CPPFLAGS="$CPPFLAGS $YAJL_CFLAGS"
-    LIBS="$YAJL_LIBS $LIBS"
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <yajl/yajl_parse.h>]], [[
-        yajl_handle parser = yajl_alloc(0, 0, 0);
-        yajl_complete_parse(parser);
-        yajl_free(parser);
-    ]])], [have_yajl=yes], [YAJL_CFLAGS=""; YAJL_LIBS=""])
-    CPPFLAGS="$ssm_saved_CPPFLAGS"
-    LIBS="$ssm_saved_LIBS"
-fi
-AM_CONDITIONAL([HAVE_YAJL], [test "$have_yajl" = yes])
 
 dnl ---- Optional loadable audio backends ----
 
@@ -588,7 +557,6 @@ AC_SUBST(PLUGINLIST)
 
 dnl Modify the output files.
 AC_OUTPUT(
-JSON/Makefile
 libs/libSpumoni/Makefile
 SpiralSynthPluginLocation.h
 Makefile

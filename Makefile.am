@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = JSON libs/libSpumoni libspiralcore GUI Plugins
+SUBDIRS = libs/libSpumoni libspiralcore GUI Plugins
 
 AM_CPPFLAGS =                                              \
                 $(FLTK_CXXFLAGS)                        \
@@ -7,10 +7,8 @@ AM_CPPFLAGS =                                              \
                 $(SPIRALCORE_CFLAGS)                    \
                 -I$(top_srcdir)/libs/libSpumoni/include \
                 -I$(top_srcdir)/libSSMCore/include
-if HAVE_YAJL
 # The file contract: the host hands each device its own state under it.
-AM_CPPFLAGS += -DHAVE_YAJL -I$(top_srcdir)/JSON $(YAJL_CFLAGS) -DSPIRALCORE_SCHEMA_DIR='"$(abs_top_srcdir)/libspiralcore/File/schemas"'
-endif
+AM_CPPFLAGS += -DSPIRALCORE_SCHEMA_DIR='"$(abs_top_srcdir)/libspiralcore/File/schemas"'
 
 SpiralSynthModular_LDADD = 							\
 	$(FLTK_LIBS) $(MIDI_LIBS)					\

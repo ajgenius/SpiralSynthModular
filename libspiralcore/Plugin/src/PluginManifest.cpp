@@ -1,9 +1,9 @@
 // Manifest reading is independent of GUI libraries and never opens a module.
 // GPL-2.0-or-later.
 #include "PluginManifest.h"
-#include "JSONParser.h"
+#include "JSON.h"
 #include <climits>
-using SpiralJSON::JSONValue;
+typedef Spumoni::JSON JSONValue;
 
 namespace {
 bool text(const JSONValue *object, const char *key, std::string &out) {
@@ -23,7 +23,7 @@ bool basename(const std::string &name) {
 bool PluginManifest::Read(const std::string &path, std::string &error)
 {
 	*this = PluginManifest();
-	JSONValue *root = SpiralJSON::ParseJSON(path.c_str(), false, &error);
+	JSONValue *root = Spumoni::ParseJSON(path.c_str(), &error);
 	if (!root)
 		return false;
 	const JSONValue *schema = root->Get("schema_version"), *identifier = root->Get("id");
