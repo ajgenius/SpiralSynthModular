@@ -275,6 +275,17 @@ AC_SUBST([JACK_MIDI_LIBS])
 AM_CONDITIONAL([HAVE_JACK_MIDI], [test "x$have_jack_midi" = xyes])
 AC_MSG_NOTICE([JACK MIDI module: $have_jack_midi])
 
+dnl The two native transports the tree has always carried: CoreMIDI on
+dnl Darwin, the raw OSS device where OSS audio is.
+have_coremidi=no
+case "$host_os" in
+    darwin*) have_coremidi=yes ;;
+esac
+AM_CONDITIONAL([HAVE_COREMIDI], [test "x$have_coremidi" = xyes])
+AC_MSG_NOTICE([CoreMIDI module: $have_coremidi])
+AM_CONDITIONAL([HAVE_OSS_MIDI], [test "x$have_output_oss" = xyes])
+AC_MSG_NOTICE([OSS MIDI module: $have_output_oss])
+
 
 default_output_audio_client="none"
 if test "x$have_output_portaudio" = "xyes"; then
@@ -568,6 +579,8 @@ Plugins/Midi/Makefile
 Plugins/Midi/RtMidi/Makefile
 Plugins/Midi/ALSA/Makefile
 Plugins/Midi/JACK/Makefile
+Plugins/Midi/CoreMIDI/Makefile
+Plugins/Midi/OSS/Makefile
 Plugins/DSP/Makefile
 Plugins/GUI/Makefile
 Plugins/GUI/AmpPlugin/Makefile
