@@ -184,7 +184,7 @@ AC_MSG_NOTICE([Native CoreAudio client: $have_coreaudio])
 
 dnl Where consumers find libspiralcore's headers. Groups inside the library
 dnl add their include directory here, nowhere else.
-SPIRALCORE_CFLAGS='-I$(top_srcdir)/libspiralcore/include'
+SPIRALCORE_CFLAGS='-I$(top_srcdir)/libspiralcore/include -I$(top_srcdir)/libspiralcore/Plugin/include'
 AC_SUBST([SPIRALCORE_CFLAGS])
 
 AC_ARG_ENABLE([pipewire],
