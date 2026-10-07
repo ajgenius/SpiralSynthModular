@@ -30,7 +30,7 @@ class WaveShaperPlugin : public SpiralPlugin {
     virtual void Execute();
     virtual void Reset();
     virtual void ExecuteCommands();
-    virtual void StreamOut(std::ostream &s);
+    virtual void Describe(spiralcore::Description &d);
     virtual void StreamIn(std::istream &s);
     enum GUICommands { NONE, SETWAVETYPE, SETCOEF };
     struct GUIArgs {
@@ -44,10 +44,10 @@ class WaveShaperPlugin : public SpiralPlugin {
     void calc (void);
     void set (int index, float v);
     friend std::istream &operator>> (std::istream &s, WaveShaperPlugin &o);
-    friend std::ostream &operator<< (std::ostream &s, WaveShaperPlugin &o);
+    friend spiralcore::Description &Describe(spiralcore::Description &d, WaveShaperPlugin &o);
 };
 
 std::istream &operator>> (std::istream &s, WaveShaperPlugin &o);
-std::ostream &operator<< (std::ostream &s, WaveShaperPlugin &o);
+spiralcore::Description &Describe(spiralcore::Description &d, WaveShaperPlugin &o);
 
 #endif

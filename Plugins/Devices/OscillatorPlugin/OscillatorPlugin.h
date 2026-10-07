@@ -31,7 +31,7 @@ public:
 	virtual void 		Execute();
 	virtual void		Reset();
 
-	virtual void	    StreamOut(std::ostream &s);
+	virtual void	    Describe(spiralcore::Description &d);
 	virtual void	    StreamIn(std::istream &s);
 
 	typedef char Type;
@@ -72,10 +72,10 @@ private:
 	static const int FIXED;
 
 	friend std::istream &operator>>(std::istream &s, OscillatorPlugin &o);
-	friend std::ostream &operator<<(std::ostream &s, OscillatorPlugin &o);
+	friend spiralcore::Description &Describe(spiralcore::Description &d, OscillatorPlugin &o);
 };
 
 std::istream &operator>>(std::istream &s, OscillatorPlugin &o);
-std::ostream &operator<<(std::ostream &s, OscillatorPlugin &o);
+spiralcore::Description &Describe(spiralcore::Description &d, OscillatorPlugin &o);
 
 #endif

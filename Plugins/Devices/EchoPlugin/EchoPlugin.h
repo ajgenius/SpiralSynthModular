@@ -30,7 +30,7 @@ class EchoPlugin : public SpiralPlugin
 	virtual void Execute();
 	virtual void Reset();
 
-	virtual void StreamOut (std::ostream &s);
+	virtual void Describe(spiralcore::Description &d);
 	virtual void StreamIn (std::istream &s);
 	float GetDelay() { return m_Delay; }
 	float GetFeedback() { return m_Feedback; }
@@ -42,10 +42,10 @@ class EchoPlugin : public SpiralPlugin
 	int m_HeadPos, m_Buf0, m_Buf1;
 	Sample m_Buffer[2];
 	friend std::istream &operator>>(std::istream &s, EchoPlugin &o);
-	friend std::ostream &operator<<(std::ostream &s, EchoPlugin &o);
+	friend spiralcore::Description &Describe(spiralcore::Description &d, EchoPlugin &o);
 };
 
 std::istream &operator>>(std::istream &s, EchoPlugin &o);
-std::ostream &operator<<(std::ostream &s, EchoPlugin &o);
+spiralcore::Description &Describe(spiralcore::Description &d, EchoPlugin &o);
 
 #endif

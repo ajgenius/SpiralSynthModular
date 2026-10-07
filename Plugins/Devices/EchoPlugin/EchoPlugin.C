@@ -150,9 +150,9 @@ void EchoPlugin::Execute()
 //{
 //}
 
-void EchoPlugin::StreamOut(ostream &s)
+void EchoPlugin::Describe(spiralcore::Description &d)
 {
-	s << m_Version << " " << m_Delay << " " << m_Feedback << " " << m_Bounce << " ";
+	d.Value(m_Version).Separator(" ").Value(m_Delay).Separator(" ").Value(m_Feedback).Separator(" ").Value(m_Bounce).Separator(" ");
 }
 
 void EchoPlugin::StreamIn(istream &s)

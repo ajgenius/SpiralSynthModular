@@ -209,9 +209,9 @@ void DistributorPlugin::ExecuteCommands ()
 	}
 }
 
-void DistributorPlugin::StreamOut (ostream &s) 
+void DistributorPlugin::Describe(spiralcore::Description &d) 
 {
-	s << m_Version << " " << GetChannelCount() << " ";
+	d.Value(m_Version).Separator(" ").Value(GetChannelCount()).Separator(" ");
 }
 
 void DistributorPlugin::StreamIn (istream &s)

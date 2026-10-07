@@ -231,9 +231,10 @@ void WaveTablePlugin::Execute()
 	}
 }
 
-void WaveTablePlugin::StreamOut(ostream &s)
+void WaveTablePlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<" "<<*this;
+	d.Value(m_Version).Separator(" ");
+	::Describe(d, *this);
 }
 
 void WaveTablePlugin::StreamIn(istream &s)
@@ -248,8 +249,8 @@ istream &operator>>(istream &s, WaveTablePlugin &o)
 	return s;
 }
 
-ostream &operator<<(ostream &s, WaveTablePlugin &o)
+spiralcore::Description &Describe(spiralcore::Description &d, WaveTablePlugin &o)
 {
-	s<<(int)o.m_Type<<" "<<o.m_Octave<<" "<<o.m_FineFreq<<" "<<o.m_ModAmount<<" ";
-	return s;
+	d.Value((int)o.m_Type).Separator(" ").Value(o.m_Octave).Separator(" ").Value(o.m_FineFreq).Separator(" ").Value(o.m_ModAmount).Separator(" ");
+	return d;
 }

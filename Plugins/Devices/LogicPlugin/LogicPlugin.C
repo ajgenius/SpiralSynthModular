@@ -177,9 +177,9 @@ void LogicPlugin::CreatePorts (int n, bool AddPorts) {
   }
 }
 
-void LogicPlugin::StreamOut(ostream &s)
+void LogicPlugin::Describe(spiralcore::Description &d)
 {
-	s << m_Version << " " << m_PluginInfo.NumInputs << " " << m_Operator;
+	d.Value(m_Version).Separator(" ").Value(m_PluginInfo.NumInputs).Separator(" ").Value(m_Operator);
 }
 
 void LogicPlugin::StreamIn(istream &s) {

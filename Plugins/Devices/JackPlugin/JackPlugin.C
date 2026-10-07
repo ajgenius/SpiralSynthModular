@@ -381,9 +381,9 @@ void  JackPlugin::CreatePorts (int nInputs, int nOutputs, bool AddPorts) {
 
 }
 
-void JackPlugin::StreamOut (ostream &s) 
+void JackPlugin::Describe(spiralcore::Description &d) 
 {
-	s << m_Version << " " << m_GUIArgs.NumInputs << " " << m_GUIArgs.NumOutputs << " ";
+	d.Value(m_Version).Separator(" ").Value(m_GUIArgs.NumInputs).Separator(" ").Value(m_GUIArgs.NumOutputs).Separator(" ");
 }
 
 void JackPlugin::StreamIn (istream &s) 

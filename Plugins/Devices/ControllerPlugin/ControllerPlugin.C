@@ -185,51 +185,51 @@ void ControllerPlugin::Clear()
 	m_PluginInfo.NumOutputs=0;
 }
 
-void ControllerPlugin::StreamOut(ostream &s)
+void ControllerPlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<" ";
+	d.Value(m_Version).Separator(" ");
 
 	switch (m_Version)
 	{
 		case 5:
 		{
-			s<<m_Num<<endl;
+			d.Value(m_Num).Line();
 			for (int n=0; n<m_Num; n++)
 			{
-				s<<m_Names[n].size()<<" ";
-				s<<m_Names[n]<<" ";
-				s<<m_MinVal[n]<<" ";
-				s<<m_MaxVal[n]<<" ";
-				s<<m_ChannelVal[n]<<endl;
+				d.Value(m_Names[n].size()).Separator(" ");
+				d.Value(m_Names[n]).Separator(" ");
+				d.Value(m_MinVal[n]).Separator(" ");
+				d.Value(m_MaxVal[n]).Separator(" ");
+				d.Value(m_ChannelVal[n]).Line();
 			}
 		} break;
 		case 4:
 		{
-			s<<m_Num<<endl;
+			d.Value(m_Num).Line();
 			for (int n=0; n<m_Num; n++)
 			{
-				s<<m_Names[n]<<" ";
-				s<<m_MinVal[n]<<" ";
-				s<<m_MaxVal[n]<<" ";
-				s<<m_ChannelVal[n]<<endl;
+				d.Value(m_Names[n]).Separator(" ");
+				d.Value(m_MinVal[n]).Separator(" ");
+				d.Value(m_MaxVal[n]).Separator(" ");
+				d.Value(m_ChannelVal[n]).Line();
 			}
 		} break;
 		case 3:
 		{
-			s<<m_Num<<" ";
+			d.Value(m_Num).Separator(" ");
 			for (int n=0; n<m_Num; n++)
 			{
-				s<<m_ChannelVal[n]<<" ";
+				d.Value(m_ChannelVal[n]).Separator(" ");
 			}
-			s<<1<<endl;
-			s<<m_Num<<" ";
+			d.Value(1).Line();
+			d.Value(m_Num).Separator(" ");
 			for (int n=0; n<m_Num; n++)
 			{
-				s<<m_Names[n].size()<<" ";
-				s<<m_Names[n]<<" ";
-				s<<m_MinVal[n]<<" ";
-				s<<m_MaxVal[n]<<" ";
-				s<<m_ChannelVal[n]<<endl;
+				d.Value(m_Names[n].size()).Separator(" ");
+				d.Value(m_Names[n]).Separator(" ");
+				d.Value(m_MinVal[n]).Separator(" ");
+				d.Value(m_MaxVal[n]).Separator(" ");
+				d.Value(m_ChannelVal[n]).Line();
 			}
 
 		} break;

@@ -168,8 +168,8 @@ void SplitSwitchPlugin::Execute() {
   }
 }
 
-void SplitSwitchPlugin::StreamOut (ostream &s) {
-  s << m_Version << " " << m_PluginInfo.NumOutputs - 1 << " " << m_SwitchPos << " ";
+void SplitSwitchPlugin::Describe(spiralcore::Description &d) {
+  d.Value(m_Version).Separator(" ").Value(m_PluginInfo.NumOutputs - 1).Separator(" ").Value(m_SwitchPos).Separator(" ");
 }
 
 void SplitSwitchPlugin::StreamIn (istream &s) {

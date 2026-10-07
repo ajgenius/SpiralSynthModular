@@ -29,7 +29,7 @@ class MixSwitchPlugin : public SpiralPlugin {
     virtual void Execute ();
     virtual void Reset();
     virtual void ExecuteCommands();
-    virtual void StreamOut (std::ostream &s);
+    virtual void Describe(spiralcore::Description &d);
     virtual void StreamIn (std::istream &s);
     int GetSwitch (void) { return m_SwitchPos; }
     int GetChans (void) { return m_PluginInfo.NumInputs - 2; }
@@ -45,10 +45,10 @@ class MixSwitchPlugin : public SpiralPlugin {
     bool m_Triggered;
     void CreatePorts (int n = 2, bool AddPorts = false);
     friend std::istream &operator>> (std::istream &s, MixSwitchPlugin &o);
-    friend std::ostream &operator<< (std::ostream &s, MixSwitchPlugin &o);
+    friend spiralcore::Description &Describe(spiralcore::Description &d, MixSwitchPlugin &o);
 };
 
 std::istream &operator>> (std::istream &s, MixSwitchPlugin &o);
-std::ostream &operator<< (std::ostream &s, MixSwitchPlugin &o);
+spiralcore::Description &Describe(spiralcore::Description &d, MixSwitchPlugin &o);
 
 #endif
