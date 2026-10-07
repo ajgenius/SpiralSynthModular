@@ -95,7 +95,7 @@ bool DeviceClassRegistry::Accept(void *entry, const string &path)
 		return false;
 	}
 
-	if (!GetID || !GetType || GetType() != SPIRAL_PLUGIN_TYPE_DSP)
+	if (!GetID || !GetType || GetType() != SPIRAL_PLUGIN_TYPE_DEVICE)
 	{
 		cerr << "Obsolete or invalid plugin module: " << path << endl;
 		return false;
