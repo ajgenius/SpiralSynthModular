@@ -60,7 +60,7 @@ int main()
 	MidiBackend *module = registry->Create("probe");
 	assert(module && module->Poll(packet) && packet.Status == 0x90 && packet.Data1 == 60);
 	assert(module->Ports(false).size() == 1);
-	// A live backend keeps its module loaded.
+	// A live backend keeps its module loaded and the registry in place.
 	assert(!PluginManager::Get()->UnloadAll());
 	MidiBackendRegistry::PackUpAndGoHome();
 	assert(MidiBackendRegistry::Get() == registry);
@@ -68,8 +68,10 @@ int main()
 	assert(PluginManager::Get()->UnloadAll());
 	assert(!registry->Find("probe") && registry->Find("dummy"));
 	assert(registry->LoadModules(root) == 1);
+	// Nothing live: the registry goes, and with it its kind, so the
+	// manager has nothing left to load the probe into.
 	MidiBackendRegistry::PackUpAndGoHome();
-	assert(!registry->Find("probe"));
+	assert(PluginManager::Get()->LoadAll(root) == 0);
 	PluginManager::PackUpAndGoHome();
 	printf("PASS\n");
 	return 0;
