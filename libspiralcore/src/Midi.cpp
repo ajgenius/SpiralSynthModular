@@ -45,14 +45,8 @@ static int NKEYS = 30;
 
 MidiDevice *MidiDevice::m_Singleton;
 string MidiDevice::m_AppName;
-
-#if __APPLE__
-#define read	AppleRead
-#endif
-
-#ifdef USE_OSS_MIDI
 string MidiDevice::m_DeviceName;
-#endif
+string MidiDevice::m_WantedBackend;
 
 void MidiDevice::Init(const string &name, Type t)
 {
@@ -63,39 +57,79 @@ void MidiDevice::Init(const string &name, Type t)
 	}
 }
 
+void MidiDevice::SetBackendName(const string &name)
+{
+	m_WantedBackend=name;
+	if (m_Singleton && m_Singleton->m_BackendName!=name)
+	{
+		pthread_mutex_lock(m_Singleton->m_Mutex);
+		m_Singleton->CloseBackend();
+		m_Singleton->OpenBackend();
+		pthread_mutex_unlock(m_Singleton->m_Mutex);
+	}
+}
+
+void MidiDevice::SetDeviceName(string s)
+{
+	m_DeviceName=s;
+	if (m_Singleton && m_Singleton->m_Backend)
+		m_Singleton->m_Backend->Select(s,s);
+}
+
 MidiDevice::MidiDevice(Type t) :
 m_Poly (1),
 m_Clock (1.0f),
-m_ClockCount (0)
+m_ClockCount (0),
+m_Backend (NULL)
 {
-#if __APPLE__
-     AppleOpen();
-#endif
-#ifdef USE_ALSA_MIDI
-     AlsaOpen();
-#endif
-#ifdef USE_OSS_MIDI
-     if (!OssOpen()) return;
-#endif
      m_Mutex = new pthread_mutex_t;
      pthread_mutex_init (m_Mutex, NULL);
-     pthread_create (&m_MidiReader, NULL, (void*(*)(void*))MidiDevice::MidiReaderCallback, (void*)this);
+     OpenBackend();
 }
 
 MidiDevice::~MidiDevice() {
      pthread_mutex_lock (m_Mutex);
-     pthread_cancel (m_MidiReader);
+     CloseBackend();
      pthread_mutex_unlock (m_Mutex);
      pthread_mutex_destroy (m_Mutex);
-#if __APPLE__
-     AppleClose();
-#endif
-#ifdef USE_ALSA_MIDI
-     AlsaClose();
-#endif
-#ifdef USE_OSS_MIDI
-     OssClose();
-#endif
+     delete m_Mutex;
+}
+
+// The named backend, else the first registered that is not the dummy,
+// else the dummy; connected to whatever device name is set.
+void MidiDevice::OpenBackend()
+{
+	MidiBackendRegistry *registry=MidiBackendRegistry::Get();
+	m_BackendName=m_WantedBackend;
+	if (m_BackendName.empty() || !registry->Find(m_BackendName))
+	{
+		vector<string> names=registry->Names();
+		m_BackendName=names.empty() ? "" : names.front();
+	}
+	m_Backend=registry->Create(m_BackendName);
+	if (!m_Backend)
+	{
+		cerr<<"MidiDevice: no midi backend"<<endl;
+		return;
+	}
+	cerr<<"MidiDevice: using "<<m_BackendName<<" backend"<<endl;
+	m_Backend->Select(m_DeviceName,m_DeviceName);
+}
+
+void MidiDevice::CloseBackend()
+{
+	if (m_Backend) MidiBackendRegistry::Get()->Destroy(m_BackendName,m_Backend);
+	m_Backend=NULL;
+	for (int n=0; n<16; n++)
+		while (!m_EventVec[n].empty()) m_EventVec[n].pop();
+}
+
+string MidiDevice::GetStatus()
+{
+	pthread_mutex_lock(m_Mutex);
+	string status=m_Backend ? m_Backend->Status() : "no midi backend";
+	pthread_mutex_unlock(m_Mutex);
+	return status;
 }
 
 // returns the next event off the list, or an
@@ -109,6 +143,7 @@ MidiEvent MidiDevice::GetEvent(int Device)
 	}
 
 	pthread_mutex_lock(m_Mutex);
+	CollectEvents();
 	if (m_EventVec[Device].size()==0)
 	{
 		pthread_mutex_unlock(m_Mutex);
@@ -123,91 +158,38 @@ MidiEvent MidiDevice::GetEvent(int Device)
 }
 
 void MidiDevice::SendEvent (int Device, const MidiEvent &Event) {
-#ifdef USE_ALSA_MIDI
-	AlsaSendEvent (Device, Event);
-#else
 	if (Device<0 || Device>15)
 	{
 		cerr<<"SendEvent: Invalid Midi device "<<Device<<endl;
+		return;
 	}
 
-	char message[3];
-
-	message[1]=Event.GetNote()+MIDI_KEYOFFSET;
-	message[2]=(char)Event.GetVolume();
+	MidiPacket message;
+	message.Data1=Event.GetNote()+MIDI_KEYOFFSET;
+	message.Data2=(unsigned char)Event.GetVolume();
 
 	if (Event.GetType()==MidiEvent::ON)
-	{
-		message[0]=STATUS_NOTE_ON+Device;
-		write(m_MidiWrFd,message,3);
-		//cerr<<"sending "<<message<<endl;
-	}
+		message.Status=STATUS_NOTE_ON+Device;
+	else if (Event.GetType()==MidiEvent::OFF)
+		message.Status=STATUS_NOTE_OFF+Device;
+	else
+		return;
 
-	if (Event.GetType()==MidiEvent::OFF)
-	{
-		message[0]=STATUS_NOTE_OFF+Device;
-		write(m_MidiWrFd,message,3);
-		//cerr<<"sending "<<message<<endl;
-	}
-#endif
+	pthread_mutex_lock(m_Mutex);
+	if (m_Backend) m_Backend->Send(message);
+	pthread_mutex_unlock(m_Mutex);
 }
 
-//////////////////////////////////////////// Oss Code Only ////////////////////////////////////////
-
-#ifdef USE_OSS_MIDI
-
-bool MidiDevice::OssOpen() {
-     //if (!SpiralInfo::WANTMIDI) return;
-     m_MidiFd = open (m_DeviceName.c_str(), O_RDONLY | O_SYNC);
-     if (!m_MidiFd) {
-        cerr << "Couldn't open midi for reading [" << m_DeviceName << "]" << endl;
-        return false;
-     }
-     m_MidiWrFd = open (m_DeviceName.c_str(), O_WRONLY);
-     if (!m_MidiWrFd) {
-        cerr << "Couldn't open midi for writing [" << m_DeviceName << "]" << endl;
-        return false;
-     }
-     cerr << "Opened midi device [" << m_DeviceName << "]" << endl;
-     return true;
-}
-
-void MidiDevice::OssClose() {
-     close(m_MidiFd);
-     close(m_MidiWrFd);
-     cerr<<"Closed midi device"<<endl;
-}
-
-// little helper to strip out the realtime and unused messages
-void MidiDevice::OssReadByte(unsigned char *c)
+// collect events drains what the backend has polled since last time
+// into the per channel lists; the clock is counted here as it comes.
+// Called with the mutex held.
+void MidiDevice::CollectEvents()
 {
-	*c=ACTIVE_SENSE;
-	do read(m_MidiFd,c,1);
-	while (*c>=STATUS_END && *c!=MIDI_CLOCK);
-}
-
-// collect events deals with the byte level messages, and sorts
-// and filters them into distinct messages we can handle easily
-
-void MidiDevice::OssCollectEvents()
-{
-	unsigned char buf[1];
-	int count,n,nn;
-	bool MessageSent;
-	unsigned char data[3],last=0;
-
-	// constantly scan for relevent input,
-	// and write it to the pipe
-
-	// filters out unhandled messages, and attempts to build
-	// coherent messages to send to the midi handler
-	bool InSysex=false;
-
-	for(;;)
+	if (!m_Backend) return;
+	MidiPacket packet;
+	for (int n=0; n<1024 && m_Backend->Poll(packet); n++)
 	{
-		OssReadByte(buf);
-
-		if (*buf==MIDI_CLOCK)
+		if (packet.Status==MIDI_CLOCK)
 		{
 			m_ClockCount++;
 			if (m_ClockCount==6)
@@ -216,61 +198,17 @@ void MidiDevice::OssCollectEvents()
 				m_ClockCount=0;
 			}
 		}
-		else
-		if (*buf>=STATUS_START) // we've got a status byte
-		{
-			if (*buf==SYSEX_TERMINATOR) InSysex=false;
-
-			// find out if it's an opcode
-			if(*buf>=STATUS_START && *buf<=STATUS_END)
-			{
-				InSysex=false;
-				last=data[0]=*buf;
-
-				if (data[0]>=STATUS_PROG_CHANGE && data[0]<STATUS_PITCH_WHEEL)
-				{
-					OssReadByte(&data[1]); //one byte
-					data[2]=0;
-				}
-				else // get the next two bytes
-				{
-					OssReadByte(&data[1]);
-					OssReadByte(&data[2]);
-				}
-				OssAddEvent(data);
-			}
-			else // its a sysex or other message like active sense
-			{
-				if (*buf==SYSEX_START) InSysex=true;
-				cerr<<"Unhandled midi message: "; printf("%x\n",(int)*buf);
-			}
-		}
-		else // more data (running status)
-		{
-			if (!InSysex)
-			{
-				data[0]=last;
-				data[1]=*buf;
-
-				if (data[0]>=STATUS_PROG_CHANGE && data[0]<STATUS_PITCH_WHEEL)
-				{
-					data[2]=0;  //one byte
-				}
-				else // get the next byte
-				{
-					OssReadByte(&data[2]);
-				}
-
-				OssAddEvent(data);
-			}
-		}
+		else if (packet.Status>=STATUS_START && packet.Status<STATUS_END)
+			AddEvent(packet);
+		// 0xff from the backend is a reset: the notes it knew are gone.
 	}
 }
 
-// addevent converts the midi bytecode into midi message objects and
+// addevent converts the midi packet into midi message objects and
 // stacks them onto the event list to be picked up by the app
-void MidiDevice::OssAddEvent(unsigned char* midi)
+void MidiDevice::AddEvent(const MidiPacket &packet)
 {
+	const unsigned char midi[3]={packet.Status,packet.Data1,packet.Data2};
 	MidiEvent::type MessageType=MidiEvent::NONE;
 	int Volume=0,Note=0,EventDevice=0;
 
@@ -332,265 +270,5 @@ void MidiDevice::OssAddEvent(unsigned char* midi)
 		return;
 	}
 
-	pthread_mutex_lock(m_Mutex);
 	m_EventVec[EventDevice].push(MidiEvent(MessageType,Note,Volume));
-	pthread_mutex_unlock(m_Mutex);
 }
-
-#endif
-
-//////////////////////////////////////////// Alsa Code Only ////////////////////////////////////////
-
-#ifdef USE_ALSA_MIDI
-
-// code taken and modified from jack_miniFMsynth
-
-void MidiDevice::AlsaClose () {
-
-	//Alsa requires two handles - one for read and one for write,
-	//so we make sure too close both here
-
-	snd_seq_close (seq_rhandle);
-	snd_seq_close (seq_whandle);
-}
-
-void MidiDevice::AlsaCollectEvents () {
-     //As Alsa only supports a read or write, we use the read handle here to poll our input
-     //for MIDI events
-
-     int seq_nfds, l1;
-     struct pollfd *pfds;
-
-     //get descriptors count to find out how many events are
-     //waiting to be processed
-     seq_nfds = snd_seq_poll_descriptors_count(seq_rhandle, POLLIN);
-
-     //poll the descriptors to be proccessed and loop through them
-     pfds = new struct pollfd[seq_nfds];
-     snd_seq_poll_descriptors(seq_rhandle, pfds, seq_nfds, POLLIN);
-     for (;;) {
-         if (poll (pfds, seq_nfds, 1000) > 0) {
-            for (l1 = 0; l1 < seq_nfds; l1++) {
-                if (pfds[l1].revents > 0) {
-                   snd_seq_event_t *ev;
-                   // this line looks suspect to me (Andy Preston)
-                   // int l1;
-                   MidiEvent::type MessageType=MidiEvent::NONE;
-                   int Volume=0, Note=0, EventDevice=0;
-                   do {
-                      snd_seq_event_input (seq_rhandle, &ev);
-                      if ((ev->type == SND_SEQ_EVENT_NOTEON) && (ev->data.note.velocity == 0)) {
-                         ev->type = SND_SEQ_EVENT_NOTEOFF;
-                      }
-                      switch (ev->type) {
-                        case SND_SEQ_EVENT_PITCHBEND:
-                             // Andy Preston
-                             MessageType=MidiEvent::PITCHBEND;
-                             Volume = (char)((ev->data.control.value / 8192.0)*256);
-                             break;
-                        case SND_SEQ_EVENT_CONTROLLER:
-                             MessageType=MidiEvent::PARAMETER;
-                             Note = ev->data.control.param;
-                             Volume = ev->data.control.value;
-                             break;
-                        case SND_SEQ_EVENT_NOTEON:
-                             MessageType=MidiEvent::ON;
-                             EventDevice = ev->data.control.channel;
-                             Note = ev->data.note.note;
-                             Volume = ev->data.note.velocity;
-                             break;
-                        case SND_SEQ_EVENT_NOTEOFF:
-                             MessageType=MidiEvent::ON;
-                             EventDevice = ev->data.control.channel;
-                             Note = ev->data.note.note;
-                             break;
-                      }
-                      pthread_mutex_lock (m_Mutex);
-                      m_EventVec[EventDevice].push (MidiEvent (MessageType, Note, Volume));
-                      pthread_mutex_unlock (m_Mutex);
-                      snd_seq_free_event (ev);
-                   } while (snd_seq_event_input_pending(seq_rhandle, 0) > 0);
-                }
-            }
-         }
-     }
-     delete [] pfds;
-}
-
-void MidiDevice::AlsaSendEvent (int Device, const MidiEvent &Event) {
-	//As Alsa only supports a read or write, we use the write handle here to send
-	//our MIDI events
-
-	snd_seq_event_t ev;
-
-	snd_seq_ev_clear      (&ev);
-	snd_seq_ev_set_direct (&ev);
-	snd_seq_ev_set_subs   (&ev);
-	snd_seq_ev_set_source (&ev, 0);
-
-	switch (Event.GetType())
-	{
-		case MidiEvent::ON:
-                     ev.type = SND_SEQ_EVENT_NOTEON;
-                     break;
-		case MidiEvent::OFF:
-                     ev.type = SND_SEQ_EVENT_NOTEOFF;
-                     break;
-/*		case MidiEvent::PARAMETER:
-                     ev.type = SND_SEQ_EVENT_CONTROLLER;
-                     ev.data.control.param = Event.GetNote();
-                     ev.data.control.value =
-                     break;
-		case MidiEvent::PITCHBEND:
-                     ev.type = SND_SEQ_EVENT_PITCHBEND;
-                     ev.data.control.param = Event.GetNote();
-                     ev.data.control.value =
-                     break;*/
-                default:
-                     break;
-	}
-
-	ev.data.note.velocity = (char)Event.GetVolume()*127;
-	ev.data.control.channel = Device;
-	ev.data.note.note=Event.GetNote();
-
-	snd_seq_event_output(seq_whandle, &ev);
-	snd_seq_drain_output(seq_whandle);
-}
-
-void MidiDevice::AlsaOpen()
-{
-	int client_id, port_id;
-
-	//Alsa apears to require two handles, one for read and one for write
-	//so we try to open one first for input and then one for output
-
-	//open input handle
-	if (snd_seq_open(&seq_rhandle, "default", SND_SEQ_OPEN_INPUT, 0) < 0)
-	{
-		fprintf(stderr, "Error opening ALSA input sequencer.\n");
-		exit(1);
-	}
-
-	//setup our input name as seen by other apps, and get corresponding client id
-	snd_seq_set_client_name(seq_rhandle, m_AppName.c_str());
-	client_id = snd_seq_client_id(seq_rhandle);
-
-	//try and create our actual input port capable of being written to by MIDI outputs
-	if ((port_id = snd_seq_create_simple_port(seq_rhandle, m_AppName.c_str(),
-		SND_SEQ_PORT_CAP_WRITE|SND_SEQ_PORT_CAP_SUBS_WRITE,
-		SND_SEQ_PORT_TYPE_APPLICATION) < 0))
-	{
-		fprintf(stderr, "Error creating input sequencer port.\n");
-	}
-
-	//open output handle
-	if (snd_seq_open(&seq_whandle, "default", SND_SEQ_OPEN_OUTPUT, 0) < 0)
-	{
-		fprintf(stderr, "Error opening ALSA ouput sequencer.\n");
-		exit(1);
-	}
-
-	//setup our output name as seen by other apps, and get corresponding client id
-	snd_seq_set_client_name(seq_whandle, m_AppName.c_str());
-	client_id = snd_seq_client_id(seq_whandle);
-
-	//try and create our actual output port capable of being read from by MIDI inputs
-	if ((port_id = snd_seq_create_simple_port(seq_whandle, m_AppName.c_str(),
-		SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ,
-		SND_SEQ_PORT_TYPE_APPLICATION) < 0))
-	{
-		fprintf(stderr, "Error creating output sequencer port.\n");
-	}
-}
-
-#endif
-
-////////////////////////////////////////////  Apple Code Only /////////////////////////////////////////
-
-#if __APPLE__
-
-void MidiDevice::AppleOpen()
-{
-	m_ReadFillIndex = m_ReadReadIndex = 0;
-
-	OSStatus err = 0;
-
-	mMIDISource					= NULL;
-	mMIDIClient					= NULL;
-	mMIDIDestination			= NULL;
-
-	err = MIDIClientCreate(CFSTR("org.pawpal.ssm"), NULL, NULL, &mMIDIClient);
-	if (err) printf("MIDIClientCreate failed returned %d\n", err);
-
-	if (!err) {
-		err = MIDISourceCreate(mMIDIClient, CFSTR("SpiralSynth"), &mMIDISource);
-		if (err) printf("MIDIInputPortCreate failed returned %d\n", err);
-	}
-
-	if (!err) {
-		err = MIDIDestinationCreate(mMIDIClient, CFSTR("SpiralSynth"), sMIDIRead, this, &mMIDIDestination);
-		MIDIObjectSetIntegerProperty(mMIDIDestination, kMIDIPropertyUniqueID, 'SSmP');
-	}
-}
-
-
-void MidiDevice::AppleClose()
-{
-	if (mMIDIDestination)
-		MIDIEndpointDispose(mMIDIDestination);
-	if (mMIDISource)
-		MIDIEndpointDispose(mMIDISource);
-	mMIDISource = NULL;
-	if (mMIDIClient)
-		MIDIClientDispose(mMIDIClient);
-	mMIDIClient = NULL;
-}
-
-int MidiDevice::AppleWrite(int dummy, unsigned char *outbuffer, int maxlen)
-{
-	return 0;
-}
-
-int MidiDevice::AppleRead(int dummy, unsigned char *outbuffer, int maxlen)
-{
-	if (!mMIDIClient)
-		return -1;
-	int len = 0;
-	do {
-		while (m_ReadReadIndex == m_ReadFillIndex)
-			usleep(1000);	// 1ms
-		int readl =  m_ReadFillIndex - m_ReadReadIndex;
-		if (readl < 0)
-			readl += midi_ReadSize;	// wrapped
-		while (len < maxlen && readl-- > 0) {
-			int r = m_ReadReadIndex;
-			outbuffer[len++] = m_ReadBuffer[r];
-			r++;
-			m_ReadReadIndex = r % midi_ReadSize;
-		}
-	} while (len < maxlen);
-	return len;
-}
-
-void MidiDevice::sMIDIRead(const MIDIPacketList *pktlist, void *readProcRefCon, void *srcConnRefCon)
-{
-	MidiDevice & t = *((MidiDevice*)readProcRefCon);
-
-	const MIDIPacket *packet = &pktlist->packet[0];
-	for (int i = 0; i < (int)pktlist->numPackets; i++) {
-		const MIDIPacket & p = *packet;
-
-		for (int b = 0; b < p.length; b++) {
-		//	printf("%02x ", p.data[b]);
-			int d = t.m_ReadFillIndex;
-			t.m_ReadBuffer[d] = p.data[b];
-			d++;
-			t.m_ReadFillIndex = d % midi_ReadSize;
-		}
-	//	printf("\n");
-		packet = MIDIPacketNext(packet);
-	}
-}
-
-#endif
