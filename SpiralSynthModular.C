@@ -36,6 +36,7 @@
 #include "SpiralSynthModular.h"
 #include "AudioTransportHub.h"
 #include "AudioBackend.h"
+#include "Midi.h"
 #include "DeviceClassRegistry.h"
 #include "EditorClassRegistry.h"
 #include "OutputPlugin.h"
@@ -132,6 +133,9 @@ SynthModular::~SynthModular()
 	// Editors before devices, the reverse of loading.
 	spiralcore::EditorClassRegistry::PackUpAndGoHome();
 	spiralcore::DeviceClassRegistry::PackUpAndGoHome();
+	// The MidiPlugin instances are gone with the devices, so the
+	// backend they shared is too; its module can leave now.
+	spiralcore::MidiBackendRegistry::PackUpAndGoHome();
 	system("rm -f ___temp.ssmcopytmp");
 	pthread_mutex_destroy(&m_CycleLock);
 }
@@ -611,6 +615,10 @@ void SynthModular::LoadPlugins (string pluginPath) {
      // compiled-in backends are already registered and a module of the
      // same name yields.
      spiralcore::AudioBackendRegistry::Get()->LoadModules(PluginRoot);
+     // MIDI backends under midi/; the preference names one, else the
+     // first that is not the dummy. MidiPlugin opens the device itself.
+     spiralcore::MidiBackendRegistry::Get()->LoadModules(PluginRoot);
+     spiralcore::MidiDevice::SetBackendName(SpiralInfo::MIDIBACKEND);
      // Built-in devices first: a module of the same ID is not loaded.
      spiralcore::DeviceClassRegistry::Get()->Register(OutputPlugin::Class());
      spiralcore::EditorClassRegistry::Get()->Register(OutputPluginGUI::Class());
@@ -921,6 +929,7 @@ void SynthModular::UpdateHostInfo()
 	m_Info.AUDIOCLIENT = SpiralInfo::AUDIOCLIENT;
 	m_Info.MIDIFILE   = SpiralInfo::MIDIFILE;
 	m_Info.POLY       = SpiralInfo::POLY;
+	spiralcore::MidiDevice::SetBackendName(SpiralInfo::MIDIBACKEND);
 
 	/* Reset all plugin ports/buffers befure Resuming */
 	ResetAudio();

@@ -94,6 +94,11 @@ coreaudio_output_test_SOURCES = tests/coreaudio-output.cpp
 coreaudio_output_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la
 endif
 
+check_PROGRAMS += midi-plugin-test
+midi_plugin_test_SOURCES = tests/midi-plugin.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
+midi_plugin_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
+midi_plugin_test_LDADD = $(SpiralSynthModular_LDADD) $(MIDI_LIBS)
+midi_plugin_test_LDFLAGS = -export-dynamic
 check_PROGRAMS += dummy-host-test
 dummy_host_test_SOURCES = tests/dummy-host.cpp SpiralSynthModular.C SpiralInfo.C SettingsWindow.C GraphSort.C
 dummy_host_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
