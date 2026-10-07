@@ -51,13 +51,21 @@ libspiralcore_la_SOURCES += include/AudioClient.h
 
 libspiralcore_la_SOURCES += include/PluginLoader.h src/PluginLoader.cpp
 libspiralcore_la_SOURCES += include/BackendModule.h include/AudioBackend.h src/AudioBackend.cpp src/AudioBackends.cpp include/DummyClient.h src/DummyClient.cpp
+libspiralcore_la_SOURCES += include/MidiBackend.h src/MidiBackend.cpp include/NativeMidi.h src/NativeMidi.cpp include/ThreadCompatibility.h include/Compatibility.h
+check_PROGRAMS += midi-backend-test native-midi-test
+midi_backend_test_SOURCES = tests/midi-backend.cpp
+midi_backend_test_LDADD = libspiralcore.la
+native_midi_test_SOURCES = tests/native-midi.cpp
+native_midi_test_LDADD = libspiralcore.la
 check_PROGRAMS += audio-backend-test
 audio_backend_test_SOURCES = tests/audio-backend.cpp
 audio_backend_test_LDADD = libspiralcore.la
 check_PROGRAMS += plugin-loader-test
 plugin_loader_test_SOURCES = tests/plugin-loader.cpp
 plugin_loader_test_LDADD = libspiralcore.la
-check_LTLIBRARIES = probe_Probe.la sub_Probe.la stranger_Probe.la probe_Audio.la
+check_LTLIBRARIES = probe_Probe.la sub_Probe.la stranger_Probe.la probe_Audio.la probe_Midi.la
+probe_Midi_la_SOURCES = tests/plugin-loader/midi.cpp
+probe_Midi_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
 probe_Audio_la_SOURCES = tests/plugin-loader/audio.cpp
 probe_Audio_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
 probe_Probe_la_SOURCES = tests/plugin-loader/probe.cpp
@@ -69,8 +77,9 @@ stranger_Probe_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
 # The test root: probe/probe_Probe.so, probe/sub/sub_Probe.so, probe/stranger_Probe.so
 plugin-loader-root: $(check_LTLIBRARIES)
 	rm -rf plugin-loader-root
-	$(MKDIR_P) plugin-loader-root/probe/sub plugin-loader-root/audio
+	$(MKDIR_P) plugin-loader-root/probe/sub plugin-loader-root/audio plugin-loader-root/midi
 	cp .libs/probe_Audio.so plugin-loader-root/audio/
+	cp .libs/probe_Midi.so plugin-loader-root/midi/
 	cp .libs/probe_Probe.so plugin-loader-root/probe/
 	cp .libs/sub_Probe.so plugin-loader-root/probe/sub/
 	cp .libs/stranger_Probe.so plugin-loader-root/probe/
