@@ -1107,15 +1107,16 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 
 				if ((paste || ver>1) && m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow())
 				{
+					// updates the data in the channel buffers, so the values don't
+					// get overwritten in the next tick, and so the GUI can read the
+					// loaded state through the channel.
+					m_DeviceWinMap[ID]->m_Device->GetChannelHandler()->FlushChannels();
+
 					// set the GUI up with the loaded values
 					// looks messy, but if we do it here, the plugin and it's gui can remain
 					// totally seperated.
 					((SpiralPluginGUI*)(m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow()))->
 						UpdateValues(m_DeviceWinMap[ID]->m_Device);
-
-					// updates the data in the channel buffers, so the values don't
-					// get overwritten in the next tick. (should maybe be somewhere else)
-					m_DeviceWinMap[ID]->m_Device->GetChannelHandler()->FlushChannels();
 
 					// position the plugin window in the main window
 					//m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow()->position(px,py);
