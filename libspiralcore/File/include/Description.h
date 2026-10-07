@@ -87,6 +87,7 @@ namespace spiralcore
 			bool More() const { return m_At < m_End; }
 			size_t Position() const { return m_At; }
 			bool Failed() const { return m_Failed; }
+			const Description &Source() const { return m_Description; }
 		private:
 			// The next value, consumed; past the end, Failed() and "".
 			const std::string &Next();
