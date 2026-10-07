@@ -23,23 +23,23 @@
 #include <sys/stat.h>
 #include <iostream>
 #include <algorithm>
-#include "PluginLoader.h"
+#include "PluginManager.h"
 
 using namespace std;
 using namespace spiralcore;
 
-PluginLoader *PluginLoader::m_Singleton = NULL;
+PluginManager *PluginManager::m_Singleton = NULL;
 
-PluginLoader::PluginLoader()
+PluginManager::PluginManager()
 {
 }
 
-PluginLoader::~PluginLoader()
+PluginManager::~PluginManager()
 {
 	UnloadAll();
 }
 
-void PluginLoader::PackUpAndGoHome()
+void PluginManager::PackUpAndGoHome()
 {
 	if (m_Singleton && !m_Singleton->UnloadAll())
 		return;
@@ -48,7 +48,7 @@ void PluginLoader::PackUpAndGoHome()
 	m_Singleton = NULL;
 }
 
-bool PluginLoader::UnregisterKind(PluginKind *kind)
+bool PluginManager::UnregisterKind(PluginKind *kind)
 {
 	if (!kind || !kind->CanUnload())
 		return false;
@@ -66,7 +66,7 @@ bool PluginLoader::UnregisterKind(PluginKind *kind)
 	return true;
 }
 
-void PluginLoader::RegisterKind(PluginKind *kind)
+void PluginManager::RegisterKind(PluginKind *kind)
 {
 	if (!kind) return;
 	for (vector<PluginKind*>::iterator i=m_Kinds.begin(); i!=m_Kinds.end(); i++)
@@ -81,7 +81,7 @@ static bool HasSuffix(const string &name, const char *suffix)
 	return name.size() > ending.size() && name.compare(name.size() - ending.size(), ending.size(), ending) == 0;
 }
 
-unsigned PluginLoader::Load(PluginKind &kind, const string &root)
+unsigned PluginManager::Load(PluginKind &kind, const string &root)
 {
 	string directory = root;
 	if (!directory.empty() && directory[directory.size()-1] != '/') directory += '/';
@@ -118,7 +118,7 @@ unsigned PluginLoader::Load(PluginKind &kind, const string &root)
 	return loaded;
 }
 
-unsigned PluginLoader::LoadAll(const string &root)
+unsigned PluginManager::LoadAll(const string &root)
 {
 	unsigned loaded = 0;
 	for (vector<PluginKind*>::iterator i=m_Kinds.begin(); i!=m_Kinds.end(); i++)
@@ -127,7 +127,7 @@ unsigned PluginLoader::LoadAll(const string &root)
 	return loaded;
 }
 
-bool PluginLoader::LoadModule(PluginKind &kind, const string &path)
+bool PluginManager::LoadModule(PluginKind &kind, const string &path)
 {
 	void *handle = dlopen(path.c_str(), RTLD_NOW | RTLD_LOCAL);
 	if (handle == NULL)
@@ -156,13 +156,13 @@ bool PluginLoader::LoadModule(PluginKind &kind, const string &path)
 	return true;
 }
 
-void PluginLoader::ReleaseModule(const Module &module)
+void PluginManager::ReleaseModule(const Module &module)
 {
 	module.Kind->Release(module.Entry, module.Path);
 	dlclose(module.Handle);
 }
 
-bool PluginLoader::UnloadAll()
+bool PluginManager::UnloadAll()
 {
 	// Check the whole set before releasing any descriptor or library.
 	for (size_t n = 0; n < m_Modules.size(); ++n)

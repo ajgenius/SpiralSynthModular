@@ -2,7 +2,7 @@
 // The loader finds a kind's modules under <root>/<subdirectory>, resolves
 // the kind's entry symbol and lets the kind accept or refuse; a module
 // without the symbol is dropped, a missing root loads nothing.
-#include "PluginLoader.h"
+#include "PluginManager.h"
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
@@ -37,12 +37,12 @@ struct ProbeKind : public PluginKind
 
 int main(int argc, char **argv)
 {
-	const char *given = argc == 2 ? argv[1] : getenv("PLUGIN_LOADER_ROOT");
+	const char *given = argc == 2 ? argv[1] : getenv("PLUGIN_MANAGER_ROOT");
 	if (!given) return 77;
 
 	const std::string root = given;
 	ProbeKind probe;
-	PluginLoader *loader = PluginLoader::Get();
+	PluginManager *loader = PluginManager::Get();
 	loader->RegisterKind(&probe);
 	loader->RegisterKind(&probe);
 
@@ -60,14 +60,14 @@ int main(int argc, char **argv)
 	probe.Busy = true;
 	assert(!loader->UnloadAll() && probe.Released == 0);
 	assert(!loader->UnregisterKind(&probe));
-	PluginLoader::PackUpAndGoHome();
-	assert(PluginLoader::Get() == loader);
+	PluginManager::PackUpAndGoHome();
+	assert(PluginManager::Get() == loader);
 
 	probe.Busy = false;
 	assert(loader->UnregisterKind(&probe) && probe.Released == 2);
 	assert(loader->LoadAll(root) == 0);
 	assert(loader->UnloadAll());
-	PluginLoader::PackUpAndGoHome();
+	PluginManager::PackUpAndGoHome();
 	printf("PASS\n");
 	return 0;
 }

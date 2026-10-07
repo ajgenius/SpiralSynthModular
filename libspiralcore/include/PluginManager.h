@@ -16,8 +16,8 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#ifndef SPIRAL_PLUGIN_LOADER_H
-#define SPIRAL_PLUGIN_LOADER_H
+#ifndef SPIRAL_PLUGIN_MANAGER_H
+#define SPIRAL_PLUGIN_MANAGER_H
 
 #include <string>
 #include <vector>
@@ -54,10 +54,10 @@ public:
 
 //////////////////////////////////////////////////////////
 
-class PluginLoader
+class PluginManager
 {
 public:
-	static PluginLoader *Get() { if(!m_Singleton) m_Singleton=new PluginLoader; return m_Singleton; }
+	static PluginManager *Get() { if(!m_Singleton) m_Singleton=new PluginManager; return m_Singleton; }
 	static void         PackUpAndGoHome();
 
 	void                RegisterKind(PluginKind *kind);
@@ -68,8 +68,8 @@ public:
 
 private:
 
-	PluginLoader();
-	~PluginLoader();
+	PluginManager();
+	~PluginManager();
 	bool LoadModule(PluginKind &kind, const std::string &path);
 
 	std::vector<PluginKind*> m_Kinds;
@@ -81,7 +81,7 @@ private:
 	};
 	void ReleaseModule(const Module &module);
 	std::vector<Module> m_Modules;
-	static PluginLoader *m_Singleton;
+	static PluginManager *m_Singleton;
 };
 
 }
