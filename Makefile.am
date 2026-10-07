@@ -10,7 +10,6 @@ SpiralSynthModular_LDADD = 							\
 	$(FLTK_LIBS) $(MIDI_LIBS)					\
 	-lm				\
 	$(top_builddir)/GUI/Widgets/libSpiralWidgets.la \
-	$(top_builddir)/GUI/Widgets/libSpiralPlugin.la\
                 $(top_builddir)/libspiralcore/libspiralcore.la
 
 
@@ -60,7 +59,7 @@ mixer_ports_test_LDADD = $(SpiralSynthModular_LDADD)
 check_PROGRAMS += mixer-signal-test stereo-mixer-signal-test
 mixer_signal_test_SOURCES = tests/mixer-signal.cpp Plugins/DSP/MixerPlugin/MixerPlugin.C
 mixer_signal_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/MixerPlugin
-mixer_signal_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la
+mixer_signal_test_LDADD = libspiralcore/libspiralcore.la
 stereo_mixer_signal_test_SOURCES = tests/mixer-signal.cpp Plugins/DSP/StereoMixerPlugin/StereoMixerPlugin.C
 stereo_mixer_signal_test_CPPFLAGS = $(AM_CPPFLAGS) -DTEST_STEREO -I$(srcdir)/Plugins/DSP/StereoMixerPlugin
 stereo_mixer_signal_test_LDADD = $(mixer_signal_test_LDADD)
@@ -85,13 +84,13 @@ jack_gui_test_LDADD = $(SpiralSynthModular_LDADD) $(JACK_LIBS)
 jack_gui_test_LDFLAGS = -export-dynamic
 jack_plugin_test_SOURCES = tests/jack-plugin.cpp
 jack_plugin_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/JackPlugin
-jack_plugin_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la $(JACK_LIBS) -ldl
+jack_plugin_test_LDADD = libspiralcore/libspiralcore.la $(JACK_LIBS) -ldl
 endif
 
 if HAVE_CORE_AUDIO_CLIENT
 check_PROGRAMS += coreaudio-output-test
 coreaudio_output_test_SOURCES = tests/coreaudio-output.cpp
-coreaudio_output_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la
+coreaudio_output_test_LDADD = libspiralcore/libspiralcore.la
 endif
 
 check_PROGRAMS += midi-plugin-test
@@ -134,10 +133,10 @@ check_PROGRAMS += jack-periods-test
 TESTS += jack-periods-test
 jack_periods_test_SOURCES = tests/jack-periods.cpp Plugins/DSP/JackPlugin/JackPlugin.C libspiralcore/src/JackClient.cpp
 jack_periods_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/JackPlugin
-jack_periods_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la
+jack_periods_test_LDADD = libspiralcore/libspiralcore.la
 endif
 
 check_PROGRAMS += hub-clock-test
 TESTS += hub-clock-test
 hub_clock_test_SOURCES = tests/hub-clock.cpp
-hub_clock_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la
+hub_clock_test_LDADD = libspiralcore/libspiralcore.la

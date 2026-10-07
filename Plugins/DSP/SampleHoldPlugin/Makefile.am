@@ -5,7 +5,7 @@ dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = SampleHoldPlugin_DSP.la
 SampleHoldPlugin_DSP_la_SOURCES = SampleHoldPlugin.h SampleHoldPlugin.C
 SampleHoldPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
-SampleHoldPlugin_DSP_la_LIBADD = $(top_builddir)/GUI/Widgets/libSpiralPlugin.la $(top_builddir)/libspiralcore/libspiralcore.la -lm
+SampleHoldPlugin_DSP_la_LIBADD = $(top_builddir)/libspiralcore/libspiralcore.la -lm
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/SampleHoldPlugin_DSP.la"
 uninstall-local:

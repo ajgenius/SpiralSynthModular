@@ -5,7 +5,7 @@ dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = TransposePlugin_DSP.la
 TransposePlugin_DSP_la_SOURCES = TransposePlugin.h TransposePlugin.C
 TransposePlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
-TransposePlugin_DSP_la_LIBADD = $(top_builddir)/GUI/Widgets/libSpiralPlugin.la $(top_builddir)/libspiralcore/libspiralcore.la -lm
+TransposePlugin_DSP_la_LIBADD = $(top_builddir)/libspiralcore/libspiralcore.la -lm
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/TransposePlugin_DSP.la"
 uninstall-local:

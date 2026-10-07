@@ -5,7 +5,7 @@ dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = NoteSnapPlugin_DSP.la
 NoteSnapPlugin_DSP_la_SOURCES = NoteSnapPlugin.h NoteSnapPlugin.C
 NoteSnapPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
-NoteSnapPlugin_DSP_la_LIBADD = $(top_builddir)/GUI/Widgets/libSpiralPlugin.la $(top_builddir)/libspiralcore/libspiralcore.la -lm
+NoteSnapPlugin_DSP_la_LIBADD = $(top_builddir)/libspiralcore/libspiralcore.la -lm
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/NoteSnapPlugin_DSP.la"
 uninstall-local:
