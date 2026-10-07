@@ -1177,11 +1177,11 @@ iostream &operator>>(iostream &s, SynthModular &o)
 
 //////////////////////////////////////////////////////////
 
-ostream &operator<<(ostream &s, SynthModular &o)
+spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o)
 {
 	o.FreezeAll();
 
-	s<<"SpiralSynthModular File Ver "<<FILE_VERSION<<endl;
+	d.Value("SpiralSynthModular File Ver").Separator(" ").Value(FILE_VERSION).Line();
 
 	// make external files dir
 	bool ExternalDirUsed=false;
@@ -1190,55 +1190,55 @@ ostream &operator<<(ostream &s, SynthModular &o)
 
 	if (FILE_VERSION>2)
 	{
-		s<<o.m_TopWindow->x()<<" "<<o.m_TopWindow->y()<<" ";
-		s<<o.m_TopWindow->w()<<" "<<o.m_TopWindow->h()<<" ";
-		s<<0<<" "<<0<<" ";
-		s<<0<<" "<<0<<endl;
+		d.Value(o.m_TopWindow->x()).Separator(" ").Value(o.m_TopWindow->y()).Separator(" ");
+		d.Value(o.m_TopWindow->w()).Separator(" ").Value(o.m_TopWindow->h()).Separator(" ");
+		d.Value(0).Separator(" ").Value(0).Separator(" ");
+		d.Value(0).Separator(" ").Value(0).Line();
 	}
 
 	// save out the SynthModular
-	s<<"SectionList"<<endl;
-	s<<o.m_DeviceWinMap.size()<<endl;
+	d.Value("SectionList").Line();
+	d.Value(o.m_DeviceWinMap.size()).Line();
 
 	for(map<int,DeviceWin*>::iterator i=o.m_DeviceWinMap.begin();
 		i!=o.m_DeviceWinMap.end(); i++)
 	{
 		if (i->second->m_DeviceGUI && ((i->second->m_Device) || (i->second->m_PluginID==COMMENT_ID)))
 		{
-			s<<endl;
-			s<<"Device ";
-			s<<i->first<<" "; // save the id
-			s<<"Plugin ";
-			s<<i->second->m_PluginID<<endl;
-			s<<i->second->m_DeviceGUI->x()<<" ";
-			s<<i->second->m_DeviceGUI->y()<<" ";
-			s<<i->second->m_DeviceGUI->GetName().size()<<" ";
-			s<<i->second->m_DeviceGUI->GetName()<<" ";
+			d.Line();
+			d.Value("Device").Separator(" ");
+			d.Value(i->first).Separator(" "); // save the id
+			d.Value("Plugin").Separator(" ");
+			d.Value(i->second->m_PluginID).Line();
+			d.Value(i->second->m_DeviceGUI->x()).Separator(" ");
+			d.Value(i->second->m_DeviceGUI->y()).Separator(" ");
+			d.Value(i->second->m_DeviceGUI->GetName().size()).Separator(" ");
+			d.Value(i->second->m_DeviceGUI->GetName()).Separator(" ");
 
 			if (i->second->m_DeviceGUI->GetPluginWindow())
 			{
-				s<<i->second->m_DeviceGUI->GetPluginWindow()->visible()<<" ";
-				s<<i->second->m_DeviceGUI->GetPluginWindow()->x()<<" ";
-				s<<i->second->m_DeviceGUI->GetPluginWindow()->y()<<" ";
+				d.Value(i->second->m_DeviceGUI->GetPluginWindow()->visible()).Separator(" ");
+				d.Value(i->second->m_DeviceGUI->GetPluginWindow()->x()).Separator(" ");
+				d.Value(i->second->m_DeviceGUI->GetPluginWindow()->y()).Separator(" ");
 			}
 			else
 			{
-				s<<0<<" "<<0<<" "<<0;
+				d.Value(0).Separator(" ").Value(0).Separator(" ").Value(0);
 			}
 
-			s<<endl;
+			d.Line();
 
 			if (i->second->m_PluginID==COMMENT_ID)
 			{
 				// save the comment gui
-				((Fl_CommentGUI*)(i->second->m_DeviceGUI))->StreamOut(s);
+				((Fl_CommentGUI*)(i->second->m_DeviceGUI))->Describe(d);
 			}
 			else
 			{
 				// save the plugin
-				i->second->m_Device->StreamOut(s);
+				i->second->m_Device->Describe(d);
 			}
-			s<<endl;
+			d.Line();
 
 			// save external files
 			if (i->second->m_Device && i->second->m_Device->SaveExternalFiles(o.m_FilePath+"_files/"))
@@ -1248,7 +1248,9 @@ ostream &operator<<(ostream &s, SynthModular &o)
 		}
 	}
 
-	s<<endl<<*o.m_Canvas<<endl;
+	d.Line();
+	::Describe(d, *o.m_Canvas);
+	d.Line();
 
 	// remove it if it wasn't used
 	if (!ExternalDirUsed)
@@ -1261,6 +1263,14 @@ ostream &operator<<(ostream &s, SynthModular &o)
 
 	o.ThawAll();
 
+	return d;
+}
+
+ostream &operator<<(ostream &s, SynthModular &o)
+{
+	spiralcore::Description d;
+	Describe(d, o);
+	d.Write(s);
 	return s;
 }
 

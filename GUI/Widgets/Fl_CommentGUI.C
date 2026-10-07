@@ -76,11 +76,18 @@ void Fl_CommentGUI::NewText(void) {
 }
 
 
+void Fl_CommentGUI::Describe(spiralcore::Description &d)
+{
+	d.Value(1).Separator(" ");
+	d.Value(m_Comment.size()).Separator(" ");
+	d.Value(m_Comment).Line();
+}
+
 void Fl_CommentGUI::StreamOut(ostream &s)
 {
-	s<<1<<" ";
-	s<<m_Comment.size()<<" ";
-	s<<m_Comment<<endl;
+	spiralcore::Description d;
+	Describe(d);
+	d.Write(s);
 }
 
 void Fl_CommentGUI::StreamIn(istream &s)
