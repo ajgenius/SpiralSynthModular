@@ -50,16 +50,16 @@ endif
 
 check_PROGRAMS = mixer-ports-test
 TESTS = $(check_PROGRAMS)
-mixer_ports_test_SOURCES = tests/mixer-ports.cpp Plugins/DSP/MixerPlugin/MixerPlugin.C SpiralInfo.C
-mixer_ports_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir) -I$(srcdir)/Plugins/DSP/MixerPlugin
+mixer_ports_test_SOURCES = tests/mixer-ports.cpp Plugins/Devices/MixerPlugin/MixerPlugin.C SpiralInfo.C
+mixer_ports_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir) -I$(srcdir)/Plugins/Devices/MixerPlugin
 mixer_ports_test_LDADD = $(SpiralSynthModular_LDADD)
 
 check_PROGRAMS += mixer-signal-test stereo-mixer-signal-test
-mixer_signal_test_SOURCES = tests/mixer-signal.cpp Plugins/DSP/MixerPlugin/MixerPlugin.C
-mixer_signal_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/MixerPlugin
+mixer_signal_test_SOURCES = tests/mixer-signal.cpp Plugins/Devices/MixerPlugin/MixerPlugin.C
+mixer_signal_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/Devices/MixerPlugin
 mixer_signal_test_LDADD = libspiralcore/libspiralcore.la
-stereo_mixer_signal_test_SOURCES = tests/mixer-signal.cpp Plugins/DSP/StereoMixerPlugin/StereoMixerPlugin.C
-stereo_mixer_signal_test_CPPFLAGS = $(AM_CPPFLAGS) -DTEST_STEREO -I$(srcdir)/Plugins/DSP/StereoMixerPlugin
+stereo_mixer_signal_test_SOURCES = tests/mixer-signal.cpp Plugins/Devices/StereoMixerPlugin/StereoMixerPlugin.C
+stereo_mixer_signal_test_CPPFLAGS = $(AM_CPPFLAGS) -DTEST_STEREO -I$(srcdir)/Plugins/Devices/StereoMixerPlugin
 stereo_mixer_signal_test_LDADD = $(mixer_signal_test_LDADD)
 
 check_PROGRAMS += plugin-classes-test
@@ -81,7 +81,7 @@ jack_gui_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
 jack_gui_test_LDADD = $(SpiralSynthModular_LDADD) $(JACK_LIBS)
 jack_gui_test_LDFLAGS = -export-dynamic
 jack_plugin_test_SOURCES = tests/jack-plugin.cpp
-jack_plugin_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/JackPlugin
+jack_plugin_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/Devices/JackPlugin
 jack_plugin_test_LDADD = libspiralcore/libspiralcore.la $(JACK_LIBS) -ldl
 endif
 
@@ -129,8 +129,8 @@ endif
 if HAVE_JACK_CLIENT
 check_PROGRAMS += jack-periods-test
 TESTS += jack-periods-test
-jack_periods_test_SOURCES = tests/jack-periods.cpp Plugins/DSP/JackPlugin/JackPlugin.C libspiralcore/Audio/src/JackClient.cpp
-jack_periods_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/JackPlugin
+jack_periods_test_SOURCES = tests/jack-periods.cpp Plugins/Devices/JackPlugin/JackPlugin.C libspiralcore/Audio/src/JackClient.cpp
+jack_periods_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/Devices/JackPlugin
 jack_periods_test_LDADD = libspiralcore/libspiralcore.la
 endif
 
