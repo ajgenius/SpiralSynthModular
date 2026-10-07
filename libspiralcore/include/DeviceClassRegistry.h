@@ -21,7 +21,7 @@
 
 #include <string>
 #include <vector>
-#include "PluginLoader.h"
+#include "PluginManager.h"
 
 class SpiralPlugin;
 

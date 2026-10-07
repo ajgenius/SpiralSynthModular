@@ -47,7 +47,7 @@ DeviceClassRegistry *DeviceClassRegistry::Get()
 	if (!m_Singleton)
 	{
 		m_Singleton = new DeviceClassRegistry;
-		PluginLoader::Get()->RegisterKind(m_Singleton);
+		PluginManager::Get()->RegisterKind(m_Singleton);
 	}
 	return m_Singleton;
 }
@@ -56,14 +56,14 @@ void DeviceClassRegistry::PackUpAndGoHome()
 {
 	if (!m_Singleton) return;
 	// Releases every module of this kind first.
-	PluginLoader::Get()->UnregisterKind(m_Singleton);
+	PluginManager::Get()->UnregisterKind(m_Singleton);
 	delete m_Singleton;
 	m_Singleton = NULL;
 }
 
 unsigned DeviceClassRegistry::LoadModules(const string &root)
 {
-	return PluginLoader::Get()->Load(*this, root);
+	return PluginManager::Get()->Load(*this, root);
 }
 
 bool DeviceClassRegistry::Accept(void *entry, const string &path)

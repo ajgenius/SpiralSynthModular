@@ -12,7 +12,7 @@
 #include <vector>
 #include <map>
 #include "AudioClient.h"
-#include "PluginLoader.h"
+#include "PluginManager.h"
 namespace spiralcore
 {
 	// Bumped when AudioClient or the descriptor changes shape; the registry
@@ -28,7 +28,7 @@ namespace spiralcore
 	// The audio kind: modules are <plugins>/audio/<Backend>/<Backend>_Audio<ext>.
 	// Compiled-in backends register their descriptor directly; modules arrive
 	// through Accept. The first registration of a name wins. Handles stay with
-	// the PluginLoader; destroy instances before unloading.
+	// the PluginManager; destroy instances before unloading.
 	class AudioBackendRegistry : public PluginKind
 	{
 	public:
