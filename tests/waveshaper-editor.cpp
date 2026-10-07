@@ -57,8 +57,8 @@ int main(int argc, char **argv)
 	for (int n=0; n<6; ++n) state << " " << coefs[n];
 	plugin->StreamIn(state);
 	// The host's sequence after StreamIn.
-	static_cast<SpiralPluginGUI *>(gui)->UpdateValues(plugin);
 	plugin->GetChannelHandler()->FlushChannels();
+	static_cast<SpiralPluginGUI *>(gui)->UpdateValues(plugin);
 
 	std::vector<Fl_Knob *> knobs;
 	std::vector<Fl_LED_Button *> leds;
