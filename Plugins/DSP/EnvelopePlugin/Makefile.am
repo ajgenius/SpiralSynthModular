@@ -5,7 +5,7 @@ dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = EnvelopePlugin_DSP.la
 EnvelopePlugin_DSP_la_SOURCES = EnvelopePlugin.h EnvelopePlugin.C
 EnvelopePlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
-EnvelopePlugin_DSP_la_LIBADD = $(top_builddir)/GUI/Widgets/libSpiralPlugin.la $(top_builddir)/libspiralcore/libspiralcore.la -lm
+EnvelopePlugin_DSP_la_LIBADD = $(top_builddir)/libspiralcore/libspiralcore.la -lm
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/EnvelopePlugin_DSP.la"
 uninstall-local:
