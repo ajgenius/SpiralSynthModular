@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "Description.h"
 #include <cstdio>
+#include <cstdlib>
 #include <ostream>
 
 namespace spiralcore
@@ -66,6 +67,35 @@ namespace spiralcore
 			x = Next();
 		else
 			m_Failed = true;
+		return *this;
+	}
+
+	// The whole value must be the number; a range error (a denormal, an
+	// overflow) still is one, as the C library spells it.
+	Description::Reader &Description::Reader::Value(double &x)
+	{
+		if (More())
+		{
+			const std::string &text = Next();
+			char *end = NULL;
+			double v = strtod(text.c_str(), &end);
+			if (!text.empty() && end == text.c_str() + text.size())
+				x = v;
+			else
+				m_Failed = true;
+		}
+		else
+		{
+			m_Failed = true;
+		}
+		return *this;
+	}
+
+	Description::Reader &Description::Reader::Value(float &x)
+	{
+		double v = x;
+		Value(v);
+		x = static_cast<float>(v);
 		return *this;
 	}
 
