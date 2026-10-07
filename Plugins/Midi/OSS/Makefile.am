@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_srcdir)/libspiralcore/include -I$(top_builddir)
+AM_CPPFLAGS = $(SPIRALCORE_CFLAGS) -I$(top_builddir)
 
 plugindir = @PLUGINDIR@/midi/OSS
 plugin_LTLIBRARIES = OSS_Midi.la

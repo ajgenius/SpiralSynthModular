@@ -2,7 +2,7 @@ INCLUDES = 						\
 		$(FLTK_CXXFLAGS)			\
 		$(FLTK_CFLAGS)				\
 		-I$(top_builddir)/GUI/Widgets		\
-		-I$(top_srcdir)/libspiralcore/include
+		$(SPIRALCORE_CFLAGS)
 		
 EXTRA_DIST = SpiralIcon.xpm
 	
