@@ -53,6 +53,17 @@ int main()
 	r2.Value(n).Value(s);
 	CHECK(n == 7 && s == "x" && !r2.More() && !r2.Failed());
 
+	// A denormal is a number: the file's value, not the default. One C++
+	// library's istream fails on it and stops reading. So is an overflow.
+	spiralcore::Description tiny;
+	tiny.Value(std::string("1.4013e-45")).Separator(" ").Value(std::string("0.069")).Separator(" ").Value(std::string("1e999")).Separator(" ").Value(std::string("1x"));
+	spiralcore::Description::Reader tr(tiny);
+	float small = 0.1f, after = 1, big = 2, bad = 3;
+	tr.Value(small).Value(after).Value(big);
+	CHECK(small > 0 && small < 1e-37f && after == 0.069f && big > 3e38f && !tr.Failed());
+	tr.Value(bad);
+	CHECK(bad == 3 && tr.Failed());
+
 	// A span: a device reads its own values and no further, whatever it asks.
 	spiralcore::Description::Reader span(d, 3, 6);
 	int p = 0, q = 0;
