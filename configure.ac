@@ -229,6 +229,53 @@ fi
 AM_CONDITIONAL([HAVE_OUTPUT_ESD], [test "x$have_output_esd" = "xyes"])
 AC_MSG_NOTICE([ESD compatibility module: $have_output_esd])
 
+dnl MIDI APIs are linked only by their loadable backend. Each check is
+dnl pkg-config first, then the header and library the way the audio
+dnl modules find them.
+AC_ARG_ENABLE([rtmidi], AS_HELP_STRING([--disable-rtmidi], [Do not build the RtMidi MIDI backend]), [], [enable_rtmidi=yes])
+have_rtmidi=no
+RTMIDI_CFLAGS=""
+RTMIDI_LIBS=""
+if test "x$enable_rtmidi" != xno; then
+  PKG_CHECK_MODULES([RTMIDI], [rtmidi >= 4.0], [have_rtmidi=yes],
+    [AC_CHECK_HEADER([rtmidi/RtMidi.h],
+      [AC_CHECK_LIB([rtmidi], [main], [have_rtmidi=yes; RTMIDI_LIBS="-lrtmidi"
+         AC_DEFINE([HAVE_RTMIDI_SUBDIR_HEADER], [1], [RtMidi.h lives under rtmidi/])])])])
+fi
+AC_SUBST([RTMIDI_CFLAGS])
+AC_SUBST([RTMIDI_LIBS])
+AM_CONDITIONAL([HAVE_RTMIDI], [test "x$have_rtmidi" = xyes])
+AC_MSG_NOTICE([RtMidi MIDI module: $have_rtmidi])
+
+AC_ARG_ENABLE([alsa-midi], AS_HELP_STRING([--disable-alsa-midi], [Do not build native ALSA sequencer MIDI]), [], [enable_alsa_midi=yes])
+have_alsa_midi=no
+ALSA_MIDI_CFLAGS=""
+ALSA_MIDI_LIBS=""
+if test "x$enable_alsa_midi" != xno; then
+  PKG_CHECK_MODULES([ALSA_MIDI], [alsa], [have_alsa_midi=yes],
+    [AC_CHECK_HEADER([alsa/asoundlib.h],
+      [AC_CHECK_LIB([asound], [snd_seq_open], [have_alsa_midi=yes; ALSA_MIDI_LIBS="-lasound"])])])
+fi
+AC_SUBST([ALSA_MIDI_CFLAGS])
+AC_SUBST([ALSA_MIDI_LIBS])
+AM_CONDITIONAL([HAVE_ALSA_MIDI], [test "x$have_alsa_midi" = xyes])
+AC_MSG_NOTICE([ALSA sequencer MIDI module: $have_alsa_midi])
+
+AC_ARG_ENABLE([jack-midi], AS_HELP_STRING([--disable-jack-midi], [Do not build native JACK MIDI]), [], [enable_jack_midi=yes])
+have_jack_midi=no
+JACK_MIDI_CFLAGS=""
+JACK_MIDI_LIBS=""
+if test "x$enable_jack_midi" != xno; then
+  PKG_CHECK_MODULES([JACK_MIDI], [jack >= 0.109.0], [have_jack_midi=yes],
+    [AC_CHECK_HEADER([jack/midiport.h],
+      [AC_CHECK_LIB([jack], [jack_midi_get_event_count], [have_jack_midi=yes; JACK_MIDI_LIBS="-ljack"])])])
+fi
+AC_SUBST([JACK_MIDI_CFLAGS])
+AC_SUBST([JACK_MIDI_LIBS])
+AM_CONDITIONAL([HAVE_JACK_MIDI], [test "x$have_jack_midi" = xyes])
+AC_MSG_NOTICE([JACK MIDI module: $have_jack_midi])
+
+
 default_output_audio_client="none"
 if test "x$have_output_portaudio" = "xyes"; then
     default_output_audio_client="portaudio"
@@ -517,6 +564,10 @@ Plugins/Audio/ALSA/Makefile
 Plugins/Audio/OSS/Makefile
 Plugins/Audio/PipeWire/Makefile
 Plugins/Audio/ESD/Makefile
+Plugins/Midi/Makefile
+Plugins/Midi/RtMidi/Makefile
+Plugins/Midi/ALSA/Makefile
+Plugins/Midi/JACK/Makefile
 Plugins/DSP/Makefile
 Plugins/GUI/Makefile
 Plugins/GUI/AmpPlugin/Makefile

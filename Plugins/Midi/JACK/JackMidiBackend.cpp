@@ -3,14 +3,14 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
-#include "BackendModule.h"
+#include "MidiBackend.h"
 #include <cstdlib>
 #include "NativeMidi.h"
 #include <jack/jack.h>
 #include <jack/midiport.h>
 #include <algorithm>
 #include <stdexcept>
-using namespace Spiral;
+using namespace spiralcore;
 class JackMidiTransport: public MidiTransport
 {
 	jack_client_t *client;
@@ -167,8 +167,8 @@ static void *Create(void *)
 	catch(...) { return NULL; }
 }
 static void Destroy(void *p) { delete static_cast<MidiBackend *>(p); }
-extern "C" const BackendDescriptor *SSM_Backend_v1()
+extern "C" const BackendDescriptor *SpiralPlugin_GetMidiBackend()
 {
-	static const BackendDescriptor d= {1, "midi", "jack", Create, Destroy};
+	static const BackendDescriptor d= {SPIRAL_MIDI_PLUGIN_ABI, "midi", "jack", Create, Destroy};
 	return &d;
 }
