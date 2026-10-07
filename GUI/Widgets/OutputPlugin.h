@@ -28,6 +28,9 @@ public:
 	// Same values as AudioTransportHub::Mode; the GUI reads these.
 	enum Mode {NO_MODE,INPUT,OUTPUT,DUPLEX,CLOSED};
 
+	// Built into the host: registered with the device registry, no module.
+	static const spiralcore::DeviceClass &Class();
+
 	OutputPlugin();
 	virtual ~OutputPlugin();
 
