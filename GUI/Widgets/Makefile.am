@@ -1,14 +1,9 @@
 AM_CPPFLAGS = -I$(top_srcdir)                                              \
                 $(FLTK_CXXFLAGS)                        \
                 -I$(top_srcdir)/GUI/Widgets           \
+                -I$(top_srcdir)/GUI/Controls          \
                 $(SPIRALCORE_CFLAGS) \
                 $(PORTAUDIO_CFLAGS) $(ALSA_CFLAGS)
-
-EXTRA_DIST = 				\
-		Fl_DragBar.fld  	\
-		Fl_Knob.fld		\
-		Fl_LED_Button.fld	\
-		Fl_SevenSeg.fld
 
 lib_LTLIBRARIES = libSpiralWidgets.la
 libSpiralWidgets_la_SOURCES =					\
@@ -18,49 +13,17 @@ libSpiralWidgets_la_SOURCES =					\
 					Fl_CommentGUI.C		\
 					Fl_DeviceGUI.h		\
 					Fl_DeviceGUI.C		\
-					Fl_DragBar.H		\
-					Fl_DragBar.cxx		\
-					Fl_EventMap.h		\
-					Fl_EventMap.C		\
-					Fl_Knob.H		\
-					Fl_Knob.cxx		\
-					Fl_LED_Button.H		\
-					Fl_LED_Button.cxx	\
-					Fl_Loop.h		\
-					Fl_Loop.C		\
-					Fl_SEvent.C		\
-					Fl_SEvent.h		\
-					Fl_SevenSeg.H		\
-					Fl_SevenSeg.cxx		\
-					Fl_Trigger.h		\
-					Fl_Trigger.C		\
-					Fl_VU_Meter.h		\
-					Fl_VU_Meter.cxx		\
-					PawfalInput.h		\
-					PawfalInput.C		\
-					PawfalYesNo.h		\
-					PawfalYesNo.C		\
 					OutputPluginGUI.h	\
 					OutputPluginGUI.cpp	\
 			                SpiralGUI.H		\
 			                SpiralGUI.C		\
 					SpiralPluginGUI.h	\
-					SpiralPluginGUI.C	\
-					WS_Pulse1.h		\
-					WS_Pulse2.h		\
-					WS_RevSaw.h		\
-					WS_Saw.h		\
-					WS_Sine.h		\
-					WS_Square.h		\
-					WS_Tri.h		\
-					WaveChooser.h		\
-					WaveChooser.C		\
-					WS_InvSine.h		\
-					WS_Noise.h
-					
+					SpiralPluginGUI.C
+
 libSpiralWidgets_la_LDFLAGS = -shared -version-info $(LT_VERSION_INFO)
 libSpiralWidgets_la_LIBADD = 				\
 				$(FLTK_LIBS)		\
 				 -lm	\
+                $(top_builddir)/GUI/Controls/libSpiralControls.la \
                 $(top_builddir)/libspiralcore/libspiralcore.la
 

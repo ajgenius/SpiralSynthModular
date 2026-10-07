@@ -189,7 +189,7 @@ AC_SUBST([SPIRALCORE_CFLAGS])
 
 dnl Where editors and the host find the toolkit-side headers; groups under
 dnl GUI/ add their directory here, nowhere else.
-SPIRALGUI_CFLAGS='-I$(top_srcdir)/GUI/Widgets'
+SPIRALGUI_CFLAGS='-I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/GUI/Controls'
 AC_SUBST([SPIRALGUI_CFLAGS])
 
 AC_ARG_ENABLE([pipewire],
@@ -575,6 +575,7 @@ JSON/Makefile
 SpiralSynthPluginLocation.h
 Makefile
 GUI/Makefile
+GUI/Controls/Makefile
 GUI/Widgets/Makefile
 libspiralcore/Makefile
 Plugins/Makefile
