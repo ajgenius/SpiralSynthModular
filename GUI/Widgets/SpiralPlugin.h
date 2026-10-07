@@ -31,13 +31,10 @@ using spiralcore::Linear;
 using spiralcore::feq;
 #include "ChannelHandler.h"
 using spiralcore::ChannelHandler;
-
-enum
-{
-	SPIRAL_PLUGIN_TYPE_DSP = 1,
-	SPIRAL_PLUGIN_TYPE_GUI = 2,
-	SPIRAL_PLUGIN_TYPE_PAIRED = 3
-};
+#include "DeviceClassRegistry.h"
+using spiralcore::SPIRAL_PLUGIN_TYPE_DSP;
+using spiralcore::SPIRAL_PLUGIN_TYPE_GUI;
+using spiralcore::SPIRAL_PLUGIN_TYPE_PAIRED;
 
 static const float MAX_FREQ = 13000;
 

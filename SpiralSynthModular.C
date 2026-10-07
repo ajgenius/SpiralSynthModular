@@ -129,8 +129,8 @@ SynthModular::~SynthModular()
 	delete m_SettingsWindow;
 	delete m_TopWindow;
 	// Editors before devices, the reverse of loading.
-	EditorClassRegistry::PackUpAndGoHome();
-	DeviceClassRegistry::PackUpAndGoHome();
+	spiralcore::EditorClassRegistry::PackUpAndGoHome();
+	spiralcore::DeviceClassRegistry::PackUpAndGoHome();
 	// The MidiPlugin instances are gone with the devices, so the
 	// backend they shared is too; its module can leave now.
 	spiralcore::MidiBackendRegistry::PackUpAndGoHome();
@@ -619,11 +619,11 @@ void SynthModular::LoadPlugins (string pluginPath) {
      spiralcore::MidiDevice::SetBackendName(SpiralInfo::MIDIBACKEND);
      // Devices under dsp/, editors under gui/; an editor needs no device
      // module to load, it pairs by ID when a device is made.
-     DeviceClassRegistry::Get()->LoadModules(PluginRoot);
-     EditorClassRegistry::Get()->LoadModules(PluginRoot);
-     const vector<DeviceClass*> &Devices = DeviceClassRegistry::Get()->Classes();
-     for (vector<DeviceClass*>::const_iterator i=Devices.begin(); i!=Devices.end(); i++) {
-         const DeviceClass *info = *i;
+     spiralcore::DeviceClassRegistry::Get()->LoadModules(PluginRoot);
+     spiralcore::EditorClassRegistry::Get()->LoadModules(PluginRoot);
+     const vector<spiralcore::DeviceClass*> &Devices = spiralcore::DeviceClassRegistry::Get()->Classes();
+     for (vector<spiralcore::DeviceClass*>::const_iterator i=Devices.begin(); i!=Devices.end(); i++) {
+         const spiralcore::DeviceClass *info = *i;
          int ID = info->ID;
          if (SpiralInfo::USEPLUGINLIST && !ListedModule(info->Module)) continue;
          {
@@ -764,7 +764,7 @@ DeviceGUIInfo SynthModular::BuildDeviceGUIInfo(PluginInfo &PInfo)
 DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 {
 	DeviceWin *nlw = new DeviceWin;
-	const DeviceClass* Plugin=DeviceClassRegistry::Get()->Find(n);
+	const spiralcore::DeviceClass* Plugin=spiralcore::DeviceClassRegistry::Get()->Find(n);
 
 	if (!Plugin)
 	{
@@ -794,7 +794,7 @@ DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 	Fl_Group *prev = Fl_Group::current();
 	Fl_Group::current(0);
 	// A device with no editor gets a bare device window.
-	const EditorClass *Editor=EditorClassRegistry::Get()->Find(n);
+	const spiralcore::EditorClass *Editor=spiralcore::EditorClassRegistry::Get()->Find(n);
 	SpiralGUIType *temp = Editor ? Editor->CreateEditor(nlw->m_Device) : NULL;
 	if (temp) temp->end();
 	Fl_Pixmap *Pix      = new Fl_Pixmap(Plugin->Icon);

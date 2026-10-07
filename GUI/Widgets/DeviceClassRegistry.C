@@ -24,6 +24,7 @@
 #include "DeviceClassRegistry.h"
 
 using namespace std;
+using namespace spiralcore;
 
 DeviceClassRegistry *DeviceClassRegistry::m_Singleton = NULL;
 
@@ -46,7 +47,7 @@ DeviceClassRegistry *DeviceClassRegistry::Get()
 	if (!m_Singleton)
 	{
 		m_Singleton = new DeviceClassRegistry;
-		spiralcore::PluginLoader::Get()->RegisterKind(m_Singleton);
+		PluginLoader::Get()->RegisterKind(m_Singleton);
 	}
 	return m_Singleton;
 }
@@ -55,14 +56,14 @@ void DeviceClassRegistry::PackUpAndGoHome()
 {
 	if (!m_Singleton) return;
 	// Releases every module of this kind first.
-	spiralcore::PluginLoader::Get()->UnregisterKind(m_Singleton);
+	PluginLoader::Get()->UnregisterKind(m_Singleton);
 	delete m_Singleton;
 	m_Singleton = NULL;
 }
 
 unsigned DeviceClassRegistry::LoadModules(const string &root)
 {
-	return spiralcore::PluginLoader::Get()->Load(*this, root);
+	return PluginLoader::Get()->Load(*this, root);
 }
 
 bool DeviceClassRegistry::Accept(void *entry, const string &path)
