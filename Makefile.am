@@ -84,14 +84,13 @@ jack_gui_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
 jack_gui_test_LDADD = $(SpiralSynthModular_LDADD) $(JACK_LIBS)
 jack_gui_test_LDFLAGS = -export-dynamic
 jack_plugin_test_SOURCES = tests/jack-plugin.cpp
-jack_plugin_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/JackPlugin -I$(srcdir)/Plugins/DSP/OutputPlugin
+jack_plugin_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/JackPlugin
 jack_plugin_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la $(JACK_LIBS) -ldl
 endif
 
 if HAVE_CORE_AUDIO_CLIENT
 check_PROGRAMS += coreaudio-output-test
-coreaudio_output_test_SOURCES = tests/coreaudio-output.cpp Plugins/DSP/OutputPlugin/OutputPlugin.C
-coreaudio_output_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/DSP/OutputPlugin
+coreaudio_output_test_SOURCES = tests/coreaudio-output.cpp
 coreaudio_output_test_LDADD = GUI/Widgets/libSpiralPlugin.la libspiralcore/libspiralcore.la
 endif
 
