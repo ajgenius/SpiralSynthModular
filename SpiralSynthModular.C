@@ -69,8 +69,8 @@ static const int FILE_VERSION = 4;
 
 #ifdef HAVE_YAJL
 // The contract the file reader decodes a device's state under: loaded once,
-// from SSM_SCHEMA_DIR or the built tree's schemas. Without it a device reads
-// the stream itself, as it always has.
+// from SSM_SCHEMA_DIR or the built tree's schemas. Without it no device's
+// state can be told from the next device's, and a patch cannot be loaded.
 static spiralcore::PositionalReader *ContractReader()
 {
 	static bool tried = false;
@@ -94,12 +94,12 @@ static spiralcore::PositionalReader *ContractReader()
 
 // The device line of a patch: the device's state, as the contract finds it
 // in the file's text, applied to the plugin; the stream carries on after
-// the state. With no text (paste) or no contract for it, the plugin reads
-// the stream itself as before.
-static void StreamDeviceIn(iostream &s, const string &text, int PluginID, SpiralPlugin *plugin)
+// the state. False when the state cannot be told apart from what follows
+// it, which ends the load: nothing after it can be placed.
+static bool ApplyDeviceState(iostream &s, const string &text, int PluginID, SpiralPlugin *plugin)
 {
 #ifdef HAVE_YAJL
-	spiralcore::PositionalReader *reader = text.empty() ? NULL : ContractReader();
+	spiralcore::PositionalReader *reader = ContractReader();
 	if (reader)
 	{
 		spiralcore::Description state;
@@ -110,12 +110,16 @@ static void StreamDeviceIn(iostream &s, const string &text, int PluginID, Spiral
 			spiralcore::Description::Reader values(state);
 			plugin->Apply(values);
 			s.seekg(at + consumed);
-			return;
+			return true;
 		}
-		cerr << "Device " << PluginID << " state is not under the contract (" << error << "); the plugin reads it" << endl;
+		char id[32];
+		sprintf(id, "%d", PluginID);
+		SpiralInfo::Alert("Plugin "+string(id)+" state is not under the file contract ("+error+") - aborting load");
+		return false;
 	}
 #endif
-	plugin->StreamIn(s);
+	SpiralInfo::Alert("Built without the file contract (yajl) - cannot load a patch");
+	return false;
 }
 static int Numbers[512];
 
@@ -1021,8 +1025,8 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 	int ver;
 
 	// The file as text, for the contract to find each device's state in.
+	// Pasting reads the same text from the clipboard file.
 	string text;
-	if (!paste)
 	{
 		streampos here = s.tellg();
 		text.assign(istreambuf_iterator<char>(s), istreambuf_iterator<char>());
@@ -1177,7 +1181,11 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 
 				temp->m_Device->SetUpdateInfoCallback(ID,cb_UpdatePluginInfo);
 				m_DeviceWinMap[ID]=temp;
-				StreamDeviceIn(s, text, PluginID, m_DeviceWinMap[ID]->m_Device); // load the plugin
+				if (!ApplyDeviceState(s, text, PluginID, m_DeviceWinMap[ID]->m_Device)) // load the plugin
+				{
+					ThawAll();
+					return s;
+				}
 
 				// load external files
 				if (paste || merge)
