@@ -52,6 +52,41 @@ inline bool ValidMidi(const MidiPacket &p)
 	unsigned size= MidiSize(p.Status);
 	return size && (size < 2 || p.Data1 < 128) && (size < 3 || p.Data2 < 128);
 }
+// Bytes in, fixed packets out, for transports that hand over a raw
+// stream: running status, one- or two-byte data, realtime messages
+// passed as they come, sysex and the other system messages dropped.
+class MidiByteStream
+{
+	unsigned char status, data[2];
+	unsigned have;
+	bool sysex;
+public:
+	MidiByteStream(): status(0), have(0), sysex(false) {}
+	// True when this byte completed a packet.
+	bool Push(unsigned char byte, MidiPacket &out)
+	{
+		if(byte >= 0xf8)
+		{
+			if(!MidiSize(byte)) return false;
+			out= MidiPacket(byte);
+			return true;
+		}
+		if(byte >= 0x80)
+		{
+			sysex= byte == 0xf0;
+			status= byte < 0xf0 ? byte : 0;
+			have= 0;
+			return false;
+		}
+		if(sysex || !status) return false;
+		data[have++]= byte;
+		const unsigned need= MidiSize(status) - 1;
+		if(have < need) return false;
+		out= MidiPacket(status, data[0], need > 1 ? data[1] : 0);
+		have= 0;
+		return true;
+	}
+};
 
 // All methods run on the worker, never the synth thread. JACK internally
 // bridges its process callback with a second pair of fixed packet queues.
