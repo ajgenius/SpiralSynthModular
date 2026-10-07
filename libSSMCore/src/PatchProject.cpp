@@ -42,7 +42,7 @@ namespace Spiral
 
 		Project::Project(const std::string &path)
 			: Spumoni::Project(Format())
-			, m_Source(new Spumoni::SourcePart("source.ssm"))
+			, m_Source(new Spumoni::SourcePart("patch.spiral.legacy.ssm"))
 		{
 			AddPart(*m_Source);
 			m_SourcePath = path;

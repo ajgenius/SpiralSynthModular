@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Spumoni::SourcePart — a file kept whole: the one a project was made from.
-// An application gives it a fixed name in the branch ("source.ssm") and
+// An application gives it a fixed name in the branch ("patch.spiral.legacy.ssm") and
 // sets the bytes when it imports. A branch saved without one has no such
 // file, and one opened with it has the bytes back. Optional.
 #ifndef SPUMONI_SOURCE_PART_H
