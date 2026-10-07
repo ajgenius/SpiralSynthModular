@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
-AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include -I$(srcdir)/Plugin/include -I$(srcdir)/Audio/include -I$(srcdir)/Midi/include
+AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include -I$(srcdir)/File/include -I$(srcdir)/Plugin/include -I$(srcdir)/Audio/include -I$(srcdir)/Midi/include
 lib_LTLIBRARIES = libspiralcore.la
 libspiralcore_la_SOURCES = \
     include/Allocator.h \
@@ -97,6 +97,13 @@ libspiralcore_la_SOURCES += src/RingBuffer.cpp include/RingBuffer.h src/CommandR
 check_PROGRAMS += ring-buffer-test
 ring_buffer_test_SOURCES = tests/ring-buffer.cpp
 ring_buffer_test_LDADD = libspiralcore.la
+
+# The description: a device's state as positional tokens, the form the
+# files have always been written in.
+libspiralcore_la_SOURCES += File/include/Description.h File/src/Description.cpp
+check_PROGRAMS += description-test
+description_test_SOURCES = File/tests/description.cpp
+description_test_LDADD = libspiralcore.la
 
 libspiralcore_la_SOURCES += Audio/include/AtomicClock.h
 if ATOMIC_CLOCK_MACH
