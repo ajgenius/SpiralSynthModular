@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
-AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include
+AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include -I$(srcdir)/Plugin/include
 lib_LTLIBRARIES = libspiralcore.la
 libspiralcore_la_SOURCES = \
     include/Allocator.h \
@@ -39,10 +39,10 @@ EXTRA_DIST += AUDIO-TRANSPORT.md
 
 libspiralcore_la_SOURCES += include/AudioClient.h
 
-libspiralcore_la_SOURCES += include/PluginManager.h src/PluginManager.cpp
-libspiralcore_la_SOURCES += include/DeviceClassRegistry.h src/DeviceClassRegistry.cpp include/EditorClassRegistry.h src/EditorClassRegistry.cpp
-libspiralcore_la_SOURCES += include/SpiralPlugin.h src/SpiralPlugin.cpp include/OutputAudioClient.h src/OutputAudioClient.cpp include/AudioTransportHub.h src/AudioTransportHub.cpp include/OutputPlugin.h src/OutputPlugin.cpp include/OutputIcon.xpm
-libspiralcore_la_SOURCES += include/BackendModule.h include/AudioBackend.h src/AudioBackend.cpp src/AudioBackends.cpp include/DummyClient.h src/DummyClient.cpp
+libspiralcore_la_SOURCES += Plugin/include/PluginManager.h Plugin/src/PluginManager.cpp
+libspiralcore_la_SOURCES += Plugin/include/DeviceClassRegistry.h Plugin/src/DeviceClassRegistry.cpp Plugin/include/EditorClassRegistry.h Plugin/src/EditorClassRegistry.cpp
+libspiralcore_la_SOURCES += Plugin/include/SpiralPlugin.h Plugin/src/SpiralPlugin.cpp include/OutputAudioClient.h src/OutputAudioClient.cpp include/AudioTransportHub.h src/AudioTransportHub.cpp Plugin/include/OutputPlugin.h Plugin/src/OutputPlugin.cpp Plugin/include/OutputIcon.xpm
+libspiralcore_la_SOURCES += Plugin/include/BackendModule.h include/AudioBackend.h src/AudioBackend.cpp src/AudioBackends.cpp include/DummyClient.h src/DummyClient.cpp
 libspiralcore_la_SOURCES += include/MidiBackend.h src/MidiBackend.cpp include/NativeMidi.h src/NativeMidi.cpp include/ThreadCompatibility.h include/Compatibility.h
 check_PROGRAMS += midi-backend-test native-midi-test midi-device-test
 midi_device_test_SOURCES = tests/midi-device.cpp
@@ -55,18 +55,18 @@ check_PROGRAMS += audio-backend-test
 audio_backend_test_SOURCES = tests/audio-backend.cpp
 audio_backend_test_LDADD = libspiralcore.la
 check_PROGRAMS += plugin-manager-test
-plugin_manager_test_SOURCES = tests/plugin-manager.cpp
+plugin_manager_test_SOURCES = Plugin/tests/plugin-manager.cpp
 plugin_manager_test_LDADD = libspiralcore.la
 check_LTLIBRARIES = probe_Probe.la sub_Probe.la stranger_Probe.la probe_Audio.la probe_Midi.la
-probe_Midi_la_SOURCES = tests/plugin-manager/midi.cpp
+probe_Midi_la_SOURCES = Plugin/tests/plugin-manager/midi.cpp
 probe_Midi_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
-probe_Audio_la_SOURCES = tests/plugin-manager/audio.cpp
+probe_Audio_la_SOURCES = Plugin/tests/plugin-manager/audio.cpp
 probe_Audio_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
-probe_Probe_la_SOURCES = tests/plugin-manager/probe.cpp
+probe_Probe_la_SOURCES = Plugin/tests/plugin-manager/probe.cpp
 probe_Probe_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
-sub_Probe_la_SOURCES = tests/plugin-manager/probe.cpp
+sub_Probe_la_SOURCES = Plugin/tests/plugin-manager/probe.cpp
 sub_Probe_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
-stranger_Probe_la_SOURCES = tests/plugin-manager/stranger.cpp
+stranger_Probe_la_SOURCES = Plugin/tests/plugin-manager/stranger.cpp
 stranger_Probe_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
 # The test root: probe/probe_Probe.so, probe/sub/sub_Probe.so, probe/stranger_Probe.so
 plugin-manager-root: $(check_LTLIBRARIES)
