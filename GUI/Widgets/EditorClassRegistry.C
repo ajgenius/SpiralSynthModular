@@ -22,9 +22,9 @@
 #include <stdio.h>
 #include <iostream>
 #include "EditorClassRegistry.h"
-#include "SpiralGUI.H"
 
 using namespace std;
+using namespace spiralcore;
 
 EditorClassRegistry *EditorClassRegistry::m_Singleton = NULL;
 
@@ -47,7 +47,7 @@ EditorClassRegistry *EditorClassRegistry::Get()
 	if (!m_Singleton)
 	{
 		m_Singleton = new EditorClassRegistry;
-		spiralcore::PluginLoader::Get()->RegisterKind(m_Singleton);
+		PluginLoader::Get()->RegisterKind(m_Singleton);
 	}
 	return m_Singleton;
 }
@@ -56,14 +56,14 @@ void EditorClassRegistry::PackUpAndGoHome()
 {
 	if (!m_Singleton) return;
 	// Releases every module of this kind first.
-	spiralcore::PluginLoader::Get()->UnregisterKind(m_Singleton);
+	PluginLoader::Get()->UnregisterKind(m_Singleton);
 	delete m_Singleton;
 	m_Singleton = NULL;
 }
 
 unsigned EditorClassRegistry::LoadModules(const string &root)
 {
-	return spiralcore::PluginLoader::Get()->Load(*this, root);
+	return PluginLoader::Get()->Load(*this, root);
 }
 
 bool EditorClassRegistry::Accept(void *entry, const string &path)
