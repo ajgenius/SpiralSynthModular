@@ -17,11 +17,13 @@ libSpumoni_a_SOURCES = \
 	include/Tar.h src/Tar.cpp \
 	include/Zip.h src/Zip.cpp
 
-check_PROGRAMS = json-test store-test
+check_PROGRAMS = json-test store-test package-test
 TESTS = $(check_PROGRAMS)
 json_test_SOURCES = tests/json.cpp
 json_test_LDADD = libSpumoni.a
 store_test_SOURCES = tests/store.cpp
 store_test_LDADD = libSpumoni.a
+package_test_SOURCES = tests/package.cpp
+package_test_LDADD = libSpumoni.a $(ZLIB_LIBS)
 
 EXTRA_DIST = README.md
