@@ -51,7 +51,7 @@ libspiralcore_la_SOURCES += include/AudioClient.h
 
 libspiralcore_la_SOURCES += include/PluginManager.h src/PluginManager.cpp
 libspiralcore_la_SOURCES += include/DeviceClassRegistry.h src/DeviceClassRegistry.cpp include/EditorClassRegistry.h src/EditorClassRegistry.cpp
-libspiralcore_la_SOURCES += include/AudioBackend.h src/AudioBackend.cpp src/AudioBackends.cpp include/DummyClient.h src/DummyClient.cpp
+libspiralcore_la_SOURCES += include/BackendModule.h include/AudioBackend.h src/AudioBackend.cpp src/AudioBackends.cpp include/DummyClient.h src/DummyClient.cpp
 check_PROGRAMS += audio-backend-test
 audio_backend_test_SOURCES = tests/audio-backend.cpp
 audio_backend_test_LDADD = libspiralcore.la
