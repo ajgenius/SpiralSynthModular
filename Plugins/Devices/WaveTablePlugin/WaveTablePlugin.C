@@ -237,16 +237,17 @@ void WaveTablePlugin::Describe(spiralcore::Description &d)
 	::Describe(d, *this);
 }
 
-void WaveTablePlugin::StreamIn(istream &s)
+void WaveTablePlugin::Apply(spiralcore::Description::Reader &r)
 {
 	int version;
-	s>>version>>*this;
+	r.Value(version);
+	::Apply(r, *this);
 }
 
-istream &operator>>(istream &s, WaveTablePlugin &o)
+spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, WaveTablePlugin &o)
 {
-	s>>(int&)o.m_Type>>o.m_Octave>>o.m_FineFreq>>o.m_ModAmount;
-	return s;
+	r.Value((int&)o.m_Type).Value(o.m_Octave).Value(o.m_FineFreq).Value(o.m_ModAmount);
+	return r;
 }
 
 spiralcore::Description &Describe(spiralcore::Description &d, WaveTablePlugin &o)

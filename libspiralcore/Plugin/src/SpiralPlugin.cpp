@@ -66,15 +66,6 @@ void SpiralPlugin::StreamOut(std::ostream &s)
 	d.Write(s);
 }
 
-void SpiralPlugin::Apply(spiralcore::Description::Reader &r)
-{
-	// The host's state descriptions are whole, one per device, so the
-	// source is the span.
-	std::stringstream s;
-	r.Source().Write(s);
-	StreamIn(s);
-}
-
 void SpiralPlugin::Reset() 
 {
 	ResetPorts();

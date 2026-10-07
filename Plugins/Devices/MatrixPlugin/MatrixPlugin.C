@@ -451,31 +451,31 @@ void MatrixPlugin::Describe(spiralcore::Description &d)
 
 }
 
-void MatrixPlugin::StreamIn (istream &s) {
+void MatrixPlugin::Apply(spiralcore::Description::Reader &r) {
      int version;
-     s >> version;
-     s >> m_Current >> m_Time >> m_Step >> m_Loop >> m_NoteCut;
+     r.Value(version);
+     r.Value(m_Current).Value(m_Time).Value(m_Step).Value(m_Loop).Value(m_NoteCut);
      for (int n=0; n<NUM_PATTERNS; n++) {
-         s >> m_Matrix[n].Length >> m_Matrix[n].Speed >> m_Matrix[n].Octave;
+         r.Value(m_Matrix[n].Length).Value(m_Matrix[n].Speed).Value(m_Matrix[n].Octave);
          if (version == 1) {
             for (int y=0; y<MATY; y++)
                 for (int x=0; x<MATX; x++)
-                    s >> m_Matrix[n].Matrix[x][y];
+                    r.Value(m_Matrix[n].Matrix[x][y]);
          }
          else {
             // version > 1
             float vol;
             int x=0, y=0;
             while (x!=-1) {
-                  s >> x;
+                  r.Value(x);
                   if (x != -1) {
                      if (version == 2) {
-                        s >> y;
+                        r.Value(y);
                         if (y != -1) m_Matrix[n].Matrix[x][y] = true;
                      }
                      else {
                         // version > 2
-                        s >> y >> vol;
+                        r.Value(y).Value(vol);
                         if (y != -1) {
                            m_Matrix[n].Matrix[x][y] = true;
                            m_Matrix[n].Volume[x][y] = vol;
@@ -488,7 +488,7 @@ void MatrixPlugin::StreamIn (istream &s) {
      if (version > 3) {
         int ps;
         for (int n=0; n<NUM_PATSEQ; n++) {
-            s >> ps;
+            r.Value(ps);
             if (n==0 && ps<0) ps = 0;
             m_PatSeq[n] = ps;
         }

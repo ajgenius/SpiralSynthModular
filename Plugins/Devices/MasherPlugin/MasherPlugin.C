@@ -209,9 +209,9 @@ void MasherPlugin::Describe(spiralcore::Description &d)
 	d.Value(m_GrainStoreSize).Separator(" ").Value(m_Density).Separator(" ").Value(m_Randomness).Separator(" ").Value(m_GrainPitch).Separator(" ");
 }
 
-void MasherPlugin::StreamIn(istream &s)
+void MasherPlugin::Apply(spiralcore::Description::Reader &r)
 {	
 	int version;
-	s>>version;
-	s>>m_GrainStoreSize>>m_Density>>m_Randomness>>m_GrainPitch;
+	r.Value(version);
+	r.Value(m_GrainStoreSize).Value(m_Density).Value(m_Randomness).Value(m_GrainPitch);
 }

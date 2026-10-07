@@ -53,7 +53,7 @@ public:
 	virtual void Reset();
 	virtual void ExecuteCommands();
 	virtual void Describe(spiralcore::Description &d);
-	virtual void StreamIn(std::istream &s);
+	virtual void Apply(spiralcore::Description::Reader &r);
 
 	unsigned long  GetUniqueID() { return m_UniqueID; }
 	const char    *GetName() { return (const char *)m_Name; }

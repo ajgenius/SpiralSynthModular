@@ -243,9 +243,9 @@ void FormantFilterPlugin::Describe(spiralcore::Description &d)
 	d.Value(m_Version).Separator(" ").Value(m_Vowel).Separator(" ");
 }
 
-void FormantFilterPlugin::StreamIn(istream &s)
+void FormantFilterPlugin::Apply(spiralcore::Description::Reader &r)
 {	
 	int version;
-	s>>version;
-	s>>m_Vowel;
+	r.Value(version);
+	r.Value(m_Vowel);
 }

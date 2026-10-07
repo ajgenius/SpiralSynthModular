@@ -130,10 +130,10 @@ void NoisePlugin::Describe(spiralcore::Description &d)
 	d.Value(m_Version).Separator(" ").Value((char)m_Type);
 }
 
-void NoisePlugin::StreamIn(istream &s)
+void NoisePlugin::Apply(spiralcore::Description::Reader &r)
 {
 	int version;
 	char t;
-	s>>version>>t;
+	r.Value(version).Value(t);
 	m_Type=(Type)t;
 }

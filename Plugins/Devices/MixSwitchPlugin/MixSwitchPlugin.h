@@ -30,7 +30,7 @@ class MixSwitchPlugin : public SpiralPlugin {
     virtual void Reset();
     virtual void ExecuteCommands();
     virtual void Describe(spiralcore::Description &d);
-    virtual void StreamIn (std::istream &s);
+    virtual void Apply(spiralcore::Description::Reader &r);
     int GetSwitch (void) { return m_SwitchPos; }
     int GetChans (void) { return m_PluginInfo.NumInputs - 2; }
     enum GUICommands { NONE, SETCHANS };
@@ -44,11 +44,11 @@ class MixSwitchPlugin : public SpiralPlugin {
     int m_SwitchPos;
     bool m_Triggered;
     void CreatePorts (int n = 2, bool AddPorts = false);
-    friend std::istream &operator>> (std::istream &s, MixSwitchPlugin &o);
+    friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, MixSwitchPlugin &o);
     friend spiralcore::Description &Describe(spiralcore::Description &d, MixSwitchPlugin &o);
 };
 
-std::istream &operator>> (std::istream &s, MixSwitchPlugin &o);
+spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, MixSwitchPlugin &o);
 spiralcore::Description &Describe(spiralcore::Description &d, MixSwitchPlugin &o);
 
 #endif

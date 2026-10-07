@@ -151,10 +151,10 @@ void AnotherFilterPlugin::Describe(spiralcore::Description &d)
 	d.Value(m_Version).Separator(" ").Value(Cutoff).Separator(" ").Value(Resonance).Separator(" ");
 }
 
-void AnotherFilterPlugin::StreamIn(istream &s)
+void AnotherFilterPlugin::Apply(spiralcore::Description::Reader &r)
 {	
 	int version;
-	s>>version;
-	s>>Cutoff>>Resonance;
+	r.Value(version);
+	r.Value(Cutoff).Value(Resonance);
 }
 

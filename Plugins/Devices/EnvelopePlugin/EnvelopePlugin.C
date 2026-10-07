@@ -224,9 +224,9 @@ void EnvelopePlugin::Describe(spiralcore::Description &d)
 	.Value(m_Release).Separator(" ").Value(m_Volume).Separator(" ").Value(m_TrigThresh);
 }
 
-void EnvelopePlugin::StreamIn(istream &s)
+void EnvelopePlugin::Apply(spiralcore::Description::Reader &r)
 {
 	int version;
-	s>>version;
-	s>>m_Attack>>m_Decay>>m_Sustain>>m_Release>>m_Volume>>m_TrigThresh;
+	r.Value(version);
+	r.Value(m_Attack).Value(m_Decay).Value(m_Sustain).Value(m_Release).Value(m_Volume).Value(m_TrigThresh);
 }

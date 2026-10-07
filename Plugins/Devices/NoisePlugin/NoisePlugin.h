@@ -30,7 +30,7 @@ public:
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void 		Execute();
 	virtual void	    Describe(spiralcore::Description &d);
-	virtual void	    StreamIn(std::istream &s);
+	virtual void	    Apply(spiralcore::Description::Reader &r);
 
 	enum Type {WHITE,PINK};	
 	Type GetType() {return m_Type;}
