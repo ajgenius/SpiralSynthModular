@@ -108,8 +108,8 @@ public:
 	// The plugin's state as a description; the host decides how it is
 	// written. StreamOut is the transitional writer, the legacy stream
 	// the description would have produced.
-	virtual void        Describe(spiralcore::Description &d) {}
-	virtual void	    StreamOut(std::ostream &s);
+	virtual void        Describe(spiralcore::Description &d)=0;
+	void                StreamOut(std::ostream &s);
 	virtual void	    StreamIn(std::istream &s)=0;
 
 	// stuff here gets saved in filename_files directory
