@@ -52,13 +52,21 @@ libspiralcore_la_SOURCES += include/AudioClient.h
 libspiralcore_la_SOURCES += include/PluginManager.h src/PluginManager.cpp
 libspiralcore_la_SOURCES += include/DeviceClassRegistry.h src/DeviceClassRegistry.cpp include/EditorClassRegistry.h src/EditorClassRegistry.cpp
 libspiralcore_la_SOURCES += include/BackendModule.h include/AudioBackend.h src/AudioBackend.cpp src/AudioBackends.cpp include/DummyClient.h src/DummyClient.cpp
+libspiralcore_la_SOURCES += include/MidiBackend.h src/MidiBackend.cpp include/NativeMidi.h src/NativeMidi.cpp include/ThreadCompatibility.h include/Compatibility.h
+check_PROGRAMS += midi-backend-test native-midi-test
+midi_backend_test_SOURCES = tests/midi-backend.cpp
+midi_backend_test_LDADD = libspiralcore.la
+native_midi_test_SOURCES = tests/native-midi.cpp
+native_midi_test_LDADD = libspiralcore.la
 check_PROGRAMS += audio-backend-test
 audio_backend_test_SOURCES = tests/audio-backend.cpp
 audio_backend_test_LDADD = libspiralcore.la
 check_PROGRAMS += plugin-manager-test
 plugin_manager_test_SOURCES = tests/plugin-manager.cpp
 plugin_manager_test_LDADD = libspiralcore.la
-check_LTLIBRARIES = probe_Probe.la sub_Probe.la stranger_Probe.la probe_Audio.la
+check_LTLIBRARIES = probe_Probe.la sub_Probe.la stranger_Probe.la probe_Audio.la probe_Midi.la
+probe_Midi_la_SOURCES = tests/plugin-manager/midi.cpp
+probe_Midi_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
 probe_Audio_la_SOURCES = tests/plugin-manager/audio.cpp
 probe_Audio_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
 probe_Probe_la_SOURCES = tests/plugin-manager/probe.cpp
@@ -70,8 +78,9 @@ stranger_Probe_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
 # The test root: probe/probe_Probe.so, probe/sub/sub_Probe.so, probe/stranger_Probe.so
 plugin-manager-root: $(check_LTLIBRARIES)
 	rm -rf plugin-manager-root
-	$(MKDIR_P) plugin-manager-root/probe/sub plugin-manager-root/audio
+	$(MKDIR_P) plugin-manager-root/probe/sub plugin-manager-root/audio plugin-manager-root/midi
 	cp .libs/probe_Audio.so plugin-manager-root/audio/
+	cp .libs/probe_Midi.so plugin-manager-root/midi/
 	cp .libs/probe_Probe.so plugin-manager-root/probe/
 	cp .libs/sub_Probe.so plugin-manager-root/probe/sub/
 	cp .libs/stranger_Probe.so plugin-manager-root/probe/
