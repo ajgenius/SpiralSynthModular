@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
-AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include -I$(srcdir)/Plugin/include
+AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include -I$(srcdir)/Plugin/include -I$(srcdir)/Audio/include
 lib_LTLIBRARIES = libspiralcore.la
 libspiralcore_la_SOURCES = \
     include/Allocator.h \
@@ -35,14 +35,14 @@ EXTRA_DIST = \
     src/EventQueue.cpp \
     src/Time.cpp
 
-EXTRA_DIST += AUDIO-TRANSPORT.md
+EXTRA_DIST += Audio/AUDIO-TRANSPORT.md
 
-libspiralcore_la_SOURCES += include/AudioClient.h
+libspiralcore_la_SOURCES += Audio/include/AudioClient.h
 
 libspiralcore_la_SOURCES += Plugin/include/PluginManager.h Plugin/src/PluginManager.cpp
 libspiralcore_la_SOURCES += Plugin/include/DeviceClassRegistry.h Plugin/src/DeviceClassRegistry.cpp Plugin/include/EditorClassRegistry.h Plugin/src/EditorClassRegistry.cpp
-libspiralcore_la_SOURCES += Plugin/include/SpiralPlugin.h Plugin/src/SpiralPlugin.cpp include/OutputAudioClient.h src/OutputAudioClient.cpp include/AudioTransportHub.h src/AudioTransportHub.cpp Plugin/include/OutputPlugin.h Plugin/src/OutputPlugin.cpp Plugin/include/OutputIcon.xpm
-libspiralcore_la_SOURCES += Plugin/include/BackendModule.h include/AudioBackend.h src/AudioBackend.cpp src/AudioBackends.cpp include/DummyClient.h src/DummyClient.cpp
+libspiralcore_la_SOURCES += Plugin/include/SpiralPlugin.h Plugin/src/SpiralPlugin.cpp Audio/include/OutputAudioClient.h Audio/src/OutputAudioClient.cpp Audio/include/AudioTransportHub.h Audio/src/AudioTransportHub.cpp Plugin/include/OutputPlugin.h Plugin/src/OutputPlugin.cpp Plugin/include/OutputIcon.xpm
+libspiralcore_la_SOURCES += Plugin/include/BackendModule.h Audio/include/AudioBackend.h Audio/src/AudioBackend.cpp Audio/src/AudioBackends.cpp Audio/include/DummyClient.h Audio/src/DummyClient.cpp
 libspiralcore_la_SOURCES += include/MidiBackend.h src/MidiBackend.cpp include/NativeMidi.h src/NativeMidi.cpp include/ThreadCompatibility.h include/Compatibility.h
 check_PROGRAMS += midi-backend-test native-midi-test midi-device-test
 midi_device_test_SOURCES = tests/midi-device.cpp
@@ -52,7 +52,7 @@ midi_backend_test_LDADD = libspiralcore.la
 native_midi_test_SOURCES = tests/native-midi.cpp
 native_midi_test_LDADD = libspiralcore.la
 check_PROGRAMS += audio-backend-test
-audio_backend_test_SOURCES = tests/audio-backend.cpp
+audio_backend_test_SOURCES = Audio/tests/audio-backend.cpp
 audio_backend_test_LDADD = libspiralcore.la
 check_PROGRAMS += plugin-manager-test
 plugin_manager_test_SOURCES = Plugin/tests/plugin-manager.cpp
@@ -87,48 +87,48 @@ check_PROGRAMS += ring-buffer-test
 ring_buffer_test_SOURCES = tests/ring-buffer.cpp
 ring_buffer_test_LDADD = libspiralcore.la
 
-libspiralcore_la_SOURCES += include/AtomicClock.h
+libspiralcore_la_SOURCES += Audio/include/AtomicClock.h
 if ATOMIC_CLOCK_MACH
-libspiralcore_la_SOURCES += src/MachAtomicClock.cpp
+libspiralcore_la_SOURCES += Audio/src/MachAtomicClock.cpp
 endif
 if ATOMIC_CLOCK_MACH
 check_PROGRAMS += atomic-clock-test
-atomic_clock_test_SOURCES = tests/atomic-clock.cpp
+atomic_clock_test_SOURCES = Audio/tests/atomic-clock.cpp
 atomic_clock_test_LDADD = libspiralcore.la
 endif
-EXTRA_DIST += src/MachAtomicClock.cpp
+EXTRA_DIST += Audio/src/MachAtomicClock.cpp
 
 if HAVE_JACK_CLIENT
-libspiralcore_la_SOURCES += src/JackClient.cpp include/JackClient.h
+libspiralcore_la_SOURCES += Audio/src/JackClient.cpp Audio/include/JackClient.h
 check_PROGRAMS += jack-client-test
-jack_client_test_SOURCES = tests/jack-client.cpp src/JackClient.cpp src/AudioTiming.cpp
+jack_client_test_SOURCES = Audio/tests/jack-client.cpp Audio/src/JackClient.cpp Audio/src/AudioTiming.cpp
 jack_client_test_CPPFLAGS = $(AM_CPPFLAGS)
 endif
 
-EXTRA_DIST += tests/jack-live.cpp tests/analyze-loopback.py tests/LOOPBACK.md
+EXTRA_DIST += Audio/tests/jack-live.cpp Audio/tests/analyze-loopback.py Audio/tests/LOOPBACK.md
 
 # Build these explicitly; live routing and microphone tests are opt-in.
 if HAVE_JACK_CLIENT
 EXTRA_PROGRAMS = jack-alignment-live native-loopback
-jack_alignment_live_SOURCES = tests/jack-alignment-live.cpp
+jack_alignment_live_SOURCES = Audio/tests/jack-alignment-live.cpp
 jack_alignment_live_LDADD = libspiralcore.la $(JACK_LIBS)
-native_loopback_SOURCES = tests/native-loopback.cpp
+native_loopback_SOURCES = Audio/tests/native-loopback.cpp
 native_loopback_LDADD = libspiralcore.la $(JACK_LIBS)
 endif
 
 
-libspiralcore_la_SOURCES += include/AudioTiming.h src/AudioTiming.cpp include/TimedAudioBuffer.h src/TimedAudioBuffer.cpp
+libspiralcore_la_SOURCES += Audio/include/AudioTiming.h Audio/src/AudioTiming.cpp Audio/include/TimedAudioBuffer.h Audio/src/TimedAudioBuffer.cpp
 check_PROGRAMS += audio-timeline-test
-audio_timeline_test_SOURCES = tests/audio-timeline.cpp
+audio_timeline_test_SOURCES = Audio/tests/audio-timeline.cpp
 audio_timeline_test_LDADD = libspiralcore.la
 
-libspiralcore_la_SOURCES += include/AudioStream.h src/AudioStream.cpp include/PresentationClock.h src/PresentationClock.cpp
+libspiralcore_la_SOURCES += Audio/include/AudioStream.h Audio/src/AudioStream.cpp Audio/include/PresentationClock.h Audio/src/PresentationClock.cpp
 
 check_PROGRAMS += audio-stream-test
-audio_stream_test_SOURCES = tests/audio-stream.cpp
+audio_stream_test_SOURCES = Audio/tests/audio-stream.cpp
 audio_stream_test_LDADD = libspiralcore.la
 
-libspiralcore_la_SOURCES += include/AudioTimeline.h src/AudioTimeline.cpp
+libspiralcore_la_SOURCES += Audio/include/AudioTimeline.h Audio/src/AudioTimeline.cpp
 check_PROGRAMS += audio-coordinator-test
-audio_coordinator_test_SOURCES = tests/audio-coordinator.cpp
+audio_coordinator_test_SOURCES = Audio/tests/audio-coordinator.cpp
 audio_coordinator_test_LDADD = libspiralcore.la
