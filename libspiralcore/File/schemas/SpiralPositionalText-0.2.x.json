@@ -2,13 +2,13 @@
   "format": "SpiralSynthModular Schema File Ver 1",
   "Type": "Positional",
   "License": "GPL-2.0-or-later",
-  "Release": "0.2.2",
+  "Release": "0.2.x",
   "Syntax": "SpiralPositionalText",
-  "Scope": "Layouts emitted by the unmodified 0.2.2 release. Earlier layouts accepted by its StreamIn methods and later CVS changes are not selected by this contract.",
+  "Scope": "The 0.2 line of the positional format. The baseline layouts here are the ones emitted by the unmodified 0.2.2 release; the layouts added by later CVS commits up to the abandoned CVS 0.2.3 tree are selected through SpiralPositionalText.history.json, which points back into this file for the unchanged plugins. Earlier layouts accepted by 0.2.2 StreamIn methods (pre-0.2.2 versions) are not yet catalogued.",
   "Origin": {
     "Archive": "https://archive.debian.org/debian/pool/main/s/spiralsynthmodular/spiralsynthmodular_0.2.2.orig.tar.gz",
     "SHA256": "0a2523660f67b8b9f057692bee2aa87bdac006da75fc817611406e876e3d17b1",
-    "AuthorsFile": "SpiralPositionalText-0.2.2.AUTHORS",
+    "AuthorsFile": "SpiralPositionalText-0.2.x.AUTHORS",
     "AuthorsSHA256": "64290ea30d5b5e372f326b4417a7e3ea58fc6a20bc2a92175a304469dfded85c",
     "Attribution": "Derived from SpiralSynthModular by David Griffiths and contributors; see the preserved release AUTHORS and individual source notices.",
     "Sources": [
