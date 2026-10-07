@@ -301,6 +301,6 @@ int main(int argc, char **argv)
 	AudioBackendRegistry::Get()->LoadModules(argv[1]);
 	const bool ok = Run(argv[2], argv[3], argv[4], options);
 	AudioBackendRegistry::PackUpAndGoHome();
-	PluginLoader::PackUpAndGoHome();
+	PluginManager::PackUpAndGoHome();
 	return ok ? 0 : 1;
 }

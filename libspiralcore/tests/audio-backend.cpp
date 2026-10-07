@@ -66,21 +66,21 @@ int main()
 	assert(destroyed == 1);
 	assert(!registry->Create("nonesuch"));
 	assert(registry->LoadModules("/nonexistent/path") == 0);
-	const char *root = std::getenv("PLUGIN_LOADER_ROOT");
+	const char *root = std::getenv("PLUGIN_MANAGER_ROOT");
 	assert(root && registry->LoadModules(root) == 1);
 	AudioClient *module = registry->Create("probe");
 	assert(module && module->IsAttached());
-	assert(!PluginLoader::Get()->UnloadAll());
+	assert(!PluginManager::Get()->UnloadAll());
 	AudioBackendRegistry::PackUpAndGoHome();
 	assert(AudioBackendRegistry::Get() == registry && module->IsAttached());
 	registry->Destroy("probe", module);
-	assert(PluginLoader::Get()->UnloadAll());
+	assert(PluginManager::Get()->UnloadAll());
 	assert(!registry->Find("probe") && registry->Find("dummy"));
 	assert(registry->LoadModules(root) == 1);
-	PluginLoader::PackUpAndGoHome();
+	PluginManager::PackUpAndGoHome();
 	assert(!registry->Find("probe"));
 	assert(AudioBackendRegistry::Get() == registry);
-	assert(PluginLoader::Get()->LoadAll(root) == 1);
+	assert(PluginManager::Get()->LoadAll(root) == 1);
 
 	// The built-in dummy paces at the nominal rate with no device:
 	// 50 periods of 256 frames at 48 kHz take about 0.267 s.
@@ -110,8 +110,8 @@ int main()
 	registry->Destroy("dummy", dummy);
 
 	AudioBackendRegistry::PackUpAndGoHome();
-	assert(PluginLoader::Get()->LoadAll(root) == 0);
-	PluginLoader::PackUpAndGoHome();
+	assert(PluginManager::Get()->LoadAll(root) == 0);
+	PluginManager::PackUpAndGoHome();
 	printf("PASS\n");
 	return 0;
 }

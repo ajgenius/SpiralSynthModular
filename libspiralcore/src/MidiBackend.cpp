@@ -24,7 +24,7 @@ namespace spiralcore
 			m_Singleton= new MidiBackendRegistry;
 			m_Singleton->Register(DummyMidi());
 		}
-		PluginLoader::Get()->RegisterKind(m_Singleton);
+		PluginManager::Get()->RegisterKind(m_Singleton);
 		return m_Singleton;
 	}
 	void MidiBackendRegistry::PackUpAndGoHome()
@@ -32,7 +32,7 @@ namespace spiralcore
 		if (!m_Singleton || !m_Singleton->CanUnload())
 			return;
 
-		PluginLoader::Get()->UnregisterKind(m_Singleton);
+		PluginManager::Get()->UnregisterKind(m_Singleton);
 		delete m_Singleton;
 		m_Singleton= NULL;
 	}
@@ -53,7 +53,7 @@ namespace spiralcore
 	}
 	unsigned MidiBackendRegistry::LoadModules(const std::string &root)
 	{
-		return PluginLoader::Get()->Load(*this, root);
+		return PluginManager::Get()->Load(*this, root);
 	}
 	bool MidiBackendRegistry::Accept(void *entry, const std::string &)
 	{
