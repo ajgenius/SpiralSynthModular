@@ -37,6 +37,38 @@ namespace spiralcore
 		s << m_Between.back();
 	}
 
+	Description::Reader::Reader(const Description &d)
+	: m_Description(d), m_At(0), m_End(d.m_Values.size()), m_Failed(false)
+	{
+	}
+
+	Description::Reader::Reader(const Description &d, size_t begin, size_t end)
+	: m_Description(d), m_At(begin), m_End(end), m_Failed(false)
+	{
+		if (m_End > d.m_Values.size()) m_End = d.m_Values.size();
+		if (m_At > m_End) m_At = m_End;
+	}
+
+	const std::string &Description::Reader::Next()
+	{
+		static const std::string none;
+		if (!More())
+		{
+			m_Failed = true;
+			return none;
+		}
+		return m_Description.m_Values[m_At++];
+	}
+
+	Description::Reader &Description::Reader::Value(std::string &x)
+	{
+		if (More())
+			x = Next();
+		else
+			m_Failed = true;
+		return *this;
+	}
+
 	// JSON string escaping. Values are what an ostream wrote, so anything
 	// below 0x20 is a raw byte a plugin chose to emit; it is kept, escaped.
 	static void Quote(std::string &out, const std::string &text)
