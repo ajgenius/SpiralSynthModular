@@ -7,7 +7,7 @@
 #include "ThreadCompatibility.h"
 #include "Compatibility.h"
 
-namespace Spiral
+namespace spiralcore
 {
 // Exactly one producer and one consumer. Neither side allocates or locks.
 class MidiQueue

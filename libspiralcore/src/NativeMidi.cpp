@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cstring>
 #include <exception>
-using namespace Spiral;
+using namespace spiralcore;
 
 NativeMidiBackend::NativeMidiBackend(MidiTransport *t):
     transport(t),
