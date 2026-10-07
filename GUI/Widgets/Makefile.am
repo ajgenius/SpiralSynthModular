@@ -40,6 +40,8 @@ libSpiralWidgets_la_SOURCES =					\
 					PawfalInput.C		\
 					PawfalYesNo.h		\
 					PawfalYesNo.C		\
+					OutputPluginGUI.h	\
+					OutputPluginGUI.cpp	\
 			                SpiralGUI.H		\
 			                SpiralGUI.C		\
 					SpiralPluginGUI.h	\
@@ -62,7 +64,7 @@ libSpiralWidgets_la_LIBADD = 				\
 				 -lm	\
                 $(top_builddir)/libspiralcore/libspiralcore.la
 
-libSpiralPlugin_la_SOURCES = SpiralPlugin.C SpiralPlugin.h OutputAudioClient.C OutputAudioClient.h AudioTransportHub.C AudioTransportHub.h DeviceClassRegistry.C DeviceClassRegistry.h EditorClassRegistry.C EditorClassRegistry.h
+libSpiralPlugin_la_SOURCES = SpiralPlugin.C SpiralPlugin.h OutputAudioClient.C OutputAudioClient.h AudioTransportHub.C AudioTransportHub.h DeviceClassRegistry.C DeviceClassRegistry.h EditorClassRegistry.C EditorClassRegistry.h OutputPlugin.C OutputPlugin.h OutputIcon.xpm
 libSpiralPlugin_la_LIBADD = $(top_builddir)/libspiralcore/libspiralcore.la
 libSpiralPlugin_la_LDFLAGS = -shared -no-undefined -version-info $(LT_VERSION_INFO)
 libSpiralWidgets_la_LIBADD += libSpiralPlugin.la
