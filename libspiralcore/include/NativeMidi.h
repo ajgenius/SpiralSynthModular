@@ -6,6 +6,12 @@
 #include <memory>
 #include "ThreadCompatibility.h"
 #include "Compatibility.h"
+// As in MidiBackend.h: Xlib's Status macro set aside for the declarations.
+#ifdef Status
+#pragma push_macro("Status")
+#undef Status
+#define SSM_NATIVE_MIDI_RESTORE_STATUS
+#endif
 
 namespace spiralcore
 {
@@ -133,4 +139,8 @@ public:
 	std::string Status();
 };
 }
+#ifdef SSM_NATIVE_MIDI_RESTORE_STATUS
+#pragma pop_macro("Status")
+#undef SSM_NATIVE_MIDI_RESTORE_STATUS
+#endif
 #endif
