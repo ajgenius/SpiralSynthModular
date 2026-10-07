@@ -93,9 +93,9 @@ static spiralcore::PositionalReader *ContractReader()
 #endif
 
 // The device line of a patch: the device's state, as the contract finds it
-// in the file's text, replayed to the plugin's StreamIn (its Apply, once it
-// has one); the stream carries on after the state. With no text (paste) or
-// no contract for it, the plugin reads the stream itself as before.
+// in the file's text, applied to the plugin; the stream carries on after
+// the state. With no text (paste) or no contract for it, the plugin reads
+// the stream itself as before.
 static void StreamDeviceIn(iostream &s, const string &text, int PluginID, SpiralPlugin *plugin)
 {
 #ifdef HAVE_YAJL
@@ -107,9 +107,8 @@ static void StreamDeviceIn(iostream &s, const string &text, int PluginID, Spiral
 		string error;
 		if (reader->ReadState(PluginID, text, at, state, consumed, error))
 		{
-			stringstream replay;
-			state.Write(replay);
-			plugin->StreamIn(replay);
+			spiralcore::Description::Reader values(state);
+			plugin->Apply(values);
 			s.seekg(at + consumed);
 			return;
 		}
