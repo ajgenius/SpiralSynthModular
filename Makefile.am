@@ -155,3 +155,9 @@ install-data-local:
 
 uninstall-local:
 	rm -rf "$(DESTDIR)$(pkgdatadir)/Examples"
+
+check_PROGRAMS += package-project-test
+package_project_test_SOURCES = tests/package-project.cpp libSSMCore/src/PatchProject.cpp
+package_project_test_CPPFLAGS = -I$(srcdir)/libSSMCore/include -I$(srcdir)/libs/libSpumoni/include \
+	-DPUBLIC_TEST_SOURCE='"$(abs_srcdir)/Examples/FourOsc.ssm"'
+package_project_test_LDADD = libs/libSpumoni/libSpumoni.a -lz
