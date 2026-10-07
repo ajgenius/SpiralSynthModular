@@ -25,10 +25,7 @@ compatibility_test_SOURCES = tests/compatibility.cpp
 compatibility_test_LDADD = libspiralcore.la
 
 EXTRA_DIST = \
-    CHANGES \
     COPYING \
-    README \
-    SConstruct \
     include/AsyncSampleLoader.h \
     include/Event.h \
     include/EventQueue.h \
@@ -45,7 +42,7 @@ EXTRA_DIST = \
     src/Time.cpp \
     src/Tuna.cpp
 
-EXTRA_DIST += README.ssm AUDIO-TRANSPORT.md
+EXTRA_DIST += AUDIO-TRANSPORT.md
 
 libspiralcore_la_SOURCES += include/AudioClient.h
 
