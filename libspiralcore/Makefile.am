@@ -50,6 +50,7 @@ EXTRA_DIST += README.ssm AUDIO-TRANSPORT.md
 libspiralcore_la_SOURCES += include/AudioClient.h
 
 libspiralcore_la_SOURCES += include/PluginManager.h src/PluginManager.cpp
+libspiralcore_la_SOURCES += include/DeviceClassRegistry.h src/DeviceClassRegistry.cpp include/EditorClassRegistry.h src/EditorClassRegistry.cpp
 libspiralcore_la_SOURCES += include/BackendModule.h include/AudioBackend.h src/AudioBackend.cpp src/AudioBackends.cpp include/DummyClient.h src/DummyClient.cpp
 libspiralcore_la_SOURCES += include/MidiBackend.h src/MidiBackend.cpp include/NativeMidi.h src/NativeMidi.cpp include/ThreadCompatibility.h include/Compatibility.h
 check_PROGRAMS += midi-backend-test native-midi-test midi-device-test
