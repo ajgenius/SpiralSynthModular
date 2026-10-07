@@ -29,18 +29,12 @@ EXTRA_DIST = \
     include/AsyncSampleLoader.h \
     include/Event.h \
     include/EventQueue.h \
-    include/OSCServer.h \
-    include/SearchPaths.h \
     include/SpiralTime.h \
     include/Trace.h \
-    include/Tuna.h \
     src/AsyncSampleLoader.cpp \
     src/Event.cpp \
     src/EventQueue.cpp \
-    src/OSCServer.cpp \
-    src/SearchPaths.cpp \
-    src/Time.cpp \
-    src/Tuna.cpp
+    src/Time.cpp
 
 EXTRA_DIST += AUDIO-TRANSPORT.md
 
