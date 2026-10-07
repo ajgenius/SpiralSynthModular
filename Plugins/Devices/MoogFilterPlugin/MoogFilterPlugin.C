@@ -208,9 +208,9 @@ void MoogFilterPlugin::Describe(spiralcore::Description &d)
 	d.Value(m_Version).Separator(" ").Value(Cutoff).Separator(" ").Value(Resonance).Separator(" ");
 }
 
-void MoogFilterPlugin::StreamIn(istream &s)
+void MoogFilterPlugin::Apply(spiralcore::Description::Reader &r)
 {	
 	int version;
-	s>>version;
-	s>>Cutoff>>Resonance;
+	r.Value(version);
+	r.Value(Cutoff).Value(Resonance);
 }

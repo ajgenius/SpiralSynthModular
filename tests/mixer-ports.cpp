@@ -14,7 +14,7 @@ public:
 		m_PluginInfo.NumInputs = m_PluginInfo.NumOutputs = 1;
 	}
 	void Execute() {}
-	void StreamIn(std::istream &) {}
+	void Apply(spiralcore::Description::Reader &) {}
 	void Describe(spiralcore::Description &d) {}
 };
 

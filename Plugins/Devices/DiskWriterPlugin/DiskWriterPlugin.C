@@ -162,26 +162,15 @@ void DiskWriterPlugin::Describe(spiralcore::Description &d)
 	d.Value(m_Version).Separator(" ").Value(m_GUIArgs.BitsPerSample).Separator(" ").Value(m_GUIArgs.Stereo).Separator(" ");
 }
 
-void DiskWriterPlugin::StreamIn (istream &s)
+void DiskWriterPlugin::Apply(spiralcore::Description::Reader &r)
 {
-	char Test;
 	int Version, BitsPerSample, Stereo;
 
 	// originally DiskWriter had NO streaming code whatsover
-	// so to test if this is an old patch we must
-	// read ahead and find out what the first char
-	// of the next line is
-
-	s.seekg (2, ios::cur );  //skip to next line
-	Test = s.peek();         //peek first char
-	s.seekg (-2, ios::cur ); //jump back to prior line
-
-	// This test works because if the char
-	// of the next line isn't a version number
-	// it will only be 'D', ' ', #13, or '-'
-	if ( (Test >= '0') && (Test <= '9') )
+	// so an old patch has no state for it at all
+	if (r.More())
 	{
-		s >> Version;
+		r.Value(Version);
 	}
 	else
 	{
@@ -193,7 +182,7 @@ void DiskWriterPlugin::StreamIn (istream &s)
 	{
 		case 2:
 		{
-			s >> BitsPerSample >> Stereo;
+			r.Value(BitsPerSample).Value(Stereo);
 			m_GUIArgs.BitsPerSample = BitsPerSample;
 			m_GUIArgs.Stereo = Stereo;
 		}

@@ -33,7 +33,7 @@ class LFOPlugin : public SpiralPlugin {
       virtual void Reset();
 
       virtual void Describe(spiralcore::Description &d);
-      virtual void StreamIn (std::istream &s);
+      virtual void Apply(spiralcore::Description::Reader &r);
       //typedef char Type;
       enum Type {SINE, TRIANGLE, SQUARE, SAW};
       void WriteWaves();

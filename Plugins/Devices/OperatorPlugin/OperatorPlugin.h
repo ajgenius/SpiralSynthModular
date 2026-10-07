@@ -31,7 +31,7 @@ public:
 	virtual void 		Execute();
 	virtual void 		ExecuteCommands();
 	virtual void	    Describe(spiralcore::Description &d);
-	virtual void	    StreamIn(std::istream &s);
+	virtual void	    Apply(spiralcore::Description::Reader &r);
 
 	enum OperatorType{NONE,ADD,SUB,DIV,MUL};
 

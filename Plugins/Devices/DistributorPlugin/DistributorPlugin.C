@@ -214,18 +214,14 @@ void DistributorPlugin::Describe(spiralcore::Description &d)
 	d.Value(m_Version).Separator(" ").Value(GetChannelCount()).Separator(" ");
 }
 
-void DistributorPlugin::StreamIn (istream &s)
+void DistributorPlugin::Apply(spiralcore::Description::Reader &r)
 {
-	char Test;
 	int Version, Channels;
 
-	s.seekg (2, ios::cur );//skip to next line
-	Test = s.peek();//peek first char
-	s.seekg (-2, ios::cur );//jump back to prior line
-
-	if ( (Test >= '0') && (Test <= '9') )
+	// an old patch has no state for it at all
+	if (r.More())
 	{
-		s >> Version;
+		r.Value(Version);
 	}
 	else
 	{
@@ -237,7 +233,7 @@ void DistributorPlugin::StreamIn (istream &s)
 	{
 		case 2:
 		{
-			s >> Channels;
+			r.Value(Channels);
 			SetChannelCount (Channels);
 		}
 		break;

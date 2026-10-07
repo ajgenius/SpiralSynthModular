@@ -31,7 +31,7 @@ public:
 	virtual void 		Execute();
 	virtual void		Reset();
 	virtual void	    Describe(spiralcore::Description &d);
-	virtual void	    StreamIn(std::istream &s);
+	virtual void	    Apply(spiralcore::Description::Reader &r);
 	
 	float GetUp()        { return m_Up; }
 	float GetDown()      { return m_Down; }

@@ -111,10 +111,8 @@ public:
 	virtual void        Describe(spiralcore::Description &d)=0;
 	void                StreamOut(std::ostream &s);
 	// The state read back from a description, in the order Describe gave
-	// it; the host finds the description. The transitional base Apply
-	// replays it to StreamIn, the legacy stream reader.
-	virtual void        Apply(spiralcore::Description::Reader &r);
-	virtual void	    StreamIn(std::istream &s)=0;
+	// it; the host finds the description.
+	virtual void        Apply(spiralcore::Description::Reader &r)=0;
 
 	// stuff here gets saved in filename_files directory
 	// you must return true if this feature is used.

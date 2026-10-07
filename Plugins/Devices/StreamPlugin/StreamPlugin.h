@@ -32,7 +32,7 @@ class StreamPlugin : public SpiralPlugin {
 
       virtual void ExecuteCommands();
       virtual void Describe(spiralcore::Description &d);
-      virtual void StreamIn (std::istream &s);
+      virtual void Apply(spiralcore::Description::Reader &r);
       enum GUICommands { NONE, SET_TIME, LOAD, RESTART, STOP, PLAY };
       // has to be defined in the plugin
       float GetVolume (void) { return m_GUIArgs.Volume; }

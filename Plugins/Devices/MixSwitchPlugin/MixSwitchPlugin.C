@@ -186,9 +186,9 @@ void MixSwitchPlugin::Describe(spiralcore::Description &d) {
   d.Value(m_Version).Separator(" ").Value(m_PluginInfo.NumInputs - 2).Separator(" ").Value(m_SwitchPos).Separator(" ");
 }
 
-void MixSwitchPlugin::StreamIn (istream &s) {
+void MixSwitchPlugin::Apply(spiralcore::Description::Reader &r) {
   int Version, Chans, SwitchPos;
-  s >> Version >> Chans >> SwitchPos;
+  r.Value(Version).Value(Chans).Value(SwitchPos);
   SetChans (Chans);
   m_SwitchPos = SwitchPos;
 }

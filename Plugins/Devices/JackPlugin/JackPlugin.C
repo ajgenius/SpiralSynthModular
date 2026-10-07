@@ -386,18 +386,14 @@ void JackPlugin::Describe(spiralcore::Description &d)
 	d.Value(m_Version).Separator(" ").Value(m_GUIArgs.NumInputs).Separator(" ").Value(m_GUIArgs.NumOutputs).Separator(" ");
 }
 
-void JackPlugin::StreamIn (istream &s) 
+void JackPlugin::Apply(spiralcore::Description::Reader &r) 
 {
-	char Test;
 	int Version, NumInputs, NumOutputs;
 
-	s.seekg (2, ios::cur );  //skip to next line
-	Test = s.peek();         //peek first char
-	s.seekg (-2, ios::cur ); //jump back to prior line
-	
-	if ( (Test >= '0') && (Test <= '9') )
+	// an old patch has no state for it at all
+	if (r.More())
 	{
-		s >> Version;
+		r.Value(Version);
 	}
 	else
 	{
@@ -409,7 +405,7 @@ void JackPlugin::StreamIn (istream &s)
 	{
 		case 2:
 		{
-			s >> NumInputs >> NumOutputs;
+			r.Value(NumInputs).Value(NumOutputs);
 			m_GUIArgs.NumOutputs = min(max(NumOutputs, MIN_PORTS), MAX_PORTS);
 			m_GUIArgs.NumInputs = min(max(NumInputs, MIN_PORTS), MAX_PORTS);
 			

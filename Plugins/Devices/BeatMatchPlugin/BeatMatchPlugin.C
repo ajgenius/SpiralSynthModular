@@ -166,9 +166,9 @@ void BeatMatchPlugin::Describe(spiralcore::Description &d)
 	d.Value(m_Sensitivity).Separator(" ");
 }
 
-void BeatMatchPlugin::StreamIn(istream &s) 
+void BeatMatchPlugin::Apply(spiralcore::Description::Reader &r) 
 {
 	int version;
-	s>>version;
-	s>>m_Sensitivity;
+	r.Value(version);
+	r.Value(m_Sensitivity);
 }

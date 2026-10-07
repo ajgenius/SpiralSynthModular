@@ -259,18 +259,18 @@ void SpiralLoopPlugin::Describe(spiralcore::Description &d)
 	}
 }
 
-void SpiralLoopPlugin::StreamIn(istream &s)
+void SpiralLoopPlugin::Apply(spiralcore::Description::Reader &r)
 {
 	int version;
-	s>>version;
-	s>>m_LoopPoint>>m_Speed>>m_Volume>>m_TicksPerLoop;
+	r.Value(version);
+	r.Value(m_LoopPoint).Value(m_Speed).Value(m_Volume).Value(m_TicksPerLoop);
 	int size;
-	s>>size;
+	r.Value(size);
 	
 	for (int n=0; n<size; n++)
 	{
 		TriggerInfo t;
-		s>>t.Channel>>t.Time;
+		r.Value(t.Channel).Value(t.Time);
 		m_TriggerVec.push_back(t);
 	}
 }

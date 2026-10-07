@@ -35,7 +35,7 @@ public:
 	virtual void		Reset();
 
 	virtual void	    Describe(spiralcore::Description &d);
-	virtual void	    StreamIn(std::istream &s);
+	virtual void	    Apply(spiralcore::Description::Reader &r);
 	
 	// has to be defined in the plugin	
 
@@ -65,11 +65,11 @@ private:
 	Sample m_Table[NUM_TABLES];
 	int    m_TableLength;
 	
-	friend std::istream &operator>>(std::istream &s, WaveTablePlugin &o);
+	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, WaveTablePlugin &o);
 	friend spiralcore::Description &Describe(spiralcore::Description &d, WaveTablePlugin &o);
 };
 
-std::istream &operator>>(std::istream &s, WaveTablePlugin &o);
+spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, WaveTablePlugin &o);
 spiralcore::Description &Describe(spiralcore::Description &d, WaveTablePlugin &o);
 
 #endif

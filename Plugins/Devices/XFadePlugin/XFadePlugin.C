@@ -121,9 +121,9 @@ void XFadePlugin::Describe(spiralcore::Description &d)
 	d.Value(m_Version).Separator(" ").Value(m_Mix).Separator(" ").Line();
 }
 
-void XFadePlugin::StreamIn(istream &s)
+void XFadePlugin::Apply(spiralcore::Description::Reader &r)
 {	
 	int version;
-	s>>version;
-	s>>m_Mix;
+	r.Value(version);
+	r.Value(m_Mix);
 }

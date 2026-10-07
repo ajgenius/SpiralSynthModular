@@ -31,7 +31,7 @@ public:
 	virtual void Execute();
 	virtual void Reset();
 	virtual void Describe(spiralcore::Description &d);
-	virtual void StreamIn(std::istream &s);
+	virtual void Apply(spiralcore::Description::Reader &r);
 	
    	float GetDelay()    { return m_Delay;    }
 	float GetMix() { return m_Mix; }
@@ -47,10 +47,10 @@ private:
 	
 	Sample m_Buffer;
 
-	friend std::istream &operator>>(std::istream &s, DelayPlugin &o);
+	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, DelayPlugin &o);
 	friend spiralcore::Description &Describe(spiralcore::Description &d, DelayPlugin &o);
 };
-std::istream &operator>>(std::istream &s, DelayPlugin &o);
+spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, DelayPlugin &o);
 spiralcore::Description &Describe(spiralcore::Description &d, DelayPlugin &o);
 
 #endif
