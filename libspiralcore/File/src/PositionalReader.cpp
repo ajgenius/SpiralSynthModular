@@ -619,4 +619,46 @@ namespace spiralcore
 			return false;
 		}
 	}
+
+	bool PositionalReader::ReadState(long pluginID, const std::string &text, size_t at,
+	                                 Description &out, size_t &consumed, std::string &error)
+	{
+		try
+		{
+			if (text.size() > byteLimit)
+				throw std::runtime_error("Source exceeds 16 MiB");
+			if (at > text.size())
+				throw std::runtime_error("State offset past the end");
+
+			Layouts layouts(m_Contract, m_History);
+			Decoder decoder(layouts, text, m_Diagnostics);
+			decoder.at = decoder.origin = decoder.mark = at;
+
+			// The Device structure's State field: a PluginState keyed by PluginID.
+			const Value &device = Require(Require(m_Contract, "Structures", Value::Object), "Device", Value::Object);
+			const Value &fields = Require(device, "Fields", Value::Array);
+			const Value *state = NULL;
+			for (size_t i = 0; i < fields.Size() && !state; ++i)
+				if (fields.At(i)->Get("Type")->Text() == "PluginState")
+					state = fields.At(i);
+			if (!state)
+				throw std::runtime_error("Contract has no PluginState field");
+
+			Scope scope;
+			scope[Require(*state, "PropertyName", Value::String).Text()] = pluginID;
+			long integer;
+			decoder.Read(*state, scope, 0, integer);
+
+			out = Description();
+			decoder.Finish(out);
+			consumed = decoder.at - at;
+			error.clear();
+			return true;
+		}
+		catch (const std::runtime_error &failure)
+		{
+			error = failure.what();
+			return false;
+		}
+	}
 }
