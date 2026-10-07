@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_srcdir)/GUI/Widgets $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/SwitchPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
+AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/DSP/SwitchPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
 plugindir = @PLUGINDIR@/gui/SwitchPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = SwitchPlugin_GUI.la
