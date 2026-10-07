@@ -87,6 +87,10 @@ namespace spiralcore
 			Reader &Value(std::string &x);
 			Reader &Value(float &x);
 			Reader &Value(double &x);
+			// What is left of the span, values and the gaps among them, as a
+			// description of its own; the reader is at its end. For a device
+			// that keeps a state it cannot read and gives it back as it was.
+			void Rest(Description &out);
 			// Values left in the span.
 			bool More() const { return m_At < m_End; }
 			size_t Position() const { return m_At; }
