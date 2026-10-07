@@ -69,6 +69,15 @@ sub_Probe_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
 stranger_Probe_la_SOURCES = Plugin/tests/plugin-manager/stranger.cpp
 stranger_Probe_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
 # The test root: probe/probe_Probe.so, probe/sub/sub_Probe.so, probe/stranger_Probe.so
+# The plugin manifest the host reads before opening a module. Its JSON
+# reader stays in JSON/, which is its own library and not spiral's.
+if HAVE_YAJL
+check_PROGRAMS += manifest-test
+manifest_test_SOURCES = Plugin/tests/manifest.cpp Plugin/include/PluginManifest.h Plugin/src/PluginManifest.cpp ../JSON/JSONParser.cpp
+manifest_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/JSON $(YAJL_CFLAGS)
+manifest_test_LDADD = $(YAJL_LIBS)
+endif
+
 plugin-manager-root: $(check_LTLIBRARIES)
 	rm -rf plugin-manager-root
 	$(MKDIR_P) plugin-manager-root/probe/sub plugin-manager-root/audio plugin-manager-root/midi
