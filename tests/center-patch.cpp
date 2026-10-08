@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Centering moves the view, never the devices. A patch smaller than the view
-// ends up with equal margins; one larger than the view keeps its top left
-// corner on screen behind a 32px margin.
+// Centering moves the view, never the devices, and it looks at the middle of
+// the patch whatever its size. A patch smaller than the view ends up with
+// equal margins; one larger than the view puts its middle in the middle of
+// the view, which is the case that matters because real patches are bigger
+// than the window.
 //
 // The geometry does not care what the children are, so plain boxes stand in
 // for devices and the test needs no plugins.
@@ -87,22 +89,31 @@ int main()
 		assert(std::abs(GapTop - GapBottom) <= 1);
 	}
 
-	// Grow it past the view: the top left corner is what has to stay visible.
+	// Grow it well past the view, the shape of a real song: song50-3 spans
+	// about 2600x2900 against a 700x644 window. Anchoring the corner would
+	// leave the view on the topmost devices with the rest below it.
 	{
 		const Patch patch(canvas);
-		Place(canvas, patch.Left + PageW + 200, patch.Top + PageH + 200);
+		Place(canvas, patch.Left + 4 * PageW, patch.Top + 4 * PageH);
 	}
 
 	canvas->CenterPatch();
 
 	{
 		const Patch patch(canvas);
+		const int PatchMiddleX = (patch.Left + patch.Right) / 2;
+		const int PatchMiddleY = (patch.Top + patch.Bottom) / 2;
+		const int ViewMiddleX = scroll->x() + PageW / 2;
+		const int ViewMiddleY = scroll->y() + PageH / 2;
 
 		assert(patch.Right - patch.Left > PageW && patch.Bottom - patch.Top > PageH);
-		assert(patch.Left - scroll->x() == 32);
-		assert(patch.Top - scroll->y() == 32);
+		assert(std::abs(PatchMiddleX - ViewMiddleX) <= 1);
+		assert(std::abs(PatchMiddleY - ViewMiddleY) <= 1);
+		// The devices that used to fill the view are now off it, above and
+		// to the left, which is the whole point of the change.
+		assert(patch.Left < scroll->x() && patch.Top < scroll->y());
 	}
 
-	std::puts("A small patch is centered in the view; a large one keeps its top left corner");
+	std::puts("A patch is centered on its middle whether or not it fits in the view");
 	return 0;
 }
