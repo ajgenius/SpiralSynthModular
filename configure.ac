@@ -515,7 +515,9 @@ case "$host_os" in
     SPUMONI_WHOLE_ARCHIVE='-Wl,-force_load,$(top_builddir)/libs/libSpumoni/libSpumoni.a'
     ;;
   *)
-    SPUMONI_WHOLE_ARCHIVE='-Wl,--whole-archive,$(top_builddir)/libs/libSpumoni/libSpumoni.a -Wl,--no-whole-archive'
+    dnl Libtool emits these flags after LIBADD. Keep zlib after the archive
+    dnl too, otherwise GNU --as-needed drops it before seeing Zip's symbols.
+    SPUMONI_WHOLE_ARCHIVE='-Wl,--whole-archive,$(top_builddir)/libs/libSpumoni/libSpumoni.a -Wl,--no-whole-archive,-lz'
     ;;
 esac
 AC_SUBST([SPUMONI_WHOLE_ARCHIVE])
