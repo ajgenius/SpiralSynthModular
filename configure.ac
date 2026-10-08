@@ -5,7 +5,7 @@ m4_define([lt_revision], [1])
 m4_define([lt_age], [0])
           
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT([SpiralSynthModular], [0.3.1])
+AC_INIT([SpiralSynthModular], [0.3.2])
 AC_CONFIG_SRCDIR([SpiralSynthModular.C])
 
 AC_DEFINE([SSM_HOST_ABI], ["ssm-fltk-audio-7"], [SSM plugin host ABI])
