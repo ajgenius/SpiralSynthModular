@@ -883,27 +883,19 @@ void Fl_Canvas::CenterPatch()
 
 	if (!scroll || !children()) return;
 
-	// Offsets inside the canvas, not window coordinates. Scrolling moves the
-	// canvas and every device on it together, so these differences read the
-	// same before and after the first draw, and they are what scroll_to
-	// takes. Asking the scroll where it is instead only works once it has
-	// been drawn: fresh, xposition() reads 0 while the canvas sits at -5000,
-	// and a position worked out from that lands outside the canvas.
-	int left = child(0)->x() - x();
-	int top = child(0)->y() - y();
+	int left = child(0)->x();
+	int top = child(0)->y();
 	int right = left + child(0)->w();
 	int bottom = top + child(0)->h();
 
 	for (int n=1; n<children(); n++)
 	{
 		Fl_Widget *o = child(n);
-		const int ox = o->x() - x();
-		const int oy = o->y() - y();
 
-		left = std::min(left, ox);
-		top = std::min(top, oy);
-		right = std::max(right, ox + o->w());
-		bottom = std::max(bottom, oy + o->h());
+		left = std::min(left, o->x());
+		top = std::min(top, o->y());
+		right = std::max(right, o->x() + o->w());
+		bottom = std::max(bottom, o->y() + o->h());
 	}
 
 	// The page is what the scroll shows once its scrollbars are taken off.
@@ -915,29 +907,11 @@ void Fl_Canvas::CenterPatch()
 	// anchoring the corner instead leaves the view on whichever devices
 	// happen to be furthest up and left, which on a big patch is nowhere
 	// near the work.
-	int TargetX = (left + right) / 2 - PageW / 2;
-	int TargetY = (top + bottom) / 2 - PageH / 2;
+	const int TargetX = (left + right) / 2 - PageW / 2;
+	const int TargetY = (top + bottom) / 2 - PageH / 2;
 
-	// There is nothing to see past the edges of the canvas, and a view parked
-	// outside it leaves the scrollbars describing somewhere the view is not:
-	// the display stops tracking the scroll, and it stays that way into the
-	// next patch because nothing else ever moves the view.
-	TargetX = std::max(0, std::min(TargetX, w() - PageW));
-	TargetY = std::max(0, std::min(TargetY, h() - PageH));
-
-	// Where the canvas itself has to end up for that offset to be at the top
-	// left of the view.
-	const int DesiredX = scroll->x() - TargetX;
-	const int DesiredY = scroll->y() - TargetY;
-
-	// scroll_to displaces the children by (position - argument), so ask for
-	// the argument that produces the displacement this needs. Going through
-	// the displacement rather than handing it the offset directly is what
-	// makes this work before the first draw, when the scroll's idea of its
-	// own position is still 0 and the canvas is already at -5000; the next
-	// draw re-derives the position from where the canvas actually is.
-	scroll->scroll_to(scroll->xposition() + x() - DesiredX,
-	                  scroll->yposition() + y() - DesiredY);
+	scroll->scroll_to(scroll->xposition() + (TargetX - scroll->x()),
+	                  scroll->yposition() + (TargetY - scroll->y()));
 }
 
 

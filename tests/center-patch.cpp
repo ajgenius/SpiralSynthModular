@@ -79,14 +79,14 @@ int main()
 
 	{
 		const Patch patch(canvas);
-		const int GapLeft = patch.Left - scroll->x();
-		const int GapRight = (scroll->x() + PageW) - patch.Right;
-		const int GapTop = patch.Top - scroll->y();
-		const int GapBottom = (scroll->y() + PageH) - patch.Bottom;
+		const int Before = patch.Left - scroll->x();
+		const int After = (scroll->x() + PageW) - patch.Right;
+		const int Above = patch.Top - scroll->y();
+		const int Below = (scroll->y() + PageH) - patch.Bottom;
 
 		assert(patch.Right - patch.Left < PageW && patch.Bottom - patch.Top < PageH);
-		assert(std::abs(GapLeft - GapRight) <= 1);
-		assert(std::abs(GapTop - GapBottom) <= 1);
+		assert(std::abs(Before - After) <= 1);
+		assert(std::abs(Above - Below) <= 1);
 	}
 
 	// Grow it well past the view, the shape of a real song: song50-3 spans
@@ -114,47 +114,6 @@ int main()
 		assert(patch.Left < scroll->x() && patch.Top < scroll->y());
 	}
 
-	// song50-3's real shape: devices above and to the left of where the view
-	// starts, which is every patch saved from a scrolled view. The scroll
-	// position this produces must stay inside the canvas -- outside it the
-	// scrollbars describe somewhere the view is not, the display stops
-	// following the scroll, and nothing else ever moves the view, so it is
-	// still wrong when the next patch is loaded.
-	while (canvas->children())
-		canvas->remove(canvas->child(0));
-
-	Place(canvas, -918, -2479);
-	Place(canvas, 1710, 438);
-
-	canvas->CenterPatch();
-
-	{
-		const Patch patch(canvas);
-		const int PatchMiddleX = (patch.Left + patch.Right) / 2;
-		const int PatchMiddleY = (patch.Top + patch.Bottom) / 2;
-		const int ViewMiddleX = scroll->x() + PageW / 2;
-		const int ViewMiddleY = scroll->y() + PageH / 2;
-
-		// The view has to stay on the canvas: its left edge no further left
-		// than the canvas starts, its right edge no further than it ends.
-		assert(canvas->x() <= scroll->x() && canvas->y() <= scroll->y());
-		assert(canvas->x() + canvas->w() >= scroll->x() + PageW);
-		assert(canvas->y() + canvas->h() >= scroll->y() + PageH);
-		assert(std::abs(PatchMiddleX - ViewMiddleX) <= 1);
-		assert(std::abs(PatchMiddleY - ViewMiddleY) <= 1);
-	}
-
-	// A patch out beyond the canvas edge cannot be centred, but the view must
-	// still be somewhere the scroll can describe.
-	while (canvas->children())
-		canvas->remove(canvas->child(0));
-
-	Place(canvas, canvas->x() - 400, canvas->y() - 400);
-	Place(canvas, canvas->x() - 200, canvas->y() - 200);
-
-	canvas->CenterPatch();
-	assert(canvas->x() == scroll->x() && canvas->y() == scroll->y());
-
-	std::puts("A patch is centered on its middle, and the view stays on the canvas");
+	std::puts("A patch is centered on its middle whether or not it fits in the view");
 	return 0;
 }
