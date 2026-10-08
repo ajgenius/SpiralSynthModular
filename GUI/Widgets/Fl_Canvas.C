@@ -322,6 +322,9 @@ void Fl_Canvas::AddPluginName (const string &s, int ID) {
      // This isn't IMMEDIATELY important, as if you've no plugins - there's nothing to copy/paste/etc anyway.
      if (! (m_Menu)) {
         m_Menu = new Fl_Menu_Button (0, 0, 4, 4, NULL);
+        // The canvas owns this popup even when another group is current.
+        // PopupEditMenu attaches it only for the duration of popup().
+        if (m_Menu->parent()) m_Menu->parent()->remove(m_Menu);
         m_Menu->type (Fl_Menu_Button::POPUP123);
         m_Menu->textsize (10);
         m_Menu->add ("Edit/Cut Currently Selected Devices", 0, (Fl_Callback*)cb_CutDeviceGroup, user_data());
