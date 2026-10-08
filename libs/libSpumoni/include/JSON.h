@@ -7,7 +7,6 @@
 #ifndef SPUMONI_JSON_H
 #define SPUMONI_JSON_H
 
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -81,18 +80,24 @@ namespace Spumoni
 		std::vector<Member> m_Members;
 	};
 
+	// Scoped ownership of one root. A raw pointer and a destructor rather
+	// than a standard smart pointer: this header is included by consumers
+	// that pick their own C++ standard, and auto_ptr was removed in C++17
+	// while unique_ptr does not exist in the C++03 this library builds as.
+	// Same shape as Spicy's JSONOwner, which is where it came from.
 	class JSONOwner
 	{
 	public:
 		explicit JSONOwner(JSON *value) : m_Value(value) {}
-		JSON *get() const { return m_Value.get(); }
+		~JSONOwner() { delete m_Value; }
+		JSON *get() const { return m_Value; }
 		JSON &operator*() const { return *m_Value; }
-		JSON *operator->() const { return m_Value.get(); }
+		JSON *operator->() const { return m_Value; }
 
 	private:
 		JSONOwner(const JSONOwner &);
 		JSONOwner &operator=(const JSONOwner &);
-		std::auto_ptr<JSON> m_Value;
+		JSON *m_Value;
 	};
 
 	// Parse one JSON value, the whole text. Trailing whitespace is allowed;
