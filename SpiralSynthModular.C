@@ -512,6 +512,7 @@ SpiralWindowType *SynthModular::CreateWindow()
         //MenuAdd ("Edit/Toolbars/Plugins", cb_Undefined, (void*)(this), 0);
         //MenuAdd ("Edit/Toolbars/Function", cb_Undefined, (void*)(this), 0);
         MenuAdd ("Edit/Options", cb_Options, (void*)(this), 0);
+        MenuAdd ("View/Center Patch", cb_CenterPatch, (void*)(this), 0);
         // Holds the Plugins menu's place in the order until the plugins load.
         MenuAdd ("Plugins/dummy", NULL, NULL, 0);
         MenuAdd ("Audio/Pause", cb_PlayPause, NULL, 0);
@@ -1475,7 +1476,12 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 	GrowUnavailablePorts(s, paste, merge, m_DeviceWinMap, m_Copied.m_DeviceIds);
 
 	if (!paste && !merge)
+	{
 		s>>*m_Canvas;
+		// The devices are wherever the file says, which is where the view
+		// happened to be when it was saved. Bring the patch into sight.
+		m_Canvas->CenterPatch();
+	}
 
 	ThawAll();
         return s;
@@ -1856,6 +1862,15 @@ void SynthModular::cb_Delete (Fl_Widget *o, void *v) {
 
 inline void SynthModular::cb_Options_i (Fl_Widget *o, void *v) {
        m_SettingsWindow->show();
+}
+
+// View menu
+
+void SynthModular::cb_CenterPatch (Fl_Widget* o, void* v) {
+     ((SynthModular*)(o->user_data()))->cb_CenterPatch_i (o, v);
+}
+inline void SynthModular::cb_CenterPatch_i (Fl_Widget *o, void *v) {
+       m_Canvas->CenterPatch();
 }
 
 void SynthModular::cb_Options (Fl_Widget* o, void* v) {

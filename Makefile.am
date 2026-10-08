@@ -88,6 +88,12 @@ menu_chrome_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
 menu_chrome_test_LDADD = $(SpiralSynthModular_LDADD)
 menu_chrome_test_LDFLAGS = -export-dynamic
 
+check_PROGRAMS += center-patch-test
+center_patch_test_SOURCES = tests/center-patch.cpp SpiralSynthModular.C UnavailablePlugin.C SpiralInfo.C SettingsWindow.C
+center_patch_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
+center_patch_test_LDADD = $(SpiralSynthModular_LDADD)
+center_patch_test_LDFLAGS = -export-dynamic
+
 if HAVE_JACK_CLIENT
 check_PROGRAMS += jack-gui-test jack-plugin-test
 jack_gui_test_SOURCES = tests/jack-gui.cpp SpiralSynthModular.C UnavailablePlugin.C SpiralInfo.C SettingsWindow.C
