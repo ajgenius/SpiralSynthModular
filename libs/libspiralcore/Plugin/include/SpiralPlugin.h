@@ -86,7 +86,7 @@ struct HostInfo
 class StablePortLayout
 {
 public:
-	virtual ~StablePortLayout() {}
+	virtual ~StablePortLayout();
 };
 
 class SpiralPlugin
