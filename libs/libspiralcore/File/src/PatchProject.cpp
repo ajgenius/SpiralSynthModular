@@ -231,5 +231,68 @@ namespace Spiral
 			Project judge(path);
 			return judge.LooksLikePackage(path) || judge.IsPackage(path);
 		}
+
+		namespace
+		{
+			// A string member, or nothing. A field stated as a number or an
+			// object is not a string and is left unread rather than
+			// stringified into something that was never written.
+			std::string TextOf(const Spumoni::JSON *owner, const char *key)
+			{
+				const Spumoni::JSON *member = owner ? owner->Get(key) : NULL;
+				return member && member->GetType() == Spumoni::JSON::String
+					? member->Text() : std::string();
+			}
+		}
+
+		DocumentSection Project::GetDocument() const
+		{
+			DocumentSection document;
+			const std::string &text = GetIdentity().ApplicationMetadata;
+			if (text.empty())
+				return document;
+
+			// The load keeps the metadata file's whole text, so this reads
+			// the same keys the save path writes. A key the project does
+			// not state stays empty, which Empty() reports as nothing to
+			// show: an absent title is not an empty title.
+			Spumoni::JSONOwner root(Spumoni::ParseJSONText(text));
+			if (!root.get() || root->GetType() != Spumoni::JSON::Object)
+				return document;
+
+			document.Title = TextOf(root.get(), "Title");
+			document.Description = TextOf(root.get(), "Description");
+			document.SavedBy = TextOf(root.get(), "SavedBy");
+			document.CreatedAt = TextOf(root.get(), "CreatedAt");
+			document.SavedAt = TextOf(root.get(), "SavedAt");
+
+			if (const Spumoni::JSON *rights = root->Get("Rights"))
+			{
+				document.Rights.Copyright = TextOf(rights, "Copyright");
+				document.Rights.License = TextOf(rights, "License");
+			}
+
+			// Credits are a list of who did what. An entry naming nobody
+			// says nothing, so it is dropped rather than shown as a blank
+			// row with a role beside it.
+			const Spumoni::JSON *credits = root->Get("Credits");
+			if (credits && credits->GetType() == Spumoni::JSON::Array)
+			{
+				for (size_t i = 0; i < credits->Size(); ++i)
+				{
+					const Spumoni::JSON *entry = credits->At(i);
+					if (!entry || entry->GetType() != Spumoni::JSON::Object)
+						continue;
+
+					Credit credit;
+					credit.Name = TextOf(entry, "Name");
+					credit.Role = TextOf(entry, "Role");
+					if (!credit.Name.empty())
+						document.Credits.push_back(credit);
+				}
+			}
+
+			return document;
+		}
 	}
 }
