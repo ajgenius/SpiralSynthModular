@@ -225,6 +225,9 @@ private:
 	static void cb_Delete (Fl_Widget *o, void *v);
         inline void cb_Options_i (Fl_Widget *o, void *v);
 	static void cb_Options (Fl_Widget *o, void *v);
+        // View menu
+        inline void cb_CenterPatch_i (Fl_Widget *o, void *v);
+	static void cb_CenterPatch (Fl_Widget *o, void *v);
         // Plugin Menu
         inline void cb_NewDevice_i (Fl_Button *o, void *v);
 	static void cb_NewDevice (Fl_Button *o, void *v);
