@@ -82,6 +82,20 @@ trailer, so the log reads forwards. Clones from before that need a fresh one.)
 - ???
 - FreeBSD, OpenBSD, linux x86_64 / arm, glibc/musl, and macOS fixes
 
+- Bundles swh ladspa plugins by default, including mac.
+
+The install path is the spiral plugins folder.
+
+Should take priority over system installed where applicable.
+
+Reason: Hermes has been testing and building for release all morning,
+working through the lab and build fixes, and ran into mac issues
+without ports etc, no ladspa.
+
+LADSPA is a frozen header anyway, and then the bundled example.
+So because of missing gverb, and swh has the most coverage,
+installing by default for now. 
+
 Tested on Void Linux with musl and an M1 Mac running macOS 14.
 
 Some things tested using CI without my asking by ChatGPT on Ubuntu and others.
