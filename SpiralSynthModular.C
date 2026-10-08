@@ -1625,7 +1625,7 @@ void SynthModular::ChooseAndLoadPatch(const char *directory) {
        if (m_DeviceWinMap.size()>0 && !Pawfal_YesNo ("Load - Lose changes to current patch?"))
           return;
        char *fn=fl_file_chooser (directory ? "Load an example patch" : "Load a patch",
-          "Spiral patch (*.ssm)\t*.ssm\nPackage (*.ssmp)\t*.ssmp", directory);
+          "Patches (*.{ssm,ssmp})\tSpiral patch (*.ssm)\tPackage (*.ssmp)", directory);
        if (fn && *fn!='\0')
           LoadPatch(fn);
 }
@@ -1676,7 +1676,7 @@ void SynthModular::cb_Save (Fl_Widget *o, void *v) {
 
 inline void SynthModular::cb_SaveAs_i (Fl_Widget *o, void *v) {
        char *fn=fl_file_chooser("Save a patch",
-          "Spiral patch (*.ssm)\t*.ssm\nPackage (*.ssmp)\t*.ssmp", NULL);
+          "Patches (*.{ssm,ssmp})\tSpiral patch (*.ssm)\tPackage (*.ssmp)", NULL);
        if (fn && *fn!='\0') {
           ifstream ifl (fn);
           if (ifl) {
@@ -1701,7 +1701,7 @@ void SynthModular::cb_SaveAs (Fl_Widget *o, void *v) {
 
 inline void SynthModular::cb_Merge_i (Fl_Widget *o, void *v) {
        char *fn = fl_file_chooser ("Merge a patch",
-          "Spiral patch (*.ssm)\t*.ssm\nPackage (*.ssmp)\t*.ssmp", NULL);
+          "Patches (*.{ssm,ssmp})\tSpiral patch (*.ssm)\tPackage (*.ssmp)", NULL);
        if (fn && *fn!='\0') {
           iostream *stream = NULL;
           ifstream in;
