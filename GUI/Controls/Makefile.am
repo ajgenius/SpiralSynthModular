@@ -40,4 +40,5 @@ libSpiralControls_la_SOURCES = \
 	WS_Square.h \
 	WS_Tri.h
 libSpiralControls_la_LDFLAGS = -shared -version-info $(LT_VERSION_INFO)
-libSpiralControls_la_LIBADD = $(FLTK_LIBS) -lm
+# WaveChooser reads the format list straight from libsndfile.
+libSpiralControls_la_LIBADD = $(FLTK_LIBS) $(SFLIBS) -lm
