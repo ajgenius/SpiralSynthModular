@@ -21,7 +21,6 @@
 #define SPIRALSYNTHMODULAR
 
 #include <FL/Fl.H>
-#include <FL/x.H>
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Box.H>
@@ -95,7 +94,8 @@ public:
 	void ClearUp(bool synchronize = true);
 	void UpdateHostInfo();
 	void UpdatePluginGUIs();
-	void LoadPatch(const char *fn);
+	void LoadPatch(const char *fn, const char *branchId = NULL);
+	void SavePatch(const char *fn);
 
 	void FreezeAll()
 	{
@@ -137,10 +137,9 @@ public:
 	// only for audio thread
 	bool IsFrozen() { return m_Frozen; }
 
-	iostream &StreamPatchIn(iostream &s, bool paste, bool merge);
+	iostream &StreamPatchIn(iostream &s, bool paste, bool merge, const string &sidecars = string());
 private:
 
-	vector<string> BuildPluginList(const string &Path);
 
 	DeviceWin* NewDeviceWin(int n, int x, int y);
 	DeviceWin* NewComment(int n, int x, int y);
@@ -159,7 +158,7 @@ private:
 
         int m_NextID;
 	static bool m_CallbackUpdateMode;
-	string m_FilePath, m_MergeFilePath;
+	string m_FilePath, m_MergeFilePath, m_BranchID;
 
 	// Main GUI stuff
 	void CreateGUI (int xoff=0, int yoff=0, const char *name="");
@@ -187,11 +186,14 @@ private:
 	inline void cb_Load_i (Fl_Widget *o, void *v);
 	static void cb_Load (Fl_Widget *o, void *v);
         void ChooseAndLoadPatch(const char *directory);
-#ifdef __APPLE__
         static void cb_Examples(Fl_Widget *o, void *v);
-#endif
 	inline void cb_Save_i (Fl_Widget *o, void *v);
 	static void cb_Save (Fl_Widget *o, void *v);
+        inline void cb_SaveAs_i (Fl_Widget *o, void *v);
+	static void cb_SaveAs (Fl_Widget *o, void *v);
+	void SaveBranch(bool ask = true);
+        inline void cb_SavePoints_i (Fl_Widget *o, void *v);
+	static void cb_SavePoints (Fl_Widget *o, void *v);
 	inline void cb_Merge_i (Fl_Widget *o, void *v);
 	static void cb_Merge (Fl_Widget *o, void *v);
 	inline void cb_Close_i (Fl_Widget *o, void *v);
@@ -234,10 +236,14 @@ private:
 		((SynthModular*)o)->cb_ChangeBufferAndSampleRate_i(NewBufferSize, NewSamplerate);
 	}
 	friend istream &operator>>(istream &s, SynthModular &o);
+	friend spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o);
+	friend spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o, const string &sidecars);
 	friend ostream &operator<<(ostream &s, SynthModular &o);
 };
 
 iostream &operator>>(iostream &s, SynthModular &o);
+spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o);
+spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o, const string &sidecars);
 ostream &operator<<(ostream &s, SynthModular &o);
 
 #endif

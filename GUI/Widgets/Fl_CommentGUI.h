@@ -21,6 +21,7 @@
 
 #include <FL/Fl_Input.H>
 #include "Fl_DeviceGUI.h"
+#include "Description.h"
 
 class Fl_CommentGUI : public Fl_DeviceGUI
 {
@@ -29,7 +30,8 @@ public:
 	virtual int  handle(int event);
 	virtual void Setup(const DeviceGUIInfo& Info, bool FirstTime = false);
 	virtual void Clear();
-	virtual void	    StreamOut(ostream &s);
+	virtual void	    Describe(spiralcore::Description &d);
+	void                StreamOut(ostream &s);   // the description, written
 	virtual void	    StreamIn(istream &s);
 protected:
 	string m_Comment;

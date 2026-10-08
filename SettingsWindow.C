@@ -24,10 +24,11 @@
 #include "SettingsWindow.h"
 #include "SpiralInfo.h"
 #include "AudioBackend.h"
+#include "MidiBackend.h"
 #include "GUI/options.xpm"
 
 SettingsWindow::SettingsWindow() :
-Fl_Double_Window(250,295,"SSM Options"),
+Fl_Double_Window(250,315,"SSM Options"),
 m_App(NULL)
 {
 	color(SpiralInfo::GUICOL_Tool);
@@ -56,11 +57,11 @@ m_App(NULL)
 	TextBox->labelsize(10);
 
 
-	Fl_Group *OptionsGrp = new Fl_Group(5,95,240,170,"");
+	Fl_Group *OptionsGrp = new Fl_Group(5,95,240,190,"");
 	OptionsGrp->box(FL_FLAT_BOX);
 	OptionsGrp->color(SpiralInfo::GUICOL_Button);
 
-	m_Options = new Fl_Pack(5,115,230,120,"Settings");
+	m_Options = new Fl_Pack(5,115,230,140,"Settings");
 	m_Options->color(SpiralInfo::GUICOL_Button);
 	OptionsGrp->add(m_Options);
 
@@ -161,6 +162,20 @@ m_App(NULL)
 
 	Line = new Fl_Pack(0,0,100,20,"");
 	Line->type(FL_HORIZONTAL);
+	Name = new Fl_Box(55,0,150,20,"Midi Backend");
+	Name->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+	Name->labelsize(10);
+	Line->add(Name);
+	m_MidiBackend = new Fl_Choice(0,0,80,20,"");
+	m_MidiBackend->labelsize(10);
+	m_MidiBackend->tooltip("MidiPlugin backend");
+	ListMidiBackends();
+	Line->add(m_MidiBackend);
+	Line->end();
+	m_Options->add(Line);
+
+	Line = new Fl_Pack(0,0,100,20,"");
+	Line->type(FL_HORIZONTAL);
 	Name = new Fl_Box(55,0,150,20,"Midi Device");
 	Name->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 	Name->labelsize(10);
@@ -173,13 +188,13 @@ m_App(NULL)
 
 	m_Options->end();
 
-	m_Save = new Fl_Button(140,270,50,20,"Save");
+	m_Save = new Fl_Button(140,290,50,20,"Save");
  	m_Save->labelsize(10);
  	m_Save->tooltip("Save these settings");
 	m_Save->callback((Fl_Callback*)cb_Save);
  	add(m_Save);
 
-	m_Apply = new Fl_Button(195,270,50,20,"Apply");
+	m_Apply = new Fl_Button(195,290,50,20,"Apply");
 	m_Apply->labelsize(10);
 	m_Apply->tooltip("Some plugins may request to save data first");
 	m_Apply->callback((Fl_Callback*)cb_Apply);
@@ -191,6 +206,7 @@ m_App(NULL)
 void SettingsWindow::show()
 {
 	ListAudioClients();
+	ListMidiBackends();
 	Fl_Double_Window::show();
 }
 
@@ -210,6 +226,22 @@ void SettingsWindow::ListAudioClients()
 	m_AudioClient->value(active);
 }
 
+// As the audio list; "auto" is the empty preference, the first backend
+// registered that is not the dummy.
+void SettingsWindow::ListMidiBackends()
+{
+	m_MidiBackend->clear();
+	m_MidiBackend->add("auto");
+	const std::vector<std::string> names = spiralcore::MidiBackendRegistry::Get()->Names();
+	int active = 0;
+	for (size_t n = 0; n < names.size(); ++n)
+	{
+		m_MidiBackend->add(names[n].c_str());
+		if (SpiralInfo::MIDIBACKEND == names[n]) active = n+1;
+	}
+	m_MidiBackend->value(active);
+}
+
 SettingsWindow::~SettingsWindow()
 {
 }
@@ -222,6 +254,7 @@ inline void SettingsWindow::cb_Apply_i(Fl_Button* o, void* v)
 	SpiralInfo::SAMPLERATE=(int)atof(m_Samplerate->value());
 	if (m_AudioClient->text()) SpiralInfo::AUDIOCLIENT=m_AudioClient->text();
 	SpiralInfo::OUTPUTFILE=m_OutputDevice->value();
+	SpiralInfo::MIDIBACKEND=m_MidiBackend->value() ? m_MidiBackend->text() : "";
 	SpiralInfo::MIDIFILE=m_MidiDevice->value();
 
 	assert(m_App);
@@ -241,6 +274,7 @@ inline void SettingsWindow::cb_Save_i(Fl_Button* o, void* v)
  	SpiralInfo::SAMPLERATE=(int)atof(m_Samplerate->value());
 	if (m_AudioClient->text()) SpiralInfo::AUDIOCLIENT=m_AudioClient->text();
 	SpiralInfo::OUTPUTFILE=m_OutputDevice->value();
+	SpiralInfo::MIDIBACKEND=m_MidiBackend->value() ? m_MidiBackend->text() : "";
  	SpiralInfo::MIDIFILE=m_MidiDevice->value();
  	SpiralInfo::Get()->SavePrefs();
 }

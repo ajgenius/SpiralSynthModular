@@ -1,0 +1,156 @@
+/*  SpiralSound
+ *  Copyleft (C) 2001 David Griffiths <dave@pawfal.org>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+*/ 
+#include "CounterPlugin.h"
+#include "SpiralIcon.xpm"
+#include "NoteTable.h"
+
+using namespace std;
+
+#include <config.h>
+
+extern "C" {
+const char *SpiralPlugin_GetHostVersion()
+{
+	return PACKAGE_VERSION;
+}
+
+const char *SpiralPlugin_GetHostABI()
+{
+	return SSM_HOST_ABI;
+}
+
+SpiralPlugin* SpiralPlugin_CreateInstance()
+{
+	return new CounterPlugin;
+}
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DEVICE;
+}
+
+
+const char** SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 45;
+}
+
+string SpiralPlugin_GetName()
+{
+	return "Counter";
+}
+
+string SpiralPlugin_GetGroupName()
+{
+	return "Maths/Logic";
+}
+}
+
+///////////////////////////////////////////////////////
+
+CounterPlugin::CounterPlugin() :
+m_Count(4),
+m_Current(0),
+m_Triggered(false),
+m_CurrentLevel(1.0f)
+{
+	m_PluginInfo.Name="Counter";
+	m_PluginInfo.Width=80;
+	m_PluginInfo.Height=50;
+	m_PluginInfo.NumInputs=1;
+	m_PluginInfo.NumOutputs=1;
+	m_PluginInfo.PortTips.push_back("Input");	
+	m_PluginInfo.PortTips.push_back("Output");
+
+	m_AudioCH->Register("Count",&m_Count);
+}
+
+CounterPlugin::~CounterPlugin()
+{
+}
+
+PluginInfo &CounterPlugin::Initialise(const HostInfo *Host)
+{	
+	return SpiralPlugin::Initialise(Host);
+}
+
+
+
+void CounterPlugin::Reset()
+{
+	ResetPorts();
+	m_Current = 0;
+	m_Triggered = false;
+	m_CurrentLevel = 1.0f;
+}
+
+
+void CounterPlugin::Execute()
+{	
+	bool Triggered;
+	
+	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
+	{
+		if (GetInput(0,n)>0)
+		{
+			if(!m_Triggered)
+			{
+				m_Triggered=true;
+				m_Current++;
+			}
+		}
+		else
+		{
+			if (m_Triggered)
+			{
+				m_Triggered=false;
+				m_Current++;
+			}
+		}
+
+		if (m_Current>=m_Count)
+		{
+			m_CurrentLevel=-m_CurrentLevel;
+			m_Current=0;
+		}
+		
+		SetOutput(0,n,m_CurrentLevel);
+	}
+}
+
+void CounterPlugin::ExecuteCommands()
+{
+}
+	
+void CounterPlugin::Describe(spiralcore::Description &d) 
+{
+	d.Value(m_Version).Line();
+	d.Value(m_Count).Separator(" ").Value(m_Current).Separator(" ");
+}
+
+void CounterPlugin::Apply(spiralcore::Description::Reader &r) 
+{
+	int version;
+	r.Value(version);
+	r.Value(m_Count).Value(m_Current);
+}

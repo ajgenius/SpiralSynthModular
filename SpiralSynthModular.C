@@ -36,9 +36,23 @@
 #include "SpiralSynthModular.h"
 #include "AudioTransportHub.h"
 #include "AudioBackend.h"
-#include "PluginManager.h"
+#include "Midi.h"
+#include "DeviceClassRegistry.h"
+#include "EditorClassRegistry.h"
+#include "OutputPlugin.h"
+#include "OutputPluginGUI.h"
+#include "PatchProject.h"
+#include <memory>
+#include <FL/fl_ask.H>
+#include <FL/Fl_Choice.H>
+#include <FL/Fl_Return_Button.H>
+#include <FL/Fl_Window.H>
+#include "UnavailablePlugin.h"
 #include "SpiralInfo.h"
 #include "SpiralPluginGUI.h"
+#include "JSON.h"
+#include "PositionalReader.h"
+#include <iterator>
 #include "GUI/SSM.xpm"
 #include "GUI/load.xpm"
 #include "GUI/save.xpm"
@@ -46,8 +60,9 @@
 #include "GUI/options.xpm"
 #include "GUI/comment.xpm"
 #include "PawfalYesNo.h"
-#ifdef __APPLE__
 #include "MacBundle.h"
+#ifndef SSM_EXAMPLES_DIR
+#define SSM_EXAMPLES_DIR ""
 #endif
 
 //#define DEBUG_PLUGINS
@@ -57,6 +72,57 @@ const static string LABEL = "SpiralSynthModular "+VER_STRING;
 static string TITLEBAR;
 
 static const int FILE_VERSION = 4;
+
+// The contract the file reader decodes a device's state under: loaded once,
+// from SSM_SCHEMA_DIR or the built tree's schemas. Without it no device's
+// state can be told from the next device's, and a patch cannot be loaded.
+static spiralcore::PositionalReader *ContractReader()
+{
+	static bool tried = false;
+	static spiralcore::PositionalReader *reader = NULL;
+	if (!tried)
+	{
+		tried = true;
+		const char *env = getenv("SSM_SCHEMA_DIR");
+		string dir = env ? env : SPIRALCORE_SCHEMA_DIR;
+		string error;
+		Spumoni::JSON *contract = Spumoni::ParseJSON((dir + "/SpiralPositionalText-0.2.x.json").c_str(), &error);
+		Spumoni::JSON *history = contract ? Spumoni::ParseJSON((dir + "/SpiralPositionalText.history.json").c_str(), &error) : NULL;
+		if (contract)
+			reader = new spiralcore::PositionalReader(*contract, history);
+		else
+			cerr << "SpiralSynthModular: no file contract in " << dir << ": " << error << endl;
+	}
+	return reader;
+}
+
+// The device line of a patch: the device's state, as the contract finds it
+// in the file's text, applied to the plugin; the stream carries on after
+// the state. False when the state cannot be told apart from what follows
+// it, which ends the load: nothing after it can be placed.
+static bool ApplyDeviceState(iostream &s, const string &text, int PluginID, SpiralPlugin *plugin)
+{
+	spiralcore::PositionalReader *reader = ContractReader();
+	if (reader)
+	{
+		spiralcore::Description state;
+		size_t at = s.tellg(), consumed = 0;
+		string error;
+		if (reader->ReadState(PluginID, text, at, state, consumed, error))
+		{
+			spiralcore::Description::Reader values(state);
+			plugin->Apply(values);
+			s.seekg(at + consumed);
+			return true;
+		}
+		char id[32];
+		sprintf(id, "%d", PluginID);
+		SpiralInfo::Alert("Plugin "+string(id)+" state is not under the file contract ("+error+") - aborting load");
+		return false;
+	}
+	SpiralInfo::Alert("No file contract - cannot load a patch");
+	return false;
+}
 static int Numbers[512];
 
 static const int MAIN_WIDTH     = 700;
@@ -126,7 +192,12 @@ SynthModular::~SynthModular()
 	AudioTransportHub::Get()->SetHost(NULL);
 	delete m_SettingsWindow;
 	delete m_TopWindow;
-	PluginManager::Get()->PackUpAndGoHome();
+	// Editors before devices, the reverse of loading.
+	spiralcore::EditorClassRegistry::PackUpAndGoHome();
+	spiralcore::DeviceClassRegistry::PackUpAndGoHome();
+	// The MidiPlugin instances are gone with the devices, so the
+	// backend they shared is too; its module can leave now.
+	spiralcore::MidiBackendRegistry::PackUpAndGoHome();
 	system("rm -f ___temp.ssmcopytmp");
 	pthread_mutex_destroy(&m_CycleLock);
 }
@@ -388,12 +459,11 @@ SpiralWindowType *SynthModular::CreateWindow()
         m_MainMenu->textsize (10);
         m_MainMenu->add ("File/New", 0, cb_New, (void*)(this), FL_MENU_DIVIDER);
         m_MainMenu->add ("File/Load", 0, cb_Load, (void*)(this), 0);
-        m_MainMenu->add ("File/Save As", 0, cb_Save, (void*)(this), 0);
+        m_MainMenu->add ("File/Save", 0, cb_Save, (void*)(this), 0);
+        m_MainMenu->add ("File/Save As", 0, cb_SaveAs, (void*)(this), FL_MENU_DIVIDER);
         m_MainMenu->add ("File/Merge", 0, cb_Merge, (void*)(this), FL_MENU_DIVIDER);
-#ifdef __APPLE__
-        if (!SSMBundleResourceDirectory("Examples").empty())
-            m_MainMenu->add ("File/Examples...", 0, cb_Examples, (void*)(this), FL_MENU_DIVIDER);
-#endif
+        m_MainMenu->add ("File/Save Points", 0, cb_SavePoints, (void*)(this), 0);
+        m_MainMenu->add ("File/Examples", 0, cb_Examples, (void*)(this), FL_MENU_DIVIDER);
         m_MainMenu->add ("File/Exit", 0, cb_Close, (void*)(this), 0);
         m_MainMenu->add ("Edit/Cut", 0, cb_Cut, (void*)(this), 0);
         m_MainMenu->add ("Edit/Copy", 0, cb_Copy, (void*)(this), 0);
@@ -568,58 +638,17 @@ SpiralWindowType *SynthModular::CreateWindow()
 
 //////////////////////////////////////////////////////////
 
-static void CollectSo(const string &dir, const string &rel, vector<string> &ret)
+// A preference list names modules the way the preferences file always
+// has: by file name, with or without the _DSP/_GUI split.
+static bool ListedModule(const string &module)
 {
-	DIR *directory = opendir(dir.c_str());
-	if (!directory) return;
-	struct dirent *entry;
-	while ((entry = readdir(directory)))
-	{
-		string name = entry->d_name;
-		if (name.size() < 3 || name.substr(name.size()-3) != ".so") continue;
-		string full = dir + "/" + name;
-		struct stat info;
-		if (!stat(full.c_str(), &info) && S_ISREG(info.st_mode))
-			ret.push_back(rel.empty() ? name : rel + "/" + name);
-	}
-	closedir(directory);
-}
-
-static void CollectPluginDirs(const string &root, const char *kind, vector<string> &ret)
-{
-	string base = root + "/" + kind;
-	DIR *directory = opendir(base.c_str());
-	if (!directory) return;
-	struct dirent *entry;
-	while ((entry = readdir(directory)))
-	{
-		string name = entry->d_name;
-		if (name == "." || name == "..") continue;
-		string dir = base + "/" + name;
-		struct stat info;
-		if (!stat(dir.c_str(), &info) && S_ISDIR(info.st_mode))
-			CollectSo(dir, string(kind) + "/" + name, ret);
-	}
-	closedir(directory);
-}
-
-vector<string> SynthModular::BuildPluginList (const string &Path)
-{
-	vector<string> ret;
-	string root = Path;
-	if (!root.empty() && root[root.size()-1] == '/') root.erase(root.size()-1);
-	DIR *directory = opendir(root.c_str());
-	if (!directory)
-	{
-		cerr << "WARNING: Could not open path " << Path << endl;
-		return ret;
-	}
-	closedir(directory);
-	CollectSo(root, "", ret);
-	CollectPluginDirs(root, "dsp", ret);
-	CollectPluginDirs(root, "gui", ret);
-	sort(ret.begin(), ret.end());
-	return ret;
+	string stem = module.substr(module.rfind('/') + 1);
+	stem = stem.substr(0, stem.find('.'));
+	string::size_type split = stem.rfind('_');
+	if (split != string::npos) stem.erase(split);
+	for (vector<string>::const_iterator i = SpiralInfo::PLUGINVEC.begin(); i != SpiralInfo::PLUGINVEC.end(); ++i)
+		if (i->compare(0, stem.size(), stem) == 0) return true;
+	return false;
 }
 
 void SynthModular::LoadPlugins (string pluginPath) {
@@ -641,66 +670,40 @@ void SynthModular::LoadPlugins (string pluginPath) {
      Splash->add (pbut);
      Splash->add (splashtext);
      Splash->show();
-     int ID=-1;
-     vector<string> PluginVector;
-     set<int> ShownDSP;
-     if (SpiralInfo::USEPLUGINLIST) PluginVector = SpiralInfo::PLUGINVEC;
-     else {
-        if (pluginPath.empty()) PluginVector = BuildPluginList (SpiralInfo::PLUGIN_PATH);
-        else {
-           string::iterator i = pluginPath.end() - 1;
-           if (*i != '/') pluginPath += '/';
-           PluginVector = BuildPluginList (pluginPath);
-        }
-     }
      string PluginRoot = pluginPath.empty() ? SpiralInfo::PLUGIN_PATH : pluginPath;
      if (!PluginRoot.empty() && PluginRoot[PluginRoot.size()-1] != '/') PluginRoot += '/';
      // Audio backend modules sit beside the device plugins under audio/;
      // compiled-in backends are already registered and a module of the
      // same name yields.
      spiralcore::AudioBackendRegistry::Get()->LoadModules(PluginRoot);
-     vector<string> DSPNames;
-     vector<string> GUINames;
-     set<string> SeenModules;
-     for (vector<string>::const_iterator i = PluginVector.begin(); i != PluginVector.end(); ++i)
-     {
-         string name = *i;
-         if (name.size() > 3 && name.substr(name.size()-3) == ".so" &&
-             name.find("_DSP.so") == string::npos && name.find("_GUI.so") == string::npos)
+     // MIDI backends under midi/; the preference names one, else the
+     // first that is not the dummy. MidiPlugin opens the device itself.
+     spiralcore::MidiBackendRegistry::Get()->LoadModules(PluginRoot);
+     spiralcore::MidiDevice::SetBackendName(SpiralInfo::MIDIBACKEND);
+     // Built-in devices first: a module of the same ID is not loaded.
+     spiralcore::DeviceClassRegistry::Get()->Register(OutputPlugin::Class());
+     spiralcore::EditorClassRegistry::Get()->Register(OutputPluginGUI::Class());
+     // Devices under dsp/, editors under gui/; an editor needs no device
+     // module to load, it pairs by ID when a device is made.
+     spiralcore::DeviceClassRegistry::Get()->LoadModules(PluginRoot);
+     spiralcore::EditorClassRegistry::Get()->LoadModules(PluginRoot);
+     const vector<spiralcore::DeviceClass*> &Devices = spiralcore::DeviceClassRegistry::Get()->Classes();
+     for (vector<spiralcore::DeviceClass*>::const_iterator i=Devices.begin(); i!=Devices.end(); i++) {
+         const spiralcore::DeviceClass *info = *i;
+         int ID = info->ID;
+         if (SpiralInfo::USEPLUGINLIST && !ListedModule(info->Module)) continue;
          {
-             // Preferences written before the split name the combined module.
-             string stem = name.substr(0, name.size()-3);
-             name = stem + "_DSP.so";
-             string gui = stem + "_GUI.so";
-             struct stat info;
-             if (!stat((PluginRoot+gui).c_str(), &info) && SeenModules.insert(gui).second)
-                 GUINames.push_back(gui);
-         }
-         if (!SeenModules.insert(name).second) continue;
-         if (name.size() >= 7 && name.substr(name.size()-7) == "_GUI.so")
-             GUINames.push_back(name);
-         else
-             DSPNames.push_back(name);
-     }
-     PluginVector = DSPNames;
-     PluginVector.insert(PluginVector.end(), GUINames.begin(), GUINames.end());
-     for (vector<string>::iterator i=PluginVector.begin(); i!=PluginVector.end(); i++) {
-         string Fullpath;
-         Fullpath = PluginRoot + *i;
-         ID = PluginManager::Get()->LoadPlugin (Fullpath.c_str());
-         const HostsideInfo *info = (ID!=PluginError) ? PluginManager::Get()->GetPlugin(ID) : NULL;
-         if (info && info->HasDSP() && ShownDSP.insert(ID).second) {
             #ifdef DEBUG_PLUGINS
-            cerr << ID << " = Plugin [" << *i << "]" << endl;
+            cerr << ID << " = Plugin [" << info->Module << "]" << endl;
             #endif
             Fl_ToolButton *NewButton = new Fl_ToolButton (0, 0, Width, Height, "");
             // we can't set user data, because the callback uses it
             // NewButton->user_data ((void*)(this));
             NewButton->labelsize (1);
-            Fl_Pixmap *tPix = new Fl_Pixmap (info->Icon());
+            Fl_Pixmap *tPix = new Fl_Pixmap (info->Icon);
             NewButton->image(tPix->copy(tPix->w(),tPix->h()));
             delete tPix;
-            string GroupName = info->GroupName();
+            string GroupName = info->Category;
             Fl_Pack* the_group=NULL;
             // find or create this group, and add an icon
             map<string,Fl_Pack*>::iterator gi = m_PluginGroupMap.find (GroupName);
@@ -824,16 +827,122 @@ DeviceGUIInfo SynthModular::BuildDeviceGUIInfo(PluginInfo &PInfo)
 
 //////////////////////////////////////////////////////////
 
+static string SavedDeviceName(DeviceWin *win)
+{
+	if (win && win->m_Device)
+	{
+		UnavailablePlugin *missing = dynamic_cast<UnavailablePlugin*>(win->m_Device);
+		if (missing)
+			return missing->SavedName();
+	}
+	if (win && win->m_DeviceGUI)
+		return win->m_DeviceGUI->GetName();
+	return "";
+}
+
+static int RemapLoadedId(bool remap, map<int,int> &ids, int id)
+{
+	if (!remap)
+		return id;
+	map<int,int>::iterator found = ids.find(id);
+	if (found == ids.end())
+		return id;
+	return found->second;
+}
+
+static void NoteUnavailablePort(map<int,DeviceWin*> &devs, int id, bool input, int port)
+{
+	map<int,DeviceWin*>::iterator found;
+	UnavailablePlugin *missing;
+	int inputs;
+	int outputs;
+
+	if (port < 0)
+		return;
+	found = devs.find(id);
+	if (found == devs.end() || !found->second->m_Device)
+		return;
+	missing = dynamic_cast<UnavailablePlugin*>(found->second->m_Device);
+	if (!missing)
+		return;
+
+	inputs = missing->InputCount();
+	outputs = missing->OutputCount();
+	if (input)
+	{
+		if (port + 1 > inputs)
+			inputs = port + 1;
+	}
+	else if (port + 1 > outputs)
+		outputs = port + 1;
+	missing->EnsurePorts(inputs, outputs);
+}
+
+static void GrowUnavailablePorts(iostream &s, bool paste, bool merge, map<int,DeviceWin*> &devs, map<int,int> &remap)
+{
+	streampos mark = s.tellg();
+	int num = 0;
+	bool eight;
+	int n;
+
+	if (mark < streampos(0))
+		return;
+
+	s >> num;
+	if (!s)
+	{
+		s.clear();
+		s.seekg(mark);
+		return;
+	}
+
+	eight = paste || num == -1;
+	if (eight && !paste)
+	{
+		int version = 0;
+		s >> version >> num;
+	}
+	if (num < 0)
+		num = 0;
+
+	for (n = 0; n < num; n++)
+	{
+		int outId, inId, outPort, inPort, dummy;
+		int outTerm = 0, inTerm = 0;
+
+		s >> outId >> dummy >> outPort;
+		if (eight)
+			s >> outTerm;
+		s >> inId >> dummy >> inPort;
+		if (eight)
+			s >> inTerm;
+		if (!s)
+			break;
+
+		outId = RemapLoadedId(paste || merge, remap, outId);
+		inId = RemapLoadedId(paste || merge, remap, inId);
+		NoteUnavailablePort(devs, outId, false, outPort);
+		NoteUnavailablePort(devs, inId, true, inPort);
+	}
+
+	s.clear();
+	s.seekg(mark);
+}
+
 DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 {
 	DeviceWin *nlw = new DeviceWin;
-	const HostsideInfo* Plugin=PluginManager::Get()->GetPlugin(n);
+	const spiralcore::DeviceClass* Plugin=spiralcore::DeviceClassRegistry::Get()->Find(n);
+	bool missing = false;
 
-	if (!Plugin) return NULL;
-
-	nlw->m_Device=Plugin->CreateDSPInstance();
-
-	if (!nlw->m_Device) return NULL;
+	nlw->m_Device = NULL;
+	if (Plugin)
+		nlw->m_Device=Plugin->CreateInstance();
+	if (!nlw->m_Device)
+	{
+		missing = true;
+		nlw->m_Device = new UnavailablePlugin(n);
+	}
 
 	nlw->m_Device->SetUpdateCallback(cb_Update);
 	nlw->m_Device->SetParent((void*)this);
@@ -850,9 +959,12 @@ DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 	   during the click handler — crash or a window that cannot expand. */
 	Fl_Group *prev = Fl_Group::current();
 	Fl_Group::current(0);
-	SpiralGUIType *temp = Plugin->CreateGUI(nlw->m_Device);
+	// A device with no editor gets a bare device window; a missing plugin
+	// gets no editor and no icon.
+	const spiralcore::EditorClass *Editor = missing ? NULL : spiralcore::EditorClassRegistry::Get()->Find(n);
+	SpiralGUIType *temp = Editor ? Editor->CreateEditor(nlw->m_Device) : NULL;
 	if (temp) temp->end();
-	Fl_Pixmap *Pix      = new Fl_Pixmap(Plugin->Icon());
+	Fl_Pixmap *Pix      = (!missing && Plugin) ? new Fl_Pixmap(Plugin->Icon) : NULL;
 	nlw->m_PluginID     = n;
 
 	if (temp) temp->position(x+10,y);
@@ -979,6 +1091,7 @@ void SynthModular::UpdateHostInfo()
 	m_Info.AUDIOCLIENT = SpiralInfo::AUDIOCLIENT;
 	m_Info.MIDIFILE   = SpiralInfo::MIDIFILE;
 	m_Info.POLY       = SpiralInfo::POLY;
+	spiralcore::MidiDevice::SetBackendName(SpiralInfo::MIDIBACKEND);
 
 	/* Reset all plugin ports/buffers befure Resuming */
 	ResetAudio();
@@ -995,7 +1108,7 @@ void SynthModular::cb_Update(void* o, bool mode)
 
 //////////////////////////////////////////////////////////
 
-iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
+iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const string &sidecars)
 {
 	//if we are merging as opposed to loading a new patch
 	//we have no need to pause audio
@@ -1012,6 +1125,16 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 
 	string dummy,dummy2;		
 	int ver;
+
+	// The file as text, for the contract to find each device's state in.
+	// Pasting reads the same text from the clipboard file.
+	string text;
+	{
+		streampos here = s.tellg();
+		text.assign(istreambuf_iterator<char>(s), istreambuf_iterator<char>());
+		s.clear();
+		s.seekg(here);
+	}
 
 	if (paste)
 	{
@@ -1158,27 +1281,43 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 					temp->m_DeviceGUI->SetName(Name);
 				}
 
+				if (UnavailablePlugin *missingDevice = dynamic_cast<UnavailablePlugin*>(temp->m_Device))
+				{
+					missingDevice->SetSavedName(Name);
+					string label = Name.empty() ? string("Plugin") : Name;
+					temp->m_DeviceGUI->SetName(label + " (unavailable)");
+					cerr << "SSM: Missing plugin " << label << " (" << PluginID
+						<< "); preserving its state and wires.\n";
+				}
+
 				temp->m_Device->SetUpdateInfoCallback(ID,cb_UpdatePluginInfo);
 				m_DeviceWinMap[ID]=temp;
-				m_DeviceWinMap[ID]->m_Device->StreamIn(s); // load the plugin
+				if (!ApplyDeviceState(s, text, PluginID, m_DeviceWinMap[ID]->m_Device)) // load the plugin
+				{
+					ThawAll();
+					return s;
+				}
 
 				// load external files
-				if (paste || merge)
+				if (!sidecars.empty())
+					m_DeviceWinMap[ID]->m_Device->LoadExternalFiles(sidecars, (paste || merge) ? oldID : -1);
+				else if (paste || merge)
 					m_DeviceWinMap[ID]->m_Device->LoadExternalFiles(m_FromFilePath+"_files/", oldID);
 				else
 					m_DeviceWinMap[ID]->m_Device->LoadExternalFiles(m_FilePath+"_files/");
 
 				if ((paste || ver>1) && m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow())
 				{
+					// updates the data in the channel buffers, so the values don't
+					// get overwritten in the next tick, and so the GUI can read the
+					// loaded state through the channel.
+					m_DeviceWinMap[ID]->m_Device->GetChannelHandler()->FlushChannels();
+
 					// set the GUI up with the loaded values
 					// looks messy, but if we do it here, the plugin and it's gui can remain
 					// totally seperated.
 					((SpiralPluginGUI*)(m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow()))->
 						UpdateValues(m_DeviceWinMap[ID]->m_Device);
-
-					// updates the data in the channel buffers, so the values don't
-					// get overwritten in the next tick. (should maybe be somewhere else)
-					m_DeviceWinMap[ID]->m_Device->GetChannelHandler()->FlushChannels();
 
 					// position the plugin window in the main window
 					//m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow()->position(px,py);
@@ -1194,19 +1333,21 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 					if (paste || merge)
 						Fl_Canvas::AppendSelection(ID, m_Canvas);
 				}
+				else if (paste || merge)
+					Fl_Canvas::AppendSelection(ID, m_Canvas);
 
 				if (!paste && !merge)
 					if (m_NextID<=ID) m_NextID=ID+1;
 			}
 			else
 			{
-				// can't really recover if the plugin ID doesn't match a plugin, as
-			    // we have no idea how much data in the stream belongs to this plugin
 				SpiralInfo::Alert("Error in stream, can't really recover data from here on.");
 				return s;
 			}
 		}
 	}
+
+	GrowUnavailablePorts(s, paste, merge, m_DeviceWinMap, m_Copied.m_DeviceIds);
 
 	if (!paste && !merge)
 	{
@@ -1225,90 +1366,105 @@ iostream &operator>>(iostream &s, SynthModular &o)
 
 //////////////////////////////////////////////////////////
 
-ostream &operator<<(ostream &s, SynthModular &o)
+spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o)
+{
+	return Describe(d, o, o.m_FilePath + "_files/");
+}
+
+spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o, const string &sidecars)
 {
 	o.FreezeAll();
 
-	s<<"SpiralSynthModular File Ver "<<FILE_VERSION<<endl;
+	d.Value("SpiralSynthModular File Ver").Separator(" ").Value(FILE_VERSION).Line();
 
 	// make external files dir
 	bool ExternalDirUsed=false;
-	string command("mkdir '"+o.m_FilePath+"_files'");
-	system(command.c_str());
+	string directoryError;
+	Spumoni::Path::MakeDirectories(sidecars, directoryError);
 
 	if (FILE_VERSION>2)
 	{
-		s<<o.m_TopWindow->x()<<" "<<o.m_TopWindow->y()<<" ";
-		s<<o.m_TopWindow->w()<<" "<<o.m_TopWindow->h()<<" ";
-		s<<0<<" "<<0<<" ";
-		s<<0<<" "<<0<<endl;
+		d.Value(o.m_TopWindow->x()).Separator(" ").Value(o.m_TopWindow->y()).Separator(" ");
+		d.Value(o.m_TopWindow->w()).Separator(" ").Value(o.m_TopWindow->h()).Separator(" ");
+		d.Value(0).Separator(" ").Value(0).Separator(" ");
+		d.Value(0).Separator(" ").Value(0).Line();
 	}
 
 	// save out the SynthModular
-	s<<"SectionList"<<endl;
-	s<<o.m_DeviceWinMap.size()<<endl;
+	d.Value("SectionList").Line();
+	d.Value(o.m_DeviceWinMap.size()).Line();
 
 	for(map<int,DeviceWin*>::iterator i=o.m_DeviceWinMap.begin();
 		i!=o.m_DeviceWinMap.end(); i++)
 	{
 		if (i->second->m_DeviceGUI && ((i->second->m_Device) || (i->second->m_PluginID==COMMENT_ID)))
 		{
-			s<<endl;
-			s<<"Device ";
-			s<<i->first<<" "; // save the id
-			s<<"Plugin ";
-			s<<i->second->m_PluginID<<endl;
-			s<<i->second->m_DeviceGUI->x()<<" ";
-			s<<i->second->m_DeviceGUI->y()<<" ";
-			s<<i->second->m_DeviceGUI->GetName().size()<<" ";
-			s<<i->second->m_DeviceGUI->GetName()<<" ";
+			d.Line();
+			d.Value("Device").Separator(" ");
+			d.Value(i->first).Separator(" "); // save the id
+			d.Value("Plugin").Separator(" ");
+			d.Value(i->second->m_PluginID).Line();
+			d.Value(i->second->m_DeviceGUI->x()).Separator(" ");
+			d.Value(i->second->m_DeviceGUI->y()).Separator(" ");
+			string savedName = SavedDeviceName(i->second);
+			d.Value(savedName.size()).Separator(" ");
+			d.Value(savedName).Separator(" ");
 
 			if (i->second->m_DeviceGUI->GetPluginWindow())
 			{
-				s<<i->second->m_DeviceGUI->GetPluginWindow()->visible()<<" ";
-				s<<i->second->m_DeviceGUI->GetPluginWindow()->x()<<" ";
-				s<<i->second->m_DeviceGUI->GetPluginWindow()->y()<<" ";
+				d.Value(i->second->m_DeviceGUI->GetPluginWindow()->visible()).Separator(" ");
+				d.Value(i->second->m_DeviceGUI->GetPluginWindow()->x()).Separator(" ");
+				d.Value(i->second->m_DeviceGUI->GetPluginWindow()->y()).Separator(" ");
 			}
 			else
 			{
-				s<<0<<" "<<0<<" "<<0;
+				d.Value(0).Separator(" ").Value(0).Separator(" ").Value(0);
 			}
 
-			s<<endl;
+			d.Line();
 
 			if (i->second->m_PluginID==COMMENT_ID)
 			{
 				// save the comment gui
-				((Fl_CommentGUI*)(i->second->m_DeviceGUI))->StreamOut(s);
+				((Fl_CommentGUI*)(i->second->m_DeviceGUI))->Describe(d);
 			}
 			else
 			{
 				// save the plugin
-				i->second->m_Device->StreamOut(s);
+				i->second->m_Device->Describe(d);
 			}
-			s<<endl;
+			d.Line();
 
 			// save external files
-			if (i->second->m_Device && i->second->m_Device->SaveExternalFiles(o.m_FilePath+"_files/"))
+			if (i->second->m_Device && i->second->m_Device->SaveExternalFiles(sidecars))
 			{
 				ExternalDirUsed=true;
 			}
 		}
 	}
 
-	s<<endl<<*o.m_Canvas<<endl;
+	d.Line();
+	::Describe(d, *o.m_Canvas);
+	d.Line();
 
 	// remove it if it wasn't used
 	if (!ExternalDirUsed)
 	{
 		// i guess rmdir won't work if there is something in the dir
 		// anyway, but best to be on the safe side. (could do rm -rf) :)
-		string command("rmdir "+o.m_FilePath+"_files");
-		system(command.c_str());
+		rmdir(sidecars.c_str());
 	}
 
 	o.ThawAll();
 
+	return d;
+}
+
+ostream &operator<<(ostream &s, SynthModular &o)
+{
+	spiralcore::Description d;
+	Describe(d, o);
+	d.Write(s);
 	return s;
 }
 
@@ -1326,6 +1482,8 @@ inline void SynthModular::cb_New_i (Fl_Widget *o, void *v) {
           return;
        m_TopWindow->label (TITLEBAR.c_str());
        ClearUp();
+       m_FilePath.clear();
+       m_BranchID.clear();
 }
 
 void SynthModular::cb_New (Fl_Widget *o, void *v) {
@@ -1337,37 +1495,34 @@ void SynthModular::cb_New (Fl_Widget *o, void *v) {
 void SynthModular::ChooseAndLoadPatch(const char *directory) {
        if (m_DeviceWinMap.size()>0 && !Pawfal_YesNo ("Load - Lose changes to current patch?"))
           return;
-       char *fn=fl_file_chooser (directory ? "Load an example patch" : "Load a patch", "*.ssm", directory);
-       if (fn && *fn!='\0') {
-          ifstream in (fn);
-          if (in) {
-             fstream inf;
-             inf.open (fn, ios::in);
-             m_FilePath = fn;
-             ClearUp();
-             inf >> *this;
-             inf.close();
-             TITLEBAR = LABEL + " " + fn;
-             m_TopWindow->label (TITLEBAR.c_str());
-          }
-       }
+       char *fn=fl_file_chooser (directory ? "Load an example patch" : "Load a patch",
+          "Spiral patch (*.ssm)\t*.ssm\nPackage (*.ssmp)\t*.ssmp", directory);
+       if (fn && *fn!='\0')
+          LoadPatch(fn);
 }
 
 inline void SynthModular::cb_Load_i (Fl_Widget *o, void *v) {
      ChooseAndLoadPatch(NULL);
 }
 
-#ifdef __APPLE__
+static std::string ExamplesDirectory()
+{
+	struct stat info;
+	if (SSM_EXAMPLES_DIR[0] && stat(SSM_EXAMPLES_DIR, &info) == 0 && S_ISDIR(info.st_mode))
+		return SSM_EXAMPLES_DIR;
+	return SSMBundleResourceDirectory("Examples");
+}
+
 void SynthModular::cb_Examples(Fl_Widget *o, void *v) {
-     std::string directory = SSMBundleResourceDirectory("Examples");
+     std::string directory = ExamplesDirectory();
      if (directory.empty()) {
-          fl_message("The bundled Examples folder is unavailable.");
+          fl_message("Examples were not found under the install prefix or the application bundle.");
           return;
      }
-     directory += "/";
+     if (directory[directory.size() - 1] != '/')
+          directory += "/";
      ((SynthModular*)v)->ChooseAndLoadPatch(directory.c_str());
 }
-#endif
 
 void SynthModular::cb_Load(Fl_Widget *o, void *v) {
      ((SynthModular*)(o->user_data()))->cb_Load_i (o, v);
@@ -1376,44 +1531,82 @@ void SynthModular::cb_Load(Fl_Widget *o, void *v) {
 // Save
 
 inline void SynthModular::cb_Save_i (Fl_Widget *o, void *v) {
-       char *fn=fl_file_chooser("Save a patch", "*.ssm", NULL);
-       if (fn && *fn!='\0') {
-          ifstream ifl (fn);
-          if (ifl) {
-             if (!Pawfal_YesNo ("File [%s] exists, overwrite?", fn))
-                return;
-          }
-          ofstream of (fn);
-          if (of) {
-             m_FilePath = fn;
-             of << *this;
-             TITLEBAR = LABEL + " " + fn;
-             m_TopWindow->label (TITLEBAR.c_str());
-          }
-          else {
-              fl_message ( "%s", string ("Error saving " + string(fn)).c_str());
-          }
+       if (m_FilePath.empty()) {
+          cb_SaveAs_i(o, v);
+          return;
        }
+       if (Spiral::File::Project::PathLooksLikePackage(m_FilePath))
+          SaveBranch();
+       else
+          SavePatch(m_FilePath.c_str());
 }
 
 void SynthModular::cb_Save (Fl_Widget *o, void *v) {
      ((SynthModular*)(o->user_data()))->cb_Save_i (o, v);
 }
 
+inline void SynthModular::cb_SaveAs_i (Fl_Widget *o, void *v) {
+       char *fn=fl_file_chooser("Save a patch",
+          "Spiral patch (*.ssm)\t*.ssm\nPackage (*.ssmp)\t*.ssmp", NULL);
+       if (fn && *fn!='\0') {
+          ifstream ifl (fn);
+          if (ifl) {
+             if (!Pawfal_YesNo ("File [%s] exists, overwrite?", fn))
+                return;
+          }
+          // Same package: overwrite the open branch and keep the others.
+          if (Spiral::File::Project::PathLooksLikePackage(fn)
+              && Spumoni::Project::SameFile(m_FilePath, fn)) {
+             SaveBranch(false);
+             return;
+          }
+          SavePatch(fn);
+       }
+}
+
+void SynthModular::cb_SaveAs (Fl_Widget *o, void *v) {
+     ((SynthModular*)(o->user_data()))->cb_SaveAs_i (o, v);
+}
+
 // Merge
 
 inline void SynthModular::cb_Merge_i (Fl_Widget *o, void *v) {
-       char *fn = fl_file_chooser ("Merge a patch", "*.ssm", NULL);
+       char *fn = fl_file_chooser ("Merge a patch",
+          "Spiral patch (*.ssm)\t*.ssm\nPackage (*.ssmp)\t*.ssmp", NULL);
        if (fn && *fn!='\0') {
-          ifstream in (fn);
-          if (in) {
-             fstream inf;
-             inf.open (fn, ios::in);
-             m_MergeFilePath = fn;
-             StreamPatchIn (inf, false, true);
-             m_Canvas->StreamSelectionWiresIn (inf, m_Copied.m_DeviceIds, true, false);
-             inf.close();
+          iostream *stream = NULL;
+          ifstream in;
+          fstream inf;
+          std::stringstream packaged;
+          std::auto_ptr<Spiral::File::Project> project;
+          std::string sidecars;
+          if (Spiral::File::Project::PathLooksLikePackage(fn)) {
+             project.reset(new Spiral::File::Project(fn));
+             std::string error;
+             if (!project->OpenPackage("", error)) {
+                fl_message("%s", error.c_str());
+                return;
+             }
+             if (project->Source().Empty()) {
+                fl_message("Package has no patch.spiral.legacy.ssm");
+                return;
+             }
+             packaged.str(project->Source().Bytes());
+             stream = &packaged;
+             sidecars = project->SidecarDirectory();
           }
+          else {
+             in.open(fn);
+             if (!in)
+                return;
+             inf.open(fn, ios::in);
+             stream = &inf;
+          }
+          m_MergeFilePath = fn;
+          StreamPatchIn(*stream, false, true, sidecars);
+          m_Canvas->StreamSelectionWiresIn(*stream, m_Copied.m_DeviceIds, true, false);
+          if (stream == &inf)
+             inf.close();
        }
 }
 
@@ -1481,8 +1674,9 @@ inline void SynthModular::cb_Copy_i (Fl_Widget *o, void *v) {
            m_Copied.devices << "Plugin " <<j->second->m_PluginID << endl;
            m_Copied.devices << j->second->m_DeviceGUI->x() << " ";
            m_Copied.devices << j->second->m_DeviceGUI->y() << " ";
-           m_Copied.devices << j->second->m_DeviceGUI->GetName().size() << " ";
-           m_Copied.devices << j->second->m_DeviceGUI->GetName() << " ";
+           string savedName = SavedDeviceName(j->second);
+           m_Copied.devices << savedName.size() << " ";
+           m_Copied.devices << savedName << " ";
            if (j->second->m_DeviceGUI->GetPluginWindow()) {
               m_Copied.devices << j->second->m_DeviceGUI->GetPluginWindow()->visible() << " ";
               m_Copied.devices << j->second->m_DeviceGUI->GetPluginWindow()->x() << " ";
@@ -1727,24 +1921,246 @@ void SynthModular::cb_UpdatePluginInfo(int ID, void *PInfo)
 
 //////////////////////////////////////////////////////////
 
-void SynthModular::LoadPatch(const char *fn)
+void SynthModular::LoadPatch(const char *fn, const char *branchId)
 {
-	ifstream in(fn);
+	iostream *stream = NULL;
+	ifstream file;
+	fstream inf;
+	std::stringstream packaged;
+	std::string branch;
+	std::auto_ptr<Spiral::File::Project> project;
+	std::string sidecars;
 
-	if (in)
+	if (Spiral::File::Project::PathLooksLikePackage(fn))
 	{
-		fstream	inf;
+		project.reset(new Spiral::File::Project(fn));
+		std::string error;
+		bool opened = (branchId && *branchId)
+			? project->SwitchBranch(branchId, error)
+			: project->OpenPackage("", error);
+		if (!opened)
+		{
+			fl_message("%s", error.empty() ? "Error opening package" : error.c_str());
+			return;
+		}
+		if (project->Source().Empty())
+		{
+			fl_message("Package has no patch.spiral.legacy.ssm");
+			return;
+		}
+		packaged.str(project->Source().Bytes());
+		stream = &packaged;
+		branch = project->GetIdentity().ActiveBranchID;
+		sidecars = project->SidecarDirectory();
+	}
+	else
+	{
+		file.open(fn);
+		if (!file)
+			return;
 		inf.open(fn, std::ios::in);
+		stream = &inf;
+	}
 
-		m_FilePath=fn;
-
-		ClearUp();
-		inf>>*this;
-
+	m_FilePath=fn;
+	m_BranchID=branch;
+	ClearUp();
+	StreamPatchIn(*stream, false, false, sidecars);
+	if (stream == &inf)
 		inf.close();
 
-		TITLEBAR=LABEL+" "+fn;
-		m_TopWindow->label(TITLEBAR.c_str());
-	}
+	TITLEBAR=LABEL+" "+fn;
+	m_TopWindow->label(TITLEBAR.c_str());
 }
 
+void SynthModular::SavePatch(const char *fn)
+{
+	if (Spiral::File::Project::PathLooksLikePackage(fn))
+	{
+		// A fresh project, then SaveAs. Constructing on the destination
+		// would treat a not-yet-opened package as the current file.
+		Spiral::File::Project project("");
+		std::string error;
+		if (!project.BeginSidecars(error))
+		{
+			fl_message("%s", error.c_str());
+			return;
+		}
+
+		std::ostringstream bytes;
+		spiralcore::Description description;
+		Describe(description, *this, project.SidecarDirectory()).Write(bytes);
+		project.Source().Set(bytes.str());
+		if (!project.SaveAs(fn, error))
+		{
+			fl_message("%s", error.empty() ? "Error saving package" : error.c_str());
+			return;
+		}
+	}
+	else
+	{
+		ofstream of(fn);
+		if (!of)
+		{
+			fl_message("%s", string("Error saving " + string(fn)).c_str());
+			return;
+		}
+		spiralcore::Description description;
+		Describe(description, *this, string(fn) + "_files/").Write(of);
+	}
+
+	m_FilePath = fn;
+	m_BranchID.clear();
+	TITLEBAR = LABEL + " " + fn;
+	m_TopWindow->label(TITLEBAR.c_str());
+}
+
+
+static std::string MenuLabel(const std::string &name)
+{
+	std::string label;
+	for (size_t c = 0; c < name.size(); ++c)
+	{
+		if (name[c] == '/' || name[c] == '\\' || name[c] == '&')
+			label += '\\';
+		label += name[c];
+	}
+	return label;
+}
+
+void SynthModular::SaveBranch(bool ask)
+{
+	if (!Spiral::File::Project::PathLooksLikePackage(m_FilePath))
+	{
+		fl_message("Save As an .ssmp package before saving a branch.");
+		return;
+	}
+
+	Spiral::File::Project project(m_FilePath);
+	std::string error;
+	bool opened = m_BranchID.empty()
+		? project.OpenPackage("", error)
+		: project.SwitchBranch(m_BranchID, error);
+	if (!opened)
+	{
+		fl_message("%s", error.empty() ? "Error opening package" : error.c_str());
+		return;
+	}
+
+	const Spumoni::Identity &identity = project.GetIdentity();
+	int choice = 2;
+	if (ask)
+	{
+		choice = fl_choice("Save Patch", "Cancel", "Create New Save Point", "Replace Current Save Point");
+		if (choice == 0)
+			return;
+	}
+
+	bool replace = choice != 1;
+	std::string name;
+	if (!replace)
+	{
+		std::string suggested = Spumoni::Project::SuggestedSavePointName(identity);
+		const char *entered = fl_input("Save Point Name", suggested.c_str());
+		if (!entered)
+			return;
+		name = entered;
+		if (name.find_first_not_of(" \t\r\n") == std::string::npos)
+		{
+			fl_message("A new save point needs a name.");
+			return;
+		}
+	}
+	else if (!identity.ActiveBranchName.empty())
+		name = identity.ActiveBranchName;
+	else
+		name = project.BranchNameFromPath(m_FilePath);
+
+	if (!project.BeginSidecars(error))
+	{
+		fl_message("%s", error.c_str());
+		return;
+	}
+
+	std::ostringstream bytes;
+	spiralcore::Description description;
+	Describe(description, *this, project.SidecarDirectory()).Write(bytes);
+	project.Source().Set(bytes.str());
+	if (!project.CreateSavePoint(name, replace, error))
+	{
+		fl_message("%s", error.empty() ? "Error saving package" : error.c_str());
+		return;
+	}
+
+	m_BranchID = project.GetIdentity().ActiveBranchID;
+	TITLEBAR = LABEL + " " + m_FilePath;
+	m_TopWindow->label(TITLEBAR.c_str());
+}
+
+inline void SynthModular::cb_SavePoints_i (Fl_Widget *o, void *v)
+{
+	if (!Spiral::File::Project::PathLooksLikePackage(m_FilePath))
+	{
+		fl_message("Open an SSMP file to browse save points.");
+		return;
+	}
+
+	Spiral::File::Project project(m_FilePath);
+	std::string error;
+	if (!project.OpenPackage("", error))
+	{
+		fl_message("%s", error.empty() ? "Error opening package" : error.c_str());
+		return;
+	}
+
+	const Spumoni::Identity identity = project.GetIdentity();
+	if (identity.Branches.empty())
+	{
+		fl_message("Open an SSMP file to browse save points.");
+		return;
+	}
+
+	std::string current = m_BranchID.empty() ? identity.ActiveBranchID : m_BranchID;
+	Fl_Window dialog(550, 150, "Save Points");
+	Fl_Box warning(10, 5, 530, 30, "Opening replaces unsaved changes in the current patch.");
+	Fl_Choice points(20, 45, 510, 30);
+	for (size_t i = 0; i < identity.Branches.size(); ++i)
+	{
+		std::string name = identity.Branches[i].Name;
+		if (identity.Branches[i].ID == current)
+			name += " (current)";
+		points.add(MenuLabel(name).c_str());
+		if (identity.Branches[i].ID == current)
+			points.value((int)i);
+	}
+
+	Fl_Return_Button open(220, 100, 190, 30, "Open Save Point");
+	Fl_Button cancel(420, 100, 110, 30, "Cancel");
+	dialog.end();
+	dialog.set_modal();
+	dialog.show();
+	bool accepted = false;
+	while (dialog.shown())
+	{
+		Fl::wait();
+		Fl_Widget *action;
+		while ((action = Fl::readqueue()))
+		{
+			if (action == &open || action == &cancel || action == &dialog)
+			{
+				accepted = action == &open;
+				dialog.hide();
+			}
+		}
+	}
+
+	if (!accepted || points.value() < 0)
+		return;
+
+	std::string id = identity.Branches[points.value()].ID;
+	LoadPatch(m_FilePath.c_str(), id.c_str());
+}
+
+void SynthModular::cb_SavePoints (Fl_Widget *o, void *v) {
+     ((SynthModular*)(o->user_data()))->cb_SavePoints_i (o, v);
+}

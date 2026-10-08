@@ -1,0 +1,81 @@
+/*  SpiralSound
+ *  Copyleft (C) 2001 David Griffiths <dave@pawfal.org>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+*/
+
+#include "SpiralPlugin.h"
+
+#ifndef OscillatorPLUGIN
+#define OscillatorPLUGIN
+
+class OscillatorPlugin : public SpiralPlugin
+{
+public:
+ 	OscillatorPlugin();
+	virtual ~OscillatorPlugin();
+
+	virtual PluginInfo &Initialise(const HostInfo *Host);
+	virtual void 		Execute();
+	virtual void		Reset();
+
+	virtual void	    Describe(spiralcore::Description &d);
+	virtual void	    Apply(spiralcore::Description::Reader &r);
+
+	typedef char Type;
+	enum {NONE,SQUARE,SAW,NOISE};
+
+	void ModulateFreq(Sample *data) {m_FreqModBuf=data;}
+	void ModulatePulseWidth(Sample *data) {m_PulseWidthModBuf=data;}
+	void ModulateSHLen(Sample *data) {m_SHModBuf=data;}
+
+	void NoteTrigger(int V,int s,int v);
+	int   GetOctave() {return m_Octave;}
+	float GetFineFreq() {return m_FineFreq;}
+	float GetPulseWidth() {return m_PulseWidth;}
+	Type  GetType() {return m_Type;}
+	float GetSHLen() {return m_SHLen;}
+	float GetModAmount() {return m_ModAmount;}
+
+private:
+
+	// Voice specific parameter
+	int   m_Note;
+	int   m_CyclePos;
+	float m_LastFreq;
+
+        // Common voice parameters
+	Type   m_Type;
+	int    m_Octave;
+	float  m_FineFreq;
+	float  m_PulseWidth;
+	float  m_SHLen;
+	float  m_ModAmount;
+	short  m_Noisev;
+
+	Sample *m_FreqModBuf;
+	Sample *m_PulseWidthModBuf;
+	Sample *m_SHModBuf;
+
+	static const int FIXED;
+
+	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, OscillatorPlugin &o);
+	friend spiralcore::Description &Describe(spiralcore::Description &d, OscillatorPlugin &o);
+};
+
+spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, OscillatorPlugin &o);
+spiralcore::Description &Describe(spiralcore::Description &d, OscillatorPlugin &o);
+
+#endif

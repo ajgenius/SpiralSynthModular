@@ -1,0 +1,147 @@
+/*  SpiralSound
+ *  Copyleft (C) 2001 David Griffiths <dave@pawfal.org>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+*/ 
+#include "TrigPlugin.h"
+#include "SpiralIcon.xpm"
+#include "NoteTable.h"
+
+using namespace std;
+
+static const float PI=3.141592654;
+static const float RAD=(PI/180)*360;
+
+#include <config.h>
+
+extern "C" {
+const char *SpiralPlugin_GetHostVersion()
+{
+	return PACKAGE_VERSION;
+}
+
+const char *SpiralPlugin_GetHostABI()
+{
+	return SSM_HOST_ABI;
+}
+
+SpiralPlugin* SpiralPlugin_CreateInstance()
+{
+	return new TrigPlugin;
+}
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DEVICE;
+}
+
+
+const char** SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 53;
+}
+
+string SpiralPlugin_GetName()
+{
+	return "Trig";
+}
+
+string SpiralPlugin_GetGroupName()
+{
+	return "Maths/Logic";
+}
+}
+
+///////////////////////////////////////////////////////
+
+TrigPlugin::TrigPlugin() :
+m_Operator(SIN)
+{
+	m_Version=1;
+
+	m_PluginInfo.Name="Trig";
+	m_PluginInfo.Width=80;
+	m_PluginInfo.Height=80;
+	m_PluginInfo.NumInputs=1;
+	m_PluginInfo.NumOutputs=1;
+	m_PluginInfo.PortTips.push_back("Input");	
+	m_PluginInfo.PortTips.push_back("Output");
+		
+	m_AudioCH->Register("Operator",(int*)&m_Operator);
+}
+
+TrigPlugin::~TrigPlugin()
+{
+}
+
+PluginInfo &TrigPlugin::Initialise(const HostInfo *Host)
+{	
+	return SpiralPlugin::Initialise(Host);
+}
+
+
+
+void TrigPlugin::Execute()
+{	
+	float Freq=0, OldFreq=0;
+	
+	switch (m_Operator) 
+	{
+		case SIN : 
+			for (int n=0; n<m_HostInfo->BUFSIZE; n++)
+			{
+				SetOutput(0,n,sin(GetInput(0,n)*RAD));
+			} 
+			break;
+		case COS : 
+			for (int n=0; n<m_HostInfo->BUFSIZE; n++)
+			{
+				SetOutput(0,n,cos(GetInput(0,n)*RAD));
+			} 
+			break;
+		case TAN :
+			for (int n=0; n<m_HostInfo->BUFSIZE; n++)
+			{
+				SetOutput(0,n,tan(GetInput(0,n)*RAD));
+			}
+			break;
+                default: break;
+
+	}
+}
+
+void TrigPlugin::ExecuteCommands()
+{
+}
+
+void TrigPlugin::Describe(spiralcore::Description &d)
+{
+	d.Value(m_Version).Line();
+	d.Value((int)m_Operator).Separator(" ");
+}
+
+void TrigPlugin::Apply(spiralcore::Description::Reader &r)
+{
+	int version;
+	r.Value(version);
+	int t;
+	r.Value(t);
+	m_Operator=(OperatorType)t;
+}
