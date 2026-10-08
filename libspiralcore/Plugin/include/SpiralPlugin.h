@@ -110,7 +110,9 @@ public:
 	// the description would have produced.
 	virtual void        Describe(spiralcore::Description &d)=0;
 	void                StreamOut(std::ostream &s);
-	virtual void	    StreamIn(std::istream &s)=0;
+	// The state read back from a description, in the order Describe gave
+	// it; the host finds the description.
+	virtual void        Apply(spiralcore::Description::Reader &r)=0;
 
 	// stuff here gets saved in filename_files directory
 	// you must return true if this feature is used.

@@ -30,7 +30,7 @@ class ScopePlugin : public SpiralPlugin {
       virtual void ExecuteCommands();
       virtual void Reset();
       virtual void Describe(spiralcore::Description &d) {}
-      virtual void StreamIn(std::istream &s) {}
+      virtual void Apply(spiralcore::Description::Reader &r) {}
 
 	enum GUICommands{NONE,UPDATEDATASIZE};
    private:

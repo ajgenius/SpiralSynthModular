@@ -33,7 +33,7 @@ public:
 	
 	virtual void 		ExecuteCommands();
 	virtual void	    Describe(spiralcore::Description &d);
-	virtual void	    StreamIn(std::istream &s);
+	virtual void	    Apply(spiralcore::Description::Reader &r);
 
 	int        GetCount() { return m_Count; }
 	

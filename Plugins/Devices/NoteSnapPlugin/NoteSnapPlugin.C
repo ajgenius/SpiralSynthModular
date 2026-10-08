@@ -157,10 +157,10 @@ void NoteSnapPlugin::Describe(spiralcore::Description &d)
 
 }
 
-void NoteSnapPlugin::StreamIn(istream &s) 
+void NoteSnapPlugin::Apply(spiralcore::Description::Reader &r) 
 {
-// Pre-version 1 - check for blank line
-	if (s.peek() == 10) {
+// Pre-version 1 - no state
+	if (!r.More()) {
 		for (int n=0; n<12; n++)
 		{
 		// Use default (no notes filtered)
@@ -168,10 +168,10 @@ void NoteSnapPlugin::StreamIn(istream &s)
 		}
 	} else {
 		int version;
-		s>>version;
+		r.Value(version);
 		for (int n=0; n<12; n++)
 		{
-			s>>m_Filter[n];
+			r.Value(m_Filter[n]);
 		}
 	}
 }

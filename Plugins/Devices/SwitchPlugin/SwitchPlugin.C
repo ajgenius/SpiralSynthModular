@@ -127,9 +127,9 @@ void SwitchPlugin::Describe(spiralcore::Description &d)
 	d.Value(m_Mix).Separator(" ");
 }
 
-void SwitchPlugin::StreamIn(istream &s) 
+void SwitchPlugin::Apply(spiralcore::Description::Reader &r) 
 {
 	int version;
-	s>>version;
-	s>>m_Mix;
+	r.Value(version);
+	r.Value(m_Mix);
 }

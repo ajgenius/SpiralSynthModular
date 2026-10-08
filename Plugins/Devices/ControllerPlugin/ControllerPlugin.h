@@ -33,7 +33,7 @@ public:
 	virtual void Execute();
 	virtual void ExecuteCommands();
 	virtual void Describe(spiralcore::Description &d);
-	virtual void StreamIn(std::istream &s);
+	virtual void Apply(spiralcore::Description::Reader &r);
 
 	std::string GetName(int n) { return m_Names[n]; }
 	int    GetNum()       { return m_Num; }

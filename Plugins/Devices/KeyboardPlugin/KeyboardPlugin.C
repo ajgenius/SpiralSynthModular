@@ -122,9 +122,9 @@ void KeyboardPlugin::Describe(spiralcore::Description &d)
 	d.Value(m_Version).Line();
 }
 
-void KeyboardPlugin::StreamIn(istream &s) 
+void KeyboardPlugin::Apply(spiralcore::Description::Reader &r) 
 {
 	int version;
-	s>>version;
+	r.Value(version);
 }
 

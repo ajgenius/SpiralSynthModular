@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "Description.h"
 #include <cstdio>
+#include <cstdlib>
 #include <ostream>
 
 namespace spiralcore
@@ -35,6 +36,78 @@ namespace spiralcore
 			s << m_Between[i] << m_Values[i];
 		}
 		s << m_Between.back();
+	}
+
+	Description::Reader::Reader(const Description &d)
+	: m_Description(d), m_At(0), m_End(d.m_Values.size()), m_Failed(false)
+	{
+	}
+
+	Description::Reader::Reader(const Description &d, size_t begin, size_t end)
+	: m_Description(d), m_At(begin), m_End(end), m_Failed(false)
+	{
+		if (m_End > d.m_Values.size()) m_End = d.m_Values.size();
+		if (m_At > m_End) m_At = m_End;
+	}
+
+	const std::string &Description::Reader::Next()
+	{
+		static const std::string none;
+		if (!More())
+		{
+			m_Failed = true;
+			return none;
+		}
+		return m_Description.m_Values[m_At++];
+	}
+
+	Description::Reader &Description::Reader::Value(std::string &x)
+	{
+		if (More())
+			x = Next();
+		else
+			m_Failed = true;
+		return *this;
+	}
+
+	// The whole value must be the number; a range error (a denormal, an
+	// overflow) still is one, as the C library spells it.
+	Description::Reader &Description::Reader::Value(double &x)
+	{
+		if (More())
+		{
+			const std::string &text = Next();
+			char *end = NULL;
+			double v = strtod(text.c_str(), &end);
+			if (!text.empty() && end == text.c_str() + text.size())
+				x = v;
+			else
+				m_Failed = true;
+		}
+		else
+		{
+			m_Failed = true;
+		}
+		return *this;
+	}
+
+	void Description::Reader::Rest(Description &out)
+	{
+		out = Description();
+		out.m_Between[0] = m_Description.m_Between[m_At];
+		for (; m_At < m_End; ++m_At)
+		{
+			out.m_Values.push_back(m_Description.m_Values[m_At]);
+			out.m_Between.push_back(m_Description.m_Between[m_At + 1]);
+		}
+	}
+
+	Description::Reader &Description::Reader::Value(float &x)
+	{
+		double v = x;
+		Value(v);
+		x = static_cast<float>(v);
+		return *this;
 	}
 
 	// JSON string escaping. Values are what an ostream wrote, so anything

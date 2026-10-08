@@ -32,7 +32,7 @@ public:
 	virtual void Reset();
 
 	virtual void Describe(spiralcore::Description &d);
-	virtual void StreamIn(std::istream &s);
+	virtual void Apply(spiralcore::Description::Reader &r);
 	
 	float GetCutoff()    { return Cutoff; }
 	float GetResonance() { return Resonance;  } 
@@ -50,10 +50,10 @@ private:
 	
 	float in1,in2,in3,in4,out1,out2,out3,out4;
 	
-	friend std::istream &operator>>(std::istream &s, MoogFilterPlugin &o);
+	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, MoogFilterPlugin &o);
 	friend spiralcore::Description &Describe(spiralcore::Description &d, MoogFilterPlugin &o);
 };
-std::istream &operator>>(std::istream &s, MoogFilterPlugin &o);
+spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, MoogFilterPlugin &o);
 spiralcore::Description &Describe(spiralcore::Description &d, MoogFilterPlugin &o);
 
 #endif

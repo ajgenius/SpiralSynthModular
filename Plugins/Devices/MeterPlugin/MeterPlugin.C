@@ -132,8 +132,8 @@ void MeterPlugin::Describe(spiralcore::Description &d) {
   d.Value(m_Version).Separator(" ").Value(m_VUMode).Separator(" ");
 }
 
-void MeterPlugin::StreamIn (istream &s) {
+void MeterPlugin::Apply(spiralcore::Description::Reader &r) {
   int Version;
-  s >> Version;
-  s >> m_VUMode;
+  r.Value(Version);
+  r.Value(m_VUMode);
 }

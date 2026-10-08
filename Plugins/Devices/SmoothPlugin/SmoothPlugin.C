@@ -121,10 +121,10 @@ void SmoothPlugin::Describe(spiralcore::Description &d)
 	d.Value(m_Up).Separator(" ").Value(m_Down);
 }
 
-void SmoothPlugin::StreamIn(istream &s)
+void SmoothPlugin::Apply(spiralcore::Description::Reader &r)
 {
-	s>>m_Version;
-	s>>m_Up>>m_Down;
+	r.Value(m_Version);
+	r.Value(m_Up).Value(m_Down);
 }
 
  

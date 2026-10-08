@@ -419,7 +419,7 @@ void LADSPAPlugin::Describe(spiralcore::Description &d)
 	}
 }
 
-void LADSPAPlugin::StreamIn(istream &s)
+void LADSPAPlugin::Apply(spiralcore::Description::Reader &r)
 {
 	int Version = 0;
 	float Gain = 0.0f;
@@ -431,177 +431,177 @@ void LADSPAPlugin::StreamIn(istream &s)
 
 	ClearPlugin();
 
-	s >> Version;
+	r.Value(Version);
 
 	switch (Version)
 	{
 		case 9:
 		{
-			s >> m_Page;
-			s >> m_UpdateInputs;
-			s >> UniqueID;
-			s >> PortCount;
-			s >> m_UnconnectedInputs;
+			r.Value(m_Page);
+			r.Value(m_UpdateInputs);
+			r.Value(UniqueID);
+			r.Value(PortCount);
+			r.Value(m_UnconnectedInputs);
 
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Min;
+				r.Value(Min);
 				m_InputPortMin.push_back(Min);
 			}
 
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Max;
+				r.Value(Max);
 				m_InputPortMax.push_back(Max);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Clamp;
+				r.Value(Clamp);
 				m_InputPortClamp.push_back(Clamp);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Default;
+				r.Value(Default);
 				m_InputPortDefault.push_back(Default);
 			}
 		}
 		break;
 		case 8:
 		{
-			s >> m_Page;
-			s >> m_UpdateInputs;
-			s >> UniqueID;
-			s >> PortCount;
+			r.Value(m_Page);
+			r.Value(m_UpdateInputs);
+			r.Value(UniqueID);
+			r.Value(PortCount);
 
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Min;
+				r.Value(Min);
 				m_InputPortMin.push_back(Min);
 			}
 
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Max;
+				r.Value(Max);
 				m_InputPortMax.push_back(Max);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Clamp;
+				r.Value(Clamp);
 				m_InputPortClamp.push_back(Clamp);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Default;
+				r.Value(Default);
 				m_InputPortDefault.push_back(Default);
 			}
 		}
 		break;
 		case 7:
 		{
-			s >> m_Page;
-			s >> UniqueID;
-			s >> PortCount;
+			r.Value(m_Page);
+			r.Value(UniqueID);
+			r.Value(PortCount);
 
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Min;
+				r.Value(Min);
 				m_InputPortMin.push_back(Min);
 			}
 
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Max;
+				r.Value(Max);
 				m_InputPortMax.push_back(Max);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Clamp;
+				r.Value(Clamp);
 				m_InputPortClamp.push_back(Clamp);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Default;
+				r.Value(Default);
 				m_InputPortDefault.push_back(Default);
 			}
 		}
 		break;
 		case 6:
 		{
-			s >> UniqueID;
-			s >> PortCount;
+			r.Value(UniqueID);
+			r.Value(PortCount);
 
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Min;
+				r.Value(Min);
 				m_InputPortMin.push_back(Min);
 			}
 
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Max;
+				r.Value(Max);
 				m_InputPortMax.push_back(Max);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Clamp;
+				r.Value(Clamp);
 				m_InputPortClamp.push_back(Clamp);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Default;
+				r.Value(Default);
 				m_InputPortDefault.push_back(Default);
 			}
 		}
 		break;
 		case 5:
 		{
-			s >> Gain;
-			s >> UniqueID;
-			s >> PortCount;
+			r.Value(Gain);
+			r.Value(UniqueID);
+			r.Value(PortCount);
 
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Min;
+				r.Value(Min);
 				m_InputPortMin.push_back(Min);
 			}
 
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Max;
+				r.Value(Max);
 				m_InputPortMax.push_back(Max);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Clamp;
+				r.Value(Clamp);
 				m_InputPortClamp.push_back(Clamp);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Default;
+				r.Value(Default);
 				m_InputPortDefault.push_back(Default);
 			}
 		}
 		break;
 		case 4:
 		{
-			s >> Gain;
-			s >> UniqueID;
-			s >> PortCount;
+			r.Value(Gain);
+			r.Value(UniqueID);
+			r.Value(PortCount);
 
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Min;
+				r.Value(Min);
 				m_InputPortMin.push_back(Min);
 			}
 
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Max;
+				r.Value(Max);
 				m_InputPortMax.push_back(Max);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Clamp;
+				r.Value(Clamp);
 				m_InputPortClamp.push_back(Clamp);
 			}
 			for (int n=0; n<PortCount; n++)
@@ -615,25 +615,25 @@ void LADSPAPlugin::StreamIn(istream &s)
 		{
 			string Filename,Label;
 
-			s >> Gain;
-			s >> Filename;
-			s >> Label;
-			s >> PortCount;
+			r.Value(Gain);
+			r.Value(Filename);
+			r.Value(Label);
+			r.Value(PortCount);
 
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Min;
+				r.Value(Min);
 				m_InputPortMin.push_back(Min);
 			}
 
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Max;
+				r.Value(Max);
 				m_InputPortMax.push_back(Max);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Clamp;
+				r.Value(Clamp);
 				m_InputPortClamp.push_back(Clamp);
 			}
 
@@ -653,20 +653,20 @@ void LADSPAPlugin::StreamIn(istream &s)
 		{
 			string Filename, Label;
 
-			s >> Gain;
-			s >> Filename;
-			s >> Label;
-			s >> PortCount;
+			r.Value(Gain);
+			r.Value(Filename);
+			r.Value(Label);
+			r.Value(PortCount);
 
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Min;
+				r.Value(Min);
 				m_InputPortMin.push_back(Min);
 			}
 
 			for (int n=0; n<PortCount; n++)
 			{
-				s >> Max;
+				r.Value(Max);
 				m_InputPortMax.push_back(Max);
 			}
 
@@ -691,9 +691,9 @@ void LADSPAPlugin::StreamIn(istream &s)
 		{
 			string Filename, Label;
 
-			s >> Gain;
-			s >> Filename;
-			s >> Label;
+			r.Value(Gain);
+			r.Value(Filename);
+			r.Value(Label);
 
 			if (Filename!="None")
 			{

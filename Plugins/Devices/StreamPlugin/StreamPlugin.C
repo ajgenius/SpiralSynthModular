@@ -266,20 +266,22 @@ void StreamPlugin::Describe(spiralcore::Description &d) {
         .Value(m_Pitch).Separator(" ").Line();
 }
 
-void StreamPlugin::StreamIn(istream &s) {
+void StreamPlugin::Apply(spiralcore::Description::Reader &r) {
      int version;
-     s >> version;
+     r.Value(version);
 
-     s >> m_GUIArgs.Volume >> m_GUIArgs.PitchMod;
+     r.Value(m_GUIArgs.Volume).Value(m_GUIArgs.PitchMod);
      int size;
-     s >> size;
+     std::string FileName;
+     r.Value(size);
+     r.Value(FileName);   // the counted bytes, one value
      if (size > 255) size = 255;
-     s.ignore (1);
-     s.get (m_GUIArgs.FileName, size+1);
+     strncpy (m_GUIArgs.FileName, FileName.c_str(), size);
+     m_GUIArgs.FileName[size] = 0;
      if (std::string(m_GUIArgs.FileName) != "None") OpenStream ();
        // is it really necessary to load this lot??
-     s >> m_Pos;
-     s >> m_StreamPos;
-     s >> m_GlobalPos;
-     s >> m_Pitch;
+     r.Value(m_Pos);
+     r.Value(m_StreamPos);
+     r.Value(m_GlobalPos);
+     r.Value(m_Pitch);
 }

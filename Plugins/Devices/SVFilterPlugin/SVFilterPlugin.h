@@ -35,7 +35,7 @@ public:
 	virtual void Reset();
 	
 	virtual void Describe(spiralcore::Description &d);
-	virtual void StreamIn(std::istream &s);
+	virtual void Apply(spiralcore::Description::Reader &r);
 	
 	float GetCutoff()    { return Cutoff; }
 	float GetResonance() { return Resonance;  } 
@@ -56,10 +56,10 @@ private:
 	// Outputs
 	double m_h, m_b, m_l, m_p, m_n;
 		
-	friend std::istream &operator>>(std::istream &s, SVFilterPlugin &o);
+	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, SVFilterPlugin &o);
 	friend spiralcore::Description &Describe(spiralcore::Description &d, SVFilterPlugin &o);
 };
-std::istream &operator>>(std::istream &s, SVFilterPlugin &o);
+spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, SVFilterPlugin &o);
 spiralcore::Description &Describe(spiralcore::Description &d, SVFilterPlugin &o);
 
 #endif

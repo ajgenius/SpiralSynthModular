@@ -121,8 +121,8 @@ void EnvFollowerPlugin::Describe(spiralcore::Description &d)
 	d.Value(m_Attack).Separator(" ").Value(m_Decay);
 }
 
-void EnvFollowerPlugin::StreamIn(istream &s)
+void EnvFollowerPlugin::Apply(spiralcore::Description::Reader &r)
 {
-	s>>m_Version;
-	s>>m_Attack>>m_Decay;
+	r.Value(m_Version);
+	r.Value(m_Attack).Value(m_Decay);
 }

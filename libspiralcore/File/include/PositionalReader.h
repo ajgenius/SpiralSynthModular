@@ -54,6 +54,15 @@ namespace spiralcore
 		// true with Status() Recovered, Partial or Unreadable.
 		bool Read(const std::string &text, Description &out, std::string &error);
 
+		// One device's state alone: decoded under the contract from text at
+		// `at` (the first byte after the device's header), out gets the
+		// state's values and the gaps among them, consumed the bytes they
+		// took. For a host that still reads the file as a stream: it hands
+		// each device exactly its own state and carries on after it,
+		// whether or not the device's module is there to read it.
+		bool ReadState(long pluginID, const std::string &text, size_t at,
+		               Description &out, size_t &consumed, std::string &error);
+
 		const std::string &Status() const { return m_Status; }
 		const std::vector<Device> &Devices() const { return m_Devices; }
 		const std::vector<Diagnostic> &Diagnostics() const { return m_Diagnostics; }

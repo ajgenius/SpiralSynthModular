@@ -31,7 +31,7 @@ class WaveShaperPlugin : public SpiralPlugin {
     virtual void Reset();
     virtual void ExecuteCommands();
     virtual void Describe(spiralcore::Description &d);
-    virtual void StreamIn(std::istream &s);
+    virtual void Apply(spiralcore::Description::Reader &r);
     enum GUICommands { NONE, SETWAVETYPE, SETCOEF };
     struct GUIArgs {
       int WaveType, CoefNum;
@@ -43,11 +43,11 @@ class WaveShaperPlugin : public SpiralPlugin {
     int m_Wave;
     void calc (void);
     void set (int index, float v);
-    friend std::istream &operator>> (std::istream &s, WaveShaperPlugin &o);
+    friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, WaveShaperPlugin &o);
     friend spiralcore::Description &Describe(spiralcore::Description &d, WaveShaperPlugin &o);
 };
 
-std::istream &operator>> (std::istream &s, WaveShaperPlugin &o);
+spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, WaveShaperPlugin &o);
 spiralcore::Description &Describe(spiralcore::Description &d, WaveShaperPlugin &o);
 
 #endif

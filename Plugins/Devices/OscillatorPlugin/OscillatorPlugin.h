@@ -32,7 +32,7 @@ public:
 	virtual void		Reset();
 
 	virtual void	    Describe(spiralcore::Description &d);
-	virtual void	    StreamIn(std::istream &s);
+	virtual void	    Apply(spiralcore::Description::Reader &r);
 
 	typedef char Type;
 	enum {NONE,SQUARE,SAW,NOISE};
@@ -71,11 +71,11 @@ private:
 
 	static const int FIXED;
 
-	friend std::istream &operator>>(std::istream &s, OscillatorPlugin &o);
+	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, OscillatorPlugin &o);
 	friend spiralcore::Description &Describe(spiralcore::Description &d, OscillatorPlugin &o);
 };
 
-std::istream &operator>>(std::istream &s, OscillatorPlugin &o);
+spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, OscillatorPlugin &o);
 spiralcore::Description &Describe(spiralcore::Description &d, OscillatorPlugin &o);
 
 #endif

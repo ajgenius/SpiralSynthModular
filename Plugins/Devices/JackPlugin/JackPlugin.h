@@ -80,7 +80,7 @@ public:
 
 	/* Jack Plugin Streaming - soon to be obsolete and for backward compatibility only*/
 	virtual void	Describe(spiralcore::Description &d);
-	virtual void	StreamIn(std::istream &s);			
+	virtual void	Apply(spiralcore::Description::Reader &r);			
 private:
 	GUIArgs m_GUIArgs;	
 	

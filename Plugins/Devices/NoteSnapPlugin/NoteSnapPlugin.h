@@ -32,7 +32,7 @@ public:
 	virtual void 		Reset();
 	virtual void 		ExecuteCommands();
 	virtual void	    Describe(spiralcore::Description &d);
-	virtual void	    StreamIn(std::istream &s);
+	virtual void	    Apply(spiralcore::Description::Reader &r);
 
 	bool GetFilter(int n) { return m_Filter[n]; }
 

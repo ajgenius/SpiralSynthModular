@@ -34,7 +34,7 @@ public:
 	virtual void Reset();
 
 	virtual void Describe(spiralcore::Description &d);
-	virtual void StreamIn(std::istream &s);
+	virtual void Apply(spiralcore::Description::Reader &r);
 		
 	float GetAttack()           { return m_Attack;     }
 	float GetDecay()            { return m_Decay;      }	
@@ -59,10 +59,10 @@ private:
 	
 	float m_Current;
 	
-	friend std::istream &operator>>(std::istream &s, EnvelopePlugin &o);
+	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, EnvelopePlugin &o);
 	friend spiralcore::Description &Describe(spiralcore::Description &d, EnvelopePlugin &o);
 };
-std::istream &operator>>(std::istream &s, EnvelopePlugin &o);
+spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, EnvelopePlugin &o);
 spiralcore::Description &Describe(spiralcore::Description &d, EnvelopePlugin &o);
 
 #endif
