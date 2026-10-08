@@ -400,19 +400,20 @@ AM_CONDITIONAL([BUILD_LADSPA], [test "$build_ladspa" = "y"])
 dnl Whether to build and ship the vendored swh-plugins
 dnl
 dnl A LADSPA host with no plugins to host is not much of a demonstration, and
-dnl Examples/Tutorial7-LADSPA.ssm asks for GVerb by name. Linux and the BSDs
-dnl package swh-plugins, so there they stay the user's to install: building our
-dnl own copy would put the same unique IDs on the search path twice. macOS
-dnl packages no LADSPA plugins at all, so that is where the bundled set earns
-dnl its place.
+dnl Examples/Tutorial7-LADSPA.ssm asks for GVerb by name. These install under
+dnl the application's own plugin directory rather than the system LADSPA one,
+dnl so they overwrite nothing a distribution ships, and the host puts that
+dnl directory first on the search path: LADSPAInfo keeps the first instance of
+dnl a duplicated plugin ID, so the copy this build was tested against wins and
+dnl anything the user installed stays available behind it.
+dnl
+dnl Packagers who would rather depend on their own swh-plugins can say
+dnl --disable-bundled-ladspa.
 AC_ARG_ENABLE(
     bundled-ladspa,
-    [  --enable-bundled-ladspa Build the vendored swh-plugins (default: macOS only)],
+    [  --disable-bundled-ladspa Do not build the vendored swh-plugins],
     [bundle_ladspa="$enableval"],
-    [case "$host_os" in
-        darwin*) bundle_ladspa="yes" ;;
-        *)       bundle_ladspa="no" ;;
-     esac]
+    [bundle_ladspa="yes"]
 )
 if test "$bundle_ladspa" = "yes" -a "$build_ladspa" = "n"; then
    bundle_ladspa="no"
@@ -761,7 +762,7 @@ if test "$bundle_ladspa" = "yes"; then
       printf 'Enabled - 94 of 98, no FFTW for the FFT based ones\n'
    fi
 else
-   printf 'Disabled - %s\n' "${bundled_ladspa_message:-not needed on this platform}"
+   printf 'Disabled - %s\n' "${bundled_ladspa_message:-manually disabled}"
 fi
 printf '%35s - ' "liblrdf support for LADSPAPlugin"
 if test "$use_liblrdf" = "y"; then

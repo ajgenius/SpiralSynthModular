@@ -7,14 +7,20 @@ Juhana Sadeharju's DSP with Steve Harris' LADSPA wrapper.
 ## Why these are in the tree
 
 LADSPA is a header and a `dlopen` convention, so the LADSPA host builds anywhere,
-but a host is useless with no plugins to host. Linux and the BSDs package
-swh-plugins, so there they are the user's to install and ours to leave alone.
-macOS packages nothing of the sort, which left `Examples/Tutorial7-LADSPA.ssm`
-unopenable on a Mac — it asks for GVerb by name.
+but a host is useless with no plugins to host. macOS packages nothing of the sort,
+which left `Examples/Tutorial7-LADSPA.ssm` unopenable on a Mac — it asks for GVerb
+by name.
 
-So these are built and bundled **on macOS only**. Building them on a platform
-whose package manager also ships them would put two copies of the same unique IDs
-on the LADSPA search path, and the host would load whichever it found first.
+They are built everywhere, because nothing collides. These install under the
+application's own plugin directory (`<plugins>/ladspa`), not the system
+`/usr/lib/ladspa`, so a distribution's own swh-plugins package is untouched. Both
+sets can be present: the host puts its own directory first on the search path and
+LADSPAInfo keeps the first instance of a duplicated plugin ID, so the copy this
+build was tested against is the one that loads, and anything else the user has
+installed stays available behind it.
+
+Packagers who would rather depend on their distribution's build can configure
+with `--disable-bundled-ladspa`.
 
 ## What was changed
 

@@ -159,20 +159,28 @@ int main(int argc, char **argv)
 	Fl_Window* win = synth->CreateWindow();
 	
 	// LADSPA plugins shipped with the application sit beside the device
-	// plugins. Add that directory to the search path rather than replacing
-	// it: plugins the user installed themselves should still show up.
-	if (!cmd_pluginPath.empty())
+	// plugins, under whichever root they were found in: a bundle resolves
+	// that at runtime, an installed copy has it compiled in, and
+	// --PluginPath overrides both.
+	//
+	// Ours goes on the front of the search path. LADSPAInfo keeps the first
+	// instance of a duplicated plugin ID, and the copy shipped here is the
+	// one this build was tested against; anything else the user has
+	// installed still shows up behind it.
 	{
-		string bundled = cmd_pluginPath;
-		if (bundled[bundled.size()-1] != '/') bundled += '/';
-		bundled += "ladspa";
-		struct stat info;
-		if (stat(bundled.c_str(), &info) == 0 && S_ISDIR(info.st_mode))
+		string root = cmd_pluginPath.empty() ? SpiralInfo::PLUGIN_PATH : cmd_pluginPath;
+		if (!root.empty())
 		{
-			const char *existing = getenv("LADSPA_PATH");
-			string search = existing && *existing
-			              ? string(existing) + ":" + bundled : bundled;
-			setenv("LADSPA_PATH", search.c_str(), 1);
+			if (root[root.size()-1] != '/') root += '/';
+			const string bundled = root + "ladspa";
+			struct stat info;
+			if (stat(bundled.c_str(), &info) == 0 && S_ISDIR(info.st_mode))
+			{
+				const char *existing = getenv("LADSPA_PATH");
+				const string search = existing && *existing
+				                    ? bundled + ":" + existing : bundled;
+				setenv("LADSPA_PATH", search.c_str(), 1);
+			}
 		}
 	}
 
