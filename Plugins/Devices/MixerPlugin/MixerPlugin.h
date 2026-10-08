@@ -30,7 +30,7 @@ class MixerPlugin : public SpiralPlugin, public StablePortLayout {
       virtual PluginInfo &Initialise(const HostInfo *Host);
       virtual void Execute();
       virtual void ExecuteCommands();
-      virtual void StreamOut(std::ostream &s);
+      virtual void Describe(spiralcore::Description &d);
       virtual void StreamIn(std::istream &s);
       // has to be defined in the plugin
       enum GUICommands { NONE, SETMIX, ADDCHAN, REMOVECHAN };

@@ -34,7 +34,7 @@ public:
 	virtual void Execute();
 	virtual void Reset();
 
-	virtual void StreamOut(std::ostream &s);
+	virtual void Describe(spiralcore::Description &d);
 	virtual void StreamIn(std::istream &s);
 	
 	float GetCutoff()    { return Cutoff; }
@@ -48,9 +48,9 @@ private:
 	double w,q,r,c,vibrapos,vibraspeed;
 	 	
 	friend std::istream &operator>>(std::istream &s, AnotherFilterPlugin &o);
-	friend std::ostream &operator<<(std::ostream &s, AnotherFilterPlugin &o);
+	friend spiralcore::Description &Describe(spiralcore::Description &d, AnotherFilterPlugin &o);
 };
 std::istream &operator>>(std::istream &s, AnotherFilterPlugin &o);
-std::ostream &operator<<(std::ostream &s, AnotherFilterPlugin &o);
+spiralcore::Description &Describe(spiralcore::Description &d, AnotherFilterPlugin &o);
 
 #endif

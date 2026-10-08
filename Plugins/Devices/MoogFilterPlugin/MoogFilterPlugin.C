@@ -203,9 +203,9 @@ void MoogFilterPlugin::Randomise()
 {
 }
 	
-void MoogFilterPlugin::StreamOut(ostream &s)
+void MoogFilterPlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<" "<<Cutoff<<" "<<Resonance<<" ";
+	d.Value(m_Version).Separator(" ").Value(Cutoff).Separator(" ").Value(Resonance).Separator(" ");
 }
 
 void MoogFilterPlugin::StreamIn(istream &s)

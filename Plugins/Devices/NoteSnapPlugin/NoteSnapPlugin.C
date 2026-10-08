@@ -147,12 +147,12 @@ void NoteSnapPlugin::ExecuteCommands()
 	}
 }
 	
-void NoteSnapPlugin::StreamOut(ostream &s) 
+void NoteSnapPlugin::Describe(spiralcore::Description &d) 
 {
-	s<<m_Version<<endl;
+	d.Value(m_Version).Line();
 	for (int n=0; n<12; n++)
 	{
-		s<<m_Filter[n]<<" ";
+		d.Value(m_Filter[n]).Separator(" ");
 	}
 
 }

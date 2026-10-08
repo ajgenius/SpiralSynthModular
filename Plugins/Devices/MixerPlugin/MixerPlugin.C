@@ -172,10 +172,10 @@ void MixerPlugin::RemoveChannel (void) {
      RemoveInput();
 }
 
-void MixerPlugin::StreamOut (ostream &s) {
-     s << m_Version << " ";
-     s << m_NumChannels << " ";
-     for (int n=0; n<m_NumChannels; n++) s << m_ChannelVal[n] << " ";
+void MixerPlugin::Describe(spiralcore::Description &d) {
+     d.Value(m_Version).Separator(" ");
+     d.Value(m_NumChannels).Separator(" ");
+     for (int n=0; n<m_NumChannels; n++) d.Value(m_ChannelVal[n]).Separator(" ");
 }
 
 void MixerPlugin::StreamIn (istream &s) {

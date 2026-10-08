@@ -64,7 +64,7 @@ class TranslatePlugin : public SpiralPlugin {
       virtual void Execute ();
       enum GUICommands { NOCMD, SETMETHOD };
       virtual void ExecuteCommands ();
-      virtual void StreamOut (std::ostream &s);
+      virtual void Describe(spiralcore::Description &d);
       virtual void StreamIn (std::istream &s);
       enum TranMethod { tr_Pass, tr_NoteToFreq, tr_FreqToNote, tr_NoteToVolt, tr_VoltToNote };
       int GetMethod (void) { return m_Method; }

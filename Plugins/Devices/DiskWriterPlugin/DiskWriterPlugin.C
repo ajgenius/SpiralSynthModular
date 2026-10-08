@@ -157,9 +157,9 @@ void DiskWriterPlugin::ExecuteCommands()
 	}
 }
 
-void DiskWriterPlugin::StreamOut (ostream &s)
+void DiskWriterPlugin::Describe(spiralcore::Description &d)
 {
-	s << m_Version << " " << m_GUIArgs.BitsPerSample << " " << m_GUIArgs.Stereo << " ";
+	d.Value(m_Version).Separator(" ").Value(m_GUIArgs.BitsPerSample).Separator(" ").Value(m_GUIArgs.Stereo).Separator(" ");
 }
 
 void DiskWriterPlugin::StreamIn (istream &s)

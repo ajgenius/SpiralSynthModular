@@ -121,10 +121,10 @@ void SwitchPlugin::ExecuteCommands()
 {
 }
 	
-void SwitchPlugin::StreamOut(ostream &s) 
+void SwitchPlugin::Describe(spiralcore::Description &d) 
 {
-	s<<m_Version<<endl;
-	s<<m_Mix<<" ";
+	d.Value(m_Version).Line();
+	d.Value(m_Mix).Separator(" ");
 }
 
 void SwitchPlugin::StreamIn(istream &s) 

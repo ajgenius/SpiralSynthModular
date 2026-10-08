@@ -32,7 +32,7 @@ public:
 	virtual void 		Execute();
 	virtual void 		ExecuteCommands();
 	
-	virtual void	    StreamOut(std::ostream &s);
+	virtual void	    Describe(spiralcore::Description &d);
 	virtual void	    StreamIn(std::istream &s);
 	
 	int GetChannelCount (void) { return m_GUIArgs.ChannelCount; }

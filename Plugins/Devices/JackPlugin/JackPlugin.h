@@ -79,7 +79,7 @@ public:
 	void Detach();
 
 	/* Jack Plugin Streaming - soon to be obsolete and for backward compatibility only*/
-	virtual void	StreamOut(std::ostream &s);
+	virtual void	Describe(spiralcore::Description &d);
 	virtual void	StreamIn(std::istream &s);			
 private:
 	GUIArgs m_GUIArgs;	

@@ -203,9 +203,9 @@ void FilterPlugin::Execute()
 	}		
 }
 	
-void FilterPlugin::StreamOut(ostream &s)
+void FilterPlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<" "<<fc<<" "<<Q<<" "<<m_RevCutoffMod<<" "<<m_RevResonanceMod<<" ";
+	d.Value(m_Version).Separator(" ").Value(fc).Separator(" ").Value(Q).Separator(" ").Value(m_RevCutoffMod).Separator(" ").Value(m_RevResonanceMod).Separator(" ");
 }
 
 void FilterPlugin::StreamIn(istream &s)

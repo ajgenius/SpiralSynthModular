@@ -364,9 +364,9 @@ void LADSPAPlugin::ExecuteCommands()
 	}
 }
 
-void LADSPAPlugin::StreamOut(ostream &s)
+void LADSPAPlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<" ";
+	d.Value(m_Version).Separator(" ");
 
 	switch (m_Version)
 	{
@@ -381,11 +381,11 @@ void LADSPAPlugin::StreamOut(ostream &s)
 				}
 			}
 
-			s<<m_Page<<" ";
-			s<<m_UpdateInputs<<" ";
-			s<<m_UniqueID<<" ";
-			s<<m_InputPortMin.size()<<" ";
-			s<<m_UnconnectedInputs<<" ";
+			d.Value(m_Page).Separator(" ");
+			d.Value(m_UpdateInputs).Separator(" ");
+			d.Value(m_UniqueID).Separator(" ");
+			d.Value(m_InputPortMin.size()).Separator(" ");
+			d.Value(m_UnconnectedInputs).Separator(" ");
 			assert(m_InputPortMin.size()==m_InputPortMax.size());
 			assert(m_InputPortMin.size()==m_InputPortClamp.size());
 			assert(m_InputPortMin.size()==m_InputPortDefault.size());
@@ -393,24 +393,24 @@ void LADSPAPlugin::StreamOut(ostream &s)
 			     i!=m_InputPortMin.end(); i++)
 			{
 				float f = ssm_finite(*i)?(*i):0.0f;
-				s<< f <<" ";
+				d.Value(f).Separator(" ");
 			}
 			for (vector<float>::iterator i=m_InputPortMax.begin();
 			     i!=m_InputPortMax.end(); i++)
 			{
 				float f = ssm_finite(*i)?(*i):0.0f;
-				s<< f <<" ";
+				d.Value(f).Separator(" ");
 			}
 			for (vector<char>::iterator i=m_InputPortClamp.begin();
 			     i!=m_InputPortClamp.end(); i++)
 			{
-				s<< (int)(*i) <<" ";
+				d.Value((int)(*i)).Separator(" ");
 			}
 			for (vector<float>::iterator i=m_InputPortDefault.begin();
 			     i!=m_InputPortDefault.end(); i++)
 			{
 				float f = ssm_finite(*i)?(*i):0.0f;
-				s<< f <<" ";
+				d.Value(f).Separator(" ");
 			}
 		}
 		break;

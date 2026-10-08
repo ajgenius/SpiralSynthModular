@@ -30,7 +30,7 @@ public:
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void Execute();
 	virtual void Reset();
-	virtual void StreamOut(std::ostream &s);
+	virtual void Describe(spiralcore::Description &d);
 	virtual void StreamIn(std::istream &s);
 	
    	float GetDelay()    { return m_Delay;    }
@@ -48,9 +48,9 @@ private:
 	Sample m_Buffer;
 
 	friend std::istream &operator>>(std::istream &s, DelayPlugin &o);
-	friend std::ostream &operator<<(std::ostream &s, DelayPlugin &o);
+	friend spiralcore::Description &Describe(spiralcore::Description &d, DelayPlugin &o);
 };
 std::istream &operator>>(std::istream &s, DelayPlugin &o);
-std::ostream &operator<<(std::ostream &s, DelayPlugin &o);
+spiralcore::Description &Describe(spiralcore::Description &d, DelayPlugin &o);
 
 #endif

@@ -32,7 +32,7 @@ public:
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void Execute();
 	virtual void Reset();
-	virtual void StreamOut(std::ostream &s);
+	virtual void Describe(spiralcore::Description &d);
 	virtual void StreamIn(std::istream &s);
 	
 	// has to be defined in the plugin	
@@ -64,9 +64,9 @@ private:
 	std::vector<GrainDesc> m_OverlapVec;
 	
 	friend std::istream &operator>>(std::istream &s, MasherPlugin &o);
-	friend std::ostream &operator<<(std::ostream &s, MasherPlugin &o);
+	friend spiralcore::Description &Describe(spiralcore::Description &d, MasherPlugin &o);
 };
 std::istream &operator>>(std::istream &s, MasherPlugin &o);
-std::ostream &operator<<(std::ostream &s, MasherPlugin &o);
+spiralcore::Description &Describe(spiralcore::Description &d, MasherPlugin &o);
 
 #endif

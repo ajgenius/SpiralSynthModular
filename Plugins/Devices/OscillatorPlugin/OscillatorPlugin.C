@@ -209,9 +209,10 @@ void OscillatorPlugin::Execute()
 	}
 }
 
-void OscillatorPlugin::StreamOut(ostream &s)
+void OscillatorPlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<" "<<*this;
+	d.Value(m_Version).Separator(" ");
+	::Describe(d, *this);
 }
 
 void OscillatorPlugin::StreamIn(istream &s)
@@ -228,10 +229,10 @@ istream &operator>>(istream &s, OscillatorPlugin &o)
 	return s;
 }
 
-ostream &operator<<(ostream &s, OscillatorPlugin &o)
+spiralcore::Description &Describe(spiralcore::Description &d, OscillatorPlugin &o)
 {
 	float dummy=0;
-	s<<(int)o.m_Type<<" "<<o.m_Octave<<" "<<o.m_FineFreq<<" "<<o.m_PulseWidth<<" "<<
-	dummy<<" "<<o.m_SHLen<<" "<<o.m_ModAmount<<" ";
-	return s;
+	d.Value((int)o.m_Type).Separator(" ").Value(o.m_Octave).Separator(" ").Value(o.m_FineFreq).Separator(" ").Value(o.m_PulseWidth).Separator(" ")
+	.Value(dummy).Separator(" ").Value(o.m_SHLen).Separator(" ").Value(o.m_ModAmount).Separator(" ");
+	return d;
 }

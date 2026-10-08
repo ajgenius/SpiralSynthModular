@@ -33,7 +33,7 @@ public:
 	virtual void Execute();
 	virtual void Reset();
 	virtual void ExecuteCommands();
-	virtual void StreamOut(std::ostream &s);
+	virtual void Describe(spiralcore::Description &d);
 	virtual void StreamIn(std::istream &s);
 		
 	int  GetBegin()      { return m_Begin; }

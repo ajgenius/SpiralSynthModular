@@ -199,9 +199,9 @@ void WaveShaperPlugin::calc (void) {
 
 // Streaming
 
-void WaveShaperPlugin::StreamOut (ostream &s) {
-  s << m_Version << " " << m_Wave;
-  for (int i=0; i<6; i++) s << " " << m_Coefs[i];
+void WaveShaperPlugin::Describe(spiralcore::Description &d) {
+  d.Value(m_Version).Separator(" ").Value(m_Wave);
+  for (int i=0; i<6; i++) d.Separator(" ").Value(m_Coefs[i]);
 }
 
 void WaveShaperPlugin::StreamIn (istream &s) {

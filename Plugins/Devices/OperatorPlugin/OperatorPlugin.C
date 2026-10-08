@@ -178,11 +178,11 @@ void OperatorPlugin::ExecuteCommands()
 {
 }
 
-void OperatorPlugin::StreamOut(ostream &s)
+void OperatorPlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<endl;
-	s<<m_Constant<<" ";
-	s<<(int)m_Operator<<" ";
+	d.Value(m_Version).Line();
+	d.Value(m_Constant).Separator(" ");
+	d.Value((int)m_Operator).Separator(" ");
 }
 
 void OperatorPlugin::StreamIn(istream &s) 

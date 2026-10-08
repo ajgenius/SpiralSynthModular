@@ -128,8 +128,8 @@ void MeterPlugin::ExecuteCommands () {
   }
 }
 
-void MeterPlugin::StreamOut (ostream &s) {
-  s << m_Version << " " << m_VUMode << " ";
+void MeterPlugin::Describe(spiralcore::Description &d) {
+  d.Value(m_Version).Separator(" ").Value(m_VUMode).Separator(" ");
 }
 
 void MeterPlugin::StreamIn (istream &s) {

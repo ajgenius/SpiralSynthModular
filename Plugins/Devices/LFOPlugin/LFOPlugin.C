@@ -147,8 +147,8 @@ void LFOPlugin::Execute() {
      }
 }
 
-void LFOPlugin::StreamOut(ostream &s) {
-     s << m_Version << " " << (int)m_Type << " " << m_Freq << " ";
+void LFOPlugin::Describe(spiralcore::Description &d) {
+     d.Value(m_Version).Separator(" ").Value((int)m_Type).Separator(" ").Value(m_Freq).Separator(" ");
 }
 
 void LFOPlugin::StreamIn(istream &s) {

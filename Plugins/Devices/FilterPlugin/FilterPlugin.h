@@ -32,7 +32,7 @@ public:
 	
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void Execute();
-	virtual void StreamOut(std::ostream &s);
+	virtual void Describe(spiralcore::Description &d);
 	virtual void StreamIn(std::istream &s);
 		
 	virtual void Reset();
@@ -60,9 +60,9 @@ private:
 	bool	 m_RevResonanceMod;
 
 	friend std::istream &operator>>(std::istream &s, FilterPlugin &o);
-	friend std::ostream &operator<<(std::ostream &s, FilterPlugin &o);
+	friend spiralcore::Description &Describe(spiralcore::Description &d, FilterPlugin &o);
 };
 std::istream &operator>>(std::istream &s, FilterPlugin &o);
-std::ostream &operator<<(std::ostream &s, FilterPlugin &o);
+spiralcore::Description &Describe(spiralcore::Description &d, FilterPlugin &o);
 
 #endif
