@@ -62,6 +62,15 @@ unsigned SpiralInfo::SCOPE_MRK_COLOUR = fl_rgb_color (155, 155, 50);
 // is the option. Session only, as the comment in the header says.
 bool   SpiralInfo::CURVEDWIRES = true;
 
+// macOS puts the menu in the system menu bar at the top of the screen, so the
+// strip inside the window is a second copy of it and starts hidden. Every
+// other platform has nowhere else to put the menu.
+#ifdef __APPLE__
+bool   SpiralInfo::SHOWMENUBAR = false;
+#else
+bool   SpiralInfo::SHOWMENUBAR = true;
+#endif
+
 /*int SpiralInfo::GUICOL_Tool=179;
 int SpiralInfo::GUICOL_Button=181;
 int SpiralInfo::GUICOL_Canvas=181;
