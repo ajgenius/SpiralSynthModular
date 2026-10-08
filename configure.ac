@@ -330,6 +330,12 @@ SmoothPlugin SpiralLoopPlugin SplitSwitchPlugin SplitterPlugin StereoMixerPlugin
 StreamPlugin SwitchPlugin TranslatePlugin TransposePlugin TrigPlugin WaveShaperPlugin \
 WaveTablePlugin XFadePlugin"
 
+dnl Every plugin directory, whether or not this host can build it. SUBDIRS
+dnl drives the build and has to follow the optional components, but a source
+dnl distribution must carry them all: a tarball rolled where LADSPA is absent
+dnl would otherwise omit a directory that configure still expects to find.
+ALL_PLUGINLIST="JackPlugin LADSPAPlugin $PLUGINLIST"
+
 dnl Check whether jack is present or has been disabled
 jack_message=""
 AC_ARG_ENABLE(
@@ -556,8 +562,18 @@ for plugin in $PLUGINLIST; do
         *) GUI_PLUGINLIST="$GUI_PLUGINLIST $plugin" ;;
     esac
 done
+dnl The same exclusion over every plugin, for the distribution list.
+ALL_GUI_PLUGINLIST=""
+for plugin in $ALL_PLUGINLIST; do
+    case "$plugin" in
+        SampleHoldPlugin) ;;
+        *) ALL_GUI_PLUGINLIST="$ALL_GUI_PLUGINLIST $plugin" ;;
+    esac
+done
 AC_SUBST(GUI_PLUGINLIST)
 AC_SUBST(PLUGINLIST)
+AC_SUBST(ALL_GUI_PLUGINLIST)
+AC_SUBST(ALL_PLUGINLIST)
 
 dnl Modify the output files.
 AC_OUTPUT(
