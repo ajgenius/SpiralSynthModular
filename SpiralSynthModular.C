@@ -657,6 +657,8 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_SettingsWindow = new SettingsWindow;
 	m_SettingsWindow->RegisterApp(this);
 
+	ApplyViewOptions();
+
 	return m_TopWindow;
 }
 
@@ -1119,6 +1121,16 @@ void SynthModular::UpdateHostInfo()
 
 	/* Reset all plugin ports/buffers befure Resuming */
 	ResetAudio();
+}
+
+//////////////////////////////////////////////////////////
+
+// The view options live in SpiralInfo, so this reads them rather than taking
+// arguments: the options panel sets them and calls here, and CreateWindow
+// calls here once with the defaults in place.
+void SynthModular::ApplyViewOptions()
+{
+	if (m_Canvas) m_Canvas->redraw();
 }
 
 //////////////////////////////////////////////////////////

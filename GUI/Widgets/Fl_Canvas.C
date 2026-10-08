@@ -437,17 +437,17 @@ void Fl_Canvas::DrawWires()
                 
                 ep2_mid_x = fabs(ep1_x-ep2_x)/2;
                 ep2_new_x = ep2_x-ep2_mid_x;
-                
-                fl_begin_line();
-                
-                fl_curve( ep1_x, ep1_y, ep1_new_x, ep1_mid_y, ep2_new_x, ep2_mid_y, ep2_x, ep2_y );
-                
-                fl_end_line();
 
-		/* fl_line(SourceDevice->GetPortX(i->OutputPort+SourceDevice->GetInfo()->NumInputs), */
-		/* 		SourceDevice->GetPortY(i->OutputPort+SourceDevice->GetInfo()->NumInputs), */
-		/* 		DestDevice->GetPortX(i->InputPort), */
-		/* 		DestDevice->GetPortY(i->InputPort)); */
+                // A curve by default; the straight line is the view option.
+                if (SpiralInfo::CURVEDWIRES)
+                {
+                        fl_begin_line();
+
+                        fl_curve( ep1_x, ep1_y, ep1_new_x, ep1_mid_y, ep2_new_x, ep2_mid_y, ep2_x, ep2_y );
+
+                        fl_end_line();
+                }
+                else fl_line((int)ep1_x, (int)ep1_y, (int)ep2_x, (int)ep2_y);
 	}
 
 	DrawIncompleteWire();

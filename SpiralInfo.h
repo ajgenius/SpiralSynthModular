@@ -64,6 +64,11 @@ class SpiralInfo {
       static unsigned SCOPE_SEL_COLOUR;
       static unsigned SCOPE_IND_COLOUR;
       static unsigned SCOPE_MRK_COLOUR;
+
+      // View options, held for the session only: LoadPrefs and SavePrefs do
+      // not carry them yet, so they are back at their default each launch.
+      static bool   CURVEDWIRES;
+
       static SpiralInfo* Get();
       void SetColours();
       static string PLUGIN_PATH;

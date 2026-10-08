@@ -94,6 +94,9 @@ public:
 	void ClearUp(bool synchronize = true);
 	void UpdateHostInfo();
 	void UpdatePluginGUIs();
+	// The options panel applies the view options through here. Nothing on this
+	// path is persisted yet.
+	void ApplyViewOptions();
 	void LoadPatch(const char *fn, const char *branchId = NULL);
 	void SavePatch(const char *fn);
 
