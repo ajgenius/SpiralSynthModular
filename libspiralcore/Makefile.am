@@ -21,7 +21,7 @@ libspiralcore_la_SOURCES = \
 libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 2:0:0 \
 	$(SPUMONI_WHOLE_ARCHIVE)
 libspiralcore_la_DEPENDENCIES = $(top_builddir)/libs/libSpumoni/libSpumoni.a
-# libSpumoni.a is linked in full. Nothing in the loader calls it yet.
+# libSpumoni.a is linked in full for the core and its consumers.
 libspiralcore_la_LIBADD = $(SFLIBS) $(JACK_LIBS) -lm \
 	$(ZLIB_LIBS)
 
@@ -101,6 +101,7 @@ ring_buffer_test_LDADD = libspiralcore.la
 # The description: a device's state as positional tokens, the form the
 # files have always been written in.
 libspiralcore_la_SOURCES += File/include/Description.h File/src/Description.cpp
+libspiralcore_la_SOURCES += File/include/PatchProject.h File/src/PatchProject.cpp
 check_PROGRAMS += description-test description-reader-test
 description_test_SOURCES = File/tests/description.cpp
 description_test_LDADD = libspiralcore.la
