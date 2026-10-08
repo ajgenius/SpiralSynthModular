@@ -18,7 +18,7 @@ libspiralcore_la_SOURCES = \
     src/RiffWav.cpp \
     include/GraphSort.h \
     src/GraphSort.cpp
-libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 2:0:0 \
+libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 3:0:0 \
 	$(SPUMONI_WHOLE_ARCHIVE)
 libspiralcore_la_DEPENDENCIES = $(top_builddir)/libs/libSpumoni/libSpumoni.a
 # libSpumoni.a is linked in full for the core and its consumers.
@@ -110,7 +110,8 @@ description_reader_test_LDADD = libspiralcore.la
 
 # The positional contract and its reader. The contract is data; Spumoni's
 # JSON reader loads it.
-EXTRA_DIST += \
+schemadir = $(pkgdatadir)/schemas
+dist_schema_DATA = \
     File/schemas/SpiralPositionalText-0.2.x.json \
     File/schemas/SpiralPositionalText-0.2.x.AUTHORS \
     File/schemas/SpiralPositionalText.history.json

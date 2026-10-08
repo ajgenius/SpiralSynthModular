@@ -7,6 +7,7 @@ AM_CPPFLAGS =                                              \
                 $(SPIRALCORE_CFLAGS)                    \
                 -I$(top_srcdir)/libs/libSpumoni/include
 # The file contract: the host hands each device its own state under it.
+AM_CPPFLAGS += -DSSM_INSTALLED_SCHEMA_DIR='"$(pkgdatadir)/schemas"'
 AM_CPPFLAGS += -DSPIRALCORE_SCHEMA_DIR='"$(abs_top_srcdir)/libs/libspiralcore/File/schemas"'
 
 SpiralSynthModular_LDADD = 							\
@@ -48,7 +49,7 @@ if MACOS_BUNDLE
 bundle: all
 	+$(SHELL) "$(srcdir)/build-aux/macos-bundle.sh" "$(MAKE)" \
 		"$(bindir)" "$(libdir)" "$(ssm_plugindir)" \
-		"$(srcdir)" "$(PACKAGE_VERSION)" "$(BUNDLE_DIR)"
+		"$(srcdir)" "$(PACKAGE_VERSION)" "$(BUNDLE_DIR)" "$(pkgdatadir)/schemas"
 else
 bundle:
 	@echo "Bundle packaging requires macOS"; exit 1
@@ -167,12 +168,13 @@ package_sidecars_host_test_LDADD = $(SpiralSynthModular_LDADD)
 package_sidecars_host_test_LDFLAGS = -export-dynamic
 
 check_PROGRAMS += canvas-menu-test
+check_LTLIBRARIES =
 if BUILD_LADSPA
 check_PROGRAMS += ladspa-reset-test
 ladspa_reset_test_SOURCES = tests/ladspa-reset.cpp Plugins/Devices/LADSPAPlugin/LADSPAPlugin.C Plugins/Devices/LADSPAPlugin/LADSPAInfo.C
 ladspa_reset_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/Devices/LADSPAPlugin
 ladspa_reset_test_LDADD = libs/libspiralcore/libspiralcore.la $(LRDFLIBS)
-check_LTLIBRARIES = tests/ladspa/ports.la
+check_LTLIBRARIES += tests/ladspa/ports.la
 tests_ladspa_ports_la_SOURCES = tests/ladspa/ports.cpp
 tests_ladspa_ports_la_LDFLAGS = -module -avoid-version -rpath /unused
 TESTS_ENVIRONMENT = LADSPA_PATH='$(abs_builddir)/tests/ladspa/.libs'
@@ -185,3 +187,15 @@ stream_paste_test_SOURCES = Plugins/Devices/StreamPlugin/StreamPlugin.C tests/st
 stream_paste_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir) -I$(srcdir)/Plugins/Devices/StreamPlugin
 stream_paste_test_LDADD = $(SpiralSynthModular_LDADD)
 stream_paste_test_LDFLAGS = -export-dynamic
+
+check_PROGRAMS += schema-deployment-test plugin-abi-test
+schema_deployment_test_SOURCES = tests/schema-deployment.cpp SpiralSynthModular.C UnavailablePlugin.C SpiralInfo.C SettingsWindow.C
+schema_deployment_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
+schema_deployment_test_LDADD = $(SpiralSynthModular_LDADD)
+schema_deployment_test_LDFLAGS = -export-dynamic
+plugin_abi_test_SOURCES = tests/plugin-abi.cpp
+plugin_abi_test_LDADD = libs/libspiralcore/libspiralcore.la
+check_LTLIBRARIES += tests/old-device.la
+tests_old_device_la_SOURCES = tests/old-device.cpp
+tests_old_device_la_LDFLAGS = -module -avoid-version -rpath /unused
+EXTRA_DIST += tests/fixtures/controller-v4.ssm
