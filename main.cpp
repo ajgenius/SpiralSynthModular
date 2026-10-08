@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <sys/stat.h>
 #include <cstring>
 #include <FL/Fl.H>
 #include <FL/Fl_Tooltip.H>
@@ -157,6 +158,24 @@ int main(int argc, char **argv)
 	// setup the synth
 	Fl_Window* win = synth->CreateWindow();
 	
+	// LADSPA plugins shipped with the application sit beside the device
+	// plugins. Add that directory to the search path rather than replacing
+	// it: plugins the user installed themselves should still show up.
+	if (!cmd_pluginPath.empty())
+	{
+		string bundled = cmd_pluginPath;
+		if (bundled[bundled.size()-1] != '/') bundled += '/';
+		bundled += "ladspa";
+		struct stat info;
+		if (stat(bundled.c_str(), &info) == 0 && S_ISDIR(info.st_mode))
+		{
+			const char *existing = getenv("LADSPA_PATH");
+			string search = existing && *existing
+			              ? string(existing) + ":" + bundled : bundled;
+			setenv("LADSPA_PATH", search.c_str(), 1);
+		}
+	}
+
 	synth->LoadPlugins(cmd_pluginPath);
 	win->xclass("");
 	if (GUI) win->show(1, argv); // prevents stuff happening before the plugins have loaded

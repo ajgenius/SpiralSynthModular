@@ -397,6 +397,55 @@ AC_SUBST(LADSPA_CFLAGS)
 
 AM_CONDITIONAL([BUILD_LADSPA], [test "$build_ladspa" = "y"])
 
+dnl Whether to build and ship the vendored swh-plugins
+dnl
+dnl A LADSPA host with no plugins to host is not much of a demonstration, and
+dnl Examples/Tutorial7-LADSPA.ssm asks for GVerb by name. Linux and the BSDs
+dnl package swh-plugins, so there they stay the user's to install: building our
+dnl own copy would put the same unique IDs on the search path twice. macOS
+dnl packages no LADSPA plugins at all, so that is where the bundled set earns
+dnl its place.
+AC_ARG_ENABLE(
+    bundled-ladspa,
+    [  --enable-bundled-ladspa Build the vendored swh-plugins (default: macOS only)],
+    [bundle_ladspa="$enableval"],
+    [case "$host_os" in
+        darwin*) bundle_ladspa="yes" ;;
+        *)       bundle_ladspa="no" ;;
+     esac]
+)
+if test "$bundle_ladspa" = "yes" -a "$build_ladspa" = "n"; then
+   bundle_ladspa="no"
+   bundled_ladspa_message="LADSPAPlugin not built"
+fi
+if test "$bundle_ladspa" = "yes"; then
+   AC_PATH_PROG([PERL], [perl], [no])
+   if test "$PERL" = "no"; then
+      bundle_ladspa="no"
+      bundled_ladspa_message="perl not found, needed to generate the sources"
+   fi
+fi
+AM_CONDITIONAL([BUNDLE_LADSPA_PLUGINS], [test "$bundle_ladspa" = "yes"])
+
+dnl Four of the bundled plugins are FFT based
+dnl
+dnl Single-precision FFTW, and only where the plugins are being bundled: the
+dnl macOS application carries its own copy, so this adds a library to that
+dnl bundle rather than a dependency to anyone's distribution build. Missing
+dnl FFTW costs four plugins out of ninety-eight, so it is not worth failing
+dnl over.
+have_fftw3f="no"
+if test "$bundle_ladspa" = "yes"; then
+   PKG_CHECK_MODULES([FFTW3F], [fftw3f >= 3.0],
+      [have_fftw3f="yes"],
+      [AC_CHECK_LIB([fftw3f], [fftwf_plan_dft_r2c_1d],
+         [have_fftw3f="yes" ; FFTW3F_LIBS="-lfftw3f" ; FFTW3F_CFLAGS=""],
+         [have_fftw3f="no"])])
+fi
+AC_SUBST(FFTW3F_CFLAGS)
+AC_SUBST(FFTW3F_LIBS)
+AM_CONDITIONAL([BUNDLE_LADSPA_FFTW], [test "$have_fftw3f" = "yes"])
+
 dnl Check whether liblrdf is present or has been disabled
 lrdf_message=""
 AC_ARG_ENABLE(
@@ -585,6 +634,7 @@ Plugins/Midi/CoreMIDI/Makefile
 Plugins/Midi/OSS/Makefile
 Plugins/Devices/Makefile
 Plugins/Editors/Makefile
+third-party/swh-plugins/Makefile
 Plugins/Editors/AmpPlugin/Makefile
 Plugins/Editors/AnotherFilterPlugin/Makefile
 Plugins/Editors/BeatMatchPlugin/Makefile
@@ -702,6 +752,16 @@ if test "$build_ladspa" = "y"; then
    printf 'Enabled - %s\n' "$ladspa_message"
 else
    printf 'Disabled - %s\n' "$ladspa_message"
+fi
+printf '%35s - ' "Bundled swh-plugins (LADSPA set)"
+if test "$bundle_ladspa" = "yes"; then
+   if test "$have_fftw3f" = "yes"; then
+      printf 'Enabled - all 98, FFTW found\n'
+   else
+      printf 'Enabled - 94 of 98, no FFTW for the FFT based ones\n'
+   fi
+else
+   printf 'Disabled - %s\n' "${bundled_ladspa_message:-not needed on this platform}"
 fi
 printf '%35s - ' "liblrdf support for LADSPAPlugin"
 if test "$use_liblrdf" = "y"; then

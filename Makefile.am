@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = libs/libSpumoni libs/libspiralcore GUI Plugins
+SUBDIRS = libs/libSpumoni libs/libspiralcore GUI Plugins third-party/swh-plugins
 
 AM_CPPFLAGS =                                              \
                 $(FLTK_CXXFLAGS)                        \
@@ -194,6 +194,14 @@ tests_ladspa_ports_la_SOURCES = tests/ladspa/ports.cpp
 tests_ladspa_ports_la_LDFLAGS = -module -avoid-version -rpath /unused
 TESTS_ENVIRONMENT = LADSPA_PATH='$(abs_builddir)/tests/ladspa/.libs'
 
+# The bundled reverb the LADSPA example asks for, played and listened to.
+if BUNDLE_LADSPA_PLUGINS
+check_PROGRAMS += ladspa-gverb-test
+ladspa_gverb_test_SOURCES = tests/ladspa-gverb.cpp Plugins/Devices/LADSPAPlugin/LADSPAPlugin.C Plugins/Devices/LADSPAPlugin/LADSPAInfo.C
+ladspa_gverb_test_CPPFLAGS = $(AM_CPPFLAGS) $(LADSPA_CFLAGS) -I$(srcdir)/Plugins/Devices/LADSPAPlugin
+ladspa_gverb_test_LDADD = libs/libspiralcore/libspiralcore.la $(LRDFLIBS)
+TESTS_ENVIRONMENT += LADSPA_BUNDLE_DIR='$(abs_builddir)/third-party/swh-plugins/.libs'
+endif
 endif
 canvas_menu_test_SOURCES = tests/canvas-menu.cpp SpiralInfo.C
 canvas_menu_test_LDADD = $(SpiralSynthModular_LDADD)
