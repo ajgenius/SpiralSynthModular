@@ -4,7 +4,7 @@ AM_CXXFLAGS = -std=c++03 -fPIC
 
 noinst_LIBRARIES = libSpumoni.a
 libSpumoni_a_SOURCES = \
-	include/JSON.h src/JSON.cpp \
+	include/JSON.h include/detail/JSONReader.h src/JSON.cpp \
 	include/Container.h src/Container.cpp src/Containers.cpp \
 	include/Directory.h src/Directory.cpp \
 	include/Folder.h src/Folder.cpp \
