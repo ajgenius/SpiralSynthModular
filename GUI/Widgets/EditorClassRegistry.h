@@ -21,10 +21,12 @@
 
 #include <string>
 #include <vector>
-#include "SpiralPlugin.h"
-#include "PluginLoader.h"
+#include "DeviceClassRegistry.h"
 
 class SpiralGUIType;
+
+namespace spiralcore
+{
 
 /* The GUI half of the paired slot (0.3.1 split): an editor of the device
    class it names by ID. It sees the device only as a SpiralPlugin and its
@@ -50,7 +52,7 @@ struct EditorClass
 /* The editor kind: modules are <plugins>/gui/<X>/<X>_GUI<ext>, the entry
    is the editor factory, and the device ID beside it is the old export
    set, read back through the module until modules carry a descriptor. */
-class EditorClassRegistry : public spiralcore::PluginKind
+class EditorClassRegistry : public PluginKind
 {
 public:
 	static EditorClassRegistry *Get();
@@ -77,5 +79,7 @@ private:
 	std::vector<EditorClass*> m_PluginVec;
 	static EditorClassRegistry *m_Singleton;
 };
+
+}
 
 #endif

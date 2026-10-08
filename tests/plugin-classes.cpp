@@ -10,6 +10,8 @@
 #include <cassert>
 #include <cstdio>
 
+using namespace spiralcore;
+
 static const DeviceClass *Named(const char *name)
 {
 	const std::vector<DeviceClass*> &devices=DeviceClassRegistry::Get()->Classes();
