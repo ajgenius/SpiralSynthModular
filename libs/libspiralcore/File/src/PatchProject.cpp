@@ -12,7 +12,7 @@ namespace Spiral
 		class SSMApplication : public Spumoni::Package::Application
 		{
 		public:
-			virtual void Describe(Spumoni::JSON &root, const Spumoni::Identity &) const
+			virtual void Describe(Spumoni::JSON &root, const Spumoni::Identity &identity) const
 			{
 				root.SetOwned("format", Spumoni::JSON::MakeString("SpiralSynthModular File Ver 9"));
 				Spumoni::JSON *main = Spumoni::JSON::MakeObject();
@@ -23,6 +23,33 @@ namespace Spiral
 				Spumoni::JSON *application = Spumoni::JSON::MakeObject();
 				application->SetOwned("name", Spumoni::JSON::MakeString("SpiralSynthModular"));
 				root.SetOwned("application", application);
+
+				// The project's own title, credits and rights. Spumoni holds
+				// them as opaque text because only this handler knows their
+				// shape, and they are written beside the format rather than
+				// under a key of their own: that is where the newer envelope
+				// spells them. A project that claims none grows no keys.
+				if (!identity.ApplicationMetadata.empty())
+				{
+					Spumoni::JSON *metadata =
+						Spumoni::ParseJSONText(identity.ApplicationMetadata);
+					if (metadata && metadata->GetType() == Spumoni::JSON::Object)
+					{
+						const std::vector<std::string> keys = metadata->Keys();
+						for (size_t i = 0; i < keys.size(); ++i)
+						{
+							// This host owns the stamp. Carrying it over from
+							// the stored text would write an older project's
+							// version back out as if it were ours.
+							if (keys[i] == "format" || keys[i] == "main"
+								|| keys[i] == "application")
+								continue;
+							if (const Spumoni::JSON *value = metadata->Get(keys[i]))
+								root.SetOwned(keys[i], value->Duplicate());
+						}
+					}
+					delete metadata;
+				}
 			}
 
 			virtual bool Accept(const Spumoni::JSON &root, Spumoni::Identity &, std::string &error) const
