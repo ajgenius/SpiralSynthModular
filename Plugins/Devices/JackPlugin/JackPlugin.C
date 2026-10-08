@@ -336,15 +336,17 @@ void  JackPlugin::SetNumberPorts (int nInputs, int nOutputs) {
      nOutputs = std::max(MIN_PORTS, std::min(MAX_PORTS, nOutputs));
      const bool reconnect = m_JackClient->IsAttached();
      Detach();
+     const int oldInputs = m_PluginInfo.NumInputs;
+     const int oldOutputs = m_PluginInfo.NumOutputs;
+     CreatePorts (nInputs, nOutputs, false);
+     // Disconnect only removed ports before releasing their Sample objects.
+     // Surviving inputs and output Sample addresses keep their graph wires.
      UpdatePluginInfoWithHost();
-     RemoveAllInputs ();
-     RemoveAllOutputs ();
-     m_PluginInfo.NumInputs = 0;
-     m_PluginInfo.NumOutputs = 0;
-     m_PluginInfo.PortTips.clear ();
-     CreatePorts (nInputs, nOutputs, true);
+     for (int n = nInputs; n < oldInputs; ++n) RemoveInput();
+     for (int n = nOutputs; n < oldOutputs; ++n) RemoveOutput();
+     for (int n = oldInputs; n < nInputs; ++n) AddInput();
+     for (int n = oldOutputs; n < nOutputs; ++n) AddOutput();
      Reset();
-     UpdatePluginInfoWithHost ();
      if (reconnect) Attach();
 
 }

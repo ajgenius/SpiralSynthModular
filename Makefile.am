@@ -200,3 +200,10 @@ check_LTLIBRARIES += tests/old-device.la
 tests_old_device_la_SOURCES = tests/old-device.cpp
 tests_old_device_la_LDFLAGS = -module -avoid-version -rpath /unused
 EXTRA_DIST += tests/fixtures/controller-v4.ssm
+
+if HAVE_JACK_CLIENT
+check_PROGRAMS += module-ports-test
+module_ports_test_SOURCES = tests/module-ports.cpp SpiralInfo.C
+module_ports_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir) -I$(srcdir)/Plugins/Devices/MixerPlugin -I$(srcdir)/Plugins/Devices/JackPlugin
+module_ports_test_LDADD = $(SpiralSynthModular_LDADD) $(JACK_LIBS) -ldl
+endif
