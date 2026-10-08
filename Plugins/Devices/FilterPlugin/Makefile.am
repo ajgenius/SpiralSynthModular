@@ -5,7 +5,7 @@ dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = FilterPlugin_DSP.la
 FilterPlugin_DSP_la_SOURCES = iir_filter.h iir_filter.C FilterPlugin.h FilterPlugin.C
 FilterPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
-FilterPlugin_DSP_la_LIBADD = $(top_builddir)/libspiralcore/libspiralcore.la -lm
+FilterPlugin_DSP_la_LIBADD = $(top_builddir)/libs/libspiralcore/libspiralcore.la -lm
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/FilterPlugin_DSP.la"
 uninstall-local:

@@ -5,7 +5,7 @@ dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = TranslatePlugin_DSP.la
 TranslatePlugin_DSP_la_SOURCES = TranslatePlugin.h TranslatePlugin.C
 TranslatePlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
-TranslatePlugin_DSP_la_LIBADD = $(top_builddir)/libspiralcore/libspiralcore.la -lm
+TranslatePlugin_DSP_la_LIBADD = $(top_builddir)/libs/libspiralcore/libspiralcore.la -lm
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/TranslatePlugin_DSP.la"
 uninstall-local:

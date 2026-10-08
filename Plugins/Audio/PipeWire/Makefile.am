@@ -9,13 +9,13 @@ plugin_LTLIBRARIES += PipeWire_Audio.la
 PipeWire_Audio_la_SOURCES = PipeWireClient.C PipeWireClient.h PipeWireModule.cpp
 PipeWire_Audio_la_CPPFLAGS = $(AM_CPPFLAGS)
 PipeWire_Audio_la_LDFLAGS = -module -avoid-version -shared -no-undefined
-PipeWire_Audio_la_LIBADD = $(top_builddir)/libspiralcore/libspiralcore.la $(PIPEWIRE_LIBS) -lpthread
+PipeWire_Audio_la_LIBADD = $(top_builddir)/libs/libspiralcore/libspiralcore.la $(PIPEWIRE_LIBS) -lpthread
 
 check_PROGRAMS = pipewire-client-test
 TESTS = tests/pipewire-client.sh
 pipewire_client_test_SOURCES = tests/pipewire-client.cpp PipeWireClient.C PipeWireClient.h
 pipewire_client_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
-pipewire_client_test_LDADD = $(top_builddir)/libspiralcore/libspiralcore.la $(PIPEWIRE_LIBS) -lpthread
+pipewire_client_test_LDADD = $(top_builddir)/libs/libspiralcore/libspiralcore.la $(PIPEWIRE_LIBS) -lpthread
 EXTRA_DIST = tests/pipewire-client.sh tests/pipewire-client.conf tests/pipewire-server.conf
 
 install-data-hook:

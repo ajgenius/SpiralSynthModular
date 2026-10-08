@@ -25,5 +25,5 @@ libSpiralWidgets_la_LIBADD = 				\
 				$(FLTK_LIBS)		\
 				 -lm	\
                 $(top_builddir)/GUI/Controls/libSpiralControls.la \
-                $(top_builddir)/libspiralcore/libspiralcore.la
+                $(top_builddir)/libs/libspiralcore/libspiralcore.la
 

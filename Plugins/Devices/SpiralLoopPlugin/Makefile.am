@@ -5,7 +5,7 @@ dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = SpiralLoopPlugin_DSP.la
 SpiralLoopPlugin_DSP_la_SOURCES = SpiralLoopPlugin.h SpiralLoopPlugin.C
 SpiralLoopPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
-SpiralLoopPlugin_DSP_la_LIBADD = $(top_builddir)/libspiralcore/libspiralcore.la -lm
+SpiralLoopPlugin_DSP_la_LIBADD = $(top_builddir)/libs/libspiralcore/libspiralcore.la -lm
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/SpiralLoopPlugin_DSP.la"
 uninstall-local:
