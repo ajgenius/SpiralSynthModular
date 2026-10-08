@@ -26,10 +26,10 @@ SUBDIRS += OSS
 MODULE_DIRS += OSS
 endif
 
-AM_CPPFLAGS = -I$(top_srcdir)/libspiralcore/include
+AM_CPPFLAGS = $(SPIRALCORE_CFLAGS)
 check_PROGRAMS = audio-modules-test
 TESTS = tests/modules.sh
 audio_modules_test_SOURCES = tests/modules.cpp
-audio_modules_test_LDADD = $(top_builddir)/libspiralcore/libspiralcore.la
+audio_modules_test_LDADD = $(top_builddir)/libs/libspiralcore/libspiralcore.la
 TESTS_ENVIRONMENT = AUDIO_MODULE_DIRS='$(MODULE_DIRS)' AUDIO_MODULE_SUFFIX='@plugin_module_ext@'
 EXTRA_DIST = tests/modules.sh

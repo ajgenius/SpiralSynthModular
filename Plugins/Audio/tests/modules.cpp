@@ -30,15 +30,15 @@ int main(int argc, char **argv)
 			AudioClient *first = registry->Create(names[n]);
 			AudioClient *second = registry->Create(names[n]);
 			assert(first && second && first != second);
-			assert(!PluginLoader::Get()->UnloadAll());
+			assert(!PluginManager::Get()->UnloadAll());
 
 			registry->Destroy(names[n], first);
 			assert(!second->IsAttached());
-			assert(!PluginLoader::Get()->UnloadAll());
+			assert(!PluginManager::Get()->UnloadAll());
 			registry->Destroy(names[n], second);
 		}
 
-		assert(PluginLoader::Get()->UnloadAll());
+		assert(PluginManager::Get()->UnloadAll());
 		for (size_t n = 0; n < names.size(); ++n)
 			assert(!registry->Find(names[n]));
 
@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 	}
 
 	AudioBackendRegistry::PackUpAndGoHome();
-	PluginLoader::PackUpAndGoHome();
+	PluginManager::PackUpAndGoHome();
 	std::printf("%lu native modules: independent instances, unload refusal and reload PASS\n",
 		static_cast<unsigned long>(names.size()));
 }

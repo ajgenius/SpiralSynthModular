@@ -1,0 +1,128 @@
+/*  SpiralSound
+ *  Copyleft (C) 2001 David Griffiths <dave@pawfal.org>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+*/
+#include "EnvFollowerPlugin.h"
+#include "SpiralIcon.xpm"
+
+using namespace std;
+
+#include <config.h>
+
+extern "C" {
+const char *SpiralPlugin_GetHostVersion()
+{
+	return PACKAGE_VERSION;
+}
+
+const char *SpiralPlugin_GetHostABI()
+{
+	return SSM_HOST_ABI;
+}
+
+SpiralPlugin* SpiralPlugin_CreateInstance()
+{
+	return new EnvFollowerPlugin;
+}
+
+int SpiralPlugin_GetType()
+{
+	return SPIRAL_PLUGIN_TYPE_DEVICE;
+}
+
+
+const char** SpiralPlugin_GetIcon()
+{
+	return SpiralIcon_xpm;
+}
+
+int SpiralPlugin_GetID()
+{
+	return 0x0013;
+}
+
+string SpiralPlugin_GetName()
+{
+	return "EnvFollower";
+}
+
+string SpiralPlugin_GetGroupName()
+{
+	return "Control";
+}
+}
+
+///////////////////////////////////////////////////////
+
+EnvFollowerPlugin::EnvFollowerPlugin() :
+m_Attack(0.5),
+m_Decay(0.5),
+m_Value(0)
+{
+	m_PluginInfo.Name="EnvFollower";
+	m_PluginInfo.Width=120;
+	m_PluginInfo.Height=80;
+	m_PluginInfo.NumInputs=1;
+	m_PluginInfo.NumOutputs=1;
+	m_PluginInfo.PortTips.push_back("Input");
+	m_PluginInfo.PortTips.push_back("Output");
+
+	m_AudioCH->Register("Attack",&m_Attack);
+	m_AudioCH->Register("Decay",&m_Decay);
+}
+
+EnvFollowerPlugin::~EnvFollowerPlugin()
+{
+}
+
+PluginInfo &EnvFollowerPlugin::Initialise(const HostInfo *Host)
+{
+	return SpiralPlugin::Initialise(Host);
+}
+
+
+
+void EnvFollowerPlugin::Reset()
+{
+	ResetPorts();
+	m_Value = 0;
+}
+
+void EnvFollowerPlugin::Execute()
+{
+	float Value;
+	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
+	{
+		Value = fabs(GetInput(0,n));
+		
+		if (Value>m_Value) m_Value+=(m_Attack*100);
+		else m_Value-=(m_Decay*100);
+		
+		SetOutput(0,n,m_Value);
+	}
+}
+
+void EnvFollowerPlugin::Describe(spiralcore::Description &d) 
+{
+	d.Value(m_Version).Separator(" ");
+	d.Value(m_Attack).Separator(" ").Value(m_Decay);
+}
+
+void EnvFollowerPlugin::Apply(spiralcore::Description::Reader &r)
+{
+	r.Value(m_Version);
+	r.Value(m_Attack).Value(m_Decay);
+}

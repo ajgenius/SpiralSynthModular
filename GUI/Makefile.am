@@ -1,4 +1,4 @@
-SUBDIRS=Widgets
+SUBDIRS=Controls Widgets
 
 EXTRA_DIST = \
 	options.xpm	\

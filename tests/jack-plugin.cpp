@@ -78,10 +78,15 @@ int main(int argc, char **argv)
 	const bool output=argc==3 && std::string(argv[2])=="out";
 	const bool half=argc==3 && std::string(argv[2])=="half";
 	alarm(20);
-	void *module=dlopen((std::string(argv[1])+(output ? "/dsp/OutputPlugin/OutputPlugin_DSP.so" : "/dsp/JackPlugin/JackPlugin_DSP.so")).c_str(),RTLD_NOW|RTLD_GLOBAL);
-	if (!module) { puts(dlerror()); return 1; }
+	// The Output device is built into the host; the Jack device is a module.
+	SpiralPlugin *(*create)()=OutputPlugin::Class().Create;
+	if (!output)
+	{
+		void *module=dlopen((std::string(argv[1])+"/dsp/JackPlugin/JackPlugin_DSP.so").c_str(),RTLD_NOW|RTLD_GLOBAL);
+		if (!module) { puts(dlerror()); return 1; }
 
-	SpiralPlugin *(*create)()=(SpiralPlugin *(*)())dlsym(module,"SpiralPlugin_CreateInstance");
+		create=(SpiralPlugin *(*)())dlsym(module,"SpiralPlugin_CreateInstance");
+	}
 	assert(create);
 	Capture capture;
 	spiralcore::AudioClientOptions options;

@@ -1,1 +1,1 @@
-SUBDIRS = DSP GUI Audio
+SUBDIRS = Devices Editors Audio Midi

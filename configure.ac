@@ -28,37 +28,6 @@ AM_PROG_LIBTOOL
 
 AC_PATH_TOOL([PKG_CONFIG], [pkg-config], [no])
 
-dnl JSON reader. Skip it when YAJL 2 is not installed.
-AC_ARG_VAR([YAJL_CFLAGS], [C preprocessor flags for YAJL 2])
-AC_ARG_VAR([YAJL_LIBS], [Linker flags for YAJL 2])
-have_yajl=no
-if test "$PKG_CONFIG" != no && $PKG_CONFIG --exists 'yajl >= 2.0'; then
-    if test -z "$YAJL_CFLAGS"; then
-        YAJL_CFLAGS=`$PKG_CONFIG --cflags yajl`
-        dnl Some YAJL .pc files advertise include/yajl, although their
-        dnl own headers include <yajl/yajl_common.h>.
-        yajl_includedir=`$PKG_CONFIG --variable=includedir yajl`
-        case "$yajl_includedir" in
-            */yajl) YAJL_CFLAGS="$YAJL_CFLAGS -I${yajl_includedir%/yajl}" ;;
-        esac
-    fi
-    test -n "$YAJL_LIBS" || YAJL_LIBS=`$PKG_CONFIG --libs yajl`
-fi
-if test "$have_yajl" = no; then
-    test -n "$YAJL_LIBS" || YAJL_LIBS="-lyajl"
-    ssm_saved_CPPFLAGS="$CPPFLAGS"
-    ssm_saved_LIBS="$LIBS"
-    CPPFLAGS="$CPPFLAGS $YAJL_CFLAGS"
-    LIBS="$YAJL_LIBS $LIBS"
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <yajl/yajl_parse.h>]], [[
-        yajl_handle parser = yajl_alloc(0, 0, 0);
-        yajl_complete_parse(parser);
-        yajl_free(parser);
-    ]])], [have_yajl=yes], [YAJL_CFLAGS=""; YAJL_LIBS=""])
-    CPPFLAGS="$ssm_saved_CPPFLAGS"
-    LIBS="$ssm_saved_LIBS"
-fi
-AM_CONDITIONAL([HAVE_YAJL], [test "$have_yajl" = yes])
 
 dnl ---- Optional loadable audio backends ----
 
@@ -182,6 +151,16 @@ AC_SUBST([CORE_AUDIO_LIBS])
 AM_CONDITIONAL([HAVE_CORE_AUDIO_CLIENT], [test "$have_coreaudio" = yes])
 AC_MSG_NOTICE([Native CoreAudio client: $have_coreaudio])
 
+dnl Where consumers find libspiralcore's headers. Groups inside the library
+dnl add their include directory here, nowhere else.
+SPIRALCORE_CFLAGS='-I$(top_srcdir)/libs/libspiralcore/include -I$(top_srcdir)/libs/libspiralcore/File/include -I$(top_srcdir)/libs/libspiralcore/Plugin/include -I$(top_srcdir)/libs/libspiralcore/Audio/include -I$(top_srcdir)/libs/libspiralcore/Midi/include'
+AC_SUBST([SPIRALCORE_CFLAGS])
+
+dnl Where editors and the host find the toolkit-side headers; groups under
+dnl GUI/ add their directory here, nowhere else.
+SPIRALGUI_CFLAGS='-I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/GUI/Controls'
+AC_SUBST([SPIRALGUI_CFLAGS])
+
 AC_ARG_ENABLE([pipewire],
     AS_HELP_STRING([--disable-pipewire], [Do not build the optional C++11 PipeWire audio module]),
     [enable_output_pipewire="$enableval"], [enable_output_pipewire="yes"])
@@ -228,6 +207,64 @@ if test "x$have_output_esd" = "xyes"; then
 fi
 AM_CONDITIONAL([HAVE_OUTPUT_ESD], [test "x$have_output_esd" = "xyes"])
 AC_MSG_NOTICE([ESD compatibility module: $have_output_esd])
+
+dnl MIDI APIs are linked only by their loadable backend. Each check is
+dnl pkg-config first, then the header and library the way the audio
+dnl modules find them.
+AC_ARG_ENABLE([rtmidi], AS_HELP_STRING([--disable-rtmidi], [Do not build the RtMidi MIDI backend]), [], [enable_rtmidi=yes])
+have_rtmidi=no
+RTMIDI_CFLAGS=""
+RTMIDI_LIBS=""
+if test "x$enable_rtmidi" != xno; then
+  PKG_CHECK_MODULES([RTMIDI], [rtmidi >= 4.0], [have_rtmidi=yes],
+    [AC_CHECK_HEADER([rtmidi/RtMidi.h],
+      [AC_CHECK_LIB([rtmidi], [main], [have_rtmidi=yes; RTMIDI_LIBS="-lrtmidi"
+         AC_DEFINE([HAVE_RTMIDI_SUBDIR_HEADER], [1], [RtMidi.h lives under rtmidi/])])])])
+fi
+AC_SUBST([RTMIDI_CFLAGS])
+AC_SUBST([RTMIDI_LIBS])
+AM_CONDITIONAL([HAVE_RTMIDI], [test "x$have_rtmidi" = xyes])
+AC_MSG_NOTICE([RtMidi MIDI module: $have_rtmidi])
+
+AC_ARG_ENABLE([alsa-midi], AS_HELP_STRING([--disable-alsa-midi], [Do not build native ALSA sequencer MIDI]), [], [enable_alsa_midi=yes])
+have_alsa_midi=no
+ALSA_MIDI_CFLAGS=""
+ALSA_MIDI_LIBS=""
+if test "x$enable_alsa_midi" != xno; then
+  PKG_CHECK_MODULES([ALSA_MIDI], [alsa], [have_alsa_midi=yes],
+    [AC_CHECK_HEADER([alsa/asoundlib.h],
+      [AC_CHECK_LIB([asound], [snd_seq_open], [have_alsa_midi=yes; ALSA_MIDI_LIBS="-lasound"])])])
+fi
+AC_SUBST([ALSA_MIDI_CFLAGS])
+AC_SUBST([ALSA_MIDI_LIBS])
+AM_CONDITIONAL([HAVE_ALSA_MIDI], [test "x$have_alsa_midi" = xyes])
+AC_MSG_NOTICE([ALSA sequencer MIDI module: $have_alsa_midi])
+
+AC_ARG_ENABLE([jack-midi], AS_HELP_STRING([--disable-jack-midi], [Do not build native JACK MIDI]), [], [enable_jack_midi=yes])
+have_jack_midi=no
+JACK_MIDI_CFLAGS=""
+JACK_MIDI_LIBS=""
+if test "x$enable_jack_midi" != xno; then
+  PKG_CHECK_MODULES([JACK_MIDI], [jack >= 0.109.0], [have_jack_midi=yes],
+    [AC_CHECK_HEADER([jack/midiport.h],
+      [AC_CHECK_LIB([jack], [jack_midi_get_event_count], [have_jack_midi=yes; JACK_MIDI_LIBS="-ljack"])])])
+fi
+AC_SUBST([JACK_MIDI_CFLAGS])
+AC_SUBST([JACK_MIDI_LIBS])
+AM_CONDITIONAL([HAVE_JACK_MIDI], [test "x$have_jack_midi" = xyes])
+AC_MSG_NOTICE([JACK MIDI module: $have_jack_midi])
+
+dnl The two native transports the tree has always carried: CoreMIDI on
+dnl Darwin, the raw OSS device where OSS audio is.
+have_coremidi=no
+case "$host_os" in
+    darwin*) have_coremidi=yes ;;
+esac
+AM_CONDITIONAL([HAVE_COREMIDI], [test "x$have_coremidi" = xyes])
+AC_MSG_NOTICE([CoreMIDI module: $have_coremidi])
+AM_CONDITIONAL([HAVE_OSS_MIDI], [test "x$have_output_oss" = xyes])
+AC_MSG_NOTICE([OSS MIDI module: $have_output_oss])
+
 
 default_output_audio_client="none"
 if test "x$have_output_portaudio" = "xyes"; then
@@ -287,7 +324,7 @@ CounterPlugin DelayPlugin DiskWriterPlugin DistributorPlugin EchoPlugin \
 EnvFollowerPlugin EnvelopePlugin FilterPlugin FlipflopPlugin FormantFilterPlugin \
 KeyboardPlugin LFOPlugin LogicPlugin MasherPlugin MatrixPlugin \
 MeterPlugin MidiPlugin MixSwitchPlugin MixerPlugin MoogFilterPlugin NoisePlugin \
-NoteSnapPlugin OperatorPlugin OscillatorPlugin OutputPlugin PoshSamplerPlugin \
+NoteSnapPlugin OperatorPlugin OscillatorPlugin PoshSamplerPlugin \
 RingModPlugin SVFilterPlugin SampleHoldPlugin ScopePlugin SeqSelectorPlugin \
 SmoothPlugin SpiralLoopPlugin SplitSwitchPlugin SplitterPlugin StereoMixerPlugin \
 StreamPlugin SwitchPlugin TranslatePlugin TransposePlugin TrigPlugin WaveShaperPlugin \
@@ -464,6 +501,23 @@ AC_SEARCH_LIBS([clock_gettime], [rt])
 AC_SEARCH_LIBS([pthread_create], [pthread], [],
     [AC_MSG_ERROR([POSIX threads are required])])
 
+dnl libSpumoni (ZIP/tar) needs zlib. The static archive is linked into libspiralcore.
+AC_CHECK_HEADER([zlib.h], [], [AC_MSG_ERROR([zlib.h is required to build libSpumoni])])
+AC_CHECK_LIB([z], [deflate], [ZLIB_LIBS="-lz"], [AC_MSG_ERROR([libz is required to build libSpumoni])])
+AC_SUBST([ZLIB_LIBS])
+
+dnl Pull every Spumoni object into libspiralcore. GNU ld and Apple ld
+dnl spell that differently.
+case "$host_os" in
+  darwin*)
+    SPUMONI_WHOLE_ARCHIVE='-Wl,-force_load,$(top_builddir)/libs/libSpumoni/libSpumoni.a'
+    ;;
+  *)
+    SPUMONI_WHOLE_ARCHIVE='-Wl,--whole-archive,$(top_builddir)/libs/libSpumoni/libSpumoni.a -Wl,--no-whole-archive'
+    ;;
+esac
+AC_SUBST([SPUMONI_WHOLE_ARCHIVE])
+
 dnl The existing Apple MIDI implementation uses these system frameworks.
 MIDI_LIBS=""
 case "$host_os" in
@@ -503,12 +557,13 @@ AC_SUBST(PLUGINLIST)
 
 dnl Modify the output files.
 AC_OUTPUT(
-JSON/Makefile
+libs/libSpumoni/Makefile
 SpiralSynthPluginLocation.h
 Makefile
 GUI/Makefile
+GUI/Controls/Makefile
 GUI/Widgets/Makefile
-libspiralcore/Makefile
+libs/libspiralcore/Makefile
 Plugins/Makefile
 Plugins/Audio/Makefile
 Plugins/Audio/PortAudio/Makefile
@@ -517,108 +572,112 @@ Plugins/Audio/ALSA/Makefile
 Plugins/Audio/OSS/Makefile
 Plugins/Audio/PipeWire/Makefile
 Plugins/Audio/ESD/Makefile
-Plugins/DSP/Makefile
-Plugins/GUI/Makefile
-Plugins/GUI/AmpPlugin/Makefile
-Plugins/GUI/AnotherFilterPlugin/Makefile
-Plugins/GUI/BeatMatchPlugin/Makefile
-Plugins/GUI/ControllerPlugin/Makefile
-Plugins/GUI/CounterPlugin/Makefile
-Plugins/GUI/DelayPlugin/Makefile
-Plugins/GUI/DiskWriterPlugin/Makefile
-Plugins/GUI/DistributorPlugin/Makefile
-Plugins/GUI/EchoPlugin/Makefile
-Plugins/GUI/EnvFollowerPlugin/Makefile
-Plugins/GUI/EnvelopePlugin/Makefile
-Plugins/GUI/FilterPlugin/Makefile
-Plugins/GUI/FlipflopPlugin/Makefile
-Plugins/GUI/FormantFilterPlugin/Makefile
-Plugins/GUI/JackPlugin/Makefile
-Plugins/GUI/KeyboardPlugin/Makefile
-Plugins/GUI/LADSPAPlugin/Makefile
-Plugins/GUI/LFOPlugin/Makefile
-Plugins/GUI/LogicPlugin/Makefile
-Plugins/GUI/MasherPlugin/Makefile
-Plugins/GUI/MatrixPlugin/Makefile
-Plugins/GUI/MeterPlugin/Makefile
-Plugins/GUI/MidiPlugin/Makefile
-Plugins/GUI/MixSwitchPlugin/Makefile
-Plugins/GUI/MixerPlugin/Makefile
-Plugins/GUI/MoogFilterPlugin/Makefile
-Plugins/GUI/NoisePlugin/Makefile
-Plugins/GUI/NoteSnapPlugin/Makefile
-Plugins/GUI/OperatorPlugin/Makefile
-Plugins/GUI/OscillatorPlugin/Makefile
-Plugins/GUI/OutputPlugin/Makefile
-Plugins/GUI/PoshSamplerPlugin/Makefile
-Plugins/GUI/RingModPlugin/Makefile
-Plugins/GUI/SVFilterPlugin/Makefile
-Plugins/GUI/ScopePlugin/Makefile
-Plugins/GUI/SeqSelectorPlugin/Makefile
-Plugins/GUI/SmoothPlugin/Makefile
-Plugins/GUI/SpiralLoopPlugin/Makefile
-Plugins/GUI/SplitSwitchPlugin/Makefile
-Plugins/GUI/SplitterPlugin/Makefile
-Plugins/GUI/StereoMixerPlugin/Makefile
-Plugins/GUI/StreamPlugin/Makefile
-Plugins/GUI/SwitchPlugin/Makefile
-Plugins/GUI/TranslatePlugin/Makefile
-Plugins/GUI/TransposePlugin/Makefile
-Plugins/GUI/TrigPlugin/Makefile
-Plugins/GUI/WaveShaperPlugin/Makefile
-Plugins/GUI/WaveTablePlugin/Makefile
-Plugins/GUI/XFadePlugin/Makefile
-Plugins/DSP/AmpPlugin/Makefile
-Plugins/DSP/AnotherFilterPlugin/Makefile
-Plugins/DSP/BeatMatchPlugin/Makefile
-Plugins/DSP/ControllerPlugin/Makefile
-Plugins/DSP/CounterPlugin/Makefile
-Plugins/DSP/DelayPlugin/Makefile
-Plugins/DSP/DiskWriterPlugin/Makefile
-Plugins/DSP/DistributorPlugin/Makefile
-Plugins/DSP/EchoPlugin/Makefile
-Plugins/DSP/EnvFollowerPlugin/Makefile
-Plugins/DSP/EnvelopePlugin/Makefile
-Plugins/DSP/FilterPlugin/Makefile
-Plugins/DSP/FlipflopPlugin/Makefile
-Plugins/DSP/FormantFilterPlugin/Makefile
-Plugins/DSP/JackPlugin/Makefile
-Plugins/DSP/KeyboardPlugin/Makefile
-Plugins/DSP/LADSPAPlugin/Makefile
-Plugins/DSP/LFOPlugin/Makefile
-Plugins/DSP/LogicPlugin/Makefile
-Plugins/DSP/MasherPlugin/Makefile
-Plugins/DSP/MatrixPlugin/Makefile
-Plugins/DSP/MeterPlugin/Makefile
-Plugins/DSP/MidiPlugin/Makefile
-Plugins/DSP/MixSwitchPlugin/Makefile
-Plugins/DSP/MixerPlugin/Makefile
-Plugins/DSP/MoogFilterPlugin/Makefile
+Plugins/Midi/Makefile
+Plugins/Midi/RtMidi/Makefile
+Plugins/Midi/ALSA/Makefile
+Plugins/Midi/JACK/Makefile
+Plugins/Midi/CoreMIDI/Makefile
+Plugins/Midi/OSS/Makefile
+Plugins/Devices/Makefile
+Plugins/Editors/Makefile
+Plugins/Editors/AmpPlugin/Makefile
+Plugins/Editors/AnotherFilterPlugin/Makefile
+Plugins/Editors/BeatMatchPlugin/Makefile
+Plugins/Editors/ControllerPlugin/Makefile
+Plugins/Editors/CounterPlugin/Makefile
+Plugins/Editors/DelayPlugin/Makefile
+Plugins/Editors/DiskWriterPlugin/Makefile
+Plugins/Editors/DistributorPlugin/Makefile
+Plugins/Editors/EchoPlugin/Makefile
+Plugins/Editors/EnvFollowerPlugin/Makefile
+Plugins/Editors/EnvelopePlugin/Makefile
+Plugins/Editors/FilterPlugin/Makefile
+Plugins/Editors/FlipflopPlugin/Makefile
+Plugins/Editors/FormantFilterPlugin/Makefile
+Plugins/Editors/JackPlugin/Makefile
+Plugins/Editors/KeyboardPlugin/Makefile
+Plugins/Editors/LADSPAPlugin/Makefile
+Plugins/Editors/LFOPlugin/Makefile
+Plugins/Editors/LogicPlugin/Makefile
+Plugins/Editors/MasherPlugin/Makefile
+Plugins/Editors/MatrixPlugin/Makefile
+Plugins/Editors/MeterPlugin/Makefile
+Plugins/Editors/MidiPlugin/Makefile
+Plugins/Editors/MixSwitchPlugin/Makefile
+Plugins/Editors/MixerPlugin/Makefile
+Plugins/Editors/MoogFilterPlugin/Makefile
+Plugins/Editors/NoisePlugin/Makefile
+Plugins/Editors/NoteSnapPlugin/Makefile
+Plugins/Editors/OperatorPlugin/Makefile
+Plugins/Editors/OscillatorPlugin/Makefile
+Plugins/Editors/PoshSamplerPlugin/Makefile
+Plugins/Editors/RingModPlugin/Makefile
+Plugins/Editors/SVFilterPlugin/Makefile
+Plugins/Editors/ScopePlugin/Makefile
+Plugins/Editors/SeqSelectorPlugin/Makefile
+Plugins/Editors/SmoothPlugin/Makefile
+Plugins/Editors/SpiralLoopPlugin/Makefile
+Plugins/Editors/SplitSwitchPlugin/Makefile
+Plugins/Editors/SplitterPlugin/Makefile
+Plugins/Editors/StereoMixerPlugin/Makefile
+Plugins/Editors/StreamPlugin/Makefile
+Plugins/Editors/SwitchPlugin/Makefile
+Plugins/Editors/TranslatePlugin/Makefile
+Plugins/Editors/TransposePlugin/Makefile
+Plugins/Editors/TrigPlugin/Makefile
+Plugins/Editors/WaveShaperPlugin/Makefile
+Plugins/Editors/WaveTablePlugin/Makefile
+Plugins/Editors/XFadePlugin/Makefile
+Plugins/Devices/AmpPlugin/Makefile
+Plugins/Devices/AnotherFilterPlugin/Makefile
+Plugins/Devices/BeatMatchPlugin/Makefile
+Plugins/Devices/ControllerPlugin/Makefile
+Plugins/Devices/CounterPlugin/Makefile
+Plugins/Devices/DelayPlugin/Makefile
+Plugins/Devices/DiskWriterPlugin/Makefile
+Plugins/Devices/DistributorPlugin/Makefile
+Plugins/Devices/EchoPlugin/Makefile
+Plugins/Devices/EnvFollowerPlugin/Makefile
+Plugins/Devices/EnvelopePlugin/Makefile
+Plugins/Devices/FilterPlugin/Makefile
+Plugins/Devices/FlipflopPlugin/Makefile
+Plugins/Devices/FormantFilterPlugin/Makefile
+Plugins/Devices/JackPlugin/Makefile
+Plugins/Devices/KeyboardPlugin/Makefile
+Plugins/Devices/LADSPAPlugin/Makefile
+Plugins/Devices/LFOPlugin/Makefile
+Plugins/Devices/LogicPlugin/Makefile
+Plugins/Devices/MasherPlugin/Makefile
+Plugins/Devices/MatrixPlugin/Makefile
+Plugins/Devices/MeterPlugin/Makefile
+Plugins/Devices/MidiPlugin/Makefile
+Plugins/Devices/MixSwitchPlugin/Makefile
+Plugins/Devices/MixerPlugin/Makefile
+Plugins/Devices/MoogFilterPlugin/Makefile
 Plugins/Broken/MousePlugin/Makefile
-Plugins/DSP/NoisePlugin/Makefile
-Plugins/DSP/NoteSnapPlugin/Makefile
-Plugins/DSP/OperatorPlugin/Makefile
-Plugins/DSP/OscillatorPlugin/Makefile
-Plugins/DSP/OutputPlugin/Makefile
-Plugins/DSP/PoshSamplerPlugin/Makefile
-Plugins/DSP/RingModPlugin/Makefile
-Plugins/DSP/SVFilterPlugin/Makefile
-Plugins/DSP/SampleHoldPlugin/Makefile
-Plugins/DSP/ScopePlugin/Makefile
-Plugins/DSP/SeqSelectorPlugin/Makefile
-Plugins/DSP/SmoothPlugin/Makefile
-Plugins/DSP/SpiralLoopPlugin/Makefile
-Plugins/DSP/SplitSwitchPlugin/Makefile
-Plugins/DSP/SplitterPlugin/Makefile
-Plugins/DSP/StereoMixerPlugin/Makefile
-Plugins/DSP/StreamPlugin/Makefile
-Plugins/DSP/SwitchPlugin/Makefile
-Plugins/DSP/TranslatePlugin/Makefile
-Plugins/DSP/TransposePlugin/Makefile
-Plugins/DSP/TrigPlugin/Makefile
-Plugins/DSP/WaveShaperPlugin/Makefile
-Plugins/DSP/WaveTablePlugin/Makefile
-Plugins/DSP/XFadePlugin/Makefile
+Plugins/Devices/NoisePlugin/Makefile
+Plugins/Devices/NoteSnapPlugin/Makefile
+Plugins/Devices/OperatorPlugin/Makefile
+Plugins/Devices/OscillatorPlugin/Makefile
+Plugins/Devices/PoshSamplerPlugin/Makefile
+Plugins/Devices/RingModPlugin/Makefile
+Plugins/Devices/SVFilterPlugin/Makefile
+Plugins/Devices/SampleHoldPlugin/Makefile
+Plugins/Devices/ScopePlugin/Makefile
+Plugins/Devices/SeqSelectorPlugin/Makefile
+Plugins/Devices/SmoothPlugin/Makefile
+Plugins/Devices/SpiralLoopPlugin/Makefile
+Plugins/Devices/SplitSwitchPlugin/Makefile
+Plugins/Devices/SplitterPlugin/Makefile
+Plugins/Devices/StereoMixerPlugin/Makefile
+Plugins/Devices/StreamPlugin/Makefile
+Plugins/Devices/SwitchPlugin/Makefile
+Plugins/Devices/TranslatePlugin/Makefile
+Plugins/Devices/TransposePlugin/Makefile
+Plugins/Devices/TrigPlugin/Makefile
+Plugins/Devices/WaveShaperPlugin/Makefile
+Plugins/Devices/WaveTablePlugin/Makefile
+Plugins/Devices/XFadePlugin/Makefile
 )
 
 echo -e "\nConfig options:"
