@@ -14,6 +14,7 @@ SpiralSynthModular_LDADD = 							\
 	$(FLTK_LIBS) $(MIDI_LIBS)					\
 	-lm				\
 	$(top_builddir)/GUI/Widgets/libSpiralWidgets.la \
+	$(top_builddir)/GUI/Controls/libSpiralControls.la \
                 $(top_builddir)/libs/libspiralcore/libspiralcore.la
 
 
