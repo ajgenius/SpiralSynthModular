@@ -1,4 +1,4 @@
-AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir)
+AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) $(LADSPA_CFLAGS) -I$(top_srcdir)
 EXTRA_DIST = SpiralIcon.xpm
 plugindir = @PLUGINDIR@/dsp/LADSPAPlugin
 dist_plugin_DATA = info.json

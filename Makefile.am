@@ -19,6 +19,7 @@ SpiralSynthModular_LDADD = 							\
 
 
 EXTRA_DIST = autogen.sh build-aux/macos-bundle.sh GUI/SpiralSynthModular.icns Examples
+EXTRA_DIST += third-party/ladspa
 EXTRA_DIST += tools/native-audio/README.md tools/native-audio/build-macos.sh \
 	tools/native-audio/patches/jack2-coreaudio-latency.patch \
 	tools/native-audio/patches/portaudio-coreaudio-latency.patch
@@ -185,12 +186,14 @@ check_LTLIBRARIES =
 if BUILD_LADSPA
 check_PROGRAMS += ladspa-reset-test
 ladspa_reset_test_SOURCES = tests/ladspa-reset.cpp Plugins/Devices/LADSPAPlugin/LADSPAPlugin.C Plugins/Devices/LADSPAPlugin/LADSPAInfo.C
-ladspa_reset_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/Devices/LADSPAPlugin
+ladspa_reset_test_CPPFLAGS = $(AM_CPPFLAGS) $(LADSPA_CFLAGS) -I$(srcdir)/Plugins/Devices/LADSPAPlugin
 ladspa_reset_test_LDADD = libs/libspiralcore/libspiralcore.la $(LRDFLIBS)
 check_LTLIBRARIES += tests/ladspa/ports.la
+tests_ladspa_ports_la_CPPFLAGS = $(AM_CPPFLAGS) $(LADSPA_CFLAGS)
 tests_ladspa_ports_la_SOURCES = tests/ladspa/ports.cpp
 tests_ladspa_ports_la_LDFLAGS = -module -avoid-version -rpath /unused
 TESTS_ENVIRONMENT = LADSPA_PATH='$(abs_builddir)/tests/ladspa/.libs'
+
 endif
 canvas_menu_test_SOURCES = tests/canvas-menu.cpp SpiralInfo.C
 canvas_menu_test_LDADD = $(SpiralSynthModular_LDADD)

@@ -371,7 +371,13 @@ fi
 AC_SUBST([JACK_LIBS])
 
 dnl Check whether LADSPA is present or has been disabled
+dnl LADSPA is a header and a dlopen convention, with no library to link, so a
+dnl host missing ladspa.h is no reason to drop the plugin: the bundled copy of
+dnl the frozen 1.1 header is used instead. That keeps the plugin list the same
+dnl everywhere, and lets a patch that names LADSPA devices keep their state on
+dnl a machine that has no LADSPA plugins installed.
 ladspa_message=""
+LADSPA_CFLAGS=""
 AC_ARG_ENABLE(
     ladspa,
     [  --disable-ladspa        Do not build LADSPAPlugin],
@@ -379,11 +385,15 @@ AC_ARG_ENABLE(
     [build_ladspa="y"]
 )
 if test "$build_ladspa" = "y"; then
-   AC_CHECK_HEADER(ladspa.h, [build_ladspa="y"], [build_ladspa="n" ; ladspa_message="No ladspa.h found"])
+   AC_CHECK_HEADER(ladspa.h,
+      [ladspa_message="system ladspa.h"],
+      [LADSPA_CFLAGS="-I\$(top_srcdir)/third-party/ladspa"
+       ladspa_message="bundled ladspa.h (no system header)"])
 fi
 if test "$build_ladspa" = "y" ; then
    PLUGINLIST="LADSPAPlugin $PLUGINLIST"
 fi
+AC_SUBST(LADSPA_CFLAGS)
 
 AM_CONDITIONAL([BUILD_LADSPA], [test "$build_ladspa" = "y"])
 
@@ -689,7 +699,7 @@ else
 fi
 printf '%35s - ' "LADSPA support (via LADSPAPlugin)"
 if test "$build_ladspa" = "y"; then
-   printf 'Enabled\n'
+   printf 'Enabled - %s\n' "$ladspa_message"
 else
    printf 'Disabled - %s\n' "$ladspa_message"
 fi
