@@ -139,6 +139,7 @@ public:
 	static void EnablePaste(Fl_Canvas *data) { data->m_CanPaste=true; }
 
 	bool HaveSelection() {return m_HaveSelection; }
+	bool CanPaste() {return m_CanPaste; }
 	CanvasGroup Selection() { return m_Selection; }
 
 	static void SetDeviceCallbacks(Fl_DeviceGUI *device, Fl_Canvas *data)

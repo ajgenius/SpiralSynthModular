@@ -178,7 +178,12 @@ m_SysMenu(NULL),
 m_Topbar(NULL),
 m_Canvas(NULL),
 m_CanvasScroll(NULL),
-m_TopWindow(NULL)
+m_TopWindow(NULL),
+m_SavePointCount(0),
+m_MenuStateKnown(false),
+m_MenuSelection(false),
+m_MenuPaste(false),
+m_MenuSavePoints(false)
 {
 	pthread_mutex_init(&m_CycleLock, NULL);
 	/* Shared Audio State Information  */
@@ -1195,6 +1200,54 @@ template<class Bar> static void RelabelItem(Bar *bar, const string &oldLabel, co
 	}
 }
 
+// Fl_Sys_Menu_Bar tracks the Mac menu through mode(), so the flag goes
+// through the bar rather than straight onto the item.
+template<class Bar> static void EnableItem(Bar *bar, const string &label, bool on)
+{
+	for (int item = 0; item < bar->size(); item++)
+	{
+		if (bar->text (item) != NULL && label == bar->text (item))
+		{
+			const int flags = bar->mode (item);
+			bar->mode (item, on ? (flags & ~FL_MENU_INACTIVE)
+			                    : (flags | FL_MENU_INACTIVE));
+			break;
+		}
+	}
+}
+
+void SynthModular::MenuEnable(const string &label, bool on)
+{
+	if (m_MainMenu) EnableItem(m_MainMenu, label, on);
+	if (m_SysMenu) EnableItem(m_SysMenu, label, on);
+}
+
+// Cut, copy and delete need a selection, paste needs something copied, and
+// browsing save points needs a project that has some. The canvas already
+// greys these on its own right click menu; the menu bar said nothing.
+void SynthModular::RefreshMenuState()
+{
+	if (!m_Canvas) return;
+
+	const bool selection = m_Canvas->HaveSelection();
+	const bool paste = m_Canvas->CanPaste();
+	const bool points = m_SavePointCount > 0;
+
+	if (m_MenuStateKnown && selection == m_MenuSelection &&
+	    paste == m_MenuPaste && points == m_MenuSavePoints) return;
+
+	m_MenuStateKnown = true;
+	m_MenuSelection = selection;
+	m_MenuPaste = paste;
+	m_MenuSavePoints = points;
+
+	MenuEnable("Cut", selection);
+	MenuEnable("Copy", selection);
+	MenuEnable("Delete", selection);
+	MenuEnable("Paste", paste);
+	MenuEnable("Save Points", points);
+}
+
 // The placeholders held the Plugins menu's position until the plugins arrived.
 void SynthModular::MenuDropPlaceholders()
 {
@@ -1611,6 +1664,7 @@ inline void SynthModular::cb_New_i (Fl_Widget *o, void *v) {
           return;
        m_TopWindow->label (TITLEBAR.c_str());
        ClearUp();
+       m_SavePointCount = 0;
        m_FilePath.clear();
        m_BranchID.clear();
 }
@@ -2082,6 +2136,7 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 		packaged.str(project->Source().Bytes());
 		stream = &packaged;
 		branch = project->GetIdentity().ActiveBranchID;
+		m_SavePointCount = project->GetIdentity().Branches.size();
 		sidecars = project->SidecarDirectory();
 	}
 	else
@@ -2091,6 +2146,7 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 			return;
 		inf.open(fn, std::ios::in);
 		stream = &inf;
+		m_SavePointCount = 0;
 	}
 
 	m_FilePath=fn;
@@ -2224,6 +2280,7 @@ void SynthModular::SaveBranch(bool ask)
 	}
 
 	m_BranchID = project.GetIdentity().ActiveBranchID;
+	m_SavePointCount = project.GetIdentity().Branches.size();
 	TITLEBAR = LABEL + " " + m_FilePath;
 	m_TopWindow->label(TITLEBAR.c_str());
 }

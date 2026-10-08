@@ -200,6 +200,9 @@ int main(int argc, char **argv)
 	{
     	if (!Fl::check()) break;    	
 		synth->UpdatePluginGUIs(); // deletes any if necc
+		// Menu state is GUI state. Update() runs on the audio thread, and
+		// the macOS menu bar may only be touched from the main thread.
+		synth->RefreshMenuState();
 		usleep(10000);
 		gui_watchdog_check=1;
   	}

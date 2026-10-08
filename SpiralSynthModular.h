@@ -142,6 +142,11 @@ public:
 	bool IsFrozen() { return m_Frozen; }
 
 	iostream &StreamPatchIn(iostream &s, bool paste, bool merge, const string &sidecars = string());
+	// Menu items that are only worth offering when there is something for
+	// them to act on. Called from the GUI loop on the main thread, and it
+	// compares against what it last set rather than rewriting the menus
+	// every pass.
+	void RefreshMenuState();
 private:
 
 
@@ -163,6 +168,8 @@ private:
         int m_NextID;
 	static bool m_CallbackUpdateMode;
 	string m_FilePath, m_MergeFilePath, m_BranchID;
+	unsigned m_SavePointCount;
+	bool m_MenuStateKnown, m_MenuSelection, m_MenuPaste, m_MenuSavePoints;
 
 	// Main GUI stuff
 	void CreateGUI (int xoff=0, int yoff=0, const char *name="");
@@ -174,6 +181,7 @@ private:
 	// the two cannot share one - and every menu edit goes to both.
 	void MenuAdd(const string &path, Fl_Callback *cb, void *data, int flags);
 	void MenuRelabel(const string &oldLabel, const string &newLabel);
+	void MenuEnable(const string &label, bool on);
 	void MenuDropPlaceholders();
         Fl_Menu_Bar *m_MainMenu;
         // Created on macOS only: elsewhere Fl_Sys_Menu_Bar is another in-window
