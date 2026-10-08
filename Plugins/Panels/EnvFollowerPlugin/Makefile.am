@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/EnvFollowerPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/EnvFollowerPlugin
+plugindir = @PLUGINDIR@/panels/EnvFollowerPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = EnvFollowerPlugin_GUI.la
 EnvFollowerPlugin_GUI_la_SOURCES = EnvFollowerPluginGUI.cpp EnvFollowerPluginGUI.h

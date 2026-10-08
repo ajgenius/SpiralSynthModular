@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/MixSwitchPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/MixSwitchPlugin
+plugindir = @PLUGINDIR@/panels/MixSwitchPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = MixSwitchPlugin_GUI.la
 MixSwitchPlugin_GUI_la_SOURCES = MixSwitchPluginGUI.cpp MixSwitchPluginGUI.h

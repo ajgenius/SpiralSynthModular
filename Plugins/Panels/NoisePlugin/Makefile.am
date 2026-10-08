@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/NoisePlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/NoisePlugin
+plugindir = @PLUGINDIR@/panels/NoisePlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = NoisePlugin_GUI.la
 NoisePlugin_GUI_la_SOURCES = NoisePluginGUI.cpp NoisePluginGUI.h

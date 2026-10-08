@@ -32,7 +32,7 @@ namespace spiralcore
    class it names by ID. It sees the device only as a SpiralPlugin and its
    ChannelHandler, so the device need not be the native DSP module of the
    same name, and several editors (toolkits, variants) may name one
-   device. The modules under gui/ are FLTK editors. */
+   device. The modules under panels/ are FLTK editors. */
 struct EditorClass
 {
 	int   ForDevice;
@@ -49,7 +49,7 @@ struct EditorClass
 
 //////////////////////////////////////////////////////////
 
-/* The editor kind: modules are <plugins>/gui/<X>/<X>_GUI<ext>, the entry
+/* The editor kind: modules are <plugins>/panels/<X>/<X>_GUI<ext>, the entry
    is the editor factory, and the device ID beside it is the old export
    set, read back through the module until modules carry a descriptor. */
 class EditorClassRegistry : public PluginKind
@@ -59,7 +59,7 @@ public:
 	static void         PackUpAndGoHome();
 
 	virtual const char *Name() const { return "editor"; }
-	virtual const char *Subdirectory() const { return "gui"; }
+	virtual const char *Subdirectory() const { return "panels"; }
 	virtual const char *Suffix() const { return "_GUI"; }
 	virtual const char *EntrySymbol() const { return "SpiralPlugin_CreateGUI"; }
 	virtual bool        Accept(void *entry, const std::string &path);

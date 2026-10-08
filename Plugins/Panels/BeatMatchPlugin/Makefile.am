@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/BeatMatchPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/BeatMatchPlugin
+plugindir = @PLUGINDIR@/panels/BeatMatchPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = BeatMatchPlugin_GUI.la
 BeatMatchPlugin_GUI_la_SOURCES = BeatMatchPluginGUI.cpp BeatMatchPluginGUI.h

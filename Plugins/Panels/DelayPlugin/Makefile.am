@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/DelayPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/DelayPlugin
+plugindir = @PLUGINDIR@/panels/DelayPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = DelayPlugin_GUI.la
 DelayPlugin_GUI_la_SOURCES = DelayPluginGUI.cpp DelayPluginGUI.h

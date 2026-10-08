@@ -766,7 +766,7 @@ void SynthModular::LoadPlugins (string pluginPath) {
      // Built-in devices first: a module of the same ID is not loaded.
      spiralcore::DeviceClassRegistry::Get()->Register(OutputPlugin::Class());
      spiralcore::EditorClassRegistry::Get()->Register(OutputPluginGUI::Class());
-     // Devices under dsp/, editors under gui/; an editor needs no device
+     // Devices under dsp/, panels under panels/; a panel needs no device
      // module to load, it pairs by ID when a device is made.
      spiralcore::DeviceClassRegistry::Get()->LoadModules(PluginRoot);
      spiralcore::EditorClassRegistry::Get()->LoadModules(PluginRoot);

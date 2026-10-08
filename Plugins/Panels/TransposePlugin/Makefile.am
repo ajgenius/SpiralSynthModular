@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/TransposePlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/TransposePlugin
+plugindir = @PLUGINDIR@/panels/TransposePlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = TransposePlugin_GUI.la
 TransposePlugin_GUI_la_SOURCES = TransposePluginGUI.cpp TransposePluginGUI.h

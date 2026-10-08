@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/LogicPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/LogicPlugin
+plugindir = @PLUGINDIR@/panels/LogicPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = LogicPlugin_GUI.la
 LogicPlugin_GUI_la_SOURCES = LogicPluginGUI.cpp LogicPluginGUI.h

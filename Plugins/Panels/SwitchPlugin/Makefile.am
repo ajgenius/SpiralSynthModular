@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/SwitchPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/SwitchPlugin
+plugindir = @PLUGINDIR@/panels/SwitchPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = SwitchPlugin_GUI.la
 SwitchPlugin_GUI_la_SOURCES = SwitchPluginGUI.cpp SwitchPluginGUI.h

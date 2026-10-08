@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/ControllerPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/ControllerPlugin
+plugindir = @PLUGINDIR@/panels/ControllerPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = ControllerPlugin_GUI.la
 ControllerPlugin_GUI_la_SOURCES = ControllerPluginGUI.cpp ControllerPluginGUI.h

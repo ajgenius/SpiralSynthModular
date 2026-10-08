@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 
 	std::string root=argv[1];
 	// No DSP module loaded yet: an editor must not need one to link.
-	void *ui=dlopen((root + "/gui/WaveShaperPlugin/WaveShaperPlugin_GUI.so").c_str(), RTLD_NOW | RTLD_GLOBAL);
+	void *ui=dlopen((root + "/panels/WaveShaperPlugin/WaveShaperPlugin_GUI.so").c_str(), RTLD_NOW | RTLD_GLOBAL);
 	if (!ui) { puts(dlerror()); return 1; }
 	puts("GUI module loads with no DSP module present");
 

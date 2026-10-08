@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/WaveTablePlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/WaveTablePlugin
+plugindir = @PLUGINDIR@/panels/WaveTablePlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = WaveTablePlugin_GUI.la
 WaveTablePlugin_GUI_la_SOURCES = WaveTablePluginGUI.cpp WaveTablePluginGUI.h

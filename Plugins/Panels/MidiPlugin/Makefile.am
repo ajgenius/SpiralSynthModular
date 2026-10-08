@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/MidiPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/MidiPlugin
+plugindir = @PLUGINDIR@/panels/MidiPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = MidiPlugin_GUI.la
 MidiPlugin_GUI_la_SOURCES = MidiPluginGUI.cpp MidiPluginGUI.h

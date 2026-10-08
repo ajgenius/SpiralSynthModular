@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/MoogFilterPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/MoogFilterPlugin
+plugindir = @PLUGINDIR@/panels/MoogFilterPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = MoogFilterPlugin_GUI.la
 MoogFilterPlugin_GUI_la_SOURCES = MoogFilterPluginGUI.cpp MoogFilterPluginGUI.h

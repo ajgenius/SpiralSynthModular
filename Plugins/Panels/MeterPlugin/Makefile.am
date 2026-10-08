@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/MeterPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/MeterPlugin
+plugindir = @PLUGINDIR@/panels/MeterPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = MeterPlugin_GUI.la
 MeterPlugin_GUI_la_SOURCES = MeterPluginGUI.cpp MeterPluginGUI.h

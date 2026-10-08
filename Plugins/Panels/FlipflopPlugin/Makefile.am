@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/FlipflopPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/FlipflopPlugin
+plugindir = @PLUGINDIR@/panels/FlipflopPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = FlipflopPlugin_GUI.la
 FlipflopPlugin_GUI_la_SOURCES = FlipflopPluginGUI.cpp FlipflopPluginGUI.h

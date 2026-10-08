@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/OscillatorPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/OscillatorPlugin
+plugindir = @PLUGINDIR@/panels/OscillatorPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = OscillatorPlugin_GUI.la
 OscillatorPlugin_GUI_la_SOURCES = OscillatorPluginGUI.cpp OscillatorPluginGUI.h

@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/SVFilterPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/SVFilterPlugin
+plugindir = @PLUGINDIR@/panels/SVFilterPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = SVFilterPlugin_GUI.la
 SVFilterPlugin_GUI_la_SOURCES = SVFilterPluginGUI.cpp SVFilterPluginGUI.h

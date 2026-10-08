@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/FilterPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/FilterPlugin
+plugindir = @PLUGINDIR@/panels/FilterPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = FilterPlugin_GUI.la
 FilterPlugin_GUI_la_SOURCES = FilterPluginGUI.cpp FilterPluginGUI.h

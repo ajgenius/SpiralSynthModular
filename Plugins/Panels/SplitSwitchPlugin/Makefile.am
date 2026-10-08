@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/SplitSwitchPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/SplitSwitchPlugin
+plugindir = @PLUGINDIR@/panels/SplitSwitchPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = SplitSwitchPlugin_GUI.la
 SplitSwitchPlugin_GUI_la_SOURCES = SplitSwitchPluginGUI.cpp SplitSwitchPluginGUI.h

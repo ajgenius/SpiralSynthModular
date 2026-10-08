@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/LFOPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/LFOPlugin
+plugindir = @PLUGINDIR@/panels/LFOPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = LFOPlugin_GUI.la
 LFOPlugin_GUI_la_SOURCES = LFOPluginGUI.cpp LFOPluginGUI.h

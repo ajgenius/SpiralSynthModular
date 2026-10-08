@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/AmpPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/AmpPlugin
+plugindir = @PLUGINDIR@/panels/AmpPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = AmpPlugin_GUI.la
 AmpPlugin_GUI_la_SOURCES = AmpPluginGUI.cpp AmpPluginGUI.h

@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 	void *dsp=dlopen((root + "/dsp/JackPlugin/JackPlugin_DSP.so").c_str(), RTLD_NOW | RTLD_GLOBAL);
 	if (!dsp) { puts(dlerror()); return 1; }
 
-	void *ui=dlopen((root + "/gui/JackPlugin/JackPlugin_GUI.so").c_str(), RTLD_NOW | RTLD_GLOBAL);
+	void *ui=dlopen((root + "/panels/JackPlugin/JackPlugin_GUI.so").c_str(), RTLD_NOW | RTLD_GLOBAL);
 	if (!ui) { puts(dlerror()); return 1; }
 
 	SpiralPlugin *(*create)()=(SpiralPlugin *(*)())dlsym(dsp, "SpiralPlugin_CreateInstance");

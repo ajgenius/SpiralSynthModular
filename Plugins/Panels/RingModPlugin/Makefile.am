@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/RingModPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/RingModPlugin
+plugindir = @PLUGINDIR@/panels/RingModPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = RingModPlugin_GUI.la
 RingModPlugin_GUI_la_SOURCES = RingModPluginGUI.cpp RingModPluginGUI.h

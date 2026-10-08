@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/WaveShaperPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/WaveShaperPlugin
+plugindir = @PLUGINDIR@/panels/WaveShaperPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = WaveShaperPlugin_GUI.la
 WaveShaperPlugin_GUI_la_SOURCES = WaveShaperPluginGUI.cpp WaveShaperPluginGUI.h

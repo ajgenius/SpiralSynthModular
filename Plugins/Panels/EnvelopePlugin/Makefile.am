@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/EnvelopePlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/EnvelopePlugin
+plugindir = @PLUGINDIR@/panels/EnvelopePlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = EnvelopePlugin_GUI.la
 EnvelopePlugin_GUI_la_SOURCES = EnvelopePluginGUI.cpp EnvelopePluginGUI.h

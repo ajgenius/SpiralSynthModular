@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/TranslatePlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/TranslatePlugin
+plugindir = @PLUGINDIR@/panels/TranslatePlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = TranslatePlugin_GUI.la
 TranslatePlugin_GUI_la_SOURCES = TranslatePluginGUI.cpp TranslatePluginGUI.h

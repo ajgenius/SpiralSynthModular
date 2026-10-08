@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/StreamPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/StreamPlugin
+plugindir = @PLUGINDIR@/panels/StreamPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = StreamPlugin_GUI.la
 StreamPlugin_GUI_la_SOURCES = StreamPluginGUI.cpp StreamPluginGUI.h

@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/FormantFilterPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/FormantFilterPlugin
+plugindir = @PLUGINDIR@/panels/FormantFilterPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = FormantFilterPlugin_GUI.la
 FormantFilterPlugin_GUI_la_SOURCES = FormantFilterPluginGUI.cpp FormantFilterPluginGUI.h

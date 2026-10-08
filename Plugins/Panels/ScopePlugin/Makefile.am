@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/ScopePlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/ScopePlugin
+plugindir = @PLUGINDIR@/panels/ScopePlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = ScopePlugin_GUI.la
 ScopePlugin_GUI_la_SOURCES = ScopePluginGUI.cpp ScopePluginGUI.h

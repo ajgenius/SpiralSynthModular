@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/XFadePlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/XFadePlugin
+plugindir = @PLUGINDIR@/panels/XFadePlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = XFadePlugin_GUI.la
 XFadePlugin_GUI_la_SOURCES = XFadePluginGUI.cpp XFadePluginGUI.h

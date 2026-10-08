@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/SplitterPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/SplitterPlugin
+plugindir = @PLUGINDIR@/panels/SplitterPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = SplitterPlugin_GUI.la
 SplitterPlugin_GUI_la_SOURCES = SplitterPluginGUI.cpp SplitterPluginGUI.h

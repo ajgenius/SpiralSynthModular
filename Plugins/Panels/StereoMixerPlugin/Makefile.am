@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/StereoMixerPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/StereoMixerPlugin
+plugindir = @PLUGINDIR@/panels/StereoMixerPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = StereoMixerPlugin_GUI.la
 StereoMixerPlugin_GUI_la_SOURCES = StereoMixerPluginGUI.cpp StereoMixerPluginGUI.h

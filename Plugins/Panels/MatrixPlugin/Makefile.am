@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/MatrixPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/MatrixPlugin
+plugindir = @PLUGINDIR@/panels/MatrixPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = MatrixPlugin_GUI.la
 MatrixPlugin_GUI_la_SOURCES = MatrixPluginGUI.cpp MatrixPluginGUI.h

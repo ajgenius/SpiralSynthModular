@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/CounterPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/CounterPlugin
+plugindir = @PLUGINDIR@/panels/CounterPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = CounterPlugin_GUI.la
 CounterPlugin_GUI_la_SOURCES = CounterPluginGUI.cpp CounterPluginGUI.h

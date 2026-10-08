@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/DiskWriterPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/DiskWriterPlugin
+plugindir = @PLUGINDIR@/panels/DiskWriterPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = DiskWriterPlugin_GUI.la
 DiskWriterPlugin_GUI_la_SOURCES = DiskWriterPluginGUI.cpp DiskWriterPluginGUI.h

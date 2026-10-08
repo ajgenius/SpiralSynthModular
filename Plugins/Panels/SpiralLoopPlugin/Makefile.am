@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/SpiralLoopPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/SpiralLoopPlugin
+plugindir = @PLUGINDIR@/panels/SpiralLoopPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = SpiralLoopPlugin_GUI.la
 SpiralLoopPlugin_GUI_la_SOURCES = SpiralLoopPluginGUI.cpp SpiralLoopPluginGUI.h

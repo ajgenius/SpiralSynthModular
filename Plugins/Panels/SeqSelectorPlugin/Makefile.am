@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/SeqSelectorPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/SeqSelectorPlugin
+plugindir = @PLUGINDIR@/panels/SeqSelectorPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = SeqSelectorPlugin_GUI.la
 SeqSelectorPlugin_GUI_la_SOURCES = SeqSelectorPluginGUI.cpp SeqSelectorPluginGUI.h

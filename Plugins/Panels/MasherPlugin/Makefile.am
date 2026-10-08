@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/MasherPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/MasherPlugin
+plugindir = @PLUGINDIR@/panels/MasherPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = MasherPlugin_GUI.la
 MasherPlugin_GUI_la_SOURCES = MasherPluginGUI.cpp MasherPluginGUI.h

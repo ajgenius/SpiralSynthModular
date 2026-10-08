@@ -1,5 +1,5 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir) -I$(top_srcdir)/Plugins/Devices/KeyboardPlugin $(FLTK_CFLAGS) $(FLTK_CXXFLAGS)
-plugindir = @PLUGINDIR@/gui/KeyboardPlugin
+plugindir = @PLUGINDIR@/panels/KeyboardPlugin
 dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = KeyboardPlugin_GUI.la
 KeyboardPlugin_GUI_la_SOURCES = KeyboardPluginGUI.cpp KeyboardPluginGUI.h
