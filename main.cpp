@@ -167,6 +167,14 @@ int main(int argc, char **argv)
 	// instance of a duplicated plugin ID, and the copy shipped here is the
 	// one this build was tested against; anything else the user has
 	// installed still shows up behind it.
+	//
+	// An unset LADSPA_PATH does not mean there is nothing to keep: it means
+	// LADSPAInfo would have scanned the two standard directories itself, so
+	// putting only our own directory there would hide every system wide
+	// plugin, including the four FFT ones this build leaves out when FFTW is
+	// missing. The list matches the one LADSPAInfo assumes in that case
+	// (LADSPAInfo.C, ScanPlugins); the host does not link LADSPAInfo, so it
+	// cannot share the constant.
 	{
 		string root = cmd_pluginPath.empty() ? SpiralInfo::PLUGIN_PATH : cmd_pluginPath;
 		if (!root.empty())
@@ -178,7 +186,8 @@ int main(int argc, char **argv)
 			{
 				const char *existing = getenv("LADSPA_PATH");
 				const string search = existing && *existing
-				                    ? bundled + ":" + existing : bundled;
+				                    ? bundled + ":" + existing
+				                    : bundled + ":/usr/lib/ladspa:/usr/local/lib/ladspa";
 				setenv("LADSPA_PATH", search.c_str(), 1);
 			}
 		}

@@ -44,3 +44,9 @@ than pulling libraries into a bundle for four plugins:
 | `imp_1199`, `mbeq_1197`, `pitch_scale_1193`, `pitch_scale_1194` | FFTW (the sources want FFTW 2's `rfftw.h`) |
 
 `util/pitchscale.c` belongs to the FFTW set and is skipped with it.
+
+Configure says so rather than leaving it to be discovered: a build without FFTW
+warns, names the four and the package that would supply it, and the summary line
+reads `94 of 98` instead of `all 98`. They can also arrive later from a
+distribution's own swh-plugins package, because the host puts its own plugin
+directory in front of the system ones rather than in place of them.

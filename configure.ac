@@ -442,6 +442,21 @@ if test "$bundle_ladspa" = "yes"; then
       [AC_CHECK_LIB([fftw3f], [fftwf_plan_dft_r2c_1d],
          [have_fftw3f="yes" ; FFTW3F_LIBS="-lfftw3f" ; FFTW3F_CFLAGS=""],
          [have_fftw3f="no"])])
+   if test "$have_fftw3f" = "no"; then
+      AC_MSG_WARN([Single-precision FFTW was not found, so four of the bundled
+swh-plugins will not be built: imp_1199 (Impulse convolver), mbeq_1197
+(Multiband EQ), pitch_scale_1193 (Pitch Scaler) and pitch_scale_1194 (Higher
+Quality Pitch Scaler). The other 94 are unaffected, and no example patch asks
+for any of the four.
+
+Install FFTW's development package and configure again to get all 98:
+libfftw3-dev on Debian and Ubuntu, fftw-devel on Fedora, fftw-dev on Alpine,
+fftw on Homebrew and MacPorts.
+
+They can also be supplied later by a distribution's own swh-plugins package:
+the host searches its own plugin directory first but keeps the system
+directories behind it, so a plugin this build left out is still found there.])
+   fi
 fi
 AC_SUBST(FFTW3F_CFLAGS)
 AC_SUBST(FFTW3F_LIBS)
