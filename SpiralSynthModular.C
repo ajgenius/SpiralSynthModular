@@ -36,6 +36,7 @@
 #include "SpiralSynthModular.h"
 #include "AudioTransportHub.h"
 #include "AudioBackend.h"
+#include "Midi.h"
 #include "PluginManager.h"
 #include "SpiralInfo.h"
 #include "SpiralPluginGUI.h"
@@ -127,6 +128,9 @@ SynthModular::~SynthModular()
 	delete m_SettingsWindow;
 	delete m_TopWindow;
 	PluginManager::Get()->PackUpAndGoHome();
+	// The MidiPlugin instances are gone with the devices, so the
+	// backend they shared is too; its module can leave now.
+	spiralcore::MidiBackendRegistry::PackUpAndGoHome();
 	system("rm -f ___temp.ssmcopytmp");
 	pthread_mutex_destroy(&m_CycleLock);
 }
@@ -659,6 +663,10 @@ void SynthModular::LoadPlugins (string pluginPath) {
      // compiled-in backends are already registered and a module of the
      // same name yields.
      spiralcore::AudioBackendRegistry::Get()->LoadModules(PluginRoot);
+     // MIDI backends under midi/; the preference names one, else the
+     // first that is not the dummy. MidiPlugin opens the device itself.
+     spiralcore::MidiBackendRegistry::Get()->LoadModules(PluginRoot);
+     spiralcore::MidiDevice::SetBackendName(SpiralInfo::MIDIBACKEND);
      vector<string> DSPNames;
      vector<string> GUINames;
      set<string> SeenModules;
@@ -979,6 +987,7 @@ void SynthModular::UpdateHostInfo()
 	m_Info.AUDIOCLIENT = SpiralInfo::AUDIOCLIENT;
 	m_Info.MIDIFILE   = SpiralInfo::MIDIFILE;
 	m_Info.POLY       = SpiralInfo::POLY;
+	spiralcore::MidiDevice::SetBackendName(SpiralInfo::MIDIBACKEND);
 
 	/* Reset all plugin ports/buffers befure Resuming */
 	ResetAudio();
