@@ -118,4 +118,20 @@ int main()
 	assert(sink.GetInput(0) == NULL && unrelatedSink.GetInput(0) == unrelated);
 	canvas.PortClicked(views[0], Fl_DeviceGUI::OUTPUT, 0, false);
 	assert(WireCount(canvas) == 1 && mixer.GetInput(0) == NULL);
+	const int savedCounts[] = {-1, 0, 1, 2, 16, 20};
+	for (unsigned n = 0; n < sizeof(savedCounts) / sizeof(*savedCounts); ++n)
+	{
+		spiralcore::Description saved;
+		saved.Value(2).Value(savedCounts[n]);
+		for (int i = 0; i < savedCounts[n]; ++i) saved.Value(0.25f);
+		saved.Value(1234); // the next field must survive an oversized record
+		spiralcore::Description::Reader reader(saved);
+		mixer.Apply(reader);
+		int next = 0;
+		reader.Value(next);
+		assert(!reader.Failed() && next == 1234);
+		assert(mixer.GetChannels() >= 2 && mixer.GetChannels() <= MAX_CHANNELS);
+		mixer.Execute();
+	}
+
 }

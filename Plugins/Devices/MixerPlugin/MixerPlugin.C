@@ -135,6 +135,7 @@ void MixerPlugin::ExecuteCommands() {
 }
 
 void MixerPlugin::SetChannels (int num) {
+     num = std::max(2, std::min(MAX_CHANNELS, num));
      // This is only used on loading, so we don't care that it clears all the inputs first
      UpdatePluginInfoWithHost(); // once to clear the connections with the current info
      RemoveAllInputs();
@@ -179,7 +180,7 @@ void MixerPlugin::Describe(spiralcore::Description &d) {
 }
 
 void MixerPlugin::Apply(spiralcore::Description::Reader &r) {
-     int version, chans;
+     int version = 0, chans = m_NumChannels;
      r.Value(version);
      switch (version) {
        case 1: // needs default number of channels
@@ -188,5 +189,10 @@ void MixerPlugin::Apply(spiralcore::Description::Reader &r) {
                SetChannels (chans);
                break;
      }
-     for (int n=0; n<m_NumChannels; n++) r.Value(m_ChannelVal[n]);
+     // Consume old oversized records without writing beyond the fixed gains.
+     for (int n=0; n<chans && !r.Failed(); n++) {
+          float value = 1.0f;
+          r.Value(value);
+          if (n<m_NumChannels) m_ChannelVal[n] = value;
+     }
 }
