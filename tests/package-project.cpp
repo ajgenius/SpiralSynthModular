@@ -22,11 +22,41 @@ int main(int argc, char **argv)
 	Spiral::File::Project writer("");
 	writer.Source().Set(bytes);
 	std::string error;
+	assert(writer.BeginSidecars(error));
+	assert(Spumoni::Path::WriteFile(writer.SidecarDirectory() + "PoshSampler3_0.wav", "first sample", error));
+	assert(Spumoni::Path::WriteFile(writer.SidecarDirectory() + "obsolete.wav", "old", error));
 	assert(writer.SaveAs(path, error));
+	const std::string first = writer.GetIdentity().ActiveBranchID;
+	assert(writer.BeginSidecars(error));
+	assert(Spumoni::Path::WriteFile(writer.SidecarDirectory() + "PoshSampler3_0.wav", "second sample", error));
 	assert(writer.CreateSavePoint("Second", false, error));
-	Spiral::File::Project reader(path);
+	// Relocation must not depend on a directory beside the original package.
+	const std::string relocated = argc == 3 ? path : std::string(temporary) + "/moved.ssmp";
+	if (argc != 3)
+		assert(rename(path.c_str(), relocated.c_str()) == 0);
+
+	Spiral::File::Project reader(relocated);
 	assert(reader.OpenPackage("", error));
 	assert(reader.Source().Bytes() == bytes);
+	std::string sample;
+	assert(Spumoni::Path::ReadFile(reader.SidecarDirectory() + "PoshSampler3_0.wav", sample, error));
+	assert(sample == "second sample");
+	assert(!Spumoni::Path::IsFile(reader.SidecarDirectory() + "obsolete.wav"));
+	assert(reader.SwitchBranch(first, error));
+	assert(Spumoni::Path::ReadFile(reader.SidecarDirectory() + "PoshSampler3_0.wav", sample, error));
+	assert(sample == "first sample");
+	const std::string kept = reader.SidecarDirectory();
+	assert(!reader.SwitchBranch("missing", error));
+	assert(reader.SidecarDirectory() == kept);
+	// Saving an empty replacement removes the old samples in that branch.
+	if (argc != 3)
+	{
+		assert(reader.BeginSidecars(error));
+		assert(reader.CreateSavePoint(reader.GetIdentity().ActiveBranchName, true, error));
+		assert(reader.SwitchBranch(first, error));
+		assert(!Spumoni::Path::IsFile(reader.SidecarDirectory() + "PoshSampler3_0.wav"));
+	}
+
 	assert(reader.GetIdentity().Branches.size() == 2);
 	std::string metadata;
 	assert(reader.Workspace()->Read("project.spiral.json", metadata, error));
@@ -44,7 +74,7 @@ int main(int argc, char **argv)
 	root->Get("main")->SetOwned("name", Spumoni::JSON::MakeString("patch.spiral.json"));
 	assert(!app.Accept(*root, identity, error));
 	if (argc != 3)
-		assert(unlink(path.c_str()) == 0);
+		assert(unlink(relocated.c_str()) == 0);
 
 	assert(rmdir(temporary) == 0);
 	std::puts("package-project OK");
