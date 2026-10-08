@@ -1728,7 +1728,7 @@ void SynthModular::ChooseAndLoadPatch(const char *directory) {
        if (m_DeviceWinMap.size()>0 && !Pawfal_YesNo ("Load - Lose changes to current patch?"))
           return;
        char *fn=fl_file_chooser (directory ? "Load an example patch" : "Load a patch",
-          "Patches (*.{ssm,ssmp})\tSpiral patch (*.ssm)\tPackage (*.ssmp)", directory);
+          "SSM Patches (*.{ssm,ssmp})\tSSM Project (*.ssmp)\tLegacy SSM (*.ssm)", directory);
        if (fn && *fn!='\0')
           LoadPatch(fn);
 }
@@ -1779,7 +1779,7 @@ void SynthModular::cb_Save (Fl_Widget *o, void *v) {
 
 inline void SynthModular::cb_SaveAs_i (Fl_Widget *o, void *v) {
        char *fn=fl_file_chooser("Save a patch",
-          "Patches (*.{ssm,ssmp})\tSpiral patch (*.ssm)\tPackage (*.ssmp)", NULL);
+          "SSM Patches (*.{ssm,ssmp})\tSSM Project (*.ssmp)\tLegacy SSM (*.ssm)", NULL);
        if (fn && *fn!='\0') {
           ifstream ifl (fn);
           if (ifl) {
@@ -1804,7 +1804,7 @@ void SynthModular::cb_SaveAs (Fl_Widget *o, void *v) {
 
 inline void SynthModular::cb_Merge_i (Fl_Widget *o, void *v) {
        char *fn = fl_file_chooser ("Merge a patch",
-          "Patches (*.{ssm,ssmp})\tSpiral patch (*.ssm)\tPackage (*.ssmp)", NULL);
+          "SSM Patches (*.{ssm,ssmp})\tSSM Project (*.ssmp)\tLegacy SSM (*.ssm)", NULL);
        if (fn && *fn!='\0') {
           iostream *stream = NULL;
           ifstream in;
@@ -1820,7 +1820,7 @@ inline void SynthModular::cb_Merge_i (Fl_Widget *o, void *v) {
                 return;
              }
              if (project->Source().Empty()) {
-                fl_message("Package has no patch.spiral.legacy.ssm");
+                fl_message("This SSM Project has no patch in it.");
                 return;
              }
              packaged.str(project->Source().Bytes());
@@ -2239,12 +2239,12 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 			: project->OpenPackage("", error);
 		if (!opened)
 		{
-			fl_message("%s", error.empty() ? "Error opening package" : error.c_str());
+			fl_message("%s", error.empty() ? "Error opening SSM Project" : error.c_str());
 			return;
 		}
 		if (project->Source().Empty())
 		{
-			fl_message("Package has no patch.spiral.legacy.ssm");
+			fl_message("This SSM Project has no patch in it.");
 			return;
 		}
 		packaged.str(project->Source().Bytes());
@@ -2294,7 +2294,7 @@ void SynthModular::SavePatch(const char *fn)
 		project.Source().Set(bytes.str());
 		if (!project.SaveAs(fn, error))
 		{
-			fl_message("%s", error.empty() ? "Error saving package" : error.c_str());
+			fl_message("%s", error.empty() ? "Error saving SSM Project" : error.c_str());
 			return;
 		}
 	}
@@ -2333,7 +2333,7 @@ void SynthModular::SaveBranch(bool ask)
 {
 	if (!Spiral::File::Project::PathLooksLikePackage(m_FilePath))
 	{
-		fl_message("Save As an .ssmp package before saving a branch.");
+		fl_message("Save As an SSM Project before saving a branch.");
 		return;
 	}
 
@@ -2344,7 +2344,7 @@ void SynthModular::SaveBranch(bool ask)
 		: project.SwitchBranch(m_BranchID, error);
 	if (!opened)
 	{
-		fl_message("%s", error.empty() ? "Error opening package" : error.c_str());
+		fl_message("%s", error.empty() ? "Error opening SSM Project" : error.c_str());
 		return;
 	}
 
@@ -2389,7 +2389,7 @@ void SynthModular::SaveBranch(bool ask)
 	project.Source().Set(bytes.str());
 	if (!project.CreateSavePoint(name, replace, error))
 	{
-		fl_message("%s", error.empty() ? "Error saving package" : error.c_str());
+		fl_message("%s", error.empty() ? "Error saving SSM Project" : error.c_str());
 		return;
 	}
 
@@ -2410,12 +2410,12 @@ inline void SynthModular::cb_ImportBranch_i (Fl_Widget *o, void *v)
 	// for a shortcut or a script arriving by another route.
 	if (!Spiral::File::Project::PathLooksLikePackage(m_FilePath))
 	{
-		fl_message("Save this patch as an SSMP project before importing a branch.");
+		fl_message("Save this patch as an SSM Project before importing a branch.");
 		return;
 	}
 
 	char *fn = fl_file_chooser ("Import a patch as a branch",
-		"Patches (*.{ssm,ssmp})\tSpiral patch (*.ssm)\tPackage (*.ssmp)", NULL);
+		"SSM Patches (*.{ssm,ssmp})\tSSM Project (*.ssmp)\tLegacy SSM (*.ssm)", NULL);
 	if (!fn || *fn=='\0')
 		return;
 
@@ -2427,7 +2427,7 @@ inline void SynthModular::cb_ImportBranch_i (Fl_Widget *o, void *v)
 		Spiral::File::Project source(fn);
 		if (!source.OpenPackage("", error) || source.Source().Empty())
 		{
-			fl_message("%s", error.empty() ? "Error opening package" : error.c_str());
+			fl_message("%s", error.empty() ? "Error opening SSM Project" : error.c_str());
 			return;
 		}
 		imported = source.Source().Bytes();
@@ -2448,7 +2448,7 @@ inline void SynthModular::cb_ImportBranch_i (Fl_Widget *o, void *v)
 	Spiral::File::Project project(m_FilePath);
 	if (!project.OpenPackage("", error))
 	{
-		fl_message("%s", error.empty() ? "Error opening package" : error.c_str());
+		fl_message("%s", error.empty() ? "Error opening SSM Project" : error.c_str());
 		return;
 	}
 
@@ -2479,7 +2479,7 @@ inline void SynthModular::cb_SavePoints_i (Fl_Widget *o, void *v)
 {
 	if (!Spiral::File::Project::PathLooksLikePackage(m_FilePath))
 	{
-		fl_message("Open an SSMP file to browse save points.");
+		fl_message("Open an SSM Project to browse save points.");
 		return;
 	}
 
@@ -2487,14 +2487,14 @@ inline void SynthModular::cb_SavePoints_i (Fl_Widget *o, void *v)
 	std::string error;
 	if (!project.OpenPackage("", error))
 	{
-		fl_message("%s", error.empty() ? "Error opening package" : error.c_str());
+		fl_message("%s", error.empty() ? "Error opening SSM Project" : error.c_str());
 		return;
 	}
 
 	const Spumoni::Identity identity = project.GetIdentity();
 	if (identity.Branches.empty())
 	{
-		fl_message("Open an SSMP file to browse save points.");
+		fl_message("Open an SSM Project to browse save points.");
 		return;
 	}
 
