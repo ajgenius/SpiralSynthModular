@@ -42,6 +42,7 @@
 #include "OutputPlugin.h"
 #include "OutputPluginGUI.h"
 #include "PatchProject.h"
+#include <memory>
 #include <FL/fl_ask.H>
 #include <FL/Fl_Choice.H>
 #include <FL/Fl_Return_Button.H>
@@ -1107,7 +1108,7 @@ void SynthModular::cb_Update(void* o, bool mode)
 
 //////////////////////////////////////////////////////////
 
-iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
+iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const string &sidecars)
 {
 	//if we are merging as opposed to loading a new patch
 	//we have no need to pause audio
@@ -1298,7 +1299,9 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 				}
 
 				// load external files
-				if (paste || merge)
+				if (!sidecars.empty())
+					m_DeviceWinMap[ID]->m_Device->LoadExternalFiles(sidecars, (paste || merge) ? oldID : -1);
+				else if (paste || merge)
 					m_DeviceWinMap[ID]->m_Device->LoadExternalFiles(m_FromFilePath+"_files/", oldID);
 				else
 					m_DeviceWinMap[ID]->m_Device->LoadExternalFiles(m_FilePath+"_files/");
@@ -1365,14 +1368,19 @@ iostream &operator>>(iostream &s, SynthModular &o)
 
 spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o)
 {
+	return Describe(d, o, o.m_FilePath + "_files/");
+}
+
+spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o, const string &sidecars)
+{
 	o.FreezeAll();
 
 	d.Value("SpiralSynthModular File Ver").Separator(" ").Value(FILE_VERSION).Line();
 
 	// make external files dir
 	bool ExternalDirUsed=false;
-	string command("mkdir '"+o.m_FilePath+"_files'");
-	system(command.c_str());
+	string directoryError;
+	Spumoni::Path::MakeDirectories(sidecars, directoryError);
 
 	if (FILE_VERSION>2)
 	{
@@ -1428,7 +1436,7 @@ spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o)
 			d.Line();
 
 			// save external files
-			if (i->second->m_Device && i->second->m_Device->SaveExternalFiles(o.m_FilePath+"_files/"))
+			if (i->second->m_Device && i->second->m_Device->SaveExternalFiles(sidecars))
 			{
 				ExternalDirUsed=true;
 			}
@@ -1444,8 +1452,7 @@ spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o)
 	{
 		// i guess rmdir won't work if there is something in the dir
 		// anyway, but best to be on the safe side. (could do rm -rf) :)
-		string command("rmdir "+o.m_FilePath+"_files");
-		system(command.c_str());
+		rmdir(sidecars.c_str());
 	}
 
 	o.ThawAll();
@@ -1571,19 +1578,22 @@ inline void SynthModular::cb_Merge_i (Fl_Widget *o, void *v) {
           ifstream in;
           fstream inf;
           std::stringstream packaged;
+          std::auto_ptr<Spiral::File::Project> project;
+          std::string sidecars;
           if (Spiral::File::Project::PathLooksLikePackage(fn)) {
-             Spiral::File::Project project(fn);
+             project.reset(new Spiral::File::Project(fn));
              std::string error;
-             if (!project.OpenPackage("", error)) {
+             if (!project->OpenPackage("", error)) {
                 fl_message("%s", error.c_str());
                 return;
              }
-             if (project.Source().Empty()) {
+             if (project->Source().Empty()) {
                 fl_message("Package has no patch.spiral.legacy.ssm");
                 return;
              }
-             packaged.str(project.Source().Bytes());
+             packaged.str(project->Source().Bytes());
              stream = &packaged;
+             sidecars = project->SidecarDirectory();
           }
           else {
              in.open(fn);
@@ -1593,7 +1603,7 @@ inline void SynthModular::cb_Merge_i (Fl_Widget *o, void *v) {
              stream = &inf;
           }
           m_MergeFilePath = fn;
-          StreamPatchIn(*stream, false, true);
+          StreamPatchIn(*stream, false, true, sidecars);
           m_Canvas->StreamSelectionWiresIn(*stream, m_Copied.m_DeviceIds, true, false);
           if (stream == &inf)
              inf.close();
@@ -1918,27 +1928,30 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 	fstream inf;
 	std::stringstream packaged;
 	std::string branch;
+	std::auto_ptr<Spiral::File::Project> project;
+	std::string sidecars;
 
 	if (Spiral::File::Project::PathLooksLikePackage(fn))
 	{
-		Spiral::File::Project project(fn);
+		project.reset(new Spiral::File::Project(fn));
 		std::string error;
 		bool opened = (branchId && *branchId)
-			? project.SwitchBranch(branchId, error)
-			: project.OpenPackage("", error);
+			? project->SwitchBranch(branchId, error)
+			: project->OpenPackage("", error);
 		if (!opened)
 		{
 			fl_message("%s", error.empty() ? "Error opening package" : error.c_str());
 			return;
 		}
-		if (project.Source().Empty())
+		if (project->Source().Empty())
 		{
 			fl_message("Package has no patch.spiral.legacy.ssm");
 			return;
 		}
-		packaged.str(project.Source().Bytes());
+		packaged.str(project->Source().Bytes());
 		stream = &packaged;
-		branch = project.GetIdentity().ActiveBranchID;
+		branch = project->GetIdentity().ActiveBranchID;
+		sidecars = project->SidecarDirectory();
 	}
 	else
 	{
@@ -1952,7 +1965,7 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 	m_FilePath=fn;
 	m_BranchID=branch;
 	ClearUp();
-	(*stream)>>*this;
+	StreamPatchIn(*stream, false, false, sidecars);
 	if (stream == &inf)
 		inf.close();
 
@@ -1964,13 +1977,20 @@ void SynthModular::SavePatch(const char *fn)
 {
 	if (Spiral::File::Project::PathLooksLikePackage(fn))
 	{
-		std::ostringstream bytes;
-		bytes << *this;
 		// A fresh project, then SaveAs. Constructing on the destination
 		// would treat a not-yet-opened package as the current file.
 		Spiral::File::Project project("");
-		project.Source().Set(bytes.str());
 		std::string error;
+		if (!project.BeginSidecars(error))
+		{
+			fl_message("%s", error.c_str());
+			return;
+		}
+
+		std::ostringstream bytes;
+		spiralcore::Description description;
+		Describe(description, *this, project.SidecarDirectory()).Write(bytes);
+		project.Source().Set(bytes.str());
 		if (!project.SaveAs(fn, error))
 		{
 			fl_message("%s", error.empty() ? "Error saving package" : error.c_str());
@@ -1985,7 +2005,8 @@ void SynthModular::SavePatch(const char *fn)
 			fl_message("%s", string("Error saving " + string(fn)).c_str());
 			return;
 		}
-		of << *this;
+		spiralcore::Description description;
+		Describe(description, *this, string(fn) + "_files/").Write(of);
 	}
 
 	m_FilePath = fn;
@@ -2055,8 +2076,15 @@ void SynthModular::SaveBranch(bool ask)
 	else
 		name = project.BranchNameFromPath(m_FilePath);
 
+	if (!project.BeginSidecars(error))
+	{
+		fl_message("%s", error.c_str());
+		return;
+	}
+
 	std::ostringstream bytes;
-	bytes << *this;
+	spiralcore::Description description;
+	Describe(description, *this, project.SidecarDirectory()).Write(bytes);
 	project.Source().Set(bytes.str());
 	if (!project.CreateSavePoint(name, replace, error))
 	{

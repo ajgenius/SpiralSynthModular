@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Spiral::File::Project — the bare tip of an SSM project.
 //
-// One part: patch.spiral.legacy.ssm, the patch kept whole, its own
-// header saying which version it is. Opening a package reads those
+// Two parts: patch.spiral.legacy.ssm and patch.spiral.legacy.ssm_files/.
+// The patch keeps its own version header. Opening a package reads those
 // bytes and the existing loader streams them in. No patch JSON, no
 // schema, no property stack. Draft, not ABI stable.
 #ifndef SPIRAL_FILE_PROJECT_H
@@ -26,15 +26,22 @@ namespace Spiral
 			const Spumoni::SourcePart &Source() const { return *m_Source; }
 			Spumoni::SourcePart &Source() { return *m_Source; }
 
+			// A fresh directory for the plugins to populate on save; cleared each
+			// time so removed samples cannot survive in a replacement branch.
+			bool BeginSidecars(std::string &error);
+			std::string SidecarDirectory() const;
+
 			// Extension (.ssmp, .tar, a directory) or a manifest inside.
 			static bool PathLooksLikePackage(const std::string &path);
 
 		protected:
 			virtual bool HasContent() const { return m_Source && !m_Source->Empty(); }
-			virtual void OnReset() { if (m_Source) m_Source->Clear(); }
+			virtual void OnReset();
 
 		private:
+			class SidecarPart;
 			Spumoni::SourcePart *m_Source;
+			SidecarPart *m_Sidecars;
 		};
 	}
 }
