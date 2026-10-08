@@ -39,6 +39,8 @@
 #include "Midi.h"
 #include "DeviceClassRegistry.h"
 #include "EditorClassRegistry.h"
+#include "OutputPlugin.h"
+#include "OutputPluginGUI.h"
 #include "SpiralInfo.h"
 #include "SpiralPluginGUI.h"
 #include "GUI/SSM.xpm"
@@ -617,6 +619,9 @@ void SynthModular::LoadPlugins (string pluginPath) {
      // first that is not the dummy. MidiPlugin opens the device itself.
      spiralcore::MidiBackendRegistry::Get()->LoadModules(PluginRoot);
      spiralcore::MidiDevice::SetBackendName(SpiralInfo::MIDIBACKEND);
+     // Built-in devices first: a module of the same ID is not loaded.
+     spiralcore::DeviceClassRegistry::Get()->Register(OutputPlugin::Class());
+     spiralcore::EditorClassRegistry::Get()->Register(OutputPluginGUI::Class());
      // Devices under dsp/, editors under gui/; an editor needs no device
      // module to load, it pairs by ID when a device is made.
      spiralcore::DeviceClassRegistry::Get()->LoadModules(PluginRoot);
@@ -1116,15 +1121,16 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 
 				if ((paste || ver>1) && m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow())
 				{
+					// updates the data in the channel buffers, so the values don't
+					// get overwritten in the next tick, and so the GUI can read the
+					// loaded state through the channel.
+					m_DeviceWinMap[ID]->m_Device->GetChannelHandler()->FlushChannels();
+
 					// set the GUI up with the loaded values
 					// looks messy, but if we do it here, the plugin and it's gui can remain
 					// totally seperated.
 					((SpiralPluginGUI*)(m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow()))->
 						UpdateValues(m_DeviceWinMap[ID]->m_Device);
-
-					// updates the data in the channel buffers, so the values don't
-					// get overwritten in the next tick. (should maybe be somewhere else)
-					m_DeviceWinMap[ID]->m_Device->GetChannelHandler()->FlushChannels();
 
 					// position the plugin window in the main window
 					//m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow()->position(px,py);
