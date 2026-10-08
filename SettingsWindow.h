@@ -57,6 +57,8 @@ private:
 	Fl_Choice    *m_MidiBackend;
 	Fl_Input     *m_MidiDevice;
 	Fl_Choice    *m_CurvedWires;
+	// Only built on macOS; NULL elsewhere.
+	Fl_Choice    *m_ShowMenuBar;
 	Fl_Button    *m_Save;	
 	Fl_Button    *m_Apply;
 		

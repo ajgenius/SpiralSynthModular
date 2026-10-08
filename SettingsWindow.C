@@ -33,7 +33,12 @@ static const int OPTION_ROW = 20;
 
 static int OptionRows()
 {
+	// The Mac menu bar option is only offered where there is one.
+#ifdef __APPLE__
+	return 10;
+#else
 	return 9;
+#endif
 }
 
 static int OptionsHeight()
@@ -49,7 +54,8 @@ static int PanelHeight()
 
 SettingsWindow::SettingsWindow() :
 Fl_Double_Window(250,PanelHeight(),"SSM Options"),
-m_App(NULL)
+m_App(NULL),
+m_ShowMenuBar(NULL)
 {
 	color(SpiralInfo::GUICOL_Tool);
 	box(FL_FLAT_BOX);
@@ -224,6 +230,24 @@ m_App(NULL)
 	Line->end();
 	m_Options->add(Line);
 
+#ifdef __APPLE__
+	Line = new Fl_Pack(0,0,100,20,"");
+	Line->type(FL_HORIZONTAL);
+	Name = new Fl_Box(55,0,150,20,"Show Menubar");
+	Name->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+	Name->labelsize(10);
+	Line->add(Name);
+	m_ShowMenuBar = new Fl_Choice(0,0,80,20,"");
+	m_ShowMenuBar->labelsize(10);
+	m_ShowMenuBar->tooltip("Show the menu strip inside the window as well as the menu bar at the top of the screen");
+	m_ShowMenuBar->add("No");
+	m_ShowMenuBar->add("Yes");
+	m_ShowMenuBar->value(SpiralInfo::SHOWMENUBAR ? 1 : 0);
+	Line->add(m_ShowMenuBar);
+	Line->end();
+	m_Options->add(Line);
+#endif
+
 	m_Options->end();
 
 	const int ButtonY = 115 + OptionsHeight() + 15;
@@ -248,6 +272,7 @@ void SettingsWindow::show()
 	ListAudioClients();
 	ListMidiBackends();
 	m_CurvedWires->value(SpiralInfo::CURVEDWIRES ? 1 : 0);
+	if (m_ShowMenuBar) m_ShowMenuBar->value(SpiralInfo::SHOWMENUBAR ? 1 : 0);
 	Fl_Double_Window::show();
 }
 
@@ -298,6 +323,7 @@ inline void SettingsWindow::cb_Apply_i(Fl_Button* o, void* v)
 	SpiralInfo::MIDIBACKEND=m_MidiBackend->value() ? m_MidiBackend->text() : "";
 	SpiralInfo::MIDIFILE=m_MidiDevice->value();
 	SpiralInfo::CURVEDWIRES=m_CurvedWires->value()!=0;
+	if (m_ShowMenuBar) SpiralInfo::SHOWMENUBAR=m_ShowMenuBar->value()!=0;
 
 	assert(m_App);
 	if (m_App)
@@ -321,6 +347,7 @@ inline void SettingsWindow::cb_Save_i(Fl_Button* o, void* v)
  	SpiralInfo::MIDIFILE=m_MidiDevice->value();
 	// SavePrefs does not carry the view options yet; Save still applies them.
 	SpiralInfo::CURVEDWIRES=m_CurvedWires->value()!=0;
+	if (m_ShowMenuBar) SpiralInfo::SHOWMENUBAR=m_ShowMenuBar->value()!=0;
 	if (m_App) m_App->ApplyViewOptions();
  	SpiralInfo::Get()->SavePrefs();
 }
