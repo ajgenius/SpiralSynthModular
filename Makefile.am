@@ -155,3 +155,16 @@ install-data-local:
 
 uninstall-local:
 	rm -rf "$(DESTDIR)$(pkgdatadir)/Examples"
+
+check_PROGRAMS += package-project-test
+package_project_test_SOURCES = tests/package-project.cpp libSSMCore/src/PatchProject.cpp
+package_project_test_CPPFLAGS = -I$(srcdir)/libSSMCore/include -I$(srcdir)/libs/libSpumoni/include \
+	-DPUBLIC_TEST_SOURCE='"$(abs_srcdir)/Examples/FourOsc.ssm"'
+package_project_test_LDADD = libs/libSpumoni/libSpumoni.a -lz
+
+check_PROGRAMS += package-sidecars-host-test
+package_sidecars_host_test_SOURCES = tests/package-sidecars-host.cpp SpiralSynthModular.C libSSMCore/src/PatchProject.cpp UnavailablePlugin.C SpiralInfo.C SettingsWindow.C
+package_sidecars_host_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir) \
+	-DPUBLIC_SAMPLER_SOURCE='"$(abs_srcdir)/Examples/Tutorial5-MatrixSampler.ssm"'
+package_sidecars_host_test_LDADD = $(SpiralSynthModular_LDADD)
+package_sidecars_host_test_LDFLAGS = -export-dynamic

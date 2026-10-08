@@ -137,7 +137,7 @@ public:
 	// only for audio thread
 	bool IsFrozen() { return m_Frozen; }
 
-	iostream &StreamPatchIn(iostream &s, bool paste, bool merge);
+	iostream &StreamPatchIn(iostream &s, bool paste, bool merge, const string &sidecars = string());
 private:
 
 
@@ -237,11 +237,13 @@ private:
 	}
 	friend istream &operator>>(istream &s, SynthModular &o);
 	friend spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o);
+	friend spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o, const string &sidecars);
 	friend ostream &operator<<(ostream &s, SynthModular &o);
 };
 
 iostream &operator>>(iostream &s, SynthModular &o);
 spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o);
+spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o, const string &sidecars);
 ostream &operator<<(ostream &s, SynthModular &o);
 
 #endif

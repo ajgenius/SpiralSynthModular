@@ -174,7 +174,8 @@ namespace Spumoni
 		for (size_t i = 0; i < m_Parts.size(); ++i)
 		{
 			Part &part = *m_Parts[i];
-			if (!workspace->IsFile(branchRoot + part.Name()))
+			if (!workspace->IsFile(branchRoot + part.Name())
+				&& !workspace->IsDirectory(branchRoot + part.Name()))
 			{
 				if (part.Required())
 				{
