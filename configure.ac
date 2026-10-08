@@ -379,6 +379,8 @@ if test "$build_ladspa" = "y" ; then
    PLUGINLIST="LADSPAPlugin $PLUGINLIST"
 fi
 
+AM_CONDITIONAL([BUILD_LADSPA], [test "$build_ladspa" = "y"])
+
 dnl Check whether liblrdf is present or has been disabled
 lrdf_message=""
 AC_ARG_ENABLE(

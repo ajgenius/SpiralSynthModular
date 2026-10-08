@@ -1110,10 +1110,9 @@ void SynthModular::cb_Update(void* o, bool mode)
 
 iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const string &sidecars)
 {
-	//if we are merging as opposed to loading a new patch
-	//we have no need to pause audio
-	if (!merge && !paste)
-		FreezeAll();
+	// Paste and merge also publish devices into the live map before Apply
+	// finishes. Keep channel updates out until loaded INPUT buffers agree.
+	FreezeAll();
 
 	//if we are pasting we don't have any of the file version
 	//or saving information. since its internal we didn't
@@ -1306,12 +1305,11 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 				else
 					m_DeviceWinMap[ID]->m_Device->LoadExternalFiles(m_FilePath+"_files/");
 
+				// Loaded INPUT values must survive the first tick even without an editor.
+				m_DeviceWinMap[ID]->m_Device->GetChannelHandler()->FlushChannels();
+
 				if ((paste || ver>1) && m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow())
 				{
-					// updates the data in the channel buffers, so the values don't
-					// get overwritten in the next tick, and so the GUI can read the
-					// loaded state through the channel.
-					m_DeviceWinMap[ID]->m_Device->GetChannelHandler()->FlushChannels();
 
 					// set the GUI up with the loaded values
 					// looks messy, but if we do it here, the plugin and it's gui can remain
@@ -1342,6 +1340,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 			else
 			{
 				SpiralInfo::Alert("Error in stream, can't really recover data from here on.");
+				ThawAll();
 				return s;
 			}
 		}
@@ -1350,11 +1349,9 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 	GrowUnavailablePorts(s, paste, merge, m_DeviceWinMap, m_Copied.m_DeviceIds);
 
 	if (!paste && !merge)
-	{
 		s>>*m_Canvas;
-		ThawAll();
-	}
-	
+
+	ThawAll();
         return s;
 }
 

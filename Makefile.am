@@ -165,3 +165,23 @@ package_sidecars_host_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir) \
 	-DPUBLIC_SAMPLER_SOURCE='"$(abs_srcdir)/Examples/Tutorial5-MatrixSampler.ssm"'
 package_sidecars_host_test_LDADD = $(SpiralSynthModular_LDADD)
 package_sidecars_host_test_LDFLAGS = -export-dynamic
+
+check_PROGRAMS += canvas-menu-test
+if BUILD_LADSPA
+check_PROGRAMS += ladspa-reset-test
+ladspa_reset_test_SOURCES = tests/ladspa-reset.cpp Plugins/Devices/LADSPAPlugin/LADSPAPlugin.C Plugins/Devices/LADSPAPlugin/LADSPAInfo.C
+ladspa_reset_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/Devices/LADSPAPlugin
+ladspa_reset_test_LDADD = libs/libspiralcore/libspiralcore.la $(LRDFLIBS)
+check_LTLIBRARIES = tests/ladspa/ports.la
+tests_ladspa_ports_la_SOURCES = tests/ladspa/ports.cpp
+tests_ladspa_ports_la_LDFLAGS = -module -avoid-version -rpath /unused
+TESTS_ENVIRONMENT = LADSPA_PATH='$(abs_builddir)/tests/ladspa/.libs'
+endif
+canvas_menu_test_SOURCES = tests/canvas-menu.cpp SpiralInfo.C
+canvas_menu_test_LDADD = $(SpiralSynthModular_LDADD)
+
+check_PROGRAMS += stream-paste-test
+stream_paste_test_SOURCES = Plugins/Devices/StreamPlugin/StreamPlugin.C tests/stream-paste.cpp SpiralSynthModular.C UnavailablePlugin.C SpiralInfo.C SettingsWindow.C
+stream_paste_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir) -I$(srcdir)/Plugins/Devices/StreamPlugin
+stream_paste_test_LDADD = $(SpiralSynthModular_LDADD)
+stream_paste_test_LDFLAGS = -export-dynamic
