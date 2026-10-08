@@ -345,7 +345,7 @@ CounterPlugin DelayPlugin DiskWriterPlugin DistributorPlugin EchoPlugin \
 EnvFollowerPlugin EnvelopePlugin FilterPlugin FlipflopPlugin FormantFilterPlugin \
 KeyboardPlugin LFOPlugin LogicPlugin MasherPlugin MatrixPlugin \
 MeterPlugin MidiPlugin MixSwitchPlugin MixerPlugin MoogFilterPlugin NoisePlugin \
-NoteSnapPlugin OperatorPlugin OscillatorPlugin OutputPlugin PoshSamplerPlugin \
+NoteSnapPlugin OperatorPlugin OscillatorPlugin PoshSamplerPlugin \
 RingModPlugin SVFilterPlugin SampleHoldPlugin ScopePlugin SeqSelectorPlugin \
 SmoothPlugin SpiralLoopPlugin SplitSwitchPlugin SplitterPlugin StereoMixerPlugin \
 StreamPlugin SwitchPlugin TranslatePlugin TransposePlugin TrigPlugin WaveShaperPlugin \
@@ -613,7 +613,6 @@ Plugins/GUI/NoisePlugin/Makefile
 Plugins/GUI/NoteSnapPlugin/Makefile
 Plugins/GUI/OperatorPlugin/Makefile
 Plugins/GUI/OscillatorPlugin/Makefile
-Plugins/GUI/OutputPlugin/Makefile
 Plugins/GUI/PoshSamplerPlugin/Makefile
 Plugins/GUI/RingModPlugin/Makefile
 Plugins/GUI/SVFilterPlugin/Makefile
@@ -663,7 +662,6 @@ Plugins/DSP/NoisePlugin/Makefile
 Plugins/DSP/NoteSnapPlugin/Makefile
 Plugins/DSP/OperatorPlugin/Makefile
 Plugins/DSP/OscillatorPlugin/Makefile
-Plugins/DSP/OutputPlugin/Makefile
 Plugins/DSP/PoshSamplerPlugin/Makefile
 Plugins/DSP/RingModPlugin/Makefile
 Plugins/DSP/SVFilterPlugin/Makefile

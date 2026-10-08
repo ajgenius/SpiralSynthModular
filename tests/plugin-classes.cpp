@@ -7,6 +7,8 @@
 #include "DeviceClassRegistry.h"
 #include "EditorClassRegistry.h"
 #include "SpiralPluginGUI.h"
+#include "OutputPlugin.h"
+#include "OutputPluginGUI.h"
 #include <cassert>
 #include <cstdio>
 
@@ -25,12 +27,19 @@ int main(int argc, char **argv)
 {
 	if (argc != 2) return 77;
 
-	const unsigned editors=EditorClassRegistry::Get()->LoadModules(argv[1]);
-	const unsigned devices=DeviceClassRegistry::Get()->LoadModules(argv[1]);
+	// The host's built-in Output, registered before any scan.
+	assert(DeviceClassRegistry::Get()->Register(OutputPlugin::Class()));
+	assert(EditorClassRegistry::Get()->Register(OutputPluginGUI::Class()));
+	const unsigned editors=EditorClassRegistry::Get()->LoadModules(argv[1])+1;
+	const unsigned devices=DeviceClassRegistry::Get()->LoadModules(argv[1])+1;
 	printf("%u editors, %u devices\n", editors, devices);
-	assert(editors>0 && devices>0);
+	assert(editors>1 && devices>1);
 	assert(EditorClassRegistry::Get()->Classes().size()==editors);
 	assert(DeviceClassRegistry::Get()->Classes().size()==devices);
+	const DeviceClass *output=DeviceClassRegistry::Get()->Find(0);
+	assert(output && output->Name=="Output" && output->Module.empty());
+	assert(EditorClassRegistry::Get()->Find(0)->Module.empty());
+	assert(!Named("Output") || Named("Output")==output);
 
 	const std::vector<EditorClass*> &editing=EditorClassRegistry::Get()->Classes();
 	for (size_t n=0; n<editing.size(); ++n)
