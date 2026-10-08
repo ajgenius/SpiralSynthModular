@@ -20,6 +20,7 @@
 #include <FL/Fl_Scroll.H>
 #include "Fl_Canvas.h"
 #include "Fl_DeviceGUI.h"
+#include <algorithm>
 #include <iostream>
 #include "SpiralInfo.h"
 #include <math.h>
@@ -437,17 +438,17 @@ void Fl_Canvas::DrawWires()
                 
                 ep2_mid_x = fabs(ep1_x-ep2_x)/2;
                 ep2_new_x = ep2_x-ep2_mid_x;
-                
-                fl_begin_line();
-                
-                fl_curve( ep1_x, ep1_y, ep1_new_x, ep1_mid_y, ep2_new_x, ep2_mid_y, ep2_x, ep2_y );
-                
-                fl_end_line();
 
-		/* fl_line(SourceDevice->GetPortX(i->OutputPort+SourceDevice->GetInfo()->NumInputs), */
-		/* 		SourceDevice->GetPortY(i->OutputPort+SourceDevice->GetInfo()->NumInputs), */
-		/* 		DestDevice->GetPortX(i->InputPort), */
-		/* 		DestDevice->GetPortY(i->InputPort)); */
+                // A curve by default; the straight line is the view option.
+                if (SpiralInfo::CURVEDWIRES)
+                {
+                        fl_begin_line();
+
+                        fl_curve( ep1_x, ep1_y, ep1_new_x, ep1_mid_y, ep2_new_x, ep2_mid_y, ep2_x, ep2_y );
+
+                        fl_end_line();
+                }
+                else fl_line((int)ep1_x, (int)ep1_y, (int)ep2_x, (int)ep2_y);
 	}
 
 	DrawIncompleteWire();
@@ -871,6 +872,50 @@ void Fl_Canvas::Clear()
 
 	m_WireVec.clear();
 	redraw();
+}
+
+// Center a small patch; keep the top/left and a 32px margin visible for a
+// large one. The same rule the new stack states as Editor::CenterInset.
+static int CenterInset(int page, int extent)
+{
+	return std::max(32, (page - extent) / 2);
+}
+
+// A patch carries the window coordinates its devices were saved at, which say
+// nothing about where the view is now. Centering moves the view, never the
+// devices: the canvas is one big widget inside a scroll, so this is a scroll.
+void Fl_Canvas::CenterPatch()
+{
+	Fl_Scroll *scroll = dynamic_cast<Fl_Scroll*>(parent());
+
+	if (!scroll || !children()) return;
+
+	int left = child(0)->x();
+	int top = child(0)->y();
+	int right = left + child(0)->w();
+	int bottom = top + child(0)->h();
+
+	for (int n=1; n<children(); n++)
+	{
+		Fl_Widget *o = child(n);
+
+		left = std::min(left, o->x());
+		top = std::min(top, o->y());
+		right = std::max(right, o->x() + o->w());
+		bottom = std::max(bottom, o->y() + o->h());
+	}
+
+	// The page is what the scroll shows once its scrollbars are taken off.
+	const int PageW = scroll->w() - scroll->scrollbar.w();
+	const int PageH = scroll->h() - scroll->hscrollbar.h();
+
+	// Where the patch has to start for that margin to be on screen, and the
+	// scroll offset that puts that point at the top left of the view.
+	const int TargetX = left - CenterInset(PageW, right - left);
+	const int TargetY = top - CenterInset(PageH, bottom - top);
+
+	scroll->scroll_to(scroll->xposition() + (TargetX - scroll->x()),
+	                  scroll->yposition() + (TargetY - scroll->y()));
 }
 
 

@@ -172,7 +172,13 @@ SynthModular::SynthModular():
 m_ResetingAudioThread(false),
 m_HostNeedsUpdate(false),
 m_Frozen(false),
-m_NextID(0)
+m_NextID(0),
+m_MainMenu(NULL),
+m_SysMenu(NULL),
+m_Topbar(NULL),
+m_Canvas(NULL),
+m_CanvasScroll(NULL),
+m_TopWindow(NULL)
 {
 	pthread_mutex_init(&m_CycleLock, NULL);
 	/* Shared Audio State Information  */
@@ -481,28 +487,39 @@ SpiralWindowType *SynthModular::CreateWindow()
         m_MainMenu->user_data((void*)(this));
         m_MainMenu->box(FL_PLASTIC_UP_BOX);
         m_MainMenu->textsize (10);
-        m_MainMenu->add ("File/New", 0, cb_New, (void*)(this), FL_MENU_DIVIDER);
-        m_MainMenu->add ("File/Load", 0, cb_Load, (void*)(this), 0);
-        m_MainMenu->add ("File/Save", 0, cb_Save, (void*)(this), 0);
-        m_MainMenu->add ("File/Save As", 0, cb_SaveAs, (void*)(this), FL_MENU_DIVIDER);
-        m_MainMenu->add ("File/Merge", 0, cb_Merge, (void*)(this), FL_MENU_DIVIDER);
-        m_MainMenu->add ("File/Save Points", 0, cb_SavePoints, (void*)(this), 0);
-        m_MainMenu->add ("File/Examples", 0, cb_Examples, (void*)(this), FL_MENU_DIVIDER);
-        m_MainMenu->add ("File/Exit", 0, cb_Close, (void*)(this), 0);
-        m_MainMenu->add ("Edit/Cut", 0, cb_Cut, (void*)(this), 0);
-        m_MainMenu->add ("Edit/Copy", 0, cb_Copy, (void*)(this), 0);
-        m_MainMenu->add ("Edit/Paste", 0, cb_Paste, (void*)(this), 0);
-        m_MainMenu->add ("Edit/Delete", 0, cb_Delete, (void*)(this), FL_MENU_DIVIDER);
-        //m_MainMenu->add ("Edit/Toolbars/Plugins", 0, cb_Undefined, (void*)(this), 0);
-        //m_MainMenu->add ("Edit/Toolbars/Function", 0, cb_Undefined, (void*)(this), 0);
-        m_MainMenu->add ("Edit/Options", 0, cb_Options, (void*)(this), 0);
-        m_MainMenu->add ("Plugins/dummy", 0, NULL, NULL, 0);
-        m_MainMenu->add ("Audio/Pause", 0, cb_PlayPause, NULL, 0);
-        m_MainMenu->add ("Audio/Reset", 0, cb_Reset, NULL, 0);
-        //m_MainMenu->add ("Help/Plugins/dummy", 0, NULL, NULL, 0);
-        //m_MainMenu->add ("Help/Credits", 0, NULL, (void*)(this), 0);
-        //m_MainMenu->add ("Help/About", 0, NULL, (void*)(this), 0);
         m_TopWindow->add (m_MainMenu);
+
+        // The macOS system menu bar always carries the menu; the strip inside
+        // the window is a second copy of it, shown or not by the option. The
+        // two keep their own items: FLTK inserts its own Window menu into the
+        // system bar's array, so neither can be handed the other's.
+#ifdef __APPLE__
+        m_SysMenu = new Fl_Sys_Menu_Bar (0, 0, MAIN_WIDTH, 1, "");
+        m_SysMenu->user_data((void*)(this));
+#endif
+        MenuAdd ("File/New", cb_New, (void*)(this), FL_MENU_DIVIDER);
+        MenuAdd ("File/Load", cb_Load, (void*)(this), 0);
+        MenuAdd ("File/Save", cb_Save, (void*)(this), 0);
+        MenuAdd ("File/Save As", cb_SaveAs, (void*)(this), FL_MENU_DIVIDER);
+        MenuAdd ("File/Merge", cb_Merge, (void*)(this), FL_MENU_DIVIDER);
+        MenuAdd ("File/Save Points", cb_SavePoints, (void*)(this), 0);
+        MenuAdd ("File/Examples", cb_Examples, (void*)(this), FL_MENU_DIVIDER);
+        MenuAdd ("File/Exit", cb_Close, (void*)(this), 0);
+        MenuAdd ("Edit/Cut", cb_Cut, (void*)(this), 0);
+        MenuAdd ("Edit/Copy", cb_Copy, (void*)(this), 0);
+        MenuAdd ("Edit/Paste", cb_Paste, (void*)(this), 0);
+        MenuAdd ("Edit/Delete", cb_Delete, (void*)(this), FL_MENU_DIVIDER);
+        //MenuAdd ("Edit/Toolbars/Plugins", cb_Undefined, (void*)(this), 0);
+        //MenuAdd ("Edit/Toolbars/Function", cb_Undefined, (void*)(this), 0);
+        MenuAdd ("Edit/Options", cb_Options, (void*)(this), 0);
+        MenuAdd ("View/Center Patch", cb_CenterPatch, (void*)(this), 0);
+        // Holds the Plugins menu's place in the order until the plugins load.
+        MenuAdd ("Plugins/dummy", NULL, NULL, 0);
+        MenuAdd ("Audio/Pause", cb_PlayPause, NULL, 0);
+        MenuAdd ("Audio/Reset", cb_Reset, NULL, 0);
+        //MenuAdd ("Help/Plugins/dummy", NULL, NULL, 0);
+        //MenuAdd ("Help/Credits", NULL, (void*)(this), 0);
+        //MenuAdd ("Help/About", NULL, (void*)(this), 0);
 	int but = 50;
         int ToolbarHeight = but + 0;
         m_Topbar = new Fl_Pack (0, 20, MAIN_WIDTH, ToolbarHeight, "");
@@ -657,6 +674,8 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_SettingsWindow = new SettingsWindow;
 	m_SettingsWindow->RegisterApp(this);
 
+	ApplyViewOptions();
+
 	return m_TopWindow;
 }
 
@@ -766,7 +785,7 @@ void SynthModular::LoadPlugins (string pluginPath) {
             while ((p = GroupName.find ('/')) != string::npos)
                   GroupName = GroupName.replace (p, 1, " and ");
             string MenuEntry = "Plugins/" + GroupName + "/" + *PluginName;
-            m_MainMenu->add (MenuEntry.c_str(), 0, cb_NewDeviceFromMenu, &Numbers[ID], 0);
+            MenuAdd (MenuEntry, cb_NewDeviceFromMenu, &Numbers[ID], 0);
             // when help is working better - this will put the plugins into the help menu
             // MenuEntry = "Help/" + MenuEntry;
             // m_MainMenu->add (MenuEntry.c_str(), 0, NULL, &Numbers[ID], 0);
@@ -799,18 +818,7 @@ void SynthModular::LoadPlugins (string pluginPath) {
      // can't find it - show the first plugin group
      if (PlugGrp==m_PluginGroupMap.end()) PlugGrp=m_PluginGroupMap.begin();
      m_GroupTab->value(PlugGrp->second);
-     bool found_dummy;
-     int i;
-     do {
-        found_dummy = false;
-        for (i=0; i<m_MainMenu->size(); i++) {
-            if (m_MainMenu->text (i) != NULL) {
-               found_dummy = (strcmp ("dummy", m_MainMenu->text (i)) == 0);
-               if (found_dummy) break;
-            }
-        }
-        if (found_dummy) m_MainMenu->remove (i);
-     } while (found_dummy);
+     MenuDropPlaceholders();
      Splash->hide();
      delete Splash;
 }
@@ -1123,6 +1131,101 @@ void SynthModular::UpdateHostInfo()
 
 //////////////////////////////////////////////////////////
 
+// The view options live in SpiralInfo, so this reads them rather than taking
+// arguments: the options panel sets them and calls here, and CreateWindow
+// calls here once with the defaults in place.
+void SynthModular::ApplyViewOptions()
+{
+	// The strip is chrome like the toolbar. On macOS the system menu bar has
+	// the same menu whether it is shown or not, which is why it starts hidden
+	// there; everywhere else it is the only menu and stays up.
+	if (m_MainMenu)
+	{
+		if (SpiralInfo::SHOWMENUBAR) m_MainMenu->show();
+		else m_MainMenu->hide();
+	}
+
+	LayoutChrome();
+
+	if (m_Canvas) m_Canvas->redraw();
+}
+
+// Both bars get the entry. Fl_Sys_Menu_Bar hides Fl_Menu_'s add() rather than
+// overriding it, so each call has to reach the concrete type for the macOS
+// menu to be updated.
+void SynthModular::MenuAdd(const string &path, Fl_Callback *cb, void *data, int flags)
+{
+	if (m_MainMenu) m_MainMenu->add(path.c_str(), 0, cb, data, flags);
+	if (m_SysMenu) m_SysMenu->add(path.c_str(), 0, cb, data, flags);
+}
+
+// remove() and replace() are hidden in the same way add() is, so the two
+// sweeps below are written once over the concrete bar.
+
+template<class Bar> static void RemovePlaceholders(Bar *bar)
+{
+	bool found;
+	int item;
+
+	do {
+		found = false;
+
+		for (item = 0; item < bar->size(); item++)
+		{
+			if (bar->text (item) != NULL)
+			{
+				found = (strcmp ("dummy", bar->text (item)) == 0);
+				if (found) break;
+			}
+		}
+
+		if (found) bar->remove (item);
+	} while (found);
+}
+
+template<class Bar> static void RelabelItem(Bar *bar, const string &oldLabel, const string &newLabel)
+{
+	for (int item = 0; item < bar->size(); item++)
+	{
+		if (bar->text (item) != NULL && oldLabel == bar->text (item))
+		{
+			bar->replace (item, newLabel.c_str());
+			break;
+		}
+	}
+}
+
+// The placeholders held the Plugins menu's position until the plugins arrived.
+void SynthModular::MenuDropPlaceholders()
+{
+	if (m_MainMenu) RemovePlaceholders(m_MainMenu);
+	if (m_SysMenu) RemovePlaceholders(m_SysMenu);
+}
+
+// Play and Pause are the same menu entry under two names.
+void SynthModular::MenuRelabel(const string &oldLabel, const string &newLabel)
+{
+	if (m_MainMenu) RelabelItem(m_MainMenu, oldLabel, newLabel);
+	if (m_SysMenu) RelabelItem(m_SysMenu, oldLabel, newLabel);
+}
+
+// Hiding the strip is not enough on its own: the row it occupied would stay
+// empty, so the toolbar and the canvas move up into it. The window's own
+// resizing still belongs to FLTK, which is why only the offsets are set here.
+void SynthModular::LayoutChrome()
+{
+	if (!m_MainMenu || !m_Topbar || !m_CanvasScroll || !m_TopWindow) return;
+
+	const int MenuHeight = m_MainMenu->visible() ? m_MainMenu->h() : 0;
+	const int ChromeHeight = MenuHeight + m_Topbar->h();
+
+	m_Topbar->position(0, MenuHeight);
+	m_CanvasScroll->resize(0, ChromeHeight, m_TopWindow->w(), m_TopWindow->h() - ChromeHeight);
+	m_TopWindow->redraw();
+}
+
+//////////////////////////////////////////////////////////
+
 // called when a callback output plugin wants to run the audio thread
 void SynthModular::cb_Update(void* o, bool mode)
 {
@@ -1373,7 +1476,12 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 	GrowUnavailablePorts(s, paste, merge, m_DeviceWinMap, m_Copied.m_DeviceIds);
 
 	if (!paste && !merge)
+	{
 		s>>*m_Canvas;
+		// The devices are wherever the file says, which is where the view
+		// happened to be when it was saved. Bring the patch into sight.
+		m_Canvas->CenterPatch();
+	}
 
 	ThawAll();
         return s;
@@ -1756,6 +1864,15 @@ inline void SynthModular::cb_Options_i (Fl_Widget *o, void *v) {
        m_SettingsWindow->show();
 }
 
+// View menu
+
+void SynthModular::cb_CenterPatch (Fl_Widget* o, void* v) {
+     ((SynthModular*)(o->user_data()))->cb_CenterPatch_i (o, v);
+}
+inline void SynthModular::cb_CenterPatch_i (Fl_Widget *o, void *v) {
+       m_Canvas->CenterPatch();
+}
+
 void SynthModular::cb_Options (Fl_Widget* o, void* v) {
      ((SynthModular*)(o->user_data()))->cb_Options_i (o, v);
 }
@@ -1812,15 +1929,8 @@ inline void SynthModular::cb_PlayPause_i (Fl_Widget *o, void *v) {
           m_PlayPause->tooltip ("Play");
           PauseAudio();
        }
-       for (int i=0; i<m_MainMenu->size(); i++) {
-            if (m_MainMenu->text (i) != NULL) {
-               if (oldname == m_MainMenu->text (i)) {
-                  m_MainMenu->replace (i, m_PlayPause->tooltip());
-                  break;
-               }
-            }
-        }
-
+       // Play/Pause is a menu entry as well as a button.
+       MenuRelabel (oldname, m_PlayPause->tooltip());
 }
 
 void SynthModular::cb_PlayPause (Fl_Widget *o, void *v) {

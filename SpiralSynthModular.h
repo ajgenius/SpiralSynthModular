@@ -31,6 +31,7 @@
 #include <FL/Fl_Tile.H>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Menu_Bar.H>
+#include <FL/Fl_Sys_Menu_Bar.H>
 #include <sstream>
 #include <iostream>
 #include <fstream>
@@ -94,6 +95,9 @@ public:
 	void ClearUp(bool synchronize = true);
 	void UpdateHostInfo();
 	void UpdatePluginGUIs();
+	// The options panel applies the view options through here. Nothing on this
+	// path is persisted yet.
+	void ApplyViewOptions();
 	void LoadPatch(const char *fn, const char *branchId = NULL);
 	void SavePatch(const char *fn);
 
@@ -162,7 +166,19 @@ private:
 
 	// Main GUI stuff
 	void CreateGUI (int xoff=0, int yoff=0, const char *name="");
+	// The in-window menu strip hides like a toolbar: the chrome below it moves
+	// up into its row, so nothing is left behind.
+	void LayoutChrome();
+	// The macOS system menu bar and the in-window strip each hold their own
+	// items - FLTK inserts its own Window menu into the system bar's array, so
+	// the two cannot share one - and every menu edit goes to both.
+	void MenuAdd(const string &path, Fl_Callback *cb, void *data, int flags);
+	void MenuRelabel(const string &oldLabel, const string &newLabel);
+	void MenuDropPlaceholders();
         Fl_Menu_Bar *m_MainMenu;
+        // Created on macOS only: elsewhere Fl_Sys_Menu_Bar is another in-window
+        // bar, and a second strip is not what it is for.
+        Fl_Sys_Menu_Bar *m_SysMenu;
         Fl_Pack *m_Topbar, *m_ToolbarPanel, *m_Toolbar;
         Fl_Group *m_GroupFiller;
 	Fl_Button *m_Load, *m_Save, *m_New, *m_Options, *m_NewComment;
@@ -209,6 +225,9 @@ private:
 	static void cb_Delete (Fl_Widget *o, void *v);
         inline void cb_Options_i (Fl_Widget *o, void *v);
 	static void cb_Options (Fl_Widget *o, void *v);
+        // View menu
+        inline void cb_CenterPatch_i (Fl_Widget *o, void *v);
+	static void cb_CenterPatch (Fl_Widget *o, void *v);
         // Plugin Menu
         inline void cb_NewDevice_i (Fl_Button *o, void *v);
 	static void cb_NewDevice (Fl_Button *o, void *v);

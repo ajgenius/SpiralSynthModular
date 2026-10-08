@@ -100,6 +100,8 @@ public:
 	void RestorePortConnections(Fl_DeviceGUI* Device);
 	void RemoveDevice(Fl_DeviceGUI* Device);
 	void Clear();
+	// Scroll the view so the patch sits in the middle of it.
+	void CenterPatch();
         void AddPluginName(const string &s, int ID);
 
         GraphSort* GetGraph() { return &m_Graph; }
