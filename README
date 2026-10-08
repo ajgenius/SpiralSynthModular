@@ -2,14 +2,17 @@
 
 It's Aliiive! Or is it walking dead... Hmm.
 
-This version point does work for me. 
+This version point does work for me.
 
-GIT WARNING: This branch WILL BREAK later. 
 
-I AM MERGING UNRELATED HISTORIES OUT OF ORDER. 
+*** Git warning ***
+
+This branch WILL BREAK later.
+
+I AM MERGING UNRELATED HISTORIES OUT OF ORDER.
 
 Once I am done with the historical merges, I will be fixing the out of order,
-so there is a seamless (lying) chronology. I have done it 4 times already, 
+so there is a seamless (lying) chronology. I have done it 4 times already,
 I see at least 3 more in the future. Forks/Clones will not update cleanly.
 
 Until I am done any clones should be fresh every time.
@@ -21,58 +24,63 @@ I thought I was almost ready to release a new version. 16 years ago.
 
 - ajgenius
 
-WORKING NOTES:
 
-Back in 2006 I started reworking SSM for portability (I had a new mac!), 
-more plugin backends, sub-patches, a better audio/GUI split, and a move away 
-from FLTK. Much of it worked in various branches, then disappeared along with 
-SVN access, darcs repos, and a hard drive. 
+*** Working notes ***
+
+Back in 2006 I started reworking SSM for portability (I had a new mac!),
+more plugin backends, sub-patches, a better audio/GUI split, and a move away
+from FLTK. Much of it worked in various branches, then disappeared along with
+SVN access, darcs repos, and a hard drive.
 
 Life happened. Bad decisions were made.
 
-In 2024 I recovered scattered pieces from roughly four(?) hard drives and 
-started working on them sporadically. More recently, Grok and now Astra have 
-helped reconstruct the history and lost work. 
+In 2024 I recovered scattered pieces from roughly four(?) hard drives and
+started working on them sporadically. More recently, Grok and now Astra have
+helped reconstruct the history and lost work.
 
-The private repos contain years of UI ports and engine experiments in various 
+The private repos contain years of UI ports and engine experiments in various
 states of usefulness. I am not publishing all of that.
 
-This public repo brings the best pieces back onto the abandoned upstream, 
+This public repo brings the best pieces back onto the abandoned upstream,
 alongside patches from other people and new fixes.
 
 AI has been useful for build fixes, stack "modernizing" and certain bugs,
-sometimes better than my original work. Sometimes. 
+sometimes better than my original work. Sometimes.
 
-(side rant: modern stacks are SO BAD. Enshitification + Wirth's law in action), 
+(side rant: modern stacks are SO BAD. Enshitification + Wirth's law in action)
 
-Architectural changes still tend to involve burning through tokens, 
-then doing it myself anyway. 
+Architectural changes still tend to involve burning through tokens,
+then doing it myself anyway.
 
-This past week cost $100 on Grok, $100 and three resets on Astra, 
-and still left me untangling a reconstructed git history 
-that bounced from 2026 to 2006 to 2026 to 2008 etc. Argh. 
+This past week cost $100 on Grok, $100 and three resets on Astra,
+and still left me untangling a reconstructed git history
+that bounced from 2026 to 2006 to 2026 to 2008 etc. Argh.
 
-May fix that later at the expense of breaking things again.
+(Oct 8 2026: those dates are repaired. Commits that replayed old work now
+carry the date they were replayed, with the original kept in an Original-Date
+trailer, so the log reads forwards. Clones from before that need a fresh one.)
 
-Currently included: 
 
-libspiralcore, 
-my 2006 autotools work with subsequent updates, 
-community patches not already incorporated, 
-2007 + 2026 plugin splitting partial work,
-a new audio callback output model
-more audio backends (coreaudio, jack, pipewire, portaudio, alsa, oss, dummy)
-more midi backends (coreaudio, alsa, jack(?), rtmidi, dummy)
-an atomic clock and a presentation clock
-more 2026 plugin splitting
-FLTK fixes,
-load format fixes using a contract reader (incomplete, but covers all old patches I have left)
-unsupported device preserving missing plugins/ladspa through save when ladspa missing on load
-better support for ladspa loads where port numbers have changed
-A new bundled project format, supporting save points (each a new copy/assets)
-???,
-FreeBsd, OpenBSD, linux x86_64 / arm, glibc/musl,
-and macOS fixes.
+*** Currently included ***
+
+- libspiralcore
+- my 2006 autotools work with subsequent updates
+- community patches not already incorporated
+- 2007 + 2026 plugin splitting partial work
+- a new audio callback output model
+- more audio backends (coreaudio, jack, pipewire, portaudio, alsa, oss, dummy)
+- more midi backends (coreaudio, alsa, jack(?), rtmidi, dummy)
+- an atomic clock and a presentation clock
+- more 2026 plugin splitting
+- FLTK fixes
+- load format fixes using a contract reader (incomplete, but covers all the
+  old patches I have left)
+- an unsupported device that preserves missing plugins/ladspa through a save,
+  when ladspa is missing on load
+- better support for ladspa loads where port numbers have changed
+- a new bundled project format, supporting save points (each a new copy/assets)
+- ???
+- FreeBSD, OpenBSD, linux x86_64 / arm, glibc/musl, and macOS fixes
 
 Tested on Void Linux with musl and an M1 Mac running macOS 14.
 
@@ -80,27 +88,38 @@ Some things tested using CI without my asking by ChatGPT on Ubuntu and others.
 
 (Burning through all my github actions at once....)
 
-and a new suite of VM lab VMs usig AI to run tests on various platforms and stacks.
+And a new lab of VMs, using AI to run tests on various platforms and stacks.
 
-Still very much a work in progress. The bad repo name will change.
+Still very much a work in progress.
 
-If someone finds this before I finish, here is what is coming—as soon as I get AI 
-to do it properly, or do it myself:
 
-- Complex Envelope (restored from broken and working in private, unsure if it is RIGHT but it does things)
-- JSON-only UI definitions, already functional for 30 plugins in private.
-- JSON definitions for external plugins such as LADSPA. Straightforward enough, but on hold.
+*** Coming next ***
+
+If someone finds this before I finish, here is what is coming - as soon as I
+get AI to do it properly, or do it myself:
+
+- Complex Envelope (restored from broken and working in private, unsure if it
+  is RIGHT but it does things)
+- JSON-only UI definitions, already functional for 30 plugins in private
+- JSON definitions for external plugins such as LADSPA. Straightforward
+  enough, but on hold
 - More Audio and MIDI backend fixes
-- More platforms (windows support in progress, don't have a full dev box, but most things compile)
-- GTK2, GTK3, Qt4, Qt5, and Cocoa hosts alongside the old FLTK host. Already work in private (a lot to do for this migration)
-- Upgrading the old positional text format to JSON and support automatic differential checkpoints per save point branch (implemented in private)
-- SubPatches / Instruments (Virtual groups already working in private, full isolation planned)
-- Eventually, undo/redo.
+- More platforms (windows support in progress, don't have a full dev box, but
+  most things compile)
+- GTK2, GTK3, Qt4, Qt5, and Cocoa hosts alongside the old FLTK host. Already
+  work in private (a lot to do for this migration)
+- Upgrading the old positional text format to JSON, with automatic
+  differential checkpoints per save point branch (implemented in private)
+- SubPatches / Instruments (virtual groups already working in private, full
+  isolation planned)
+- Eventually, undo/redo
 
-Undo/redo is on hold. The plan is patch-based history; my unpublished 2006–2008 
-implementation used darcs, but only the notes survived. Checkpoints may help solve this eventually.
+Undo/redo is on hold. The plan is patch-based history; my unpublished
+2006-2008 implementation used darcs, but only the notes survived. Checkpoints
+may help solve this eventually.
 
 - ajgenius (Oct 8 2026)
+
 
 Old Readme from 2004:
 

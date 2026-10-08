@@ -674,7 +674,6 @@ Plugins/Devices/MidiPlugin/Makefile
 Plugins/Devices/MixSwitchPlugin/Makefile
 Plugins/Devices/MixerPlugin/Makefile
 Plugins/Devices/MoogFilterPlugin/Makefile
-Plugins/Broken/MousePlugin/Makefile
 Plugins/Devices/NoisePlugin/Makefile
 Plugins/Devices/NoteSnapPlugin/Makefile
 Plugins/Devices/OperatorPlugin/Makefile
