@@ -932,6 +932,11 @@ void LADSPAPlugin::ResetPortSettings(void)
 	if (!m_PlugDesc || !m_HostInfo)
 		return;
 
+	// Reset keeps saved defaults for surviving ports. A different installed
+	// descriptor can add or remove inputs; all four setting vectors must agree.
+	if (m_SSMPluginReset && m_InputPortDefault.size() > (size_t)m_PluginInfo.NumInputs)
+		m_InputPortDefault.resize(m_PluginInfo.NumInputs);
+
 	for (int n=0; n<m_PluginInfo.NumInputs; n++)
 	{
 		if (n >= (int)m_PortID.size())
@@ -945,7 +950,7 @@ void LADSPAPlugin::ResetPortSettings(void)
 			m_InputPortMin.push_back(Min);
 			m_InputPortMax.push_back(Max);
 			m_InputPortClamp.push_back(true);
-			if (! m_SSMPluginReset)
+			if (!m_SSMPluginReset || (size_t)n >= m_InputPortDefault.size())
 				m_InputPortDefault.push_back(Default);
 			continue;
 		}
@@ -1040,7 +1045,7 @@ void LADSPAPlugin::ResetPortSettings(void)
 		m_InputPortMax.push_back(Max);
 		m_InputPortClamp.push_back(true);
 
-		if (! m_SSMPluginReset)
+		if (!m_SSMPluginReset || (size_t)n >= m_InputPortDefault.size())
 		{
 			m_InputPortDefault.push_back(Default);
 		}
