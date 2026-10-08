@@ -9,6 +9,13 @@
 #include <string>
 #include <vector>
 
+// Xlib defines Status as a macro, including through FLTK on X11 hosts.
+#ifdef Status
+#pragma push_macro("Status")
+#undef Status
+#define SPIRALCORE_RESTORE_POSITIONAL_STATUS
+#endif
+
 namespace Spumoni
 {
 	class JSON;
@@ -77,5 +84,10 @@ namespace spiralcore
 		size_t m_Remainder;
 	};
 }
+
+#ifdef SPIRALCORE_RESTORE_POSITIONAL_STATUS
+#pragma pop_macro("Status")
+#undef SPIRALCORE_RESTORE_POSITIONAL_STATUS
+#endif
 
 #endif
