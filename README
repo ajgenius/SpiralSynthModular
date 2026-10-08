@@ -2,6 +2,8 @@
 
 It's Aliiive! Or is it walking dead... Hmm.
 
+This version point does work for me. 
+
 GIT WARNING: This branch WILL BREAK later. 
 
 I AM MERGING UNRELATED HISTORIES OUT OF ORDER. 
@@ -58,9 +60,18 @@ libspiralcore,
 my 2006 autotools work with subsequent updates, 
 community patches not already incorporated, 
 2007 + 2026 plugin splitting partial work,
-more audio backends,
+a new audio callback output model
+more audio backends (coreaudio, jack, pipewire, portaudio, alsa, oss, dummy)
+more midi backends (coreaudio, alsa, jack(?), rtmidi, dummy)
+an atomic clock and a presentation clock
+more 2026 plugin splitting
 FLTK fixes,
+load format fixes using a contract reader (incomplete, but covers all old patches I have left)
+unsupported device preserving missing plugins/ladspa through save when ladspa missing on load
+better support for ladspa loads where port numbers have changed
+A new bundled project format, supporting save points (each a new copy/assets)
 ???,
+FreeBsd, OpenBSD, linux x86_64 / arm, glibc/musl,
 and macOS fixes.
 
 Tested on Void Linux with musl and an M1 Mac running macOS 14.
@@ -74,18 +85,20 @@ Still very much a work in progress. The bad repo name will change.
 If someone finds this before I finish, here is what is coming—as soon as I get AI 
 to do it properly, or do it myself:
 
+- Complex Envelope (restored from broken and working in private, unsure if it is RIGHT but it does things)
 - JSON-only UI definitions, already functional for 30 plugins in private.
 - JSON definitions for external plugins such as LADSPA. Straightforward enough, but on hold.
-- Audio and MIDI backend fixes.
-- GTK3 and Cocoa hosts alongside the old FLTK host. Both already work in private.
-- A bundled file format containing JSON and assets in a branching folder structure.
+- More Audio and MIDI backend fixes
+- More platforms (windows support in progress, don't have a full dev box, but most things compile)
+- GTK2, GTK3, Qt4, Qt5, and Cocoa hosts alongside the old FLTK host. Already work in private (a lot to do for this migration)
+- Upgrading the old positional text format to JSON and support automatic differential checkpoints per save point branch (implemented in private)
+- SubPatches / Instruments (Virtual groups already working in private, full isolation planned)
 - Eventually, undo/redo.
 
 Undo/redo is on hold. The plan is patch-based history; my unpublished 2006–2008 
-implementation used darcs, but only the notes survived. Whether I want to make 
-darcs a dependency just for undo/redo is another question.
+implementation used darcs, but only the notes survived. Checkpoints may help solve this eventually.
 
-- ajgenius (Sep 2026)
+- ajgenius (Oct 8 2026)
 
 Old Readme from 2004:
 
