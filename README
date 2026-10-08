@@ -135,6 +135,55 @@ may help solve this eventually.
 - ajgenius (Oct 8 2026)
 
 
+*** Building ***
+
+The shape of the build is still Dave's, below: configure, make, make install.
+What has changed is how little is required and how much is optional.
+
+Needed: a C++ compiler and FLTK. That is the whole list. Everything else is
+detected, and configure prints what it found and what it skipped when it
+finishes.
+
+Found if present, skipped with a reason if not:
+
+  audio out     JACK, ALSA, OSS, PortAudio, PipeWire, ESD, and on macOS a
+                native CoreAudio client built from the system frameworks
+  midi          ALSA sequencer, JACK MIDI, RtMidi, CoreMIDI
+  files         libsndfile, for everything that loads or writes audio
+  LADSPA        the plugin host needs only ladspa.h, and a copy is in the
+                tree, so it builds whether or not the system has one
+  liblrdf       LADSPA plugin metadata, if you have it
+  FFTW          single precision, for four of the bundled LADSPA plugins
+
+Turn any of them off with --disable-NAME: --disable-jack, --disable-ladspa,
+--disable-sndfile, --disable-lrdf, --disable-portaudio, --disable-pipewire,
+--disable-alsa-output, --disable-oss-output, --disable-coreaudio,
+--disable-rtmidi, --disable-alsa-midi, --disable-jack-midi, --disable-esd.
+
+--disable-bundled-ladspa leaves out the vendored swh-plugins, for packagers
+who would rather depend on their distribution's copy.
+
+--with-plugindir=DIR puts the plugins somewhere other than
+$libdir/SpiralPlugins/$VERSION. They install as dsp/, panels/, audio/, midi/
+and ladspa/ under it, and the application looks for them there.
+
+--enable-debug for a debugging build.
+
+There is no flag for choosing the GUI toolkit. The macOS build uses Cocoa
+through FLTK because that is what FLTK does there; the Qt and GTK hosts are
+in the private tree and not in this one yet.
+
+Out of tree builds work and are the easier way to keep several configurations
+around:
+
+  ./autogen.sh
+  mkdir build && cd build
+  ../configure && make
+
+autogen.sh is only needed from a git checkout. A release tarball is already
+configured and starts at ./configure.
+
+
 Old Readme from 2004:
 
 Last changed Tuesday 11-March-2004.
