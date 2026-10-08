@@ -160,10 +160,10 @@ void BeatMatchPlugin::ExecuteCommands()
 {
 }
 	
-void BeatMatchPlugin::StreamOut(ostream &s) 
+void BeatMatchPlugin::Describe(spiralcore::Description &d) 
 {
-	s<<m_Version<<endl;
-	s<<m_Sensitivity<<" ";
+	d.Value(m_Version).Line();
+	d.Value(m_Sensitivity).Separator(" ");
 }
 
 void BeatMatchPlugin::StreamIn(istream &s) 

@@ -154,12 +154,12 @@ void StereoMixerPlugin::ExecuteCommands()
 	}
 }
 
-void StereoMixerPlugin::StreamOut(ostream &s)
+void StereoMixerPlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<" ";
+	d.Value(m_Version).Separator(" ");
 	for (int n=0; n<NUM_CHANNELS; n++)
 	{
-		s<<m_ChannelVal[n]<<" "<<m_Pan[n]<<" ";
+		d.Value(m_ChannelVal[n]).Separator(" ").Value(m_Pan[n]).Separator(" ");
 	}
 }
 

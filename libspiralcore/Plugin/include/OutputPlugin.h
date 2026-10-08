@@ -54,7 +54,7 @@ public:
 
 	Mode GetMode() { return (Mode)m_Hub->GetMode(); }
 
-	virtual void StreamOut(std::ostream &s) {}
+	virtual void Describe(spiralcore::Description &d) {}
 	virtual void StreamIn(std::istream &s)  {}
 private:
 	AudioTransportHub *m_Hub;

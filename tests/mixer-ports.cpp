@@ -15,7 +15,7 @@ public:
 	}
 	void Execute() {}
 	void StreamIn(std::istream &) {}
-	void StreamOut(std::ostream &) {}
+	void Describe(spiralcore::Description &d) {}
 };
 
 static std::map<int, SpiralPlugin *> devices;

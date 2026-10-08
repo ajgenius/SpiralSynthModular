@@ -182,8 +182,8 @@ void MixSwitchPlugin::Execute() {
   }
 }
 
-void MixSwitchPlugin::StreamOut (ostream &s) {
-  s << m_Version << " " << m_PluginInfo.NumInputs - 2 << " " << m_SwitchPos << " ";
+void MixSwitchPlugin::Describe(spiralcore::Description &d) {
+  d.Value(m_Version).Separator(" ").Value(m_PluginInfo.NumInputs - 2).Separator(" ").Value(m_SwitchPos).Separator(" ");
 }
 
 void MixSwitchPlugin::StreamIn (istream &s) {

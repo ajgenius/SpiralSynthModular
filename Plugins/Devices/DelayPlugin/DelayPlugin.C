@@ -150,9 +150,9 @@ void DelayPlugin::Randomise()
 {
 }
 
-void DelayPlugin::StreamOut(ostream &s)
+void DelayPlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<" "<<m_Delay<<" "<<m_Mix<<" ";
+	d.Value(m_Version).Separator(" ").Value(m_Delay).Separator(" ").Value(m_Mix).Separator(" ");
 }
 
 void DelayPlugin::StreamIn(istream &s)

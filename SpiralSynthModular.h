@@ -232,10 +232,12 @@ private:
 		((SynthModular*)o)->cb_ChangeBufferAndSampleRate_i(NewBufferSize, NewSamplerate);
 	}
 	friend istream &operator>>(istream &s, SynthModular &o);
+	friend spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o);
 	friend ostream &operator<<(ostream &s, SynthModular &o);
 };
 
 iostream &operator>>(iostream &s, SynthModular &o);
+spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o);
 ostream &operator<<(ostream &s, SynthModular &o);
 
 #endif

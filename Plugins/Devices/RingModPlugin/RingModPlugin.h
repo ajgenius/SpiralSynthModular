@@ -29,7 +29,7 @@ public:
 	
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void Execute();
-	virtual void StreamOut(std::ostream &s);
+	virtual void Describe(spiralcore::Description &d);
 	virtual void StreamIn(std::istream &s);
 			
 	float GetAmount()       { return m_Amount; }
@@ -40,9 +40,9 @@ private:
 	float m_Amount;
 	
 	friend std::istream &operator>>(std::istream &s, RingModPlugin &o);
-	friend std::ostream &operator<<(std::ostream &s, RingModPlugin &o);
+	friend spiralcore::Description &Describe(spiralcore::Description &d, RingModPlugin &o);
 };
 std::istream &operator>>(std::istream &s, RingModPlugin &o);
-std::ostream &operator<<(std::ostream &s, RingModPlugin &o);
+spiralcore::Description &Describe(spiralcore::Description &d, RingModPlugin &o);
 
 #endif

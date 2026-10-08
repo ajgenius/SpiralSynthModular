@@ -203,10 +203,10 @@ void MasherPlugin::Randomise()
 {
 }
 	
-void MasherPlugin::StreamOut(ostream &s)
+void MasherPlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<" ";
-	s<<m_GrainStoreSize<<" "<<m_Density<<" "<<m_Randomness<<" "<<m_GrainPitch<<" ";
+	d.Value(m_Version).Separator(" ");
+	d.Value(m_GrainStoreSize).Separator(" ").Value(m_Density).Separator(" ").Value(m_Randomness).Separator(" ").Value(m_GrainPitch).Separator(" ");
 }
 
 void MasherPlugin::StreamIn(istream &s)

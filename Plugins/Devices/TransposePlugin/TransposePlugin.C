@@ -129,9 +129,9 @@ void TransposePlugin::Execute () {
 	}
 }
 
-void TransposePlugin::StreamOut (ostream &s) {
-     s << m_Version << endl;
-     s << m_Amount;
+void TransposePlugin::Describe(spiralcore::Description &d) {
+     d.Value(m_Version).Line();
+     d.Value(m_Amount);
 }
 
 void TransposePlugin::StreamIn (istream &s) {

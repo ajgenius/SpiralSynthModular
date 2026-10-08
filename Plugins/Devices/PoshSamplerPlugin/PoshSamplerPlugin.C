@@ -350,21 +350,21 @@ void PoshSamplerPlugin::InitializeSampleDescription (SampleDesc* NewDesc, int nu
        }
 }
 
-void PoshSamplerPlugin::StreamOut (ostream &s) {
-     s << m_Version << " ";
+void PoshSamplerPlugin::Describe(spiralcore::Description &d) {
+     d.Value(m_Version).Separator(" ");
      for (int n=0; n<NUM_SAMPLES; n++) {
-         s << m_SampleDescVec[n]->Volume << " " <<
-              m_SampleDescVec[n]->PitchMod << " " <<
-              m_SampleDescVec[n]->Loop << " " <<
-              m_SampleDescVec[n]->PingPong << " " <<
-              m_SampleDescVec[n]->Note << " " <<
-              m_SampleDescVec[n]->Octave << " " <<
-              m_SampleDescVec[n]->SamplePos << " " <<
-              m_SampleDescVec[n]->PlayStart << " " <<
-              m_SampleDescVec[n]->LoopStart << " " <<
-              m_SampleDescVec[n]->LoopEnd << " " <<
-              m_SampleDescVec[n]->Note << " " <<
-              m_SampleDescVec[n]->ReTrig << " ";
+         d.Value(m_SampleDescVec[n]->Volume).Separator(" ")
+              .Value(m_SampleDescVec[n]->PitchMod).Separator(" ")
+              .Value(m_SampleDescVec[n]->Loop).Separator(" ")
+              .Value(m_SampleDescVec[n]->PingPong).Separator(" ")
+              .Value(m_SampleDescVec[n]->Note).Separator(" ")
+              .Value(m_SampleDescVec[n]->Octave).Separator(" ")
+              .Value(m_SampleDescVec[n]->SamplePos).Separator(" ")
+              .Value(m_SampleDescVec[n]->PlayStart).Separator(" ")
+              .Value(m_SampleDescVec[n]->LoopStart).Separator(" ")
+              .Value(m_SampleDescVec[n]->LoopEnd).Separator(" ")
+              .Value(m_SampleDescVec[n]->Note).Separator(" ")
+              .Value(m_SampleDescVec[n]->ReTrig).Separator(" ");
      }
 }
 

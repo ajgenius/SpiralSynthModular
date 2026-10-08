@@ -125,9 +125,9 @@ void NoisePlugin::Execute()
 	}
 }
 
-void NoisePlugin::StreamOut(ostream &s)
+void NoisePlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<" "<<(char)m_Type;
+	d.Value(m_Version).Separator(" ").Value((char)m_Type);
 }
 
 void NoisePlugin::StreamIn(istream &s)

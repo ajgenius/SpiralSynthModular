@@ -131,10 +131,10 @@ void TrigPlugin::ExecuteCommands()
 {
 }
 
-void TrigPlugin::StreamOut(ostream &s)
+void TrigPlugin::Describe(spiralcore::Description &d)
 {
-	s<<m_Version<<endl;
-	s<<(int)m_Operator<<" ";
+	d.Value(m_Version).Line();
+	d.Value((int)m_Operator).Separator(" ");
 }
 
 void TrigPlugin::StreamIn(istream &s)

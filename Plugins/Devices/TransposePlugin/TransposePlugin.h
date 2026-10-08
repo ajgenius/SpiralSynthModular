@@ -28,7 +28,7 @@ public:
 	virtual PluginInfo& Initialise (const HostInfo *Host);
 	virtual void Execute ();
 	//virtual void ExecuteCommands ();
-	virtual void StreamOut (std::ostream &s);
+	virtual void Describe(spiralcore::Description &d);
 	virtual void StreamIn (std::istream &s);
 	int GetAmount () { return m_Amount; }
 private:

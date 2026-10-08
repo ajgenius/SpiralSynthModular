@@ -300,14 +300,14 @@ void MidiPlugin::DeleteControl()
 	UpdatePluginInfoWithHost();
 }
 
-void MidiPlugin::StreamOut(ostream &s) 
+void MidiPlugin::Describe(spiralcore::Description &d) 
 {
-	s<<m_Version<<" "<<m_DeviceNum<<" "<<m_NoteCut<<" ";	
-	s<<m_ControlList.size()<<endl;
+	d.Value(m_Version).Separator(" ").Value(m_DeviceNum).Separator(" ").Value(m_NoteCut).Separator(" ");	
+	d.Value(m_ControlList.size()).Line();
 	for (unsigned int n=0; n<m_ControlList.size(); n++)
 	{
 		string PortTip=m_PluginInfo.PortTips[5+n];
-		s<<m_ControlList[n]<<" "<<PortTip.size()<<" "<<PortTip<<endl;
+		d.Value(m_ControlList[n]).Separator(" ").Value(PortTip.size()).Separator(" ").Value(PortTip).Line();
 	}
 	
 }

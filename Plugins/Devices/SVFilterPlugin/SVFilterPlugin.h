@@ -34,7 +34,7 @@ public:
 	virtual void Execute();
 	virtual void Reset();
 	
-	virtual void StreamOut(std::ostream &s);
+	virtual void Describe(spiralcore::Description &d);
 	virtual void StreamIn(std::istream &s);
 	
 	float GetCutoff()    { return Cutoff; }
@@ -57,9 +57,9 @@ private:
 	double m_h, m_b, m_l, m_p, m_n;
 		
 	friend std::istream &operator>>(std::istream &s, SVFilterPlugin &o);
-	friend std::ostream &operator<<(std::ostream &s, SVFilterPlugin &o);
+	friend spiralcore::Description &Describe(spiralcore::Description &d, SVFilterPlugin &o);
 };
 std::istream &operator>>(std::istream &s, SVFilterPlugin &o);
-std::ostream &operator<<(std::ostream &s, SVFilterPlugin &o);
+spiralcore::Description &Describe(spiralcore::Description &d, SVFilterPlugin &o);
 
 #endif

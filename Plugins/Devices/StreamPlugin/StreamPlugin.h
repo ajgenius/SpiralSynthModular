@@ -31,7 +31,7 @@ class StreamPlugin : public SpiralPlugin {
       virtual void Reset();
 
       virtual void ExecuteCommands();
-      virtual void StreamOut (std::ostream &s);
+      virtual void Describe(spiralcore::Description &d);
       virtual void StreamIn (std::istream &s);
       enum GUICommands { NONE, SET_TIME, LOAD, RESTART, STOP, PLAY };
       // has to be defined in the plugin
