@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
-AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include -I$(srcdir)/Plugin/include -I$(srcdir)/Audio/include -I$(srcdir)/Midi/include
+AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include -I$(srcdir)/File/include -I$(srcdir)/Plugin/include -I$(srcdir)/Audio/include -I$(srcdir)/Midi/include
 lib_LTLIBRARIES = libspiralcore.la
 libspiralcore_la_SOURCES = \
     include/Allocator.h \
@@ -97,6 +97,34 @@ libspiralcore_la_SOURCES += src/RingBuffer.cpp include/RingBuffer.h src/CommandR
 check_PROGRAMS += ring-buffer-test
 ring_buffer_test_SOURCES = tests/ring-buffer.cpp
 ring_buffer_test_LDADD = libspiralcore.la
+
+# The description: a device's state as positional tokens, the form the
+# files have always been written in.
+libspiralcore_la_SOURCES += File/include/Description.h File/src/Description.cpp
+check_PROGRAMS += description-test
+description_test_SOURCES = File/tests/description.cpp
+description_test_LDADD = libspiralcore.la
+
+# The positional contract and its reader. The contract is data; the reader
+# needs the YAJL JSON parser from ../JSON to load it.
+EXTRA_DIST += \
+    File/schemas/SpiralPositionalText-0.2.x.json \
+    File/schemas/SpiralPositionalText-0.2.x.AUTHORS \
+    File/schemas/SpiralPositionalText.history.json
+if HAVE_YAJL
+AM_CPPFLAGS += -I$(top_srcdir)/JSON $(YAJL_CFLAGS) -DSPIRALCORE_SCHEMA_DIR='"$(abs_srcdir)/File/schemas"'
+libspiralcore_la_SOURCES += File/include/PositionalReader.h File/src/PositionalReader.cpp ../JSON/JSONParser.cpp
+libspiralcore_la_SOURCES += File/src/DescriptionJSON.cpp
+libspiralcore_la_LIBADD += $(YAJL_LIBS)
+check_PROGRAMS += positional-reader-test description-json-test
+positional_reader_test_SOURCES = File/tests/positional-reader.cpp
+positional_reader_test_LDADD = libspiralcore.la
+description_json_test_SOURCES = File/tests/description-json.cpp
+description_json_test_LDADD = libspiralcore.la
+noinst_PROGRAMS = positional-tokens
+positional_tokens_SOURCES = File/tools/positional-tokens.cpp
+positional_tokens_LDADD = libspiralcore.la
+endif
 
 libspiralcore_la_SOURCES += Audio/include/AtomicClock.h
 if ATOMIC_CLOCK_MACH
