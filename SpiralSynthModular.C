@@ -21,6 +21,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <memory>
 #include <set>
 #include <algorithm>
 #include <sys/types.h>
@@ -73,27 +74,50 @@ static string TITLEBAR;
 
 static const int FILE_VERSION = 4;
 
-// The contract the file reader decodes a device's state under: loaded once,
-// from SSM_SCHEMA_DIR or the built tree's schemas. Without it no device's
-// state can be told from the next device's, and a patch cannot be loaded.
+// Explicit overrides never silently fall back. Packaged resources precede
+// the Unix installation, and a source checkout is only the development fallback.
+static string ContractDirectory()
+{
+	const char *override = getenv("SSM_SCHEMA_DIR");
+	if (override)
+		return override;
+
+	string bundle = SSMBundleResourceDirectory("schemas");
+	if (!bundle.empty())
+		return bundle;
+
+	const string installed = SSM_INSTALLED_SCHEMA_DIR;
+	if (access((installed + "/SpiralPositionalText-0.2.x.json").c_str(), R_OK) == 0
+	    && access((installed + "/SpiralPositionalText.history.json").c_str(), R_OK) == 0)
+		return installed;
+
+	return SPIRALCORE_SCHEMA_DIR;
+}
+
 static spiralcore::PositionalReader *ContractReader()
 {
 	static bool tried = false;
-	static spiralcore::PositionalReader *reader = NULL;
+	static std::auto_ptr<Spumoni::JSON> contract;
+	static std::auto_ptr<Spumoni::JSON> history;
+	static std::auto_ptr<spiralcore::PositionalReader> reader;
 	if (!tried)
 	{
 		tried = true;
-		const char *env = getenv("SSM_SCHEMA_DIR");
-		string dir = env ? env : SPIRALCORE_SCHEMA_DIR;
+		string dir = ContractDirectory();
 		string error;
-		Spumoni::JSON *contract = Spumoni::ParseJSON((dir + "/SpiralPositionalText-0.2.x.json").c_str(), &error);
-		Spumoni::JSON *history = contract ? Spumoni::ParseJSON((dir + "/SpiralPositionalText.history.json").c_str(), &error) : NULL;
-		if (contract)
-			reader = new spiralcore::PositionalReader(*contract, history);
+		contract.reset(Spumoni::ParseJSON((dir + "/SpiralPositionalText-0.2.x.json").c_str(), &error));
+		if (contract.get())
+			history.reset(Spumoni::ParseJSON((dir + "/SpiralPositionalText.history.json").c_str(), &error));
+
+		// Historical layouts are required too: accepting only the main schema
+		// would silently lose the Controller and other versioned layouts.
+		if (contract.get() && history.get())
+			reader.reset(new spiralcore::PositionalReader(*contract, history.get()));
 		else
 			cerr << "SpiralSynthModular: no file contract in " << dir << ": " << error << endl;
 	}
-	return reader;
+
+	return reader.get();
 }
 
 // The device line of a patch: the device's state, as the contract finds it

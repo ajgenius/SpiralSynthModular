@@ -4,7 +4,7 @@ set -eu
 
 fail() { echo "bundle: $*" >&2; exit 1; }
 [ "$(uname -s)" = Darwin ] || fail "packaging requires macOS"
-[ "$#" = 7 ] || fail "expected make, bindir, libdir, plugindir, srcdir, version, output"
+[ "$#" = 8 ] || fail "expected make, bindir, libdir, plugindir, srcdir, version, output, schemadir"
 make_command=$1
 bindir=$2
 libdir=$3
@@ -12,7 +12,8 @@ plugindir=$4
 srcdir=$5
 version=$6
 destination=$7
-for path in "$bindir" "$libdir" "$plugindir"; do
+schemadir=$8
+for path in "$bindir" "$libdir" "$plugindir" "$schemadir"; do
     case $path in /*) ;; *) fail "installation paths must be absolute: $path" ;; esac
 done
 case $destination in /*) ;; *) destination=$PWD/$destination ;; esac
@@ -39,6 +40,7 @@ mkdir -p "$contents/MacOS" "$frameworks" "$resources" "$work/sources"
 cp -p "$original_executable" "$contents/MacOS/SpiralSynthModular"
 cp -R "$stage$plugindir" "$resources/SpiralPlugins"
 cp -R "$srcdir/Examples" "$resources/Examples"
+cp -R "$stage$schemadir" "$resources/schemas"
 cp "$srcdir/COPYING" "$srcdir/GUI/SpiralSynthModular.icns" "$resources/"
 
 canonical() (
