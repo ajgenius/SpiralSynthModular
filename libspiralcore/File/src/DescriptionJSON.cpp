@@ -3,24 +3,24 @@
 // "between" are arrays of strings, one more gap than values. Anything else
 // is refused with a reason; a value is whatever string the writer put there.
 #include "Description.h"
-#include "JSONParser.h"
+#include "JSON.h"
 #include <memory>
 #include <sstream>
 
 namespace spiralcore
 {
-	static bool Strings(const SpiralJSON::JSONValue *list, const char *name,
+	static bool Strings(const Spumoni::JSON *list, const char *name,
 	                    std::vector<std::string> &out, std::string &error)
 	{
-		if (!list || list->GetType() != SpiralJSON::JSONValue::Array)
+		if (!list || list->GetType() != Spumoni::JSON::Array)
 		{
 			error = std::string("\"") + name + "\" is not an array";
 			return false;
 		}
 		for (size_t i = 0; i < list->Size(); ++i)
 		{
-			const SpiralJSON::JSONValue *item = list->At(i);
-			if (!item || item->GetType() != SpiralJSON::JSONValue::String)
+			const Spumoni::JSON *item = list->At(i);
+			if (!item || item->GetType() != Spumoni::JSON::String)
 			{
 				std::ostringstream where;
 				where << "\"" << name << "\"[" << i << "] is not a string";
@@ -34,10 +34,10 @@ namespace spiralcore
 
 	bool Description::FromJSON(const std::string &text, Description &out, std::string &error)
 	{
-		std::auto_ptr<SpiralJSON::JSONValue> root(SpiralJSON::ParseJSONText(text, false, &error));
+		std::auto_ptr<Spumoni::JSON> root(Spumoni::ParseJSONText(text, &error));
 		if (!root.get())
 			return false;
-		if (root->GetType() != SpiralJSON::JSONValue::Object)
+		if (root->GetType() != Spumoni::JSON::Object)
 		{
 			error = "a description is an object";
 			return false;

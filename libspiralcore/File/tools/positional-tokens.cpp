@@ -8,7 +8,7 @@
 //   positional-tokens <patch.ssm> [more.ssm ...]
 //
 // SPIRALCORE_SCHEMA_DIR (or the build-time default) locates the contract.
-#include "JSONParser.h"
+#include "JSON.h"
 #include "PositionalReader.h"
 #include <cstdio>
 #include <cstdlib>
@@ -76,13 +76,13 @@ int main(int argc, char **argv)
 	const char *env = std::getenv("SPIRALCORE_SCHEMA_DIR");
 	std::string dir = env && *env ? env : SPIRALCORE_SCHEMA_DIR;
 	std::string error;
-	std::auto_ptr<SpiralJSON::JSONValue> contract(SpiralJSON::ParseJSON((dir + "/SpiralPositionalText-0.2.x.json").c_str(), false, &error));
+	std::auto_ptr<Spumoni::JSON> contract(Spumoni::ParseJSON((dir + "/SpiralPositionalText-0.2.x.json").c_str(), &error));
 	if (!contract.get())
 	{
 		std::fprintf(stderr, "%s/SpiralPositionalText-0.2.x.json: %s\n", dir.c_str(), error.c_str());
 		return 2;
 	}
-	std::auto_ptr<SpiralJSON::JSONValue> history(SpiralJSON::ParseJSON((dir + "/SpiralPositionalText.history.json").c_str(), false, &error));
+	std::auto_ptr<Spumoni::JSON> history(Spumoni::ParseJSON((dir + "/SpiralPositionalText.history.json").c_str(), &error));
 	if (!history.get())
 	{
 		std::fprintf(stderr, "%s/SpiralPositionalText.history.json: %s\n", dir.c_str(), error.c_str());
