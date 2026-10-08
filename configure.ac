@@ -411,27 +411,15 @@ if test "$use_liblrdf" = "y"; then
    AC_SUBST(LRDFLIBS)
 fi
 
-dnl Check whether alsa-midi is present or has been disabled
-amidi_message=""
-AC_ARG_ENABLE(
-    alsa_midi,
-    [  --disable-alsa-midi     Disable alsa midi (use OSS)],
-    [use_alsa_midi="n"; amidi_message="manually disabled"],
-    [use_alsa_midi="y"]
-)
-if test "$use_alsa_midi" = "y"; then
-   AC_CHECK_HEADER(alsa/asoundlib.h, [use_alsa_midi="y"], [use_alsa_midi="n" ; amidi_message="No alsa/asoundlib.h found"])
-fi
-if test "$use_alsa_midi" = "y"; then
-   AC_CHECK_LIB(asound, snd_seq_open, [use_alsa_midi="y"], [use_alsa_midi="n" ; amidi_message="No libasound found"])
-fi
-if test "$use_alsa_midi" = "y"; then
-   AC_DEFINE(USE_ALSA_MIDI, , [Use ALSA MIDI not OSS])
-   AMIDILIBS="-lasound"
-   AC_SUBST(AMIDILIBS)
-else
-   AC_DEFINE(USE_OSS_MIDI, , [Use OSS MIDI not ALSA])
-fi
+dnl ALSA MIDI is decided once, above, for the Plugins/Midi module. There used
+dnl to be a second AC_ARG_ENABLE here for the MidiPlugin's own ALSA path; it
+dnl named the option alsa_midi, which derives the same enable_alsa_midi shell
+dnl variable as the alsa-midi option above, so it read that option's default as
+dnl a user-supplied value and took its disable branch on every single build.
+dnl USE_ALSA_MIDI was therefore never defined, USE_OSS_MIDI always was, and
+dnl AMIDILIBS was always empty -- on hosts where ALSA was plainly present. None
+dnl of those three are read anywhere in the tree any more, so the block is gone
+dnl rather than repaired; $have_alsa_midi is the live answer.
 
 dnl Check whether libsndfile is present or has been disabled
 sndfile_message=""
@@ -686,35 +674,51 @@ Plugins/Devices/WaveTablePlugin/Makefile
 Plugins/Devices/XFadePlugin/Makefile
 )
 
-echo -e "\nConfig options:"
-echo -n "libsndfile support for wave loading - "
+printf '\nConfig options:\n'
+printf '%35s - ' "libsndfile support for wave loading"
 if test "$use_sndfile" = "y"; then
-   echo "Enabled"
+   printf 'Enabled\n'
 else
-   echo "Disabled - $sndfile_message"
+   printf 'Disabled - %s\n' "$sndfile_message"
 fi
-echo -n "        ALSA support for MidiPlugin - "
-if test "$use_alsa_midi" = "y"; then
-   echo "Enabled"
-else
-   echo "Disabled - $amidi_message - Using OSS instead"
-fi
-echo -n "      Jack support (via JackPlugin) - "
+printf '%35s - ' "Jack support (via JackPlugin)"
 if test "$build_jack" = "y"; then
-   echo "Enabled"
+   printf 'Enabled\n'
 else
-   echo "Disabled - $jack_message"
+   printf 'Disabled - %s\n' "$jack_message"
 fi
-echo -n "  LADSPA support (via LADSPAPlugin) - "
+printf '%35s - ' "LADSPA support (via LADSPAPlugin)"
 if test "$build_ladspa" = "y"; then
-   echo "Enabled"
+   printf 'Enabled\n'
 else
-   echo "Disabled - $ladspa_message"
+   printf 'Disabled - %s\n' "$ladspa_message"
 fi
-echo -n "   liblrdf support for LADSPAPlugin - "
+printf '%35s - ' "liblrdf support for LADSPAPlugin"
 if test "$use_liblrdf" = "y"; then
-   echo "Enabled"
+   printf 'Enabled\n'
 else
-   echo "Disabled - $lrdf_message"
+   printf 'Disabled - %s\n' "$lrdf_message"
 fi
-echo ""
+
+dnl The modules decided above only reached the log as AC_MSG_NOTICE lines, which
+dnl scroll past. A release build is judged on which backends it actually got.
+printf '\nAudio output modules:\n'
+printf '%35s - %s\n' "ALSA"      "$alsa_output_message"
+printf '%35s - %s\n' "OSS"       "$oss_output_message"
+printf '%35s - %s\n' "PortAudio" "$portaudio_message"
+printf '%35s - %s\n' "PipeWire"  "$pipewire_message"
+printf '%35s - %s\n' "ESD"       "$have_output_esd"
+printf '%35s - %s\n' "CoreAudio" "$have_coreaudio"
+
+printf '\nMIDI modules:\n'
+printf '%35s - %s\n' "ALSA sequencer" "$have_alsa_midi"
+printf '%35s - %s\n' "JACK"           "$have_jack_midi"
+printf '%35s - %s\n' "OSS"            "$have_output_oss"
+printf '%35s - %s\n' "RtMidi"         "$have_rtmidi"
+printf '%35s - %s\n' "CoreMIDI"       "$have_coremidi"
+
+printf '\n%35s - %s\n' "AtomicClock" "$atomic_clock"
+printf '%35s - %s\n' "Install prefix" "$prefix"
+dnl Not the plugin directory: $plugindir still holds the unexpanded make
+dnl variables at this point, and printing those is worse than printing nothing.
+printf '\n'
