@@ -356,4 +356,23 @@ EXTRA_DIST = \
 	util/iir.c util/iir.h util/pitchscale.c util/pitchscale.h \
 	util/rms.c util/rms.h util/biquad.h util/ls_filter.h util/waveguide_nl.h \
 	gverb/gverb.c gverb/gverb.h gverb/gverbdsp.c gverb/gverbdsp.h \
-	gsm impulses
+	gsm/COPYRIGHT gsm/README gsm/add.c gsm/code.c gsm/config.h gsm/decode.c \
+	gsm/gsm.h gsm/gsm_create.c gsm/gsm_decode.c gsm/gsm_destroy.c \
+	gsm/gsm_encode.c gsm/gsm_option.c gsm/long_term.c gsm/lpc.c \
+	gsm/preprocess.c gsm/private.h gsm/proto.h gsm/rpe.c gsm/short_term.c \
+	gsm/table.c gsm/unproto.h \
+	impulses/01-unit.h impulses/02-steves-flat.h impulses/03-stk-m1.h \
+	impulses/04-fender-68-vibrolux-sm57.h \
+	impulses/05-fender-68-vibrolux-sm57-off.h \
+	impulses/06-fender-68-vibrolux-at4050.h \
+	impulses/07-fender-68-vibrolux-ui87.h impulses/08-fender-bassman-sm57.h \
+	impulses/09-fender-bassman-sm57-off.h impulses/10-fender-bassman-at4050.h \
+	impulses/11-fender-bassman-ui87.h impulses/12-fender-superchamp-sm57.h \
+	impulses/13-fender-superchamp-sm57-off.h \
+	impulses/14-fender-superchamp-at4050.h \
+	impulses/15-fender-superchamp-ui87.h impulses/16-marshall-jcm2000-sm57.h \
+	impulses/17-marshall-jcm2000-sm57-off.h impulses/18-marshall-plexi-sm57.h \
+	impulses/19-marshall-plexi-sm57-off.h \
+	impulses/20-matchless-chieftain-sm57.h \
+	impulses/21-matchless-chieftain-sm57-off.h impulses/all.h \
+	impulses/mkall-h.sh impulses/reorder.pl impulses/scale.pl
