@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = subdir-objects
-AM_CPPFLAGS = -I$(top_srcdir)/libspiralcore/include -I$(top_builddir) $(ALSA_CFLAGS)
+AM_CPPFLAGS = $(SPIRALCORE_CFLAGS) -I$(top_builddir) $(ALSA_CFLAGS)
 plugindir = @PLUGINDIR@/audio/ALSA
 plugin_LTLIBRARIES = ALSA_Audio.la
 ALSA_Audio_la_SOURCES = AlsaClient.h AlsaClient.cpp Module.cpp AlsaAtomicClock.cpp AlsaAtomicClock.h
@@ -16,6 +16,6 @@ alsa_client_test_CPPFLAGS = $(AM_CPPFLAGS)
 alsa_client_test_LDADD = $(top_builddir)/libspiralcore/libspiralcore.la $(ALSA_LIBS)
 
 check_PROGRAMS += alsa-clock-test
-alsa_clock_test_SOURCES = $(top_srcdir)/libspiralcore/tests/atomic-clock.cpp AlsaAtomicClock.cpp
+alsa_clock_test_SOURCES = $(top_srcdir)/libspiralcore/Audio/tests/atomic-clock.cpp AlsaAtomicClock.cpp
 alsa_clock_test_CPPFLAGS = $(AM_CPPFLAGS)
 alsa_clock_test_LDADD = $(ALSA_LIBS)

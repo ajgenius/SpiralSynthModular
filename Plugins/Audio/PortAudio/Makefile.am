@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_srcdir)/libspiralcore/include -I$(top_builddir) $(PORTAUDIO_CFLAGS)
+AM_CPPFLAGS = $(SPIRALCORE_CFLAGS) -I$(top_builddir) $(PORTAUDIO_CFLAGS)
 
 plugindir = @PLUGINDIR@/audio/PortAudio
 plugin_LTLIBRARIES = PortAudio_Audio.la

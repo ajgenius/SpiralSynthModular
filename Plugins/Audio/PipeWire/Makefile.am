@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = subdir-objects
-AM_CPPFLAGS = -I$(top_srcdir)/libspiralcore/include -I$(top_builddir)
+AM_CPPFLAGS = $(SPIRALCORE_CFLAGS) -I$(top_builddir)
 # PipeWire's headers require C++11; this override is local to the module.
 CXXFLAGS = @CXXFLAGS@ -std=c++11
 AM_CPPFLAGS += $(PIPEWIRE_CFLAGS)
