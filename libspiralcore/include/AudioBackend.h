@@ -4,27 +4,21 @@
 // coreaudio...). It lives either in a module exporting
 // SpiralPlugin_GetAudioBackend(), or compiled in and registered at
 // startup; the registry hands out clients by name either way, so the
-// host never names a native implementation. The descriptor is shared
-// with the private tree; its Kind lets one shape serve audio and midi.
+// host never names a native implementation. The descriptor is the one
+// in BackendModule.h, with Kind "audio".
 #ifndef SPIRALCORE_AUDIO_BACKEND_H
 #define SPIRALCORE_AUDIO_BACKEND_H
 #include <string>
 #include <vector>
 #include <map>
 #include "AudioClient.h"
+#include "BackendModule.h"
 #include "PluginLoader.h"
 namespace spiralcore
 {
 	// Bumped when AudioClient or the descriptor changes shape; the registry
 	// refuses backends built against another version.
 #define SPIRAL_AUDIO_PLUGIN_ABI 1
-	struct BackendDescriptor
-	{
-		unsigned ABI;
-		const char *Kind, *Name;
-		void *(*Create)(void *context);
-		void (*Destroy)(void *instance);
-	};
 	// The audio kind: modules are <plugins>/audio/<Backend>/<Backend>_Audio<ext>.
 	// Compiled-in backends register their descriptor directly; modules arrive
 	// through Accept. The first registration of a name wins. Handles stay with

@@ -47,6 +47,8 @@ int    SpiralInfo::FILTERGRAN  = 50;
 string SpiralInfo::AUDIOCLIENT = DEFAULT_OUTPUT_AUDIO_CLIENT;
 string SpiralInfo::OUTPUTFILE  = "default";
 string SpiralInfo::MIDIFILE    = "/dev/midi";
+// Empty: the first backend registered that is not the dummy.
+string SpiralInfo::MIDIBACKEND = "";
 int    SpiralInfo::POLY        = 1;
 bool   SpiralInfo::USEPLUGINLIST = false;
 unsigned SpiralInfo::GUI_COLOUR = 179;
@@ -227,6 +229,7 @@ void SpiralInfo::StreamOutAudioSettingsPrefs (ostream &s)
 	s << "AudioClient       = " << AUDIOCLIENT << endl;
 	s << "Output            = " << OUTPUTFILE << endl;
 	s << "Midi              = " << MIDIFILE << endl;
+	s << "MidiBackend       = " << MIDIBACKEND << endl;
 	s << "UsePluginList     = " << USEPLUGINLIST << endl;
 	s << "Polyphony         = " << POLY << endl;
 
@@ -273,6 +276,15 @@ bool SpiralInfo::StreamInAudioSettingsPrefs (istream &s, string &section, string
 
 		else if (ident == "Midi")
 			s >> MIDIFILE;
+
+		else if (ident == "MidiBackend") {
+			std::getline(s, MIDIBACKEND);
+			if (s && !s.eof()) s.unget(); // as Output: the value may be empty
+			const string::size_type first=MIDIBACKEND.find_first_not_of(" \t");
+			MIDIBACKEND.erase(0,first==string::npos ? MIDIBACKEND.size() : first);
+			const string::size_type last=MIDIBACKEND.find_last_not_of(" \t\r");
+			MIDIBACKEND.erase(last==string::npos ? 0 : last+1);
+		}
 
 		else if (ident == "UsePluginList")
 			s >> USEPLUGINLIST;
