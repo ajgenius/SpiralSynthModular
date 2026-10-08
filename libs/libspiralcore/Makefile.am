@@ -18,11 +18,14 @@ libspiralcore_la_SOURCES = \
     src/RiffWav.cpp \
     include/GraphSort.h \
     src/GraphSort.cpp
-libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 3:0:0 \
-	$(SPUMONI_WHOLE_ARCHIVE)
-libspiralcore_la_DEPENDENCIES = $(top_builddir)/libs/libSpumoni/libSpumoni.a
-# libSpumoni.a is linked in full for the core and its consumers.
+libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 3:0:0
+# Spumoni is linked in whole as a convenience library. It has to arrive as a
+# library and not as a trailing linker flag: libtool emits LDFLAGS after the
+# crt epilogue, which puts the archive's .eh_frame past crtend's __FRAME_END__
+# and leaves the unwinder registering a frame table it cannot parse. musl's
+# loader segfaults in frame_dummy before main; glibc tolerates it silently.
 libspiralcore_la_LIBADD = $(SFLIBS) $(JACK_LIBS) -lm \
+	$(top_builddir)/libs/libSpumoni/libSpumoni.la \
 	$(ZLIB_LIBS)
 
 check_PROGRAMS = compatibility-test
