@@ -57,10 +57,11 @@ public:
 
 	unsigned long  GetUniqueID() { return m_UniqueID; }
 	const char    *GetName() { return (const char *)m_Name; }
-	const std::vector<LADSPAInfo::PluginEntry> &GetMenuList() const
-	{
-		return m_LADSPAInfo->GetMenuList();
-	}
+	// Virtual, and defined in the module that owns m_LADSPAInfo. An inline body
+	// here makes every caller reference that static directly, and the editor
+	// module is dlopened RTLD_LOCAL, so the DSP module's statics are not its to
+	// read. Through the vtable the editor needs no symbol from us at all.
+	virtual const std::vector<LADSPAInfo::PluginEntry> &GetMenuList() const;
 	const char    *GetMaker() { return (const char *)m_Maker; }
 	int            GetPage() { return m_Page; }
 	bool           GetUpdateInputs() { return m_UpdateInputs; }

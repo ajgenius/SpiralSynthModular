@@ -194,6 +194,11 @@ PluginInfo &LADSPAPlugin::Initialise(const HostInfo *Host)
 	return Info;
 }
 
+const std::vector<LADSPAInfo::PluginEntry> &LADSPAPlugin::GetMenuList() const
+{
+	return m_LADSPAInfo->GetMenuList();
+}
+
 
 
 void LADSPAPlugin::Reset()
