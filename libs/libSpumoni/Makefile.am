@@ -27,3 +27,5 @@ package_test_SOURCES = tests/package.cpp
 package_test_LDADD = libSpumoni.a $(ZLIB_LIBS)
 
 EXTRA_DIST = README.md
+
+EXTRA_DIST += tests/json-conformance.h

@@ -93,10 +93,10 @@ namespace SpiralJSONDetail
 
 	private:
 		const char *m_P;
-			const char *m_End;
+		const char *m_End;
 		string *m_Error;
 		size_t m_Depth;
-			bool m_Fold;
+		bool m_Fold;
 
 		bool Enter()
 		{
@@ -317,10 +317,10 @@ namespace SpiralJSONDetail
 				JSON *key = String();
 				if (!key) { Ownership::Release(object); return NULL; }
 				string name = key->Text();
-					if (m_Fold)
-						for (size_t i = 0; i < name.size(); ++i)
-							if (name[i] >= 'A' && name[i] <= 'Z')
-								name[i] += 'a' - 'A';
+				if (m_Fold)
+					for (size_t i = 0; i < name.size(); ++i)
+						if (name[i] >= 'A' && name[i] <= 'Z')
+							name[i] += 'a' - 'A';
 
 				Ownership::Release(key);
 				Skip();
