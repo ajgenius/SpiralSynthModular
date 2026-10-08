@@ -54,6 +54,7 @@ class SpiralInfo {
       static string AUDIOCLIENT;
       static string OUTPUTFILE;
       static string MIDIFILE;
+      static string MIDIBACKEND;
       static bool   USEPLUGINLIST;
       static int    POLY;
       static string LOCALE;
