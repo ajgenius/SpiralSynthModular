@@ -230,7 +230,6 @@ m_ShowMenuBar(NULL)
 	Line->end();
 	m_Options->add(Line);
 
-#ifdef __APPLE__
 	Line = new Fl_Pack(0,0,100,20,"");
 	Line->type(FL_HORIZONTAL);
 	Name = new Fl_Box(55,0,150,20,"Show Menubar");
@@ -239,14 +238,17 @@ m_ShowMenuBar(NULL)
 	Line->add(Name);
 	m_ShowMenuBar = new Fl_Choice(0,0,80,20,"");
 	m_ShowMenuBar->labelsize(10);
-	m_ShowMenuBar->tooltip("Show the menu strip inside the window as well as the menu bar at the top of the screen");
+	// Offered everywhere, not only where a system menu bar duplicates it:
+	// the toolbar is never hidden and carries the Options button, so the
+	// strip can always be asked back. What differs by platform is the
+	// default, not whether the choice exists.
+	m_ShowMenuBar->tooltip("Show the menu strip inside the window. The toolbar's Options button stays available either way");
 	m_ShowMenuBar->add("No");
 	m_ShowMenuBar->add("Yes");
 	m_ShowMenuBar->value(SpiralInfo::SHOWMENUBAR ? 1 : 0);
 	Line->add(m_ShowMenuBar);
 	Line->end();
 	m_Options->add(Line);
-#endif
 
 	m_Options->end();
 
