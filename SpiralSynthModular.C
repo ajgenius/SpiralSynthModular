@@ -720,8 +720,16 @@ void SynthModular::LoadPlugins (string pluginPath) {
      splashtext->labelsize (10);
      splashtext->box (FL_NO_BOX);
      splashtext->align (FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
+     // The artwork used to carry the version, and said 0.2.3 CVS for twenty
+     // years. Drawing it from the build is one place to be wrong instead of
+     // two, and the one place keeps itself right.
+     Fl_Box *splashversion = new Fl_Box (SWidth-115, SHeight-22, 110, 20, VERSION " GIT");
+     splashversion->labelsize (12);
+     splashversion->box (FL_NO_BOX);
+     splashversion->align (FL_ALIGN_INSIDE | FL_ALIGN_RIGHT);
      Splash->add (pbut);
      Splash->add (splashtext);
+     Splash->add (splashversion);
      Splash->show();
      string PluginRoot = pluginPath.empty() ? SpiralInfo::PLUGIN_PATH : pluginPath;
      if (!PluginRoot.empty() && PluginRoot[PluginRoot.size()-1] != '/') PluginRoot += '/';
