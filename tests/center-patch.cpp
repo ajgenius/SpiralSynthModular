@@ -77,14 +77,14 @@ int main()
 
 	{
 		const Patch patch(canvas);
-		const int Before = patch.Left - scroll->x();
-		const int After = (scroll->x() + PageW) - patch.Right;
-		const int Above = patch.Top - scroll->y();
-		const int Below = (scroll->y() + PageH) - patch.Bottom;
+		const int GapLeft = patch.Left - scroll->x();
+		const int GapRight = (scroll->x() + PageW) - patch.Right;
+		const int GapTop = patch.Top - scroll->y();
+		const int GapBottom = (scroll->y() + PageH) - patch.Bottom;
 
 		assert(patch.Right - patch.Left < PageW && patch.Bottom - patch.Top < PageH);
-		assert(std::abs(Before - After) <= 1);
-		assert(std::abs(Above - Below) <= 1);
+		assert(std::abs(GapLeft - GapRight) <= 1);
+		assert(std::abs(GapTop - GapBottom) <= 1);
 	}
 
 	// Grow it past the view: the top left corner is what has to stay visible.
