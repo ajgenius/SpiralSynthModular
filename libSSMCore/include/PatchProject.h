@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Spiral::File::Project — the bare tip of an SSM project.
 //
-// One part: source.ssm, the patch kept whole. Opening a package reads
-// those bytes and the existing loader streams them in. No patch JSON,
-// no schema, no property stack. Draft, not ABI stable.
+// One part: patch.spiral.legacy.ssm, the patch kept whole, its own
+// header saying which version it is. Opening a package reads those
+// bytes and the existing loader streams them in. No patch JSON, no
+// schema, no property stack. Draft, not ABI stable.
 #ifndef SPIRAL_FILE_PROJECT_H
 #define SPIRAL_FILE_PROJECT_H
 
