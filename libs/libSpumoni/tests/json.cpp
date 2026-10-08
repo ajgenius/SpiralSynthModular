@@ -19,8 +19,20 @@ static void invalid(const std::string &input)
 	assert(!root.get() && !error.empty());
 }
 
+#include "json-conformance.h"
+struct JSONAPI
+{
+	typedef JSON Value;
+	static Value *Parse(const std::string &text, std::string *error)
+	{
+		return ParseJSONText(text, error);
+	}
+	static void Release(Value *value) { delete value; }
+};
+
 int main()
 {
+	JSONConformance<JSONAPI>();
 	std::string error("stale");
 	std::auto_ptr<JSON> root(ParseJSONText(
 	    "{\"schema_version\":1,\"id\":7,\"host\":{\"abi\":\"0.3.1\"},"
