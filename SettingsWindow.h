@@ -56,6 +56,7 @@ private:
 	Fl_Input     *m_OutputDevice;
 	Fl_Choice    *m_MidiBackend;
 	Fl_Input     *m_MidiDevice;
+	Fl_Choice    *m_CurvedWires;
 	Fl_Button    *m_Save;	
 	Fl_Button    *m_Apply;
 		

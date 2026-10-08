@@ -58,6 +58,10 @@ unsigned SpiralInfo::SCOPE_SEL_COLOUR = FL_WHITE;
 unsigned SpiralInfo::SCOPE_IND_COLOUR = fl_rgb_color (203, 255, 0);
 unsigned SpiralInfo::SCOPE_MRK_COLOUR = fl_rgb_color (155, 155, 50);
 
+// Wires have been curves since the canvas learnt fl_curve; the straight line
+// is the option. Session only, as the comment in the header says.
+bool   SpiralInfo::CURVEDWIRES = true;
+
 /*int SpiralInfo::GUICOL_Tool=179;
 int SpiralInfo::GUICOL_Button=181;
 int SpiralInfo::GUICOL_Canvas=181;
