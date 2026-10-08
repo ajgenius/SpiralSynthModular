@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
-AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include -I$(srcdir)/File/include -I$(srcdir)/Plugin/include -I$(srcdir)/Audio/include -I$(srcdir)/Midi/include
+AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include -I$(srcdir)/File/include -I$(srcdir)/Plugin/include -I$(srcdir)/Audio/include -I$(srcdir)/Midi/include -I$(top_srcdir)/libs/libSpumoni/include
 lib_LTLIBRARIES = libspiralcore.la
 libspiralcore_la_SOURCES = \
     include/Allocator.h \
@@ -18,8 +18,12 @@ libspiralcore_la_SOURCES = \
     src/RiffWav.cpp \
     include/GraphSort.h \
     src/GraphSort.cpp
-libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 2:0:0
-libspiralcore_la_LIBADD = $(SFLIBS) $(JACK_LIBS) -lm
+libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 2:0:0 \
+	$(SPUMONI_WHOLE_ARCHIVE)
+libspiralcore_la_DEPENDENCIES = $(top_builddir)/libs/libSpumoni/libSpumoni.a
+# libSpumoni.a is linked in full. Nothing in the loader calls it yet.
+libspiralcore_la_LIBADD = $(SFLIBS) $(JACK_LIBS) -lm \
+	$(ZLIB_LIBS)
 
 check_PROGRAMS = compatibility-test
 TESTS = $(check_PROGRAMS)
@@ -71,14 +75,10 @@ sub_Probe_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
 stranger_Probe_la_SOURCES = Plugin/tests/plugin-manager/stranger.cpp
 stranger_Probe_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
 # The test root: probe/probe_Probe.so, probe/sub/sub_Probe.so, probe/stranger_Probe.so
-# The plugin manifest the host reads before opening a module. Its JSON
-# reader stays in JSON/, which is its own library and not spiral's.
-if HAVE_YAJL
+# The plugin manifest the host reads before opening a module.
 check_PROGRAMS += manifest-test
-manifest_test_SOURCES = Plugin/tests/manifest.cpp Plugin/include/PluginManifest.h Plugin/src/PluginManifest.cpp ../JSON/JSONParser.cpp
-manifest_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/JSON $(YAJL_CFLAGS)
-manifest_test_LDADD = $(YAJL_LIBS)
-endif
+manifest_test_SOURCES = Plugin/tests/manifest.cpp Plugin/include/PluginManifest.h Plugin/src/PluginManifest.cpp
+manifest_test_LDADD = libspiralcore.la
 
 plugin-manager-root: $(check_LTLIBRARIES)
 	rm -rf plugin-manager-root
@@ -107,17 +107,15 @@ description_test_LDADD = libspiralcore.la
 description_reader_test_SOURCES = File/tests/description-reader.cpp
 description_reader_test_LDADD = libspiralcore.la
 
-# The positional contract and its reader. The contract is data; the reader
-# needs the YAJL JSON parser from ../JSON to load it.
+# The positional contract and its reader. The contract is data; Spumoni's
+# JSON reader loads it.
 EXTRA_DIST += \
     File/schemas/SpiralPositionalText-0.2.x.json \
     File/schemas/SpiralPositionalText-0.2.x.AUTHORS \
     File/schemas/SpiralPositionalText.history.json
-if HAVE_YAJL
-AM_CPPFLAGS += -I$(top_srcdir)/JSON $(YAJL_CFLAGS) -DSPIRALCORE_SCHEMA_DIR='"$(abs_srcdir)/File/schemas"'
-libspiralcore_la_SOURCES += File/include/PositionalReader.h File/src/PositionalReader.cpp ../JSON/JSONParser.cpp
+AM_CPPFLAGS += -DSPIRALCORE_SCHEMA_DIR='"$(abs_srcdir)/File/schemas"'
+libspiralcore_la_SOURCES += File/include/PositionalReader.h File/src/PositionalReader.cpp
 libspiralcore_la_SOURCES += File/src/DescriptionJSON.cpp
-libspiralcore_la_LIBADD += $(YAJL_LIBS)
 check_PROGRAMS += positional-reader-test description-json-test
 positional_reader_test_SOURCES = File/tests/positional-reader.cpp
 positional_reader_test_LDADD = libspiralcore.la
@@ -126,7 +124,6 @@ description_json_test_LDADD = libspiralcore.la
 noinst_PROGRAMS = positional-tokens
 positional_tokens_SOURCES = File/tools/positional-tokens.cpp
 positional_tokens_LDADD = libspiralcore.la
-endif
 
 libspiralcore_la_SOURCES += Audio/include/AtomicClock.h
 if ATOMIC_CLOCK_MACH

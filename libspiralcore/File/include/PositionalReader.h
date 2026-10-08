@@ -9,9 +9,9 @@
 #include <string>
 #include <vector>
 
-namespace SpiralJSON
+namespace Spumoni
 {
-	class JSONValue;
+	class JSON;
 }
 
 namespace spiralcore
@@ -48,7 +48,7 @@ namespace spiralcore
 		};
 
 		// Both trees stay owned by the caller for the reader's lifetime.
-		PositionalReader(const SpiralJSON::JSONValue &contract, const SpiralJSON::JSONValue *history);
+		PositionalReader(const Spumoni::JSON &contract, const Spumoni::JSON *history);
 
 		// False only for an unusable contract; a damaged file still returns
 		// true with Status() Recovered, Partial or Unreadable.
@@ -69,8 +69,8 @@ namespace spiralcore
 		size_t Remainder() const { return m_Remainder; }   // first undecoded byte
 
 	private:
-		const SpiralJSON::JSONValue &m_Contract;
-		const SpiralJSON::JSONValue *m_History;
+		const Spumoni::JSON &m_Contract;
+		const Spumoni::JSON *m_History;
 		std::string m_Status;
 		std::vector<Device> m_Devices;
 		std::vector<Diagnostic> m_Diagnostics;
