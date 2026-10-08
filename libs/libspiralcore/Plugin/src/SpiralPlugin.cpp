@@ -50,6 +50,10 @@ bool SpiralPlugin::Kill()
 	return true;
 }
 
+// Anchor the protocol's RTTI in libspiralcore so RTLD_LOCAL devices and
+// the host share one identity, including with libc++ on macOS.
+StablePortLayout::~StablePortLayout() {}
+
 void SpiralPlugin::ResetPorts() 
 {
 	for (int n=0; n<m_PluginInfo.NumOutputs; n++)

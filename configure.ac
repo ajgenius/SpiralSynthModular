@@ -8,7 +8,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT([SpiralSynthModular], [0.3.1])
 AC_CONFIG_SRCDIR([SpiralSynthModular.C])
 
-AC_DEFINE([SSM_HOST_ABI], ["ssm-fltk-audio-6"], [SSM plugin host ABI])
+AC_DEFINE([SSM_HOST_ABI], ["ssm-fltk-audio-7"], [SSM plugin host ABI])
 
 AM_INIT_AUTOMAKE
 
@@ -379,6 +379,8 @@ if test "$build_ladspa" = "y" ; then
    PLUGINLIST="LADSPAPlugin $PLUGINLIST"
 fi
 
+AM_CONDITIONAL([BUILD_LADSPA], [test "$build_ladspa" = "y"])
+
 dnl Check whether liblrdf is present or has been disabled
 lrdf_message=""
 AC_ARG_ENABLE(
@@ -513,7 +515,9 @@ case "$host_os" in
     SPUMONI_WHOLE_ARCHIVE='-Wl,-force_load,$(top_builddir)/libs/libSpumoni/libSpumoni.a'
     ;;
   *)
-    SPUMONI_WHOLE_ARCHIVE='-Wl,--whole-archive,$(top_builddir)/libs/libSpumoni/libSpumoni.a -Wl,--no-whole-archive'
+    dnl Libtool emits these flags after LIBADD. Keep zlib after the archive
+    dnl too, otherwise GNU --as-needed drops it before seeing Zip's symbols.
+    SPUMONI_WHOLE_ARCHIVE='-Wl,--whole-archive,$(top_builddir)/libs/libSpumoni/libSpumoni.a -Wl,--no-whole-archive,-lz'
     ;;
 esac
 AC_SUBST([SPUMONI_WHOLE_ARCHIVE])

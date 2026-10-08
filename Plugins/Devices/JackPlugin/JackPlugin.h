@@ -29,7 +29,7 @@ using namespace std;
 const int MAX_PORTS = 64;
 const int MIN_PORTS = 2;
 
-class JackPlugin : public AudioDriver
+class JackPlugin : public AudioDriver, public StablePortLayout
 {
 public:
  	JackPlugin();
