@@ -300,7 +300,18 @@ namespace Spumoni
 									}
 									code = 0x10000 + (((code - 0xD800) << 10) | (low - 0xDC00));
 								}
+								else
+								{
+									Fail("Missing low surrogate");
+									return NULL;
+								}
 							}
+							else if (code >= 0xDC00 && code <= 0xDFFF)
+							{
+								Fail("Unpaired low surrogate");
+								return NULL;
+							}
+
 							AppendUtf8(text, code);
 							break;
 						}
@@ -455,18 +466,29 @@ namespace Spumoni
 
 	const JSON *JSON::Get(const char *key) const
 	{
-		if (m_Type != Object || !key) return NULL;
-		for (size_t i = 0; i < m_Members.size(); ++i)
-			if (m_Members[i].Key == key) return m_Members[i].Value;
-		return NULL;
+		return key ? Get(string(key)) : NULL;
 	}
 
 	JSON *JSON::Get(const char *key)
 	{
-		if (m_Type != Object || !key) return NULL;
+		return key ? Get(string(key)) : NULL;
+	}
+
+	const JSON *JSON::Get(const string &key) const
+	{
+		if (m_Type != Object)
+			return NULL;
+
 		for (size_t i = 0; i < m_Members.size(); ++i)
-			if (m_Members[i].Key == key) return m_Members[i].Value;
+			if (m_Members[i].Key == key)
+				return m_Members[i].Value;
+
 		return NULL;
+	}
+
+	JSON *JSON::Get(const string &key)
+	{
+		return const_cast<JSON *>(static_cast<const JSON *>(this)->Get(key));
 	}
 
 	vector<string> JSON::Keys() const

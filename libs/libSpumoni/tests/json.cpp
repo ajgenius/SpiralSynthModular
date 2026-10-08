@@ -63,6 +63,15 @@ int main()
 	invalid(std::string("{}\0[]", 5));
 	invalid(std::string("\"\xFF\""));
 	invalid(std::string("\"\xC0\x80\""));   // overlong NUL
+	invalid("\"\\ud800\"");
+	invalid("\"\\udc00\"");
+	invalid("\"\\ud800x\"");
+	invalid("{\"a\\u0000b\":1,\"a\\u0000b\":2}");
+	root.reset(ParseJSONText("{\"a\\u0000b\":1,\"a\":2}"));
+	assert(root.get());
+	assert(root->Get(std::string("a\0b", 3))->Integer(n) && n == 1);
+	assert(root->Get("a")->Integer(n) && n == 2);
+
 	root.reset(ParseJSONText("{\"Name\":1}"));
 	assert(root->Get("Name") && !root->Get("name"));   // keys are what they are
 	root.reset(ParseJSONText(std::string(64, '[') + "0" + std::string(64, ']')));
