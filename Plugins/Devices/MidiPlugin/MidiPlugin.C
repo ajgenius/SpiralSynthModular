@@ -312,34 +312,33 @@ void MidiPlugin::Describe(spiralcore::Description &d)
 	
 }
 
-void MidiPlugin::StreamIn(istream &s) 
+void MidiPlugin::Apply(spiralcore::Description::Reader &r) 
 {
 	int version;
-	s>>version;
+	r.Value(version);
 		
 	switch (version)
 	{
-		case 1:	s>>m_DeviceNum>>m_NoteCut; break;
+		case 1:	r.Value(m_DeviceNum).Value(m_NoteCut); break;
 		
 		case 2:
 		{
-			s>>m_DeviceNum>>m_NoteCut; 
+			r.Value(m_DeviceNum).Value(m_NoteCut); 
 			
 			int Num;
-			s>>Num;
+			r.Value(Num);
 			
 			for (int n=0; n<Num; n++)
 			{
 				int Control;
-				s>>Control;
+				r.Value(Control);
 				
-				char Buf[4096];	
+				std::string Name;
 				int size;		
-				s>>size;
-				s.ignore(1);
-				s.get(Buf,size+1);								
+				r.Value(size);
+				r.Value(Name);   // the counted bytes, one value
 				
-				AddControl(Control, Buf);
+				AddControl(Control, Name);
 			}			
 		}
 	}

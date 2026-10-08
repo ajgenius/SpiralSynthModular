@@ -368,29 +368,28 @@ void PoshSamplerPlugin::Describe(spiralcore::Description &d) {
      }
 }
 
-void PoshSamplerPlugin::StreamIn (istream &s) {
+void PoshSamplerPlugin::Apply(spiralcore::Description::Reader &r) {
      int version;
-     s >> version;
+     r.Value(version);
      for (int n=0; n<NUM_SAMPLES; n++) {
-         s >> m_SampleDescVec[n]->Volume >>
-              m_SampleDescVec[n]->PitchMod >>
-              m_SampleDescVec[n]->Loop >>
-              m_SampleDescVec[n]->PingPong >>
-              m_SampleDescVec[n]->Note >>
-              m_SampleDescVec[n]->Octave >>
-              m_SampleDescVec[n]->SamplePos >>
-              m_SampleDescVec[n]->PlayStart >>
-              m_SampleDescVec[n]->LoopStart >>
-              m_SampleDescVec[n]->LoopEnd >>
-              m_SampleDescVec[n]->Note;
+         r.Value(m_SampleDescVec[n]->Volume)
+              .Value(m_SampleDescVec[n]->PitchMod)
+              .Value(m_SampleDescVec[n]->Loop)
+              .Value(m_SampleDescVec[n]->PingPong)
+              .Value(m_SampleDescVec[n]->Note)
+              .Value(m_SampleDescVec[n]->Octave)
+              .Value(m_SampleDescVec[n]->SamplePos)
+              .Value(m_SampleDescVec[n]->PlayStart)
+              .Value(m_SampleDescVec[n]->LoopStart)
+              .Value(m_SampleDescVec[n]->LoopEnd)
+              .Value(m_SampleDescVec[n]->Note);
          if (version < 3) {
             int size;
-            s >> size;
-            s.ignore (1);
-            char Buf[4096];
-            s.get (Buf, size+1);
+            std::string Buf;
+            r.Value(size);
+            r.Value(Buf);   // the counted bytes, one value, unused
          }
-         if (version > 3) s >> m_SampleDescVec[n]->ReTrig;
+         if (version > 3) r.Value(m_SampleDescVec[n]->ReTrig);
          else m_SampleDescVec[n]->ReTrig = true;
      }
 }

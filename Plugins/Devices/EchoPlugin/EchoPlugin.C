@@ -155,11 +155,11 @@ void EchoPlugin::Describe(spiralcore::Description &d)
 	d.Value(m_Version).Separator(" ").Value(m_Delay).Separator(" ").Value(m_Feedback).Separator(" ").Value(m_Bounce).Separator(" ");
 }
 
-void EchoPlugin::StreamIn(istream &s)
+void EchoPlugin::Apply(spiralcore::Description::Reader &r)
 {
 	int version;
-	s >> version;
-	s >> m_Delay >> m_Feedback;
-        if (version>1) s >> m_Bounce; else m_Bounce = false;
+	r.Value(version);
+	r.Value(m_Delay).Value(m_Feedback);
+        if (version>1) r.Value(m_Bounce); else m_Bounce = false;
 }
 

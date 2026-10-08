@@ -111,10 +111,10 @@ void RingModPlugin::Describe(spiralcore::Description &d)
 	d.Value(m_Version).Separator(" ").Value(m_Amount).Separator(" ");
 }
 
-void RingModPlugin::StreamIn(istream &s)
+void RingModPlugin::Apply(spiralcore::Description::Reader &r)
 {	
 	int version;
-	s>>version;
-	s>>m_Amount;
+	r.Value(version);
+	r.Value(m_Amount);
 }
 

@@ -215,18 +215,19 @@ void OscillatorPlugin::Describe(spiralcore::Description &d)
 	::Describe(d, *this);
 }
 
-void OscillatorPlugin::StreamIn(istream &s)
+void OscillatorPlugin::Apply(spiralcore::Description::Reader &r)
 {
 	int version;
-	s>>version>>*this;
+	r.Value(version);
+	::Apply(r, *this);
 }
 
-istream &operator>>(istream &s, OscillatorPlugin &o)
+spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, OscillatorPlugin &o)
 {
 	float dummy=0;
-	s>>(int&)o.m_Type>>o.m_Octave>>o.m_FineFreq>>o.m_PulseWidth>>dummy>>
-	o.m_SHLen>>o.m_ModAmount;
-	return s;
+	r.Value((int&)o.m_Type).Value(o.m_Octave).Value(o.m_FineFreq).Value(o.m_PulseWidth).Value(dummy)
+	.Value(o.m_SHLen).Value(o.m_ModAmount);
+	return r;
 }
 
 spiralcore::Description &Describe(spiralcore::Description &d, OscillatorPlugin &o)

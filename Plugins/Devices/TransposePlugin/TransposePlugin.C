@@ -134,8 +134,8 @@ void TransposePlugin::Describe(spiralcore::Description &d) {
      d.Value(m_Amount);
 }
 
-void TransposePlugin::StreamIn (istream &s) {
+void TransposePlugin::Apply(spiralcore::Description::Reader &r) {
      int version;
-     s >> version;
-     s >> m_Amount;
+     r.Value(version);
+     r.Value(m_Amount);
 }

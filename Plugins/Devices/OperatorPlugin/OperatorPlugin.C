@@ -185,15 +185,15 @@ void OperatorPlugin::Describe(spiralcore::Description &d)
 	d.Value((int)m_Operator).Separator(" ");
 }
 
-void OperatorPlugin::StreamIn(istream &s) 
+void OperatorPlugin::Apply(spiralcore::Description::Reader &r) 
 {
 	int version;
-	s>>version;
-	s>>m_Constant;
+	r.Value(version);
+	r.Value(m_Constant);
 	if (version>1)
 	{
 		int t;
-		s>>t;
+		r.Value(t);
 		m_Operator=(OperatorType)t;
 	}
 }

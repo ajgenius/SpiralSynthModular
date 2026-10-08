@@ -121,9 +121,9 @@ void AmpPlugin::Describe(spiralcore::Description &d)
 	d.Value(m_Version).Separator(" ").Value(m_Gain).Separator(" ").Value(m_DC).Separator(" ");
 }
 
-void AmpPlugin::StreamIn(istream &s)
+void AmpPlugin::Apply(spiralcore::Description::Reader &r)
 {	
 	int version;
-	s>>version;
-	s>>m_Gain>>m_DC;
+	r.Value(version);
+	r.Value(m_Gain).Value(m_DC);
 }

@@ -52,11 +52,12 @@ int main(int argc, char **argv)
 
 	// What a patch file carries: version, wave, six coefficients.
 	const float coefs[6]={0.5f, 0.25f, 0.125f, 0.0625f, 0.03125f, 0.015625f};
-	std::stringstream state;
-	state << "1 0";
-	for (int n=0; n<6; ++n) state << " " << coefs[n];
-	plugin->StreamIn(state);
-	// The host's sequence after StreamIn.
+	spiralcore::Description state;
+	state.Value(1).Value(0);
+	for (int n=0; n<6; ++n) state.Value(coefs[n]);
+	spiralcore::Description::Reader reader(state);
+	plugin->Apply(reader);
+	// The host's sequence after Apply.
 	plugin->GetChannelHandler()->FlushChannels();
 	static_cast<SpiralPluginGUI *>(gui)->UpdateValues(plugin);
 

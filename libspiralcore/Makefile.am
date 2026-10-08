@@ -101,9 +101,11 @@ ring_buffer_test_LDADD = libspiralcore.la
 # The description: a device's state as positional tokens, the form the
 # files have always been written in.
 libspiralcore_la_SOURCES += File/include/Description.h File/src/Description.cpp
-check_PROGRAMS += description-test
+check_PROGRAMS += description-test description-reader-test
 description_test_SOURCES = File/tests/description.cpp
 description_test_LDADD = libspiralcore.la
+description_reader_test_SOURCES = File/tests/description-reader.cpp
+description_reader_test_LDADD = libspiralcore.la
 
 # The positional contract and its reader. The contract is data; the reader
 # needs the YAJL JSON parser from ../JSON to load it.

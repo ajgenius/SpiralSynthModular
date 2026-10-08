@@ -51,6 +51,58 @@ namespace spiralcore
 		// with the reason in error, out untouched.
 		static bool FromJSON(const std::string &text, Description &out, std::string &error);
 
+		// Reading a description back, value by value, in the order it was
+		// written: what a plugin's Apply does with what its Describe said.
+		// Value(x) extracts the next value into x the way an istream with
+		// default flags would, which is what the legacy StreamIn did; a
+		// std::string takes the whole value; a float or double takes any
+		// number the text spells, denormals included, where one C++ library's
+		// istream refuses them. Past the end, or when the text
+		// does not extract, x is left alone and Failed() stays set. A reader
+		// can be limited to a span of the values: the host gives each device
+		// the span the file reader found for its state, and no device can
+		// read past its own.
+		class Reader
+		{
+		public:
+			explicit Reader(const Description &d);
+			Reader(const Description &d, size_t begin, size_t end);
+			template <class T> Reader &Value(T &x)
+			{
+				if (More())
+				{
+					std::istringstream text(Next());
+					T v;
+					if (text >> v)
+						x = v;
+					else
+						m_Failed = true;
+				}
+				else
+				{
+					m_Failed = true;
+				}
+				return *this;
+			}
+			Reader &Value(std::string &x);
+			Reader &Value(float &x);
+			Reader &Value(double &x);
+			// What is left of the span, values and the gaps among them, as a
+			// description of its own; the reader is at its end. For a device
+			// that keeps a state it cannot read and gives it back as it was.
+			void Rest(Description &out);
+			// Values left in the span.
+			bool More() const { return m_At < m_End; }
+			size_t Position() const { return m_At; }
+			bool Failed() const { return m_Failed; }
+		private:
+			// The next value, consumed; past the end, Failed() and "".
+			const std::string &Next();
+			const Description &m_Description;
+			size_t m_At, m_End;
+			bool m_Failed;
+		};
+
 	private:
 		void AddValue(const std::string &text);
 

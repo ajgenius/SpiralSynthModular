@@ -43,6 +43,11 @@
 #include "OutputPluginGUI.h"
 #include "SpiralInfo.h"
 #include "SpiralPluginGUI.h"
+#ifdef HAVE_YAJL
+#include "JSONParser.h"
+#include "PositionalReader.h"
+#endif
+#include <iterator>
 #include "GUI/SSM.xpm"
 #include "GUI/load.xpm"
 #include "GUI/save.xpm"
@@ -61,6 +66,61 @@ const static string LABEL = "SpiralSynthModular "+VER_STRING;
 static string TITLEBAR;
 
 static const int FILE_VERSION = 4;
+
+#ifdef HAVE_YAJL
+// The contract the file reader decodes a device's state under: loaded once,
+// from SSM_SCHEMA_DIR or the built tree's schemas. Without it no device's
+// state can be told from the next device's, and a patch cannot be loaded.
+static spiralcore::PositionalReader *ContractReader()
+{
+	static bool tried = false;
+	static spiralcore::PositionalReader *reader = NULL;
+	if (!tried)
+	{
+		tried = true;
+		const char *env = getenv("SSM_SCHEMA_DIR");
+		string dir = env ? env : SPIRALCORE_SCHEMA_DIR;
+		string error;
+		SpiralJSON::JSONValue *contract = SpiralJSON::ParseJSON((dir + "/SpiralPositionalText-0.2.x.json").c_str(), false, &error);
+		SpiralJSON::JSONValue *history = contract ? SpiralJSON::ParseJSON((dir + "/SpiralPositionalText.history.json").c_str(), false, &error) : NULL;
+		if (contract)
+			reader = new spiralcore::PositionalReader(*contract, history);
+		else
+			cerr << "SpiralSynthModular: no file contract in " << dir << ": " << error << endl;
+	}
+	return reader;
+}
+#endif
+
+// The device line of a patch: the device's state, as the contract finds it
+// in the file's text, applied to the plugin; the stream carries on after
+// the state. False when the state cannot be told apart from what follows
+// it, which ends the load: nothing after it can be placed.
+static bool ApplyDeviceState(iostream &s, const string &text, int PluginID, SpiralPlugin *plugin)
+{
+#ifdef HAVE_YAJL
+	spiralcore::PositionalReader *reader = ContractReader();
+	if (reader)
+	{
+		spiralcore::Description state;
+		size_t at = s.tellg(), consumed = 0;
+		string error;
+		if (reader->ReadState(PluginID, text, at, state, consumed, error))
+		{
+			spiralcore::Description::Reader values(state);
+			plugin->Apply(values);
+			s.seekg(at + consumed);
+			return true;
+		}
+		char id[32];
+		sprintf(id, "%d", PluginID);
+		SpiralInfo::Alert("Plugin "+string(id)+" state is not under the file contract ("+error+") - aborting load");
+		return false;
+	}
+#endif
+	SpiralInfo::Alert("Built without the file contract (yajl) - cannot load a patch");
+	return false;
+}
 static int Numbers[512];
 
 static const int MAIN_WIDTH     = 700;
@@ -964,6 +1024,16 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 	string dummy,dummy2;		
 	int ver;
 
+	// The file as text, for the contract to find each device's state in.
+	// Pasting reads the same text from the clipboard file.
+	string text;
+	{
+		streampos here = s.tellg();
+		text.assign(istreambuf_iterator<char>(s), istreambuf_iterator<char>());
+		s.clear();
+		s.seekg(here);
+	}
+
 	if (paste)
 	{
 		m_Copied.devices>>has_file_path;
@@ -1111,7 +1181,11 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge)
 
 				temp->m_Device->SetUpdateInfoCallback(ID,cb_UpdatePluginInfo);
 				m_DeviceWinMap[ID]=temp;
-				m_DeviceWinMap[ID]->m_Device->StreamIn(s); // load the plugin
+				if (!ApplyDeviceState(s, text, PluginID, m_DeviceWinMap[ID]->m_Device)) // load the plugin
+				{
+					ThawAll();
+					return s;
+				}
 
 				// load external files
 				if (paste || merge)

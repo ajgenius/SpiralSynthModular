@@ -151,11 +151,11 @@ void LFOPlugin::Describe(spiralcore::Description &d) {
      d.Value(m_Version).Separator(" ").Value((int)m_Type).Separator(" ").Value(m_Freq).Separator(" ");
 }
 
-void LFOPlugin::StreamIn(istream &s) {
+void LFOPlugin::Apply(spiralcore::Description::Reader &r) {
      int version;
-     s >> version;
+     r.Value(version);
      int type = static_cast<int>(m_Type);
-     if (s >> type) m_Type = static_cast<Type>(type);
-     s >> m_Freq;
+     if (!r.Value(type).Failed()) m_Type = static_cast<Type>(type);
+     r.Value(m_Freq);
 }
 

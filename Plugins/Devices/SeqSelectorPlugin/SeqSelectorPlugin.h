@@ -34,7 +34,7 @@ public:
 	virtual void Reset();
 	virtual void ExecuteCommands();
 	virtual void Describe(spiralcore::Description &d);
-	virtual void StreamIn(std::istream &s);
+	virtual void Apply(spiralcore::Description::Reader &r);
 		
 	int  GetBegin()      { return m_Begin; }
 	int  GetEnd()        { return m_End; }

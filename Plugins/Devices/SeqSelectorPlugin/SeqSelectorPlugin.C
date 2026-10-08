@@ -212,20 +212,20 @@ void SeqSelectorPlugin::Describe(spiralcore::Description &d)
 	}
 }
 
-void SeqSelectorPlugin::StreamIn(istream &s)
+void SeqSelectorPlugin::Apply(spiralcore::Description::Reader &r)
 {	
 	int version;
-	s>>version;
+	r.Value(version);
 	
 	int Num;
-	s>>Num;
+	r.Value(Num);
 	
 	for (int i=0; i<Num; i++)
 	{
 		Line NewLine;
 		for (int n=0; n<NUM_VALUES; n++)
 		{
-			s>>NewLine.Value[n];
+			r.Value(NewLine.Value[n]);
 		}
 		m_Lines.push_back(NewLine);
 	}	

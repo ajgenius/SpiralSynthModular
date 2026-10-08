@@ -148,9 +148,9 @@ void CounterPlugin::Describe(spiralcore::Description &d)
 	d.Value(m_Count).Separator(" ").Value(m_Current).Separator(" ");
 }
 
-void CounterPlugin::StreamIn(istream &s) 
+void CounterPlugin::Apply(spiralcore::Description::Reader &r) 
 {
 	int version;
-	s>>version;
-	s>>m_Count>>m_Current;
+	r.Value(version);
+	r.Value(m_Count).Value(m_Current);
 }

@@ -77,6 +77,25 @@ int main()
 	CHECK(reader.Status() == "Partial" && reader.Devices().size() == 1);
 	CHECK(Replay(d) == cut.substr(0, reader.Remainder()));
 
+	// One device's state alone, from where a stream reader stands after the
+	// device's header: the Matrix's values, the bytes they took, no more.
+	{
+		const std::string file = header + "2\n" + output + matrix + footer;
+		size_t at = file.find("\n4 0 0.5");
+		CHECK(at != std::string::npos);
+		spiralcore::Description state;
+		size_t consumed = 0;
+		CHECK(reader.ReadState(18, file, at, state, consumed, error));
+		CHECK(state.Values().size() > 20 && state.Values()[0] == "4" && state.Values().back() == "0");
+		CHECK(Replay(state) == file.substr(at, consumed));
+		CHECK(file.substr(at + consumed, 3) == " \n-");   // the stream carries on at the footer
+		// A device with no state (Output) takes nothing; an unknown plugin id
+		// is refused, not guessed.
+		size_t header_end = file.find("\n0 0 0  0 0 0") + 13;
+		CHECK(reader.ReadState(0, file, header_end, state, consumed, error) && consumed == 0 && state.Values().empty());
+		CHECK(!reader.ReadState(9999, file, at, state, consumed, error) && error == "Unknown plugin layout");
+	}
+
 	if (!fails)
 		printf("positional reader: replay, spans, lexemes and recovery passed\n");
 	return fails ? 1 : 0;
