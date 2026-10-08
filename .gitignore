@@ -35,9 +35,9 @@ spiralsynthmodular
 /JSON/manifest-test
 /JSON/*.log
 /JSON/*.trs
-/libspiralcore/compatibility-test
-/libspiralcore/*.log
-/libspiralcore/*.trs
+/libs/libspiralcore/compatibility-test
+/libs/libspiralcore/*.log
+/libs/libspiralcore/*.trs
 
 /SpiralSynthModular.app/
 /.ssm-bundle-*/

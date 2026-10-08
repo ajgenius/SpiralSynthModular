@@ -4,7 +4,7 @@ dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = DiskWriterPlugin_GUI.la
 DiskWriterPlugin_GUI_la_SOURCES = DiskWriterPluginGUI.cpp DiskWriterPluginGUI.h
 DiskWriterPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared
-DiskWriterPlugin_GUI_la_LIBADD = $(top_builddir)/GUI/Widgets/libSpiralWidgets.la $(top_builddir)/libspiralcore/libspiralcore.la $(FLTK_LIBS) -lm
+DiskWriterPlugin_GUI_la_LIBADD = $(top_builddir)/GUI/Widgets/libSpiralWidgets.la $(top_builddir)/libs/libspiralcore/libspiralcore.la $(FLTK_LIBS) -lm
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/DiskWriterPlugin_GUI.la"
 uninstall-local:

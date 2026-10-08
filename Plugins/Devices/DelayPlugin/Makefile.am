@@ -5,7 +5,7 @@ dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = DelayPlugin_DSP.la
 DelayPlugin_DSP_la_SOURCES = DelayPlugin.h DelayPlugin.C
 DelayPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
-DelayPlugin_DSP_la_LIBADD = $(top_builddir)/libspiralcore/libspiralcore.la -lm
+DelayPlugin_DSP_la_LIBADD = $(top_builddir)/libs/libspiralcore/libspiralcore.la -lm
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/DelayPlugin_DSP.la"
 uninstall-local:

@@ -5,7 +5,7 @@ dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = EnvFollowerPlugin_DSP.la
 EnvFollowerPlugin_DSP_la_SOURCES = EnvFollowerPlugin.h EnvFollowerPlugin.C
 EnvFollowerPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
-EnvFollowerPlugin_DSP_la_LIBADD = $(top_builddir)/libspiralcore/libspiralcore.la -lm
+EnvFollowerPlugin_DSP_la_LIBADD = $(top_builddir)/libs/libspiralcore/libspiralcore.la -lm
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/EnvFollowerPlugin_DSP.la"
 uninstall-local:

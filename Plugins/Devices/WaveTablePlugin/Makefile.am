@@ -5,7 +5,7 @@ dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = WaveTablePlugin_DSP.la
 WaveTablePlugin_DSP_la_SOURCES = WaveTablePlugin.h WaveTablePlugin.C
 WaveTablePlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
-WaveTablePlugin_DSP_la_LIBADD = $(top_builddir)/libspiralcore/libspiralcore.la -lm
+WaveTablePlugin_DSP_la_LIBADD = $(top_builddir)/libs/libspiralcore/libspiralcore.la -lm
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/WaveTablePlugin_DSP.la"
 uninstall-local:

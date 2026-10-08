@@ -4,7 +4,7 @@ dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = MixSwitchPlugin_GUI.la
 MixSwitchPlugin_GUI_la_SOURCES = MixSwitchPluginGUI.cpp MixSwitchPluginGUI.h
 MixSwitchPlugin_GUI_la_LDFLAGS = -module -avoid-version -shared
-MixSwitchPlugin_GUI_la_LIBADD = $(top_builddir)/GUI/Widgets/libSpiralWidgets.la $(top_builddir)/libspiralcore/libspiralcore.la $(FLTK_LIBS) -lm
+MixSwitchPlugin_GUI_la_LIBADD = $(top_builddir)/GUI/Widgets/libSpiralWidgets.la $(top_builddir)/libs/libspiralcore/libspiralcore.la $(FLTK_LIBS) -lm
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/MixSwitchPlugin_GUI.la"
 uninstall-local:

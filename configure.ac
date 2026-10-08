@@ -153,7 +153,7 @@ AC_MSG_NOTICE([Native CoreAudio client: $have_coreaudio])
 
 dnl Where consumers find libspiralcore's headers. Groups inside the library
 dnl add their include directory here, nowhere else.
-SPIRALCORE_CFLAGS='-I$(top_srcdir)/libspiralcore/include -I$(top_srcdir)/libspiralcore/File/include -I$(top_srcdir)/libspiralcore/Plugin/include -I$(top_srcdir)/libspiralcore/Audio/include -I$(top_srcdir)/libspiralcore/Midi/include'
+SPIRALCORE_CFLAGS='-I$(top_srcdir)/libs/libspiralcore/include -I$(top_srcdir)/libs/libspiralcore/File/include -I$(top_srcdir)/libs/libspiralcore/Plugin/include -I$(top_srcdir)/libs/libspiralcore/Audio/include -I$(top_srcdir)/libs/libspiralcore/Midi/include'
 AC_SUBST([SPIRALCORE_CFLAGS])
 
 dnl Where editors and the host find the toolkit-side headers; groups under
@@ -563,7 +563,7 @@ Makefile
 GUI/Makefile
 GUI/Controls/Makefile
 GUI/Widgets/Makefile
-libspiralcore/Makefile
+libs/libspiralcore/Makefile
 Plugins/Makefile
 Plugins/Audio/Makefile
 Plugins/Audio/PortAudio/Makefile

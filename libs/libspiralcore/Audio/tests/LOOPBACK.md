@@ -1,7 +1,7 @@
 # Live output alignment
 
 These tests are opt-in and are not run by `make check`. Build `jack-alignment-live`
-and `native-loopback` in the audio library directory (`libspiralcore` in public,
+and `native-loopback` in the audio library directory (`libs/libspiralcore` in public,
 `Foundation/Audio` in private), with JACK enabled.
 
 `jack-alignment-live` connects two independent output clients to its own JACK

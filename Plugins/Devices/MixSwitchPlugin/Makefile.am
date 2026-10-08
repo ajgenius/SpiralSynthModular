@@ -5,7 +5,7 @@ dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = MixSwitchPlugin_DSP.la
 MixSwitchPlugin_DSP_la_SOURCES = MixSwitchPlugin.h MixSwitchPlugin.C
 MixSwitchPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
-MixSwitchPlugin_DSP_la_LIBADD = $(top_builddir)/libspiralcore/libspiralcore.la -lm
+MixSwitchPlugin_DSP_la_LIBADD = $(top_builddir)/libs/libspiralcore/libspiralcore.la -lm
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/MixSwitchPlugin_DSP.la"
 uninstall-local:

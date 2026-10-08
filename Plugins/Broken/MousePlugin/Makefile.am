@@ -23,7 +23,7 @@ MousePlugin_la_LIBADD = 							\
 			$(FLTK_LIBS)					\
 			-lm -ldl -lpthread				\
 			$(top_builddir)/GUI/Widgets/libSpiralWidgets.la	\
-                $(top_builddir)/libspiralcore/libspiralcore.la
+                $(top_builddir)/libs/libspiralcore/libspiralcore.la
 
 # PluginManager dlopens FooPlugin.so.  Drop the libtool .la after install
 # (same trick master used) so the directory only contains the module.

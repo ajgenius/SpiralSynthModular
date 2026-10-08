@@ -5,7 +5,7 @@ dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = MidiPlugin_DSP.la
 MidiPlugin_DSP_la_SOURCES = MidiPlugin.h MidiPlugin.C
 MidiPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
-MidiPlugin_DSP_la_LIBADD = $(top_builddir)/libspiralcore/libspiralcore.la -lm
+MidiPlugin_DSP_la_LIBADD = $(top_builddir)/libs/libspiralcore/libspiralcore.la -lm
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/MidiPlugin_DSP.la"
 uninstall-local:

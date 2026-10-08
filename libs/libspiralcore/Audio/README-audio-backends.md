@@ -6,7 +6,7 @@ Configure builds the modules whose dependencies are available. `--disable-portau
 
 All Output instances in the public host share its selected session. Each registry creation owns a separate native client, so independent engines cannot close each other's stream. The common presentation timeline aligns Output and named JACK endpoints through timestamped queues and rate conversion. ESD and PipeWire capture timing are estimated; physical alignment still needs loopback testing.
 
-Rebuild the host, libraries and plugins together. See [audio transport and module ownership](../../../libspiralcore/AUDIO-TRANSPORT.md) for the lifetime contract and tests.
+Rebuild the host, libraries and plugins together. See [audio transport and module ownership](AUDIO-TRANSPORT.md) for the lifetime contract and tests.
 
 Source: private upstream_patching commit 033d3dd53c852f6b6cbad5358c192257d24693b8,
 with file paths mapped to the public layout. That source extraction preserves
