@@ -48,8 +48,8 @@ namespace Spumoni
 		JSON *At(size_t index);
 		const JSON *Get(const char *key) const;
 		JSON *Get(const char *key);
-		const JSON *Get(const std::string &key) const { return Get(key.c_str()); }
-		JSON *Get(const std::string &key) { return Get(key.c_str()); }
+		const JSON *Get(const std::string &key) const;
+		JSON *Get(const std::string &key);
 		std::vector<std::string> Keys() const;
 
 		// Takes ownership of value, including when this is not an object
