@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_srcdir)/libspiralcore/include -I$(top_builddir) $(RTMIDI_CFLAGS)
+AM_CPPFLAGS = $(SPIRALCORE_CFLAGS) -I$(top_builddir) $(RTMIDI_CFLAGS)
 
 plugindir = @PLUGINDIR@/midi/RtMidi
 plugin_LTLIBRARIES = RtMidi_Midi.la
