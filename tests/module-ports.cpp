@@ -82,14 +82,15 @@ static void Check(SpiralPlugin &plugin, bool jack)
 	HostInfo host = HostInfo();
 	host.BUFSIZE = 8;
 	host.SAMPLERATE = 44100;
-	TestDevice source, sink, unrelatedSource, unrelatedSink;
+	TestDevice source, sink, unrelatedSource, unrelatedSink, removedSink;
 	devices[0] = &source; devices[1] = &plugin; devices[2] = &sink;
 	devices[3] = &unrelatedSource; devices[4] = &unrelatedSink;
+	devices[5] = &removedSink;
 	Fl_Canvas canvas(0, 0, 600, 400, "test");
 	canvas.end();
 	canvas.SetConnectionCallback(Connect);
 	canvas.SetUnconnectCallback(Disconnect);
-	for (int id = 0; id < 5; ++id)
+	for (int id = 0; id < 6; ++id)
 	{
 		devices[id]->Initialise(&host);
 		views[id] = new Fl_DeviceGUI(Info(devices[id]->GetPluginInfo()), NULL, NULL);
@@ -98,6 +99,7 @@ static void Check(SpiralPlugin &plugin, bool jack)
 		canvas.add(views[id]);
 		devices[id]->SetUpdateInfoCallback(id, Updated);
 	}
+
 	assert(dynamic_cast<StablePortLayout *>(&plugin));
 	if (jack)
 	{
@@ -105,9 +107,15 @@ static void Check(SpiralPlugin &plugin, bool jack)
 		plugin.GetChannelHandler()->Set("NumOutputs", 4);
 		Command(plugin, JackPlugin::SET_PORT_COUNT);
 	}
-	std::stringstream wires("-1 0 4\n0 0 0 0 1 0 0 0\n0 0 0 0 1 0 3 0\n1 0 0 0 2 0 0 1\n3 0 0 0 4 0 0 1\n");
+
+	std::stringstream wires;
+	wires << "-1 0 " << (jack ? 5 : 4) << "\n0 0 0 0 1 0 0 0\n0 0 0 0 1 0 3 0\n1 0 0 0 2 0 0 1\n3 0 0 0 4 0 0 1\n";
+	if (jack) wires << "1 0 3 0 5 0 0 1\n";
+
 	canvas.StreamWiresIn(wires, false, false);
-	assert(WireCount(canvas) == 4);
+	assert(WireCount(canvas) == unsigned(jack ? 5 : 4));
+	if (jack) assert(removedSink.GetInput(0));
+
 	const Sample *input = plugin.GetInput(0);
 	const Sample *output = sink.GetInput(0);
 	for (int cycle = 0; cycle < 3; ++cycle)
@@ -119,7 +127,7 @@ static void Check(SpiralPlugin &plugin, bool jack)
 			Command(plugin, JackPlugin::SET_PORT_COUNT);
 		}
 		else Command(plugin, MixerPlugin::REMOVECHAN);
-		assert(WireCount(canvas) == 3);
+		assert(WireCount(canvas) == 3 && removedSink.GetInput(0) == NULL);
 		assert(plugin.GetInput(0) == input && sink.GetInput(0) == output);
 		if (jack)
 		{
@@ -128,9 +136,10 @@ static void Check(SpiralPlugin &plugin, bool jack)
 			Command(plugin, JackPlugin::SET_PORT_COUNT);
 		}
 		else Command(plugin, MixerPlugin::ADDCHAN);
-		assert(WireCount(canvas) == 3);
+		assert(WireCount(canvas) == 3 && removedSink.GetInput(0) == NULL);
 		assert(plugin.GetInput(0) == input && sink.GetInput(0) == output);
 	}
+
 	plugin.SetUpdateInfoCallback(0, NULL);
 }
 
