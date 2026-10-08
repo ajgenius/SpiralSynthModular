@@ -1,0 +1,10 @@
+SpiralSynthModular File Ver 4
+0 0 700 600 0 0 0 0
+SectionList 2
+Device 0 Plugin 0
+0 0 6 Output 0 0 0
+Device 1 Plugin 3
+20 20 10 Controller 0 0 0
+4 1
+HistoryControl -2 2 0.375
+-1 0 0

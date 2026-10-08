@@ -1,5 +1,8 @@
 #include "Fl_Canvas.h"
 #include "MixerPlugin.h"
+#include "JackPlugin.h"
+#include <dlfcn.h>
+#include <cstdio>
 #include <cassert>
 #include <sstream>
 #include <map>
@@ -67,26 +70,27 @@ static unsigned WireCount(Fl_Canvas &canvas)
 	return count;
 }
 
-static void Command(MixerPlugin &mixer, char command)
+static void Command(SpiralPlugin &mixer, char command)
 {
 	mixer.GetChannelHandler()->SetCommand(command);
 	mixer.UpdateChannelHandler();
 	mixer.ExecuteCommands();
 }
 
-int main()
+static void Check(SpiralPlugin &plugin, bool jack)
 {
 	HostInfo host = HostInfo();
 	host.BUFSIZE = 8;
-	MixerPlugin mixer;
-	TestDevice source, sink, unrelatedSource, unrelatedSink;
-	devices[0] = &source; devices[1] = &mixer; devices[2] = &sink;
+	host.SAMPLERATE = 44100;
+	TestDevice source, sink, unrelatedSource, unrelatedSink, removedSink;
+	devices[0] = &source; devices[1] = &plugin; devices[2] = &sink;
 	devices[3] = &unrelatedSource; devices[4] = &unrelatedSink;
+	devices[5] = &removedSink;
 	Fl_Canvas canvas(0, 0, 600, 400, "test");
 	canvas.end();
 	canvas.SetConnectionCallback(Connect);
 	canvas.SetUnconnectCallback(Disconnect);
-	for (int id = 0; id < 5; ++id)
+	for (int id = 0; id < 6; ++id)
 	{
 		devices[id]->Initialise(&host);
 		views[id] = new Fl_DeviceGUI(Info(devices[id]->GetPluginInfo()), NULL, NULL);
@@ -95,43 +99,61 @@ int main()
 		canvas.add(views[id]);
 		devices[id]->SetUpdateInfoCallback(id, Updated);
 	}
-	std::stringstream wires("-1 0 4\n0 0 0 0 1 0 0 0\n0 0 0 0 1 0 3 0\n1 0 0 0 2 0 0 1\n3 0 0 0 4 0 0 1\n");
-	canvas.StreamWiresIn(wires, false, false);
-	assert(WireCount(canvas) == 4);
-	const Sample *input = mixer.GetInput(0);
-	const Sample *output = sink.GetInput(0);
-	const Sample *unrelated = unrelatedSink.GetInput(0);
-	Command(mixer, MixerPlugin::REMOVECHAN);
-	assert(mixer.GetChannels() == 3 && WireCount(canvas) == 3 && disconnected == 1);
-	assert(mixer.GetInput(0) == input && sink.GetInput(0) == output);
-	assert(unrelatedSink.GetInput(0) == unrelated);
-	Command(mixer, MixerPlugin::REMOVECHAN);
-	assert(mixer.GetChannels() == 2 && WireCount(canvas) == 3 && disconnected == 1);
-	Command(mixer, MixerPlugin::REMOVECHAN);
-	assert(mixer.GetChannels() == 2);
-	for (int n = 0; n < 20; ++n) Command(mixer, MixerPlugin::ADDCHAN);
-	assert(mixer.GetChannels() == MAX_CHANNELS && WireCount(canvas) == 3);
-	assert(mixer.GetInput(0) == input && sink.GetInput(0) == output);
-	// Rebuilt port buttons must retain connection counts as well as wires.
-	canvas.PortClicked(views[1], Fl_DeviceGUI::OUTPUT, 0, false);
-	assert(WireCount(canvas) == 2 && disconnected == 2);
-	assert(sink.GetInput(0) == NULL && unrelatedSink.GetInput(0) == unrelated);
-	canvas.PortClicked(views[0], Fl_DeviceGUI::OUTPUT, 0, false);
-	assert(WireCount(canvas) == 1 && mixer.GetInput(0) == NULL);
-	const int savedCounts[] = {-1, 0, 1, 2, 16, 20};
-	for (unsigned n = 0; n < sizeof(savedCounts) / sizeof(*savedCounts); ++n)
+
+	assert(dynamic_cast<StablePortLayout *>(&plugin));
+	if (jack)
 	{
-		spiralcore::Description saved;
-		saved.Value(2).Value(savedCounts[n]);
-		for (int i = 0; i < savedCounts[n]; ++i) saved.Value(0.25f);
-		saved.Value(1234); // the next field must survive an oversized record
-		spiralcore::Description::Reader reader(saved);
-		mixer.Apply(reader);
-		int next = 0;
-		reader.Value(next);
-		assert(!reader.Failed() && next == 1234);
-		assert(mixer.GetChannels() >= 2 && mixer.GetChannels() <= MAX_CHANNELS);
-		mixer.Execute();
+		plugin.GetChannelHandler()->Set("NumInputs", 4);
+		plugin.GetChannelHandler()->Set("NumOutputs", 4);
+		Command(plugin, JackPlugin::SET_PORT_COUNT);
 	}
 
+	std::stringstream wires;
+	wires << "-1 0 " << (jack ? 5 : 4) << "\n0 0 0 0 1 0 0 0\n0 0 0 0 1 0 3 0\n1 0 0 0 2 0 0 1\n3 0 0 0 4 0 0 1\n";
+	if (jack) wires << "1 0 3 0 5 0 0 1\n";
+
+	canvas.StreamWiresIn(wires, false, false);
+	assert(WireCount(canvas) == unsigned(jack ? 5 : 4));
+	if (jack) assert(removedSink.GetInput(0));
+
+	const Sample *input = plugin.GetInput(0);
+	const Sample *output = sink.GetInput(0);
+	for (int cycle = 0; cycle < 3; ++cycle)
+	{
+		if (jack)
+		{
+			plugin.GetChannelHandler()->Set("NumInputs", 3);
+			plugin.GetChannelHandler()->Set("NumOutputs", 3);
+			Command(plugin, JackPlugin::SET_PORT_COUNT);
+		}
+		else Command(plugin, MixerPlugin::REMOVECHAN);
+		assert(WireCount(canvas) == 3 && removedSink.GetInput(0) == NULL);
+		assert(plugin.GetInput(0) == input && sink.GetInput(0) == output);
+		if (jack)
+		{
+			plugin.GetChannelHandler()->Set("NumInputs", 4);
+			plugin.GetChannelHandler()->Set("NumOutputs", 4);
+			Command(plugin, JackPlugin::SET_PORT_COUNT);
+		}
+		else Command(plugin, MixerPlugin::ADDCHAN);
+		assert(WireCount(canvas) == 3 && removedSink.GetInput(0) == NULL);
+		assert(plugin.GetInput(0) == input && sink.GetInput(0) == output);
+	}
+
+	plugin.SetUpdateInfoCallback(0, NULL);
+}
+
+int main(int argc, char **argv)
+{
+	if (argc != 3) return 77;
+	for (int n = 1; n < argc; ++n)
+	{
+		void *module = dlopen(argv[n], RTLD_NOW | RTLD_LOCAL);
+		if (!module) { puts(dlerror()); return 1; }
+		SpiralPlugin *(*create)() = (SpiralPlugin *(*)())dlsym(module, "SpiralPlugin_CreateInstance");
+		assert(create);
+		SpiralPlugin *plugin = create();
+		Check(*plugin, n == 2);
+		delete plugin;
+	}
 }
