@@ -982,7 +982,11 @@ void Fl_BoundaryDrawer::ShowLicenseText()
 	const int Margin = 8;
 	const int ButtonH = 24;
 
-	Fl_Double_Window dialog((Fl::w() - Width) / 2, (Fl::h() - Height) / 2, Width, Height);
+	// The (w, h, label) form: it ends whatever group is current, so the
+	// dialog is a window of its own. The (x, y, w, h) form would add it
+	// to that group as a subwindow, at screen coordinates, off the edge.
+	Fl_Double_Window dialog(Width, Height);
+	dialog.position((Fl::w() - Width) / 2, (Fl::h() - Height) / 2);
 	dialog.copy_label(id.c_str());
 	dialog.color(color());
 

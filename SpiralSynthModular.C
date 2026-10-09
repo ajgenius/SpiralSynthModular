@@ -2062,8 +2062,10 @@ inline void SynthModular::cb_About_i (Fl_Widget *o, void *v) {
      const int TextHeight = Lines * LineHeight;
      const int Height = Pad + TextHeight + Pad + ButtonHeight + Pad;
 
-     Fl_Double_Window About ((Fl::w()/2) - (Width/2), (Fl::h()/2) - (Height/2),
-                             Width, Height, "About SpiralSynthModular");
+     // The (w, h, label) form ends whatever group is current, so this is a
+     // window of its own and not a subwindow of the last group begun.
+     Fl_Double_Window About (Width, Height, "About SpiralSynthModular");
+     About.position ((Fl::w()/2) - (Width/2), (Fl::h()/2) - (Height/2));
      About.color (SpiralInfo::GUICOL_Tool);
 
      Fl_Pixmap icon (SpiralIcon_xpm);
