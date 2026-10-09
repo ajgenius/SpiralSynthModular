@@ -80,6 +80,9 @@ public:
 	bool CanBundleLicense() const;
 	bool BundleLicenseText() const;
 	bool SetBundleLicenseText(bool on);
+	/* The full text the bundle would write, copyright line on top, in a
+	   window of its own. Nothing when the identifier has no text. */
+	void ShowLicenseText();
 
 	/* Write the field on the bound document. False when unbound. An
 	   empty value clears the field. */
@@ -116,6 +119,7 @@ private:
 	Fl_Input *m_License;
 	Fl_Menu_Button *m_LicenseMenu;
 	Fl_Check_Button *m_Bundle;
+	Fl_Button *m_ViewLicense;
 	Fl_Box *m_Dates;
 	Fl_Box *m_CreditHeader;
 	std::vector<Fl_Input *> m_CreditNames;
@@ -128,6 +132,8 @@ private:
 	static void LicenseEdited(Fl_Widget *, void *);
 	static void LicensePicked(Fl_Widget *, void *);
 	static void BundleToggled(Fl_Widget *, void *);
+	static void ViewLicenseClicked(Fl_Widget *, void *);
+	static void CloseLicense(Fl_Widget *, void *);
 	static void CreditEdited(Fl_Widget *, void *);
 	static void AddClicked(Fl_Widget *, void *);
 	static void RemoveClicked(Fl_Widget *, void *);

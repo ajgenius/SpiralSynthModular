@@ -3,6 +3,9 @@
 #include "License.h"
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
+#include <FL/Fl_Double_Window.H>
+#include <FL/Fl_Return_Button.H>
+#include <FL/Fl_Text_Display.H>
 #include <FL/fl_draw.H>
 #include <algorithm>
 #include <cstdio>
@@ -22,6 +25,7 @@ namespace
 	const int PanelMax = 560;
 	const int RemoveW = 22;
 	const int MenuW = 26;
+	const int ViewW = 56;
 	int SessionPanel = 0;
 	int SessionOpen = 0;
 
@@ -254,7 +258,7 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 	m_Collapsed(SessionCollapsed()), m_SplitDrag(false), m_SplitX(0), m_SplitW(Rail),
 	m_DocumentSection(NULL), m_CreditSection(NULL),
 	m_About(NULL), m_AboutBuffer(NULL),
-	m_License(NULL), m_LicenseMenu(NULL), m_Bundle(NULL), m_Dates(NULL), m_CreditHeader(NULL),
+	m_License(NULL), m_LicenseMenu(NULL), m_Bundle(NULL), m_ViewLicense(NULL), m_Dates(NULL), m_CreditHeader(NULL),
 	m_AddCredit(NULL), m_RemoveRow(0)
 {
 	box(FL_NO_BOX);
@@ -332,10 +336,16 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 
 	m_Bundle = new Fl_Check_Button(m_DocumentSection->x(),
 		m_DocumentSection->y() + RowTop(FieldCount),
-		m_DocumentSection->w(), RowHeight - 2, "Include licence text");
+		std::max(0, m_DocumentSection->w() - ViewW - Pad), RowHeight - 2, "Bundle licence text");
 	m_Bundle->labelsize(10);
-	m_Bundle->tooltip("Write the full licence into the project file");
+	m_Bundle->tooltip("Write the full licence into the project file on the next save");
 	m_Bundle->callback(BundleToggled, this);
+
+	m_ViewLicense = new Fl_Button(m_DocumentSection->x() + m_DocumentSection->w() - ViewW,
+		m_DocumentSection->y() + RowTop(FieldCount), ViewW, RowHeight - 2, "View");
+	PlasticButton(m_ViewLicense);
+	m_ViewLicense->tooltip("Read the licence text");
+	m_ViewLicense->callback(ViewLicenseClicked, this);
 
 	// Created and saved, as the file recorded them. Not typed here.
 	m_Dates = new Fl_Box(m_DocumentSection->x(),
@@ -555,7 +565,11 @@ void Fl_BoundaryDrawer::Relayout()
 	if (m_Bundle)
 		m_Bundle->resize(m_DocumentSection->x(),
 			m_DocumentSection->y() + RowTop(FieldCount),
-			m_DocumentSection->w(), RowHeight - 2);
+			std::max(0, m_DocumentSection->w() - ViewW - Pad), RowHeight - 2);
+
+	if (m_ViewLicense)
+		m_ViewLicense->resize(m_DocumentSection->x() + m_DocumentSection->w() - ViewW,
+			m_DocumentSection->y() + RowTop(FieldCount), ViewW, RowHeight - 2);
 
 	if (m_Dates)
 		m_Dates->resize(m_DocumentSection->x(),
@@ -624,6 +638,14 @@ void Fl_BoundaryDrawer::Repopulate()
 			m_Bundle->activate();
 		else
 			m_Bundle->deactivate();
+	}
+
+	if (m_ViewLicense)
+	{
+		if (CanBundleLicense())
+			m_ViewLicense->activate();
+		else
+			m_ViewLicense->deactivate();
 	}
 
 	if (m_Dates)
@@ -938,6 +960,67 @@ void Fl_BoundaryDrawer::LicensePicked(Fl_Widget *, void *data)
 
 	if (text != self->FieldText(FieldLicense))
 		self->Apply(FieldLicense, text);
+}
+
+void Fl_BoundaryDrawer::ShowLicenseText()
+{
+	if (!Bound())
+		return;
+
+	const std::string id = FieldText(FieldLicense);
+	std::string text = LicenseFullText(id);
+
+	if (text.empty())
+		return;
+
+	// What the bundle writes, so reading it here is reading the file.
+	if (!m_Document->Rights.Copyright.empty())
+		text = "Copyright " + m_Document->Rights.Copyright + "\n\n" + text;
+
+	const int Width = 560;
+	const int Height = 420;
+	const int Margin = 8;
+	const int ButtonH = 24;
+
+	Fl_Double_Window dialog((Fl::w() - Width) / 2, (Fl::h() - Height) / 2, Width, Height);
+	dialog.copy_label(id.c_str());
+	dialog.color(color());
+
+	Fl_Text_Buffer buffer;
+	buffer.text(text.c_str());
+
+	Fl_PanelText *display = new Fl_PanelText(Margin, Margin,
+		Width - 2 * Margin, Height - 3 * Margin - ButtonH);
+	display->buffer(&buffer);
+	display->textfont(FL_COURIER);
+	display->textsize(11);
+	display->wrap_mode(Fl_Text_Display::WRAP_AT_BOUNDS, 0);
+	display->scrollbar_width(12);
+
+	Fl_Return_Button ok(Width - Margin - 80, Height - Margin - ButtonH, 80, ButtonH, "OK");
+	PlasticButton(&ok);
+	ok.callback(CloseLicense, &dialog);
+
+	dialog.end();
+	dialog.resizable(display);
+	dialog.set_modal();
+	dialog.show();
+
+	while (dialog.shown())
+		Fl::wait();
+
+	// The buffer is on the stack: detach before it goes.
+	display->buffer(NULL);
+}
+
+void Fl_BoundaryDrawer::ViewLicenseClicked(Fl_Widget *, void *data)
+{
+	static_cast<Fl_BoundaryDrawer *>(data)->ShowLicenseText();
+}
+
+void Fl_BoundaryDrawer::CloseLicense(Fl_Widget *, void *data)
+{
+	static_cast<Fl_Window *>(data)->hide();
 }
 
 void Fl_BoundaryDrawer::BundleToggled(Fl_Widget *, void *data)
