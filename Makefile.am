@@ -181,6 +181,11 @@ package_sidecars_host_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir) \
 package_sidecars_host_test_LDADD = $(SpiralSynthModular_LDADD)
 package_sidecars_host_test_LDFLAGS = -export-dynamic
 
+check_PROGRAMS += import-branch-test
+import_branch_test_SOURCES = tests/import-branch.cpp
+import_branch_test_CPPFLAGS = $(SPIRALCORE_CFLAGS) -I$(srcdir)/libs/libSpumoni/include
+import_branch_test_LDADD = libs/libspiralcore/libspiralcore.la
+
 check_PROGRAMS += canvas-menu-test
 check_LTLIBRARIES =
 if BUILD_LADSPA
@@ -205,6 +210,10 @@ endif
 endif
 canvas_menu_test_SOURCES = tests/canvas-menu.cpp SpiralInfo.C
 canvas_menu_test_LDADD = $(SpiralSynthModular_LDADD)
+
+check_PROGRAMS += drawer-test
+drawer_test_SOURCES = tests/drawer.cpp SpiralInfo.C
+drawer_test_LDADD = $(SpiralSynthModular_LDADD)
 
 check_PROGRAMS += stream-paste-test
 stream_paste_test_SOURCES = Plugins/Devices/StreamPlugin/StreamPlugin.C tests/stream-paste.cpp SpiralSynthModular.C UnavailablePlugin.C SpiralInfo.C SettingsWindow.C

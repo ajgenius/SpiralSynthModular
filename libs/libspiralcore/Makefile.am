@@ -111,6 +111,9 @@ description_test_SOURCES = File/tests/description.cpp
 description_test_LDADD = libspiralcore.la
 description_reader_test_SOURCES = File/tests/description-reader.cpp
 description_reader_test_LDADD = libspiralcore.la
+check_PROGRAMS += project-document-test
+project_document_test_SOURCES = File/tests/project-document.cpp
+project_document_test_LDADD = libspiralcore.la
 
 # The positional contract and its reader. The contract is data; Spumoni's
 # JSON reader loads it.
