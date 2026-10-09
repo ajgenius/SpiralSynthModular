@@ -39,6 +39,7 @@
 #include "Fl_DeviceGUI.h"
 #include "Fl_CommentGUI.h"
 #include "Fl_Canvas.h"
+#include "Fl_BoundaryDrawer.h"
 #include "SpiralPlugin.h"
 #include "ChannelHandler.h"
 using spiralcore::ChannelHandler;
@@ -122,6 +123,10 @@ public:
 	// The options panel applies the view options through here. Nothing on this
 	// path is persisted yet.
 	void ApplyViewOptions();
+	// The in-window menu strip hides like a toolbar: the chrome below it moves
+	// up into its row, so nothing is left behind. The drawer beside the canvas
+	// is chrome too, and the canvas scroll takes what the two leave.
+	void LayoutChrome();
 	void LoadPatch(const char *fn, const char *branchId = NULL);
 	void SavePatch(const char *fn);
 
@@ -193,14 +198,16 @@ private:
 	static bool m_CallbackUpdateMode;
 	string m_FilePath, m_MergeFilePath, m_BranchID;
 	unsigned m_SavePointCount;
+	// What the open patch says about itself. Read from a project when it
+	// is opened, edited in the drawer, written back when it is saved; a
+	// legacy patch or a new one carries an empty document until it is
+	// saved as a project.
+	Spiral::File::DocumentSection m_Document;
 	bool m_MenuStateKnown, m_MenuSelection, m_MenuPaste, m_MenuSavePoints;
 	bool m_MenuPackage;
 
 	// Main GUI stuff
 	void CreateGUI (int xoff=0, int yoff=0, const char *name="");
-	// The in-window menu strip hides like a toolbar: the chrome below it moves
-	// up into its row, so nothing is left behind.
-	void LayoutChrome();
 	// The macOS system menu bar and the in-window strip each hold their own
 	// items - FLTK inserts its own Window menu into the system bar's array, so
 	// the two cannot share one - and every menu edit goes to both.
@@ -220,6 +227,9 @@ private:
         Fl_Tabs         *m_GroupTab;
 	Fl_Canvas 	*m_Canvas;
 	Fl_Scroll	*m_CanvasScroll;
+	// Chrome beside the canvas scroll, not inside it: the scroll gets
+	// what the drawer leaves.
+	Fl_BoundaryDrawer *m_Drawer;
 	map<string,Fl_Pack*> m_PluginGroupMap;
 	SettingsWindow  *m_SettingsWindow;
 	SpiralWindowType* m_TopWindow;
@@ -263,6 +273,12 @@ private:
 	// Not an Fl_Callback: the window hands back the host it was given,
 	// there being no widget whose user_data would carry it.
 	static void cb_Relayout (void *v);
+	// The drawer's rail was dragged: the canvas has to give or take the
+	// width. Same shape as cb_Relayout, for the same reason.
+	static void cb_DrawerCollapse (void *v);
+	// Canvas popup: open the drawer on the patch's own entry.
+	inline void cb_AboutPatch_i (Fl_Widget *o, void *v);
+	static void cb_AboutPatch (Fl_Widget *o, void *v);
         // Help menu
         inline void cb_About_i (Fl_Widget *o, void *v);
 	static void cb_About (Fl_Widget *o, void *v);

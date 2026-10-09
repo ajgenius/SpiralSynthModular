@@ -178,6 +178,7 @@ m_SysMenu(NULL),
 m_Topbar(NULL),
 m_Canvas(NULL),
 m_CanvasScroll(NULL),
+m_Drawer(NULL),
 m_TopWindow(NULL),
 m_SavePointCount(0),
 m_MenuStateKnown(false),
@@ -682,8 +683,20 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_Canvas->SetCopyDeviceGroupCallback((Fl_Callback*)cb_Copy);
 	m_Canvas->SetPasteDeviceGroupCallback((Fl_Callback*)cb_Paste);
         m_Canvas->SetMergePatchCallback((Fl_Callback*)cb_Merge);
+        m_Canvas->SetAboutPatchCallback((Fl_Callback*)cb_AboutPatch);
 
 	m_CanvasScroll->add(m_Canvas);
+
+	// The drawer starts as a rail at the canvas's right edge; drag the
+	// bar or ask for About Patch to open it. Always bound: a patch that
+	// is not a project yet still has a document to fill in, and saving
+	// as a project is what keeps it.
+	m_Drawer = new Fl_BoundaryDrawer (MAIN_WIDTH, ToolbarHeight, 1, MAIN_HEIGHT-ToolbarHeight);
+	m_Drawer->color(SpiralInfo::GUICOL_Tool);
+	m_Drawer->CollapseChanged = cb_DrawerCollapse;
+	m_Drawer->CollapseChangedData = this;
+	m_Drawer->Bind(&m_Document);
+	m_TopWindow->add(m_Drawer);
 
 	m_SettingsWindow = new SettingsWindow;
 	m_SettingsWindow->RegisterApp(this);
@@ -846,6 +859,7 @@ void SynthModular::LoadPlugins (string pluginPath) {
      if (PlugGrp==m_PluginGroupMap.end()) PlugGrp=m_PluginGroupMap.begin();
      m_GroupTab->value(PlugGrp->second);
      MenuDropPlaceholders();
+     m_Canvas->AddAboutPatch();
      Splash->hide();
      delete Splash;
 }
@@ -1322,7 +1336,13 @@ void SynthModular::LayoutChrome()
 		if (TabWidth > 0) m_GroupTab->size(TabWidth, m_GroupTab->h());
 	}
 
-	m_CanvasScroll->resize(0, ChromeHeight, m_TopWindow->w(), m_TopWindow->h() - ChromeHeight);
+	// The drawer is chrome at the right edge, as wide as its rail or its
+	// open panel; the canvas scroll takes the rest.
+	const int DrawerWidth = m_Drawer ? m_Drawer->CurrentWidth() : 0;
+	if (m_Drawer)
+		m_Drawer->resize(m_TopWindow->w() - DrawerWidth, ChromeHeight,
+		                 DrawerWidth, m_TopWindow->h() - ChromeHeight);
+	m_CanvasScroll->resize(0, ChromeHeight, m_TopWindow->w() - DrawerWidth, m_TopWindow->h() - ChromeHeight);
 	m_TopWindow->redraw();
 }
 
@@ -1716,6 +1736,8 @@ inline void SynthModular::cb_New_i (Fl_Widget *o, void *v) {
        m_SavePointCount = 0;
        m_FilePath.clear();
        m_BranchID.clear();
+       m_Document = Spiral::File::DocumentSection();
+       if (m_Drawer) m_Drawer->Refresh();
 }
 
 void SynthModular::cb_New (Fl_Widget *o, void *v) {
@@ -1984,6 +2006,24 @@ void SynthModular::cb_Relayout (void* v) {
      ((SynthModular*)v)->LayoutChrome();
 }
 
+void SynthModular::cb_DrawerCollapse (void* v) {
+     ((SynthModular*)v)->LayoutChrome();
+}
+
+// About Patch is the drawer's document section. Asking for it opens the
+// drawer when it is a rail; when it is already open there is nothing to do
+// but make sure it shows what the patch says now.
+inline void SynthModular::cb_AboutPatch_i (Fl_Widget *o, void *v) {
+     if (!m_Drawer) return;
+     if (m_Drawer->Collapsed()) m_Drawer->SetCollapsed(false);
+     else m_Drawer->Refresh();
+     LayoutChrome();
+}
+
+void SynthModular::cb_AboutPatch (Fl_Widget* o, void* v) {
+     ((SynthModular*)v)->cb_AboutPatch_i (o, v);
+}
+
 /////////////////////////////////
 // Help Menu
 
@@ -2029,6 +2069,7 @@ inline void SynthModular::cb_About_i (Fl_Widget *o, void *v) {
      }
 
      Fl_Return_Button ok ((SWidth-80)/2, SHeight + TextHeight + 5, 80, ButtonHeight-5, "OK");
+     ok.box (FL_PLASTIC_UP_BOX);
      ok.callback (cb_CloseAbout, &About);
 
      About.end();
@@ -2229,6 +2270,7 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 	std::string branch;
 	std::auto_ptr<Spiral::File::Project> project;
 	std::string sidecars;
+	Spiral::File::DocumentSection document;
 
 	if (Spiral::File::Project::PathLooksLikePackage(fn))
 	{
@@ -2252,6 +2294,7 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 		branch = project->GetIdentity().ActiveBranchID;
 		m_SavePointCount = project->GetIdentity().Branches.size();
 		sidecars = project->SidecarDirectory();
+		document = project->GetDocument();
 	}
 	else
 	{
@@ -2266,6 +2309,8 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 	m_FilePath=fn;
 	m_BranchID=branch;
 	ClearUp();
+	m_Document = document;
+	if (m_Drawer) m_Drawer->Refresh();
 	StreamPatchIn(*stream, false, false, sidecars);
 	if (stream == &inf)
 		inf.close();
@@ -2292,6 +2337,7 @@ void SynthModular::SavePatch(const char *fn)
 		spiralcore::Description description;
 		Describe(description, *this, project.SidecarDirectory()).Write(bytes);
 		project.Source().Set(bytes.str());
+		project.SetDocument(m_Document);
 		if (!project.SaveAs(fn, error))
 		{
 			fl_message("%s", error.empty() ? "Error saving SSM Project" : error.c_str());
@@ -2387,6 +2433,7 @@ void SynthModular::SaveBranch(bool ask)
 	spiralcore::Description description;
 	Describe(description, *this, project.SidecarDirectory()).Write(bytes);
 	project.Source().Set(bytes.str());
+	project.SetDocument(m_Document);
 	if (!project.CreateSavePoint(name, replace, error))
 	{
 		fl_message("%s", error.empty() ? "Error saving SSM Project" : error.c_str());

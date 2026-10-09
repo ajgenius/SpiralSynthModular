@@ -41,24 +41,42 @@ int main()
 	Fl_Scroll *canvas = Find<Fl_Scroll>(window);
 	Fl_Pack *toolbar = Find<Fl_Pack>(window);
 	Fl_Tabs *tabs = Find<Fl_Tabs>(window);
+	Fl_BoundaryDrawer *drawer = Find<Fl_BoundaryDrawer>(window);
 
-	assert(strip && canvas && toolbar && tabs);
+	assert(strip && canvas && toolbar && tabs && drawer);
 
 	// The chrome spans the window, and keeps spanning it when the window
 	// grows. The fixed toolbar widgets keep their size, so the plugin tabs
-	// take the whole of what the window gained.
+	// take the whole of what the window gained. The drawer is chrome at
+	// the right edge, a rail until it is opened, and the canvas scroll
+	// takes what it leaves.
 	const int TabsBefore = tabs->w();
 	const int Before = window->w();
 	const int Wide = Before + 240;
 	window->size(Wide, window->h());
 
-	std::printf("window %d: strip %d toolbar %d canvas %d tabs %d (was %d)\n",
-	            Wide, strip->w(), toolbar->w(), canvas->w(), tabs->w(), TabsBefore);
+	std::printf("window %d: strip %d toolbar %d canvas %d drawer %d tabs %d (was %d)\n",
+	            Wide, strip->w(), toolbar->w(), canvas->w(), drawer->w(), tabs->w(), TabsBefore);
 
 	assert(strip->w() == Wide);
 	assert(toolbar->w() == Wide);
-	assert(canvas->w() == Wide);
+	assert(drawer->Collapsed());
+	assert(drawer->w() == drawer->RailWidth());
+	assert(drawer->x() + drawer->w() == Wide);
+	assert(canvas->w() == Wide - drawer->w());
+	assert(canvas->y() == drawer->y());
 	assert(tabs->w() == TabsBefore + (Wide - Before));
+
+	// Opening the drawer takes its width from the canvas, and the two
+	// still meet at the edge.
+	drawer->SetCollapsed(false);
+	synth.LayoutChrome();
+	assert(drawer->w() == drawer->ExpandedWidth());
+	assert(canvas->w() == Wide - drawer->w());
+	assert(canvas->x() + canvas->w() == drawer->x());
+	drawer->SetCollapsed(true);
+	synth.LayoutChrome();
+	assert(canvas->w() == Wide - drawer->RailWidth());
 
 #ifndef __APPLE__
 	// About is on the Help menu here, where there is no application menu

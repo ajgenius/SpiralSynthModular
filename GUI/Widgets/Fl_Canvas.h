@@ -93,6 +93,11 @@ public:
 	void SetCopyDeviceGroupCallback(Fl_Callback* s) { cb_CopyDeviceGroup=s; }
 	void SetPasteDeviceGroupCallback(Fl_Callback* s) { cb_PasteDeviceGroup=s; }
 	void SetMergePatchCallback (Fl_Callback* s) { cb_MergePatch=s; }
+	void SetAboutPatchCallback (Fl_Callback* s) { cb_AboutPatch=s; }
+	// The last item on the popup, after a divider: the patch's own entry
+	// below the device groups. Added once the plugins are in, so it
+	// lands at the end rather than ahead of them.
+	void AddAboutPatch ();
 
         void DeleteSelection (void);
 	void ClearConnections(Fl_DeviceGUI* Device);
@@ -167,6 +172,7 @@ private:
 	void (*cb_CopyDeviceGroup)(Fl_Widget*, void*);
 	void (*cb_PasteDeviceGroup)(Fl_Widget*, void*);
 	void (*cb_MergePatch)(Fl_Widget*, void*);
+	void (*cb_AboutPatch)(Fl_Widget*, void*);
         map<int,int> MapNewDeviceIds;
 	vector<CanvasWire> m_WireVec;
 	CanvasWire m_IncompleteWire;

@@ -47,6 +47,11 @@ cb_Connection(NULL),
 cb_Unconnect(NULL),
 cb_AddDevice(NULL),
 cb_Rename(NULL),
+cb_CutDeviceGroup(NULL),
+cb_CopyDeviceGroup(NULL),
+cb_PasteDeviceGroup(NULL),
+cb_MergePatch(NULL),
+cb_AboutPatch(NULL),
 m_CanPaste(false),
 m_Selecting(false),
 m_UpdateTimer(0)
@@ -335,6 +340,24 @@ void Fl_Canvas::AddPluginName (const string &s, int ID) {
         m_Menu->add ("Edit/Delete Currently Selected Devices", 0, (Fl_Callback*)cb_DeleteDeviceGroup, this);
      }
      m_Menu->add (s.c_str(), 0, (Fl_Callback*)cb_AddDeviceFromMenu, &Numbers[ID]);
+}
+
+void Fl_Canvas::AddAboutPatch () {
+     if (!m_Menu || !cb_AboutPatch) return;
+     // The divider sits on the item before, which is the last top-level
+     // entry: a submenu title. Flagging a title draws the line under its
+     // whole group. Top level is depth 0, walking the flat array: a
+     // submenu title opens a level and a null text closes one.
+     int last = -1;
+     int depth = 0;
+     for (int item = 0; item < m_Menu->size(); item++) {
+         const Fl_Menu_Item *entry = &(m_Menu->menu()[item]);
+         if (!entry->text) { depth--; continue; }
+         if (depth == 0) last = item;
+         if (entry->flags & FL_SUBMENU) depth++;
+     }
+     if (last >= 0) ((Fl_Menu_Item*)&(m_Menu->menu()[last]))->flags |= FL_MENU_DIVIDER;
+     m_Menu->add ("About Patch", 0, (Fl_Callback*)cb_AboutPatch, user_data());
 }
 
 void Fl_Canvas::StreamSelectionWiresIn(istream &s, std::map<int,int> NewDeviceIds, bool merge, bool paste)
