@@ -142,7 +142,7 @@ int main(int argc, char **argv)
 			}
 			else 
 			{
-				cmd_filename = argv[1];
+				cmd_filename = argv[a];
 				cmd_specd = true;
 			}
 		}
