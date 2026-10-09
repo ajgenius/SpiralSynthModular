@@ -171,6 +171,48 @@ namespace
 		}
 	};
 
+	/* The paragraph editor, dressed and damaged like the inputs: its
+	   scrollbars are plastic like the rest, and an edit or a selection
+	   repaints the whole field rather than the caret's rectangle. */
+	class Fl_PanelText: public Fl_Text_Editor
+	{
+	public:
+		Fl_PanelText(int x, int y, int w, int h, const char *label = NULL):
+			Fl_Text_Editor(x, y, w, h, label)
+		{
+			box(FL_PLASTIC_DOWN_BOX);
+			mVScrollBar->box(FL_PLASTIC_DOWN_BOX);
+			mVScrollBar->slider(FL_PLASTIC_UP_BOX);
+			mHScrollBar->box(FL_PLASTIC_DOWN_BOX);
+			mHScrollBar->slider(FL_PLASTIC_UP_BOX);
+		}
+
+		int handle(int event)
+		{
+			const int result = Fl_Text_Editor::handle(event);
+
+			if (event == FL_PUSH || event == FL_DRAG || event == FL_RELEASE
+				|| event == FL_FOCUS || event == FL_UNFOCUS || event == FL_KEYBOARD
+				|| event == FL_KEYDOWN || event == FL_PASTE)
+			{
+				Fl_Widget::damage(FL_DAMAGE_ALL);
+
+				if (Fl_Window *win = window())
+					win->redraw();
+			}
+
+			return result;
+		}
+
+		void draw()
+		{
+			if (!(damage() & FL_DAMAGE_ALL))
+				Fl_Widget::damage(FL_DAMAGE_ALL);
+
+			Fl_Text_Editor::draw();
+		}
+	};
+
 	/* The rows under the credits heading are rebuilt as credits come and
 	   go. A plain group that paints its own box: the rows are placed by
 	   hand, so FLTK's proportional resize is kept out of it. */
@@ -234,11 +276,10 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 		if (FieldOrder[i] == FieldDescription)
 		{
 			m_AboutBuffer = new Fl_Text_Buffer;
-			m_About = new Fl_Text_Editor(m_DocumentSection->x() + LabelWidth, rowY,
+			m_About = new Fl_PanelText(m_DocumentSection->x() + LabelWidth, rowY,
 				std::max(0, m_DocumentSection->w() - LabelWidth), AboutHeight - 2,
 				FieldLabel(FieldDescription));
 			m_About->align(FL_ALIGN_LEFT_TOP);
-			m_About->box(FL_PLASTIC_DOWN_BOX);
 			m_About->labelsize(10);
 			m_About->textsize(10);
 			m_About->buffer(m_AboutBuffer);
