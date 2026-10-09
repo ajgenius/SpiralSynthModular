@@ -137,19 +137,20 @@ may help solve this eventually.
 
 *** Building ***
 
-The shape of the build is still Dave's, below: configure, make, make install.
-What has changed is how little is required and how much is optional.
+Three steps, as it has always been: configure, make, make install. What has
+changed is how little is required and how much is optional.
 
-Needed: a C++ compiler and FLTK. That is the whole list. Everything else is
-detected, and configure prints what it found and what it skipped when it
-finishes.
+Needed: a C++ compiler and FLTK (1.3 or 1.4; if you build FLTK from source
+use --enable-shared). That is the whole list. Everything else is detected,
+and configure prints what it found and what it skipped when it finishes.
 
 Found if present, skipped with a reason if not:
 
   audio out     JACK, ALSA, OSS, PortAudio, PipeWire, ESD, and on macOS a
                 native CoreAudio client built from the system frameworks
   midi          ALSA sequencer, JACK MIDI, RtMidi, CoreMIDI
-  files         libsndfile, for everything that loads or writes audio
+  files         libsndfile, for everything that loads or writes audio:
+                PoshSampler, Streamer and SpiralLoop read any format it does
   LADSPA        the plugin host needs only ladspa.h, and a copy is in the
                 tree, so it builds whether or not the system has one
   liblrdf       LADSPA plugin metadata, if you have it
@@ -161,7 +162,9 @@ Turn any of them off with --disable-NAME: --disable-jack, --disable-ladspa,
 --disable-rtmidi, --disable-alsa-midi, --disable-jack-midi, --disable-esd.
 
 --disable-bundled-ladspa leaves out the vendored swh-plugins, for packagers
-who would rather depend on their distribution's copy.
+who would rather depend on their distribution's copy. With them in, they are
+found ahead of any system copy of the same plugin, and the system LADSPA
+directories stay on the search path behind them.
 
 --with-plugindir=DIR puts the plugins somewhere other than
 $libdir/SpiralPlugins/$VERSION. They install as dsp/, panels/, audio/, midi/
@@ -173,6 +176,14 @@ There is no flag for choosing the GUI toolkit. The macOS build uses Cocoa
 through FLTK because that is what FLTK does there; the Qt and GTK hosts are
 in the private tree and not in this one yet.
 
+From a release tarball:
+
+  ./configure
+  make
+  make install
+  SpiralSynthModular
+
+From a git checkout, run ./autogen.sh first; a tarball is already configured.
 Out of tree builds work and are the easier way to keep several configurations
 around:
 
@@ -180,100 +191,27 @@ around:
   mkdir build && cd build
   ../configure && make
 
-autogen.sh is only needed from a git checkout. A release tarball is already
-configured and starts at ./configure.
+make check runs the test suite. The FLTK window tests need a display; under
+ssh set DISPLAY, or they fail with "Can't open display".
 
+On macOS, make bundle wraps the build as SpiralSynthModular.app with its
+libraries and plugins inside, from MacPorts or any prefix given to configure
+through CPPFLAGS and LDFLAGS.
 
-Old Readme from 2004:
-
-Last changed Tuesday 11-March-2004.
-
-SpiralSynthModular is open source software, distributed under the General
-Public License (GPL). See the file COPYING.
-
-See www.pawfal.org or sourceforge.net/projects/spiralmodular for more details.
-
-
-*** Warning ***
-
-If you are using GCC version 3, you should note that the libstdc++ included with
-the compiler uses code from the system C library (glibc) version 2.2.5. That
-version of glibc is over a year old and contains necessary bugfixes. Some people
-have reported that their distro. contains an older version, which leads to SSM
-crashing with a segfault almost immediately.
-
-
-*** Dependancies ***
-
-FLTK (www.fltk.org)
-If you build FLTK from source make sure you use "./configure --enable-shared"
-
-LADSPA plugins  (www.ladspa.org)
-
-Sound output can be provided by either OSS or JACK (and therefore alsa).
-
-
-*** Installing ***
-
-To build the SpiralSynthModular application, and all the plugins:
-
-./configure
-make
-make install
-spiralsynthmodular
-
-Check out the designs in the Examples directory.
-For more examples be sure to check out the noize farm
-(http://groups.yahoo.com/group/noize_farm) an open source repository of
-ssm patches.
+Then try the designs in Examples: File / Examples lists them. Looking Backward
+into the Future.ssmp is an SSM Project with three save points and the credits
+and licence of the track it came from; About Patch on the canvas menu shows
+them.
 
 usage:
-spiralsynthmodular options [patch.ssm]
+SpiralSynthModular options [patch.ssm | project.ssmp]
 
 options list:
 -h : help
 -v : print version
---NoGUI : run without GUI (only useful when loading patch from command line
+--NoGUI : run without GUI (only useful when loading patch from command line)
 --Realtime : spawn audio thread with FIFO scheduling (run as root)
 --PluginPath <PATH> : look for plugins in the specified directory
-
-
-*** LRDF support for LADSPA plugins ***
-
-http://plugin.org.uk/releases/lrdf/
-http://www.redland.opensource.ac.uk/raptor/
-
-If you have the lrdf library installed on your system,
-the LADSPAPlugin will automatically use it.
-
-To disable detection of this this, use the configure option:
-./configure --disable-liblrdf
-
-
-*** Jack support ***
-
-http://jackit.sourceforge.net
-
-If you have jack installed on your system, you can use it via the
-JackPlugin.
-
-To load the plugin, add it to .SpiralSynthModular's plugin list after
-installation.
-
-To disable detection of jack, use the configure option:
-./configure --disable-jack
-
-
-*** LibSndFile Support ***
-
-http://www.zip.com.au/~erikd/libsndfile/
-
-If you have libsndfile installed on you system; PoshSampler, Streamer,
-and SpiralLoops load any audio format/file that libsndfile can, though
-the Open Dialog Filter currently doesn't reflect this.
-
-To disable detection of this, use the configure option:
-./configure --disable-sndfile
 
 
 *** Setting up your .spiralmodular file ***
@@ -291,13 +229,6 @@ FragmentSize      = 256         - Subbuffer size sent to the soundcard
 FragmentCount     = 8           - Subbuffer count, -1 computes a suitable size,
                                   setting to 4 or 8 gets better latencies.
 Samplerate        = 44100       - Sets the samplerate
-
-
-*** Trying it out without installing ***
-
-You can try SpiralSynthModular by running the script ./test-run
-which creates a dummy plugin directory in your source directory
-and runs SpiralSynthModular using these uninstalled plugins.
 
 
 Disclaimer:
