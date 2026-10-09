@@ -260,6 +260,10 @@ private:
 	// Not an Fl_Callback: the window hands back the host it was given,
 	// there being no widget whose user_data would carry it.
 	static void cb_Relayout (void *v);
+        // Help menu
+        inline void cb_About_i (Fl_Widget *o, void *v);
+	static void cb_About (Fl_Widget *o, void *v);
+	static void cb_CloseAbout (Fl_Widget *o, void *v);
         // View menu
         inline void cb_CenterPatch_i (Fl_Widget *o, void *v);
 	static void cb_CenterPatch (Fl_Widget *o, void *v);

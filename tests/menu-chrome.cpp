@@ -15,6 +15,7 @@
 #include <FL/Fl_Scroll.H>
 #include <cassert>
 #include <cstdio>
+#include <cstring>
 
 template<class T> static T *Find(Fl_Widget *widget)
 {
@@ -60,6 +61,26 @@ int main()
 	assert(tabs->w() == TabsBefore + (Wide - Before));
 
 #ifndef __APPLE__
+	// About is on the Help menu here, where there is no application menu
+	// to carry it. It is modal, so close it from a timeout: the box has
+	// to come up and be the modal window, then go away on its own.
+	const Fl_Menu_Item *about = strip->find_item("Help/About");
+	assert(about);
+
+	struct Closer
+	{
+		static void Run(void *)
+		{
+			Fl_Window *box = Fl::modal();
+			assert(box && box->shown());
+			assert(std::strcmp(box->label(), "About SpiralSynthModular") == 0);
+			box->hide();
+		}
+	};
+	Fl::add_timeout(0.1, Closer::Run);
+	about->do_callback(strip, about->user_data());
+	assert(!Fl::modal());
+
 	std::puts("No system menu bar on this platform; the strip is the only menu, and the chrome follows the width");
 	return 0;
 #else

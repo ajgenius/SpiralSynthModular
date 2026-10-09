@@ -524,7 +524,14 @@ SpiralWindowType *SynthModular::CreateWindow()
         MenuAdd ("Audio/Reset", cb_Reset, NULL, 0);
         //MenuAdd ("Help/Plugins/dummy", NULL, NULL, 0);
         //MenuAdd ("Help/Credits", NULL, (void*)(this), 0);
-        //MenuAdd ("Help/About", NULL, (void*)(this), 0);
+        // About lives where each platform expects it: the application menu
+        // on macOS, which FLTK already provides and only needs a callback,
+        // and a Help menu everywhere else.
+#ifdef __APPLE__
+        Fl_Sys_Menu_Bar::about (cb_About, (void*)(this));
+#else
+        MenuAdd ("Help/About", cb_About, (void*)(this), 0);
+#endif
 	int but = 50;
         int ToolbarHeight = but + 0;
         m_Topbar = new Fl_Pack (0, 20, MAIN_WIDTH, ToolbarHeight, "");
@@ -1969,6 +1976,67 @@ void SynthModular::cb_Options (Fl_Widget* o, void* v) {
 
 void SynthModular::cb_Relayout (void* v) {
      ((SynthModular*)v)->LayoutChrome();
+}
+
+/////////////////////////////////
+// Help Menu
+
+// The splash artwork with the words that went with it: the version from the
+// build, the lines from the Options panel, and the licence. Modal, and gone
+// on OK or Escape; nothing in it is live, so it is built each time it is
+// asked for rather than kept around.
+inline void SynthModular::cb_About_i (Fl_Widget *o, void *v) {
+     const int SWidth  = 256;
+     const int SHeight = 256;
+     const int Lines   = 7;
+     const int LineHeight = 14;
+     const int TextHeight = Lines * LineHeight + 10;
+     const int ButtonHeight = 30;
+     const int Height = SHeight + TextHeight + ButtonHeight + 10;
+
+     Fl_Double_Window About ((Fl::w()/2) - (SWidth/2), (Fl::h()/2) - (Height/2),
+                             SWidth, Height, "About SpiralSynthModular");
+     About.color (SpiralInfo::GUICOL_Tool);
+
+     Fl_Pixmap pic (SSM_xpm);
+     Fl_Box *pbut = new Fl_Box (0, 0, SWidth, SHeight, "");
+     pbut->box (FL_NO_BOX);
+     pic.label (pbut);
+
+     const string version = "Version " + VER_STRING;
+     const char *lines[Lines] = {
+          version.c_str(),
+          "We are the music makers",
+          "We are the dreamers of dreams",
+          "Constructed by Dave Griffiths",
+          "Copyright Dave Griffiths 2002-2006 and contributors",
+          "www.pawfal.org",
+          "GNU General Public License, version 2 or later",
+     };
+     int y = SHeight + 5;
+     for (int i = 0; i < Lines; ++i, y += LineHeight)
+     {
+          Fl_Box *line = new Fl_Box (0, y, SWidth, LineHeight, lines[i]);
+          line->box (FL_NO_BOX);
+          line->labelsize (10);
+          line->align (FL_ALIGN_INSIDE | FL_ALIGN_CENTER);
+     }
+
+     Fl_Return_Button ok ((SWidth-80)/2, SHeight + TextHeight + 5, 80, ButtonHeight-5, "OK");
+     ok.callback (cb_CloseAbout, &About);
+
+     About.end();
+     About.set_modal();
+     About.show();
+     while (About.shown()) Fl::wait();
+}
+
+void SynthModular::cb_About (Fl_Widget* o, void* v) {
+     ((SynthModular*)v)->cb_About_i (o, v);
+}
+
+void SynthModular::cb_CloseAbout (Fl_Widget* o, void* v) {
+     ((Fl_Window*)v)->hide();
 }
 
 /////////////////////////////////
