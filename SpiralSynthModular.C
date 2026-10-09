@@ -679,6 +679,11 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_SettingsWindow = new SettingsWindow;
 	m_SettingsWindow->RegisterApp(this);
 
+	// Re-run the layout whenever the window is resized, so the chrome keeps
+	// up with its width instead of staying as wide as it opened.
+	m_TopWindow->Relayout = cb_Relayout;
+	m_TopWindow->RelayoutData = this;
+
 	ApplyViewOptions();
 
 	return m_TopWindow;
@@ -1272,7 +1277,30 @@ void SynthModular::LayoutChrome()
 	const int MenuHeight = m_MainMenu->visible() ? m_MainMenu->h() : 0;
 	const int ChromeHeight = MenuHeight + m_Topbar->h();
 
-	m_Topbar->position(0, MenuHeight);
+	// Both bars were built at the startup width and never resized, so the
+	// window's resizable (the canvas) took every extra pixel and the chrome
+	// stayed as wide as the window first opened. The strip stopped short of
+	// the right edge and the plugin tabs kept their original width however
+	// much room there was for more of them.
+	m_MainMenu->resize(0, 0, m_TopWindow->w(), m_MainMenu->h());
+	m_Topbar->resize(0, MenuHeight, m_TopWindow->w(), m_Topbar->h());
+
+	// The tab group takes what the fixed toolbar widgets leave. Fl_Pack
+	// would hand its spare width to its resizable child, but it settles
+	// that in draw(), so a window that has been laid out and not yet drawn
+	// would disagree with one that has. Sizing it here makes the layout the
+	// same either way, which is the point of doing this by hand.
+	if (m_GroupTab)
+	{
+		int Fixed = 0;
+		for (int i = 0; i < m_Topbar->children(); ++i)
+			if (m_Topbar->child(i) != m_GroupTab)
+				Fixed += m_Topbar->child(i)->w();
+
+		const int TabWidth = m_TopWindow->w() - Fixed;
+		if (TabWidth > 0) m_GroupTab->size(TabWidth, m_GroupTab->h());
+	}
+
 	m_CanvasScroll->resize(0, ChromeHeight, m_TopWindow->w(), m_TopWindow->h() - ChromeHeight);
 	m_TopWindow->redraw();
 }
@@ -1929,6 +1957,10 @@ inline void SynthModular::cb_CenterPatch_i (Fl_Widget *o, void *v) {
 
 void SynthModular::cb_Options (Fl_Widget* o, void* v) {
      ((SynthModular*)(o->user_data()))->cb_Options_i (o, v);
+}
+
+void SynthModular::cb_Relayout (void* v) {
+     ((SynthModular*)v)->LayoutChrome();
 }
 
 /////////////////////////////////

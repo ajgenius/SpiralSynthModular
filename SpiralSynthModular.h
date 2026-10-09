@@ -47,7 +47,31 @@ using spiralcore::ChannelHandler;
 
 const static string VER_STRING = PACKAGE_VERSION;
 
-typedef Fl_Double_Window SpiralWindowType;
+// The chrome is laid out by hand rather than by FLTK's resizable, because the
+// menu strip comes and goes and the toolbar must keep its height while the
+// canvas takes the rest. FLTK only tells a widget it was resized, so the
+// window passes that on and the host re-runs its layout; without this the
+// bars keep whatever width the window first opened at.
+//
+// A hook rather than a call into SynthModular: the window is declared before
+// it, and this is the idiom the canvas and the device GUIs already use.
+class SpiralWindow : public Fl_Double_Window
+{
+public:
+	SpiralWindow(int w, int h, const char *label)
+		: Fl_Double_Window(w, h, label), Relayout(NULL), RelayoutData(NULL) {}
+
+	void resize(int X, int Y, int W, int H)
+	{
+		Fl_Double_Window::resize(X, Y, W, H);
+		if (Relayout) Relayout(RelayoutData);
+	}
+
+	void (*Relayout)(void *);
+	void *RelayoutData;
+};
+
+typedef SpiralWindow SpiralWindowType;
 // typedef Fl_Window SpiralWindowType;
 
 class SettingsWindow;
@@ -233,6 +257,9 @@ private:
 	static void cb_Delete (Fl_Widget *o, void *v);
         inline void cb_Options_i (Fl_Widget *o, void *v);
 	static void cb_Options (Fl_Widget *o, void *v);
+	// Not an Fl_Callback: the window hands back the host it was given,
+	// there being no widget whose user_data would carry it.
+	static void cb_Relayout (void *v);
         // View menu
         inline void cb_CenterPatch_i (Fl_Widget *o, void *v);
 	static void cb_CenterPatch (Fl_Widget *o, void *v);
