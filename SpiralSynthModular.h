@@ -194,6 +194,7 @@ private:
 	string m_FilePath, m_MergeFilePath, m_BranchID;
 	unsigned m_SavePointCount;
 	bool m_MenuStateKnown, m_MenuSelection, m_MenuPaste, m_MenuSavePoints;
+	bool m_MenuPackage;
 
 	// Main GUI stuff
 	void CreateGUI (int xoff=0, int yoff=0, const char *name="");
@@ -244,6 +245,8 @@ private:
 	static void cb_SavePoints (Fl_Widget *o, void *v);
 	inline void cb_Merge_i (Fl_Widget *o, void *v);
 	static void cb_Merge (Fl_Widget *o, void *v);
+	inline void cb_ImportBranch_i (Fl_Widget *o, void *v);
+	static void cb_ImportBranch (Fl_Widget *o, void *v);
 	inline void cb_Close_i (Fl_Widget *o, void *v);
 	static void cb_Close (Fl_Widget *o, void *v);
         // Edit menu

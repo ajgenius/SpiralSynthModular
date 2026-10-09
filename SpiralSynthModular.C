@@ -183,7 +183,8 @@ m_SavePointCount(0),
 m_MenuStateKnown(false),
 m_MenuSelection(false),
 m_MenuPaste(false),
-m_MenuSavePoints(false)
+m_MenuSavePoints(false),
+m_MenuPackage(false)
 {
 	pthread_mutex_init(&m_CycleLock, NULL);
 	/* Shared Audio State Information  */
@@ -506,7 +507,8 @@ SpiralWindowType *SynthModular::CreateWindow()
         MenuAdd ("File/Load", cb_Load, (void*)(this), 0);
         MenuAdd ("File/Save", cb_Save, (void*)(this), 0);
         MenuAdd ("File/Save As", cb_SaveAs, (void*)(this), FL_MENU_DIVIDER);
-        MenuAdd ("File/Merge", cb_Merge, (void*)(this), FL_MENU_DIVIDER);
+        MenuAdd ("File/Merge", cb_Merge, (void*)(this), 0);
+        MenuAdd ("File/Import as Branch", cb_ImportBranch, (void*)(this), FL_MENU_DIVIDER);
         MenuAdd ("File/Save Points", cb_SavePoints, (void*)(this), 0);
         MenuAdd ("File/Examples", cb_Examples, (void*)(this), FL_MENU_DIVIDER);
         MenuAdd ("File/Exit", cb_Close, (void*)(this), 0);
@@ -1252,20 +1254,24 @@ void SynthModular::RefreshMenuState()
 	const bool selection = m_Canvas->HaveSelection();
 	const bool paste = m_Canvas->CanPaste();
 	const bool points = m_SavePointCount > 0;
+	const bool package = Spiral::File::Project::PathLooksLikePackage(m_FilePath);
 
 	if (m_MenuStateKnown && selection == m_MenuSelection &&
-	    paste == m_MenuPaste && points == m_MenuSavePoints) return;
+	    paste == m_MenuPaste && points == m_MenuSavePoints &&
+	    package == m_MenuPackage) return;
 
 	m_MenuStateKnown = true;
 	m_MenuSelection = selection;
 	m_MenuPaste = paste;
 	m_MenuSavePoints = points;
+	m_MenuPackage = package;
 
 	MenuEnable("Cut", selection);
 	MenuEnable("Copy", selection);
 	MenuEnable("Delete", selection);
 	MenuEnable("Paste", paste);
 	MenuEnable("Save Points", points);
+	MenuEnable("Import as Branch", package);
 }
 
 // The placeholders held the Plugins menu's position until the plugins arrived.
@@ -2392,6 +2398,82 @@ void SynthModular::SaveBranch(bool ask)
 	TITLEBAR = LABEL + " " + m_FilePath;
 	m_TopWindow->label(TITLEBAR.c_str());
 }
+
+// Add another patch to this project as a branch of its own. Unlike a save
+// point it descends from nothing here, so the two histories stay separate:
+// that is what CreateSavePoint's independent flag writes.
+inline void SynthModular::cb_ImportBranch_i (Fl_Widget *o, void *v)
+{
+	std::string error;
+
+	// The menu item is greyed unless this is a saved package. The guard is
+	// for a shortcut or a script arriving by another route.
+	if (!Spiral::File::Project::PathLooksLikePackage(m_FilePath))
+	{
+		fl_message("Save this patch as an SSMP project before importing a branch.");
+		return;
+	}
+
+	char *fn = fl_file_chooser ("Import a patch as a branch",
+		"Patches (*.{ssm,ssmp})\tSpiral patch (*.ssm)\tPackage (*.ssmp)", NULL);
+	if (!fn || *fn=='\0')
+		return;
+
+	// Read what is being imported without touching the open patch: a package
+	// contributes its active branch, a plain patch contributes its own text.
+	std::string imported;
+	if (Spiral::File::Project::PathLooksLikePackage(fn))
+	{
+		Spiral::File::Project source(fn);
+		if (!source.OpenPackage("", error) || source.Source().Empty())
+		{
+			fl_message("%s", error.empty() ? "Error opening package" : error.c_str());
+			return;
+		}
+		imported = source.Source().Bytes();
+	}
+	else
+	{
+		ifstream in(fn);
+		if (!in)
+		{
+			fl_message("Cannot read %s", fn);
+			return;
+		}
+		std::ostringstream bytes;
+		bytes << in.rdbuf();
+		imported = bytes.str();
+	}
+
+	Spiral::File::Project project(m_FilePath);
+	if (!project.OpenPackage("", error))
+	{
+		fl_message("%s", error.empty() ? "Error opening package" : error.c_str());
+		return;
+	}
+
+	std::string name = project.BranchNameFromPath(fn);
+	const char *entered = fl_input("Name for the imported branch:", name.c_str());
+	if (!entered)
+		return;
+	name = entered;
+	if (name.find_first_not_of(" \t\r\n") == std::string::npos)
+	{
+		fl_message("An imported branch needs a name.");
+		return;
+	}
+
+	project.Source().Set(imported);
+	if (!project.CreateSavePoint(name, false, error, true))
+	{
+		fl_message("%s", error.empty() ? "Error importing branch" : error.c_str());
+		return;
+	}
+
+	m_SavePointCount = project.GetIdentity().Branches.size();
+}
+void SynthModular::cb_ImportBranch(Fl_Widget* o, void* v)
+{((SynthModular*)(v))->cb_ImportBranch_i(o,v);}
 
 inline void SynthModular::cb_SavePoints_i (Fl_Widget *o, void *v)
 {
