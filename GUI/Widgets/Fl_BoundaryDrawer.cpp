@@ -6,6 +6,7 @@
 #include <FL/fl_draw.H>
 #include <algorithm>
 #include <cstdio>
+#include <cstdlib>
 
 using namespace Spiral::File;
 
@@ -47,11 +48,29 @@ namespace
 	};
 	const size_t FieldCount = sizeof(FieldOrder) / sizeof(FieldOrder[0]);
 
-	/* Title, about, copyright, licence, the bundle checkbox, then the
-	   dates the file recorded. */
-	int DocumentRows()
+	/* About is a paragraph and gets five lines; the rest are a line each. */
+	const int AboutHeight = RowHeight * 4;
+
+	int RowHeightOf(Fl_BoundaryDrawer::Field field)
 	{
-		return (int)FieldCount + 2;
+		return field == Fl_BoundaryDrawer::FieldDescription ? AboutHeight : RowHeight;
+	}
+
+	/* Where a field's row starts, below the ones before it. */
+	int RowTop(size_t index)
+	{
+		int top = 0;
+
+		for (size_t i = 0; i < index && i < FieldCount; ++i)
+			top += RowHeightOf(FieldOrder[i]);
+
+		return top;
+	}
+
+	/* The fields, the bundle checkbox, then the dates the file recorded. */
+	int DocumentHeight()
+	{
+		return RowTop(FieldCount) + 2 * RowHeight;
 	}
 
 	const char *FieldLabel(Fl_BoundaryDrawer::Field field)
@@ -192,6 +211,7 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 	m_Document(NULL),
 	m_Collapsed(SessionCollapsed()), m_SplitDrag(false), m_SplitX(0), m_SplitW(Rail),
 	m_DocumentSection(NULL), m_CreditSection(NULL),
+	m_About(NULL), m_AboutBuffer(NULL),
 	m_License(NULL), m_LicenseMenu(NULL), m_Bundle(NULL), m_Dates(NULL), m_CreditHeader(NULL),
 	m_AddCredit(NULL), m_RemoveRow(0)
 {
@@ -201,7 +221,7 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 	// because the whole point of the drawer is to be chrome outside the
 	// canvas's scrolling and damage.
 	m_DocumentSection = new Fl_Group(x + Rail + Pad, y + Pad,
-		std::max(0, w - Rail - 2 * Pad), DocumentRows() * RowHeight);
+		std::max(0, w - Rail - 2 * Pad), DocumentHeight());
 	/* FLTK scales children against the first resize snapshot. These rows
 	   are placed by hand; a proportional pass is what collapsed fields to
 	   slivers in the private tree. */
@@ -209,7 +229,27 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 
 	for (size_t i = 0; i < FieldCount; ++i)
 	{
-		const int rowY = m_DocumentSection->y() + (int)i * RowHeight;
+		const int rowY = m_DocumentSection->y() + RowTop(i);
+
+		if (FieldOrder[i] == FieldDescription)
+		{
+			m_AboutBuffer = new Fl_Text_Buffer;
+			m_About = new Fl_Text_Editor(m_DocumentSection->x() + LabelWidth, rowY,
+				std::max(0, m_DocumentSection->w() - LabelWidth), AboutHeight - 2,
+				FieldLabel(FieldDescription));
+			m_About->align(FL_ALIGN_LEFT_TOP);
+			m_About->box(FL_PLASTIC_DOWN_BOX);
+			m_About->labelsize(10);
+			m_About->textsize(10);
+			m_About->buffer(m_AboutBuffer);
+			m_About->wrap_mode(Fl_Text_Display::WRAP_AT_BOUNDS, 0);
+			m_About->scrollbar_width(12);
+			m_About->scrollbar_align(FL_ALIGN_RIGHT);
+			m_About->when(FL_WHEN_RELEASE);
+			m_About->callback(AboutEdited, this);
+
+			continue;
+		}
 
 		if (FieldOrder[i] == FieldLicense)
 		{
@@ -243,10 +283,11 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 		field->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 		field->callback(FieldEdited, this);
 		m_Fields.push_back(field);
+		m_FieldKinds.push_back(FieldOrder[i]);
 	}
 
 	m_Bundle = new Fl_Check_Button(m_DocumentSection->x(),
-		m_DocumentSection->y() + (int)FieldCount * RowHeight,
+		m_DocumentSection->y() + RowTop(FieldCount),
 		m_DocumentSection->w(), RowHeight - 2, "Include licence text");
 	m_Bundle->labelsize(10);
 	m_Bundle->tooltip("Write the full licence into the project file");
@@ -254,7 +295,7 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 
 	// Created and saved, as the file recorded them. Not typed here.
 	m_Dates = new Fl_Box(m_DocumentSection->x(),
-		m_DocumentSection->y() + ((int)FieldCount + 1) * RowHeight,
+		m_DocumentSection->y() + RowTop(FieldCount) + RowHeight,
 		m_DocumentSection->w(), RowHeight - 2);
 	m_Dates->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 	m_Dates->labelsize(10);
@@ -278,6 +319,11 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 Fl_BoundaryDrawer::~Fl_BoundaryDrawer()
 {
 	Fl::remove_timeout(RemoveCommitted, this);
+
+	// The editor is a child and goes with the group; the buffer is ours.
+	if (m_About)
+		m_About->buffer(NULL);
+	delete m_AboutBuffer;
 }
 
 void Fl_BoundaryDrawer::resize(int x, int y, int w, int h)
@@ -424,15 +470,23 @@ void Fl_BoundaryDrawer::Relayout()
 	const int contentW = std::max(0, w() - Rail - 2 * Pad);
 
 	m_DocumentSection->resize(contentX + Pad, y() + Pad, contentW,
-		DocumentRows() * RowHeight);
+		DocumentHeight());
 
 	size_t input = 0;
 
 	for (size_t i = 0; i < FieldCount; ++i)
 	{
-		const int rowY = m_DocumentSection->y() + (int)i * RowHeight;
+		const int rowY = m_DocumentSection->y() + RowTop(i);
 		const int fieldW = std::max(0, m_DocumentSection->w() - LabelWidth);
 		const int fieldX = m_DocumentSection->x() + LabelWidth;
+
+		if (FieldOrder[i] == FieldDescription)
+		{
+			if (m_About)
+				m_About->resize(fieldX, rowY, fieldW, AboutHeight - 2);
+
+			continue;
+		}
 
 		if (FieldOrder[i] == FieldLicense)
 		{
@@ -454,12 +508,12 @@ void Fl_BoundaryDrawer::Relayout()
 
 	if (m_Bundle)
 		m_Bundle->resize(m_DocumentSection->x(),
-			m_DocumentSection->y() + (int)FieldCount * RowHeight,
+			m_DocumentSection->y() + RowTop(FieldCount),
 			m_DocumentSection->w(), RowHeight - 2);
 
 	if (m_Dates)
 		m_Dates->resize(m_DocumentSection->x(),
-			m_DocumentSection->y() + ((int)FieldCount + 1) * RowHeight,
+			m_DocumentSection->y() + RowTop(FieldCount) + RowHeight,
 			m_DocumentSection->w(), RowHeight - 2);
 
 	m_CreditSection->resize(contentX + Pad, m_DocumentSection->y() + m_DocumentSection->h() + Pad,
@@ -494,8 +548,20 @@ void Fl_BoundaryDrawer::Repopulate()
 {
 	for (size_t i = 0; i < m_Fields.size(); ++i)
 	{
-		const std::string text = FieldText(FieldOrder[i]);
+		const std::string text = FieldText(m_FieldKinds[i]);
 		m_Fields[i]->value(text.c_str());
+	}
+
+	if (m_AboutBuffer)
+	{
+		const std::string text = FieldText(FieldDescription);
+		char *shown = m_AboutBuffer->text();
+		const bool same = shown && text == shown;
+		free(shown);
+
+		// Only when it differs: resetting the buffer moves the caret.
+		if (!same)
+			m_AboutBuffer->text(text.c_str());
 	}
 
 	if (m_License)
@@ -779,11 +845,26 @@ void Fl_BoundaryDrawer::FieldEdited(Fl_Widget *widget, void *data)
 			const char *value = self->m_Fields[i]->value();
 			const std::string text = value ? value : "";
 
-			if (text != self->FieldText(FieldOrder[i]))
-				self->Apply(FieldOrder[i], text);
+			if (text != self->FieldText(self->m_FieldKinds[i]))
+				self->Apply(self->m_FieldKinds[i], text);
 
 			return;
 		}
+}
+
+void Fl_BoundaryDrawer::AboutEdited(Fl_Widget *, void *data)
+{
+	Fl_BoundaryDrawer *self = static_cast<Fl_BoundaryDrawer *>(data);
+
+	if (!self->m_AboutBuffer)
+		return;
+
+	char *value = self->m_AboutBuffer->text();
+	const std::string text = value ? value : "";
+	free(value);
+
+	if (text != self->FieldText(FieldDescription))
+		self->Apply(FieldDescription, text);
 }
 
 void Fl_BoundaryDrawer::LicenseEdited(Fl_Widget *, void *data)

@@ -21,6 +21,7 @@
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Menu_Button.H>
+#include <FL/Fl_Text_Editor.H>
 #include <FL/Fl_Check_Button.H>
 #include "PatchProject.h"
 #include <string>
@@ -102,7 +103,13 @@ private:
 	int m_SplitW;
 	Fl_Group *m_DocumentSection;
 	Fl_Group *m_CreditSection;
+	/* One-line fields, title and copyright, with the field each edits. */
 	std::vector<Fl_Input *> m_Fields;
+	std::vector<Field> m_FieldKinds;
+	/* About is a paragraph: a wrapping, scrolling editor a few lines tall,
+	   applied when it loses focus. */
+	Fl_Text_Editor *m_About;
+	Fl_Text_Buffer *m_AboutBuffer;
 	/* Not an Fl_Input_Choice: FLTK 1.3's draws its own FL_UP_BOX and
 	   FL_DOWN_BOX whatever it is told, so it cannot be dressed like the
 	   rest of the panel. An input and a menu button side by side can. */
@@ -117,6 +124,7 @@ private:
 	Fl_Button *m_AddCredit;
 
 	static void FieldEdited(Fl_Widget *, void *);
+	static void AboutEdited(Fl_Widget *, void *);
 	static void LicenseEdited(Fl_Widget *, void *);
 	static void LicensePicked(Fl_Widget *, void *);
 	static void BundleToggled(Fl_Widget *, void *);
