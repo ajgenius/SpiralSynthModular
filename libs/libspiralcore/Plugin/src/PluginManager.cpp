@@ -81,6 +81,11 @@ static bool HasSuffix(const string &name, const char *suffix)
 	return name.size() > ending.size() && name.compare(name.size() - ending.size(), ending.size(), ending) == 0;
 }
 
+bool PluginKind::Claims(const string &file) const
+{
+	return HasSuffix(file, Suffix());
+}
+
 unsigned PluginManager::Load(PluginKind &kind, const string &root)
 {
 	string directory = root;
@@ -106,12 +111,12 @@ unsigned PluginManager::Load(PluginKind &kind, const string &root)
 			if (!sub) continue;
 
 			while (struct dirent *module = readdir(sub))
-				if (HasSuffix(module->d_name, kind.Suffix()) && LoadModule(kind, path + "/" + module->d_name))
+				if (kind.Claims(module->d_name) && LoadModule(kind, path + "/" + module->d_name))
 					++loaded;
 
 			closedir(sub);
 		}
-		else if (HasSuffix(name, kind.Suffix()) && LoadModule(kind, path))
+		else if (kind.Claims(name) && LoadModule(kind, path))
 			++loaded;
 	}
 	closedir(dir);
