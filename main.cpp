@@ -33,6 +33,10 @@
 #include "SpiralSynthModular.h"
 #include "SpiralInfo.h"
 #include "MacBundle.h"
+#ifdef __APPLE__
+#include <objc/message.h>
+#include <objc/runtime.h>
+#endif
 
 pthread_t loopthread,watchdogthread;
 SynthModular *synth;
@@ -152,6 +156,16 @@ int main(int argc, char **argv)
 	Fl_Tooltip::size(10);	
 	Fl::visible_focus(false);
 	Fl::visual(FL_DOUBLE|FL_RGB);
+
+#ifdef __APPLE__
+	// With "Prefer tabs" on, macOS folds every new window into a tab of
+	// the main one: device help, the licence text, About. These are
+	// windows of their own, so opt the application out, as the native
+	// apps do with NSWindow.allowsAutomaticWindowTabbing. Through the
+	// runtime, so this file stays C++ and the build stays as it is.
+	((void (*)(id, SEL, BOOL))objc_msgSend)((id)objc_getClass("NSWindow"),
+		sel_registerName("setAllowsAutomaticWindowTabbing:"), NO);
+#endif
 	
 	synth=new SynthModular;
 
