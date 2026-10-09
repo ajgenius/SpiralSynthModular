@@ -37,6 +37,7 @@
 #include "SpiralSynthModular.h"
 #include "AudioTransportHub.h"
 #include "AudioBackend.h"
+#include "BackendPath.h"
 #include "Midi.h"
 #include "DeviceClassRegistry.h"
 #include "EditorClassRegistry.h"
@@ -764,11 +765,11 @@ void SynthModular::LoadPlugins (string pluginPath) {
      if (!PluginRoot.empty() && PluginRoot[PluginRoot.size()-1] != '/') PluginRoot += '/';
      // Audio backend modules sit beside the device plugins under audio/;
      // compiled-in backends are already registered and a module of the
-     // same name yields.
-     Spiral::Core::AudioBackendRegistry::Get()->LoadModules(PluginRoot);
+     // same name yields. SSM_BACKEND_PATH, a colon list, overrides the root.
+     Spiral::Core::LoadAudioBackends(PluginRoot);
      // MIDI backends under midi/; the preference names one, else the
      // first that is not the dummy. MidiPlugin opens the device itself.
-     Spiral::Core::MidiBackendRegistry::Get()->LoadModules(PluginRoot);
+     Spiral::Core::LoadMidiBackends(PluginRoot);
      Spiral::Core::MidiDevice::SetBackendName(SpiralInfo::MIDIBACKEND);
      // Built-in devices first: a module of the same ID is not loaded.
      Spiral::Core::DeviceClassRegistry::Get()->Register(OutputPlugin::Class());
