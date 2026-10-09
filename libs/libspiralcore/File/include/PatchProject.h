@@ -35,6 +35,17 @@ namespace Spiral
 		{
 			std::string Copyright;
 			std::string License;
+			// When set, a save writes the full licence text into the
+			// package (licenses/LICENSE.txt beside the patch) and records
+			// that path here. The identifier above stays the short name.
+			bool BundleText;
+			std::string LicenseFile;
+			RightsSection() : BundleText(false) {}
+			bool Empty() const
+			{
+				return Copyright.empty() && License.empty()
+					&& !BundleText && LicenseFile.empty();
+			}
 		};
 
 		struct DocumentSection
@@ -56,7 +67,7 @@ namespace Spiral
 				return Title.empty() && Description.empty()
 					&& SavedBy.empty() && CreatedAt.empty()
 					&& SavedAt.empty() && Credits.empty()
-					&& Rights.Copyright.empty() && Rights.License.empty();
+					&& Rights.Empty();
 			}
 		};
 
@@ -74,6 +85,14 @@ namespace Spiral
 			// nothing, and for anything that is not a package at all.
 			DocumentSection GetDocument() const;
 
+			// Replace what the project says about itself. Keys that are
+			// not the document's (anything a newer envelope added) are
+			// kept as they were; a field left empty is dropped rather
+			// than written blank. When the rights ask for the licence
+			// text and this build has it, LicenseFile names where the
+			// next save will put it.
+			void SetDocument(const DocumentSection &document);
+
 			// A fresh directory for the plugins to populate on save; cleared each
 			// time so removed samples cannot survive in a replacement branch.
 			bool BeginSidecars(std::string &error);
@@ -88,8 +107,10 @@ namespace Spiral
 
 		private:
 			class SidecarPart;
+			class LicensePart;
 			Spumoni::SourcePart *m_Source;
 			SidecarPart *m_Sidecars;
+			LicensePart *m_License;
 		};
 	}
 }

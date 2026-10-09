@@ -105,6 +105,7 @@ ring_buffer_test_LDADD = libspiralcore.la
 # files have always been written in.
 libspiralcore_la_SOURCES += File/include/Description.h File/src/Description.cpp
 libspiralcore_la_SOURCES += File/include/PatchProject.h File/src/PatchProject.cpp
+libspiralcore_la_SOURCES += File/include/License.h File/src/License.cpp File/src/LicenseTexts.inc
 check_PROGRAMS += description-test description-reader-test
 description_test_SOURCES = File/tests/description.cpp
 description_test_LDADD = libspiralcore.la

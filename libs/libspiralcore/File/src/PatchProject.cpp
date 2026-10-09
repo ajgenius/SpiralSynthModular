@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "PatchProject.h"
+#include "License.h"
 
 #include "JSON.h"
 #include "Directory.h"
@@ -176,6 +177,49 @@ namespace Spiral
 			Spumoni::DiskFolder *m_Staged;
 		};
 
+		// The full licence text beside the patch, when the rights ask for
+		// it and this build has it. Nothing to load: the identifier in the
+		// document is what is read back, the file is for whoever opens the
+		// package by hand.
+		class Project::LicensePart : public Spumoni::Part
+		{
+		public:
+			explicit LicensePart(const Project &project) : m_Project(project) {}
+			virtual std::string Name() const { return "licenses"; }
+			virtual bool Required() const { return false; }
+			virtual bool Load(Spumoni::Folder &, const std::string &, const std::string &, std::string &)
+			{
+				return true;
+			}
+			virtual void Commit() {}
+			virtual void Discard() {}
+
+			static std::string FileName() { return "licenses/LICENSE.txt"; }
+
+			// What the save writes, or empty when there is nothing to.
+			static std::string Text(const DocumentSection &document)
+			{
+				const RightsSection &rights = document.Rights;
+				if (!rights.BundleText || rights.License.empty())
+					return std::string();
+
+				std::string text = LicenseFullText(rights.License);
+				if (!text.empty() && !rights.Copyright.empty())
+					text = "Copyright " + rights.Copyright + "\n\n" + text;
+				return text;
+			}
+
+			virtual bool Store(Spumoni::Container::Writer &writer, const std::string &branchRoot,
+				Spumoni::Store *, std::string &error)
+			{
+				const std::string text = Text(m_Project.GetDocument());
+				return text.empty() || writer.AddMemory(branchRoot + FileName(), text, error);
+			}
+
+		private:
+			const Project &m_Project;
+		};
+
 		const Spumoni::Format &Format()
 		{
 			static const SSMApplication application;
@@ -197,9 +241,11 @@ namespace Spiral
 			: Spumoni::Project(Format())
 			, m_Source(new Spumoni::SourcePart("patch.spiral.legacy.ssm"))
 			, m_Sidecars(new SidecarPart)
+			, m_License(new LicensePart(*this))
 		{
 			AddPart(*m_Source);
 			AddPart(*m_Sidecars);
+			AddPart(*m_License);
 			m_SourcePath = path;
 		}
 
@@ -207,6 +253,7 @@ namespace Spiral
 		{
 			delete m_Source;
 			delete m_Sidecars;
+			delete m_License;
 		}
 
 		void Project::OnReset()
@@ -270,6 +317,10 @@ namespace Spiral
 			{
 				document.Rights.Copyright = TextOf(rights, "Copyright");
 				document.Rights.License = TextOf(rights, "License");
+				const Spumoni::JSON *bundle = rights->Get("BundleText");
+				document.Rights.BundleText = bundle
+					&& bundle->GetType() == Spumoni::JSON::Boolean && bundle->AsBool();
+				document.Rights.LicenseFile = TextOf(rights, "LicenseFile");
 			}
 
 			// Credits are a list of who did what. An entry naming nobody
@@ -293,6 +344,90 @@ namespace Spiral
 			}
 
 			return document;
+		}
+
+		void Project::SetDocument(const DocumentSection &document)
+		{
+			typedef Spumoni::JSON J;
+			std::string &text = GetIdentity().ApplicationMetadata;
+
+			// Start from what is there, minus the document's own keys,
+			// so a key this host does not know survives the round trip.
+			// JSON has no erase: the object is rebuilt without them.
+			J *root = J::MakeObject();
+			if (!text.empty())
+			{
+				Spumoni::JSONOwner previous(Spumoni::ParseJSONText(text));
+				if (previous.get() && previous->GetType() == J::Object)
+				{
+					const std::vector<std::string> keys = previous->Keys();
+					for (size_t i = 0; i < keys.size(); ++i)
+					{
+						const std::string &key = keys[i];
+						if (key == "Title" || key == "Description" || key == "SavedBy"
+							|| key == "CreatedAt" || key == "SavedAt"
+							|| key == "Credits" || key == "Rights")
+							continue;
+						if (const J *value = previous->Get(key))
+							root->SetOwned(key, value->Duplicate());
+					}
+				}
+			}
+
+			// The same keys, in the same shape, as the private tree's
+			// patch writer: a field left empty grows no key.
+			if (!document.Title.empty())
+				root->SetOwned("Title", J::MakeString(document.Title));
+			if (!document.Description.empty())
+				root->SetOwned("Description", J::MakeString(document.Description));
+			if (!document.SavedBy.empty())
+				root->SetOwned("SavedBy", J::MakeString(document.SavedBy));
+			if (!document.CreatedAt.empty())
+				root->SetOwned("CreatedAt", J::MakeString(document.CreatedAt));
+			if (!document.SavedAt.empty())
+				root->SetOwned("SavedAt", J::MakeString(document.SavedAt));
+
+			if (!document.Credits.empty())
+			{
+				J *credits = J::MakeArray();
+				for (size_t i = 0; i < document.Credits.size(); ++i)
+				{
+					if (document.Credits[i].Name.empty())
+						continue;
+					J *credit = J::MakeObject();
+					credit->SetOwned("Name", J::MakeString(document.Credits[i].Name));
+					if (!document.Credits[i].Role.empty())
+						credit->SetOwned("Role", J::MakeString(document.Credits[i].Role));
+					credits->AppendOwned(credit);
+				}
+				root->SetOwned("Credits", credits);
+			}
+
+			RightsSection rights = document.Rights;
+			// Bundling is a promise about the save. It is only made when
+			// there is a text to keep it with, and the path recorded is
+			// the one LicensePart writes.
+			rights.LicenseFile = LicensePart::Text(document).empty()
+				? std::string() : LicensePart::FileName();
+			rights.BundleText = !rights.LicenseFile.empty();
+			if (!rights.Empty())
+			{
+				J *section = J::MakeObject();
+				if (!rights.Copyright.empty())
+					section->SetOwned("Copyright", J::MakeString(rights.Copyright));
+				if (!rights.License.empty())
+					section->SetOwned("License", J::MakeString(rights.License));
+				if (rights.BundleText)
+					section->SetOwned("BundleText", J::MakeBoolean(true));
+				if (!rights.LicenseFile.empty())
+					section->SetOwned("LicenseFile", J::MakeString(rights.LicenseFile));
+				root->SetOwned("Rights", section);
+			}
+
+			// A project that claims nothing carries no metadata text at
+			// all, which is what Empty() reads back as absent.
+			text = root->Keys().empty() ? std::string() : root->Stringify(true);
+			delete root;
 		}
 	}
 }
