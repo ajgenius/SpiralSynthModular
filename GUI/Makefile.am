@@ -3,6 +3,7 @@ SUBDIRS=Controls Widgets
 EXTRA_DIST = \
 	options.xpm	\
 	SSM.xpm \
+	SpiralIcon.xpm \
 	load.xpm \
 	save.xpm \
 	new.xpm \
