@@ -4,7 +4,9 @@
 #include <cstdlib>
 #include <ostream>
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 	Description::Description()
 	{
@@ -161,4 +163,5 @@ namespace spiralcore
 		out += '}';
 		return out;
 	}
+}
 }

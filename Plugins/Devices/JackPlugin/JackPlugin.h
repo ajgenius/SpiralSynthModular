@@ -19,7 +19,7 @@
 #include "SpiralPlugin.h"
 #include "JackClient.h"
 #include "AudioStream.h"
-using spiralcore::JackClient;
+using Spiral::Core::JackClient;
 
 using namespace std;
 
@@ -56,7 +56,7 @@ public:
 	int GetOutputCount() const { return m_OutputCount; }
 	unsigned GetDrift() const { return m_Stream.Errors(); }
 	// Native callback position and the monotonic graph capture position.
-	unsigned long GetClientFrame() { spiralcore::AudioCycleTiming timing; return m_Stream.Timing(timing) ? timing.Frame : 0; }
+	unsigned long GetClientFrame() { Spiral::Core::AudioCycleTiming timing; return m_Stream.Timing(timing) ? timing.Frame : 0; }
 	unsigned long GetCaptureFrame() const { return m_CaptureFrame; }
 
 	JackClient *GetJackClient()           { return m_JackClient; }
@@ -79,8 +79,8 @@ public:
 	void Detach();
 
 	/* Jack Plugin Streaming - soon to be obsolete and for backward compatibility only*/
-	virtual void	Describe(spiralcore::Description &d);
-	virtual void	Apply(spiralcore::Description::Reader &r);			
+	virtual void	Describe(Spiral::Core::Description &d);
+	virtual void	Apply(Spiral::Core::Description::Reader &r);			
 private:
 	GUIArgs m_GUIArgs;	
 	
@@ -105,7 +105,7 @@ private:
 	
 	//clunky work-around for unique ID
 	static int JackInstanceCount;
-	spiralcore::AudioStream m_Stream;
+	Spiral::Core::AudioStream m_Stream;
 	std::vector<float> m_EnginePeriod;
 	unsigned m_RingFrames;
 	unsigned m_NativeRate;

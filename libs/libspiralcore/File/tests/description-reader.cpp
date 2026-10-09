@@ -11,13 +11,13 @@ static int fails = 0;
 int main()
 {
 	// What description-test writes, read back into the types that wrote it.
-	spiralcore::Description d;
+	Spiral::Core::Description d;
 	d.Value(4).Separator(" ").Value(0.0566442f).Separator(" ").Value(true).Separator(" ").Line();
 	d.Value(3).Separator(" ").Value(2).Separator("  ").Value(0.5).Separator(" ");
 	d.Value("-1").Separator(" ");
 	d.Value((char)'w');
 
-	spiralcore::Description::Reader in(d);
+	Spiral::Core::Description::Reader in(d);
 	int a = 0, b = 0, c = 0, e = 0;
 	float f = 0;
 	bool t = false;
@@ -40,14 +40,14 @@ int main()
 
 	// Text that does not extract leaves the target alone too; a string
 	// takes the whole value, spaces and all (a counted string in the file).
-	spiralcore::Description odd;
+	Spiral::Core::Description odd;
 	odd.Value(std::string("a b")).Separator(" ").Value(7).Separator(" ").Value(std::string("x"));
-	spiralcore::Description::Reader r(odd);
+	Spiral::Core::Description::Reader r(odd);
 	int n = 5;
 	r.Value(n);
 	CHECK(n == 5 && r.Failed() && r.Position() == 1);
 	std::string s;
-	spiralcore::Description::Reader r2(odd);
+	Spiral::Core::Description::Reader r2(odd);
 	r2.Value(s);
 	CHECK(s == "a b" && !r2.Failed());
 	r2.Value(n).Value(s);
@@ -55,9 +55,9 @@ int main()
 
 	// A denormal is a number: the file's value, not the default. One C++
 	// library's istream fails on it and stops reading. So is an overflow.
-	spiralcore::Description tiny;
+	Spiral::Core::Description tiny;
 	tiny.Value(std::string("1.4013e-45")).Separator(" ").Value(std::string("0.069")).Separator(" ").Value(std::string("1e999")).Separator(" ").Value(std::string("1x"));
-	spiralcore::Description::Reader tr(tiny);
+	Spiral::Core::Description::Reader tr(tiny);
 	float small = 0.1f, after = 1, big = 2, bad = 3;
 	tr.Value(small).Value(after).Value(big);
 	CHECK(small > 0 && small < 1e-37f && after == 0.069f && big > 3e38f && !tr.Failed());
@@ -66,10 +66,10 @@ int main()
 
 	// The rest of a span as a description of its own: the same bytes back.
 	{
-		spiralcore::Description::Reader half(d);
+		Spiral::Core::Description::Reader half(d);
 		int first = 0;
 		half.Value(first);
-		spiralcore::Description rest;
+		Spiral::Core::Description rest;
 		half.Rest(rest);
 		std::ostringstream whole, part;
 		d.Write(whole);
@@ -79,16 +79,16 @@ int main()
 	}
 
 	// A span: a device reads its own values and no further, whatever it asks.
-	spiralcore::Description::Reader span(d, 3, 6);
+	Spiral::Core::Description::Reader span(d, 3, 6);
 	int p = 0, q = 0;
 	double h = 0;
 	span.Value(p).Value(q).Value(h);
 	CHECK(p == 3 && q == 2 && h == 0.5 && !span.More() && !span.Failed());
 	span.Value(p);
 	CHECK(p == 3 && span.Failed());
-	spiralcore::Description::Reader none(d, 5, 5);
+	Spiral::Core::Description::Reader none(d, 5, 5);
 	CHECK(!none.More() && none.Position() == 5);
-	spiralcore::Description::Reader clipped(d, 20, 40);
+	Spiral::Core::Description::Reader clipped(d, 20, 40);
 	CHECK(!clipped.More() && clipped.Position() == 8);
 
 	if (fails) printf("%d failures\n", fails);

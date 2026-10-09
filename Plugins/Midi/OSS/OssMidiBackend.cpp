@@ -28,7 +28,7 @@
 #include <cstring>
 #include <sstream>
 
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 class OssMidiTransport : public MidiTransport
 {

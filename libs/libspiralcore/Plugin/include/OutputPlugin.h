@@ -29,7 +29,7 @@ public:
 	enum Mode {NO_MODE,INPUT,OUTPUT,DUPLEX,CLOSED};
 
 	// Built into the host: registered with the device registry, no module.
-	static const spiralcore::DeviceClass &Class();
+	static const Spiral::Core::DeviceClass &Class();
 
 	OutputPlugin();
 	virtual ~OutputPlugin();
@@ -54,8 +54,8 @@ public:
 
 	Mode GetMode() { return (Mode)m_Hub->GetMode(); }
 
-	virtual void Describe(spiralcore::Description &d) {}
-	virtual void Apply(spiralcore::Description::Reader &r) {}
+	virtual void Describe(Spiral::Core::Description &d) {}
+	virtual void Apply(Spiral::Core::Description::Reader &r) {}
 private:
 	AudioTransportHub *m_Hub;
 	bool m_NotifyOpenOut;

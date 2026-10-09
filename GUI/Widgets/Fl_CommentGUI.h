@@ -30,7 +30,7 @@ public:
 	virtual int  handle(int event);
 	virtual void Setup(const DeviceGUIInfo& Info, bool FirstTime = false);
 	virtual void Clear();
-	virtual void	    Describe(spiralcore::Description &d);
+	virtual void	    Describe(Spiral::Core::Description &d);
 	void                StreamOut(ostream &s);   // the description, written
 	virtual void	    StreamIn(istream &s);
 protected:

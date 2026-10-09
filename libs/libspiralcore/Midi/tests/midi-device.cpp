@@ -8,7 +8,7 @@
 #include <cstdio>
 #include <deque>
 
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 struct Script : public MidiBackend
 {

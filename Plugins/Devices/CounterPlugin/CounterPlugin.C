@@ -142,13 +142,13 @@ void CounterPlugin::ExecuteCommands()
 {
 }
 	
-void CounterPlugin::Describe(spiralcore::Description &d) 
+void CounterPlugin::Describe(Spiral::Core::Description &d) 
 {
 	d.Value(m_Version).Line();
 	d.Value(m_Count).Separator(" ").Value(m_Current).Separator(" ");
 }
 
-void CounterPlugin::Apply(spiralcore::Description::Reader &r) 
+void CounterPlugin::Apply(Spiral::Core::Description::Reader &r) 
 {
 	int version;
 	r.Value(version);

@@ -182,11 +182,11 @@ void MixSwitchPlugin::Execute() {
   }
 }
 
-void MixSwitchPlugin::Describe(spiralcore::Description &d) {
+void MixSwitchPlugin::Describe(Spiral::Core::Description &d) {
   d.Value(m_Version).Separator(" ").Value(m_PluginInfo.NumInputs - 2).Separator(" ").Value(m_SwitchPos).Separator(" ");
 }
 
-void MixSwitchPlugin::Apply(spiralcore::Description::Reader &r) {
+void MixSwitchPlugin::Apply(Spiral::Core::Description::Reader &r) {
   int Version, Chans, SwitchPos;
   r.Value(Version).Value(Chans).Value(SwitchPos);
   SetChans (Chans);

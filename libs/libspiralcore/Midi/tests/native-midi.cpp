@@ -4,7 +4,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <sched.h>
-using namespace spiralcore;
+using namespace Spiral::Core;
 #define WaitUntil(condition)                                                    \
 	do                                                                      \
 	{                                                                       \

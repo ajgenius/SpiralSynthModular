@@ -13,7 +13,7 @@
 #include "AudioBackend.h"
 
 using namespace std;
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 OutputAudioClient *OutputAudioClient::m_Singleton = NULL;
 const HostInfo *OutputAudioClient::host = NULL;

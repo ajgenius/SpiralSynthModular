@@ -9,7 +9,9 @@
 #include <string>
 #include <vector>
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 	// A description is the values a device wrote, as the text an ostream
 	// with default flags writes for each operand, and the gaps between them.
@@ -108,6 +110,7 @@ namespace spiralcore
 		std::vector<std::string> m_Values;
 		std::vector<std::string> m_Between;   // ! always m_Values.size() + 1 entries
 	};
+}
 }
 
 #endif

@@ -20,7 +20,7 @@
 #include <memory.h>
 
 using namespace std;
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 //#define CHANNEL_DEBUG
 

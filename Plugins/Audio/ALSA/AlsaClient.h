@@ -8,7 +8,9 @@
 #include <alsa/asoundlib.h>
 #include "AudioClient.h"
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 
 class AlsaClient : public AudioClient
@@ -52,6 +54,7 @@ private:
 	std::string m_Device;
 };
 
+}
 }
 
 #endif

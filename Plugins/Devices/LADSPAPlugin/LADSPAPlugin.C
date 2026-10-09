@@ -369,7 +369,7 @@ void LADSPAPlugin::ExecuteCommands()
 	}
 }
 
-void LADSPAPlugin::Describe(spiralcore::Description &d)
+void LADSPAPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ");
 
@@ -424,7 +424,7 @@ void LADSPAPlugin::Describe(spiralcore::Description &d)
 	}
 }
 
-void LADSPAPlugin::Apply(spiralcore::Description::Reader &r)
+void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int Version = 0;
 	float Gain = 0.0f;

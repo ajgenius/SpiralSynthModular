@@ -25,7 +25,7 @@
 #include <algorithm>
 #include <pthread.h>
 
-using namespace spiralcore;
+using namespace Spiral::Core;
 using namespace std;
 
 JackClient *JackClient::m_Singleton = NULL;

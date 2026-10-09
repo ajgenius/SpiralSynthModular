@@ -171,7 +171,7 @@ void JackPlugin::Attach()
 {
 	char name[32];
 	sprintf(name, "SSM%d", m_JackInstanceID);
-	spiralcore::AudioClientOptions options;
+	Spiral::Core::AudioClientOptions options;
 	options.InChannels = m_InputCount;
 	options.OutChannels = m_OutputCount;
 	if (m_JackClient->Attach(name, options))
@@ -181,7 +181,7 @@ void JackPlugin::Attach()
 		if (!m_Stream.Configure(m_JackClient, m_InputCount, m_OutputCount,
 			m_HostInfo->BUFSIZE, m_HostInfo->SAMPLERATE)) { Detach(); return; }
 
-		m_JackClient->SetCallback(spiralcore::AudioStream::Callback, &m_Stream);
+		m_JackClient->SetCallback(Spiral::Core::AudioStream::Callback, &m_Stream);
 		AudioTransportHub::Get()->RegisterStream(&m_Stream);
 		if (!m_JackClient->Start()) Detach();
 	}
@@ -320,7 +320,7 @@ void JackPlugin::ProcessAudio()
 
 	const unsigned frames = m_HostInfo->BUFSIZE;
 	const bool silent = m_HostInfo->PAUSED || !m_JackClient->IsAttached();
-	const spiralcore::AudioStamp &stamp = AudioTransportHub::Get()->CaptureStamp();
+	const Spiral::Core::AudioStamp &stamp = AudioTransportHub::Get()->CaptureStamp();
 	if (!silent) m_Stream.Capture(&m_EnginePeriod[0], frames, stamp);
 
 	m_CaptureFrame = stamp.Frame;
@@ -383,12 +383,12 @@ void  JackPlugin::CreatePorts (int nInputs, int nOutputs, bool AddPorts) {
 
 }
 
-void JackPlugin::Describe(spiralcore::Description &d) 
+void JackPlugin::Describe(Spiral::Core::Description &d) 
 {
 	d.Value(m_Version).Separator(" ").Value(m_GUIArgs.NumInputs).Separator(" ").Value(m_GUIArgs.NumOutputs).Separator(" ");
 }
 
-void JackPlugin::Apply(spiralcore::Description::Reader &r) 
+void JackPlugin::Apply(Spiral::Core::Description::Reader &r) 
 {
 	int Version, NumInputs, NumOutputs;
 

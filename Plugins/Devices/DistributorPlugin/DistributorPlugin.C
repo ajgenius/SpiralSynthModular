@@ -209,12 +209,12 @@ void DistributorPlugin::ExecuteCommands ()
 	}
 }
 
-void DistributorPlugin::Describe(spiralcore::Description &d) 
+void DistributorPlugin::Describe(Spiral::Core::Description &d) 
 {
 	d.Value(m_Version).Separator(" ").Value(GetChannelCount()).Separator(" ");
 }
 
-void DistributorPlugin::Apply(spiralcore::Description::Reader &r)
+void DistributorPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int Version, Channels;
 

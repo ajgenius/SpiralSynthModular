@@ -147,11 +147,11 @@ void LFOPlugin::Execute() {
      }
 }
 
-void LFOPlugin::Describe(spiralcore::Description &d) {
+void LFOPlugin::Describe(Spiral::Core::Description &d) {
      d.Value(m_Version).Separator(" ").Value((int)m_Type).Separator(" ").Value(m_Freq).Separator(" ");
 }
 
-void LFOPlugin::Apply(spiralcore::Description::Reader &r) {
+void LFOPlugin::Apply(Spiral::Core::Description::Reader &r) {
      int version;
      r.Value(version);
      int type = static_cast<int>(m_Type);

@@ -131,13 +131,13 @@ void TrigPlugin::ExecuteCommands()
 {
 }
 
-void TrigPlugin::Describe(spiralcore::Description &d)
+void TrigPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Line();
 	d.Value((int)m_Operator).Separator(" ");
 }
 
-void TrigPlugin::Apply(spiralcore::Description::Reader &r)
+void TrigPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int version;
 	r.Value(version);

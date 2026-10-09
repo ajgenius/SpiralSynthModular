@@ -32,8 +32,8 @@ class LFOPlugin : public SpiralPlugin {
       virtual void Execute();
       virtual void Reset();
 
-      virtual void Describe(spiralcore::Description &d);
-      virtual void Apply(spiralcore::Description::Reader &r);
+      virtual void Describe(Spiral::Core::Description &d);
+      virtual void Apply(Spiral::Core::Description::Reader &r);
       //typedef char Type;
       enum Type {SINE, TRIANGLE, SQUARE, SAW};
       void WriteWaves();

@@ -31,8 +31,8 @@ public:
 	virtual void 		Execute();
 	virtual void		Reset();
 
-	virtual void	    Describe(spiralcore::Description &d);
-	virtual void	    Apply(spiralcore::Description::Reader &r);
+	virtual void	    Describe(Spiral::Core::Description &d);
+	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 
 	typedef char Type;
 	enum {NONE,SQUARE,SAW,NOISE};
@@ -71,11 +71,11 @@ private:
 
 	static const int FIXED;
 
-	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, OscillatorPlugin &o);
-	friend spiralcore::Description &Describe(spiralcore::Description &d, OscillatorPlugin &o);
+	friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, OscillatorPlugin &o);
+	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, OscillatorPlugin &o);
 };
 
-spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, OscillatorPlugin &o);
-spiralcore::Description &Describe(spiralcore::Description &d, OscillatorPlugin &o);
+Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, OscillatorPlugin &o);
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, OscillatorPlugin &o);
 
 #endif

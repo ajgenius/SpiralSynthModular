@@ -203,12 +203,12 @@ void FilterPlugin::Execute()
 	}		
 }
 	
-void FilterPlugin::Describe(spiralcore::Description &d)
+void FilterPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ").Value(fc).Separator(" ").Value(Q).Separator(" ").Value(m_RevCutoffMod).Separator(" ").Value(m_RevResonanceMod).Separator(" ");
 }
 
-void FilterPlugin::Apply(spiralcore::Description::Reader &r)
+void FilterPlugin::Apply(Spiral::Core::Description::Reader &r)
 {	
 	int version;
 	r.Value(version);

@@ -115,13 +115,13 @@ void EnvFollowerPlugin::Execute()
 	}
 }
 
-void EnvFollowerPlugin::Describe(spiralcore::Description &d) 
+void EnvFollowerPlugin::Describe(Spiral::Core::Description &d) 
 {
 	d.Value(m_Version).Separator(" ");
 	d.Value(m_Attack).Separator(" ").Value(m_Decay);
 }
 
-void EnvFollowerPlugin::Apply(spiralcore::Description::Reader &r)
+void EnvFollowerPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	r.Value(m_Version);
 	r.Value(m_Attack).Value(m_Decay);

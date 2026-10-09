@@ -253,7 +253,7 @@ float StreamPlugin::GetLength (void) {
                         else return m_File.GetSize() / (float)m_File.GetSamplerate () * 2;
 }
 
-void StreamPlugin::Describe(spiralcore::Description &d) {
+void StreamPlugin::Describe(Spiral::Core::Description &d) {
      d.Value(m_Version).Separator(" ")
         .Value(m_GUIArgs.Volume).Separator(" ")
         .Value(m_GUIArgs.PitchMod).Separator(" ")
@@ -266,7 +266,7 @@ void StreamPlugin::Describe(spiralcore::Description &d) {
         .Value(m_Pitch).Separator(" ").Line();
 }
 
-void StreamPlugin::Apply(spiralcore::Description::Reader &r) {
+void StreamPlugin::Apply(Spiral::Core::Description::Reader &r) {
      int version;
      r.Value(version);
 

@@ -6,7 +6,9 @@
 // defines its own ABI number and Create/Destroy types.
 #ifndef SSM_BACKEND_MODULE_H
 #define SSM_BACKEND_MODULE_H
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 	struct BackendDescriptor
 	{
@@ -15,5 +17,6 @@ namespace spiralcore
 		void *(*Create)(void *context);
 		void (*Destroy)(void *instance);
 	};
-} // namespace spiralcore
+} // namespace Core
+} // namespace Spiral
 #endif

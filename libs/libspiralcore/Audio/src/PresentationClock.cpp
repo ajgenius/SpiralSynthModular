@@ -2,7 +2,7 @@
 #include "PresentationClock.h"
 #include <algorithm>
 #include <cmath>
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 PresentationClock::PresentationClock() : m_Ready(false), m_Native(false), m_Generation(1), m_MasterEpoch(0),
 	m_Frame(0), m_NextTime(0), m_TargetFrame(0), m_MasterRate(0), m_Rate(0),

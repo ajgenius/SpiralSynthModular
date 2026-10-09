@@ -7,7 +7,9 @@
 #include <atomic>
 #include <vector>
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 	class PipeWireClient: public AudioClient
 	{
@@ -101,5 +103,6 @@ namespace spiralcore
 		PipeWireClient(const PipeWireClient &);
 		PipeWireClient &operator=(const PipeWireClient &);
 	};
+}
 }
 #endif

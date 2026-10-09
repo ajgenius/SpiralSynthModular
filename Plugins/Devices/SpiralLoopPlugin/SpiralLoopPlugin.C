@@ -247,7 +247,7 @@ void SpiralLoopPlugin::ExecuteCommands()
 	}
 }
 
-void SpiralLoopPlugin::Describe(spiralcore::Description &d)
+void SpiralLoopPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" "); 
 	d.Value(m_LoopPoint).Separator(" ").Value(m_Speed).Separator(" ").Value(m_Volume).Separator(" ").Value(m_TicksPerLoop).Separator(" ");
@@ -259,7 +259,7 @@ void SpiralLoopPlugin::Describe(spiralcore::Description &d)
 	}
 }
 
-void SpiralLoopPlugin::Apply(spiralcore::Description::Reader &r)
+void SpiralLoopPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int version;
 	r.Value(version);

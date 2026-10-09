@@ -185,7 +185,7 @@ void ControllerPlugin::Clear()
 	m_PluginInfo.NumOutputs=0;
 }
 
-void ControllerPlugin::Describe(spiralcore::Description &d)
+void ControllerPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ");
 
@@ -239,7 +239,7 @@ void ControllerPlugin::Describe(spiralcore::Description &d)
 	}
 }
 
-void ControllerPlugin::Apply(spiralcore::Description::Reader &r)
+void ControllerPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int version;
 	r.Value(version);

@@ -29,7 +29,7 @@ template<class T> static T *Find(Fl_Widget *widget)
 class SlowStream : public StreamPlugin
 {
 public:
-	virtual void Apply(spiralcore::Description::Reader &reader)
+	virtual void Apply(Spiral::Core::Description::Reader &reader)
 	{
 		StreamPlugin::Apply(reader);
 		usleep(30000);
@@ -56,7 +56,7 @@ struct Host
 
 static void Check(SynthModular &synth, const std::string &path, unsigned expected)
 {
-	spiralcore::Description description;
+	Spiral::Core::Description description;
 	Describe(description, synth);
 	unsigned count = 0;
 	for (size_t i = 3; i < description.Values().size(); ++i)
@@ -82,12 +82,12 @@ int main(int argc, char **argv)
 	SpiralInfo::OUTPUTFILE = "default";
 	Host host;
 	Fl_Widget *window = host.Synth.CreateWindow();
-	spiralcore::DeviceClass stream;
+	Spiral::Core::DeviceClass stream;
 	stream.ID = 281;
 	stream.Name = "Stream";
 	stream.Icon = icon;
 	stream.Create = CreateStream;
-	assert(spiralcore::DeviceClassRegistry::Get()->Register(stream));
+	assert(Spiral::Core::DeviceClassRegistry::Get()->Register(stream));
 	host.Synth.LoadPlugins(argv[1]);
 	pthread_t thread;
 	assert(!pthread_create(&thread, NULL, Host::Run, &host));

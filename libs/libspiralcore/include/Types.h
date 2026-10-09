@@ -14,7 +14,9 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 
 typedef signed long int64;
@@ -37,4 +39,5 @@ typedef uint32 PatternID;
 
 typedef float32 AudioType;
 
+}
 }

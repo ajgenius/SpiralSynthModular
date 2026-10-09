@@ -2,7 +2,7 @@
 #include "AlsaClient.h"
 #include <cassert>
 #include <vector>
-using namespace spiralcore;
+using namespace Spiral::Core;
 int main()
 {
 	AlsaClient *client = AlsaClient::Get();

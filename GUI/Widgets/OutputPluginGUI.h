@@ -30,7 +30,7 @@ class OutputPluginGUI : public SpiralPluginGUI
 {
 public:
 	// Built into the host: registered with the editor registry, no module.
-	static const spiralcore::EditorClass &Class();
+	static const Spiral::Core::EditorClass &Class();
 
 	OutputPluginGUI(int w, int h, SpiralPlugin *o, ChannelHandler *ch, const HostInfo *Info);
 

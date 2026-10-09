@@ -203,13 +203,13 @@ void MasherPlugin::Randomise()
 {
 }
 	
-void MasherPlugin::Describe(spiralcore::Description &d)
+void MasherPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ");
 	d.Value(m_GrainStoreSize).Separator(" ").Value(m_Density).Separator(" ").Value(m_Randomness).Separator(" ").Value(m_GrainPitch).Separator(" ");
 }
 
-void MasherPlugin::Apply(spiralcore::Description::Reader &r)
+void MasherPlugin::Apply(Spiral::Core::Description::Reader &r)
 {	
 	int version;
 	r.Value(version);

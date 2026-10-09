@@ -5,7 +5,9 @@
 #include "PresentationClock.h"
 #include <vector>
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 // One timeline per engine. The host excludes graph/control edits while calling
 // these methods; native callbacks own only their AudioStream queue ends.
@@ -41,5 +43,6 @@ private:
 	AudioTimeline(const AudioTimeline &);
 	AudioTimeline &operator=(const AudioTimeline &);
 };
+}
 }
 #endif

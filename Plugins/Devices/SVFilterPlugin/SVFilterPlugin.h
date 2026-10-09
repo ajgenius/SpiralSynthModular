@@ -34,8 +34,8 @@ public:
 	virtual void Execute();
 	virtual void Reset();
 	
-	virtual void Describe(spiralcore::Description &d);
-	virtual void Apply(spiralcore::Description::Reader &r);
+	virtual void Describe(Spiral::Core::Description &d);
+	virtual void Apply(Spiral::Core::Description::Reader &r);
 	
 	float GetCutoff()    { return Cutoff; }
 	float GetResonance() { return Resonance;  } 
@@ -56,10 +56,10 @@ private:
 	// Outputs
 	double m_h, m_b, m_l, m_p, m_n;
 		
-	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, SVFilterPlugin &o);
-	friend spiralcore::Description &Describe(spiralcore::Description &d, SVFilterPlugin &o);
+	friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, SVFilterPlugin &o);
+	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, SVFilterPlugin &o);
 };
-spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, SVFilterPlugin &o);
-spiralcore::Description &Describe(spiralcore::Description &d, SVFilterPlugin &o);
+Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, SVFilterPlugin &o);
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, SVFilterPlugin &o);
 
 #endif

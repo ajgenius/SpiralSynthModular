@@ -9,7 +9,7 @@
 #include <vector>
 #include <cstdlib>
 
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 static unsigned created = 0, destroyed = 0;
 static void *Create(void *) { ++created; return static_cast<MidiBackend *>(new DummyMidiBackend); }

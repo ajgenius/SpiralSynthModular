@@ -10,7 +10,9 @@
 #include <string>
 #include "AudioTiming.h"
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 
 struct AudioClientOptions
@@ -85,6 +87,7 @@ public:
 	virtual bool LocateTransport(unsigned long frame) { return false; }
 };
 
+}
 }
 
 #endif

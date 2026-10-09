@@ -106,12 +106,12 @@ void RingModPlugin::Randomise()
 {
 }
 	
-void RingModPlugin::Describe(spiralcore::Description &d)
+void RingModPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ").Value(m_Amount).Separator(" ");
 }
 
-void RingModPlugin::Apply(spiralcore::Description::Reader &r)
+void RingModPlugin::Apply(Spiral::Core::Description::Reader &r)
 {	
 	int version;
 	r.Value(version);

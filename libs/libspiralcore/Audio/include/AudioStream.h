@@ -6,7 +6,9 @@
 #include <vector>
 #include <pthread.h>
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 // Borrows a prepared native client. The owner stops callbacks before Configure
 // or destruction. Engine and callback own separate scratch and queue ends.
@@ -51,5 +53,6 @@ private:
 	AudioStream(const AudioStream &);
 	AudioStream &operator=(const AudioStream &);
 };
+}
 }
 #endif

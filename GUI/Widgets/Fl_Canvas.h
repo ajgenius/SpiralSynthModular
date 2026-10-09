@@ -182,7 +182,7 @@ private:
 	int m_x, m_y, m_UpdateTimer, m_DragX, m_DragY;
 	int m_StartSelectX, m_StartSelectY, m_EndSelectX,m_EndSelectY;
 	friend istream &operator>>(istream &s, Fl_Canvas &o);
-	friend spiralcore::Description &Describe(spiralcore::Description &d, Fl_Canvas &o);
+	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, Fl_Canvas &o);
 	// Callbacks
         static void cb_OnDrag_s (Fl_Widget* widget, int x, int y, void* data);
         inline void cb_OnDrag_i (Fl_Widget* widget, int x,int y);
@@ -195,7 +195,7 @@ private:
 };
 
 istream &operator>>(istream &s, Fl_Canvas &o);
-spiralcore::Description &Describe(spiralcore::Description &d, Fl_Canvas &o);
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, Fl_Canvas &o);
 ostream &operator<<(ostream &s, Fl_Canvas &o);   // the description, written
 
 #endif

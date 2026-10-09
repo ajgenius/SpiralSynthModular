@@ -11,7 +11,7 @@
 static int fails = 0;
 #define CHECK(x) do { if (!(x)) { ++fails; printf("FAIL %s:%d %s\n", __FILE__, __LINE__, #x); } } while (0)
 
-static std::string Replay(const spiralcore::Description &d)
+static std::string Replay(const Spiral::Core::Description &d)
 {
 	std::ostringstream s;
 	d.Write(s);
@@ -27,7 +27,7 @@ int main()
 	if (fails)
 		return 1;
 
-	spiralcore::PositionalReader reader(*contract, history.get());
+	Spiral::Core::PositionalReader reader(*contract, history.get());
 	const std::string header = "SpiralSynthModular File Ver 4\n0 0 700 600 0 0 0 0\nSectionList\n";
 	const std::string output = "Device 1 Plugin 0\n0 0 0  0 0 0\n";
 	// Matrix: version, current, time, step, loop, notecut, 16 patterns of
@@ -40,7 +40,7 @@ int main()
 	matrix += "\n";
 	const std::string footer = "-1 0 1\n2 0 0 0 1 0 0 0\n";
 
-	spiralcore::Description d;
+	Spiral::Core::Description d;
 	CHECK(reader.Read(header + "2\n" + output + matrix + footer, d, error));
 	CHECK(reader.Status() == "Decoded");
 	CHECK(Replay(d) == header + "2\n" + output + matrix + footer);
@@ -48,7 +48,7 @@ int main()
 	CHECK(reader.Devices().size() == 2);
 	if (reader.Devices().size() == 2)
 	{
-		const spiralcore::PositionalReader::Device &m = reader.Devices()[1];
+		const Spiral::Core::PositionalReader::Device &m = reader.Devices()[1];
 		CHECK(m.id == 2 && m.pluginID == 18);
 		CHECK(d.Values()[m.record.begin] == "Device");
 		CHECK(d.Values()[m.state.begin] == "4");           // the state starts at its version
@@ -83,7 +83,7 @@ int main()
 		const std::string file = header + "2\n" + output + matrix + footer;
 		size_t at = file.find("\n4 0 0.5");
 		CHECK(at != std::string::npos);
-		spiralcore::Description state;
+		Spiral::Core::Description state;
 		size_t consumed = 0;
 		CHECK(reader.ReadState(18, file, at, state, consumed, error));
 		CHECK(state.Values().size() > 20 && state.Values()[0] == "4" && state.Values().back() == "0");

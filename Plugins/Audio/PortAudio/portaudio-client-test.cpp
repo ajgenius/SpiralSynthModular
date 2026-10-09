@@ -2,11 +2,11 @@
 #include "PortAudioClient.h"
 #include "AudioBackend.h"
 
-extern "C" const spiralcore::BackendDescriptor *SpiralPlugin_GetAudioBackend();
+extern "C" const Spiral::Core::BackendDescriptor *SpiralPlugin_GetAudioBackend();
 #include <cassert>
 #include <cmath>
 #include <cstring>
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 static PaStreamCallback *callback;
 static void *context;

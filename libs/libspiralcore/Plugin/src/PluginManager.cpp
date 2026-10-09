@@ -26,7 +26,7 @@
 #include "PluginManager.h"
 
 using namespace std;
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 PluginManager *PluginManager::m_Singleton = NULL;
 

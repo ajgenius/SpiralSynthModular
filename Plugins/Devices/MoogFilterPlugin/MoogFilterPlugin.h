@@ -31,8 +31,8 @@ public:
 	virtual void Execute();
 	virtual void Reset();
 
-	virtual void Describe(spiralcore::Description &d);
-	virtual void Apply(spiralcore::Description::Reader &r);
+	virtual void Describe(Spiral::Core::Description &d);
+	virtual void Apply(Spiral::Core::Description::Reader &r);
 	
 	float GetCutoff()    { return Cutoff; }
 	float GetResonance() { return Resonance;  } 
@@ -50,10 +50,10 @@ private:
 	
 	float in1,in2,in3,in4,out1,out2,out3,out4;
 	
-	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, MoogFilterPlugin &o);
-	friend spiralcore::Description &Describe(spiralcore::Description &d, MoogFilterPlugin &o);
+	friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, MoogFilterPlugin &o);
+	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, MoogFilterPlugin &o);
 };
-spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, MoogFilterPlugin &o);
-spiralcore::Description &Describe(spiralcore::Description &d, MoogFilterPlugin &o);
+Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, MoogFilterPlugin &o);
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, MoogFilterPlugin &o);
 
 #endif

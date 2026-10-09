@@ -165,11 +165,11 @@ void SVFilterPlugin::Randomise()
 {
 }
 
-void SVFilterPlugin::Describe(spiralcore::Description &d) {
+void SVFilterPlugin::Describe(Spiral::Core::Description &d) {
      d.Value(m_Version).Separator(" ").Value(Cutoff).Separator(" ").Value(Resonance).Separator(" ");
 }
 
-void SVFilterPlugin::Apply(spiralcore::Description::Reader &r) {
+void SVFilterPlugin::Apply(Spiral::Core::Description::Reader &r) {
      int version;
      double dummy;
      r.Value(version);

@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <string>
 #include <vector>
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 int main(int argc, char **argv)
 {

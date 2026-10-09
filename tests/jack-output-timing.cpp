@@ -33,7 +33,7 @@ struct Host
 
 struct Probe
 {
-	spiralcore::JackClient Client;
+	Spiral::Core::JackClient Client;
 	std::vector<float> Buffer;
 	volatile unsigned Good, Silent;
 	Probe() : Good(0), Silent(0) {}
@@ -63,8 +63,8 @@ int main(int argc, char **argv)
 	snprintf(name,sizeof(name),"output-host-%ld",long(getpid()));
 	SpiralInfo::OUTPUTFILE=name;
 	Probe probe;
-	spiralcore::JackClient &observer=probe.Client;
-	spiralcore::AudioClientOptions options;
+	Spiral::Core::JackClient &observer=probe.Client;
+	Spiral::Core::AudioClientOptions options;
 	options.InChannels=2; options.OutChannels=0;
 	assert(observer.Attach(std::string(name)+"-observer",options));
 	probe.Buffer.resize(observer.GetBufferSize()*2);

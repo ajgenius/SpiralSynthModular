@@ -19,8 +19,8 @@
 #include "MidiPlugin.h"
 #include "NoteTable.h"
 #include "Midi.h"
-using spiralcore::MidiDevice;
-using spiralcore::MidiEvent;
+using Spiral::Core::MidiDevice;
+using Spiral::Core::MidiEvent;
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -300,7 +300,7 @@ void MidiPlugin::DeleteControl()
 	UpdatePluginInfoWithHost();
 }
 
-void MidiPlugin::Describe(spiralcore::Description &d) 
+void MidiPlugin::Describe(Spiral::Core::Description &d) 
 {
 	d.Value(m_Version).Separator(" ").Value(m_DeviceNum).Separator(" ").Value(m_NoteCut).Separator(" ");	
 	d.Value(m_ControlList.size()).Line();
@@ -312,7 +312,7 @@ void MidiPlugin::Describe(spiralcore::Description &d)
 	
 }
 
-void MidiPlugin::Apply(spiralcore::Description::Reader &r) 
+void MidiPlugin::Apply(Spiral::Core::Description::Reader &r) 
 {
 	int version;
 	r.Value(version);

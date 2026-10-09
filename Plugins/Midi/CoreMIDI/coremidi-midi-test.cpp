@@ -10,8 +10,8 @@
 #include <cstring>
 #include <unistd.h>
 
-extern "C" const spiralcore::BackendDescriptor *SpiralPlugin_GetMidiBackend();
-using namespace spiralcore;
+extern "C" const Spiral::Core::BackendDescriptor *SpiralPlugin_GetMidiBackend();
+using namespace Spiral::Core;
 
 static MIDIEndpointRef Named(const char *name, bool destination)
 {

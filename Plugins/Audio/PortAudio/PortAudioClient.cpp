@@ -10,7 +10,7 @@
 #include "AudioBackend.h"
 
 using namespace std;
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 PortAudioClient *PortAudioClient::m_Singleton = NULL;
 

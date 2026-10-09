@@ -33,7 +33,7 @@
 #include "OSSClient.h"
 
 using namespace std;
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 OSSClient *OSSClient::m_Singleton = NULL;
 

@@ -279,7 +279,7 @@ void SettingsWindow::show()
 void SettingsWindow::ListAudioClients()
 {
 	m_AudioClient->clear();
-	const std::vector<std::string> names = spiralcore::AudioBackendRegistry::Get()->Names();
+	const std::vector<std::string> names = Spiral::Core::AudioBackendRegistry::Get()->Names();
 	int active = 0;
 	for (size_t n = 0; n < names.size(); ++n)
 	{
@@ -296,7 +296,7 @@ void SettingsWindow::ListMidiBackends()
 {
 	m_MidiBackend->clear();
 	m_MidiBackend->add("auto");
-	const std::vector<std::string> names = spiralcore::MidiBackendRegistry::Get()->Names();
+	const std::vector<std::string> names = Spiral::Core::MidiBackendRegistry::Get()->Names();
 	int active = 0;
 	for (size_t n = 0; n < names.size(); ++n)
 	{

@@ -30,8 +30,8 @@ class EchoPlugin : public SpiralPlugin
 	virtual void Execute();
 	virtual void Reset();
 
-	virtual void Describe(spiralcore::Description &d);
-	virtual void Apply(spiralcore::Description::Reader &r);
+	virtual void Describe(Spiral::Core::Description &d);
+	virtual void Apply(Spiral::Core::Description::Reader &r);
 	float GetDelay() { return m_Delay; }
 	float GetFeedback() { return m_Feedback; }
         bool GetBounce () { return m_Bounce; }
@@ -41,11 +41,11 @@ class EchoPlugin : public SpiralPlugin
         bool m_Bounce;
 	int m_HeadPos, m_Buf0, m_Buf1;
 	Sample m_Buffer[2];
-	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, EchoPlugin &o);
-	friend spiralcore::Description &Describe(spiralcore::Description &d, EchoPlugin &o);
+	friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, EchoPlugin &o);
+	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, EchoPlugin &o);
 };
 
-spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, EchoPlugin &o);
-spiralcore::Description &Describe(spiralcore::Description &d, EchoPlugin &o);
+Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, EchoPlugin &o);
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, EchoPlugin &o);
 
 #endif

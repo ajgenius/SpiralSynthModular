@@ -32,8 +32,8 @@ public:
 	
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void Execute();
-	virtual void Describe(spiralcore::Description &d);
-	virtual void Apply(spiralcore::Description::Reader &r);
+	virtual void Describe(Spiral::Core::Description &d);
+	virtual void Apply(Spiral::Core::Description::Reader &r);
 		
 	virtual void Reset();
 	void SetupCoeffs();
@@ -59,10 +59,10 @@ private:
 	bool	 m_RevCutoffMod;
 	bool	 m_RevResonanceMod;
 
-	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, FilterPlugin &o);
-	friend spiralcore::Description &Describe(spiralcore::Description &d, FilterPlugin &o);
+	friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, FilterPlugin &o);
+	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, FilterPlugin &o);
 };
-spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, FilterPlugin &o);
-spiralcore::Description &Describe(spiralcore::Description &d, FilterPlugin &o);
+Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, FilterPlugin &o);
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, FilterPlugin &o);
 
 #endif

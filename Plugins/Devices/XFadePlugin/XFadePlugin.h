@@ -29,8 +29,8 @@ public:
 	
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void Execute();
-	virtual void Describe(spiralcore::Description &d);
-	virtual void Apply(spiralcore::Description::Reader &r);
+	virtual void Describe(Spiral::Core::Description &d);
+	virtual void Apply(Spiral::Core::Description::Reader &r);
 			
 	float GetMix()        { return m_Mix; }
 	
@@ -39,10 +39,10 @@ public:
 private:	
 	float m_Mix;
 	
-	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, XFadePlugin &o);
-	friend spiralcore::Description &Describe(spiralcore::Description &d, XFadePlugin &o);
+	friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, XFadePlugin &o);
+	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, XFadePlugin &o);
 };
-spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, XFadePlugin &o);
-spiralcore::Description &Describe(spiralcore::Description &d, XFadePlugin &o);
+Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, XFadePlugin &o);
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, XFadePlugin &o);
 
 #endif

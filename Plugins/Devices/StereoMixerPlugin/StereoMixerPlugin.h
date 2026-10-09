@@ -32,8 +32,8 @@ public:
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void Execute();
 	virtual void ExecuteCommands();
-	virtual void Describe(spiralcore::Description &d);
-	virtual void Apply(spiralcore::Description::Reader &r);
+	virtual void Describe(Spiral::Core::Description &d);
+	virtual void Apply(Spiral::Core::Description::Reader &r);
 		
 	float GetChannel(int n) { return m_ChannelVal[n]; }
 	float GetPan(int n) { return m_Pan[n]; }

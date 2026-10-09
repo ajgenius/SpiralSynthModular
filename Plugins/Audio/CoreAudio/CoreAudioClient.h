@@ -7,7 +7,9 @@
 #include <CoreAudio/CoreAudio.h>
 #include <vector>
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 class CoreAudioClient : public AudioClient
 {
@@ -67,6 +69,7 @@ private:
 	CoreAudioClient &operator=(const CoreAudioClient &);
 };
 
+}
 }
 
 #endif

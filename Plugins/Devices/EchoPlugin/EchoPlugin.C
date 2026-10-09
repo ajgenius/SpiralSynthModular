@@ -150,12 +150,12 @@ void EchoPlugin::Execute()
 //{
 //}
 
-void EchoPlugin::Describe(spiralcore::Description &d)
+void EchoPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ").Value(m_Delay).Separator(" ").Value(m_Feedback).Separator(" ").Value(m_Bounce).Separator(" ");
 }
 
-void EchoPlugin::Apply(spiralcore::Description::Reader &r)
+void EchoPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int version;
 	r.Value(version);

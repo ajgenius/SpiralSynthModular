@@ -128,11 +128,11 @@ void MeterPlugin::ExecuteCommands () {
   }
 }
 
-void MeterPlugin::Describe(spiralcore::Description &d) {
+void MeterPlugin::Describe(Spiral::Core::Description &d) {
   d.Value(m_Version).Separator(" ").Value(m_VUMode).Separator(" ");
 }
 
-void MeterPlugin::Apply(spiralcore::Description::Reader &r) {
+void MeterPlugin::Apply(Spiral::Core::Description::Reader &r) {
   int Version;
   r.Value(Version);
   r.Value(m_VUMode);

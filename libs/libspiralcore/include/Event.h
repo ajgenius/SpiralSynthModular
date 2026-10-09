@@ -20,7 +20,9 @@
 #ifndef NE_EVENT
 #define NE_EVENT
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 
 class Event
@@ -50,6 +52,7 @@ public:
 	Time TimeStamp;    // when to do this event
 };
 
+}
 }
 
 #endif

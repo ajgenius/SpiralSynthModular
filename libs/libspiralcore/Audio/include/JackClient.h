@@ -24,7 +24,9 @@
 #include <jack/jack.h>
 #include <jack/transport.h>
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 const int MAX_INPUTPORTS = 256;
 const int MAX_OUTPUTPORTS = 256;
@@ -151,6 +153,7 @@ private:
 	JackClient &operator=(const JackClient &);
 };
 
+}
 }
 
 #endif

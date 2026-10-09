@@ -34,8 +34,8 @@ public:
 	virtual void Execute();
 	virtual void Reset();
 
-	virtual void Describe(spiralcore::Description &d);
-	virtual void Apply(spiralcore::Description::Reader &r);
+	virtual void Describe(Spiral::Core::Description &d);
+	virtual void Apply(Spiral::Core::Description::Reader &r);
 	
 	float GetCutoff()    { return Cutoff; }
 	float GetResonance() { return Resonance;  } 
@@ -47,10 +47,10 @@ private:
 	// Calculation
 	double w,q,r,c,vibrapos,vibraspeed;
 	 	
-	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, AnotherFilterPlugin &o);
-	friend spiralcore::Description &Describe(spiralcore::Description &d, AnotherFilterPlugin &o);
+	friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, AnotherFilterPlugin &o);
+	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, AnotherFilterPlugin &o);
 };
-spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, AnotherFilterPlugin &o);
-spiralcore::Description &Describe(spiralcore::Description &d, AnotherFilterPlugin &o);
+Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, AnotherFilterPlugin &o);
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, AnotherFilterPlugin &o);
 
 #endif

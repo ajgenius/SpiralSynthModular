@@ -22,7 +22,9 @@
 #include <string>
 #include <vector>
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 
 /* A plugin kind says what to look for under the plugin root and what to
@@ -84,6 +86,7 @@ private:
 	static PluginManager *m_Singleton;
 };
 
+}
 }
 
 #endif

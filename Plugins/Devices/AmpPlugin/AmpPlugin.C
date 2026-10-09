@@ -116,12 +116,12 @@ void AmpPlugin::Randomise()
 {
 }
 	
-void AmpPlugin::Describe(spiralcore::Description &d)
+void AmpPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ").Value(m_Gain).Separator(" ").Value(m_DC).Separator(" ");
 }
 
-void AmpPlugin::Apply(spiralcore::Description::Reader &r)
+void AmpPlugin::Apply(Spiral::Core::Description::Reader &r)
 {	
 	int version;
 	r.Value(version);

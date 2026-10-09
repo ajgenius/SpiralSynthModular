@@ -425,7 +425,7 @@ bool MatrixPlugin::CanTransposeUp()
      return true;
 }
 
-void MatrixPlugin::Describe(spiralcore::Description &d)
+void MatrixPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ");
 	d.Value(m_Current).Separator(" ").Value(m_Time).Separator(" ").Value(m_Step).Separator(" ").Value(m_Loop).Separator(" ").Value(m_NoteCut).Separator(" ").Line();
@@ -451,7 +451,7 @@ void MatrixPlugin::Describe(spiralcore::Description &d)
 
 }
 
-void MatrixPlugin::Apply(spiralcore::Description::Reader &r) {
+void MatrixPlugin::Apply(Spiral::Core::Description::Reader &r) {
      int version;
      r.Value(version);
      r.Value(m_Current).Value(m_Time).Value(m_Step).Value(m_Loop).Value(m_NoteCut);

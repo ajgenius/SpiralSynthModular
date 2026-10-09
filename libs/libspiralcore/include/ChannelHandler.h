@@ -22,7 +22,9 @@
 #include <map>
 #include <iostream>
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 
 class ChannelHandler
@@ -145,5 +147,6 @@ private:
 	
     pthread_mutex_t* m_Mutex;	
 };
+}
 }
 #endif

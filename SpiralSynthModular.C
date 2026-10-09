@@ -95,12 +95,12 @@ static string ContractDirectory()
 	return SPIRALCORE_SCHEMA_DIR;
 }
 
-static spiralcore::PositionalReader *ContractReader()
+static Spiral::Core::PositionalReader *ContractReader()
 {
 	static bool tried = false;
 	static std::auto_ptr<Spumoni::JSON> contract;
 	static std::auto_ptr<Spumoni::JSON> history;
-	static std::auto_ptr<spiralcore::PositionalReader> reader;
+	static std::auto_ptr<Spiral::Core::PositionalReader> reader;
 	if (!tried)
 	{
 		tried = true;
@@ -113,7 +113,7 @@ static spiralcore::PositionalReader *ContractReader()
 		// Historical layouts are required too: accepting only the main schema
 		// would silently lose the Controller and other versioned layouts.
 		if (contract.get() && history.get())
-			reader.reset(new spiralcore::PositionalReader(*contract, history.get()));
+			reader.reset(new Spiral::Core::PositionalReader(*contract, history.get()));
 		else
 			cerr << "SpiralSynthModular: no file contract in " << dir << ": " << error << endl;
 	}
@@ -127,15 +127,15 @@ static spiralcore::PositionalReader *ContractReader()
 // it, which ends the load: nothing after it can be placed.
 static bool ApplyDeviceState(iostream &s, const string &text, int PluginID, SpiralPlugin *plugin)
 {
-	spiralcore::PositionalReader *reader = ContractReader();
+	Spiral::Core::PositionalReader *reader = ContractReader();
 	if (reader)
 	{
-		spiralcore::Description state;
+		Spiral::Core::Description state;
 		size_t at = s.tellg(), consumed = 0;
 		string error;
 		if (reader->ReadState(PluginID, text, at, state, consumed, error))
 		{
-			spiralcore::Description::Reader values(state);
+			Spiral::Core::Description::Reader values(state);
 			plugin->Apply(values);
 			s.seekg(at + consumed);
 			return true;
@@ -231,11 +231,11 @@ SynthModular::~SynthModular()
 	delete m_SettingsWindow;
 	delete m_TopWindow;
 	// Editors before devices, the reverse of loading.
-	spiralcore::EditorClassRegistry::PackUpAndGoHome();
-	spiralcore::DeviceClassRegistry::PackUpAndGoHome();
+	Spiral::Core::EditorClassRegistry::PackUpAndGoHome();
+	Spiral::Core::DeviceClassRegistry::PackUpAndGoHome();
 	// The MidiPlugin instances are gone with the devices, so the
 	// backend they shared is too; its module can leave now.
-	spiralcore::MidiBackendRegistry::PackUpAndGoHome();
+	Spiral::Core::MidiBackendRegistry::PackUpAndGoHome();
 	system("rm -f ___temp.ssmcopytmp");
 	pthread_mutex_destroy(&m_CycleLock);
 }
@@ -765,21 +765,21 @@ void SynthModular::LoadPlugins (string pluginPath) {
      // Audio backend modules sit beside the device plugins under audio/;
      // compiled-in backends are already registered and a module of the
      // same name yields.
-     spiralcore::AudioBackendRegistry::Get()->LoadModules(PluginRoot);
+     Spiral::Core::AudioBackendRegistry::Get()->LoadModules(PluginRoot);
      // MIDI backends under midi/; the preference names one, else the
      // first that is not the dummy. MidiPlugin opens the device itself.
-     spiralcore::MidiBackendRegistry::Get()->LoadModules(PluginRoot);
-     spiralcore::MidiDevice::SetBackendName(SpiralInfo::MIDIBACKEND);
+     Spiral::Core::MidiBackendRegistry::Get()->LoadModules(PluginRoot);
+     Spiral::Core::MidiDevice::SetBackendName(SpiralInfo::MIDIBACKEND);
      // Built-in devices first: a module of the same ID is not loaded.
-     spiralcore::DeviceClassRegistry::Get()->Register(OutputPlugin::Class());
-     spiralcore::EditorClassRegistry::Get()->Register(OutputPluginGUI::Class());
+     Spiral::Core::DeviceClassRegistry::Get()->Register(OutputPlugin::Class());
+     Spiral::Core::EditorClassRegistry::Get()->Register(OutputPluginGUI::Class());
      // Devices under dsp/, panels under panels/; a panel needs no device
      // module to load, it pairs by ID when a device is made.
-     spiralcore::DeviceClassRegistry::Get()->LoadModules(PluginRoot);
-     spiralcore::EditorClassRegistry::Get()->LoadModules(PluginRoot);
-     const vector<spiralcore::DeviceClass*> &Devices = spiralcore::DeviceClassRegistry::Get()->Classes();
-     for (vector<spiralcore::DeviceClass*>::const_iterator i=Devices.begin(); i!=Devices.end(); i++) {
-         const spiralcore::DeviceClass *info = *i;
+     Spiral::Core::DeviceClassRegistry::Get()->LoadModules(PluginRoot);
+     Spiral::Core::EditorClassRegistry::Get()->LoadModules(PluginRoot);
+     const vector<Spiral::Core::DeviceClass*> &Devices = Spiral::Core::DeviceClassRegistry::Get()->Classes();
+     for (vector<Spiral::Core::DeviceClass*>::const_iterator i=Devices.begin(); i!=Devices.end(); i++) {
+         const Spiral::Core::DeviceClass *info = *i;
          int ID = info->ID;
          if (SpiralInfo::USEPLUGINLIST && !ListedModule(info->Module)) continue;
          {
@@ -1012,7 +1012,7 @@ static void GrowUnavailablePorts(iostream &s, bool paste, bool merge, map<int,De
 DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 {
 	DeviceWin *nlw = new DeviceWin;
-	const spiralcore::DeviceClass* Plugin=spiralcore::DeviceClassRegistry::Get()->Find(n);
+	const Spiral::Core::DeviceClass* Plugin=Spiral::Core::DeviceClassRegistry::Get()->Find(n);
 	bool missing = false;
 
 	nlw->m_Device = NULL;
@@ -1041,7 +1041,7 @@ DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 	Fl_Group::current(0);
 	// A device with no editor gets a bare device window; a missing plugin
 	// gets no editor and no icon.
-	const spiralcore::EditorClass *Editor = missing ? NULL : spiralcore::EditorClassRegistry::Get()->Find(n);
+	const Spiral::Core::EditorClass *Editor = missing ? NULL : Spiral::Core::EditorClassRegistry::Get()->Find(n);
 	SpiralGUIType *temp = Editor ? Editor->CreateEditor(nlw->m_Device) : NULL;
 	if (temp) temp->end();
 	Fl_Pixmap *Pix      = (!missing && Plugin) ? new Fl_Pixmap(Plugin->Icon) : NULL;
@@ -1171,7 +1171,7 @@ void SynthModular::UpdateHostInfo()
 	m_Info.AUDIOCLIENT = SpiralInfo::AUDIOCLIENT;
 	m_Info.MIDIFILE   = SpiralInfo::MIDIFILE;
 	m_Info.POLY       = SpiralInfo::POLY;
-	spiralcore::MidiDevice::SetBackendName(SpiralInfo::MIDIBACKEND);
+	Spiral::Core::MidiDevice::SetBackendName(SpiralInfo::MIDIBACKEND);
 
 	/* Reset all plugin ports/buffers befure Resuming */
 	ResetAudio();
@@ -1624,12 +1624,12 @@ iostream &operator>>(iostream &s, SynthModular &o)
 
 //////////////////////////////////////////////////////////
 
-spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o)
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, SynthModular &o)
 {
 	return Describe(d, o, o.m_FilePath + "_files/");
 }
 
-spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o, const string &sidecars)
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, SynthModular &o, const string &sidecars)
 {
 	o.FreezeAll();
 
@@ -1720,7 +1720,7 @@ spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o, c
 
 ostream &operator<<(ostream &s, SynthModular &o)
 {
-	spiralcore::Description d;
+	Spiral::Core::Description d;
 	Describe(d, o);
 	d.Write(s);
 	return s;
@@ -2350,7 +2350,7 @@ void SynthModular::SavePatch(const char *fn)
 		}
 
 		std::ostringstream bytes;
-		spiralcore::Description description;
+		Spiral::Core::Description description;
 		Describe(description, *this, project.SidecarDirectory()).Write(bytes);
 		project.Source().Set(bytes.str());
 		project.SetDocument(m_Document);
@@ -2368,7 +2368,7 @@ void SynthModular::SavePatch(const char *fn)
 			fl_message("%s", string("Error saving " + string(fn)).c_str());
 			return;
 		}
-		spiralcore::Description description;
+		Spiral::Core::Description description;
 		Describe(description, *this, string(fn) + "_files/").Write(of);
 	}
 
@@ -2446,7 +2446,7 @@ void SynthModular::SaveBranch(bool ask)
 	}
 
 	std::ostringstream bytes;
-	spiralcore::Description description;
+	Spiral::Core::Description description;
 	Describe(description, *this, project.SidecarDirectory()).Write(bytes);
 	project.Source().Set(bytes.str());
 	project.SetDocument(m_Document);

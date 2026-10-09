@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <cerrno>
 #include <algorithm>
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 ESDClient::ESDClient():
     m_ReadFD(-1),

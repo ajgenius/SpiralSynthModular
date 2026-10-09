@@ -3,7 +3,7 @@
 #include <alsa/asoundlib.h>
 #include <cassert>
 #include <iostream>
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 int main()
 {

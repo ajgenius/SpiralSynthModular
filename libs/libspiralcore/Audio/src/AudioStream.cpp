@@ -5,7 +5,7 @@
 #include <cmath>
 #include <unistd.h>
 #include <iostream>
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 AudioStream::AudioStream() : m_Running(false), m_Stop(0), m_Client(NULL), m_Capacity(0), m_EngineFrames(0), m_InvalidTiming(0), m_NativeEpoch(1),
 	m_EngineRate(0), m_NativeRate(0), m_Errors(0), m_Failed(0), m_Generation(0)

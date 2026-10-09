@@ -23,9 +23,9 @@ using namespace std;
 
 static SpiralPlugin *CreateInstance() { return new OutputPlugin; }
 
-const spiralcore::DeviceClass &OutputPlugin::Class()
+const Spiral::Core::DeviceClass &OutputPlugin::Class()
 {
-	static spiralcore::DeviceClass device;
+	static Spiral::Core::DeviceClass device;
 	device.ID = 0x0000;
 	device.Name = "Output";
 	device.Category = "InputOutput";

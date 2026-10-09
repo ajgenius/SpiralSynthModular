@@ -34,8 +34,8 @@ public:
 	virtual void 		Execute();
 	virtual void		Reset();
 
-	virtual void	    Describe(spiralcore::Description &d);
-	virtual void	    Apply(spiralcore::Description::Reader &r);
+	virtual void	    Describe(Spiral::Core::Description &d);
+	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 	
 	// has to be defined in the plugin	
 
@@ -65,11 +65,11 @@ private:
 	Sample m_Table[NUM_TABLES];
 	int    m_TableLength;
 	
-	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, WaveTablePlugin &o);
-	friend spiralcore::Description &Describe(spiralcore::Description &d, WaveTablePlugin &o);
+	friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, WaveTablePlugin &o);
+	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, WaveTablePlugin &o);
 };
 
-spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, WaveTablePlugin &o);
-spiralcore::Description &Describe(spiralcore::Description &d, WaveTablePlugin &o);
+Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, WaveTablePlugin &o);
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, WaveTablePlugin &o);
 
 #endif

@@ -2,7 +2,7 @@
 #include "AudioTimeline.h"
 #include <cassert>
 #include <cstdio>
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 int main()
 {

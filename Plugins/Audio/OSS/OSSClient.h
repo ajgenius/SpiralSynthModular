@@ -8,7 +8,9 @@
 #include <string>
 #include "AudioClient.h"
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 
 class OSSClient : public AudioClient
@@ -57,6 +59,7 @@ private:
 	std::string m_Device;
 };
 
+}
 }
 
 #endif

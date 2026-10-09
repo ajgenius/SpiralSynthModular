@@ -4,7 +4,9 @@
 #include "AudioClient.h"
 #include <vector>
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 	// Compatibility backend: ESD exposes no ADC/DAC timestamps. Queue times are
 	// explicitly estimated; use a native timestamp backend for measured alignment.
@@ -53,5 +55,6 @@ namespace spiralcore
 		ESDClient(const ESDClient &);
 		ESDClient &operator=(const ESDClient &);
 	};
+}
 }
 #endif

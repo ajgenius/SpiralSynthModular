@@ -150,12 +150,12 @@ void DelayPlugin::Randomise()
 {
 }
 
-void DelayPlugin::Describe(spiralcore::Description &d)
+void DelayPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ").Value(m_Delay).Separator(" ").Value(m_Mix).Separator(" ");
 }
 
-void DelayPlugin::Apply(spiralcore::Description::Reader &r)
+void DelayPlugin::Apply(Spiral::Core::Description::Reader &r)
 {	
 	int version;
 	r.Value(version);

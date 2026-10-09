@@ -22,7 +22,7 @@
 #include "signal.h"
 #include "pthread.h"
 
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 static const int MIDI_SCANBUFSIZE=256;
 static const int MIDI_KEYOFFSET=0;

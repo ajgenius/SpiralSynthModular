@@ -7,7 +7,7 @@
 #include "AlsaClient.h"
 
 using namespace std;
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 AlsaClient *AlsaClient::m_Singleton = NULL;
 

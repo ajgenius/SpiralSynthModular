@@ -157,12 +157,12 @@ void DiskWriterPlugin::ExecuteCommands()
 	}
 }
 
-void DiskWriterPlugin::Describe(spiralcore::Description &d)
+void DiskWriterPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ").Value(m_GUIArgs.BitsPerSample).Separator(" ").Value(m_GUIArgs.Stereo).Separator(" ");
 }
 
-void DiskWriterPlugin::Apply(spiralcore::Description::Reader &r)
+void DiskWriterPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int Version, BitsPerSample, Stereo;
 

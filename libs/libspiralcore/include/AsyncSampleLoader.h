@@ -26,7 +26,9 @@ using namespace std;
 #ifndef SAMPLELOADER_CLOCK
 #define SAMPLELOADER_CLOCK
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 
 // a sample loader that does it's loading in another thread. should be suitable
@@ -70,6 +72,7 @@ private:
 	static AsyncSampleLoader *m_Singleton;
 };
 
+}
 }
 
 #endif

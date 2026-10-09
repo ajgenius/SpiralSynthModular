@@ -5,7 +5,7 @@
 #include <cstring>
 #include <iostream>
 
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 namespace
 {

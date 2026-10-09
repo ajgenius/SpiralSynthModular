@@ -32,8 +32,8 @@ public:
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void Execute();
 	virtual void Reset();
-	virtual void Describe(spiralcore::Description &d);
-	virtual void Apply(spiralcore::Description::Reader &r);
+	virtual void Describe(Spiral::Core::Description &d);
+	virtual void Apply(Spiral::Core::Description::Reader &r);
 	
 	// has to be defined in the plugin	
 		
@@ -63,10 +63,10 @@ private:
 	
 	std::vector<GrainDesc> m_OverlapVec;
 	
-	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, MasherPlugin &o);
-	friend spiralcore::Description &Describe(spiralcore::Description &d, MasherPlugin &o);
+	friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, MasherPlugin &o);
+	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, MasherPlugin &o);
 };
-spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, MasherPlugin &o);
-spiralcore::Description &Describe(spiralcore::Description &d, MasherPlugin &o);
+Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, MasherPlugin &o);
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, MasherPlugin &o);
 
 #endif

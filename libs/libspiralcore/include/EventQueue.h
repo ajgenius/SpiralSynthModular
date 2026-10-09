@@ -21,7 +21,9 @@
 
 static const int EVENT_QUEUE_SIZE = 256;
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 
 // no mallocs, so a bit of diy memory allocation
@@ -50,6 +52,7 @@ private:
 	QueueItem m_Queue[EVENT_QUEUE_SIZE]; 
 };
 
+}
 }
 
 #endif

@@ -89,7 +89,7 @@ int main(int argc, char **argv)
 	}
 	assert(create);
 	Capture capture;
-	spiralcore::AudioClientOptions options;
+	Spiral::Core::AudioClientOptions options;
 	options.InChannels=2; options.OutChannels=2;
 	char name[64];
 	snprintf(name,sizeof(name),"plugin-test-%ld",long(getpid()));
@@ -179,7 +179,7 @@ int main(int argc, char **argv)
 						fprintf(stderr, "capture c=%u f=%u value=%.9f graph=%lu native=%lu errors=%u generation=%u time=%.9f now=%.9f\n",
 							n, frame, (*received[n])[frame], jackPlugin->GetCaptureFrame(), jackPlugin->GetClientFrame(),
 							jackPlugin->GetDrift(), AudioTransportHub::Get()->CaptureStamp().Generation,
-							AudioTransportHub::Get()->CaptureStamp().Time, spiralcore::AudioMonotonicTime());
+							AudioTransportHub::Get()->CaptureStamp().Time, Spiral::Core::AudioMonotonicTime());
 						assert(false);
 					}
 

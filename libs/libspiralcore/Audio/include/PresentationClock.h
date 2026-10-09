@@ -2,7 +2,9 @@
 #ifndef SPIRALCORE_PRESENTATION_CLOCK_H
 #define SPIRALCORE_PRESENTATION_CLOCK_H
 #include "AudioTiming.h"
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 // Engine-owned mapping from monotonically increasing graph frames to physical
 // presentation time. Musical locate/pause never rewinds these frame numbers.
@@ -23,5 +25,6 @@ private:
 	uint64_t m_Frame;
 	double m_NextTime, m_TargetFrame, m_MasterRate, m_Rate, m_Ahead, m_Wait, m_Step;
 };
+}
 }
 #endif

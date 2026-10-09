@@ -30,8 +30,8 @@ public:
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void Execute();
 	virtual void Reset();
-	virtual void Describe(spiralcore::Description &d);
-	virtual void Apply(spiralcore::Description::Reader &r);
+	virtual void Describe(Spiral::Core::Description &d);
+	virtual void Apply(Spiral::Core::Description::Reader &r);
 	
    	float GetDelay()    { return m_Delay;    }
 	float GetMix() { return m_Mix; }
@@ -47,10 +47,10 @@ private:
 	
 	Sample m_Buffer;
 
-	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, DelayPlugin &o);
-	friend spiralcore::Description &Describe(spiralcore::Description &d, DelayPlugin &o);
+	friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, DelayPlugin &o);
+	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, DelayPlugin &o);
 };
-spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, DelayPlugin &o);
-spiralcore::Description &Describe(spiralcore::Description &d, DelayPlugin &o);
+Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, DelayPlugin &o);
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, DelayPlugin &o);
 
 #endif

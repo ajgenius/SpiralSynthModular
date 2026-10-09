@@ -12,7 +12,7 @@
 #include <cassert>
 #include <cstdio>
 
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 static const DeviceClass *Named(const char *name)
 {

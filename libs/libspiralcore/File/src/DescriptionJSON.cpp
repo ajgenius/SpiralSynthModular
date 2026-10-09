@@ -7,7 +7,9 @@
 #include <memory>
 #include <sstream>
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 	static bool Strings(const Spumoni::JSON *list, const char *name,
 	                    std::vector<std::string> &out, std::string &error)
@@ -55,4 +57,5 @@ namespace spiralcore
 		out = d;
 		return true;
 	}
+}
 }

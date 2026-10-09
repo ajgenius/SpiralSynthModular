@@ -26,16 +26,16 @@
 #include <math.h>
 #include <stdlib.h>
 #include "Sample.h"
-using spiralcore::Sample;
-using spiralcore::Linear;
-using spiralcore::feq;
+using Spiral::Core::Sample;
+using Spiral::Core::Linear;
+using Spiral::Core::feq;
 #include "ChannelHandler.h"
 #include "Description.h"
-using spiralcore::ChannelHandler;
+using Spiral::Core::ChannelHandler;
 #include "DeviceClassRegistry.h"
-using spiralcore::SPIRAL_PLUGIN_TYPE_DEVICE;
-using spiralcore::SPIRAL_PLUGIN_TYPE_EDITOR;
-using spiralcore::SPIRAL_PLUGIN_TYPE_PAIRED;
+using Spiral::Core::SPIRAL_PLUGIN_TYPE_DEVICE;
+using Spiral::Core::SPIRAL_PLUGIN_TYPE_EDITOR;
+using Spiral::Core::SPIRAL_PLUGIN_TYPE_PAIRED;
 
 static const float MAX_FREQ = 13000;
 
@@ -108,11 +108,11 @@ public:
 	// The plugin's state as a description; the host decides how it is
 	// written. StreamOut is the transitional writer, the legacy stream
 	// the description would have produced.
-	virtual void        Describe(spiralcore::Description &d)=0;
+	virtual void        Describe(Spiral::Core::Description &d)=0;
 	void                StreamOut(std::ostream &s);
 	// The state read back from a description, in the order Describe gave
 	// it; the host finds the description.
-	virtual void        Apply(spiralcore::Description::Reader &r)=0;
+	virtual void        Apply(Spiral::Core::Description::Reader &r)=0;
 
 	// stuff here gets saved in filename_files directory
 	// you must return true if this feature is used.
