@@ -21,7 +21,7 @@ namespace
 	const int Panel = 320;
 	const int PanelMax = 560;
 	const int RemoveW = 22;
-	const int MenuW = 22;
+	const int MenuW = 26;
 	int SessionPanel = 0;
 	int SessionOpen = 0;
 
@@ -305,9 +305,12 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 
 			// The known identifiers, typed or picked: the menu fills the
 			// input, which is what is read.
+			// No label: Fl_Menu_Button draws its own arrow, placed from
+			// the label size, and at this width and size it sits centred.
 			m_LicenseMenu = new Fl_Menu_Button(m_License->x() + fieldW, rowY,
-				MenuW, RowHeight - 2, "@-32>");
+				MenuW, RowHeight - 2, "");
 			PlasticButton(m_LicenseMenu);
+			m_LicenseMenu->labelsize(12);
 			m_LicenseMenu->tooltip("Known licences");
 			m_LicenseMenu->callback(LicensePicked, this);
 
