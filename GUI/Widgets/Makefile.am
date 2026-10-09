@@ -3,10 +3,13 @@ AM_CPPFLAGS = -I$(top_srcdir)                                              \
                 -I$(top_srcdir)/GUI/Widgets           \
                 -I$(top_srcdir)/GUI/Controls          \
                 $(SPIRALCORE_CFLAGS) \
+                -I$(top_srcdir)/libs/libSpumoni/include \
                 $(PORTAUDIO_CFLAGS) $(ALSA_CFLAGS)
 
 lib_LTLIBRARIES = libSpiralWidgets.la
 libSpiralWidgets_la_SOURCES =					\
+					Fl_BoundaryDrawer.h	\
+					Fl_BoundaryDrawer.cpp	\
 					Fl_Canvas.h		\
 					Fl_Canvas.C		\
 					Fl_CommentGUI.h		\
