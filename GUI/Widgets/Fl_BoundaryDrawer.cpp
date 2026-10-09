@@ -453,7 +453,9 @@ bool Fl_BoundaryDrawer::PanelShown() const
 void Fl_BoundaryDrawer::SetCollapsed(bool collapsed)
 {
 	m_Collapsed = collapsed;
-	SessionPanel = collapsed ? 0 : OpenPanel();
+	// Asked open, the panel is at least its full width: a rail dragged to
+	// a sliver earlier in the session is not what About Patch means.
+	SessionPanel = collapsed ? 0 : std::max(OpenPanel(), Panel);
 
 	if (!collapsed)
 		SessionOpen = SessionPanel;

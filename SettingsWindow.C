@@ -33,12 +33,8 @@ static const int OPTION_ROW = 20;
 
 static int OptionRows()
 {
-	// The Mac menu bar option is only offered where there is one.
-#ifdef __APPLE__
+	// Show Menubar is offered everywhere now, so the count is the same.
 	return 10;
-#else
-	return 9;
-#endif
 }
 
 static int OptionsHeight()

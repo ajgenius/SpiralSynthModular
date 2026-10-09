@@ -55,6 +55,7 @@
 #include "PositionalReader.h"
 #include <iterator>
 #include "GUI/SSM.xpm"
+#include "GUI/SpiralIcon.xpm"
 #include "GUI/load.xpm"
 #include "GUI/save.xpm"
 #include "GUI/new.xpm"
@@ -2033,49 +2034,56 @@ void SynthModular::cb_AboutPatch (Fl_Widget* o, void* v) {
 /////////////////////////////////
 // Help Menu
 
-// The splash artwork with the words that went with it: the version from the
-// build, the lines from the Options panel, and the licence. Modal, and gone
-// on OK or Escape; nothing in it is live, so it is built each time it is
-// asked for rather than kept around.
+// Laid out like the gtk hosts' about dialog: the icon beside a block of
+// text, the version from the build, the lines from the Options panel,
+// Dave's copyright, the site and the licence. Modal, and gone on OK or
+// Escape; nothing in it is live, so it is built each time it is asked for
+// rather than kept around.
 inline void SynthModular::cb_About_i (Fl_Widget *o, void *v) {
-     const int SWidth  = 256;
-     const int SHeight = 256;
-     const int Lines   = 7;
-     const int LineHeight = 14;
-     const int TextHeight = Lines * LineHeight + 10;
-     const int ButtonHeight = 30;
-     const int Height = SHeight + TextHeight + ButtonHeight + 10;
-
-     Fl_Double_Window About ((Fl::w()/2) - (SWidth/2), (Fl::h()/2) - (Height/2),
-                             SWidth, Height, "About SpiralSynthModular");
-     About.color (SpiralInfo::GUICOL_Tool);
-
-     Fl_Pixmap pic (SSM_xpm);
-     Fl_Box *pbut = new Fl_Box (0, 0, SWidth, SHeight, "");
-     pbut->box (FL_NO_BOX);
-     pic.label (pbut);
-
+     const int Pad = 16;
+     const int IconSize = 64;
+     const int TextX = Pad + IconSize + Pad;
+     const int Width = 440;
+     const int LineHeight = 16;
+     const int ButtonHeight = 26;
      const string version = "Version " + VER_STRING;
-     const char *lines[Lines] = {
+     const char *lines[] = {
+          "SpiralSynthModular",
           version.c_str(),
+          "",
           "We are the music makers",
           "We are the dreamers of dreams",
-          "Constructed by Dave Griffiths",
-          "Copyright Dave Griffiths 2002-2006 and contributors",
-          "www.pawfal.org",
+          "",
+          "Copyright \xc2\xa9 Dave Griffiths 2002-2006 and contributors",
+          "http://www.pawfal.org",
           "GNU General Public License, version 2 or later",
      };
-     int y = SHeight + 5;
+     const int Lines = sizeof(lines) / sizeof(lines[0]);
+     const int TextHeight = Lines * LineHeight;
+     const int Height = Pad + TextHeight + Pad + ButtonHeight + Pad;
+
+     Fl_Double_Window About ((Fl::w()/2) - (Width/2), (Fl::h()/2) - (Height/2),
+                             Width, Height, "About SpiralSynthModular");
+     About.color (SpiralInfo::GUICOL_Tool);
+
+     Fl_Pixmap icon (SpiralIcon_xpm);
+     Fl_Box *iconbox = new Fl_Box (Pad, Pad, IconSize, IconSize, "");
+     iconbox->box (FL_NO_BOX);
+     icon.label (iconbox);
+
+     int y = Pad;
      for (int i = 0; i < Lines; ++i, y += LineHeight)
      {
-          Fl_Box *line = new Fl_Box (0, y, SWidth, LineHeight, lines[i]);
+          Fl_Box *line = new Fl_Box (TextX, y, Width - TextX - Pad, LineHeight, lines[i]);
           line->box (FL_NO_BOX);
-          line->labelsize (10);
-          line->align (FL_ALIGN_INSIDE | FL_ALIGN_CENTER);
+          line->labelsize (i == 0 ? 14 : 11);
+          if (i == 0) line->labelfont (FL_BOLD);
+          line->align (FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
      }
 
-     Fl_Return_Button ok ((SWidth-80)/2, SHeight + TextHeight + 5, 80, ButtonHeight-5, "OK");
+     Fl_Return_Button ok (Width - Pad - 80, Height - Pad - ButtonHeight, 80, ButtonHeight, "OK");
      ok.box (FL_PLASTIC_UP_BOX);
+     ok.labelsize (11);
      ok.callback (cb_CloseAbout, &About);
 
      About.end();
