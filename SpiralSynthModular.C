@@ -660,7 +660,12 @@ SpiralWindowType *SynthModular::CreateWindow()
         m_GroupTab->callback((Fl_Callback*)cb_GroupTab);
 	m_Topbar->add (m_GroupTab);
 
-       	m_Topbar->resizable(m_GroupTab);
+	// No resizable: the tab group is sized by LayoutChrome. With one set,
+	// FLTK 1.3's Fl_Pack (plain Fl_Group::resize) scales every child on a
+	// window resize before the layout runs, so the fixed buttons it then
+	// measures have already grown and the tabs get what is left of that.
+	// 1.4 leaves a pack's children alone and never showed it.
+       	m_Topbar->resizable(NULL);
 
         /////////////////
 
@@ -693,6 +698,7 @@ SpiralWindowType *SynthModular::CreateWindow()
 	// as a project is what keeps it.
 	m_Drawer = new Fl_BoundaryDrawer (MAIN_WIDTH, ToolbarHeight, 1, MAIN_HEIGHT-ToolbarHeight);
 	m_Drawer->color(SpiralInfo::GUICOL_Tool);
+	m_Drawer->selection_color(SpiralInfo::GUICOL_Button);
 	m_Drawer->CollapseChanged = cb_DrawerCollapse;
 	m_Drawer->CollapseChangedData = this;
 	m_Drawer->Bind(&m_Document);

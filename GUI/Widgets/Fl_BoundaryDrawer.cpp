@@ -17,9 +17,10 @@ namespace
 	/* The rail is the drag bar. The panel beside it opens to a width that
 	   fits the fields; it will not grow past twice that. */
 	const int Rail = 18;
-	const int Panel = 240;
-	const int PanelMax = 480;
+	const int Panel = 320;
+	const int PanelMax = 560;
 	const int RemoveW = 22;
+	const int MenuW = 22;
 	int SessionPanel = 0;
 	int SessionOpen = 0;
 
@@ -112,6 +113,45 @@ namespace
 		return std::string(word) + " (" + buf + ")";
 	}
 
+	/* Selection in an Fl_Input is a minimal update: the box is not redrawn,
+	   and the caret is a 2px bar that can stick outside the field. The
+	   private tree's port name fields had the same: after the field has
+	   moved its selection, widen the damage to the whole window and force
+	   a full box paint, or the previous glyphs stay. */
+	class Fl_PanelInput: public Fl_Input
+	{
+	public:
+		Fl_PanelInput(int x, int y, int w, int h, const char *label = NULL):
+			Fl_Input(x, y, w, h, label)
+		{
+		}
+
+		int handle(int event)
+		{
+			const int result = Fl_Input::handle(event);
+
+			if (event == FL_PUSH || event == FL_DRAG || event == FL_RELEASE
+				|| event == FL_FOCUS || event == FL_UNFOCUS || event == FL_KEYBOARD
+				|| event == FL_KEYDOWN || event == FL_PASTE)
+			{
+				Fl_Widget::damage(FL_DAMAGE_ALL);
+
+				if (Fl_Window *win = window())
+					win->redraw();
+			}
+
+			return result;
+		}
+
+		void draw()
+		{
+			if (!(damage() & FL_DAMAGE_ALL))
+				Fl_Widget::damage(FL_DAMAGE_ALL);
+
+			Fl_Input::draw();
+		}
+	};
+
 	/* The rows under the credits heading are rebuilt as credits come and
 	   go. A plain group that paints its own box: the rows are placed by
 	   hand, so FLTK's proportional resize is kept out of it. */
@@ -152,7 +192,7 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 	m_Document(NULL),
 	m_Collapsed(SessionCollapsed()), m_SplitDrag(false), m_SplitX(0), m_SplitW(Rail),
 	m_DocumentSection(NULL), m_CreditSection(NULL),
-	m_License(NULL), m_Bundle(NULL), m_Dates(NULL), m_CreditHeader(NULL),
+	m_License(NULL), m_LicenseMenu(NULL), m_Bundle(NULL), m_Dates(NULL), m_CreditHeader(NULL),
 	m_AddCredit(NULL), m_RemoveRow(0)
 {
 	box(FL_NO_BOX);
@@ -173,23 +213,30 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 
 		if (FieldOrder[i] == FieldLicense)
 		{
-			m_License = new Fl_Input_Choice(m_DocumentSection->x() + LabelWidth, rowY,
-				std::max(0, m_DocumentSection->w() - LabelWidth), RowHeight - 2,
-				FieldLabel(FieldLicense));
+			const int fieldW = std::max(0, m_DocumentSection->w() - LabelWidth - MenuW);
+
+			m_License = new Fl_PanelInput(m_DocumentSection->x() + LabelWidth, rowY,
+				fieldW, RowHeight - 2, FieldLabel(FieldLicense));
 			m_License->align(FL_ALIGN_LEFT);
-			m_License->labelsize(10);
-			PlasticInput(m_License->input());
-			PlasticButton(m_License->menubutton());
+			PlasticInput(m_License);
 			m_License->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 			m_License->callback(LicenseEdited, this);
 
+			// The known identifiers, typed or picked: the menu fills the
+			// input, which is what is read.
+			m_LicenseMenu = new Fl_Menu_Button(m_License->x() + fieldW, rowY,
+				MenuW, RowHeight - 2, "@-32>");
+			PlasticButton(m_LicenseMenu);
+			m_LicenseMenu->tooltip("Known licences");
+			m_LicenseMenu->callback(LicensePicked, this);
+
 			for (size_t n = 0; n < LicensePresetCount(); ++n)
-				m_License->add(LicensePresetAt(n).Id);
+				m_LicenseMenu->add(LicensePresetAt(n).Id);
 
 			continue;
 		}
 
-		Fl_Input *field = new Fl_Input(m_DocumentSection->x() + LabelWidth, rowY,
+		Fl_Input *field = new Fl_PanelInput(m_DocumentSection->x() + LabelWidth, rowY,
 			m_DocumentSection->w() - LabelWidth, RowHeight - 2, FieldLabel(FieldOrder[i]));
 		field->align(FL_ALIGN_LEFT);
 		PlasticInput(field);
@@ -251,15 +298,14 @@ void Fl_BoundaryDrawer::draw()
 
 	fl_color(color());
 	fl_rectf(x(), y(), w(), h());
-	fl_color(fl_color_average(FL_FOREGROUND_COLOR, color(), 0.25f));
-	fl_rectf(x(), y(), Rail, h());
-	fl_color(FL_FOREGROUND_COLOR);
+	// The rail is a plastic bar in the host's button colour, like the
+	// toolbar beside it; the grip is a darker shade of the same.
+	fl_draw_box(FL_PLASTIC_UP_BOX, x(), y(), Rail, h(), selection_color());
+	fl_color(fl_darker(selection_color()));
 	const int mid = y() + h() / 2;
 	const int gx = x() + Rail / 2;
 	for (int i = -3; i <= 3; ++i)
 		fl_rectf(gx - 1, mid + i * 5, 3, 2);
-	fl_color(fl_darker(color()));
-	fl_yxline(x() + Rail - 1, y(), y() + h() - 1);
 	draw_children();
 }
 
@@ -390,8 +436,12 @@ void Fl_BoundaryDrawer::Relayout()
 
 		if (FieldOrder[i] == FieldLicense)
 		{
+			const int inputW = std::max(0, fieldW - MenuW);
+
 			if (m_License)
-				m_License->resize(fieldX, rowY, fieldW, RowHeight - 2);
+				m_License->resize(fieldX, rowY, inputW, RowHeight - 2);
+			if (m_LicenseMenu)
+				m_LicenseMenu->resize(fieldX + inputW, rowY, MenuW, RowHeight - 2);
 
 			continue;
 		}
@@ -502,9 +552,9 @@ void Fl_BoundaryDrawer::Repopulate()
 
 		for (size_t i = 0; i < credits.size(); ++i)
 		{
-			Fl_Input *name = new Fl_Input(m_CreditSection->x(), m_CreditSection->y(),
+			Fl_Input *name = new Fl_PanelInput(m_CreditSection->x(), m_CreditSection->y(),
 				m_CreditSection->w(), RowHeight - 2);
-			Fl_Input *role = new Fl_Input(m_CreditSection->x(), m_CreditSection->y(),
+			Fl_Input *role = new Fl_PanelInput(m_CreditSection->x(), m_CreditSection->y(),
 				m_CreditSection->w(), RowHeight - 2);
 			Fl_Button *remove = new Fl_Button(m_CreditSection->x(), m_CreditSection->y(),
 				RemoveW, RowHeight - 2, "x");
@@ -745,6 +795,19 @@ void Fl_BoundaryDrawer::LicenseEdited(Fl_Widget *, void *data)
 
 	const char *value = self->m_License->value();
 	const std::string text = value ? value : "";
+
+	if (text != self->FieldText(FieldLicense))
+		self->Apply(FieldLicense, text);
+}
+
+void Fl_BoundaryDrawer::LicensePicked(Fl_Widget *, void *data)
+{
+	Fl_BoundaryDrawer *self = static_cast<Fl_BoundaryDrawer *>(data);
+
+	if (!self->m_LicenseMenu || !self->m_LicenseMenu->text())
+		return;
+
+	const std::string text = self->m_LicenseMenu->text();
 
 	if (text != self->FieldText(FieldLicense))
 		self->Apply(FieldLicense, text);

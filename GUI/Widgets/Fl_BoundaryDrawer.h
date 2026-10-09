@@ -11,16 +11,16 @@
 // from, no boundary ports. The shape is kept so the two meet without a
 // translation step when those arrive.
 //
-// Colours come from the host through color(): the widget draws from that
-// and the FLTK defaults, and knows nothing about where the host keeps its
-// palette.
+// Colours come from the host: color() for the panel, selection_color() for
+// the rail, which is drawn like the toolbar's plastic buttons. The widget
+// knows nothing about where the host keeps its palette.
 #ifndef SSM_FL_BOUNDARYDRAWER_H
 #define SSM_FL_BOUNDARYDRAWER_H
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Input.H>
-#include <FL/Fl_Input_Choice.H>
+#include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Check_Button.H>
 #include "PatchProject.h"
 #include <string>
@@ -103,7 +103,11 @@ private:
 	Fl_Group *m_DocumentSection;
 	Fl_Group *m_CreditSection;
 	std::vector<Fl_Input *> m_Fields;
-	Fl_Input_Choice *m_License;
+	/* Not an Fl_Input_Choice: FLTK 1.3's draws its own FL_UP_BOX and
+	   FL_DOWN_BOX whatever it is told, so it cannot be dressed like the
+	   rest of the panel. An input and a menu button side by side can. */
+	Fl_Input *m_License;
+	Fl_Menu_Button *m_LicenseMenu;
 	Fl_Check_Button *m_Bundle;
 	Fl_Box *m_Dates;
 	Fl_Box *m_CreditHeader;
@@ -114,6 +118,7 @@ private:
 
 	static void FieldEdited(Fl_Widget *, void *);
 	static void LicenseEdited(Fl_Widget *, void *);
+	static void LicensePicked(Fl_Widget *, void *);
 	static void BundleToggled(Fl_Widget *, void *);
 	static void CreditEdited(Fl_Widget *, void *);
 	static void AddClicked(Fl_Widget *, void *);
