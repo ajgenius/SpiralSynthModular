@@ -171,6 +171,29 @@ int main()
 	assert(canvas->x() + canvas->w() == scroll->x() + PageW);
 	assert(canvas->y() + canvas->h() == scroll->y() + PageH);
 
+	// Opening a patch places its devices at their saved window coordinates,
+	// so the view has to be in a known place first. ResetView puts the middle
+	// of the canvas at the view's top left, from wherever the view was: the
+	// second open of a file lands its devices where the first did, instead
+	// of further out by however far the view had been scrolled since.
+	while (canvas->children())
+		canvas->remove(canvas->child(0));
+
+	canvas->ResetView();
+	assert(canvas->x() == scroll->x() - canvas->w() / 2);
+	assert(canvas->y() == scroll->y() - canvas->h() / 2);
+	Place(canvas, 400, 300);
+	const int FirstOffsetX = canvas->child(0)->x() - canvas->x();
+	const int FirstOffsetY = canvas->child(0)->y() - canvas->y();
+
+	// The view scrolled far to the right and down, as a user leaves it.
+	scroll->scroll_to(scroll->xposition() + 4000, scroll->yposition() + 3000);
+	canvas->remove(canvas->child(0));
+	canvas->ResetView();
+	Place(canvas, 400, 300);
+	assert(canvas->child(0)->x() - canvas->x() == FirstOffsetX);
+	assert(canvas->child(0)->y() - canvas->y() == FirstOffsetY);
+
 	std::puts("A patch is centered on its middle, and the view stays on the canvas");
 	return 0;
 }

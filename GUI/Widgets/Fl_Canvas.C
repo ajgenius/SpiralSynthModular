@@ -897,6 +897,27 @@ void Fl_Canvas::Clear()
 	redraw();
 }
 
+// A patch is laid out at the window coordinates its devices were saved at,
+// so where they land on the canvas depends on where the view is when they
+// are placed. Before a patch, the view goes back to where a fresh window
+// starts, the middle of the canvas at its top left: the same patch then
+// lands at the same offsets every time, and a view left far to one side by
+// the last patch cannot push the next one over the canvas's edge, where
+// the scroll cannot reach it and nothing is drawn.
+void Fl_Canvas::ResetView()
+{
+	Fl_Scroll *scroll = dynamic_cast<Fl_Scroll*>(parent());
+
+	if (!scroll) return;
+
+	const int DesiredX = scroll->x() - w() / 2;
+	const int DesiredY = scroll->y() - h() / 2;
+
+	// The displacement, as CenterPatch asks for it.
+	scroll->scroll_to(scroll->xposition() + x() - DesiredX,
+	                  scroll->yposition() + y() - DesiredY);
+}
+
 // A patch carries the window coordinates its devices were saved at, which say
 // nothing about where the view is now. Centering moves the view, never the
 // devices: the canvas is one big widget inside a scroll, so this is a scroll.

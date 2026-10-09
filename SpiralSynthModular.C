@@ -270,6 +270,9 @@ void SynthModular::ClearUp(bool synchronize)
 	}
 
 	m_Canvas->Clear();
+	// The next patch is placed at its saved window coordinates: from the
+	// same view every time, not from wherever the last one left it.
+	m_Canvas->ResetView();
 	m_DeviceWinMap.clear();
 	m_NextID=0;
 
