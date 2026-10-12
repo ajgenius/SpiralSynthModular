@@ -16,22 +16,26 @@ struct Signal
 	std::vector<float> Samples;
 	unsigned Rate, Channels;
 	uint64_t Frames;
-	volatile LONG Calls, Failed;
+	volatile LONG Calls, Failed, ClockCalls;
 	Signal(WASAPIClient *client, unsigned rate, unsigned channels) : Client(client),
 		Samples(client->GetBufferSize() * channels), Rate(rate), Channels(channels),
-		Frames(0), Calls(0), Failed(0) {}
+		Frames(0), Calls(0), Failed(0), ClockCalls(0) {}
 
 	static void Process(void *context, unsigned frames)
 	{
 		Signal &s = *static_cast<Signal *>(context);
 		AudioCycleTiming timing;
 		if (frames * s.Channels > s.Samples.size() || !s.Client->GetCycleTiming(timing)
-			|| !timing.Valid || !timing.Estimated || timing.Frame != s.Frames
-			|| timing.Frames != frames || timing.OutputTime < timing.CallbackTime)
+			|| !timing.Valid || timing.Frame != s.Frames
+			|| timing.Frames != frames || timing.OutputTime < timing.CallbackTime - 0.05
+			|| timing.OutputTime > timing.CallbackTime + s.Client->GetBufferSize() / double(s.Rate)
+				+ s.Client->GetOutputLatency() + 0.05)
 		{
 			InterlockedExchange(&s.Failed, 1);
 			return;
 		}
+
+		if (!timing.Estimated) InterlockedIncrement(&s.ClockCalls);
 
 		for (unsigned f = 0; f < frames; ++f)
 		{
@@ -51,6 +55,8 @@ struct Signal
 		InterlockedIncrement(&s.Calls);
 	}
 };
+
+static void FailedCallback(void *, unsigned) { throw 1; }
 
 int main(int argc, char **argv)
 {
@@ -105,9 +111,24 @@ int main(int argc, char **argv)
 		if (signal.Calls != calls || signal.Failed || !calls || signal.Frames < options.Samplerate / 2
 			|| client.IsAttached() || client.Start()) return 1;
 
-		std::printf("PASS output: %lu Hz, %u channels, %ld callbacks\n",
-			static_cast<unsigned long>(options.Samplerate), options.OutChannels, calls);
+		std::printf("PASS output: %lu Hz, %u channels, %ld callbacks, %ld device-clock stamps\n",
+			static_cast<unsigned long>(options.Samplerate), options.OutChannels, calls, signal.ClockCalls);
 		client.SetCallback(0, 0);
+		client.Detach();
+	}
+
+	if (!unavailable)
+	{
+		if (!client.Attach("default", options)) return 1;
+
+		client.SetCallback(FailedCallback, 0);
+		if (client.Start() || client.IsAttached() || client.LastError() != E_FAIL) return 1;
+
+		client.Detach();
+		client.SetCallback(0, 0);
+		if (!client.Attach("default", options) || !client.Start()) return 1;
+
+		Sleep(50);
 		client.Detach();
 	}
 

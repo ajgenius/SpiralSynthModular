@@ -29,3 +29,8 @@ without starting callbacks; Detach joins the worker before releasing resources.
 Missing services, missing devices and device failures are reported as failure.
 `wasapi-client-test --output` requires real output; `--unavailable` checks the
 expected no-service/no-endpoint path on minimal Windows installations.
+
+Presentation timestamps use the WASAPI device clock when it supplies valid
+monotonic timestamps. Otherwise, timing remains explicitly estimated on a
+nominal frame grid, avoiding callback jitter; discontinuities re-anchor it.
+`wasapi-stream-test` exercises the production timed queues with live output.

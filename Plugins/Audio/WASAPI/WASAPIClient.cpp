@@ -8,6 +8,7 @@
 #include <audioclient.h>
 #include <process.h>
 #include <cstring>
+#include <cmath>
 #include <vector>
 #include "WASAPIClient.h"
 
@@ -22,7 +23,9 @@ struct WASAPIClient::Platform
 	AudioClientOptions Options;
 	std::wstring Device;
 	UINT32 Capacity, ProcessFrames;
-	double Latency;
+	double Latency, ClockOffset, EstimatedOrigin;
+	bool EstimateReady;
+	UINT64 ClockRate;
 	uint64_t Frame;
 	float *Output;
 	AudioCycleTiming Timing;
@@ -34,11 +37,13 @@ struct WASAPIClient::Platform
 	IMMDevice *Endpoint;
 	IAudioClient *Client;
 	IAudioRenderClient *Render;
+	IAudioClock *Clock;
 
 	Platform() : Thread(0), Ready(0), Begin(0), Stop(0), Event(0), ThreadId(0),
 		Attached(0), Error(S_OK), Started(false), Capacity(0), ProcessFrames(0),
-		Latency(0), Frame(0), Output(0), Run(0), Context(0),
-		Enumerator(0), Endpoint(0), Client(0), Render(0) {}
+		Latency(0), ClockOffset(0), EstimatedOrigin(0), EstimateReady(false), ClockRate(0),
+		Frame(0), Output(0), Run(0), Context(0),
+		Enumerator(0), Endpoint(0), Client(0), Render(0), Clock(0) {}
 
 	bool Check(HRESULT result)
 	{
@@ -86,10 +91,20 @@ struct WASAPIClient::Platform
 		if (!Check(Client->GetStreamLatency(&latency))) return false;
 
 		Latency = latency / 1e7;
-		return Check(Client->GetService(__uuidof(IAudioRenderClient), reinterpret_cast<void **>(&Render)));
+		if (!Check(Client->GetService(__uuidof(IAudioRenderClient), reinterpret_cast<void **>(&Render))))
+			return false;
+
+		// Some compatibility runtimes cannot provide device positions. Retain
+		// explicitly estimated timing in that case, including the priming cycle.
+		if (SUCCEEDED(Client->GetService(__uuidof(IAudioClock), reinterpret_cast<void **>(&Clock))))
+		{
+			if (FAILED(Clock->GetFrequency(&ClockRate))) ClockRate = 0;
+		}
+
+		return true;
 	}
 
-	bool Process()
+	bool Process(bool running)
 	{
 		UINT32 padding = 0;
 		if (!Check(Client->GetCurrentPadding(&padding))) return false;
@@ -108,12 +123,43 @@ struct WASAPIClient::Platform
 		Timing.Frame = Frame;
 		Timing.Frames = frames;
 		Timing.SampleRate = Options.Samplerate;
-		Timing.Step = 1.0 / Options.Samplerate;
 		Timing.CallbackTime = AudioMonotonicTime();
 		// Queue depth plus the reported stream latency is an estimate, not a
 		// hardware presentation timestamp. Keep that distinction in the contract.
-		Timing.OutputTime = Timing.CallbackTime + padding / double(Options.Samplerate) + Latency;
+		const double submittedTime = Frame / double(Options.Samplerate);
+		const double observed = Timing.CallbackTime + padding / double(Options.Samplerate) + Latency;
+		// A fallback must not turn scheduler jitter into sample-rate changes.
+		// Follow the nominal frame grid, re-anchoring on a real timing gap.
+		if (!EstimateReady || std::fabs(EstimatedOrigin + submittedTime - observed) > 0.05)
+		{
+			EstimatedOrigin = observed - submittedTime;
+			EstimateReady = true;
+		}
+
+		Timing.OutputTime = EstimatedOrigin + submittedTime;
 		Timing.Estimated = Timing.Valid = true;
+		UINT64 position = 0, qpc = 0;
+		if (running && Clock && ClockRate && Clock->GetPosition(&position, &qpc) == S_OK
+			&& qpc / 1e7 >= Timing.CallbackTime - 0.25
+			&& qpc / 1e7 <= Timing.CallbackTime + 0.01)
+		{
+			const double played = double(position) / ClockRate;
+			// After an underrun the device clock advances through inserted silence.
+			// Re-anchor at an empty queue; AudioStream observes the time gap.
+			if (!padding && submittedTime + ClockOffset < played)
+				ClockOffset = played - submittedTime;
+
+			const double presentation = qpc / 1e7 + submittedTime + ClockOffset - played;
+			// Reject wrapped or mismatched clock domains rather than publishing
+			// a plausible-looking but unusable timestamp to the timed queues.
+			if (presentation >= Timing.CallbackTime - 0.02
+				&& presentation <= Timing.CallbackTime + Capacity / double(Options.Samplerate) + Latency + 0.05)
+			{
+				Timing.OutputTime = presentation;
+				Timing.Estimated = false;
+				EstimatedOrigin = presentation - submittedTime;
+			}
+		}
 
 		bool ok = true;
 		try
@@ -148,7 +194,10 @@ struct WASAPIClient::Platform
 			if (WaitForMultipleObjects(2, commands, FALSE, INFINITE) == WAIT_OBJECT_0 + 1)
 			{
 				// Prime after the host requests Start, never during Attach.
-				running = p.Process() && p.Check(p.Client->Start());
+				running = p.Process(false) && p.Check(p.Client->Start());
+				// Priming precedes Start and cannot measure its startup delay.
+				// Calibrate the fallback grid on the first running cycle instead.
+				p.EstimateReady = false;
 				if (!running) InterlockedExchange(&p.Attached, 0);
 
 				SetEvent(p.Ready);
@@ -164,13 +213,15 @@ struct WASAPIClient::Platform
 						break;
 					}
 
-					if (!p.Process()) break;
+					if (!p.Process(true)) break;
 				}
 			}
 		}
 
 		InterlockedExchange(&p.Attached, 0);
 		if (running) p.Client->Stop();
+
+		if (p.Clock) p.Clock->Release();
 
 		if (p.Render) p.Render->Release();
 
@@ -180,6 +231,7 @@ struct WASAPIClient::Platform
 
 		if (p.Enumerator) p.Enumerator->Release();
 
+		p.Clock = 0;
 		p.Render = 0;
 		p.Client = 0;
 		p.Endpoint = 0;
@@ -260,7 +312,9 @@ void WASAPIClient::Detach()
 	p.ThreadId = 0;
 	p.Started = false;
 	p.Capacity = p.ProcessFrames = 0;
-	p.Latency = 0;
+	p.Latency = p.ClockOffset = p.EstimatedOrigin = 0;
+	p.EstimateReady = false;
+	p.ClockRate = 0;
 	p.Frame = 0;
 	p.Output = 0;
 	p.Timing = AudioCycleTiming();
