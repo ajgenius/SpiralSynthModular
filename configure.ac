@@ -568,7 +568,7 @@ case "$host_os" in
 esac
 AC_SUBST([plugin_module_ext])
 AC_DEFINE_UNQUOTED([PLUGIN_MODULE_EXT], ["$plugin_module_ext"], [Loadable plugin module extension])
-AC_SEARCH_LIBS([clock_gettime], [rt])
+AS_CASE([$host_os], [darwin*|mingw*], [], [AC_SEARCH_LIBS([clock_gettime], [rt])])
 AC_SEARCH_LIBS([pthread_create], [pthread], [],
     [AC_MSG_ERROR([POSIX threads are required])])
 
@@ -586,15 +586,17 @@ esac
 AC_SUBST([MIDI_LIBS])
 AM_CONDITIONAL([MACOS_BUNDLE], [test "x$MIDI_LIBS" != x])
 
-dnl The legacy ALSA timer is supplied by its module, Mach remains in core.
+dnl The legacy ALSA timer is supplied by its module; native clocks remain in core.
 atomic_clock="none"
 case "$host_os" in
     darwin*) atomic_clock="mach" ;;
+    mingw*) atomic_clock="windows" ;;
     *) if test "x$have_output_alsa" = "xyes"; then atomic_clock="alsa"; fi ;;
 esac
 AM_CONDITIONAL([ATOMIC_CLOCK_MACH], [test "$atomic_clock" = mach])
-AM_CONDITIONAL([HAVE_ATOMIC_CLOCK], [test "$atomic_clock" = mach])
-if test "$atomic_clock" = mach; then
+AM_CONDITIONAL([ATOMIC_CLOCK_WINDOWS], [test "$atomic_clock" = windows])
+AM_CONDITIONAL([HAVE_ATOMIC_CLOCK], [test "$atomic_clock" = mach || test "$atomic_clock" = windows])
+if test "$atomic_clock" = mach || test "$atomic_clock" = windows; then
     AC_DEFINE([HAVE_ATOMIC_CLOCK], [1], [The core provides a platform AtomicClock])
 fi
 AC_MSG_NOTICE([AtomicClock: $atomic_clock])

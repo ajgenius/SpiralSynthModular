@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "AudioTiming.h"
 #include <cmath>
-#ifdef __APPLE__
+#if defined(_WIN32)
+#include <windows.h>
+#elif defined(__APPLE__)
 #include <mach/mach_time.h>
 #include <pthread.h>
 #else
@@ -28,7 +30,15 @@ namespace
 
 double AudioMonotonicTime()
 {
-#ifdef __APPLE__
+#if defined(_WIN32)
+	// QPC is independent of wall-clock adjustments. Both queries are guaranteed
+	// to succeed on Windows XP and later; no mutable initialization is needed.
+	LARGE_INTEGER counter;
+	LARGE_INTEGER frequency;
+	QueryPerformanceCounter(&counter);
+	QueryPerformanceFrequency(&frequency);
+	return double(counter.QuadPart) / double(frequency.QuadPart);
+#elif defined(__APPLE__)
 	pthread_once(&TimebaseOnce, InitializeTimebase);
 	return mach_absolute_time() * TimebaseSeconds;
 #else
