@@ -105,6 +105,8 @@ public:
 	void RestorePortConnections(Fl_DeviceGUI* Device);
 	void RemoveDevice(Fl_DeviceGUI* Device);
 	void Clear();
+	// Scroll the view back to where a fresh window starts.
+	void ResetView();
 	// Scroll the view so the patch sits in the middle of it.
 	void CenterPatch();
         void AddPluginName(const string &s, int ID);
