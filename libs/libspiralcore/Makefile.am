@@ -141,7 +141,10 @@ libspiralcore_la_SOURCES += Audio/include/AtomicClock.h
 if ATOMIC_CLOCK_MACH
 libspiralcore_la_SOURCES += Audio/src/MachAtomicClock.cpp
 endif
-if ATOMIC_CLOCK_MACH
+if ATOMIC_CLOCK_WINDOWS
+libspiralcore_la_SOURCES += Audio/src/WinAtomicClock.cpp
+endif
+if HAVE_ATOMIC_CLOCK
 check_PROGRAMS += atomic-clock-test
 atomic_clock_test_SOURCES = Audio/tests/atomic-clock.cpp
 atomic_clock_test_LDADD = libspiralcore.la
