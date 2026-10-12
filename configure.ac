@@ -568,7 +568,7 @@ case "$host_os" in
 esac
 AC_SUBST([plugin_module_ext])
 AC_DEFINE_UNQUOTED([PLUGIN_MODULE_EXT], ["$plugin_module_ext"], [Loadable plugin module extension])
-AC_SEARCH_LIBS([clock_gettime], [rt])
+AS_CASE([$host_os], [darwin*|mingw*], [], [AC_SEARCH_LIBS([clock_gettime], [rt])])
 AC_SEARCH_LIBS([pthread_create], [pthread], [],
     [AC_MSG_ERROR([POSIX threads are required])])
 
