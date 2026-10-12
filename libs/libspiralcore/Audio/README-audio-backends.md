@@ -16,3 +16,21 @@ stable representative idea from private master and corrects partial transfers,
 ALSA recovery, stale buffers and error-state handling. The source message's
 reference to .ssm version 5 describes the private branch; this backport
 intentionally retains the public branch's existing patch format.
+
+WASAPI provides native Windows shared-mode mono/stereo float output as
+`audio/WASAPI/WASAPI_Audio.dll`, registered as `wasapi`. It is selected by
+configure on Windows when the SDK is available; `--disable-wasapi` omits it.
+The destination is `default` or a Windows endpoint ID encoded as UTF-8.
+Windows converts the requested sample rate to the endpoint mix format.
+Capture and exclusive mode are not implemented; input requests are rejected.
+
+A dedicated worker owns all COM objects and audio callbacks. Attach prepares
+without starting callbacks; Detach joins the worker before releasing resources.
+Missing services, missing devices and device failures are reported as failure.
+`wasapi-client-test --output` requires real output; `--unavailable` checks the
+expected no-service/no-endpoint path on minimal Windows installations.
+
+Presentation timestamps use the WASAPI device clock when it supplies valid
+monotonic timestamps. Otherwise, timing remains explicitly estimated on a
+nominal frame grid, avoiding callback jitter; discontinuities re-anchor it.
+`wasapi-stream-test` exercises the production timed queues with live output.

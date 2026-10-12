@@ -116,6 +116,46 @@ if test "x$have_output_oss" = "xyes"; then
 fi
 AM_CONDITIONAL([HAVE_OUTPUT_OSS], [test "x$have_output_oss" = "xyes"])
 
+dnl Native Windows shared-mode output, using only the Windows SDK.
+AC_ARG_ENABLE([wasapi],
+    [AS_HELP_STRING([--disable-wasapi], [Do not build the native Windows WASAPI output module])],
+    [enable_wasapi="$enableval"], [enable_wasapi=auto])
+have_wasapi=no
+WASAPI_LIBS=""
+if test "$enable_wasapi" != no; then
+    wasapi_saved_LIBS="$LIBS"
+    LIBS="$LIBS -lole32 -luuid"
+    AC_LANG_PUSH([C++])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+        #ifndef _WIN32
+        #error WASAPI requires Windows
+        #endif
+        #include <windows.h>
+        #include <mmdeviceapi.h>
+        #include <mmreg.h>
+        #include <audioclient.h>
+    ]], [[
+        IAudioClient *client = 0;
+        IMMDeviceEnumerator *devices = 0;
+        const DWORD flags = AUDCLNT_STREAMFLAGS_EVENTCALLBACK
+            | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY;
+        (void)client; (void)flags;
+        CoCreateInstance(__uuidof(MMDeviceEnumerator), 0, CLSCTX_ALL,
+            __uuidof(IMMDeviceEnumerator), reinterpret_cast<void **>(&devices));
+        if (devices) devices->Release();
+    ]])], [have_wasapi=yes], [])
+    AC_LANG_POP([C++])
+    LIBS="$wasapi_saved_LIBS"
+fi
+if test "$have_wasapi" = yes; then
+    WASAPI_LIBS="-lole32 -luuid"
+elif test "$enable_wasapi" = yes; then
+    AC_MSG_ERROR([WASAPI requested but the Windows SDK headers and libraries are unavailable])
+fi
+AC_SUBST([WASAPI_LIBS])
+AM_CONDITIONAL([HAVE_WASAPI], [test "$have_wasapi" = yes])
+AC_MSG_NOTICE([Native WASAPI output: $have_wasapi])
+
 dnl Native CoreAudio is optional; other platforms keep their existing clients.
 AC_ARG_ENABLE([coreaudio],
     [AS_HELP_STRING([--disable-coreaudio], [Do not build the native CoreAudio client])],
@@ -267,7 +307,9 @@ AC_MSG_NOTICE([OSS MIDI module: $have_output_oss])
 
 
 default_output_audio_client="none"
-if test "x$have_output_portaudio" = "xyes"; then
+if test "$have_wasapi" = yes; then
+    default_output_audio_client="wasapi"
+elif test "x$have_output_portaudio" = "xyes"; then
     default_output_audio_client="portaudio"
 elif test "x$have_coreaudio" = "xyes"; then
     default_output_audio_client="coreaudio"
@@ -283,7 +325,7 @@ fi
 AC_DEFINE_UNQUOTED([DEFAULT_OUTPUT_AUDIO_CLIENT], ["$default_output_audio_client"],
     [Default OutputPlugin audio client])
 if test "x$default_output_audio_client" = "xnone"; then
-    AC_MSG_WARN([No OutputPlugin audio backend found (PortAudio, CoreAudio, ALSA, OSS, PipeWire, or ESD)])
+    AC_MSG_WARN([No OutputPlugin audio backend found (WASAPI, PortAudio, CoreAudio, ALSA, OSS, PipeWire, or ESD)])
 fi
 
 
@@ -640,6 +682,7 @@ Plugins/Makefile
 Plugins/Audio/Makefile
 Plugins/Audio/PortAudio/Makefile
 Plugins/Audio/CoreAudio/Makefile
+Plugins/Audio/WASAPI/Makefile
 Plugins/Audio/ALSA/Makefile
 Plugins/Audio/OSS/Makefile
 Plugins/Audio/PipeWire/Makefile
