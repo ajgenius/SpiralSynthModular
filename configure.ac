@@ -334,7 +334,7 @@ dnl Every plugin directory, whether or not this host can build it. SUBDIRS
 dnl drives the build and has to follow the optional components, but a source
 dnl distribution must carry them all: a tarball rolled where LADSPA is absent
 dnl would otherwise omit a directory that configure still expects to find.
-ALL_PLUGINLIST="JackPlugin LADSPAPlugin $PLUGINLIST"
+ALL_PLUGINLIST="JackPlugin $PLUGINLIST"
 
 dnl Check whether jack is present or has been disabled
 jack_message=""
@@ -380,7 +380,7 @@ ladspa_message=""
 LADSPA_CFLAGS=""
 AC_ARG_ENABLE(
     ladspa,
-    [  --disable-ladspa        Do not build LADSPAPlugin],
+    [  --disable-ladspa        Do not build the LADSPA device],
     [build_ladspa="n" ; ladspa_message="manually disabled"],
     [build_ladspa="y"]
 )
@@ -391,7 +391,7 @@ if test "$build_ladspa" = "y"; then
        ladspa_message="bundled ladspa.h (no system header)"])
 fi
 if test "$build_ladspa" = "y" ; then
-   PLUGINLIST="LADSPAPlugin $PLUGINLIST"
+   AC_DEFINE([HAVE_LADSPA], [1], [Build the LADSPA device into the host])
 fi
 AC_SUBST(LADSPA_CFLAGS)
 
@@ -417,7 +417,7 @@ AC_ARG_ENABLE(
 )
 if test "$bundle_ladspa" = "yes" -a "$build_ladspa" = "n"; then
    bundle_ladspa="no"
-   bundled_ladspa_message="LADSPAPlugin not built"
+   bundled_ladspa_message="LADSPA device not built"
 fi
 if test "$bundle_ladspa" = "yes"; then
    AC_PATH_PROG([PERL], [perl], [no])
@@ -472,7 +472,7 @@ AC_ARG_ENABLE(
 )
 if test "$build_ladspa" = "n" ; then
    use_liblrdf="n"
-   lrdf_message="LADSPAPlugin not used"
+   lrdf_message="LADSPA device not built"
 fi
 if test "$use_liblrdf" = "y"; then
    AC_CHECK_HEADER(lrdf.h, [use_liblrdf="y"], [use_liblrdf="n" ; lrdf_message="No lrdf.h found"])
@@ -605,7 +605,11 @@ dnl AC_CHECK_LIB(png, png_get_copyright)
 
 AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
+dnl The LADSPA device is built in, but its editor is still a module.
 GUI_PLUGINLIST=""
+if test "$build_ladspa" = "y"; then
+    GUI_PLUGINLIST="LADSPAPlugin"
+fi
 for plugin in $PLUGINLIST; do
     case "$plugin" in
         SampleHoldPlugin) ;;
@@ -613,7 +617,7 @@ for plugin in $PLUGINLIST; do
     esac
 done
 dnl The same exclusion over every plugin, for the distribution list.
-ALL_GUI_PLUGINLIST=""
+ALL_GUI_PLUGINLIST="LADSPAPlugin"
 for plugin in $ALL_PLUGINLIST; do
     case "$plugin" in
         SampleHoldPlugin) ;;
@@ -715,7 +719,6 @@ Plugins/Devices/FlipflopPlugin/Makefile
 Plugins/Devices/FormantFilterPlugin/Makefile
 Plugins/Devices/JackPlugin/Makefile
 Plugins/Devices/KeyboardPlugin/Makefile
-Plugins/Devices/LADSPAPlugin/Makefile
 Plugins/Devices/LFOPlugin/Makefile
 Plugins/Devices/LogicPlugin/Makefile
 Plugins/Devices/MasherPlugin/Makefile
@@ -763,7 +766,7 @@ if test "$build_jack" = "y"; then
 else
    printf 'Disabled - %s\n' "$jack_message"
 fi
-printf '%35s - ' "LADSPA support (via LADSPAPlugin)"
+printf '%35s - ' "LADSPA support (built-in device)"
 if test "$build_ladspa" = "y"; then
    printf 'Enabled - %s\n' "$ladspa_message"
 else
@@ -779,7 +782,7 @@ if test "$bundle_ladspa" = "yes"; then
 else
    printf 'Disabled - %s\n' "${bundled_ladspa_message:-manually disabled}"
 fi
-printf '%35s - ' "liblrdf support for LADSPAPlugin"
+printf '%35s - ' "liblrdf support for the LADSPA device"
 if test "$use_liblrdf" = "y"; then
    printf 'Enabled\n'
 else

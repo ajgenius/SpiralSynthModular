@@ -45,6 +45,9 @@ struct PortValue
 class LADSPAPlugin : public SpiralPlugin
 {
 public:
+	// Built into the host: registered with the device registry, no module.
+	static const spiralcore::DeviceClass &Class();
+
 	LADSPAPlugin();
 	virtual ~LADSPAPlugin();
 

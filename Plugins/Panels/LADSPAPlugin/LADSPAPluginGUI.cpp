@@ -1483,7 +1483,7 @@ void LADSPAPluginGUI::cb_SliderValue(Fl_Input *o)
 	((LADSPAPluginGUI*)(o->parent()->parent()))->cb_SliderValue_i(o);
 }
 
-#include "SpiralIcon.xpm"
+#include "LADSPAIcon.xpm"
 
 #include <config.h>
 
