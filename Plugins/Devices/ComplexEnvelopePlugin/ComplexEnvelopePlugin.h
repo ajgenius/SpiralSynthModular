@@ -42,6 +42,8 @@ protected:
 	void Reserve();
 	void BuildEnvelope();
 
+	unsigned long m_Changes;
+
 	Spiral::Core::SignedProperty m_Count;
 	Spiral::Core::FloatProperty m_Length;
 	Spiral::Core::SignedProperty m_Mode;

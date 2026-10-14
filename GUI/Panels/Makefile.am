@@ -25,6 +25,10 @@ libSpiralPanels_la_SOURCES = \
 	Controls/PanelCheckBox.h \
 	Controls/PanelChoice.cpp \
 	Controls/PanelChoice.h \
+	Scopes/EnvelopeCurveView.cpp \
+	Scopes/EnvelopeCurveView.h \
+	Scopes/PanelEnvelopeCurve.cpp \
+	Scopes/PanelEnvelopeCurve.h \
 	Scopes/PanelFunctionPlot.cpp \
 	Scopes/PanelFunctionPlot.h \
 	Controls/PanelFileChoosingButton.cpp \

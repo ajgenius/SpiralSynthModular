@@ -40,6 +40,7 @@ extern "C"
 ///////////////////////////////////////////////////////
 
 ComplexEnvelopePlugin::ComplexEnvelopePlugin():
+	m_Changes(0),
 	m_EnvelopeLength(0),
 	m_ReservedRate(0),
 	m_Stale(true),
@@ -181,6 +182,11 @@ void ComplexEnvelopePlugin::Reset()
 
 void ComplexEnvelopePlugin::Execute()
 {
+	if (m_AudioCH->Changes() != m_Changes)
+	{
+		m_Changes = m_AudioCH->Changes();
+		m_Stale = true;
+	}
 	if (m_Stale)
 	{
 		Reserve();
