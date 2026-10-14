@@ -303,6 +303,17 @@ AC_ARG_WITH(plugindir,
   plugindir="$withval",
   plugindir='${libdir}/SpiralPlugins/${PACKAGE_VERSION}')
 AC_SUBST(PLUGINDIR, $plugindir)
+ssm_save_prefix=$prefix
+ssm_save_exec_prefix=$exec_prefix
+test "x$prefix" = xNONE && prefix=$ac_default_prefix
+test "x$exec_prefix" = xNONE && exec_prefix=$prefix
+SSM_PLUGIN_PATH=$plugindir
+while echo "$SSM_PLUGIN_PATH" | grep '\$' >/dev/null; do
+  eval SSM_PLUGIN_PATH=\"$SSM_PLUGIN_PATH\"
+done
+prefix=$ssm_save_prefix
+exec_prefix=$ssm_save_exec_prefix
+AC_SUBST(SSM_PLUGIN_PATH)
 
 dnl Check whether to enable debugging
 AC_ARG_ENABLE(debug,  [  --enable-debug          enable debugging ],

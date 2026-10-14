@@ -38,7 +38,6 @@ SpiralSynthModular_SOURCES = MacBundle.h \
 		UnavailablePlugin.C \
 		main.cpp
 
-AM_CPPFLAGS += -DPLUGIN_PATH_LOCATION=\"$(ssm_plugindir)/\"
 AM_CPPFLAGS += -DSSM_EXAMPLES_DIR=\"$(pkgdatadir)/Examples\"
 # The host registers the built-in LADSPA device, whose header names ladspa.h.
 AM_CPPFLAGS += $(LADSPA_CFLAGS)

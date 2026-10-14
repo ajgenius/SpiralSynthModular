@@ -18,5 +18,5 @@
 */ 
 
 #ifndef PLUGIN_PATH_LOCATION
-#define PLUGIN_PATH_LOCATION "/usr/local/lib/SpiralPlugins/@PACKAGE_VERSION@/"
+#define PLUGIN_PATH_LOCATION "@SSM_PLUGIN_PATH@/"
 #endif

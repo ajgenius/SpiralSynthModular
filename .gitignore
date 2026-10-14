@@ -48,3 +48,6 @@ spiralsynthmodular
 /*-test.log
 /*-test.trs
 /test-suite.log
+.build/
+/libs/libspiralcore/plugin-manager-root/
+/third-party/swh-plugins/*_[0-9]*.c
