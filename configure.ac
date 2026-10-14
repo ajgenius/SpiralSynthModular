@@ -330,7 +330,7 @@ fi
 dnl build plugin list - plugins that do not require an optional component
 dnl (i.e. Jack, and LADSPA)
 
-PLUGINLIST="AmpPlugin AnotherFilterPlugin BeatMatchPlugin ControllerPlugin \
+PLUGINLIST="AmpPlugin AnotherFilterPlugin BeatMatchPlugin ComplexEnvelopePlugin ControllerPlugin \
 CounterPlugin DelayPlugin DiskWriterPlugin DistributorPlugin EchoPlugin \
 EnvFollowerPlugin EnvelopePlugin FilterPlugin FlipflopPlugin FormantFilterPlugin \
 KeyboardPlugin LFOPlugin LogicPlugin MasherPlugin MatrixPlugin \
@@ -623,7 +623,7 @@ if test "$build_ladspa" = "y"; then
 fi
 for plugin in $PLUGINLIST; do
     case "$plugin" in
-        SampleHoldPlugin) ;;
+        SampleHoldPlugin|ComplexEnvelopePlugin) ;;
         *) GUI_PLUGINLIST="$GUI_PLUGINLIST $plugin" ;;
     esac
 done
@@ -631,7 +631,7 @@ dnl The same exclusion over every plugin, for the distribution list.
 ALL_GUI_PLUGINLIST="LADSPAPlugin"
 for plugin in $ALL_PLUGINLIST; do
     case "$plugin" in
-        SampleHoldPlugin) ;;
+        SampleHoldPlugin|ComplexEnvelopePlugin) ;;
         *) ALL_GUI_PLUGINLIST="$ALL_GUI_PLUGINLIST $plugin" ;;
     esac
 done
@@ -717,6 +717,7 @@ Plugins/Panels/XFadePlugin/Makefile
 Plugins/Devices/AmpPlugin/Makefile
 Plugins/Devices/AnotherFilterPlugin/Makefile
 Plugins/Devices/BeatMatchPlugin/Makefile
+Plugins/Devices/ComplexEnvelopePlugin/Makefile
 Plugins/Devices/ControllerPlugin/Makefile
 Plugins/Devices/CounterPlugin/Makefile
 Plugins/Devices/DelayPlugin/Makefile

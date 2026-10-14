@@ -342,6 +342,64 @@
         "Symbol": "SpiralPlugin::SpiralPlugin"
       }
     },
+    "ComplexEnvelope": {
+      "PluginID": 33,
+      "Fields": [
+        {
+          "Name": "Version",
+          "Type": "Integer",
+          "Equals": 2
+        },
+        {
+          "Name": "PointCount",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Length",
+          "Type": "Number"
+        },
+        {
+          "Name": "Mode",
+          "Type": "Integer"
+        },
+        {
+          "Name": "Points",
+          "Type": "Array",
+          "Count": {
+            "Type": "FixedValue",
+            "Value": 16,
+            "PropertyName": null
+          },
+          "Items": {
+            "Type": "Object",
+            "Fields": [
+              {
+                "Name": "X",
+                "Type": "Number"
+              },
+              {
+                "Name": "Y",
+                "Type": "Number"
+              },
+              {
+                "Name": "TangentX",
+                "Type": "Number"
+              },
+              {
+                "Name": "TangentY",
+                "Type": "Number"
+              }
+            ]
+          }
+        }
+      ],
+      "Source": {
+        "Path": "Plugins/Devices/ComplexEnvelopePlugin/ComplexEnvelopePlugin.C",
+        "SHA256": "d4134a0e3bd638370c288302f41c4895df7709b9e5662af56fed608f08c48b41",
+        "Symbol": "ComplexEnvelopePlugin::Describe"
+      },
+      "Notes": "Version 2 replaces the 2002 layout (history, version 1), which is read and converted on load: Bezier maps to mode 2 with automatic tangents (the old curve was an approximating spline, the new one passes through the points)."
+    },
     "Controller": {
       "PluginID": 3,
       "Fields": [

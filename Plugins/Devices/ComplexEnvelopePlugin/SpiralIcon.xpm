@@ -1,5 +1,5 @@
 /* XPM */
-static const char * SpiralIcon_xpm[] = {
+const char * SpiralIcon_xpm[] = {
 "36 36 288 2",
 "  	c None",
 ". 	c #8B889B",
