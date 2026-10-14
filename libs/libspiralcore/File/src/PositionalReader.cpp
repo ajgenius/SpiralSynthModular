@@ -276,7 +276,7 @@ namespace
 			diagnostics.push_back(entry);
 		}
 
-		const Value &Plugin(const Value &definition, const Scope &scope)
+		std::vector<const Value *> Plugin(const Value &definition, const Scope &scope)
 		{
 			const std::string &key = Require(definition, "PropertyName", Value::String).Text();
 			Scope::const_iterator id = scope.find(key);
@@ -287,7 +287,7 @@ namespace
 			if (found == layouts.plugins.end())
 				throw std::runtime_error("Unknown plugin layout");
 
-			const Value *match = NULL;
+			std::vector<const Value *> matches;
 			std::string token = Peek();
 			long version = 0;
 			bool numeric = Integer(token, version);
@@ -304,18 +304,58 @@ namespace
 				}
 
 				if (selected)
-				{
-					if (match)
-						throw std::runtime_error("Ambiguous plugin layout");
-
-					match = &fields;
-				}
+					matches.push_back(&fields);
 			}
 
-			if (!match)
+			if (matches.empty())
 				throw std::runtime_error("Unknown plugin state version");
 
-			return *match;
+			return matches;
+		}
+
+		void State(const std::vector<const Value *> &candidates, Scope &object, unsigned depth)
+		{
+			if (candidates.size() == 1)
+			{
+				Fields(*candidates[0], object, depth);
+				return;
+			}
+
+			size_t start = at, logged = tokens.size(), counted = nodes, warned = diagnostics.size();
+			const Value *fallback = NULL;
+			for (size_t i = 0; i < candidates.size(); ++i)
+			{
+				Scope trial;
+				try
+				{
+					Fields(*candidates[i], trial, depth);
+				}
+				catch (const std::runtime_error &)
+				{
+					Rewind(start, logged);
+					nodes = counted;
+					diagnostics.resize(warned);
+					continue;
+				}
+
+				std::string next = Peek();
+				if (next.empty() || next == "Device" || next == "-1")
+				{
+					object = trial;
+					return;
+				}
+
+				if (!fallback)
+					fallback = candidates[i];
+				Rewind(start, logged);
+				nodes = counted;
+				diagnostics.resize(warned);
+			}
+
+			if (!fallback)
+				throw std::runtime_error("No plugin layout decodes this state");
+
+			Fields(*fallback, object, depth);
 		}
 
 		void Fields(const Value &fields, Scope &object, unsigned depth)
@@ -349,7 +389,10 @@ namespace
 				Scope object;
 				if (type == "PluginState")
 					state.begin = tokens.size();
-				Fields(type == "Object" ? *definition.Get("Fields") : Plugin(definition, scope), object, depth);
+				if (type == "Object")
+					Fields(*definition.Get("Fields"), object, depth);
+				else
+					State(Plugin(definition, scope), object, depth);
 				if (type == "PluginState")
 					state.end = tokens.size();
 				return false;

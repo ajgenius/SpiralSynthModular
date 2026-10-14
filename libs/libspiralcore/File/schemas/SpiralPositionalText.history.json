@@ -261,6 +261,228 @@
         "05fc7959b67dfc85fc0a04b7a904b35d3dbe919f"
       ],
       "Subject": "Translate Plugin, Misc Fixes"
+    },
+    "76873523ce795435e17cdee51599dc610cc46b74": {
+      "Author": {
+        "Name": "Dave Griffiths",
+        "Email": "5367+nebogeo@users.noreply.github.com"
+      },
+      "AuthorDate": "2002-07-28T23:18:14+00:00",
+      "Committer": {
+        "Name": "Dave Griffiths",
+        "Email": "5367+nebogeo@users.noreply.github.com"
+      },
+      "CommitDate": "2002-07-28T23:18:14+00:00",
+      "Parents": [],
+      "Subject": "Initial revision"
+    },
+    "889203dcd7d8e9819381b589df8beaaf2183da3f": {
+      "Author": {
+        "Name": "Dave Griffiths",
+        "Email": "5367+nebogeo@users.noreply.github.com"
+      },
+      "AuthorDate": "2003-01-19T01:25:51+00:00",
+      "Committer": {
+        "Name": "Dave Griffiths",
+        "Email": "5367+nebogeo@users.noreply.github.com"
+      },
+      "CommitDate": "2003-01-19T01:25:51+00:00",
+      "Parents": [
+        "5e35ee37399e0ec9688e27e20ad65287df03218e"
+      ],
+      "Subject": "Plugin groups, and loads of new plugins"
+    },
+    "c586de47fdf2646dd3dd462e418128488d2a9a25": {
+      "Author": {
+        "Name": "Dave Griffiths",
+        "Email": "5367+nebogeo@users.noreply.github.com"
+      },
+      "AuthorDate": "2002-09-18T20:03:17+00:00",
+      "Committer": {
+        "Name": "Dave Griffiths",
+        "Email": "5367+nebogeo@users.noreply.github.com"
+      },
+      "CommitDate": "2002-09-18T20:03:17+00:00",
+      "Parents": [
+        "5cc07ceef9ce55a5b5b5ba2b626d89ac7d6a8e3f"
+      ],
+      "Subject": "merged branches"
+    },
+    "52ff3a663999fdcc164215f85f01b68453c70292": {
+      "Author": {
+        "Name": "Dave Griffiths",
+        "Email": "5367+nebogeo@users.noreply.github.com"
+      },
+      "AuthorDate": "2002-11-14T01:12:08+00:00",
+      "Committer": {
+        "Name": "Dave Griffiths",
+        "Email": "5367+nebogeo@users.noreply.github.com"
+      },
+      "CommitDate": "2002-11-14T01:12:08+00:00",
+      "Parents": [
+        "2b6491d41e908f087cc37018aaeb0ca56b16b936"
+      ],
+      "Subject": "More fixes, including Controller stream fixes Matrix and PoshSampler GUI fixes"
+    },
+    "4a2cfc680aa0dcf7591be427bad31b1710b60b92": {
+      "Author": {
+        "Name": "Dave Griffiths",
+        "Email": "5367+nebogeo@users.noreply.github.com"
+      },
+      "AuthorDate": "2002-10-30T22:38:35+00:00",
+      "Committer": {
+        "Name": "Dave Griffiths",
+        "Email": "5367+nebogeo@users.noreply.github.com"
+      },
+      "CommitDate": "2002-10-30T22:38:35+00:00",
+      "Parents": [
+        "2f63f2d1f5116a0b77577bfe8fd371e8320fa3c4"
+      ],
+      "Subject": "* New volume controls for individual matrix notes (rmb over note) * ChannelHandler bulk transfer bug fix * PoshSampler fixes \tSample display fixes \tZoom back in (on buttons) * Delay mix bugfix * Pwm on oscillator fix * autogen.sh added * Added initial files for the (incomplete) sequencer"
+    },
+    "f0082913090261f16771cc18af02cf2418619e4d": {
+      "Author": {
+        "Name": "Dave Griffiths",
+        "Email": "5367+nebogeo@users.noreply.github.com"
+      },
+      "AuthorDate": "2003-02-04T19:57:15+00:00",
+      "Committer": {
+        "Name": "Dave Griffiths",
+        "Email": "5367+nebogeo@users.noreply.github.com"
+      },
+      "CommitDate": "2003-02-04T19:57:15+00:00",
+      "Parents": [
+        "3c205dad24c8a1ae01069fd2a34d407bba56b91c"
+      ],
+      "Subject": "SpiralLoopPlugin, TrigPlugin, Fixes, Midiclock"
+    },
+    "fc06d00f24279d01b356b0dd12df52bf38d133b9": {
+      "Author": {
+        "Name": "Dave Griffiths",
+        "Email": "5367+nebogeo@users.noreply.github.com"
+      },
+      "AuthorDate": "2003-01-02T01:49:26+00:00",
+      "Committer": {
+        "Name": "Dave Griffiths",
+        "Email": "5367+nebogeo@users.noreply.github.com"
+      },
+      "CommitDate": "2003-01-02T01:49:26+00:00",
+      "Parents": [
+        "178682c6bed6a289d8a6ca3fe60a8a00dd74f20f"
+      ],
+      "Subject": "works now (kinda)"
+    },
+    "f838c6ce53bb2b8349d11848c56d89dc5eed2aa0": {
+      "Author": {
+        "Name": "waxfrenzy",
+        "Email": "waxfrenzy"
+      },
+      "AuthorDate": "2002-11-10T02:09:08+00:00",
+      "Committer": {
+        "Name": "waxfrenzy",
+        "Email": "waxfrenzy"
+      },
+      "CommitDate": "2002-11-10T02:09:08+00:00",
+      "Parents": [
+        "7c48615fdf89cd2b57f108264494fa3ae70c0ea3"
+      ],
+      "Subject": "Now uses Unique ID when saving/loading patches. Retains backward compatibility with filename - label patches"
+    },
+    "e416a808aba220e6ba81e0746f9e156f0357668a": {
+      "Author": {
+        "Name": "waxfrenzy",
+        "Email": "waxfrenzy"
+      },
+      "AuthorDate": "2002-11-10T18:24:06+00:00",
+      "Committer": {
+        "Name": "waxfrenzy",
+        "Email": "waxfrenzy"
+      },
+      "CommitDate": "2002-11-10T18:24:06+00:00",
+      "Parents": [
+        "e057c624253d7c38b760fd9b6323109ecbfb860c"
+      ],
+      "Subject": "Drop down list for selecting plugin. Text box added for default (non-connected) values"
+    },
+    "592a8dc58f36ed7455c7b295595fc979e7fb53d7": {
+      "Author": {
+        "Name": "waxfrenzy",
+        "Email": "waxfrenzy"
+      },
+      "AuthorDate": "2002-11-11T18:08:07+00:00",
+      "Committer": {
+        "Name": "waxfrenzy",
+        "Email": "waxfrenzy"
+      },
+      "CommitDate": "2002-11-11T18:08:07+00:00",
+      "Parents": [
+        "8948aa734a57a545c9caf23d4f03006c1ce74403"
+      ],
+      "Subject": "Fixed segfault on load. Defaults now working properly. Selecting (None) plugin works as expected"
+    },
+    "53cfbe9805de63802d9f7e80e34a9358bb8d9076": {
+      "Author": {
+        "Name": "waxfrenzy",
+        "Email": "waxfrenzy"
+      },
+      "AuthorDate": "2002-11-12T13:15:42+00:00",
+      "Committer": {
+        "Name": "waxfrenzy",
+        "Email": "waxfrenzy"
+      },
+      "CommitDate": "2002-11-12T13:15:42+00:00",
+      "Parents": [
+        "72a69ccd1b22950d4f494da3c6fa22823744ffc2"
+      ],
+      "Subject": "Setup tabs controls, and plugin now passes connection state to GUI"
+    },
+    "96a50c8fed450dd6a0c3bff0b0cb37d36cb26b0b": {
+      "Author": {
+        "Name": "waxfrenzy",
+        "Email": "waxfrenzy"
+      },
+      "AuthorDate": "2002-11-17T11:13:56+00:00",
+      "Committer": {
+        "Name": "waxfrenzy",
+        "Email": "waxfrenzy"
+      },
+      "CommitDate": "2002-11-17T11:13:56+00:00",
+      "Parents": [
+        "52ff3a663999fdcc164215f85f01b68453c70292"
+      ],
+      "Subject": "Control knobs added + cleanup"
+    },
+    "551be75edc380366083b0629e5db53ca914dae26": {
+      "Author": {
+        "Name": "Andy Preston",
+        "Email": "58644922+andy-preston@users.noreply.github.com"
+      },
+      "AuthorDate": "2003-07-05T08:54:58+00:00",
+      "Committer": {
+        "Name": "Andy Preston",
+        "Email": "58644922+andy-preston@users.noreply.github.com"
+      },
+      "CommitDate": "2003-07-05T08:54:58+00:00",
+      "Parents": [
+        "7a12d2c7c5bd7298a456dd2520312ab85fd6e16d"
+      ],
+      "Subject": "New StreamerButton, MousePlugin (First Stage), Bits and Bobs"
+    },
+    "5c765de03373c406306b4b230f09e8940783d850": {
+      "Author": {
+        "Name": "Andy Preston",
+        "Email": "58644922+andy-preston@users.noreply.github.com"
+      },
+      "AuthorDate": "2004-03-14T08:20:05+00:00",
+      "Committer": {
+        "Name": "Andy Preston",
+        "Email": "58644922+andy-preston@users.noreply.github.com"
+      },
+      "CommitDate": "2004-03-14T08:20:05+00:00",
+      "Parents": [
+        "5ebe1f90ae575328165e291a0762b0156e31e02b"
+      ],
+      "Subject": "MousePlugin Updates"
     }
   },
   "Plugins": {
@@ -470,6 +692,322 @@
               "After": "ByteString"
             }
           ]
+        },
+        "76873523ce795435e17cdee51599dc610cc46b74@v1": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 1
+            },
+            {
+              "Name": "Values",
+              "Type": "Array",
+              "Count": {
+                "Type": "FixedValue",
+                "Value": 4,
+                "PropertyName": null
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "76873523ce795435e17cdee51599dc610cc46b74",
+            "Path": "SpiralSound/Plugins/ControllerPlugin/ControllerPlugin.C",
+            "Blob": "61d7b8788bd0913c1b3db0164dbaf7e1c069c684",
+            "SHA256": "8cfe28cc211ace61f85b28dd558818ebe269e646ec43fae9e356608d94464f7d",
+            "Symbol": "ControllerPlugin::StreamOut"
+          },
+          "Notes": "Version 1 (pre-2002 releases, read by StreamIn case 1): four fixed channel values."
+        },
+        "76873523ce795435e17cdee51599dc610cc46b74@v2": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 2
+            },
+            {
+              "Name": "ChannelCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Values",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "ChannelCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "NameCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Channels",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "NameCount"
+              },
+              "Items": {
+                "Type": "Object",
+                "Fields": [
+                  {
+                    "Name": "Name",
+                    "Type": "Token"
+                  },
+                  {
+                    "Name": "Minimum",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Maximum",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Value",
+                    "Type": "Number"
+                  }
+                ]
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "76873523ce795435e17cdee51599dc610cc46b74",
+            "Path": "SpiralSound/Plugins/ControllerPlugin/ControllerPlugin.C",
+            "Blob": "61d7b8788bd0913c1b3db0164dbaf7e1c069c684",
+            "SHA256": "8cfe28cc211ace61f85b28dd558818ebe269e646ec43fae9e356608d94464f7d",
+            "Symbol": "ControllerPlugin::StreamOut"
+          },
+          "Notes": "Version 2 (read by StreamIn case 2): channel names as bare tokens, so names with whitespace cannot be decoded."
+        },
+        "76873523ce795435e17cdee51599dc610cc46b74@v3": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 3
+            },
+            {
+              "Name": "ChannelCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Values",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "ChannelCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "GuiVersion",
+              "Type": "Integer",
+              "Equals": 1
+            },
+            {
+              "Name": "NameCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Channels",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "NameCount"
+              },
+              "Items": {
+                "Type": "Object",
+                "Fields": [
+                  {
+                    "Name": "Name",
+                    "Type": "ByteString"
+                  },
+                  {
+                    "Name": "Minimum",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Maximum",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Value",
+                    "Type": "Number"
+                  }
+                ]
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "76873523ce795435e17cdee51599dc610cc46b74",
+            "Path": "SpiralSound/Plugins/ControllerPlugin/ControllerPlugin.C",
+            "Blob": "61d7b8788bd0913c1b3db0164dbaf7e1c069c684",
+            "SHA256": "8cfe28cc211ace61f85b28dd558818ebe269e646ec43fae9e356608d94464f7d",
+            "Symbol": "ControllerPlugin::StreamOut"
+          },
+          "Notes": "First version 3: the editor's own stream (its version 1) follows the values. Same tokens as 52ff3a66."
+        },
+        "c586de47fdf2646dd3dd462e418128488d2a9a25@v3": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 3
+            },
+            {
+              "Name": "ChannelCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Values",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "ChannelCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "NameCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Channels",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "NameCount"
+              },
+              "Items": {
+                "Type": "Object",
+                "Fields": [
+                  {
+                    "Name": "Name",
+                    "Type": "ByteString"
+                  },
+                  {
+                    "Name": "Minimum",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Maximum",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Value",
+                    "Type": "Number"
+                  }
+                ]
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "c586de47fdf2646dd3dd462e418128488d2a9a25",
+            "Path": "SpiralSound/Plugins/ControllerPlugin/ControllerPlugin.C",
+            "Blob": "2ae41adebdbe60bd3804c904a45053ef492b84b3",
+            "SHA256": "c3a8b15e38a4f42a777ef6e8a21af2b55ce31795ce8830b76813830cd721c650",
+            "Symbol": "ControllerPlugin::StreamOut"
+          },
+          "Notes": "Version 3 as first written with names; the value block is repeated inside each channel."
+        },
+        "52ff3a663999fdcc164215f85f01b68453c70292@v3": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 3
+            },
+            {
+              "Name": "ChannelCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Values",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "ChannelCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "Marker",
+              "Type": "Integer"
+            },
+            {
+              "Name": "NameCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Channels",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "NameCount"
+              },
+              "Items": {
+                "Type": "Object",
+                "Fields": [
+                  {
+                    "Name": "Name",
+                    "Type": "ByteString"
+                  },
+                  {
+                    "Name": "Minimum",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Maximum",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Value",
+                    "Type": "Number"
+                  }
+                ]
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "52ff3a663999fdcc164215f85f01b68453c70292",
+            "Path": "SpiralSound/Plugins/ControllerPlugin/ControllerPlugin.C",
+            "Blob": "c19d98f14363b10e21403789e827c4ac372033e5",
+            "SHA256": "396eb20dbffd8b726f91e0a88654f45c88fa7f4daa2ec280fcaee524beffa19b",
+            "Symbol": "ControllerPlugin::StreamOut"
+          },
+          "Notes": "Same version 3, with an extra marker integer before the channel names: shares its version with the layout above and is told apart by trial decoding."
         }
       }
     },
@@ -808,6 +1346,25 @@
             "SHA256": "064d25bbaf66b0db84961560006a229e367d21d6d1f978ffd607f2abd57364e9",
             "Symbol": "FlipflopPlugin::StreamOut"
           }
+        },
+        "889203dcd7d8e9819381b589df8beaaf2183da3f@v1": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 1
+            }
+          ],
+          "Source": {
+            "Commit": "889203dcd7d8e9819381b589df8beaaf2183da3f",
+            "Path": "SpiralSound/Plugins/FlipflopPlugin/FlipflopPlugin.C",
+            "Blob": "86109ea4b4e5724062092457eebfb05d0a62bd9a",
+            "SHA256": "2b5e51591fae4daa4e176b46f5f678fa58a3122e6f52486dc0538e0961f5c7ac",
+            "Symbol": "FlipflopPlugin::StreamOut"
+          },
+          "Notes": "Before version 2 the state is only the version token."
         }
       }
     },
@@ -1131,6 +1688,626 @@
               "After": "Setup=2"
             }
           ]
+        },
+        "c586de47fdf2646dd3dd462e418128488d2a9a25@v1": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 1
+            },
+            {
+              "Name": "Gain",
+              "Type": "Number"
+            },
+            {
+              "Name": "Filename",
+              "Type": "Token"
+            },
+            {
+              "Name": "Label",
+              "Type": "Token"
+            }
+          ],
+          "Source": {
+            "Commit": "c586de47fdf2646dd3dd462e418128488d2a9a25",
+            "Path": "SpiralSound/Plugins/LADSPAPlugin/LADSPAPlugin.C",
+            "Blob": "07a46140ca8cce96962ab9761c19385db6b3375b",
+            "SHA256": "4381847b9661c9e599b908387825b81477599e611b71b1a8960281c3bda85a79",
+            "Symbol": "LADSPAPlugin::StreamOut"
+          },
+          "Notes": "Version 1 (read by StreamIn case 1)."
+        },
+        "c586de47fdf2646dd3dd462e418128488d2a9a25@v2": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 2
+            },
+            {
+              "Name": "Gain",
+              "Type": "Number"
+            },
+            {
+              "Name": "Filename",
+              "Type": "Token"
+            },
+            {
+              "Name": "Label",
+              "Type": "Token"
+            },
+            {
+              "Name": "PortCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Minimum",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "Maximum",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "c586de47fdf2646dd3dd462e418128488d2a9a25",
+            "Path": "SpiralSound/Plugins/LADSPAPlugin/LADSPAPlugin.C",
+            "Blob": "07a46140ca8cce96962ab9761c19385db6b3375b",
+            "SHA256": "4381847b9661c9e599b908387825b81477599e611b71b1a8960281c3bda85a79",
+            "Symbol": "LADSPAPlugin::StreamOut"
+          }
+        },
+        "c586de47fdf2646dd3dd462e418128488d2a9a25@v3": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 3
+            },
+            {
+              "Name": "Gain",
+              "Type": "Number"
+            },
+            {
+              "Name": "Filename",
+              "Type": "Token"
+            },
+            {
+              "Name": "Label",
+              "Type": "Token"
+            },
+            {
+              "Name": "PortCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Minimum",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "Maximum",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "Clamp",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Boolean"
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "c586de47fdf2646dd3dd462e418128488d2a9a25",
+            "Path": "SpiralSound/Plugins/LADSPAPlugin/LADSPAPlugin.C",
+            "Blob": "07a46140ca8cce96962ab9761c19385db6b3375b",
+            "SHA256": "4381847b9661c9e599b908387825b81477599e611b71b1a8960281c3bda85a79",
+            "Symbol": "LADSPAPlugin::StreamOut"
+          }
+        },
+        "f838c6ce53bb2b8349d11848c56d89dc5eed2aa0@v4": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 4
+            },
+            {
+              "Name": "Gain",
+              "Type": "Number"
+            },
+            {
+              "Name": "UniqueID",
+              "Type": "Integer"
+            },
+            {
+              "Name": "PortCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Minimum",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "Maximum",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "Clamp",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Boolean"
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "f838c6ce53bb2b8349d11848c56d89dc5eed2aa0",
+            "Path": "SpiralSound/Plugins/LADSPAPlugin/LADSPAPlugin.C",
+            "Blob": "cbc9e6d49bb3b4a68cb93c295e0b75dbbccc9f75",
+            "SHA256": "60a947047c9c68e324ebefd770a915df311d0317bcbea339af85170c6f66bcbf",
+            "Symbol": "LADSPAPlugin::StreamOut"
+          },
+          "Notes": "First version 4: no defaults."
+        },
+        "e416a808aba220e6ba81e0746f9e156f0357668a@v4": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 4
+            },
+            {
+              "Name": "Gain",
+              "Type": "Number"
+            },
+            {
+              "Name": "UniqueID",
+              "Type": "Integer"
+            },
+            {
+              "Name": "PortCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Minimum",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "Maximum",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "Clamp",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Boolean"
+              }
+            },
+            {
+              "Name": "Default",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "e416a808aba220e6ba81e0746f9e156f0357668a",
+            "Path": "SpiralSound/Plugins/LADSPAPlugin/LADSPAPlugin.C",
+            "Blob": "7f7da861df4541b26a108dc0fd08fa58817af39f",
+            "SHA256": "ee48fbee9628daad4df0002fbcfd705a9062794d5abce67d24ab806f231947a9",
+            "Symbol": "LADSPAPlugin::StreamOut"
+          },
+          "Notes": "Second version 4 adds defaults under the same number; told apart by trial decoding."
+        },
+        "592a8dc58f36ed7455c7b295595fc979e7fb53d7@v5": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 5
+            },
+            {
+              "Name": "Gain",
+              "Type": "Number"
+            },
+            {
+              "Name": "UniqueID",
+              "Type": "Integer"
+            },
+            {
+              "Name": "PortCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Minimum",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "Maximum",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "Clamp",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Boolean"
+              }
+            },
+            {
+              "Name": "Default",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "592a8dc58f36ed7455c7b295595fc979e7fb53d7",
+            "Path": "SpiralSound/Plugins/LADSPAPlugin/LADSPAPlugin.C",
+            "Blob": "50fb2b48c9aa0af30507ce50be1f3a8952d9d27d",
+            "SHA256": "36ebb101a304f54312971fde540a66c97f706c478792e58e5aea2a01ca0e0cd9",
+            "Symbol": "LADSPAPlugin::StreamOut"
+          }
+        },
+        "53cfbe9805de63802d9f7e80e34a9358bb8d9076@v6": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 6
+            },
+            {
+              "Name": "UniqueID",
+              "Type": "Integer"
+            },
+            {
+              "Name": "PortCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Minimum",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "Maximum",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "Clamp",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Boolean"
+              }
+            },
+            {
+              "Name": "Default",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "53cfbe9805de63802d9f7e80e34a9358bb8d9076",
+            "Path": "SpiralSound/Plugins/LADSPAPlugin/LADSPAPlugin.C",
+            "Blob": "93ef58ae7f9d3638514ee8f8bd6d39a80907fb20",
+            "SHA256": "0d2bb8db0d0ef276386e74a53445ccf27e88426dfef53cd3a14d8633ffb157ee",
+            "Symbol": "LADSPAPlugin::StreamOut"
+          },
+          "Notes": "Gain removed."
+        },
+        "96a50c8fed450dd6a0c3bff0b0cb37d36cb26b0b@v7": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 7
+            },
+            {
+              "Name": "TabIndex",
+              "Type": "Integer"
+            },
+            {
+              "Name": "UniqueID",
+              "Type": "Integer"
+            },
+            {
+              "Name": "PortCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Minimum",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "Maximum",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "Clamp",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Boolean"
+              }
+            },
+            {
+              "Name": "Default",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "96a50c8fed450dd6a0c3bff0b0cb37d36cb26b0b",
+            "Path": "SpiralSound/Plugins/LADSPAPlugin/LADSPAPlugin.C",
+            "Blob": "174c930aeedda9b065ef65a4ecd6a6a2c8ad7ad2",
+            "SHA256": "87ad972dc4f3a917253afe3688a35768ea30abc3b7edc7d140feca54c8f9304d",
+            "Symbol": "LADSPAPlugin::StreamOut"
+          },
+          "Notes": "Version 7 as StreamIn reads it; no StreamOut in history writes it."
+        },
+        "96a50c8fed450dd6a0c3bff0b0cb37d36cb26b0b@v8": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 8
+            },
+            {
+              "Name": "TabIndex",
+              "Type": "Integer"
+            },
+            {
+              "Name": "UpdateInputs",
+              "Type": "Boolean"
+            },
+            {
+              "Name": "UniqueID",
+              "Type": "Integer"
+            },
+            {
+              "Name": "PortCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Minimum",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "Maximum",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            },
+            {
+              "Name": "Clamp",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Boolean"
+              }
+            },
+            {
+              "Name": "Default",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PortCount"
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "96a50c8fed450dd6a0c3bff0b0cb37d36cb26b0b",
+            "Path": "SpiralSound/Plugins/LADSPAPlugin/LADSPAPlugin.C",
+            "Blob": "174c930aeedda9b065ef65a4ecd6a6a2c8ad7ad2",
+            "SHA256": "87ad972dc4f3a917253afe3688a35768ea30abc3b7edc7d140feca54c8f9304d",
+            "Symbol": "LADSPAPlugin::StreamOut"
+          },
+          "Notes": "49fd90f3 writes non-finite port values as 0; same tokens."
         }
       }
     },
@@ -1171,6 +2348,28 @@
             "Path": "SpiralSound/Plugins/LogicPlugin/LogicPlugin.C",
             "Blob": "229fb1badea21cf612eeb373af3f6fa8f5da39e4",
             "SHA256": "baa68c2d348cc338b858d111959324adb2c940304000c09ee803e88ccc4d0bc6",
+            "Symbol": "LogicPlugin::StreamOut"
+          }
+        },
+        "889203dcd7d8e9819381b589df8beaaf2183da3f@v1": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 1
+            },
+            {
+              "Name": "Constant",
+              "Type": "Number"
+            }
+          ],
+          "Source": {
+            "Commit": "889203dcd7d8e9819381b589df8beaaf2183da3f",
+            "Path": "SpiralSound/Plugins/LogicPlugin/LogicPlugin.C",
+            "Blob": "e67d2d9bdb576d7b3abb15c0afeaf4d149a1586a",
+            "SHA256": "257a91346c70ed00d9afcb05466bc9cdab5a621cd2a20d0b7869d2a117901629",
             "Symbol": "LogicPlugin::StreamOut"
           }
         }
@@ -1215,6 +2414,184 @@
             "SHA256": "00fee877f12854c1c213fc59cbdbf62356498101f7c0364fa45e7dbc330aca43",
             "Symbol": "MatrixPlugin::StreamOut"
           }
+        },
+        "76873523ce795435e17cdee51599dc610cc46b74@v2": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 2
+            },
+            {
+              "Name": "Current",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Time",
+              "Type": "Number"
+            },
+            {
+              "Name": "Step",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Loop",
+              "Type": "Boolean"
+            },
+            {
+              "Name": "NoteCut",
+              "Type": "Boolean"
+            },
+            {
+              "Name": "Patterns",
+              "Type": "Array",
+              "Count": {
+                "Type": "FixedValue",
+                "Value": 16,
+                "PropertyName": null
+              },
+              "Items": {
+                "Type": "Object",
+                "Fields": [
+                  {
+                    "Name": "Length",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Speed",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Octave",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Notes",
+                    "Type": "Array",
+                    "Until": {
+                      "Field": "X",
+                      "Equals": -1,
+                      "Consume": true
+                    },
+                    "Items": {
+                      "Type": "Object",
+                      "Fields": [
+                        {
+                          "Name": "X",
+                          "Type": "Integer"
+                        },
+                        {
+                          "Name": "Y",
+                          "Type": "Integer"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "76873523ce795435e17cdee51599dc610cc46b74",
+            "Path": "SpiralSound/Plugins/MatrixPlugin/MatrixPlugin.C",
+            "Blob": "194c40beb8e0bb3008556df194a0843901c93ef6",
+            "SHA256": "06442edfb32bb7e2cede7424839250022de0889b7c765b263e08446fed94f4a2",
+            "Symbol": "MatrixPlugin::StreamOut"
+          },
+          "Notes": "Notes carry no volume."
+        },
+        "4a2cfc680aa0dcf7591be427bad31b1710b60b92@v3": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 3
+            },
+            {
+              "Name": "Current",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Time",
+              "Type": "Number"
+            },
+            {
+              "Name": "Step",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Loop",
+              "Type": "Boolean"
+            },
+            {
+              "Name": "NoteCut",
+              "Type": "Boolean"
+            },
+            {
+              "Name": "Patterns",
+              "Type": "Array",
+              "Count": {
+                "Type": "FixedValue",
+                "Value": 16,
+                "PropertyName": null
+              },
+              "Items": {
+                "Type": "Object",
+                "Fields": [
+                  {
+                    "Name": "Length",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Speed",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Octave",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Notes",
+                    "Type": "Array",
+                    "Until": {
+                      "Field": "X",
+                      "Equals": -1,
+                      "Consume": true
+                    },
+                    "Items": {
+                      "Type": "Object",
+                      "Fields": [
+                        {
+                          "Name": "X",
+                          "Type": "Integer"
+                        },
+                        {
+                          "Name": "Y",
+                          "Type": "Integer"
+                        },
+                        {
+                          "Name": "Volume",
+                          "Type": "Number"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "4a2cfc680aa0dcf7591be427bad31b1710b60b92",
+            "Path": "SpiralSound/Plugins/MatrixPlugin/MatrixPlugin.C",
+            "Blob": "d58ba5fee3f081e6a807d3df2c6ea0d4974ed474",
+            "SHA256": "b171cbddbebbc88a49b596f70e71d9399990cec1ccd5000ae3c5457dee52950e",
+            "Symbol": "MatrixPlugin::StreamOut"
+          },
+          "Notes": "Per-note volume, no pattern sequence."
         }
       }
     },
@@ -1307,6 +2684,37 @@
             "SHA256": "1d66d58532f0262879f1bf23dacdae8eb9a42458f0ce7fbbe04189aec260f76d",
             "Symbol": "MixerPlugin::StreamOut"
           }
+        },
+        "76873523ce795435e17cdee51599dc610cc46b74@v1": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 1
+            },
+            {
+              "Name": "Volumes",
+              "Type": "Array",
+              "Count": {
+                "Type": "FixedValue",
+                "Value": 4,
+                "PropertyName": null
+              },
+              "Items": {
+                "Type": "Number"
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "76873523ce795435e17cdee51599dc610cc46b74",
+            "Path": "SpiralSound/Plugins/MixerPlugin/MixerPlugin.C",
+            "Blob": "79c4da87731fc903c8e019ec7cc21212096a29c6",
+            "SHA256": "0ea59757585eb2d5fed302d54854f692b7c07b15997cadad611b10092f5d5e3a",
+            "Symbol": "MixerPlugin::StreamOut"
+          },
+          "Notes": "NUM_CHANNELS was fixed at 4; no channel count was written."
         }
       }
     },
@@ -1349,6 +2757,30 @@
             "SHA256": "04a60ce7f51774903138d04b30096fc8b8b378a60314fe1a37b478b582aac118",
             "Symbol": "NoisePlugin::StreamOut"
           }
+        },
+        "SpiralTesting:468470746f00b96707e7e160753af4bfea9a28d5@v1": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 1
+            },
+            {
+              "Name": "Waveform",
+              "Type": "Integer"
+            }
+          ],
+          "Source": {
+            "Repository": "SpiralTesting",
+            "Commit": "468470746f00b96707e7e160753af4bfea9a28d5",
+            "Path": "Plugins/DSP/NoisePlugin/NoisePlugin.C",
+            "Blob": "749a7101a4d5abcc8b223e3f9a8aa79a631e191d",
+            "SHA256": "045d9814e887035e28547d5cc4d2671df7b33486194f23806cd66e48bc230371",
+            "Symbol": "NoisePlugin::StreamOut"
+          },
+          "Notes": "The private property rewrite (46847074 to b7284932) wrote the waveform as a decimal integer instead of a byte, until bbcc226e restored the cast. Both decode; a single digit is read as the byte form first, so the plugin's Apply must accept '0'-'2' as well as 0-2."
         }
       }
     },
@@ -1389,6 +2821,28 @@
             "Path": "SpiralSound/Plugins/OperatorPlugin/OperatorPlugin.C",
             "Blob": "0e3c7fbe2c51a029618f22eaadfa2ff0e3d182af",
             "SHA256": "2dca58c65f6878f8a25ed279b00b842e2cedb89be46ea4a59b702e0bdc4d95d8",
+            "Symbol": "OperatorPlugin::StreamOut"
+          }
+        },
+        "889203dcd7d8e9819381b589df8beaaf2183da3f@v1": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 1
+            },
+            {
+              "Name": "Constant",
+              "Type": "Number"
+            }
+          ],
+          "Source": {
+            "Commit": "889203dcd7d8e9819381b589df8beaaf2183da3f",
+            "Path": "SpiralSound/Plugins/OperatorPlugin/OperatorPlugin.C",
+            "Blob": "5b38f7b1031225d42fa64a41f8a57d6692176567",
+            "SHA256": "f66820bb64301211cd714950cf5f029d451b5b5e1369cf8928c878d4399089d8",
             "Symbol": "OperatorPlugin::StreamOut"
           }
         }
@@ -1775,6 +3229,345 @@
             "SHA256": "da54975a3f844c818f0827a3d618a6064eac3a4bbfc4340e8b78e9d8c183945f",
             "Symbol": "SpiralLoopPlugin::StreamOut"
           }
+        },
+        "76873523ce795435e17cdee51599dc610cc46b74@v1": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 1
+            },
+            {
+              "Name": "Id",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Position",
+              "Type": "Number"
+            },
+            {
+              "Name": "IntPosition",
+              "Type": "Integer"
+            },
+            {
+              "Name": "PlayBufferPosition",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Playing",
+              "Type": "Boolean"
+            },
+            {
+              "Name": "Master",
+              "Type": "Boolean"
+            },
+            {
+              "Name": "LoopPoint",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Speed",
+              "Type": "Number"
+            },
+            {
+              "Name": "Volume",
+              "Type": "Number"
+            },
+            {
+              "Name": "Balance",
+              "Type": "Number"
+            },
+            {
+              "Name": "LeftVolume",
+              "Type": "Number"
+            },
+            {
+              "Name": "RightVolume",
+              "Type": "Number"
+            },
+            {
+              "Name": "Cutoff",
+              "Type": "Number"
+            },
+            {
+              "Name": "Resonance",
+              "Type": "Number"
+            },
+            {
+              "Name": "CutoffMod",
+              "Type": "Number"
+            },
+            {
+              "Name": "ResonanceMod",
+              "Type": "Number"
+            },
+            {
+              "Name": "EffectsOn",
+              "Type": "Boolean"
+            },
+            {
+              "Name": "Sample",
+              "Type": "ByteString"
+            },
+            {
+              "Name": "GroupX",
+              "Type": "Integer"
+            },
+            {
+              "Name": "GroupY",
+              "Type": "Integer"
+            },
+            {
+              "Name": "GroupW",
+              "Type": "Integer"
+            },
+            {
+              "Name": "GroupH",
+              "Type": "Integer"
+            },
+            {
+              "Name": "TriggerCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Triggers",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "TriggerCount"
+              },
+              "Items": {
+                "Type": "Object",
+                "Fields": [
+                  {
+                    "Name": "CentreX",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "CentreY",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "CentreRadius",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Dragging",
+                    "Type": "Boolean"
+                  },
+                  {
+                    "Name": "ID",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Passes",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Count",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Angle",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "MaxLoops",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "MaxPasses",
+                    "Type": "Integer"
+                  }
+                ]
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "76873523ce795435e17cdee51599dc610cc46b74",
+            "Path": "SpiralSound/Plugins/SpiralLoopPlugin/SpiralLoopPlugin.C",
+            "Blob": "ebc6b0c309f54ce9ff477a76a47073b76c5cf1dc",
+            "SHA256": "105e971474ae6b926fb5c448e3ad79c2a5246f923876f5696954fdfa2c8f9acc",
+            "Symbol": "SpiralLoopPlugin::StreamOut"
+          },
+          "Notes": "Version 1: the loop with its sample path, then the editor's loop group and triggers. The sample was saved beside the patch on write."
+        },
+        "76873523ce795435e17cdee51599dc610cc46b74@v2": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 2
+            },
+            {
+              "Name": "Id",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Position",
+              "Type": "Number"
+            },
+            {
+              "Name": "IntPosition",
+              "Type": "Integer"
+            },
+            {
+              "Name": "PlayBufferPosition",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Playing",
+              "Type": "Boolean"
+            },
+            {
+              "Name": "Master",
+              "Type": "Boolean"
+            },
+            {
+              "Name": "LoopPoint",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Speed",
+              "Type": "Number"
+            },
+            {
+              "Name": "Volume",
+              "Type": "Number"
+            },
+            {
+              "Name": "Balance",
+              "Type": "Number"
+            },
+            {
+              "Name": "LeftVolume",
+              "Type": "Number"
+            },
+            {
+              "Name": "RightVolume",
+              "Type": "Number"
+            },
+            {
+              "Name": "Cutoff",
+              "Type": "Number"
+            },
+            {
+              "Name": "Resonance",
+              "Type": "Number"
+            },
+            {
+              "Name": "CutoffMod",
+              "Type": "Number"
+            },
+            {
+              "Name": "ResonanceMod",
+              "Type": "Number"
+            },
+            {
+              "Name": "EffectsOn",
+              "Type": "Boolean"
+            },
+            {
+              "Name": "GroupX",
+              "Type": "Integer"
+            },
+            {
+              "Name": "GroupY",
+              "Type": "Integer"
+            },
+            {
+              "Name": "GroupW",
+              "Type": "Integer"
+            },
+            {
+              "Name": "GroupH",
+              "Type": "Integer"
+            },
+            {
+              "Name": "TriggerCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Triggers",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "TriggerCount"
+              },
+              "Items": {
+                "Type": "Object",
+                "Fields": [
+                  {
+                    "Name": "CentreX",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "CentreY",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "CentreRadius",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Dragging",
+                    "Type": "Boolean"
+                  },
+                  {
+                    "Name": "ID",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Passes",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Count",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Angle",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "MaxLoops",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "MaxPasses",
+                    "Type": "Integer"
+                  }
+                ]
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "76873523ce795435e17cdee51599dc610cc46b74",
+            "Path": "SpiralSound/Plugins/SpiralLoopPlugin/SpiralLoopPlugin.C",
+            "Blob": "ebc6b0c309f54ce9ff477a76a47073b76c5cf1dc",
+            "SHA256": "105e971474ae6b926fb5c448e3ad79c2a5246f923876f5696954fdfa2c8f9acc",
+            "Symbol": "SpiralLoopPlugin::StreamOut"
+          },
+          "Notes": "First version 2: as version 1 without the sample path. Shares version 2 with the later layout; told apart by trial decoding."
+        },
+        "f0082913090261f16771cc18af02cf2418619e4d@vempty": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [],
+          "Source": {
+            "Commit": "f0082913090261f16771cc18af02cf2418619e4d",
+            "Path": "SpiralSound/Plugins/SpiralLoopPlugin/SpiralLoopPlugin.C",
+            "Blob": "8a9834c5ea9f1ec372ac8a19972b3de805f5db44",
+            "SHA256": "62494303c58b564bef1e6fd8b6786fd998b4dd0c7d7cecee64c7c784a5b1e35c",
+            "Symbol": "SpiralLoopPlugin::StreamOut"
+          },
+          "Notes": "StreamOut wrote nothing in this window; the state is empty."
         }
       }
     },
@@ -2060,6 +3853,19 @@
             "Symbol": "JoystickPlugin::StreamOut"
           },
           "Notes": "Source-only observation outside the 0.2.2 archive profile. Both StreamOut and StreamIn are empty; this definition does not require a working joystick plugin."
+        },
+        "76873523ce795435e17cdee51599dc610cc46b74@vempty": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [],
+          "Source": {
+            "Commit": "76873523ce795435e17cdee51599dc610cc46b74",
+            "Path": "SpiralSound/Plugins/JoystickPlugin/JoystickPlugin.C",
+            "Blob": "06988702a8616272d896aba4ec6d979a21798829",
+            "SHA256": "624e4a32d9504cfaf403ee529d15dd0c0ab83221e25f40b746730883cde690a3",
+            "Symbol": "JoystickPlugin::StreamOut"
+          },
+          "Notes": "Joystick never had a StreamOut: the state is empty."
         }
       }
     },
@@ -2120,6 +3926,48 @@
               "Type": "Byte"
             }
           ]
+        },
+        "551be75edc380366083b0629e5db53ca914dae26@v1": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 1
+            }
+          ],
+          "Source": {
+            "Commit": "551be75edc380366083b0629e5db53ca914dae26",
+            "Path": "SpiralSound/Plugins/MousePlugin/MousePlugin.C",
+            "Blob": "35e7611737852759198b51778b9ce938d8db7038",
+            "SHA256": "0f1a8ca620ee234e212dd0fabfcb5da55d59f211bad48b624fa02384b745374c",
+            "Symbol": "MousePlugin::StreamOut"
+          },
+          "Notes": "Version 1: the version alone."
+        },
+        "5c765de03373c406306b4b230f09e8940783d850@v2": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 2
+            },
+            {
+              "Name": "Port",
+              "Type": "Integer"
+            }
+          ],
+          "Source": {
+            "Commit": "5c765de03373c406306b4b230f09e8940783d850",
+            "Path": "SpiralSound/Plugins/MousePlugin/MousePlugin.C",
+            "Blob": "e61f1b476355761a79aad02735dcf9e48c080d51",
+            "SHA256": "ae5a796daccfb0b86a4c8980b23bb91ea4b912a144b1353c40b161dd962608dc",
+            "Symbol": "MousePlugin::StreamOut"
+          },
+          "Notes": "Version 2 adds the input port."
         }
       }
     },
@@ -2153,6 +4001,531 @@
             "Commit": "a470e1403c2f09d304a0600d6b6aaa1b6b910bf0",
             "Path": "SpiralSound/Plugins/SpiralPlugin.C",
             "Symbol": "SpiralPlugin::SpiralPlugin"
+          }
+        }
+      }
+    },
+    "ComplexEnvelope": {
+      "PluginID": 33,
+      "Revisions": {
+        "76873523ce795435e17cdee51599dc610cc46b74@v1": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 1
+            },
+            {
+              "Name": "Position",
+              "Type": "Integer"
+            },
+            {
+              "Name": "SampleTime",
+              "Type": "Number"
+            },
+            {
+              "Name": "Bezier",
+              "Type": "Boolean"
+            },
+            {
+              "Name": "PointCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Points",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PointCount"
+              },
+              "Items": {
+                "Type": "Object",
+                "Fields": [
+                  {
+                    "Name": "X",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Y",
+                    "Type": "Number"
+                  }
+                ]
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "76873523ce795435e17cdee51599dc610cc46b74",
+            "Path": "SpiralSound/Plugins/ComplexEnvelopePlugin/ComplexEnvelopePlugin.C",
+            "Blob": "caf25e9857151895d01222c3a3cec7b755ea903d",
+            "SHA256": "8d34e425fc493cdb7f4e9cdffca3d010f3233759646c79b681b652994c5fc9cc",
+            "Symbol": "ComplexEnvelopePlugin::StreamOut"
+          },
+          "Notes": "Unchanged 2002 to the 0.3.x Broken/ tree; m_Version is the SpiralPlugin default of 1."
+        }
+      }
+    },
+    "Sequencer": {
+      "PluginID": 17,
+      "Revisions": {
+        "4a2cfc680aa0dcf7591be427bad31b1710b60b92@v2": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 2
+            },
+            {
+              "Name": "Time",
+              "Type": "Number"
+            },
+            {
+              "Name": "Length",
+              "Type": "Number"
+            },
+            {
+              "Name": "SpeedMod",
+              "Type": "Number"
+            },
+            {
+              "Name": "Loop",
+              "Type": "Boolean"
+            },
+            {
+              "Name": "NoteCut",
+              "Type": "Boolean"
+            },
+            {
+              "Name": "CurrentPattern",
+              "Type": "Integer"
+            }
+          ],
+          "Source": {
+            "Commit": "4a2cfc680aa0dcf7591be427bad31b1710b60b92",
+            "Path": "SpiralSound/Plugins/SequencerPlugin/SequencerPlugin.C",
+            "Blob": "92fedcd4e544873fd3ade51b2164c0530941f2e2",
+            "SHA256": "3c6ac0dbe6191b9bda7e262c31e3095b89da61e9b3f820ff2a00cc05e6655450",
+            "Symbol": "SequencerPlugin::StreamOut"
+          },
+          "Notes": "Pattern streaming was commented out: only the header is written. Shares plugin id 0x11 with Seq."
+        },
+        "fc06d00f24279d01b356b0dd12df52bf38d133b9@v1": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 1
+            },
+            {
+              "Name": "Time",
+              "Type": "Number"
+            },
+            {
+              "Name": "Length",
+              "Type": "Number"
+            },
+            {
+              "Name": "BarLength",
+              "Type": "Number"
+            },
+            {
+              "Name": "BeatsPerBar",
+              "Type": "Integer"
+            },
+            {
+              "Name": "TrackVersion",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Tag",
+              "Type": "Token"
+            },
+            {
+              "Name": "PatternCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Patterns",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "PatternCount"
+              },
+              "Items": {
+                "Type": "Object",
+                "Fields": [
+                  {
+                    "Name": "PatternVersion",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Tag",
+                    "Type": "Token"
+                  },
+                  {
+                    "Name": "NoteCount",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Notes",
+                    "Type": "Array",
+                    "Count": {
+                      "Type": "PropertyValue",
+                      "Value": null,
+                      "PropertyName": "NoteCount"
+                    },
+                    "Items": {
+                      "Type": "Object",
+                      "Fields": [
+                        {
+                          "Name": "NoteVersion",
+                          "Type": "Integer"
+                        },
+                        {
+                          "Name": "Tag",
+                          "Type": "Token"
+                        },
+                        {
+                          "Name": "Time",
+                          "Type": "Number"
+                        },
+                        {
+                          "Name": "Length",
+                          "Type": "Number"
+                        },
+                        {
+                          "Name": "MidiNote",
+                          "Type": "Integer"
+                        },
+                        {
+                          "Name": "Volume",
+                          "Type": "Number"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "Name": "SequenceCount",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Sequences",
+              "Type": "Array",
+              "Count": {
+                "Type": "PropertyValue",
+                "Value": null,
+                "PropertyName": "SequenceCount"
+              },
+              "Items": {
+                "Type": "Object",
+                "Fields": [
+                  {
+                    "Name": "SequenceVersion",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Tag",
+                    "Type": "Token"
+                  },
+                  {
+                    "Name": "StartTime",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Pattern",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Colour",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "YPosition",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Length",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Channel",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Name",
+                    "Type": "ByteString"
+                  }
+                ]
+              }
+            },
+            {
+              "Name": "NextPatternID",
+              "Type": "Integer"
+            }
+          ],
+          "Source": {
+            "Commit": "fc06d00f24279d01b356b0dd12df52bf38d133b9",
+            "Path": "SpiralSound/Plugins/SequencerPlugin/SequencerPlugin.C",
+            "Blob": "3ae4dc4046b8e45976cee395b2109cc835b72f76",
+            "SHA256": "4357e09c311259234ea79f9f1a199c370ef78d4e538ea95502cfe7c37dfb50d9",
+            "Symbol": "SequencerPlugin::StreamOut"
+          },
+          "Notes": "Track, pattern, note and sequence records each carry their own version token and a tag word."
+        }
+      }
+    },
+    "Seq": {
+      "PluginID": 17,
+      "Revisions": {
+        "76873523ce795435e17cdee51599dc610cc46b74@v2": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 2
+            },
+            {
+              "Name": "Time",
+              "Type": "Number"
+            },
+            {
+              "Name": "Length",
+              "Type": "Number"
+            },
+            {
+              "Name": "SpeedMod",
+              "Type": "Number"
+            },
+            {
+              "Name": "Loop",
+              "Type": "Boolean"
+            },
+            {
+              "Name": "NoteCut",
+              "Type": "Boolean"
+            },
+            {
+              "Name": "CurrentPattern",
+              "Type": "Integer"
+            },
+            {
+              "Name": "Patterns",
+              "Type": "Array",
+              "Count": {
+                "Type": "FixedValue",
+                "Value": 16,
+                "PropertyName": null
+              },
+              "Items": {
+                "Type": "Object",
+                "Fields": [
+                  {
+                    "Name": "Tag",
+                    "Type": "Token"
+                  },
+                  {
+                    "Name": "Type",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Zoom",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "GridSizeX",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "GridSizeY",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "PixelsPerSecond",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "StartLoop",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "EndLoop",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Position",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "LastPosition",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "BarLength",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "BeatsPerBar",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "EventCount",
+                    "Type": "Integer"
+                  },
+                  {
+                    "Name": "Events",
+                    "Type": "Array",
+                    "Count": {
+                      "Type": "PropertyValue",
+                      "Value": null,
+                      "PropertyName": "EventCount"
+                    },
+                    "Items": {
+                      "Type": "Object",
+                      "Fields": [
+                        {
+                          "Name": "StartTime",
+                          "Type": "Number"
+                        },
+                        {
+                          "Name": "Group",
+                          "Type": "Integer"
+                        },
+                        {
+                          "Name": "LengthTime",
+                          "Type": "Number"
+                        },
+                        {
+                          "Name": "EventType",
+                          "Type": "Integer"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "76873523ce795435e17cdee51599dc610cc46b74",
+            "Path": "SpiralSound/Plugins/SeqPlugin/SeqPlugin.C",
+            "Blob": "f458652a983bb427676f1a22f248108dd598a6a9",
+            "SHA256": "ffcab7c71498718ba3a6fb4256dab068ff41c078581d18100677d90da2d387b2",
+            "Symbol": "SeqPlugin::StreamOut"
+          },
+          "Notes": "Each pattern is an Fl_EventMap record that starts with the word EventMap."
+        }
+      }
+    },
+    "Sampler": {
+      "PluginID": 16,
+      "Revisions": {
+        "76873523ce795435e17cdee51599dc610cc46b74@v1": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 1
+            },
+            {
+              "Name": "Samples",
+              "Type": "Array",
+              "Count": {
+                "Type": "FixedValue",
+                "Value": 8,
+                "PropertyName": null
+              },
+              "Items": {
+                "Type": "Object",
+                "Fields": [
+                  {
+                    "Name": "Volume",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "PitchMod",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Path",
+                    "Type": "Token"
+                  },
+                  {
+                    "Name": "Note",
+                    "Type": "Integer"
+                  }
+                ]
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "76873523ce795435e17cdee51599dc610cc46b74",
+            "Path": "SpiralSound/Plugins/SamplerPlugin/SamplerPlugin.C",
+            "Blob": "1f47ad019575912421c56dd5ab29bef78fe49276",
+            "SHA256": "f3cd5fadcb2f5c6f1e06ae3105d21ebba288d23dfdc459cce96a4fe89520e069",
+            "Symbol": "SamplerPlugin::StreamOut"
+          },
+          "Notes": "Version 1 paths are bare tokens: a path with whitespace cannot be decoded."
+        },
+        "76873523ce795435e17cdee51599dc610cc46b74@v2": {
+          "Kind": "Legacy",
+          "ParentRevision": null,
+          "Fields": [
+            {
+              "Name": "Version",
+              "Type": "Integer",
+              "Equals": 2
+            },
+            {
+              "Name": "Samples",
+              "Type": "Array",
+              "Count": {
+                "Type": "FixedValue",
+                "Value": 8,
+                "PropertyName": null
+              },
+              "Items": {
+                "Type": "Object",
+                "Fields": [
+                  {
+                    "Name": "Volume",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "PitchMod",
+                    "Type": "Number"
+                  },
+                  {
+                    "Name": "Path",
+                    "Type": "ByteString"
+                  },
+                  {
+                    "Name": "Note",
+                    "Type": "Integer"
+                  }
+                ]
+              }
+            }
+          ],
+          "Source": {
+            "Commit": "76873523ce795435e17cdee51599dc610cc46b74",
+            "Path": "SpiralSound/Plugins/SamplerPlugin/SamplerPlugin.C",
+            "Blob": "1f47ad019575912421c56dd5ab29bef78fe49276",
+            "SHA256": "f3cd5fadcb2f5c6f1e06ae3105d21ebba288d23dfdc459cce96a4fe89520e069",
+            "Symbol": "SamplerPlugin::StreamOut"
           }
         }
       }
