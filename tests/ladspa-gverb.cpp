@@ -156,9 +156,9 @@ int main(int argc, char **argv)
 	LADSPAPlugin plugin;
 	plugin.Initialise(&host);
 
-	spiralcore::Description saved;
+	Spiral::Core::Description saved;
 	saved.Value(9).Value(0).Value(false).Value(GVERB_ID).Value(0).Value(0);
-	spiralcore::Description::Reader state(saved);
+	Spiral::Core::Description::Reader state(saved);
 	plugin.Apply(state);
 	assert(!state.Failed());
 	printf("  device selected id %lu with %lu input ports\n",

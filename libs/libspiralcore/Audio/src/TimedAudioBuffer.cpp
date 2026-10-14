@@ -4,7 +4,9 @@
 #include <cmath>
 #include <cstring>
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 namespace
 {
@@ -181,5 +183,6 @@ unsigned TimedAudioBuffer::Read(float *samples, unsigned frames, double time, do
 	__sync_synchronize();
 	__sync_lock_test_and_set(&m_Read, read);
 	return covered;
+}
 }
 }

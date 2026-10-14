@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "AudioBackend.h"
 #include "AlsaClient.h"
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 static void *Create(void *)
 {

@@ -25,7 +25,9 @@
 
 class SpiralPlugin;
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 
 // What a module's SpiralPlugin_GetType export answers.
@@ -90,6 +92,7 @@ private:
 	static DeviceClassRegistry *m_Singleton;
 };
 
+}
 }
 
 #endif

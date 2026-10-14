@@ -7,7 +7,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <unistd.h>
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 struct Endpoint
 {

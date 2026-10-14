@@ -13,7 +13,9 @@
 #define SSM_NATIVE_MIDI_RESTORE_STATUS
 #endif
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 // Exactly one producer and one consumer. Neither side allocates or locks.
 class MidiQueue
@@ -138,6 +140,7 @@ public:
 	bool Send(const MidiPacket &);
 	std::string Status();
 };
+}
 }
 #ifdef SSM_NATIVE_MIDI_RESTORE_STATUS
 #pragma pop_macro("Status")

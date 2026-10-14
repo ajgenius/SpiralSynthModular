@@ -2,6 +2,7 @@
 // The loader finds a kind's modules under <root>/<subdirectory>, resolves
 // the kind's entry symbol and lets the kind accept or refuse; a module
 // without the symbol is dropped, a missing root loads nothing.
+#include <config.h>
 #include "PluginManager.h"
 #include <cassert>
 #include <cstdio>
@@ -9,7 +10,7 @@
 #include <string>
 #include <vector>
 
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 struct ProbeKind : public PluginKind
 {
@@ -32,6 +33,17 @@ struct ProbeKind : public PluginKind
 		const char *(*table)() = (const char *(*)())entry;
 		Seen.push_back(std::string(table()) + " " + path);
 		return !Refuse;
+	}
+};
+
+// A kind that claims a host-dependent variant beside its own suffix.
+struct VariantKind : public ProbeKind
+{
+	bool Claims(const std::string &file) const
+	{
+		static const std::string native = std::string("_Native") + PLUGIN_MODULE_EXT;
+		return PluginKind::Claims(file)
+			|| (file.size() > native.size() && file.compare(file.size() - native.size(), native.size(), native) == 0);
 	}
 };
 
@@ -67,6 +79,13 @@ int main(int argc, char **argv)
 	assert(loader->UnregisterKind(&probe) && probe.Released == 2);
 	assert(loader->LoadAll(root) == 0);
 	assert(loader->UnloadAll());
+
+	// probe/variant_Native.so is a stranger to the plain kind and a third
+	// module to the one that claims the variant.
+	VariantKind variant;
+	assert(loader->Load(variant, root) == 3 && variant.Seen.size() == 3);
+	loader->RegisterKind(&variant);
+	assert(loader->UnregisterKind(&variant) && variant.Released == 3);
 	PluginManager::PackUpAndGoHome();
 	printf("PASS\n");
 	return 0;

@@ -115,23 +115,23 @@ void StereoMixerPlugin::Execute()
 		for (int c=0; c<NUM_CHANNELS; c++)
 		{
 			const float volume = m_ChannelVal[c];
-			if (volume == 0.0f || !spiralcore::IsFinite(volume)) continue;
+			if (volume == 0.0f || !Spiral::Core::IsFinite(volume)) continue;
 			const float in = GetInput(c,n);
 			float pan = m_Pan[c];
-			if (!spiralcore::IsFinite(in) || !spiralcore::IsFinite(pan)) continue;
+			if (!Spiral::Core::IsFinite(in) || !Spiral::Core::IsFinite(pan)) continue;
 			if (InputExists(c))
 			{
 				const float cv = GetInput(c+4,n);
 				// Invalid CV leaves the channel at its base pan.
-				if (spiralcore::IsFinite(cv)) pan += cv * 0.5;
+				if (Spiral::Core::IsFinite(cv)) pan += cv * 0.5;
 			}
 			const float channelLeft = (in * volume) * pan;
 			const float channelRight = (in * volume) * (1 - pan);
 			const float mixedLeft = left + channelLeft;
 			const float mixedRight = right + channelRight;
 			// Keep both sides together, retaining the other healthy channels.
-			if (spiralcore::IsFinite(channelLeft) && spiralcore::IsFinite(channelRight) &&
-			    spiralcore::IsFinite(mixedLeft) && spiralcore::IsFinite(mixedRight))
+			if (Spiral::Core::IsFinite(channelLeft) && Spiral::Core::IsFinite(channelRight) &&
+			    Spiral::Core::IsFinite(mixedLeft) && Spiral::Core::IsFinite(mixedRight))
 			{
 				left = mixedLeft;
 				right = mixedRight;
@@ -154,7 +154,7 @@ void StereoMixerPlugin::ExecuteCommands()
 	}
 }
 
-void StereoMixerPlugin::Describe(spiralcore::Description &d)
+void StereoMixerPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ");
 	for (int n=0; n<NUM_CHANNELS; n++)
@@ -163,7 +163,7 @@ void StereoMixerPlugin::Describe(spiralcore::Description &d)
 	}
 }
 
-void StereoMixerPlugin::Apply(spiralcore::Description::Reader &r)
+void StereoMixerPlugin::Apply(Spiral::Core::Description::Reader &r)
 {	
 	int version;
 	r.Value(version);

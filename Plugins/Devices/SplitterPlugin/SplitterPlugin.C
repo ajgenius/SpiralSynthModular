@@ -171,12 +171,12 @@ void SplitterPlugin::ExecuteCommands ()
 	}
 }
 
-void SplitterPlugin::Describe(spiralcore::Description &d) 
+void SplitterPlugin::Describe(Spiral::Core::Description &d) 
 {
 	d.Value(m_Version).Separator(" ").Value(GetChannelCount()).Separator(" ");
 }
 
-void SplitterPlugin::Apply(spiralcore::Description::Reader &r) 
+void SplitterPlugin::Apply(Spiral::Core::Description::Reader &r) 
 {
 	int Version, Channels;
 

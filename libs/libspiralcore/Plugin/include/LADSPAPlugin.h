@@ -46,7 +46,7 @@ class LADSPAPlugin : public SpiralPlugin
 {
 public:
 	// Built into the host: registered with the device registry, no module.
-	static const spiralcore::DeviceClass &Class();
+	static const Spiral::Core::DeviceClass &Class();
 
 	LADSPAPlugin();
 	virtual ~LADSPAPlugin();
@@ -55,8 +55,8 @@ public:
 	virtual void Execute();
 	virtual void Reset();
 	virtual void ExecuteCommands();
-	virtual void Describe(spiralcore::Description &d);
-	virtual void Apply(spiralcore::Description::Reader &r);
+	virtual void Describe(Spiral::Core::Description &d);
+	virtual void Apply(Spiral::Core::Description::Reader &r);
 
 	unsigned long  GetUniqueID() { return m_UniqueID; }
 	const char    *GetName() { return (const char *)m_Name; }

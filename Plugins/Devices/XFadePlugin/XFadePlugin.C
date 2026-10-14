@@ -116,12 +116,12 @@ void XFadePlugin::Randomise()
 {
 }
 	
-void XFadePlugin::Describe(spiralcore::Description &d)
+void XFadePlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ").Value(m_Mix).Separator(" ").Line();
 }
 
-void XFadePlugin::Apply(spiralcore::Description::Reader &r)
+void XFadePlugin::Apply(Spiral::Core::Description::Reader &r)
 {	
 	int version;
 	r.Value(version);

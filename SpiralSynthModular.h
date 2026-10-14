@@ -42,7 +42,7 @@
 #include "Fl_BoundaryDrawer.h"
 #include "SpiralPlugin.h"
 #include "ChannelHandler.h"
-using spiralcore::ChannelHandler;
+using Spiral::Core::ChannelHandler;
 #include "SettingsWindow.h"
 #include "config.h"
 
@@ -313,14 +313,14 @@ private:
 		((SynthModular*)o)->cb_ChangeBufferAndSampleRate_i(NewBufferSize, NewSamplerate);
 	}
 	friend istream &operator>>(istream &s, SynthModular &o);
-	friend spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o);
-	friend spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o, const string &sidecars);
+	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, SynthModular &o);
+	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, SynthModular &o, const string &sidecars);
 	friend ostream &operator<<(ostream &s, SynthModular &o);
 };
 
 iostream &operator>>(iostream &s, SynthModular &o);
-spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o);
-spiralcore::Description &Describe(spiralcore::Description &d, SynthModular &o, const string &sidecars);
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, SynthModular &o);
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, SynthModular &o, const string &sidecars);
 ostream &operator<<(ostream &s, SynthModular &o);
 
 #endif

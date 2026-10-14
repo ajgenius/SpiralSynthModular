@@ -24,7 +24,9 @@
 #include "Types.h"
 #include "Allocator.h"
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 //#define DEBUG
 
@@ -143,5 +145,6 @@ private:
     unsigned long m_Frame;
 	static Allocator *m_Allocator;
 };
+}
 }
 #endif

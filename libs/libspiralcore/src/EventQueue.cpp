@@ -16,7 +16,7 @@
 
 #include "EventQueue.h"
 
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 EventQueue::EventQueue()
 {

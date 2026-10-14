@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <pthread.h>
 #include <unistd.h>
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 namespace
 {

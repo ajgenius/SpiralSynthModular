@@ -26,7 +26,7 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <sstream>
 
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 #define midi_ReadSize			4096
 

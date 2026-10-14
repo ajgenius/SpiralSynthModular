@@ -64,8 +64,8 @@ class TranslatePlugin : public SpiralPlugin {
       virtual void Execute ();
       enum GUICommands { NOCMD, SETMETHOD };
       virtual void ExecuteCommands ();
-      virtual void Describe(spiralcore::Description &d);
-      virtual void Apply(spiralcore::Description::Reader &r);
+      virtual void Describe(Spiral::Core::Description &d);
+      virtual void Apply(Spiral::Core::Description::Reader &r);
       enum TranMethod { tr_Pass, tr_NoteToFreq, tr_FreqToNote, tr_NoteToVolt, tr_VoltToNote };
       int GetMethod (void) { return m_Method; }
    private:

@@ -69,7 +69,7 @@ void UnavailablePlugin::ApplyKnownLayout()
 	int version = 1;
 	int inputs = 16;
 	int outputs = 16;
-	spiralcore::Description::Reader in(m_State);
+	Spiral::Core::Description::Reader in(m_State);
 
 	// JackPlugin::Apply. LADSPA's numbers are control-port limits, not
 	// the canvas port count, so those stay at whatever the wires require.
@@ -114,7 +114,7 @@ void UnavailablePlugin::Execute()
 	}
 }
 
-void UnavailablePlugin::Describe(spiralcore::Description &d)
+void UnavailablePlugin::Describe(Spiral::Core::Description &d)
 {
 	// The state as the host found it: every value, every gap.
 	const vector<string> &values = m_State.Values();
@@ -124,7 +124,7 @@ void UnavailablePlugin::Describe(spiralcore::Description &d)
 		d.Value(values[i]).Separator(between[i + 1].c_str());
 }
 
-void UnavailablePlugin::Apply(spiralcore::Description::Reader &r)
+void UnavailablePlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	r.Rest(m_State);
 	ApplyKnownLayout();

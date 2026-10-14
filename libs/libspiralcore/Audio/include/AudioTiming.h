@@ -4,7 +4,9 @@
 
 #include <stdint.h>
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 // Seconds on the system monotonic clock. Native clocks must be mapped to this
 // domain before publishing timestamps; wall time and musical transport are not
@@ -71,5 +73,6 @@ private:
 	uint64_t m_Frame;
 	double m_Time, m_Step;
 };
+}
 }
 #endif

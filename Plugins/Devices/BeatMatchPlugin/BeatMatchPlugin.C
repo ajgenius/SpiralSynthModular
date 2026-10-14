@@ -160,13 +160,13 @@ void BeatMatchPlugin::ExecuteCommands()
 {
 }
 	
-void BeatMatchPlugin::Describe(spiralcore::Description &d) 
+void BeatMatchPlugin::Describe(Spiral::Core::Description &d) 
 {
 	d.Value(m_Version).Line();
 	d.Value(m_Sensitivity).Separator(" ");
 }
 
-void BeatMatchPlugin::Apply(spiralcore::Description::Reader &r) 
+void BeatMatchPlugin::Apply(Spiral::Core::Description::Reader &r) 
 {
 	int version;
 	r.Value(version);

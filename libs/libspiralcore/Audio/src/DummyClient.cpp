@@ -3,7 +3,7 @@
 #include "DummyClient.h"
 #include <cstring>
 #include <unistd.h>
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 DummyClient::DummyClient():
     attached(false),
@@ -94,7 +94,7 @@ static void Destroy(void *p)
 {
 	delete static_cast<AudioClient *>(p);
 }
-const BackendDescriptor *spiralcore::DummyBackend()
+const BackendDescriptor *Spiral::Core::DummyBackend()
 {
 	static const BackendDescriptor d= {SPIRAL_AUDIO_PLUGIN_ABI, "audio", "dummy", Create, Destroy};
 	return &d;

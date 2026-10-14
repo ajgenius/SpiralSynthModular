@@ -125,12 +125,12 @@ void NoisePlugin::Execute()
 	}
 }
 
-void NoisePlugin::Describe(spiralcore::Description &d)
+void NoisePlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ").Value((char)m_Type);
 }
 
-void NoisePlugin::Apply(spiralcore::Description::Reader &r)
+void NoisePlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int version;
 	char t;

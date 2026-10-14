@@ -218,13 +218,13 @@ void EnvelopePlugin::Execute()
 	} 	
 }
 
-void EnvelopePlugin::Describe(spiralcore::Description &d)
+void EnvelopePlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ").Value(m_Attack).Separator(" ").Value(m_Decay).Separator(" ").Value(m_Sustain).Separator(" ")
 	.Value(m_Release).Separator(" ").Value(m_Volume).Separator(" ").Value(m_TrigThresh);
 }
 
-void EnvelopePlugin::Apply(spiralcore::Description::Reader &r)
+void EnvelopePlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int version;
 	r.Value(version);

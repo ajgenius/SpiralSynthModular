@@ -29,8 +29,8 @@ class SplitSwitchPlugin : public SpiralPlugin {
     virtual void Execute ();
     virtual void Reset();
     virtual void ExecuteCommands ();
-    virtual void Describe(spiralcore::Description &d);
-    virtual void Apply(spiralcore::Description::Reader &r);
+    virtual void Describe(Spiral::Core::Description &d);
+    virtual void Apply(Spiral::Core::Description::Reader &r);
     int GetSwitch (void) { return m_SwitchPos; }
     int GetChans (void) { return m_PluginInfo.NumOutputs - 1; }
     enum GUICommands { NONE, SETCHANS };
@@ -44,11 +44,11 @@ class SplitSwitchPlugin : public SpiralPlugin {
     void SetSwitch (int n);
     int m_SwitchPos;
     bool m_Triggered;
-    friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, SplitSwitchPlugin &o);
-    friend spiralcore::Description &Describe(spiralcore::Description &d, SplitSwitchPlugin &o);
+    friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, SplitSwitchPlugin &o);
+    friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, SplitSwitchPlugin &o);
 };
 
-spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, SplitSwitchPlugin &o);
-spiralcore::Description &Describe(spiralcore::Description &d, SplitSwitchPlugin &o);
+Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, SplitSwitchPlugin &o);
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, SplitSwitchPlugin &o);
 
 #endif

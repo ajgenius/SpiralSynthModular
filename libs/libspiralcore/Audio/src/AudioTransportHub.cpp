@@ -26,7 +26,7 @@
 #endif
 
 using namespace std;
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 AudioTransportHub *AudioTransportHub::m_Singleton = NULL;
 

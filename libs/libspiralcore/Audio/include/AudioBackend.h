@@ -14,7 +14,9 @@
 #include "AudioClient.h"
 #include "BackendModule.h"
 #include "PluginManager.h"
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 	// Bumped when AudioClient or the descriptor changes shape; the registry
 	// refuses backends built against another version.
@@ -58,10 +60,11 @@ namespace spiralcore
 	};
 	// Built in and always present.
 	const BackendDescriptor *DummyBackend();
-} // namespace spiralcore
+} // namespace Core
+} // namespace Spiral
 extern "C"
 {
 	// The one symbol an audio backend module exports.
-	typedef const spiralcore::BackendDescriptor *(*SpiralPlugin_GetAudioBackendFn)();
+	typedef const Spiral::Core::BackendDescriptor *(*SpiralPlugin_GetAudioBackendFn)();
 }
 #endif

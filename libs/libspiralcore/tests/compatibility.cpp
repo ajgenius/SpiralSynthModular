@@ -5,7 +5,7 @@
 #include "RiffWav.h"
 #include <cassert>
 #include <cstring>
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 class CountingAllocator : public MallocAllocator {
 public:

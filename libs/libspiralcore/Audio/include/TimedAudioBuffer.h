@@ -5,7 +5,9 @@
 #include "AudioTiming.h"
 #include <vector>
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 // Timestamped SPSC audio. A producer publishes whole blocks. The consumer plays
 // samples at requested presentation times, discarding expired audio instead of
@@ -43,5 +45,6 @@ private:
 	TimedAudioBuffer(const TimedAudioBuffer &);
 	TimedAudioBuffer &operator=(const TimedAudioBuffer &);
 };
+}
 }
 #endif

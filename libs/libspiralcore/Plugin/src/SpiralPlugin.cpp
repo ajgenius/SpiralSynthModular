@@ -65,7 +65,7 @@ void SpiralPlugin::ResetPorts()
 
 void SpiralPlugin::StreamOut(std::ostream &s)
 {
-	spiralcore::Description d;
+	Spiral::Core::Description d;
 	Describe(d);
 	d.Write(s);
 }

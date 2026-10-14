@@ -194,7 +194,7 @@ void SeqSelectorPlugin::ExecuteCommands()
 	}
 }
 
-void SeqSelectorPlugin::Describe(spiralcore::Description &d)
+void SeqSelectorPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ");
 	d.Value(m_Lines.size()).Separator(" ");
@@ -212,7 +212,7 @@ void SeqSelectorPlugin::Describe(spiralcore::Description &d)
 	}
 }
 
-void SeqSelectorPlugin::Apply(spiralcore::Description::Reader &r)
+void SeqSelectorPlugin::Apply(Spiral::Core::Description::Reader &r)
 {	
 	int version;
 	r.Value(version);

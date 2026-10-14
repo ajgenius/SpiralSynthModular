@@ -56,8 +56,8 @@ int main(int argc, char **argv)
 	char name[64];
 	snprintf(name,sizeof(name),"output-host-%ld",long(getpid()));
 	SpiralInfo::OUTPUTFILE=name;
-	spiralcore::JackClient observer;
-	spiralcore::AudioClientOptions options;
+	Spiral::Core::JackClient observer;
+	Spiral::Core::AudioClientOptions options;
 	options.InChannels=2; options.OutChannels=0;
 	assert(observer.Attach(std::string(name)+"-observer",options));
 	Host host;

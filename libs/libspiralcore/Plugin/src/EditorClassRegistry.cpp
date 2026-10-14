@@ -24,7 +24,7 @@
 #include "EditorClassRegistry.h"
 
 using namespace std;
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 EditorClassRegistry *EditorClassRegistry::m_Singleton = NULL;
 

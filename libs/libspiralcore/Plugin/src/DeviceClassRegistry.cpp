@@ -24,7 +24,7 @@
 #include "DeviceClassRegistry.h"
 
 using namespace std;
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 DeviceClassRegistry *DeviceClassRegistry::m_Singleton = NULL;
 

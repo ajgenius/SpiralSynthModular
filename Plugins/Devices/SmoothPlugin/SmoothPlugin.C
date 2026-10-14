@@ -115,13 +115,13 @@ void SmoothPlugin::Execute()
 	}
 }
 
-void SmoothPlugin::Describe(spiralcore::Description &d) 
+void SmoothPlugin::Describe(Spiral::Core::Description &d) 
 {
 	d.Value(m_Version).Separator(" ");
 	d.Value(m_Up).Separator(" ").Value(m_Down);
 }
 
-void SmoothPlugin::Apply(spiralcore::Description::Reader &r)
+void SmoothPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	r.Value(m_Version);
 	r.Value(m_Up).Value(m_Down);

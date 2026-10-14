@@ -14,7 +14,7 @@
 #include <chrono>
 #include <memory>
 #include <algorithm>
-using namespace spiralcore;
+using namespace Spiral::Core;
 // One producer/consumer per queue. Overflow requests a note reset, never blocks DSP.
 class PacketQueue
 {
@@ -259,8 +259,8 @@ static void Destroy(void *p)
 {
 	delete(MidiBackend *)p;
 }
-extern "C" const spiralcore::BackendDescriptor *SpiralPlugin_GetMidiBackend()
+extern "C" const Spiral::Core::BackendDescriptor *SpiralPlugin_GetMidiBackend()
 {
-	static const spiralcore::BackendDescriptor d= {SPIRAL_MIDI_PLUGIN_ABI, "midi", "rtmidi", Create, Destroy};
+	static const Spiral::Core::BackendDescriptor d= {SPIRAL_MIDI_PLUGIN_ABI, "midi", "rtmidi", Create, Destroy};
 	return &d;
 }

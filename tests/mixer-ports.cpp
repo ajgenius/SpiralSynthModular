@@ -14,8 +14,8 @@ public:
 		m_PluginInfo.NumInputs = m_PluginInfo.NumOutputs = 1;
 	}
 	void Execute() {}
-	void Apply(spiralcore::Description::Reader &) {}
-	void Describe(spiralcore::Description &d) {}
+	void Apply(Spiral::Core::Description::Reader &) {}
+	void Describe(Spiral::Core::Description &d) {}
 };
 
 static std::map<int, SpiralPlugin *> devices;
@@ -121,11 +121,11 @@ int main()
 	const int savedCounts[] = {-1, 0, 1, 2, 16, 20};
 	for (unsigned n = 0; n < sizeof(savedCounts) / sizeof(*savedCounts); ++n)
 	{
-		spiralcore::Description saved;
+		Spiral::Core::Description saved;
 		saved.Value(2).Value(savedCounts[n]);
 		for (int i = 0; i < savedCounts[n]; ++i) saved.Value(0.25f);
 		saved.Value(1234); // the next field must survive an oversized record
-		spiralcore::Description::Reader reader(saved);
+		Spiral::Core::Description::Reader reader(saved);
 		mixer.Apply(reader);
 		int next = 0;
 		reader.Value(next);

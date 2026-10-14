@@ -19,7 +19,7 @@
 #include "Sample.h"
 #include <iostream>
 
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 Allocator *Sample::m_Allocator = new MallocAllocator();
 

@@ -10,7 +10,9 @@
 #include <portaudio.h>
 #include "AudioClient.h"
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 
 class PortAudioClient : public AudioClient
@@ -69,6 +71,7 @@ private:
 	static int Process(const void *, void *, unsigned long, const PaStreamCallbackTimeInfo *, PaStreamCallbackFlags, void *);
 };
 
+}
 }
 
 #endif

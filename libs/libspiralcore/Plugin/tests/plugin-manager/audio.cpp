@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "AudioBackend.h"
-using namespace spiralcore;
+using namespace Spiral::Core;
 class ProbeClient : public AudioClient
 {
 public:

@@ -23,7 +23,7 @@ static void Check(unsigned frames)
 	a.SetInput(0, &signal);
 	b.SetInput(0, &signal);
 	AudioTransportHub *hub = AudioTransportHub::Get();
-	cycleTimeOffset = spiralcore::AudioMonotonicTime();
+	cycleTimeOffset = Spiral::Core::AudioMonotonicTime();
 	unsigned audible = 0, rendered = 0;
 	for (cycleFrame = 0; cycleFrame < 6000; cycleFrame += 4)
 	{

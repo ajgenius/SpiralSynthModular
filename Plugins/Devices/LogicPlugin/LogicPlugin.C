@@ -177,12 +177,12 @@ void LogicPlugin::CreatePorts (int n, bool AddPorts) {
   }
 }
 
-void LogicPlugin::Describe(spiralcore::Description &d)
+void LogicPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ").Value(m_PluginInfo.NumInputs).Separator(" ").Value(m_Operator);
 }
 
-void LogicPlugin::Apply(spiralcore::Description::Reader &r) {
+void LogicPlugin::Apply(Spiral::Core::Description::Reader &r) {
   int version, datum;
   r.Value(version);
   switch (version) {

@@ -21,7 +21,9 @@ namespace Spumoni
 	class JSON;
 }
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 	// The contract (schemas/SpiralPositionalText-0.2.x.json) names the
 	// fields each plugin wrote, in stream order, and the history catalogue
@@ -83,6 +85,7 @@ namespace spiralcore
 		std::vector<Diagnostic> m_Diagnostics;
 		size_t m_Remainder;
 	};
+}
 }
 
 #ifdef SPIRALCORE_RESTORE_POSITIONAL_STATUS

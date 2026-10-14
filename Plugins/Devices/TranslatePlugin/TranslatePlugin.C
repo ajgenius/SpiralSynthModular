@@ -155,12 +155,12 @@ void TranslatePlugin::Execute () {
      }
 }
 
-void TranslatePlugin::Describe(spiralcore::Description &d) {
+void TranslatePlugin::Describe(Spiral::Core::Description &d) {
      d.Value(m_Version).Line();
      d.Value(m_Method);
 }
 
-void TranslatePlugin::Apply(spiralcore::Description::Reader &r) {
+void TranslatePlugin::Apply(Spiral::Core::Description::Reader &r) {
      int version;
      r.Value(version);
      r.Value(m_Method);

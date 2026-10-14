@@ -231,26 +231,26 @@ void WaveTablePlugin::Execute()
 	}
 }
 
-void WaveTablePlugin::Describe(spiralcore::Description &d)
+void WaveTablePlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ");
 	::Describe(d, *this);
 }
 
-void WaveTablePlugin::Apply(spiralcore::Description::Reader &r)
+void WaveTablePlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int version;
 	r.Value(version);
 	::Apply(r, *this);
 }
 
-spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, WaveTablePlugin &o)
+Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, WaveTablePlugin &o)
 {
 	r.Value((int&)o.m_Type).Value(o.m_Octave).Value(o.m_FineFreq).Value(o.m_ModAmount);
 	return r;
 }
 
-spiralcore::Description &Describe(spiralcore::Description &d, WaveTablePlugin &o)
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, WaveTablePlugin &o)
 {
 	d.Value((int)o.m_Type).Separator(" ").Value(o.m_Octave).Separator(" ").Value(o.m_FineFreq).Separator(" ").Value(o.m_ModAmount).Separator(" ");
 	return d;

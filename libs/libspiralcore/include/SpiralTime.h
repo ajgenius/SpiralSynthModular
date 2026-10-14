@@ -25,7 +25,9 @@ using namespace std;
 
 static const double ONE_OVER_UINT_MAX = 1.0/UINT_MAX;
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 
 class Time
@@ -52,6 +54,7 @@ public:
 	unsigned long int Fraction;
 };
 
+}
 }
 
 #endif

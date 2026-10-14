@@ -31,8 +31,8 @@ public:
 	virtual void 		Execute();
 	virtual void 		Reset();
 	virtual void 		ExecuteCommands();
-	virtual void	    Describe(spiralcore::Description &d);
-	virtual void	    Apply(spiralcore::Description::Reader &r);
+	virtual void	    Describe(Spiral::Core::Description &d);
+	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 
 	bool GetFilter(int n) { return m_Filter[n]; }
 

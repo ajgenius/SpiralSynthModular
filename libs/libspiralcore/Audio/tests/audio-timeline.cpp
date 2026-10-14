@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include <vector>
 
-using namespace spiralcore;
+using namespace Spiral::Core;
 static const double Pi = 3.14159265358979323846;
 
 static void Rates(double sourceRate, double deviceRate, unsigned sourcePeriod, unsigned devicePeriod)

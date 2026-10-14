@@ -2,7 +2,7 @@
 #include "AudioTimeline.h"
 #include <algorithm>
 using namespace std;
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 AudioTimeline::AudioTimeline() : m_Master(NULL), m_Frame(0), m_Rolling(true) {}
 

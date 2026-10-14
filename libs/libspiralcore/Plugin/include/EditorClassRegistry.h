@@ -25,7 +25,9 @@
 
 class SpiralGUIType;
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 
 /* The GUI half of the paired slot (0.3.1 split): an editor of the device
@@ -80,6 +82,7 @@ private:
 	static EditorClassRegistry *m_Singleton;
 };
 
+}
 }
 
 #endif

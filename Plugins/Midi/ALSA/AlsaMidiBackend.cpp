@@ -6,7 +6,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <cerrno>
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 class AlsaMidiTransport: public MidiTransport
 {

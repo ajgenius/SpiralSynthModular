@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <new>
 #include <cstdlib>
-using namespace spiralcore;
+using namespace Spiral::Core;
 #if __cplusplus >= 201103L
 #define ALLOCATION_THROWS noexcept(false)
 #else

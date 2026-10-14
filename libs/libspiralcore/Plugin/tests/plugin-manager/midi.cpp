@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "MidiBackend.h"
-using namespace spiralcore;
+using namespace Spiral::Core;
 class ProbeMidi : public MidiBackend
 {
 public:

@@ -23,7 +23,9 @@
 #undef Status
 #define SSM_MIDI_RESTORE_STATUS
 #endif
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 	struct MidiPacket
 	{
@@ -98,11 +100,12 @@ namespace spiralcore
 	};
 	// Built in and always present.
 	const BackendDescriptor *DummyMidi();
-} // namespace spiralcore
+} // namespace Core
+} // namespace Spiral
 extern "C"
 {
 	// The one symbol a midi backend module exports.
-	typedef const spiralcore::BackendDescriptor *(*SpiralPlugin_GetMidiBackendFn)();
+	typedef const Spiral::Core::BackendDescriptor *(*SpiralPlugin_GetMidiBackendFn)();
 }
 #ifdef SSM_MIDI_RESTORE_STATUS
 #pragma pop_macro("Status")

@@ -53,9 +53,9 @@ static float ssm_sanitize(float in, float replacement)
 // external, under <plugins>/ladspa and the LADSPA_PATH LADSPAInfo scans.
 static SpiralPlugin *CreateInstance() { return new LADSPAPlugin; }
 
-const spiralcore::DeviceClass &LADSPAPlugin::Class()
+const Spiral::Core::DeviceClass &LADSPAPlugin::Class()
 {
-	static spiralcore::DeviceClass device;
+	static Spiral::Core::DeviceClass device;
 	device.ID = 0x0016;
 	device.Name = "LADSPA";
 	device.Category = "Filters/FX";
@@ -339,7 +339,7 @@ void LADSPAPlugin::ExecuteCommands()
 	}
 }
 
-void LADSPAPlugin::Describe(spiralcore::Description &d)
+void LADSPAPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ");
 
@@ -394,7 +394,7 @@ void LADSPAPlugin::Describe(spiralcore::Description &d)
 	}
 }
 
-void LADSPAPlugin::Apply(spiralcore::Description::Reader &r)
+void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int Version = 0;
 	float Gain = 0.0f;

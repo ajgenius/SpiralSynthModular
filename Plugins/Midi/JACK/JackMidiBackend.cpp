@@ -10,7 +10,7 @@
 #include <jack/midiport.h>
 #include <algorithm>
 #include <stdexcept>
-using namespace spiralcore;
+using namespace Spiral::Core;
 class JackMidiTransport: public MidiTransport
 {
 	jack_client_t *client;

@@ -17,8 +17,8 @@ public:
 		m_PluginInfo.NumInputs = m_PluginInfo.NumOutputs = 1;
 	}
 	void Execute() {}
-	void Apply(spiralcore::Description::Reader &) {}
-	void Describe(spiralcore::Description &d) {}
+	void Apply(Spiral::Core::Description::Reader &) {}
+	void Describe(Spiral::Core::Description &d) {}
 };
 
 static std::map<int, SpiralPlugin *> devices;

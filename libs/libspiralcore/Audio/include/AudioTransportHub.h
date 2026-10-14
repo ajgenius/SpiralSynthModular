@@ -71,8 +71,8 @@ public:
 	// Control thread, representative only.
 	void Service();
 
-	void RegisterStream(spiralcore::AudioStream *stream);
-	void UnregisterStream(spiralcore::AudioStream *stream);
+	void RegisterStream(Spiral::Core::AudioStream *stream);
+	void UnregisterStream(Spiral::Core::AudioStream *stream);
 	bool PreparePeriod();
 	bool PreparePeriod(double monotonicNow);
 	unsigned SleepMicroseconds() const;
@@ -81,8 +81,8 @@ public:
 	bool WaitPeriod();
 	void BeginPeriod();
 	void CommitPeriod();
-	const spiralcore::AudioStamp &PlaybackStamp() const { return m_Timeline.PlaybackStamp(); }
-	const spiralcore::AudioStamp &CaptureStamp() const { return m_Timeline.CaptureStamp(); }
+	const Spiral::Core::AudioStamp &PlaybackStamp() const { return m_Timeline.PlaybackStamp(); }
+	const Spiral::Core::AudioStamp &CaptureStamp() const { return m_Timeline.CaptureStamp(); }
 
 	// Engine position: the frame the period being rendered starts at.
 	// Slaved to the stream's transport when it has one (JACK), free
@@ -107,7 +107,7 @@ private:
 
 	bool Streaming() const;
 
-	spiralcore::AudioTimeline m_Timeline;
+	Spiral::Core::AudioTimeline m_Timeline;
 };
 
 #endif

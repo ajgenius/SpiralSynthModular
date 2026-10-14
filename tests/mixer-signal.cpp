@@ -120,14 +120,14 @@ int main()
 	cv.Set(0.0f);
 #endif
 	// Patch representation and finite settings still round-trip.
-	spiralcore::Description saved;
+	Spiral::Core::Description saved;
 	mixer.Describe(saved);
 	Mixer restored;
 	restored.Initialise(&host);
-	spiralcore::Description::Reader reader(saved);
+	Spiral::Core::Description::Reader reader(saved);
 	restored.Apply(reader);
 	assert(!reader.Failed() && !reader.More());
-	spiralcore::Description roundtrip;
+	Spiral::Core::Description roundtrip;
 	restored.Describe(roundtrip);
 	assert(roundtrip.Values() == saved.Values());
 }

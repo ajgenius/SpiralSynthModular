@@ -29,8 +29,8 @@ public:
 
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void Execute();
-	virtual void Describe(spiralcore::Description &d);
-	virtual void Apply(spiralcore::Description::Reader &r);
+	virtual void Describe(Spiral::Core::Description &d);
+	virtual void Apply(Spiral::Core::Description::Reader &r);
 
 	// has to be defined in the plugin
 
@@ -41,10 +41,10 @@ public:
 
 private:
 	float m_Gain, m_DC;
-	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, AmpPlugin &o);
-	friend spiralcore::Description &Describe(spiralcore::Description &d, AmpPlugin &o);
+	friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, AmpPlugin &o);
+	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, AmpPlugin &o);
 };
-spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, AmpPlugin &o);
-spiralcore::Description &Describe(spiralcore::Description &d, AmpPlugin &o);
+Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, AmpPlugin &o);
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, AmpPlugin &o);
 
 #endif

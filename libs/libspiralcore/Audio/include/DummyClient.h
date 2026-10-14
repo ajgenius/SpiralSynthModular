@@ -7,7 +7,9 @@
 #ifndef SSM_DUMMY_AUDIO_H
 #define SSM_DUMMY_AUDIO_H
 #include "AudioClient.h"
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 class DummyClient: public AudioClient
 {
@@ -32,5 +34,6 @@ public:
 	virtual bool Write(const float *interleaved, unsigned int nframes);
 	virtual bool Read(float *interleaved, unsigned int nframes);
 };
+}
 }
 #endif

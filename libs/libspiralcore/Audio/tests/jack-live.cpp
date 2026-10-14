@@ -7,7 +7,7 @@
 
 struct Endpoint
 {
-	spiralcore::JackClient Client;
+	Spiral::Core::JackClient Client;
 	std::vector<float> Buffer;
 	volatile unsigned Cycles, Matches, Errors;
 	bool Capture;
@@ -62,7 +62,7 @@ int main()
 	for (unsigned attempt = 0; attempt < 5; ++attempt)
 	{
 		Endpoint writer(false), reader(true);
-		spiralcore::AudioClientOptions out, in;
+		Spiral::Core::AudioClientOptions out, in;
 		out.InChannels = 0; out.OutChannels = 2;
 		in.InChannels = 2; in.OutChannels = 0;
 		if (!writer.Client.Attach(source, out) || !reader.Client.Attach(sink, in)) return 1;

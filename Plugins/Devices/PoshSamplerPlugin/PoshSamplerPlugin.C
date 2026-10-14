@@ -350,7 +350,7 @@ void PoshSamplerPlugin::InitializeSampleDescription (SampleDesc* NewDesc, int nu
        }
 }
 
-void PoshSamplerPlugin::Describe(spiralcore::Description &d) {
+void PoshSamplerPlugin::Describe(Spiral::Core::Description &d) {
      d.Value(m_Version).Separator(" ");
      for (int n=0; n<NUM_SAMPLES; n++) {
          d.Value(m_SampleDescVec[n]->Volume).Separator(" ")
@@ -368,7 +368,7 @@ void PoshSamplerPlugin::Describe(spiralcore::Description &d) {
      }
 }
 
-void PoshSamplerPlugin::Apply(spiralcore::Description::Reader &r) {
+void PoshSamplerPlugin::Apply(Spiral::Core::Description::Reader &r) {
      int version;
      r.Value(version);
      for (int n=0; n<NUM_SAMPLES; n++) {

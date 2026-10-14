@@ -19,7 +19,7 @@
 #include "AsyncSampleLoader.h"
 #include "SearchPaths.h"
 
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 AsyncSampleLoader *AsyncSampleLoader::m_Singleton=NULL;
 deque<AsyncSampleLoader::LoadItem> AsyncSampleLoader::m_LoadQueue;

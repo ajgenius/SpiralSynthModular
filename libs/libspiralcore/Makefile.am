@@ -49,6 +49,7 @@ EXTRA_DIST += Audio/AUDIO-TRANSPORT.md
 libspiralcore_la_SOURCES += Audio/include/AudioClient.h
 
 libspiralcore_la_SOURCES += Plugin/include/PluginManager.h Plugin/src/PluginManager.cpp
+libspiralcore_la_SOURCES += Plugin/include/BackendPath.h Plugin/src/BackendPath.cpp
 libspiralcore_la_SOURCES += Plugin/include/DeviceClassRegistry.h Plugin/src/DeviceClassRegistry.cpp Plugin/include/EditorClassRegistry.h Plugin/src/EditorClassRegistry.cpp
 libspiralcore_la_SOURCES += Plugin/include/SpiralPlugin.h Plugin/src/SpiralPlugin.cpp Audio/include/OutputAudioClient.h Audio/src/OutputAudioClient.cpp Audio/include/AudioTransportHub.h Audio/src/AudioTransportHub.cpp Plugin/include/OutputPlugin.h Plugin/src/OutputPlugin.cpp Plugin/include/OutputIcon.xpm
 if BUILD_LADSPA
@@ -88,7 +89,8 @@ sub_Probe_la_SOURCES = Plugin/tests/plugin-manager/probe.cpp
 sub_Probe_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
 stranger_Probe_la_SOURCES = Plugin/tests/plugin-manager/stranger.cpp
 stranger_Probe_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
-# The test root: probe/probe_Probe.so, probe/sub/sub_Probe.so, probe/stranger_Probe.so
+# The test root: probe/probe_Probe.so, probe/sub/sub_Probe.so, probe/stranger_Probe.so,
+# probe/variant_Native.so (the probe again, under a host-tagged name)
 # The plugin manifest the host reads before opening a module.
 check_PROGRAMS += manifest-test
 manifest_test_SOURCES = Plugin/tests/manifest.cpp Plugin/include/PluginManifest.h Plugin/src/PluginManifest.cpp
@@ -102,6 +104,7 @@ plugin-manager-root: $(check_LTLIBRARIES)
 	cp .libs/probe_Probe.so plugin-manager-root/probe/
 	cp .libs/sub_Probe.so plugin-manager-root/probe/sub/
 	cp .libs/stranger_Probe.so plugin-manager-root/probe/
+	cp .libs/probe_Probe.so plugin-manager-root/probe/variant_Native.so
 check_DATA = plugin-manager-root
 TESTS_ENVIRONMENT = PLUGIN_MANAGER_ROOT=$(abs_builddir)/plugin-manager-root
 clean-local:

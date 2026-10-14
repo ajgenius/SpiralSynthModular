@@ -5,7 +5,9 @@
 #endif
 #include <iostream>
 #include <algorithm>
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 	// The dummy is the only compiled-in midi backend.
 	static void *CreateDummyMidi(void *) { return static_cast<MidiBackend *>(new DummyMidiBackend); }
@@ -116,4 +118,5 @@ namespace spiralcore
 		backends.erase(found);
 		d->Destroy(backend);
 	}
-} // namespace spiralcore
+} // namespace Core
+} // namespace Spiral

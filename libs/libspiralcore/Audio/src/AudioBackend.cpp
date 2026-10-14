@@ -5,7 +5,9 @@
 #endif
 #include <iostream>
 #include <algorithm>
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 	// Backends still compiled into libspiralcore register here; each moves
 	// out to Plugins/Audio in its own change and its line leaves that list.
@@ -111,4 +113,5 @@ namespace spiralcore
 		clients.erase(found);
 		d->Destroy(client);
 	}
-} // namespace spiralcore
+} // namespace Core
+} // namespace Spiral

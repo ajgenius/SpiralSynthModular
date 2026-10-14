@@ -33,7 +33,9 @@
 
 using namespace std;
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 
 class MidiEvent
@@ -100,6 +102,7 @@ private:
 	string m_BackendName;
 };
 
-} // namespace spiralcore
+} // namespace Core
+} // namespace Spiral
 
 #endif

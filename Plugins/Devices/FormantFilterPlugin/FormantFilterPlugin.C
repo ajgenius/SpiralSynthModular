@@ -238,12 +238,12 @@ void FormantFilterPlugin::Clear()
 	}
 }
 	
-void FormantFilterPlugin::Describe(spiralcore::Description &d)
+void FormantFilterPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ").Value(m_Vowel).Separator(" ");
 }
 
-void FormantFilterPlugin::Apply(spiralcore::Description::Reader &r)
+void FormantFilterPlugin::Apply(Spiral::Core::Description::Reader &r)
 {	
 	int version;
 	r.Value(version);

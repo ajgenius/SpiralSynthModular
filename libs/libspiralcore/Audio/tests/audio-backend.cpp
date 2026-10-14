@@ -9,7 +9,7 @@
 #include <vector>
 #include <cstdlib>
 
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 struct NullClient : public AudioClient
 {

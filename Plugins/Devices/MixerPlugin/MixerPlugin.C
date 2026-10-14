@@ -101,11 +101,11 @@ void MixerPlugin::Execute () {
              in = 0.0f;
              const float volume = m_ChannelVal[c];
              // Muting must not evaluate NaN * 0 or infinity * 0.
-             if (volume != 0.0f && spiralcore::IsFinite(volume)) {
+             if (volume != 0.0f && Spiral::Core::IsFinite(volume)) {
                  const float contribution = GetInput (c, n) * volume;
                  const float mixed = out + contribution;
                  // Reject only this channel, including arithmetic overflow.
-                 if (spiralcore::IsFinite(contribution) && spiralcore::IsFinite(mixed)) {
+                 if (Spiral::Core::IsFinite(contribution) && Spiral::Core::IsFinite(mixed)) {
                      in = contribution;
                      out = mixed;
                  }
@@ -173,13 +173,13 @@ void MixerPlugin::RemoveChannel (void) {
      RemoveInput();
 }
 
-void MixerPlugin::Describe(spiralcore::Description &d) {
+void MixerPlugin::Describe(Spiral::Core::Description &d) {
      d.Value(m_Version).Separator(" ");
      d.Value(m_NumChannels).Separator(" ");
      for (int n=0; n<m_NumChannels; n++) d.Value(m_ChannelVal[n]).Separator(" ");
 }
 
-void MixerPlugin::Apply(spiralcore::Description::Reader &r) {
+void MixerPlugin::Apply(Spiral::Core::Description::Reader &r) {
      int version = 0, chans = m_NumChannels;
      r.Value(version);
      switch (version) {

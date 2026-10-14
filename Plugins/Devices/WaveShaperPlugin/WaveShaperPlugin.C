@@ -199,12 +199,12 @@ void WaveShaperPlugin::calc (void) {
 
 // Streaming
 
-void WaveShaperPlugin::Describe(spiralcore::Description &d) {
+void WaveShaperPlugin::Describe(Spiral::Core::Description &d) {
   d.Value(m_Version).Separator(" ").Value(m_Wave);
   for (int i=0; i<6; i++) d.Separator(" ").Value(m_Coefs[i]);
 }
 
-void WaveShaperPlugin::Apply(spiralcore::Description::Reader &r) {
+void WaveShaperPlugin::Apply(Spiral::Core::Description::Reader &r) {
   int version;
   r.Value(version).Value(m_Wave);
   for (int i=0; i<6; i++) r.Value(m_Coefs[i]);

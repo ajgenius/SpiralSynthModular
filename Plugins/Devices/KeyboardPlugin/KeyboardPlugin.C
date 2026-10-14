@@ -117,12 +117,12 @@ void  KeyboardPlugin::ExecuteCommands()
 	}
 }
 
-void KeyboardPlugin::Describe(spiralcore::Description &d) 
+void KeyboardPlugin::Describe(Spiral::Core::Description &d) 
 {
 	d.Value(m_Version).Line();
 }
 
-void KeyboardPlugin::Apply(spiralcore::Description::Reader &r) 
+void KeyboardPlugin::Apply(Spiral::Core::Description::Reader &r) 
 {
 	int version;
 	r.Value(version);

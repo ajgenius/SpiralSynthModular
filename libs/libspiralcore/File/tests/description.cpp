@@ -13,7 +13,7 @@ int main()
 {
 	// The shapes the plugins actually use: s<<a<<" "<<b<<"  "<<c<<" "<<endl,
 	// a sentinel literal, a raw char, a trailing-separator-less end.
-	spiralcore::Description d;
+	Spiral::Core::Description d;
 	d.Value(4).Separator(" ").Value(0.0566442f).Separator(" ").Value(true).Separator(" ").Line();
 	d.Value(3).Separator(" ").Value(2).Separator("  ").Value(0.5).Separator(" ");
 	d.Value("-1").Separator(" ");
@@ -43,14 +43,14 @@ int main()
 		"\"between\": [\"\", \" \", \" \", \" \\n\", \" \", \"  \", \" \", \" \", \"\"]}");
 
 	// An empty description is an empty stream.
-	spiralcore::Description none;
+	Spiral::Core::Description none;
 	std::ostringstream empty;
 	none.Write(empty);
 	CHECK(empty.str().empty());
 	CHECK(none.JSON() == "{\"values\": [], \"between\": [\"\"]}");
 
 	// What a string value with a quote or control byte looks like in JSON.
-	spiralcore::Description odd;
+	Spiral::Core::Description odd;
 	odd.Value(std::string("a\"b\\c\td")).Value((char)1);
 	CHECK(odd.JSON() == "{\"values\": [\"a\\\"b\\\\c\\td\", \"\\u0001\"], \"between\": [\"\", \"\", \"\"]}");
 

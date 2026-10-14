@@ -17,8 +17,8 @@
 #include <sstream>
 #include <string>
 
-using spiralcore::Description;
-using spiralcore::PositionalReader;
+using Spiral::Core::Description;
+using Spiral::Core::PositionalReader;
 
 static bool ReadBytes(const char *path, std::string &bytes)
 {

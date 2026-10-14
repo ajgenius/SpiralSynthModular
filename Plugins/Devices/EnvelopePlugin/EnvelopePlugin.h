@@ -33,8 +33,8 @@ public:
 	virtual void Execute();
 	virtual void Reset();
 
-	virtual void Describe(spiralcore::Description &d);
-	virtual void Apply(spiralcore::Description::Reader &r);
+	virtual void Describe(Spiral::Core::Description &d);
+	virtual void Apply(Spiral::Core::Description::Reader &r);
 		
 	float GetAttack()           { return m_Attack;     }
 	float GetDecay()            { return m_Decay;      }	
@@ -59,10 +59,10 @@ private:
 	
 	float m_Current;
 	
-	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, EnvelopePlugin &o);
-	friend spiralcore::Description &Describe(spiralcore::Description &d, EnvelopePlugin &o);
+	friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, EnvelopePlugin &o);
+	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, EnvelopePlugin &o);
 };
-spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, EnvelopePlugin &o);
-spiralcore::Description &Describe(spiralcore::Description &d, EnvelopePlugin &o);
+Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, EnvelopePlugin &o);
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, EnvelopePlugin &o);
 
 #endif

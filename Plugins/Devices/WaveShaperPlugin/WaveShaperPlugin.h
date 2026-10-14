@@ -30,8 +30,8 @@ class WaveShaperPlugin : public SpiralPlugin {
     virtual void Execute();
     virtual void Reset();
     virtual void ExecuteCommands();
-    virtual void Describe(spiralcore::Description &d);
-    virtual void Apply(spiralcore::Description::Reader &r);
+    virtual void Describe(Spiral::Core::Description &d);
+    virtual void Apply(Spiral::Core::Description::Reader &r);
     enum GUICommands { NONE, SETWAVETYPE, SETCOEF };
     struct GUIArgs {
       int WaveType, CoefNum;
@@ -43,11 +43,11 @@ class WaveShaperPlugin : public SpiralPlugin {
     int m_Wave;
     void calc (void);
     void set (int index, float v);
-    friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, WaveShaperPlugin &o);
-    friend spiralcore::Description &Describe(spiralcore::Description &d, WaveShaperPlugin &o);
+    friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, WaveShaperPlugin &o);
+    friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, WaveShaperPlugin &o);
 };
 
-spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, WaveShaperPlugin &o);
-spiralcore::Description &Describe(spiralcore::Description &d, WaveShaperPlugin &o);
+Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, WaveShaperPlugin &o);
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, WaveShaperPlugin &o);
 
 #endif

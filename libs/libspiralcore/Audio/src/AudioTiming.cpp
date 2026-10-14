@@ -8,7 +8,9 @@
 #include <time.h>
 #endif
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 #ifdef __APPLE__
 namespace
@@ -87,5 +89,6 @@ double AudioRateEstimator::Observe(uint64_t frame, double time, double nominalRa
 	m_Frame = frame;
 	m_Time = time;
 	return m_Step;
+}
 }
 }

@@ -65,7 +65,7 @@ int jack_get_cycle_times(const jack_client_t *, jack_nframes_t *frame, jack_time
 	*estimate = 999;
 	return 0;
 }
-jack_time_t jack_get_time() { return jack_time_t(spiralcore::AudioMonotonicTime() * 1e6); }
+jack_time_t jack_get_time() { return jack_time_t(Spiral::Core::AudioMonotonicTime() * 1e6); }
 jack_nframes_t jack_last_frame_time(const jack_client_t *) { return cycleFrame; }
 jack_time_t jack_frames_to_time(const jack_client_t *, jack_nframes_t frame) { return jack_time_t((cycleTimeOffset + double(frame) / 48000) * 1e6); }
 #ifdef HAVE_JACK_PORT_GET_LATENCY_RANGE
@@ -240,9 +240,9 @@ struct Notifications
 
 struct AudioCycle
 {
-	spiralcore::AudioClient *Client;
+	Spiral::Core::AudioClient *Client;
 	float Captured[8];
-	spiralcore::AudioCycleTiming Timing;
+	Spiral::Core::AudioCycleTiming Timing;
 	static void Run(void *context, unsigned int frames)
 	{
 		if (!frames)
@@ -262,7 +262,7 @@ struct AudioCycle
 
 int main()
 {
-	using spiralcore::JackClient;
+	using Spiral::Core::JackClient;
 	Notifications first, second;
 	JackClient a, b;
 	a.SetCallback(Notifications::Run, &first);
@@ -345,8 +345,8 @@ int main()
 	assert(clients.empty());
 	// The shared AudioClient prepares before activation and exchanges stereo
 	// only during a callback. Blocking backends retain their original API.
-	spiralcore::AudioClient *audio = &a;
-	spiralcore::AudioClientOptions options;
+	Spiral::Core::AudioClient *audio = &a;
+	Spiral::Core::AudioClientOptions options;
 	options.InChannels = options.OutChannels = 2;
 	AudioCycle cycle;
 	cycle.Client = audio;
@@ -385,7 +385,7 @@ int main()
 	cycleFrame = 0;
 	native->Process(4, native->ProcessContext);
 	assert(cycle.Timing.Frame == beforeWrap + 4);
-	spiralcore::AudioCycleTiming outsideCallback;
+	Spiral::Core::AudioCycleTiming outsideCallback;
 	assert(!audio->GetCycleTiming(outsideCallback));
 	audio->Detach();
 	assert(!audio->Start());

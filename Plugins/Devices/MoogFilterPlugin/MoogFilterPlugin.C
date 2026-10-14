@@ -203,12 +203,12 @@ void MoogFilterPlugin::Randomise()
 {
 }
 	
-void MoogFilterPlugin::Describe(spiralcore::Description &d)
+void MoogFilterPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ").Value(Cutoff).Separator(" ").Value(Resonance).Separator(" ");
 }
 
-void MoogFilterPlugin::Apply(spiralcore::Description::Reader &r)
+void MoogFilterPlugin::Apply(Spiral::Core::Description::Reader &r)
 {	
 	int version;
 	r.Value(version);

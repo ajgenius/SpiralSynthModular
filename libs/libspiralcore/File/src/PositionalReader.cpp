@@ -186,7 +186,7 @@ namespace
 
 	struct Decoder
 	{
-		typedef spiralcore::PositionalReader Reader;
+		typedef Spiral::Core::PositionalReader Reader;
 
 		struct Wire
 		{
@@ -527,7 +527,7 @@ namespace
 		}
 
 		// The gap-value log as a Description: between[0] value[0] ... between[n].
-		void Finish(spiralcore::Description &out) const
+		void Finish(Spiral::Core::Description &out) const
 		{
 			size_t last = origin;
 			for (size_t i = 0; i < tokens.size(); ++i)
@@ -541,7 +541,9 @@ namespace
 	};
 }
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 	PositionalReader::PositionalReader(const Value &contract, const Value *history):
 	    m_Contract(contract),
@@ -661,4 +663,5 @@ namespace spiralcore
 			return false;
 		}
 	}
+}
 }

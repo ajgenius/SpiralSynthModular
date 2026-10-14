@@ -6,7 +6,7 @@
 #include <cassert>
 #include <cstdio>
 #include <cmath>
-using namespace spiralcore;
+using namespace Spiral::Core;
 static int playback = -1, capture = -1;
 
 extern "C" int esd_play_stream(esd_format_t, int, const char *, const char *)

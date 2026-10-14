@@ -1214,7 +1214,7 @@ istream &operator>>(istream &s, Fl_Canvas &o)
 	return s;
 }
 
-spiralcore::Description &Describe(spiralcore::Description &d, Fl_Canvas &o)
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, Fl_Canvas &o)
 {
 	int version=0;
 	d.Value(-1).Separator(" ").Value(version).Separator(" ");
@@ -1239,7 +1239,7 @@ spiralcore::Description &Describe(spiralcore::Description &d, Fl_Canvas &o)
 
 ostream &operator<<(ostream &s, Fl_Canvas &o)
 {
-	spiralcore::Description d;
+	Spiral::Core::Description d;
 	Describe(d, o);
 	d.Write(s);
 	return s;

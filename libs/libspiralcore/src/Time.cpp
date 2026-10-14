@@ -18,7 +18,7 @@
 #include <math.h>
 #include "SpiralTime.h"
 
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 // got this and usec2ntp from http://www.openmash.org/lxr/source/rtp/ntp-time.h
 static const unsigned long GETTIMEOFDAY_TO_NTP_OFFSET = 2208988800UL;

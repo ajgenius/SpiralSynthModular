@@ -4,7 +4,7 @@
 #include <cmath>
 #include <cstdio>
 #include <unistd.h>
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 struct Probe
 {

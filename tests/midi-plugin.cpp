@@ -19,7 +19,7 @@
 #include <CoreMIDI/MIDIServices.h>
 #endif
 
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 
 static float Out(SpiralPlugin *plugin, unsigned port)

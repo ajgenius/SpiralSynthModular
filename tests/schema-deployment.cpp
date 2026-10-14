@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 	pthread_t thread;
 	assert(!pthread_create(&thread, NULL, Host::Run, &host));
 	host.Synth.LoadPatch(argv[2]);
-	spiralcore::Description result;
+	Spiral::Core::Description result;
 	Describe(result, host.Synth);
 	bool found = false;
 	for (size_t i = 0; i + 3 < result.Values().size(); ++i)

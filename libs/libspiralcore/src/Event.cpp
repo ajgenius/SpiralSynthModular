@@ -16,4 +16,4 @@
 
 #include "Event.h"
 
-using namespace spiralcore;
+using namespace Spiral::Core;

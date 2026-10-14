@@ -6,7 +6,7 @@
 
 struct Probe
 {
-	spiralcore::CoreAudioClient Client;
+	Spiral::Core::CoreAudioClient Client;
 	std::vector<float> Silence;
 	volatile unsigned Cycles, Stops, Errors;
 	Probe() : Silence(131072,0), Cycles(0), Stops(0), Errors(0) {}
@@ -27,7 +27,7 @@ struct Probe
 int main(int argc, char **argv)
 {
 	Probe probe;
-	spiralcore::AudioClientOptions options;
+	Spiral::Core::AudioClientOptions options;
 	options.InChannels=options.OutChannels=0;
 	assert(!probe.Client.Attach("default",options));
 	options.OutChannels=2;

@@ -171,9 +171,9 @@ static SpiralGUIType *CreateGUI(SpiralPlugin *plugin)
 	return new OutputPluginGUI(plugin->GetPluginInfo().Width, plugin->GetPluginInfo().Height, plugin, plugin->GetChannelHandler(), plugin->GetHostInfo());
 }
 
-const spiralcore::EditorClass &OutputPluginGUI::Class()
+const Spiral::Core::EditorClass &OutputPluginGUI::Class()
 {
-	static spiralcore::EditorClass editor;
+	static Spiral::Core::EditorClass editor;
 	editor.ForDevice = 0x0000;
 	editor.Toolkit = "fltk";
 	editor.Icon = SpiralIcon_xpm;

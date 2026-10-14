@@ -12,8 +12,8 @@ class UnavailablePlugin : public SpiralPlugin
 public:
 	explicit UnavailablePlugin(int pluginId);
 	virtual void Execute();
-	virtual void Describe(spiralcore::Description &d);
-	virtual void Apply(spiralcore::Description::Reader &r);
+	virtual void Describe(Spiral::Core::Description &d);
+	virtual void Apply(Spiral::Core::Description::Reader &r);
 
 	void SetSavedName(const std::string &name) { m_SavedName = name; }
 	std::string SavedName() const;
@@ -25,7 +25,7 @@ private:
 	void ApplyKnownLayout();
 
 	int m_PluginId;
-	spiralcore::Description m_State;
+	Spiral::Core::Description m_State;
 	std::string m_SavedName;
 };
 

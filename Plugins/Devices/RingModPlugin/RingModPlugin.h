@@ -29,8 +29,8 @@ public:
 	
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void Execute();
-	virtual void Describe(spiralcore::Description &d);
-	virtual void Apply(spiralcore::Description::Reader &r);
+	virtual void Describe(Spiral::Core::Description &d);
+	virtual void Apply(Spiral::Core::Description::Reader &r);
 			
 	float GetAmount()       { return m_Amount; }
 	
@@ -39,10 +39,10 @@ public:
 private:
 	float m_Amount;
 	
-	friend spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, RingModPlugin &o);
-	friend spiralcore::Description &Describe(spiralcore::Description &d, RingModPlugin &o);
+	friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, RingModPlugin &o);
+	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, RingModPlugin &o);
 };
-spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, RingModPlugin &o);
-spiralcore::Description &Describe(spiralcore::Description &d, RingModPlugin &o);
+Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, RingModPlugin &o);
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, RingModPlugin &o);
 
 #endif

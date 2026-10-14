@@ -23,7 +23,7 @@
 
 #include <stdio.h>
 #include "Sample.h"
-using spiralcore::Sample;
+using Spiral::Core::Sample;
 
 #include "config.h"
 

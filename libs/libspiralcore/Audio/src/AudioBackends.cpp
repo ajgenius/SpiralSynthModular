@@ -10,7 +10,7 @@
 #include "JackClient.h"
 #endif
 
-using namespace spiralcore;
+using namespace Spiral::Core;
 
 
 
@@ -21,9 +21,9 @@ static const BackendDescriptor JackBackend = { SPIRAL_AUDIO_PLUGIN_ABI, "audio",
 #endif
 
 // Registration order is the fallback preference when no backend is named.
-namespace spiralcore { void RegisterBuiltinAudioBackends(AudioBackendRegistry *registry); }
+namespace Spiral { namespace Core { void RegisterBuiltinAudioBackends(AudioBackendRegistry *registry); } }
 
-void spiralcore::RegisterBuiltinAudioBackends(AudioBackendRegistry *registry)
+void Spiral::Core::RegisterBuiltinAudioBackends(AudioBackendRegistry *registry)
 {
 #ifdef HAVE_JACK_CLIENT
 	registry->Register(&JackBackend);

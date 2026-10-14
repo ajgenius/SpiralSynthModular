@@ -121,13 +121,13 @@ void SwitchPlugin::ExecuteCommands()
 {
 }
 	
-void SwitchPlugin::Describe(spiralcore::Description &d) 
+void SwitchPlugin::Describe(Spiral::Core::Description &d) 
 {
 	d.Value(m_Version).Line();
 	d.Value(m_Mix).Separator(" ");
 }
 
-void SwitchPlugin::Apply(spiralcore::Description::Reader &r) 
+void SwitchPlugin::Apply(Spiral::Core::Description::Reader &r) 
 {
 	int version;
 	r.Value(version);

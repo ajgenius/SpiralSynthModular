@@ -11,7 +11,7 @@
 #include <pthread.h>
 #include "SpiralPlugin.h"
 #include "Sample.h"
-using spiralcore::Sample;
+using Spiral::Core::Sample;
 #include "AudioStream.h"
 
 class OutputAudioClient
@@ -33,9 +33,9 @@ public:
 	void SetNumChannels(int s) { m_Channels = s; }
 	float GetVolume() const { return m_Volume; }
 
-	void BeginPeriod(const spiralcore::AudioStamp &capture);
-	void CommitPeriod(const spiralcore::AudioStamp &playback);
-	spiralcore::AudioStream *Stream() { return &m_Stream; }
+	void BeginPeriod(const Spiral::Core::AudioStamp &capture);
+	void CommitPeriod(const Spiral::Core::AudioStamp &playback);
+	Spiral::Core::AudioStream *Stream() { return &m_Stream; }
 	unsigned Underruns() const { return m_Stream.Errors(); }
 
 	bool GetTransport(unsigned long &frame, bool &rolling) const
@@ -68,10 +68,10 @@ private:
 	bool SelectFirstAvailable();
 	void DestroyBackend();
 	bool AttachMode(unsigned int inChans, unsigned int outChans);
-	spiralcore::AudioClientOptions MakeOptions(unsigned int inChans, unsigned int outChans) const;
+	Spiral::Core::AudioClientOptions MakeOptions(unsigned int inChans, unsigned int outChans) const;
 
 	static OutputAudioClient *m_Singleton;
-	spiralcore::AudioClient *m_Client;
+	Spiral::Core::AudioClient *m_Client;
 	std::string m_ClientName;
 	std::string m_Destination;
 	float m_Volume;
@@ -79,7 +79,7 @@ private:
 	int m_Frames;
 	bool m_IsDead;
 	std::vector<float> m_Out, m_In;
-	spiralcore::AudioStream m_Stream;
+	Spiral::Core::AudioStream m_Stream;
 
 };
 

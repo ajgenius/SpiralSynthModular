@@ -209,20 +209,20 @@ void OscillatorPlugin::Execute()
 	}
 }
 
-void OscillatorPlugin::Describe(spiralcore::Description &d)
+void OscillatorPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ");
 	::Describe(d, *this);
 }
 
-void OscillatorPlugin::Apply(spiralcore::Description::Reader &r)
+void OscillatorPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int version;
 	r.Value(version);
 	::Apply(r, *this);
 }
 
-spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, OscillatorPlugin &o)
+Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, OscillatorPlugin &o)
 {
 	float dummy=0;
 	r.Value((int&)o.m_Type).Value(o.m_Octave).Value(o.m_FineFreq).Value(o.m_PulseWidth).Value(dummy)
@@ -230,7 +230,7 @@ spiralcore::Description::Reader &Apply(spiralcore::Description::Reader &r, Oscil
 	return r;
 }
 
-spiralcore::Description &Describe(spiralcore::Description &d, OscillatorPlugin &o)
+Spiral::Core::Description &Describe(Spiral::Core::Description &d, OscillatorPlugin &o)
 {
 	float dummy=0;
 	d.Value((int)o.m_Type).Separator(" ").Value(o.m_Octave).Separator(" ").Value(o.m_FineFreq).Separator(" ").Value(o.m_PulseWidth).Separator(" ")

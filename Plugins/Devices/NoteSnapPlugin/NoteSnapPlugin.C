@@ -147,7 +147,7 @@ void NoteSnapPlugin::ExecuteCommands()
 	}
 }
 	
-void NoteSnapPlugin::Describe(spiralcore::Description &d) 
+void NoteSnapPlugin::Describe(Spiral::Core::Description &d) 
 {
 	d.Value(m_Version).Line();
 	for (int n=0; n<12; n++)
@@ -157,7 +157,7 @@ void NoteSnapPlugin::Describe(spiralcore::Description &d)
 
 }
 
-void NoteSnapPlugin::Apply(spiralcore::Description::Reader &r) 
+void NoteSnapPlugin::Apply(Spiral::Core::Description::Reader &r) 
 {
 // Pre-version 1 - no state
 	if (!r.More()) {

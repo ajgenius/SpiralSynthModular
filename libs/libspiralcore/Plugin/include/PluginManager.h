@@ -22,7 +22,9 @@
 #include <string>
 #include <vector>
 
-namespace spiralcore
+namespace Spiral
+{
+namespace Core
 {
 
 /* A plugin kind says what to look for under the plugin root and what to
@@ -42,6 +44,11 @@ public:
 	virtual const char *Subdirectory() const = 0;
 	virtual const char *Suffix() const = 0;
 	virtual const char *EntrySymbol() const = 0;
+
+	// Which file names under Subdirectory() are this kind's modules: by
+	// default those ending in Suffix() plus the module extension. A kind
+	// with host-dependent variants widens this.
+	virtual bool Claims(const std::string &file) const;
 
 	// The resolved entry; return true to keep the module loaded.
 	virtual bool Accept(void *entry, const std::string &path) = 0;
@@ -84,6 +91,7 @@ private:
 	static PluginManager *m_Singleton;
 };
 
+}
 }
 
 #endif
