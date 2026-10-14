@@ -20,6 +20,7 @@
 #include "NoteTable.h"
 #include "RiffWav.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 using namespace std;
 using namespace Spiral::Core;
@@ -385,6 +386,38 @@ void PoshSamplerPlugin::Describe(Spiral::Core::Description &d) {
      }
 }
 
+void PoshSamplerPlugin::Migrate(Spiral::Core::Description &d) {
+     static const long SAMPLER_ID = 16;
+     if (d.SavedAs() != SAMPLER_ID)
+        return;
+
+     const vector<string> v = d.Values();
+     int version = v.empty() ? 0 : atoi(v[0].c_str());
+     size_t perSample = (version > 1) ? 5 : 4;
+     Description posh;
+     if (v.size() == 1 + NUM_SAMPLES * perSample) {
+        posh.Value(2);
+        for (int n = 0; n < NUM_SAMPLES; n++) {
+            const string *slot = &v[1 + n * perSample];
+            string path = slot[perSample == 5 ? 3 : 2];
+            const string &note = slot[perSample - 1];
+            if (path == "None")
+               path = "";
+            posh.Value(slot[0])
+                .Value(slot[1])
+                .Value(0).Value(0)
+                .Value(note)
+                .Value(0)
+                .Value(-1)
+                .Value(0).Value(0).Value(0)
+                .Value(note)
+                .Value((int)path.size())
+                .Value(path);
+        }
+     }
+     d = posh;
+}
+
 void PoshSamplerPlugin::Apply(Spiral::Core::Description::Reader &r) {
      int version;
      r.Value(version);
@@ -404,7 +437,13 @@ void PoshSamplerPlugin::Apply(Spiral::Core::Description::Reader &r) {
             int size;
             std::string Buf;
             r.Value(size);
-            r.Value(Buf);   // the counted bytes, one value, unused
+            r.Value(Buf);
+            if (size > 0 && Buf.size() == (size_t)size) {
+               long loopEnd = SampleSigned (n, SLOT_LOOPEND);
+               LoadSample (n, Buf);
+               if (loopEnd > 0 && loopEnd < m_SampleVec[n]->GetLength())
+                  SampleSigned (n, SLOT_LOOPEND) = loopEnd;
+            }
          }
          if (version > 3) r.Value(SlotBool (n, SLOT_RETRIG));
          else SampleBool (n, SLOT_RETRIG) = true;

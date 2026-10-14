@@ -125,6 +125,12 @@ static Spiral::Core::PositionalReader *ContractReader()
 	return reader.get();
 }
 
+static int LoadAs(int PluginID)
+{
+	Spiral::Core::PositionalReader *reader = ContractReader();
+	return reader ? (int)reader->LoadAs(PluginID) : PluginID;
+}
+
 // The device line of a patch: the device's state, as the contract finds it
 // in the file's text, applied to the plugin; the stream carries on after
 // the state. False when the state cannot be told apart from what follows
@@ -1528,7 +1534,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 		}
 		else
 		{
-			DeviceWin* temp = NewDeviceWin(PluginID, x, y);
+			DeviceWin* temp = NewDeviceWin(LoadAs(PluginID), x, y);
 			if (temp)
 			{
 				int oldID=ID;

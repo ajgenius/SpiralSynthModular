@@ -72,6 +72,8 @@ namespace Core
 		bool ReadState(long pluginID, const std::string &text, size_t at,
 		               Description &out, size_t &consumed, std::string &error);
 
+		long LoadAs(long pluginID) const;
+
 		const std::string &Status() const { return m_Status; }
 		const std::vector<Device> &Devices() const { return m_Devices; }
 		const std::vector<Diagnostic> &Diagnostics() const { return m_Diagnostics; }

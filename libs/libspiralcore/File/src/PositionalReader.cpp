@@ -595,6 +595,24 @@ namespace Core
 	{
 	}
 
+	long PositionalReader::LoadAs(long pluginID) const
+	{
+		const Value *plugins = m_History ? m_History->Get("Plugins") : NULL;
+		if (!plugins || plugins->GetType() != Value::Object)
+			return pluginID;
+
+		std::vector<std::string> names = plugins->Keys();
+		for (size_t i = 0; i < names.size(); ++i)
+		{
+			const Value *id = plugins->Get(names[i])->Get("PluginID");
+			const Value *as = plugins->Get(names[i])->Get("LoadAs");
+			long number, load;
+			if (id && as && Integer(id->Text(), number) && number == pluginID && Integer(as->Text(), load))
+				return load;
+		}
+		return pluginID;
+	}
+
 	bool PositionalReader::Read(const std::string &text, Description &out, std::string &error)
 	{
 		out = Description();
@@ -696,6 +714,8 @@ namespace Core
 
 			out = Description();
 			decoder.Finish(out);
+			if (LoadAs(pluginID) != pluginID)
+				out.SavedAs(pluginID);
 			consumed = decoder.at - at;
 			error.clear();
 			return true;

@@ -4430,6 +4430,7 @@
     },
     "Sampler": {
       "PluginID": 16,
+      "LoadAs": 32,
       "Revisions": {
         "76873523ce795435e17cdee51599dc610cc46b74@v1": {
           "Kind": "Legacy",

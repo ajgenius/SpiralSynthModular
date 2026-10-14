@@ -9,6 +9,7 @@ namespace Spiral
 namespace Core
 {
 	Description::Description()
+		: m_SavedAs(-1)
 	{
 		m_Between.push_back("");
 	}

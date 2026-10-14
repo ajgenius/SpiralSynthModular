@@ -59,6 +59,8 @@ namespace Core
 		const std::vector<std::string> &Between() const { return m_Between; }
 
 		int Version() const;
+		long SavedAs() const { return m_SavedAs; }
+		void SavedAs(long pluginID) { m_SavedAs = pluginID; }
 		int Field(size_t index, const std::string &key) const;
 		template <class T> void SetValue(size_t index, const T &v)
 		{
@@ -140,6 +142,7 @@ namespace Core
 
 		std::vector<std::string> m_Values;
 		std::vector<std::string> m_Between;   // ! always m_Values.size() + 1 entries
+		long m_SavedAs;
 	};
 }
 }

@@ -41,6 +41,7 @@ class PoshSamplerPlugin : public Spiral::Core::Device {
       virtual void ExecuteCommands();
       virtual void Describe(Spiral::Core::Description &d);
       virtual void Apply(Spiral::Core::Description::Reader &r);
+      virtual void Migrate(Spiral::Core::Description &d);
       virtual bool SaveExternalFiles (const std::string &Dir);
       virtual void LoadExternalFiles (const std::string &Dir, int withID=-1);
       enum GUICommands {NONE, LOAD, SAVE, SETVOL, SETPITCH, SETLOOP, SETPING, SETNOTE, SETOCT,
