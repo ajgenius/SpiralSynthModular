@@ -22,6 +22,10 @@
 #include <stdio.h>
 #include <iostream>
 #include "DeviceClassRegistry.h"
+#include "PassthroughPlugin.h"
+#include <algorithm>
+#include <dirent.h>
+#include <unistd.h>
 
 using namespace std;
 using namespace Spiral::Core;
@@ -63,7 +67,37 @@ void DeviceClassRegistry::PackUpAndGoHome()
 
 unsigned DeviceClassRegistry::LoadModules(const string &root)
 {
-	return PluginManager::Get()->Load(*this, root);
+	unsigned count = LoadBuiltins(root);
+	return count + PluginManager::Get()->Load(*this, root);
+}
+
+unsigned DeviceClassRegistry::LoadBuiltins(const string &root)
+{
+	string base = root;
+	if (!base.empty() && base[base.size() - 1] != '/')
+		base += '/';
+	base += Subdirectory();
+	DIR *dir = opendir(base.c_str());
+	if (!dir)
+		return 0;
+	vector<string> names;
+	while (struct dirent *entry = readdir(dir))
+		if (entry->d_name[0] != '.')
+			names.push_back(entry->d_name);
+	closedir(dir);
+	sort(names.begin(), names.end());
+
+	unsigned count = 0;
+	for (size_t i = 0; i < names.size(); ++i)
+	{
+		const string manifest = base + "/" + names[i] + "/info.json";
+		if (access(manifest.c_str(), R_OK) != 0)
+			continue;
+		DeviceClass device;
+		if (PassthroughPlugin::ReadClass(manifest, device) && Register(device))
+			++count;
+	}
+	return count;
 }
 
 bool DeviceClassRegistry::Accept(void *entry, const string &path)

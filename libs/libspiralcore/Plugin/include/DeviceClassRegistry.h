@@ -92,6 +92,7 @@ public:
 	virtual void        Release(void *entry, const std::string &path);
 
 	unsigned            LoadModules(const std::string &root);
+	unsigned            LoadBuiltins(const std::string &root);
 	// The first registration of an ID keeps its place.
 	bool                Register(const DeviceClass &device);
 	const DeviceClass*  Find(int ID) const;

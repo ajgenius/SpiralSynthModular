@@ -1,12 +1,7 @@
-AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir)
-EXTRA_DIST = SpiralIcon.xpm
 plugindir = @PLUGINDIR@/dsp/ScopePlugin
-dist_plugin_DATA = info.json
-plugin_LTLIBRARIES = ScopePlugin_DSP.la
-ScopePlugin_DSP_la_SOURCES = ScopePlugin.h ScopePlugin.C
-ScopePlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
-ScopePlugin_DSP_la_LIBADD = $(top_builddir)/libs/libspiralcore/libspiralcore.la -lm
+dist_plugin_DATA = info.json SpiralIcon.xpm
+EXTRA_DIST =
 install-data-hook:
-	-rm -f "$(DESTDIR)$(plugindir)/ScopePlugin_DSP.la"
-uninstall-local:
-	rm -f "$(DESTDIR)$(plugindir)/ScopePlugin_DSP.so"
+	-rm -f "$(DESTDIR)$(plugindir)/ScopePlugin_DSP.so"
+
+include $(top_srcdir)/Plugins/Devices/default-ui.am

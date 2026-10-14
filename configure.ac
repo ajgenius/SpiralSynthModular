@@ -619,7 +619,7 @@ dnl AC_CHECK_LIB(png, png_get_copyright)
 AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
 dnl The LADSPA device is built in, but its editor is still a module.
-PANEL_ONLY="SampleHoldPlugin ComplexEnvelopePlugin MatrixPlugin \
+PANEL_ONLY="SampleHoldPlugin ScopePlugin ComplexEnvelopePlugin MatrixPlugin \
     AmpPlugin AnotherFilterPlugin BeatMatchPlugin CounterPlugin \
     DelayPlugin EchoPlugin EnvelopePlugin FilterPlugin FlipflopPlugin \
     FormantFilterPlugin LogicPlugin MasherPlugin MixSwitchPlugin \
@@ -682,7 +682,6 @@ Plugins/Devices/Makefile
 Plugins/Panels/Makefile
 third-party/swh-plugins/Makefile
 Plugins/Panels/LADSPAPlugin/Makefile
-Plugins/Panels/ScopePlugin/Makefile
 Plugins/Devices/AmpPlugin/Makefile
 Plugins/Devices/AnotherFilterPlugin/Makefile
 Plugins/Devices/BeatMatchPlugin/Makefile

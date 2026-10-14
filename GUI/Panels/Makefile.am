@@ -59,6 +59,8 @@ libSpiralPanels_la_SOURCES = \
 	Controls/PanelRadioButton.h \
 	Controls/PanelSlider.cpp \
 	Controls/PanelSlider.h \
+	Scopes/PanelScope.cpp \
+	Scopes/PanelScope.h \
 	Controls/PanelSpinner.cpp \
 	Spiral/PanelMatrixGrid.cpp \
 	Spiral/PanelMatrixGrid.h \
@@ -68,7 +70,9 @@ libSpiralPanels_la_SOURCES = \
 	Spiral/PanelValueTable.cpp \
 	Spiral/PanelValueTable.h \
 	Controls/PanelVirtualScrollArea.cpp \
-	Controls/PanelVirtualScrollArea.h
+	Controls/PanelVirtualScrollArea.h \
+	Scopes/ScopeView.cpp \
+	Scopes/ScopeView.h
 
 libSpiralPanels_la_LDFLAGS = -shared -version-info $(LT_VERSION_INFO)
 libSpiralPanels_la_LIBADD = \
