@@ -67,6 +67,7 @@ EXTRA_DIST += Plugin/include/LADSPAInfo.h Plugin/src/LADSPAInfo.cpp \
 	Plugin/include/LADSPAPlugin.h Plugin/src/LADSPAPlugin.cpp
 endif
 EXTRA_DIST += Plugin/include/LADSPAIcon.xpm
+libspiralcore_la_SOURCES += Plugin/include/PluginManifest.h Plugin/src/PluginManifest.cpp
 libspiralcore_la_SOURCES += Plugin/include/BackendModule.h Audio/include/AudioBackend.h Audio/src/AudioBackend.cpp Audio/src/AudioBackends.cpp Audio/include/DummyClient.h Audio/src/DummyClient.cpp
 libspiralcore_la_SOURCES += Midi/include/MidiBackend.h Midi/src/MidiBackend.cpp Midi/include/NativeMidi.h Midi/src/NativeMidi.cpp include/ThreadCompatibility.h include/Compatibility.h
 check_PROGRAMS += midi-backend-test native-midi-test midi-device-test
@@ -106,7 +107,7 @@ stranger_Probe_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
 # probe/variant_Native.so (the probe again, under a host-tagged name)
 # The plugin manifest the host reads before opening a module.
 check_PROGRAMS += manifest-test
-manifest_test_SOURCES = Plugin/tests/manifest.cpp Plugin/include/PluginManifest.h Plugin/src/PluginManifest.cpp
+manifest_test_SOURCES = Plugin/tests/manifest.cpp
 manifest_test_LDADD = libspiralcore.la
 
 plugin-manager-root: $(check_LTLIBRARIES)
@@ -213,4 +214,6 @@ libspiralcore_la_SOURCES += Audio/include/AudioTimeline.h Audio/src/AudioTimelin
 check_PROGRAMS += audio-coordinator-test
 audio_coordinator_test_SOURCES = Audio/tests/audio-coordinator.cpp
 audio_coordinator_test_LDADD = libspiralcore.la
+
+libspiralcore_la_SOURCES += include/AtomicTripleBuffer.h include/SampleFeed.h src/SampleFeed.cpp
 libspiralcore_la_SOURCES += include/BreakpointCurve.h

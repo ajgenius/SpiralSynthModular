@@ -42,10 +42,18 @@ struct EditorClass
 	const char **Icon;
 	SpiralGUIType *(*Create)(SpiralPlugin *);
 	std::string Module;
+	std::string Document;
+	SpiralGUIType *(*CreateFromDocument)(SpiralPlugin *, const std::string &);
+
+	EditorClass(): ForDevice(-1), Icon(NULL), Create(NULL), CreateFromDocument(NULL) {}
 
 	SpiralGUIType *CreateEditor(SpiralPlugin *plugin) const
 	{
-		return (Create && plugin) ? Create(plugin) : NULL;
+		if (!plugin)
+			return NULL;
+		if (CreateFromDocument && !Document.empty())
+			return CreateFromDocument(plugin, Document);
+		return Create ? Create(plugin) : NULL;
 	}
 };
 

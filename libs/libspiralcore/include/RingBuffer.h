@@ -30,6 +30,7 @@ public:
 	bool Write(char *src, unsigned int size);
 	bool Read(char *dest, unsigned int size);
 	void Dump();
+	bool Empty() { return ReadSpace()==0; }
 
 private:
 	unsigned int WriteSpace();

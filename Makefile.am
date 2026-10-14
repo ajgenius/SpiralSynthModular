@@ -5,6 +5,7 @@ AM_CPPFLAGS =                                              \
                 $(FLTK_CXXFLAGS)                        \
                 $(SPIRALGUI_CFLAGS)           \
                 $(SPIRALCORE_CFLAGS)                    \
+                $(SPIRALPANELS_CFLAGS)                  \
                 -I$(top_srcdir)/libs/libSpumoni/include
 # The file contract: the host hands each device its own state under it.
 AM_CPPFLAGS += -DSSM_INSTALLED_SCHEMA_DIR='"$(pkgdatadir)/schemas"'
@@ -13,6 +14,7 @@ AM_CPPFLAGS += -DSPIRALCORE_SCHEMA_DIR='"$(abs_top_srcdir)/libs/libspiralcore/Fi
 SpiralSynthModular_LDADD = 							\
 	$(FLTK_LIBS) $(MIDI_LIBS)					\
 	-lm				\
+	$(top_builddir)/GUI/Panels/libSpiralPanels.la \
 	$(top_builddir)/GUI/Widgets/libSpiralWidgets.la \
 	$(top_builddir)/GUI/Controls/libSpiralControls.la \
                 $(top_builddir)/libs/libspiralcore/libspiralcore.la
@@ -240,3 +242,4 @@ module_ports_test_SOURCES = tests/module-ports.cpp SpiralInfo.C
 module_ports_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir) -I$(srcdir)/Plugins/Devices/MixerPlugin -I$(srcdir)/Plugins/Devices/JackPlugin
 module_ports_test_LDADD = $(SpiralSynthModular_LDADD) $(JACK_LIBS) -ldl
 endif
+

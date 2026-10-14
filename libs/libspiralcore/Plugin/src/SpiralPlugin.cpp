@@ -17,6 +17,7 @@
 */ 
 
 #include "SpiralPlugin.h"
+#include "SampleFeed.h"
 
 using namespace std;
 
@@ -35,6 +36,8 @@ SpiralPlugin::SpiralPlugin()
 	m_IsTerminal=false;
 	m_IsDead=false;
 	m_AudioCH = new ChannelHandler;
+	m_FeedCount=0;
+	m_FeedUsers=0;
 }
 
 SpiralPlugin::~SpiralPlugin()
@@ -42,6 +45,8 @@ SpiralPlugin::~SpiralPlugin()
 	RemoveAllOutputs();	
 	RemoveAllInputs();	
 	delete m_AudioCH;
+	for (int n=0; n<m_FeedCount; n++)
+		delete m_Feeds[n].Feed;
 }
 
 bool SpiralPlugin::Kill() 
@@ -187,4 +192,59 @@ void SpiralPlugin::SetOutPortType(PluginInfo &pinfo, int port, Sample::SampleTyp
 {
     pinfo.PortTypes[port+m_PluginInfo.NumInputs] = type;
     GetOutputBuf(port)->setSampleType(type);
+}
+
+Spiral::Core::SampleFeed *SpiralPlugin::RequestFeed(bool output, int port)
+{
+	for (int n=0; n<m_FeedCount; n++)
+	{
+		if (m_Feeds[n].Output==output && m_Feeds[n].Port==port)
+		{
+			__sync_fetch_and_add(&m_Feeds[n].Users, 1);
+			__sync_fetch_and_add(&m_FeedUsers, 1);
+			return m_Feeds[n].Feed;
+		}
+	}
+	if (m_FeedCount>=MaxFeeds || port<0) return NULL;
+
+	FeedSlot &slot=m_Feeds[m_FeedCount];
+	slot.Output=output;
+	slot.Port=port;
+	slot.Feed=new Spiral::Core::SampleFeed;
+	slot.Users=1;
+	__sync_synchronize();
+	__sync_fetch_and_add(&m_FeedCount, 1);
+	__sync_fetch_and_add(&m_FeedUsers, 1);
+	return slot.Feed;
+}
+
+void SpiralPlugin::ReleaseFeed(Spiral::Core::SampleFeed *feed)
+{
+	for (int n=0; n<m_FeedCount; n++)
+	{
+		if (feed && m_Feeds[n].Feed==feed && m_Feeds[n].Users>0)
+		{
+			__sync_fetch_and_sub(&m_Feeds[n].Users, 1);
+			__sync_fetch_and_sub(&m_FeedUsers, 1);
+			return;
+		}
+	}
+}
+
+void SpiralPlugin::PublishHeldFeeds()
+{
+	const int count=m_FeedCount;
+	__sync_synchronize();
+	for (int n=0; n<count; n++)
+	{
+		const FeedSlot &slot=m_Feeds[n];
+		if (!slot.Users) continue;
+		const Sample *block=NULL;
+		if (slot.Output)
+		{
+			if (slot.Port<(int)m_Output.size()) block=m_Output[slot.Port];
+		}
+		else if (slot.Port<(int)m_Input.size()) block=m_Input[slot.Port];
+		if (block) slot.Feed->Publish(block->GetBuffer(), block->GetLength());
+	}
 }

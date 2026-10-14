@@ -42,6 +42,7 @@
 #include "Midi.h"
 #include "DeviceClassRegistry.h"
 #include "EditorClassRegistry.h"
+#include "PanelEditor.h"
 #include "OutputPlugin.h"
 #include "SubPatchDevice.h"
 #include "OutputPluginGUI.h"
@@ -426,6 +427,7 @@ void SynthModular::RunDevice(int id)
 		{
 			di->second->m_Device->Execute();
 			di->second->m_Device->StampOutputs(m_Info.FRAME);
+			di->second->m_Device->PublishFeeds();
 
 			// If this is an audio device see if we need to ProcessAudio here
 			if (di->second->m_Device->IsAudioDriver())
@@ -854,13 +856,14 @@ void SynthModular::LoadPlugins (string pluginPath) {
      // module to load, it pairs by ID when a device is made.
      Spiral::Core::DeviceClassRegistry::Get()->LoadModules(PluginRoot);
      Spiral::Core::EditorClassRegistry::Get()->LoadModules(PluginRoot);
+     SpiralPanels::PanelEditor::RegisterDocuments(PluginRoot);
      const vector<Spiral::Core::DeviceClass*> &Devices = Spiral::Core::DeviceClassRegistry::Get()->Classes();
      for (vector<Spiral::Core::DeviceClass*>::const_iterator i=Devices.begin(); i!=Devices.end(); i++) {
          const Spiral::Core::DeviceClass *info = *i;
          int ID = info->ID;
          // A subpatch is made by grouping, not from the toolbar.
          if (ID == SubPatchDevice::Class().ID) continue;
-         if (SpiralInfo::USEPLUGINLIST && !ListedModule(info->Module)) continue;
+         if (SpiralInfo::USEPLUGINLIST && !ListedModule(info->Module.empty() ? info->Directory() : info->Module)) continue;
          {
             #ifdef DEBUG_PLUGINS
             cerr << ID << " = Plugin [" << info->Module << "]" << endl;
@@ -1139,6 +1142,8 @@ DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 	// A device with no editor gets a bare device window; a missing plugin
 	// gets no editor and no icon.
 	const Spiral::Core::EditorClass *Editor = missing ? NULL : Spiral::Core::EditorClassRegistry::Get()->Find(n);
+	if (Editor && getenv("SSM_PREFER_PANELS") && Spiral::Core::EditorClassRegistry::Get()->Find(n, "panel"))
+		Editor = Spiral::Core::EditorClassRegistry::Get()->Find(n, "panel");
 	SpiralGUIType *temp = Editor ? Editor->CreateEditor(nlw->m_Device) : NULL;
 	if (temp) temp->end();
 	Fl_Pixmap *Pix      = (!missing && Plugin) ? new Fl_Pixmap(Plugin->Icon) : NULL;

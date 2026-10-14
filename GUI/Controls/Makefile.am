@@ -8,6 +8,8 @@ lib_LTLIBRARIES = libSpiralControls.la
 libSpiralControls_la_SOURCES = \
 	Fl_DragBar.H \
 	Fl_DragBar.cxx \
+	Fl_VirtualScrollArea.H \
+	Fl_VirtualScrollArea.cxx \
 	Fl_Knob.H \
 	Fl_Knob.cxx \
 	Fl_LED_Button.H \
@@ -20,7 +22,9 @@ libSpiralControls_la_SOURCES = \
 	Fl_Loop.C \
 	Fl_Trigger.h \
 	Fl_Trigger.C \
+	Fl_WaveDisplay.H \
 	Fl_DamageArea.H \
+	Fl_WaveDisplay.cxx \
 	Fl_EventMap.h \
 	Fl_EventMap.C \
 	Fl_SEvent.h \

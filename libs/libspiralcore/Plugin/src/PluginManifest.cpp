@@ -3,6 +3,7 @@
 #include "PluginManifest.h"
 #include "JSON.h"
 #include <climits>
+#include <cstdlib>
 typedef Spumoni::JSON JSONValue;
 
 namespace {
@@ -18,6 +19,66 @@ bool basename(const std::string &name) {
 	return !name.empty() && name != "." && name != ".." &&
 	       name.find('/') == std::string::npos && name.find('\\') == std::string::npos;
 }
+bool number(const JSONValue *v, double &out) {
+	if (!v || v->GetType() != JSONValue::Number)
+		return false;
+	out = std::strtod(v->Text().c_str(), NULL);
+	return true;
+}
+bool number(const JSONValue *object, const char *key, double &out) {
+	const JSONValue *v = object ? object->Get(key) : NULL;
+	if (!v)
+		return true;
+	if (v->GetType() == JSONValue::Boolean) {
+		out = v->AsBool() ? 1 : 0;
+		return true;
+	}
+	return number(v, out);
+}
+}
+
+static bool passthrough(const JSONValue *root, PluginManifest &m)
+{
+	const JSONValue *ports = root->Get("ports"), *properties = root->Get("properties");
+	if (!ports || ports->GetType() != JSONValue::Array || ports->Size() == 0)
+		return false;
+	for (size_t i = 0; i < ports->Size(); ++i) {
+		PluginManifest::Port port;
+		const JSONValue *p = ports->At(i);
+		if (!text(p, "input", port.input) || !text(p, "output", port.output))
+			return false;
+		if (p->Get("shadow") && (!text(p, "shadow", port.shadow) || port.shadow != "snapshot"))
+			return false;
+		m.ports.push_back(port);
+	}
+	if (properties && properties->GetType() != JSONValue::Array)
+		return false;
+	for (size_t i = 0; properties && i < properties->Size(); ++i) {
+		PluginManifest::Property property;
+		const JSONValue *p = properties->At(i);
+		if (!text(p, "name", property.name) || !text(p, "type", property.type) ||
+		    (property.type != "toggle" && property.type != "float" && property.type != "unsigned"))
+			return false;
+		text(p, "hint", property.hint);
+		if (property.type == "toggle")
+			property.max = 1;
+		if (!number(p, "default", property.value) || !number(p, "min", property.min) ||
+		    !number(p, "max", property.max) || !number(p, "step", property.step))
+			return false;
+		m.properties.push_back(property);
+	}
+	const JSONValue *size = root->Get("size");
+	double w = 0, h = 0;
+	if (size && (size->GetType() != JSONValue::Array || size->Size() != 2 ||
+		     !number(size->At(0), w) || !number(size->At(1), h)))
+		return false;
+	double version = 0;
+	if (!number(root, "state_version", version) || version < 0 || version != static_cast<int>(version))
+		return false;
+	m.stateVersion = static_cast<int>(version);
+	m.width = static_cast<int>(w);
+	m.height = static_cast<int>(h);
+	return true;
 }
 
 bool PluginManifest::Read(const std::string &path, std::string &error)
@@ -61,8 +122,11 @@ bool PluginManifest::Read(const std::string &path, std::string &error)
 		ok = ok && gui && gui->GetType() == JSONValue::Object && text(gui, "name", guiName) &&
 		     text(gui, "abi", guiABI) && text(gui, "version", guiVersion);
 		ok = ok && (registration == "builtin" || registration == "module" || registration == "reference");
-	} else
-		ok = ok && (registration == "module" || reference) && !root->Get("gui_stack");
+	} else {
+		ok = ok && (registration == "module" || registration == "builtin" || reference) && !root->Get("gui_stack");
+		if (ok && registration == "builtin")
+			ok = text(root, "builtin", builtin) && builtin == "passthrough" && passthrough(root, *this);
+	}
 	if (registration == "module")
 		ok = ok && text(root, "module", module) && basename(module);
 	else

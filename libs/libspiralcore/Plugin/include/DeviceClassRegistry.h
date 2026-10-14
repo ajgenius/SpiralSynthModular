@@ -51,10 +51,24 @@ struct DeviceClass
 	const char **Icon;
 	SpiralPlugin *(*Create)(void);
 	std::string Module;
+	SpiralPlugin *(*Build)(const DeviceClass &device);
+	std::string Manifest;
+	bool PanelGenerated;
+
+	DeviceClass() : ID(-1), Icon(NULL), Create(NULL), Build(NULL), PanelGenerated(false) {}
 
 	SpiralPlugin *CreateInstance() const
 	{
+		if (Build)
+			return Build(*this);
 		return (Create) ? Create() : NULL;
+	}
+
+	std::string Directory() const
+	{
+		const std::string &file = Module.empty() ? Manifest : Module;
+		const std::string::size_type slash = file.rfind('/');
+		return (slash == std::string::npos) ? std::string() : file.substr(0, slash);
 	}
 };
 

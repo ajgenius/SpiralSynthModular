@@ -8,7 +8,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT([SpiralSynthModular], [0.3.2])
 AC_CONFIG_SRCDIR([SpiralSynthModular.C])
 
-AC_DEFINE([SSM_HOST_ABI], ["ssm-fltk-audio-7"], [SSM plugin host ABI])
+AC_DEFINE([SSM_HOST_ABI], ["ssm-fltk-audio-9"], [SSM plugin host ABI])
 
 AM_INIT_AUTOMAKE
 
@@ -159,6 +159,8 @@ AC_SUBST([SPIRALCORE_CFLAGS])
 dnl Where editors and the host find the toolkit-side headers; groups under
 dnl GUI/ add their directory here, nowhere else.
 SPIRALGUI_CFLAGS='-I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/GUI/Controls'
+SPIRALPANELS_CFLAGS='-I$(top_srcdir)/GUI/Panels -I$(top_srcdir)/GUI/Panels/Controls -I$(top_srcdir)/GUI/Panels/Scopes -I$(top_srcdir)/GUI/Panels/Spiral'
+AC_SUBST([SPIRALPANELS_CFLAGS])
 AC_SUBST([SPIRALGUI_CFLAGS])
 
 AC_ARG_ENABLE([pipewire],
@@ -648,6 +650,7 @@ Makefile
 GUI/Makefile
 GUI/Controls/Makefile
 GUI/Widgets/Makefile
+GUI/Panels/Makefile
 libs/libspiralcore/Makefile
 Plugins/Makefile
 Plugins/Audio/Makefile

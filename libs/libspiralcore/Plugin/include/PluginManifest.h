@@ -9,7 +9,20 @@ struct PluginManifest {
 	std::string name, type, category, version, hostVersion, hostABI;
 	std::string module, registration, guiName, guiABI, guiVersion;
 	std::vector<std::string> authors;
-	PluginManifest() : id(-1) {}
+	std::string builtin;
+	struct Port {
+		std::string input, output, shadow;
+	};
+	struct Property {
+		std::string name, type, hint;
+		double value, min, max, step;
+		Property() : value(0), min(0), max(1), step(0) {}
+	};
+	std::vector<Port> ports;
+	std::vector<Property> properties;
+	int width, height;
+	int stateVersion;
+	PluginManifest() : id(-1), width(0), height(0), stateVersion(0) {}
 	bool Read(const std::string &path, std::string &error);
 	bool Compatible(const std::string &hostVersion, const std::string &hostABI,
 			const std::string &guiName, const std::string &guiABI,

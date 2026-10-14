@@ -33,6 +33,14 @@ using Spiral::Core::feq;
 #include "Description.h"
 using Spiral::Core::ChannelHandler;
 #include "DeviceClassRegistry.h"
+
+namespace Spiral
+{
+namespace Core
+{
+	class SampleFeed;
+}
+}
 using Spiral::Core::SPIRAL_PLUGIN_TYPE_DEVICE;
 using Spiral::Core::SPIRAL_PLUGIN_TYPE_EDITOR;
 using Spiral::Core::SPIRAL_PLUGIN_TYPE_PAIRED;
@@ -123,6 +131,9 @@ public:
 	virtual void	    LoadExternalFiles(const std::string &Dir, int withID=-1) {}
 	virtual void        RestoreUnavailablePorts(int inputs, int outputs) {}
 
+	virtual bool        GeneratePanel(const std::string &Directory, std::string &Document) { return false; }
+	virtual unsigned    PanelGeneration() { return 0; }
+
 	const PluginInfo& GetPluginInfo() const { return m_PluginInfo; }
 	const HostInfo*     GetHostInfo() { return m_HostInfo; }
 	bool                GetOutput(unsigned int n, Sample **s);
@@ -147,6 +158,9 @@ public:
 	bool IsDead() { return m_IsDead; }
 	 
 	ChannelHandler *GetChannelHandler() { return m_AudioCH; }
+	Spiral::Core::SampleFeed *RequestFeed(bool output, int port);
+	void ReleaseFeed(Spiral::Core::SampleFeed *feed);
+	void PublishFeeds() { if (m_FeedUsers) PublishHeldFeeds(); }
 
 	virtual bool IsAudioDriver() { return false; }
 protected:
@@ -204,6 +218,19 @@ private:
 
 	void (*UpdateInfo)(int n,void *);	
 	int    m_HostID;	
+
+	struct FeedSlot
+	{
+		bool Output;
+		int Port;
+		Spiral::Core::SampleFeed *Feed;
+		volatile int Users;
+	};
+	static const int MaxFeeds = 4;
+	FeedSlot m_Feeds[MaxFeeds];
+	volatile int m_FeedCount;
+	volatile int m_FeedUsers;
+	void PublishHeldFeeds();
 };
 
 #endif

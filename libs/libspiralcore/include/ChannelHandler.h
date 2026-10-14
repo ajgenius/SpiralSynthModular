@@ -22,6 +22,7 @@
 #include <map>
 #include <vector>
 #include <iostream>
+#include "CommandRingBuffer.h"
 
 namespace Spiral
 {
@@ -119,10 +120,16 @@ public:
 	// delays for one or more updates. use for syncing commands
 	void          Wait();
 
+	void          RegisterCommand(const std::string &name, char command, const std::vector<std::string> &channels, const std::string &types = "");
+	bool          CommandArguments(const std::string &name, std::vector<std::string> &channels, std::string *types = NULL) const;
+	bool          SendCommand(const CommandRingBuffer::Command &command);
+	bool          CommandsQueued() { return m_Commands && !m_Commands->Empty(); }
+
 	int           ChannelSize(const std::string &ID, Type *t=NULL);
 	void          ChannelNames(std::vector<std::string> &names) const;
 	bool          Peek(const std::string &ID, int offset, void *dest, int size);
 	bool          SetDataAt(const std::string &ID, int offset, const void *src, int size);
+	unsigned long Changes() const { return m_Changes; }
 	
 private:
 
@@ -143,9 +150,21 @@ private:
     // The same channels in a row, for the update each period to walk.
     std::vector<std::map<std::string,Channel*>::iterator> m_Order;
 	char m_Command[2];
+
+	struct NamedCommand
+	{
+		char Command;
+		std::vector<std::string> Channels;
+		std::string Types;
+	};
+	std::map<std::string,NamedCommand> m_NamedCommands;
+	CommandRingBuffer *m_Commands;
+	void TakeCommand();
 	unsigned long m_Frame;
 	
 	bool m_UpdateIndicator;
+	bool m_Pending;
+	unsigned long m_Changes;
 	
 	void *m_BulkSrc;
 	

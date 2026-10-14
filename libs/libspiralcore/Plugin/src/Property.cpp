@@ -419,6 +419,11 @@ namespace Core
 			const int index = atoi(keys[i].c_str() + prefix.size());
 			if (index + 1 > count) count = index + 1;
 		}
+		for (UnsignedType i = 0; i < p.Values.size(); i++)
+		{
+			if (!p.Values[i] || p.Values[i]->GetKey().empty()) continue;
+			if (m_Description.Find(p.Values[i]->GetKey()) >= 0 && (int)i + 1 > count) count = (int)i + 1;
+		}
 		n = count;
 		return *this;
 	}

@@ -24,8 +24,13 @@ using namespace Spiral::Core;
 
 //#define CHANNEL_DEBUG
 
+static const unsigned int COMMAND_QUEUE_LENGTH = 16;
+
 ChannelHandler::ChannelHandler() :
-m_UpdateIndicator(false)
+m_UpdateIndicator(false),
+m_Pending(false),
+m_Changes(0),
+m_Commands(NULL)
 {
 	m_Mutex = new pthread_mutex_t;
 	m_Command[0]=0;
@@ -45,6 +50,7 @@ ChannelHandler::~ChannelHandler()
 		free(i->second->data_buf);
         delete i->second;
     }
+	delete m_Commands;
 
     pthread_mutex_destroy(m_Mutex);
 	delete m_Mutex;
@@ -68,6 +74,8 @@ void ChannelHandler::UpdateDataNow(unsigned long frame)
 		#endif
 		
 		m_UpdateIndicator=!m_UpdateIndicator;
+
+		if (!m_Command[1]) TakeCommand();
 
         for(size_t c=0; c<m_Order.size(); c++)
         {
@@ -140,6 +148,12 @@ void ChannelHandler::UpdateDataNow(unsigned long frame)
 			}
         }
 		
+		if (m_Pending)
+		{
+			m_Pending=false;
+			++m_Changes;
+		}
+
 		m_Command[0]=m_Command[1];
 		// make sure the command only lasts one update
 		m_Command[1]=0;
@@ -266,6 +280,7 @@ void ChannelHandler::SetData(const string &ID, void *s)
 		cerr<<"setting "<<i->second->data_buf<<" from "<<s<<" "<<i->second->size<<endl;
 #endif
         memcpy(i->second->data_buf,s,i->second->size);
+        m_Pending=true;
     }
     else
     {
@@ -279,6 +294,74 @@ void ChannelHandler::SetCommand(char command)
 	pthread_mutex_lock(m_Mutex);
 	m_Command[1]=command;
 	pthread_mutex_unlock(m_Mutex);	
+}
+
+void ChannelHandler::RegisterCommand(const string &name, char command, const vector<string> &channels, const string &types)
+{
+	pthread_mutex_lock(m_Mutex);
+	if (!m_Commands) m_Commands=new CommandRingBuffer(sizeof(CommandRingBuffer::Command)*COMMAND_QUEUE_LENGTH);
+	NamedCommand &named=m_NamedCommands[name];
+	named.Command=command;
+	named.Channels=channels;
+	named.Types=types;
+	pthread_mutex_unlock(m_Mutex);
+}
+
+bool ChannelHandler::CommandArguments(const string &name, vector<string> &channels, string *types) const
+{
+	map<string,NamedCommand>::const_iterator named=m_NamedCommands.find(name);
+	if (named==m_NamedCommands.end()) return false;
+	channels=named->second.Channels;
+	if (types) *types=named->second.Types;
+	return true;
+}
+
+bool ChannelHandler::SendCommand(const CommandRingBuffer::Command &command)
+{
+	if (!m_Commands) return false;
+	return m_Commands->Send(command);
+}
+
+void ChannelHandler::TakeCommand()
+{
+	CommandRingBuffer::Command command;
+	if (!m_Commands || !m_Commands->Get(command)) return;
+	map<string,NamedCommand>::iterator named=m_NamedCommands.find(command.Name);
+	if (named==m_NamedCommands.end()) return;
+
+	for (unsigned int n=0; n<command.Size() && n<named->second.Channels.size(); n++)
+	{
+		map<string,Channel*>::iterator i=m_ChannelMap.find(named->second.Channels[n]);
+		if (i==m_ChannelMap.end() || i->second->type!=INPUT) continue;
+		Channel *ch=i->second;
+		switch (command.Types[n])
+		{
+			case 'i':
+			{
+				int value=command.GetInt(n);
+				if (ch->size==sizeof(int)) memcpy(ch->data_buf,&value,sizeof(int));
+				else if (ch->size==sizeof(char)) *(char*)ch->data_buf=(char)value;
+				else if (ch->size==sizeof(long)) { long wide=value; memcpy(ch->data_buf,&wide,sizeof(long)); }
+			} break;
+			case 'f':
+			{
+				float value=command.GetFloat(n);
+				if (ch->size==sizeof(float)) memcpy(ch->data_buf,&value,sizeof(float));
+				else if (ch->size==sizeof(double)) { double wide=value; memcpy(ch->data_buf,&wide,sizeof(double)); }
+			} break;
+			case 's':
+			{
+				const char *text=command.GetString(n);
+				if (text && ch->size>0)
+				{
+					strncpy((char*)ch->data_buf,text,ch->size-1);
+					((char*)ch->data_buf)[ch->size-1]=0;
+				}
+			} break;
+		}
+	}
+	m_Pending=true;
+	m_Command[1]=named->second.Command;
 }
 
 void ChannelHandler::FlushChannels()
@@ -422,6 +505,7 @@ bool ChannelHandler::SetDataAt(const string &ID, int offset, const void *src, in
 	if (i==m_ChannelMap.end() || i->second->type!=INPUT || offset<0 || offset+size>i->second->size) return false;
 	pthread_mutex_lock(m_Mutex);
 	memcpy(((char*)i->second->data_buf)+offset,src,size);
+	m_Pending=true;
 	pthread_mutex_unlock(m_Mutex);
 	return true;
 }
