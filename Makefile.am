@@ -40,6 +40,8 @@ SpiralSynthModular_SOURCES = MacBundle.h \
 
 AM_CPPFLAGS += -DPLUGIN_PATH_LOCATION=\"$(ssm_plugindir)/\"
 AM_CPPFLAGS += -DSSM_EXAMPLES_DIR=\"$(pkgdatadir)/Examples\"
+# The host registers the built-in LADSPA device, whose header names ladspa.h.
+AM_CPPFLAGS += $(LADSPA_CFLAGS)
 ssm_plugindir = @PLUGINDIR@
 
 # Widgets and loadable plugins resolve host symbols from the executable.
@@ -190,9 +192,9 @@ check_PROGRAMS += canvas-menu-test
 check_LTLIBRARIES =
 if BUILD_LADSPA
 check_PROGRAMS += ladspa-reset-test
-ladspa_reset_test_SOURCES = tests/ladspa-reset.cpp Plugins/Devices/LADSPAPlugin/LADSPAPlugin.C Plugins/Devices/LADSPAPlugin/LADSPAInfo.C
-ladspa_reset_test_CPPFLAGS = $(AM_CPPFLAGS) $(LADSPA_CFLAGS) -I$(srcdir)/Plugins/Devices/LADSPAPlugin
-ladspa_reset_test_LDADD = libs/libspiralcore/libspiralcore.la $(LRDFLIBS)
+ladspa_reset_test_SOURCES = tests/ladspa-reset.cpp
+ladspa_reset_test_CPPFLAGS = $(AM_CPPFLAGS) $(LADSPA_CFLAGS)
+ladspa_reset_test_LDADD = libs/libspiralcore/libspiralcore.la
 check_LTLIBRARIES += tests/ladspa/ports.la
 tests_ladspa_ports_la_CPPFLAGS = $(AM_CPPFLAGS) $(LADSPA_CFLAGS)
 tests_ladspa_ports_la_SOURCES = tests/ladspa/ports.cpp
@@ -202,9 +204,9 @@ TESTS_ENVIRONMENT = LADSPA_PATH='$(abs_builddir)/tests/ladspa/.libs'
 # The bundled reverb the LADSPA example asks for, played and listened to.
 if BUNDLE_LADSPA_PLUGINS
 check_PROGRAMS += ladspa-gverb-test
-ladspa_gverb_test_SOURCES = tests/ladspa-gverb.cpp Plugins/Devices/LADSPAPlugin/LADSPAPlugin.C Plugins/Devices/LADSPAPlugin/LADSPAInfo.C
-ladspa_gverb_test_CPPFLAGS = $(AM_CPPFLAGS) $(LADSPA_CFLAGS) -I$(srcdir)/Plugins/Devices/LADSPAPlugin
-ladspa_gverb_test_LDADD = libs/libspiralcore/libspiralcore.la $(LRDFLIBS)
+ladspa_gverb_test_SOURCES = tests/ladspa-gverb.cpp
+ladspa_gverb_test_CPPFLAGS = $(AM_CPPFLAGS) $(LADSPA_CFLAGS)
+ladspa_gverb_test_LDADD = libs/libspiralcore/libspiralcore.la
 TESTS_ENVIRONMENT += LADSPA_BUNDLE_DIR='$(abs_builddir)/third-party/swh-plugins/.libs'
 endif
 endif

@@ -42,6 +42,9 @@
 #include "EditorClassRegistry.h"
 #include "OutputPlugin.h"
 #include "OutputPluginGUI.h"
+#ifdef HAVE_LADSPA
+#include "LADSPAPlugin.h"
+#endif
 #include "PatchProject.h"
 #include <memory>
 #include <FL/fl_ask.H>
@@ -776,6 +779,9 @@ void SynthModular::LoadPlugins (string pluginPath) {
      // Built-in devices first: a module of the same ID is not loaded.
      spiralcore::DeviceClassRegistry::Get()->Register(OutputPlugin::Class());
      spiralcore::EditorClassRegistry::Get()->Register(OutputPluginGUI::Class());
+#ifdef HAVE_LADSPA
+     spiralcore::DeviceClassRegistry::Get()->Register(LADSPAPlugin::Class());
+#endif
      // Devices under dsp/, panels under panels/; a panel needs no device
      // module to load, it pairs by ID when a device is made.
      spiralcore::DeviceClassRegistry::Get()->LoadModules(PluginRoot);

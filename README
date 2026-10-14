@@ -151,8 +151,9 @@ Found if present, skipped with a reason if not:
   midi          ALSA sequencer, JACK MIDI, RtMidi, CoreMIDI
   files         libsndfile, for everything that loads or writes audio:
                 PoshSampler, Streamer and SpiralLoop read any format it does
-  LADSPA        the plugin host needs only ladspa.h, and a copy is in the
-                tree, so it builds whether or not the system has one
+  LADSPA        the LADSPA device is built into the host like Output; it
+                needs only ladspa.h, and a copy is in the tree, so it builds
+                whether or not the system has one
   liblrdf       LADSPA plugin metadata, if you have it
   FFTW          single precision, for four of the bundled LADSPA plugins
 

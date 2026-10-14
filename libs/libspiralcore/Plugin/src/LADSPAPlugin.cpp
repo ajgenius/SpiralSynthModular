@@ -26,7 +26,7 @@
 #include <cassert>
 #include <iostream>
 
-#include "SpiralIcon.xpm"
+#include "LADSPAIcon.xpm"
 #include "LADSPAPlugin.h"
 #include "LADSPAInfo.h"
 
@@ -49,49 +49,19 @@ static float ssm_sanitize(float in, float replacement)
 
 ////////////////////////////////////////////////////
 
-#include <config.h>
+// Built into the host like Output: the LADSPA plugins it hosts stay
+// external, under <plugins>/ladspa and the LADSPA_PATH LADSPAInfo scans.
+static SpiralPlugin *CreateInstance() { return new LADSPAPlugin; }
 
-extern "C" {
-const char *SpiralPlugin_GetHostVersion()
+const spiralcore::DeviceClass &LADSPAPlugin::Class()
 {
-	return PACKAGE_VERSION;
-}
-
-const char *SpiralPlugin_GetHostABI()
-{
-	return SSM_HOST_ABI;
-}
-
-SpiralPlugin* SpiralPlugin_CreateInstance()
-{
-	return new LADSPAPlugin;
-}
-
-int SpiralPlugin_GetType()
-{
-	return SPIRAL_PLUGIN_TYPE_DEVICE;
-}
-
-
-const char** SpiralPlugin_GetIcon()
-{
-	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x0016;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "LADSPA";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Filters/FX";
-}
+	static spiralcore::DeviceClass device;
+	device.ID = 0x0016;
+	device.Name = "LADSPA";
+	device.Category = "Filters/FX";
+	device.Icon = SpiralIcon_xpm;
+	device.Create = CreateInstance;
+	return device;
 }
 
 ///////////////////////////////////////////////////////
