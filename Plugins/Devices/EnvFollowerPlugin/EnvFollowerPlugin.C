@@ -86,7 +86,7 @@ m_Value(0)
 	m_Attack = FloatProperty(DefaultLinearFlags, 0.5, 0, 1, 0.001, 0.01);
 
 	RegisterSharedProperty(m_Decay, "Decay", "Decay");
-	RegisterSharedProperty(m_Attack, "Attach", "Attach");
+	RegisterSharedProperty(m_Attack, "Attack", "Attack");
 
 
 }

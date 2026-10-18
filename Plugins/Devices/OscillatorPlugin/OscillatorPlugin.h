@@ -42,7 +42,7 @@ public:
 	void ModulateSHLen(Sample *data) {m_SHModBuf=data;}
 
 	void NoteTrigger(int V,int s,int v);
-	int   GetOctave() {return AsUnsigned(m_Octave);}
+	int   GetOctave() {return AsSigned(m_Octave);}
 	float GetFineFreq() {return AsFloat(m_FineFreq);}
 	float GetPulseWidth() {return AsFloat(m_PulseWidth);}
 	Type  GetType() {return (Type)AsUnsigned(m_Type);}
@@ -58,7 +58,7 @@ private:
 
         // Common voice parameters
 	Spiral::Core::SetProperty m_Type;
-	Spiral::Core::UnsignedProperty m_Octave;
+	Spiral::Core::SignedProperty m_Octave;
 	Spiral::Core::FloatProperty m_FineFreq;
 	Spiral::Core::FloatProperty m_PulseWidth;
 	Spiral::Core::FloatProperty m_SHLen;

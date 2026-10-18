@@ -85,7 +85,7 @@ OperatorPlugin::OperatorPlugin()
 	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 
-	m_Operator = SignedProperty(DefaultLinearFlags,0,0,3,1,1);
+	m_Operator = SignedProperty(DefaultLinearFlags,ADD,NONE,MUL,1,1);
 	RegisterSharedProperty(m_Operator, "Operator", "Operator");
 	m_Constant = FloatProperty(DefaultLinearFlags,0,0,1,0.01,0.1);
 	RegisterSharedProperty(m_Constant, "Constant", "Constant");

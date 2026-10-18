@@ -84,13 +84,14 @@ m_SHModBuf(NULL)
 {
 	const NamedPropertyValue WaveTypes[] =
 	{
+		{"None", DefaultUnsigned(NONE)},
 		{"Square", DefaultUnsigned(SQUARE)},
-		{"Saw", DefaultUnsigned(SQUARE)},
+		{"Saw", DefaultUnsigned(SAW)},
 		{"Noise", DefaultUnsigned(NOISE)}
 	};
 
-	m_Type = SetProperty(Property::WriteOnly, 0, NamedPropertySet(WaveTypes, sizeof(WaveTypes)/sizeof(WaveTypes[0])));
-	m_Octave = UnsignedProperty(DefaultLinearFlags,0,0,6,1,1);
+	m_Type = SetProperty(Property::WriteOnly, SQUARE, NamedPropertySet(WaveTypes, sizeof(WaveTypes)/sizeof(WaveTypes[0])));
+	m_Octave = SignedProperty(DefaultLinearFlags,0,-3,3,1,1);
 	m_FineFreq = FloatProperty(DefaultLinearFlags,1, 0, 1.414, 0.000001, 0.0001);
 	m_PulseWidth = FloatProperty(DefaultLinearFlags, 0.5f, 0, 1, 0.01, 0.1);
 	m_ModAmount = FloatProperty(DefaultLinearFlags, 1.0f, 0, 2.0f, 0.001, 0.01);
@@ -157,8 +158,8 @@ void OscillatorPlugin::Execute()
 			if (InputExists(0)) Freq=GetInputPitch(0,n);
 			else Freq=110;
 			Freq*=AsFloat(m_FineFreq);
-			if (AsUnsigned(m_Octave)>0) Freq*=1<<(AsUnsigned(m_Octave));
-			if (AsUnsigned(m_Octave)<0) Freq/=1<<(-AsUnsigned(m_Octave));
+			if (AsSigned(m_Octave)>0) Freq*=1<<(AsSigned(m_Octave));
+			if (AsSigned(m_Octave)<0) Freq/=1<<(-AsSigned(m_Octave));
 			CycleLen = m_HostInfo->SAMPLERATE/Freq;
 			PW = (int)((AsFloat(m_PulseWidth)+GetInput(IN_PW,n)*AsFloat(m_ModAmount)) * CycleLen);
 
@@ -177,8 +178,8 @@ void OscillatorPlugin::Execute()
 			if (InputExists(0)) Freq=GetInputPitch(0,n);
 			else Freq=110;
 			Freq*=AsFloat(m_FineFreq);
-			if (AsUnsigned(m_Octave)>0) Freq*=1<<(AsUnsigned(m_Octave));
-			if (AsUnsigned(m_Octave)<0) Freq/=1<<(-AsUnsigned(m_Octave));
+			if (AsSigned(m_Octave)>0) Freq*=1<<(AsSigned(m_Octave));
+			if (AsSigned(m_Octave)<0) Freq/=1<<(-AsSigned(m_Octave));
 			CycleLen = m_HostInfo->SAMPLERATE/Freq;
 			PW = (int)((AsFloat(m_PulseWidth)+GetInput(IN_PW,n)*AsFloat(m_ModAmount)) * CycleLen);
 
@@ -237,7 +238,7 @@ void OscillatorPlugin::Apply(Spiral::Core::Description::Reader &r)
 Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, OscillatorPlugin &o)
 {
 	float dummy=0;
-	r.Value((int&)AsUnsigned(o.m_Type)).Value(AsUnsigned(o.m_Octave)).Value(AsFloat(o.m_FineFreq)).Value(AsFloat(o.m_PulseWidth)).Value(dummy)
+	r.Value((int&)AsUnsigned(o.m_Type)).Value(AsSigned(o.m_Octave)).Value(AsFloat(o.m_FineFreq)).Value(AsFloat(o.m_PulseWidth)).Value(dummy)
 	.Value(AsFloat(o.m_SHLen)).Value(AsFloat(o.m_ModAmount));
 	return r;
 }
@@ -245,7 +246,7 @@ Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, O
 Spiral::Core::Description &Describe(Spiral::Core::Description &d, OscillatorPlugin &o)
 {
 	float dummy=0;
-	d.Value((int)AsUnsigned(o.m_Type)).Separator(" ").Value(AsUnsigned(o.m_Octave)).Separator(" ").Value(AsFloat(o.m_FineFreq)).Separator(" ").Value(AsFloat(o.m_PulseWidth)).Separator(" ")
+	d.Value((int)AsUnsigned(o.m_Type)).Separator(" ").Value(AsSigned(o.m_Octave)).Separator(" ").Value(AsFloat(o.m_FineFreq)).Separator(" ").Value(AsFloat(o.m_PulseWidth)).Separator(" ")
 	.Value(dummy).Separator(" ").Value(AsFloat(o.m_SHLen)).Separator(" ").Value(AsFloat(o.m_ModAmount)).Separator(" ");
 	return d;
 }

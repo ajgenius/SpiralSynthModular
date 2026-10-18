@@ -96,7 +96,7 @@ m_WriteGrain(0)
 
 	m_GrainPitch = FloatProperty(DefaultLinearFlags,1,0,5,0.001,0.01);
 	RegisterSharedProperty(m_GrainPitch, "GrainPitch", "GrainPitch");
-	m_GrainStoreSize = SignedProperty(DefaultLinearFlags,MAX_GRAINSTORE_SIZE - 1, 0, MAX_GRAINSTORE_SIZE - 2, 1, 1);
+	m_GrainStoreSize = SignedProperty(DefaultLinearFlags,MAX_GRAINSTORE_SIZE, 0, MAX_GRAINSTORE_SIZE, 1, 1);
 	RegisterSharedProperty(m_GrainStoreSize, "GrainStoreSize", "GrainStoreSize");
 	m_Density = SignedProperty(DefaultLinearFlags,10, 0, MAX_GRAINSTORE_SIZE, 1, 1);
 	RegisterSharedProperty(m_Density, "Density", "Density");

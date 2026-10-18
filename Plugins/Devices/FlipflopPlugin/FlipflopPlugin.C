@@ -89,7 +89,7 @@ m_TriggerSamples(0)
 
 	m_TriggerTime = FloatProperty(DefaultLinearFlags, 0.01, 0, 1, 0.0001f, 0.001f);
 	RegisterSharedProperty(m_TriggerTime, "TriggerTime", "TriggerTime");
-	m_Monostable = ToggleProperty(Property::ReadOnly,false);
+	m_Monostable = ToggleProperty(Property::WriteOnly,false);
 	RegisterSharedProperty(m_Monostable, "Monostable", "Monostable");
 
 
