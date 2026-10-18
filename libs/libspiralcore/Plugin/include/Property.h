@@ -21,6 +21,7 @@
 #include <vector>
 #include <map>
 
+#include "ChannelHandler.h"
 #include "Types.h"
 #include "Sample.h"
 
@@ -202,6 +203,8 @@ namespace Core
 
 		virtual void CopyValue(const Property &CopyFrom)=0;
 
+		virtual void RegisterChannel(ChannelHandler &channels, std::string Label) {}
+
 		inline bool IsReferenced() { return (m_References!=0); }
 		inline void Reference() { m_References++; }
 		inline void UnReference() { m_References--; }
@@ -213,6 +216,11 @@ namespace Core
 		inline void SetHint(std::string Hint) { m_Hint = Hint; }
 
 		inline bool IsReadOnly() { return m_ReadOnly; }
+
+		inline ChannelHandler::Type ChannelDirection()
+		{
+			return m_ReadOnly ? ChannelHandler::OUTPUT : ChannelHandler::INPUT;
+		}
 		inline bool IsInternal() { return m_Internal; }
 		inline bool RequiresUpdates() { return m_ForceUpdate; }
 
@@ -408,6 +416,10 @@ namespace Core
 
 		virtual void Clamp();
 
+		virtual void RegisterChannel(ChannelHandler &channels, std::string Label)
+		{
+			channels.Register(Label, (int *)&Value.AsSigned, ChannelDirection());
+		}
 
 		virtual std::string ClassName()
 		{
@@ -438,6 +450,11 @@ namespace Core
 
 		virtual void Clamp();
 
+		virtual void RegisterChannel(ChannelHandler &channels, std::string Label)
+		{
+			channels.Register(Label, (int *)&Value.AsUnsigned, ChannelDirection());
+		}
+
 		virtual std::string ClassName()
 		{
 			return "UnsignedProperty";
@@ -465,6 +482,11 @@ namespace Core
 		}
 
 		virtual void Clamp();
+		virtual void RegisterChannel(ChannelHandler &channels, std::string Label)
+		{
+			channels.Register(Label, &Value.AsFloat, ChannelDirection());
+		}
+
 		virtual std::string ClassName()
 		{
 			return "FloatProperty";
@@ -483,6 +505,11 @@ namespace Core
 		virtual Property *Duplicate()
 		{
 			return new ToggleProperty(*this);
+		}
+
+		virtual void RegisterChannel(ChannelHandler &channels, std::string Label)
+		{
+			channels.Register(Label, &Value.AsBoolean, ChannelDirection());
 		}
 
 		virtual std::string ClassName()
@@ -507,6 +534,11 @@ namespace Core
 		}
 
 		inline PropertySet Set() { return m_Set; }
+
+		virtual void RegisterChannel(ChannelHandler &channels, std::string Label)
+		{
+			channels.Register(Label, (int *)&Value.AsUnsigned, ChannelDirection());
+		}
 
 		virtual std::string ClassName()
 		{

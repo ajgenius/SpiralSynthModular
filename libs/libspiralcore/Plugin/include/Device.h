@@ -23,6 +23,7 @@
 #include <map>
 #include <string>
 
+#include "ChannelHandler.h"
 #include "Property.h"
 #include "SpiralPlugin.h"
 
@@ -143,6 +144,9 @@ namespace Core
 			m_State.Properties[key] = &Initializer;
 			m_State.Properties[key]->SetLabel(Label);
 			m_State.Properties[key]->SetHint(Hint);
+
+			if (m_AudioCH && !Initializer.IsInternal())
+				Initializer.RegisterChannel(*m_AudioCH, Label);
 		}
 	};
 }
