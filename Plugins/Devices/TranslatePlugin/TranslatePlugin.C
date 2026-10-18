@@ -94,7 +94,8 @@ float TranslateVoltToNote::Translate (float i) {
 TranslatePlugin::TranslatePlugin () :
 m_Translator (NULL)
 {
-	m_Method = UnsignedProperty(DefaultLinearFlags | Property::ForceUpdate, tr_Pass, tr_Pass, tr_VoltToNote, 1, 1);
+	const NumericPropertyValue MethodSet[] = { DefaultUnsigned(tr_Pass), DefaultUnsigned(tr_NoteToFreq), DefaultUnsigned(tr_FreqToNote), DefaultUnsigned(tr_NoteToVolt), DefaultUnsigned(tr_VoltToNote) };
+	m_Method = SetProperty(Property::ForceUpdate|DefaultLinearFlags, 0, PropertySet(MethodSet, 5));
 	RegisterSharedProperty(m_Method, "Method", "Method");
 
 	SetString(DeviceName, SpiralPlugin_GetName());

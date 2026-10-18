@@ -69,7 +69,7 @@ class TranslatePlugin : public Spiral::Core::Device {
       enum TranMethod { tr_Pass, tr_NoteToFreq, tr_FreqToNote, tr_NoteToVolt, tr_VoltToNote };
       int GetMethod (void) { return AsUnsigned(m_Method); }
    private:
-      Spiral::Core::UnsignedProperty m_Method;
+      Spiral::Core::SetProperty m_Method;
       TranslateClass *m_Translator;
       void SetUpTranslatorClass (void);
 };
