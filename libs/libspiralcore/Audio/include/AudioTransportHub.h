@@ -19,7 +19,7 @@
 #ifndef AUDIO_TRANSPORT_HUB
 #define AUDIO_TRANSPORT_HUB
 
-#include "SpiralPlugin.h"
+#include "AudioDriver.h"
 #include "OutputAudioClient.h"
 #include <vector>
 #include <ctime>
