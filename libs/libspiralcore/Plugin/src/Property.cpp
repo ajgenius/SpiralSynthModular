@@ -261,7 +261,16 @@ void SampleProperty::CopyValue(const Property &CopyFrom)
 VectorProperty::VectorProperty(SignedType Flags, vector<Property*> Values): 
 ComplexProperty(Flags)
 {
-	CopyContents(Values);
+	for (UnsignedType i=0; i < Values.size(); i++)
+	{
+		if (Values[i]) Add(Values[i]);
+	}
+}
+
+VectorProperty::VectorProperty(const VectorProperty &Copy):
+ComplexProperty(Copy)
+{
+	CopyValue(Copy);
 }
 
 VectorProperty::VectorProperty(const ComplexProperty &Copy):
@@ -272,22 +281,51 @@ ComplexProperty(Copy)
 
 void VectorProperty::CopyValue(const Property &CopyFrom)
 { 
-	if (!dynamic_cast<const VectorProperty*>(&CopyFrom))
+	ComplexProperty *Source = ((Property &)CopyFrom).AsComplex();
+
+	if (!Source)
 	{
 		InvalidPropertyCopy(CopyFrom);
 		return;
 	}
 
-	CopyContents(((const VectorProperty*)&CopyFrom)->Values);
+	CopyContents(*Source);
 }
 
-void VectorProperty::CopyContents(vector<Property*> Contents)
+void VectorProperty::Release()
 {
-	if (!Contents.size()) return;
-
-	for (UnsignedType i=0; i < Contents.size(); i++)
+	for (vector<Property*>::iterator i=Values.begin(); i!=Values.end(); i++)
 	{
-		if (Contents[i])
-			Values.push_back(Contents[i]);
+		if (!*i) continue;
+
+		(*i)->UnReference();
+
+		if (!(*i)->IsReferenced()) delete *i;
+	}
+
+	Values.clear();
+}
+
+void VectorProperty::CopyContents(ComplexProperty &Source)
+{
+	if (Values.size() == Source.size())
+	{
+		for (UnsignedType i=0; i < Values.size(); i++)
+		{
+			Property *Theirs = Source[i];
+
+			if (Values[i] && Theirs) Values[i]->CopyValue(*Theirs);
+		}
+
+		return;
+	}
+
+	Release();
+
+	for (UnsignedType i=0; i < Source.size(); i++)
+	{
+		Property *Theirs = Source[i];
+
+		if (Theirs) Add(Theirs->Duplicate());
 	}
 }

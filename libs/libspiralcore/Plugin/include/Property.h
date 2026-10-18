@@ -180,6 +180,7 @@ namespace Spiral
 {
 namespace Core
 {
+	class ComplexProperty;
 
 	class Property
 	{
@@ -204,6 +205,8 @@ namespace Core
 		virtual void CopyValue(const Property &CopyFrom)=0;
 
 		virtual void RegisterChannel(ChannelHandler &channels, std::string Label) {}
+
+		virtual ComplexProperty *AsComplex() { return NULL; }
 
 		inline bool IsReferenced() { return (m_References!=0); }
 		inline void Reference() { m_References++; }
@@ -647,6 +650,8 @@ namespace Core
 		virtual UnsignedType size()=0;
 
 		virtual void Add(Property *New)=0;
+
+		virtual ComplexProperty *AsComplex() { return this; }
 	protected:
 		ComplexProperty() {}
 		ComplexProperty(SignedType Flags): Property(Flags) { }
@@ -658,9 +663,14 @@ namespace Core
 		VectorProperty() {}
 		virtual ~VectorProperty() 
 		{
+			Release();
 		}
 
+		VectorProperty(SignedType Flags): ComplexProperty(Flags) {}
+
 		VectorProperty(SignedType Flags, std::vector<Property*> Values);
+
+		VectorProperty(const VectorProperty &Copy);
 
 		VectorProperty(const ComplexProperty &Copy);
 		virtual Property *Duplicate()
@@ -672,7 +682,7 @@ namespace Core
 
 		virtual Property* operator[](UnsignedType i)
 		{		
-			return Values[i];
+			return i < Values.size() ? Values[i] : NULL;
 		}
 		
 		virtual UnsignedType size()
@@ -680,9 +690,26 @@ namespace Core
 			return Values.size();
 		}
 
-		virtual void Add(Property *Property)
+		virtual void Add(Property *New)
 		{
-			Values.push_back(Property);
+			if (!New) return;
+
+			New->Reference();
+			Values.push_back(New);
+		}
+
+		virtual void RemoveLast()
+		{
+			if (Values.empty()) return;
+
+			Property *Last = Values.back();
+			Values.pop_back();
+
+			if (!Last) return;
+
+			Last->UnReference();
+
+			if (!Last->IsReferenced()) delete Last;
 		}
 
 		virtual std::string ClassName()
@@ -693,7 +720,8 @@ namespace Core
 		std::vector<Property*> Values;
 
 	private:
-		inline void CopyContents(vector<Property*> Contents);
+		void CopyContents(ComplexProperty &Source);
+		void Release();
 	};
 }
 }
