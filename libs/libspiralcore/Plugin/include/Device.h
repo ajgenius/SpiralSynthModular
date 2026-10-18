@@ -14,110 +14,35 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-// Device is the basic top level host for ports
-// And the root ancestor for DSP's
+#ifndef SPIRALCORE_DEVICE_H
+#define SPIRALCORE_DEVICE_H
 
-#ifndef __DEVICE_H__
-#define __DEVICE_H__
-
-#include <list>
-#include <string>
 #include <algorithm>
+#include <cassert>
 #include <cctype>
+#include <map>
+#include <string>
 
 #include "Property.h"
-
-using namespace std;
+#include "SpiralPlugin.h"
 
 namespace Spiral
 {
-	class Patch;
-
-	class InputPort;
-	class OutputPort;
-	class ShadowPort;
-
-	class Device
+namespace Core
+{
+	class Device : public SpiralPlugin
 	{
 	public:
-		Device(Patch *Host);
+		Device();
 		virtual ~Device();
 
 		/* Setting Properties */
-		virtual bool LoadProperties(map<string,Property*> &properties);
+		virtual bool LoadProperties(std::map<std::string, Property *> &properties);
 		bool CopyDevice(Device *device);
-		virtual bool UpdateProperty(string name) { return true; }
-
-		/* Setup/Shutdown */
-		virtual bool Setup();		/* Create Ports, Setup	*/
-		virtual void Shutdown();	/* Disconnect, Cleanup	*/
-
-
-		/* Port Management */
-		virtual bool CreatePorts()=0;	/* Create All Ports	*/
-		virtual void Clear();		/* Delete All Ports	*/
-		virtual void Disconnect();	/* Disconnect All Ports */
-		virtual void Reset();		/* Reset All Ports	*/
-
-
-		/* Process */
-		virtual void Process(UnsignedType SampleCount)=0;
-
-		/* Current Patch Settings */
-		inline UnsignedType SampleRate() { return m_SampleRate; }
-		inline UnsignedType SampleCount() { return m_SampleCount; }
-		inline UnsignedType VoiceCount() { return m_VoiceCount; }
-
-
-		/* Permanent Device Features */
-		virtual bool IsMonophonic() { return false; }
-
-		virtual bool SupportsInputs() { return true; }
-		virtual bool SupportsOutputs() { return true; }
-		virtual bool SupportsShadows() { return true; }
-
-		virtual bool IsTerminal() { return false; }
-
-		inline Patch *Host() { return m_Host; }
-
-		inline bool IsLive() { return m_Initialized; }
-		inline void SetVoice(UnsignedType voice) 
-		{ 
-			#ifdef BOUNDS_CHECK
-			if (UNLIKELY(voice >= m_VoiceCount))
-			{
-				cerr << "Voice Index Out Of Bounds" << endl;
-			}
-			#endif
-
-			m_CurrentVoice = voice; 
-		}
-
-		inline UnsignedType GetVoice() { return m_CurrentVoice; }
-
-		/* Ports */
-		virtual InputPort* GetInputPort(UnsignedType PortNumber);
-		virtual OutputPort* GetOutputPort(UnsignedType PortNumber);
-
-		virtual ShadowPort* GetShadowPort(UnsignedType PortNumber);
-
-		inline vector<InputPort*> InputPorts() { return m_InputPorts; }
-		inline vector<OutputPort*> OutputPorts() { return m_OutputPorts; }
-		inline vector<ShadowPort*> ShadowPorts() { return m_ShadowPorts; }
-
-		/* Convenience Macros For Common DSP Needs */
-		#define InputExists(input_port) input_port->IsConnected()
-		#define GetInputBuffer(input_port) input_port->GetSampleBuffer(GetVoice())
-		#define GetInput(input_port, pos) input_port->GetSampleValue(pos, GetVoice())
-		#define GetInputPitch(input_port, pos) input_port->GetSamplePitch(pos, GetVoice())
-
-		#define OutputExists(output_port) output_port->IsConnected()
-		#define GetOutputBuffer(output_port) output_port->GetSampleBuffer(GetVoice())
-		#define SetOutput(output_port, pos, value) output_port->SetSampleValue(pos, value, GetVoice())
-		#define SetOutputPitch(output_port, pos, value) output_port->SetSamplePitch(pos, value, GetVoice())
+		virtual bool UpdateProperty(std::string name) { return true; }
 
 		/* Shared Properties */
-		inline Property* DuplicateProperty(string &Key)
+		inline Property* DuplicateProperty(std::string &Key)
 		{
 			if (m_State.Properties.count(Key))
 			{
@@ -127,9 +52,9 @@ namespace Spiral
 			return NULL;
 		}
 
-		inline void DuplicateProperties(map<string,Property*> &External)
+		inline void DuplicateProperties(std::map<std::string, Property *> &External)
 		{
-			map<string, Property*>::iterator prop;
+			std::map<std::string, Property *>::iterator prop;
 
 			for (prop = m_State.Properties.begin();
 				prop != m_State.Properties.end();
@@ -140,7 +65,7 @@ namespace Spiral
 			}
 		}
 
-		inline void SynchronizeProperty(string Key, Property *Value)
+		inline void SynchronizeProperty(std::string Key, Property *Value)
 		{
 			if (m_State.Properties.count(Key))
 			{
@@ -151,7 +76,7 @@ namespace Spiral
 				else
 				{
 					shared->CopyValue(*Value);
-	
+
 					if (shared->RequiresUpdates())
 						UpdateProperty(Key);
 				}
@@ -163,33 +88,16 @@ namespace Spiral
 		}
 
 	protected:
-		/* Ports */
-		friend class InputPort;
-		vector<InputPort*> m_InputPorts;
-
-		friend class ShadowPort;
-		vector<ShadowPort*> m_ShadowPorts;
-
-		friend class OutputPort;
-		vector<OutputPort*> m_OutputPorts;
-
-		/* Properties */
-		typedef vector<NumericPropertyValue> StateProperties;
-		
 		/* Per Class Properties*/
 		UnsignedProperty DeviceVersion;
 		StringProperty DeviceName;
 
-		/* State Properties */	
+		/* State Properties */
 		struct
 		{
 			/* Per Instance Properties */
-			map<string,Property*> Properties;
-			map<Property*,Property*> UpdateData; /* For ProcessUpdate */
-
-			/* Per Voice State Values */
-			StateProperties DefaultValues;
-			vector<StateProperties> Values;
+			std::map<std::string, Property *> Properties;
+			std::map<Property *, Property *> UpdateData; /* For ProcessUpdate */
 		} m_State;
 
 
@@ -216,16 +124,16 @@ namespace Spiral
 		#define SetString(property, new) property.Value = new
 
 		/* Rethink all of this registering crap - simple is best */
-		inline void UnregisterSharedProperty(string Label)
+		inline void UnregisterSharedProperty(std::string Label)
 		{
-			string key = Label;
+			std::string key = Label;
 			transform (key.begin(), key.end(), key.begin(), (int(*)(int))std::toupper);
 
 			m_State.UpdateData.erase(m_State.Properties[key]);
 			m_State.Properties.erase(key);
 		}
 
-		inline void RegisterSharedProperty(Property &Initializer, string Label, string Hint)
+		inline void RegisterSharedProperty(Property &Initializer, std::string Label, std::string Hint)
 		{
 			string key = Label;
 			transform (key.begin(), key.end(), key.begin(), (int(*)(int))std::toupper);
@@ -236,71 +144,8 @@ namespace Spiral
 			m_State.Properties[key]->SetLabel(Label);
 			m_State.Properties[key]->SetHint(Hint);
 		}
-
-		/* Voice State Properties */
-		inline UnsignedType NewStateProperty(bool Initializer)
-		{
-			NumericPropertyValue init = DefaultBoolean(Initializer);
-			m_State.DefaultValues.push_back(init);
-
-			for (UnsignedType i=0; i<m_State.Values.size(); i++)
-			{
-				m_State.Values[i].push_back(init);
-			}
-
-			return m_State.DefaultValues.size() - 1;
-		}
-
-		inline UnsignedType NewStateProperty(SignedType Initializer)
-		{
-			NumericPropertyValue init = DefaultSigned(Initializer);
-			m_State.DefaultValues.push_back(init);
-
-			for (UnsignedType i=0; i<m_State.Values.size(); i++)
-			{
-				m_State.Values[i].push_back(init);
-			}
-
-			return m_State.DefaultValues.size() - 1;
-		}
-
-		inline UnsignedType NewStateProperty(UnsignedType Initializer)
-		{
-			NumericPropertyValue init = DefaultUnsigned(Initializer);
-			m_State.DefaultValues.push_back(init);
-
-			for (UnsignedType i=0; i<m_State.Values.size(); i++)
-			{
-				m_State.Values[i].push_back(init);
-			}
-
-			return m_State.DefaultValues.size() - 1;
-		}
-
-		inline UnsignedType NewStateProperty(double Initializer)
-		{
-			NumericPropertyValue init = DefaultFloat(Initializer);
-			m_State.DefaultValues.push_back(init);
-
-			for (UnsignedType i=0; i<m_State.Values.size(); i++)
-			{
-				m_State.Values[i].push_back(init);
-			}
-
-			return m_State.DefaultValues.size() - 1;
-		}
-
-		inline NumericPropertyValue *StateValue(UnsignedType index) 
-		{ 
-			return &m_State.Values[m_CurrentVoice][index]; 
-		}
-	private:
-		UnsignedType m_SampleRate, m_SampleCount, m_VoiceCount, m_CurrentVoice;
-
-		bool m_Initialized;
-
-		Patch *m_Host;
 	};
 }
+}
 
-#endif /* __DEVICE_H__ */
+#endif
