@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef SPIRAL_AUDIODRIVER
 #define SPIRAL_AUDIODRIVER
 
-class AudioDriver : public SpiralPlugin
+class AudioDriver : public Spiral::Core::Device
 {
 public:
 	/* if this is an ALWAYS process then ProcessAudio must
