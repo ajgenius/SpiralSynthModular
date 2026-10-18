@@ -69,11 +69,14 @@ string SpiralPlugin_GetGroupName()
 
 ///////////////////////////////////////////////////////
 
-static const string notes[12]={"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-
 NoteSnapPlugin::NoteSnapPlugin() :
 m_Out(0)
 {
+	m_Filter = VectorProperty(Property::WriteOnly);
+	for (int n=0; n<12; n++) m_Filter.Add(new ToggleProperty(Property::WriteOnly, false));
+
+	RegisterSharedProperty(m_Filter, "Filter", "Semitones let through");
+
 	m_PluginInfo.Name="Note Snap";
 	m_PluginInfo.Width=80;
 	m_PluginInfo.Height=80;
@@ -85,8 +88,7 @@ m_Out(0)
 	
 	for (int n=0; n<12; n++)
 	{
-		m_Filter[n] = ToggleProperty(Property::WriteOnly, true);
-		RegisterSharedProperty(m_Filter[n], notes[n], notes[n]);
+		SetFilter(n, true);
 	}
 
 	SetString(DeviceName, SpiralPlugin_GetName());
@@ -125,7 +127,7 @@ void NoteSnapPlugin::Execute()
 		{
 			for (int i=0; i<131; i++) // for every note
 			{			
-				if (AsBoolean(m_Filter[(i+1)%12]) && Freq>=NoteTable[i] && Freq<NoteTable[i+1])
+				if (GetFilter((i+1)%12) && Freq>=NoteTable[i] && Freq<NoteTable[i+1])
 				{		
 					m_Out=NoteTable[i];
 					if (i!=m_LastNote) 
@@ -148,8 +150,8 @@ void NoteSnapPlugin::ExecuteCommands()
 	{
 		switch (m_AudioCH->GetCommand())
 		{
-			case NOTE_ON  : AsBoolean(m_Filter[m_Note])=true; break;
-			case NOTE_OFF : AsBoolean(m_Filter[m_Note])=false; break;
+			case NOTE_ON  : SetFilter(m_Note, true); break;
+			case NOTE_OFF : SetFilter(m_Note, false); break;
 		}
 	}
 }
@@ -159,7 +161,7 @@ void NoteSnapPlugin::Describe(Spiral::Core::Description &d)
 	d.Value(m_Version).Line();
 	for (int n=0; n<12; n++)
 	{
-		d.Value(AsBoolean(m_Filter[n])).Separator(" ");
+		d.Value(GetFilter(n)).Separator(" ");
 	}
 
 }
@@ -171,14 +173,14 @@ void NoteSnapPlugin::Apply(Spiral::Core::Description::Reader &r)
 		for (int n=0; n<12; n++)
 		{
 		// Use default (no notes filtered)
-			AsBoolean(m_Filter[n]) = 1;
+			SetFilter(n, true);
 		}
 	} else {
 		int version;
 		r.Value(version);
 		for (int n=0; n<12; n++)
 		{
-			r.Value(AsBoolean(m_Filter[n]));
+			r.Value(((Spiral::Core::ToggleProperty *)m_Filter[n])->Value.AsBoolean);
 		}
 	}
 }

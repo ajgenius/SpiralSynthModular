@@ -34,14 +34,15 @@ public:
 	virtual void	    Describe(Spiral::Core::Description &d);
 	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 
-	bool GetFilter(int n) { return AsBoolean(m_Filter[n]); }
+	bool GetFilter(int n) { return ((Spiral::Core::ToggleProperty *)m_Filter[n])->Value.AsBoolean; }
+	void SetFilter(int n, bool v) { ((Spiral::Core::ToggleProperty *)m_Filter[n])->Value.AsBoolean = v; }
 
 	enum GUICommands{NONE,NOTE_ON,NOTE_OFF};
 
 private:
 
 	int  m_Note;
-	Spiral::Core::ToggleProperty m_Filter[12];
+	Spiral::Core::VectorProperty m_Filter;
 	float m_Out;
 	float m_LastFreq;
 	int   m_LastNote;

@@ -16,7 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef MatrixPLUGIN
 #define MatrixPLUGIN
@@ -35,7 +35,7 @@ struct Pattern
 	bool Matrix[MATX][MATY];
 };
 
-class MatrixPlugin : public SpiralPlugin
+class MatrixPlugin : public Spiral::Core::Device
 {
 public:
  	MatrixPlugin();
@@ -48,11 +48,12 @@ public:
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
 		
-	bool  GetNoteCut()               { return m_NoteCut; }
-	int   GetCurrent()               { return m_Current; }
+	bool  GetNoteCut()               { return AsBoolean(m_NoteCut); }
+	int   GetCurrent()               { return AsSigned(m_Current); }
 	float GetStepTime()              { return m_StepTime; }
-	Pattern* GetPattern() 			 { return &m_Matrix[m_Current]; }
-	int   GetPatSeq(int n)           { return m_PatSeq[n]; }
+	Pattern* GetPattern() 			 { return &m_Matrix[AsSigned(m_Current)]; }
+	int   GetPatSeq(int n)           { return ((Spiral::Core::SignedProperty *)m_PatSeq[n])->Value.AsSigned; }
+	void  SetPatSeq(int n, int Value){ ((Spiral::Core::SignedProperty *)m_PatSeq[n])->Value.AsSigned = Value; }
 		
 	enum GUICommands{NONE,MAT_LENGTH,MAT_SPEED,MAT_ACTIVATE,MAT_DEACTIVATE,
 					 MAT_OCTAVE,COPY,PASTE,CLEAR,TUP,TDOWN,MAT_VOLUME,
@@ -81,16 +82,16 @@ private:
 	
 	float m_TickTime;
 	float m_StepTime;
-	float m_Time;
-	int   m_Step;
-	bool  m_Loop;
-	bool  m_NoteCut;
+	Spiral::Core::FloatProperty  m_Time;
+	Spiral::Core::SignedProperty m_Step;
+	Spiral::Core::ToggleProperty m_Loop;
+	Spiral::Core::ToggleProperty m_NoteCut;
 	
-	int   m_Current;
+	Spiral::Core::SignedProperty m_Current;
 	int   m_GUICurrent;
 	Pattern m_Matrix[NUM_PATTERNS];
 	float m_TriggerLevel[MATY];
-	int   m_PatSeq[NUM_PATSEQ];
+	Spiral::Core::VectorProperty m_PatSeq;
 	int   m_CurPatSeq;
 	
 	float m_CurrentNoteCV;

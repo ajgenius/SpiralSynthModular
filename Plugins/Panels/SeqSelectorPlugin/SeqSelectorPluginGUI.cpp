@@ -244,7 +244,7 @@ void SeqSelectorPluginGUI::UpdateValues(SpiralPlugin *o)
 	for (int n=0; n<c; n++)
 	{
 		int temp[8];
-		for (int i=0; i<8; i++) temp[i]=Plugin->m_Lines[n].Value[i]->Value.AsSigned;
+		for (int i=0; i<8; i++) temp[i]=Plugin->LineValue(n, i);
 		AddLine(temp);
 	}
 }

@@ -36,8 +36,8 @@ public:
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
 		
-	int  GetBegin()      { return AsSigned(m_Begin); }
-	int  GetEnd()        { return AsSigned(m_End); }
+	int  GetBegin()      { return m_Begin; }
+	int  GetEnd()        { return m_End; }
 			
 	enum GUICommands{NONE,SET_BEGIN,SET_END,RANGE,ADD_LINE,REM_LINE,SET_VAL};
 	
@@ -50,20 +50,25 @@ public:
 	
 	struct Line
 	{
-		std::vector<Spiral::Core::SignedProperty*> Value;
+		int Value[NUM_VALUES];
 	};
 	
-	std::vector<Line> m_Lines;
+	Spiral::Core::VectorProperty m_Lines;
+
+	Spiral::Core::VectorProperty *NewLine();
+	int  LineValue(int line, int n)
+	{ return ((Spiral::Core::SignedProperty *)(*(Spiral::Core::VectorProperty *)m_Lines[line])[n])->Value.AsSigned; }
+	void SetLineValue(int line, int n, int v)
+	{ ((Spiral::Core::SignedProperty *)(*(Spiral::Core::VectorProperty *)m_Lines[line])[n])->Value.AsSigned = v; }
 	
 private:
 
-	void UpdateLineCount(unsigned int num);
-
 	GUIArgs m_GUIArgs;
 	
-	Spiral::Core::UnsignedProperty m_NumLines, m_Position;
-	Spiral::Core::SignedProperty m_Begin, m_End;
-	Spiral::Core::ToggleProperty m_UseRange;
+	unsigned int m_Pos;
+	unsigned int m_Begin;
+	unsigned int m_End;
+	bool m_UseRange;
 	bool m_Triggered;
 };
 

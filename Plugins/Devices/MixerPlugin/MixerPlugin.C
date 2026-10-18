@@ -56,14 +56,14 @@ int SpiralPlugin_GetType()
 
 ///////////////////////////////////////////////////////
 
-MixerPlugin::MixerPlugin()
+MixerPlugin::MixerPlugin() :
+m_NumChannels(4)
 {
-        int c;
-	m_NumChannels = UnsignedProperty(DefaultLinearFlags | Property::ForceUpdate, 4, 2, 256, 1, 1);
-	RegisterSharedProperty(m_NumChannels, "Channels", "Channels");
+	m_ChannelVal = VectorProperty(Property::WriteOnly);
+	for (int n=0; n<MAX_CHANNELS; n++) m_ChannelVal.Add(new FloatProperty(DefaultLinearFlags, 1.0f, 0.0f, 2.0f, 0.001f, 0.01f));
+	RegisterSharedProperty(m_ChannelVal, "ChannelVal", "Channel volumes");
 
-	m_Peak = ToggleProperty(Property::ReadOnly, false);
-	RegisterSharedProperty(m_Peak, "Peak", "Peak");
+        int c;
 
 	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
@@ -73,15 +73,17 @@ MixerPlugin::MixerPlugin()
 	m_PluginInfo.Width = 80;
 	m_PluginInfo.Height = 150;
         for (c=0; c<MAX_CHANNELS; c++) {
+            SetChannel(c, 1.0f);
             m_GUIArgs.inPeak[c] = false;
         }
-        EnsureChannelProperties();
-        m_PluginInfo.NumInputs = GetChannels();
+        m_GUIArgs.Peak = false;
+        m_PluginInfo.NumInputs = m_NumChannels;
         m_PluginInfo.NumOutputs = 1;
-        for (c=1; c<=GetChannels(); c++) AddInputTip (c);
+        for (c=1; c<=m_NumChannels; c++) AddInputTip (c);
         m_PluginInfo.PortTips.push_back ("Output");
 	m_AudioCH->Register ("Value", &m_GUIArgs.Value);
 	m_AudioCH->Register ("Num", &m_GUIArgs.Num);
+	m_AudioCH->Register ("Peak", &m_GUIArgs.Peak, ChannelHandler::OUTPUT);
 	m_AudioCH->RegisterData ("inPeak", ChannelHandler::OUTPUT, m_GUIArgs.inPeak, MAX_CHANNELS * sizeof (bool));
 }
 
@@ -104,9 +106,9 @@ void MixerPlugin::Execute () {
      // Mix the inputs
      for (int n=0; n<m_HostInfo->BUFSIZE; n++) {
          float in, out = 0.0;
-         for (int c=0; c<GetChannels(); c++) {
+         for (int c=0; c<m_NumChannels; c++) {
              in = 0.0f;
-             const float volume = m_Volume[c]->Value.AsFloat;
+             const float volume = GetChannel(c);
              // Muting must not evaluate NaN * 0 or infinity * 0.
              if (volume != 0.0f && Spiral::Core::IsFinite(volume)) {
                  const float contribution = GetInput (c, n) * volume;
@@ -118,10 +120,9 @@ void MixerPlugin::Execute () {
                  }
              }
              m_GUIArgs.inPeak[c] = (in > 1.0);
-             m_VolumePeak[c]->Value.AsBoolean = (in > 1.0);
          }
          SetOutput (0, n, out);
-         AsBoolean(m_Peak) = (out > 1.0);
+         m_GUIArgs.Peak = (out > 1.0);
      }
 }
 
@@ -129,8 +130,8 @@ void MixerPlugin::ExecuteCommands() {
      if (m_AudioCH->IsCommandWaiting()) {
         switch (m_AudioCH->GetCommand()) {
           case SETMIX:
-               if (m_GUIArgs.Num >= 0 && m_GUIArgs.Num < GetChannels())
-                   m_Volume[m_GUIArgs.Num]->Value.AsFloat = m_GUIArgs.Value;
+               if (m_GUIArgs.Num >= 0 && m_GUIArgs.Num < m_NumChannels)
+                   SetChannel(m_GUIArgs.Num, m_GUIArgs.Value);
                break;
           case ADDCHAN:
                AddChannel ();
@@ -142,36 +143,6 @@ void MixerPlugin::ExecuteCommands() {
       }
 }
 
-void MixerPlugin::EnsureChannelProperties()
-{
-	unsigned int num = AsUnsigned(m_NumChannels);
-	char name[256];
-
-	/* Remove Associated Value Properties */
-	while( m_Volume.size() > num) 
-	{
-		UnregisterSharedProperty(m_Volume.back()->GetLabel());
-		delete m_Volume.back();
-		m_Volume.pop_back();
-
-		UnregisterSharedProperty(m_VolumePeak.back()->GetLabel());
-		delete m_VolumePeak.back();
-		m_VolumePeak.pop_back();
-	}
-
-	/* Add Associated Value Properties */
-	while (m_Volume.size() < num) 
-	{
-		sprintf(name, "Volume%d", (int)m_Volume.size());
-		m_Volume.push_back(new FloatProperty(DefaultLinearFlags, 1.0, 0.0, 2.0, 0.001, 0.01));
-		RegisterSharedProperty(*m_Volume.back(), name, name);
-
-		sprintf(name, "Peak%d", (int)m_VolumePeak.size());
-		m_VolumePeak.push_back(new ToggleProperty(Property::ReadOnly, false));
-		RegisterSharedProperty(*m_VolumePeak.back(), name, name);
-	}
-}
-
 void MixerPlugin::SetChannels (int num) {
      num = std::max(2, std::min(MAX_CHANNELS, num));
      // This is only used on loading, so we don't care that it clears all the inputs first
@@ -179,9 +150,8 @@ void MixerPlugin::SetChannels (int num) {
      RemoveAllInputs();
      m_PluginInfo.PortTips.clear ();
      m_PluginInfo.NumInputs = num;
-     AsUnsigned(m_NumChannels) = num;
-     EnsureChannelProperties();
-     for (int c=1; c<=GetChannels(); c++) {
+     m_NumChannels = num;
+     for (int c=1; c<=m_NumChannels; c++) {
          AddInput ();
          AddInputTip (c);
      }
@@ -190,23 +160,21 @@ void MixerPlugin::SetChannels (int num) {
 }
 
 void MixerPlugin::AddChannel (void) {
-     if (GetChannels() >= MAX_CHANNELS) return;
+     if (m_NumChannels >= MAX_CHANNELS) return;
      m_PluginInfo.NumInputs++;
-     AsUnsigned(m_NumChannels)++;
-     EnsureChannelProperties();
+     m_NumChannels++;
      AddInput ();
      vector<std::string>::iterator i = m_PluginInfo.PortTips.end();
      m_PluginInfo.PortTips.erase (--i);
-     AddInputTip (GetChannels());
+     AddInputTip (m_NumChannels);
      m_PluginInfo.PortTips.push_back ("Output");
      UpdatePluginInfoWithHost ();  // do the actual update
 }
 
 void MixerPlugin::RemoveChannel (void) {
-     if (GetChannels() <= 2) return;
+     if (m_NumChannels <= 2) return;
      m_PluginInfo.NumInputs--;
-     AsUnsigned(m_NumChannels)--;
-     EnsureChannelProperties();
+     m_NumChannels--;
      m_PluginInfo.PortTips.pop_back();
      m_PluginInfo.PortTips.pop_back();
      m_PluginInfo.PortTips.push_back ("Output");
@@ -216,12 +184,12 @@ void MixerPlugin::RemoveChannel (void) {
 
 void MixerPlugin::Describe(Spiral::Core::Description &d) {
      d.Value(m_Version).Separator(" ");
-     d.Value(AsUnsigned(m_NumChannels)).Separator(" ");
-     for (int n=0; n<GetChannels(); n++) d.Value(m_Volume[n]->Value.AsFloat).Separator(" ");
+     d.Value(m_NumChannels).Separator(" ");
+     for (int n=0; n<GetChannels(); n++) d.Value(GetChannel(n)).Separator(" ");
 }
 
 void MixerPlugin::Apply(Spiral::Core::Description::Reader &r) {
-     int version = 0, chans = GetChannels();
+     int version = 0, chans = m_NumChannels;
      r.Value(version);
      switch (version) {
        case 1: // needs default number of channels
@@ -234,6 +202,6 @@ void MixerPlugin::Apply(Spiral::Core::Description::Reader &r) {
      for (int n=0; n<chans && !r.Failed(); n++) {
           float value = 1.0f;
           r.Value(value);
-          if (n<GetChannels()) m_Volume[n]->Value.AsFloat = value;
+          if (n<GetChannels()) SetChannel(n, value);
      }
 }

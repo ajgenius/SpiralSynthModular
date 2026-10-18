@@ -20,6 +20,7 @@
 #include "NoteTable.h"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -71,11 +72,6 @@ string SpiralPlugin_GetGroupName()
 MatrixPlugin::MatrixPlugin() :
 m_TickTime(1.0f),
 m_StepTime(1.0f),
-m_Time(0.0f),
-m_Step(0),
-m_Loop(true),
-m_NoteCut(false),
-m_Current(0),
 m_GUICurrent(0),
 m_CurPatSeq(0),
 m_CurrentNoteCV(0),
@@ -86,6 +82,10 @@ m_CopyPattern(0),
 m_PatAdvance(false),
 m_PatReset(false)
 {
+	m_PatSeq = VectorProperty(Property::WriteOnly);
+	for (int n=0; n<NUM_PATSEQ; n++)
+		m_PatSeq.Add(new SignedProperty(DefaultLinearFlags, -1, -1, NUM_PATTERNS - 1, 1, 1));
+
 	m_Version=4;
 
 	m_PluginInfo.Name="Matrix";
@@ -138,10 +138,18 @@ m_PatReset(false)
 
 	for (int n=0; n<NUM_PATSEQ; n++)
 	{
-		if (n ==0) m_PatSeq[n]=0; else  m_PatSeq[n]=-1;
+		if (n ==0) SetPatSeq(n, 0); else SetPatSeq(n, -1);
 	}
 
-	m_AudioCH->Register("NoteCut",&m_NoteCut,ChannelHandler::INPUT);
+	SetString(DeviceName, SpiralPlugin_GetName());
+
+	m_Time = FloatProperty(Property::ReadOnly, 0.0f, 0.0f, 1000.0f, 0.0001f, 0.001f);
+	m_Step = SignedProperty(Property::ReadOnly, 0, 0, MATX - 1, 1, 1);
+	m_Current = SignedProperty(Property::ReadOnly, 0, 0, NUM_PATTERNS - 1, 1, 1);
+	m_Loop = ToggleProperty(Property::WriteOnly, true);
+	m_NoteCut = ToggleProperty(Property::WriteOnly, false);
+
+	RegisterSharedProperty(m_NoteCut, "NoteCut", "Cut the note on a new step");
 	m_AudioCH->Register("Volume",&m_GUIArgs.Volume,ChannelHandler::INPUT);
 	m_AudioCH->Register("Current",&m_GUICurrent,ChannelHandler::INPUT);
 	m_AudioCH->Register("StepTime",&m_StepTime,ChannelHandler::INPUT);
@@ -151,9 +159,14 @@ m_PatReset(false)
 	m_AudioCH->Register("X",&m_GUIArgs.X,ChannelHandler::INPUT);
 	m_AudioCH->Register("Y",&m_GUIArgs.Y,ChannelHandler::INPUT);
 	m_AudioCH->Register("Octave",&m_GUIArgs.Octave,ChannelHandler::INPUT);
-	m_AudioCH->Register("Step",&m_Step,ChannelHandler::OUTPUT);
+	RegisterSharedProperty(m_Step, "Step", "Current step");
 	m_AudioCH->Register("PatSeqStep",&m_CurPatSeq,ChannelHandler::OUTPUT);
-	m_AudioCH->Register("EchoCur", &m_Current, ChannelHandler::OUTPUT);
+	RegisterSharedProperty(m_Current, "EchoCur", "Current pattern");
+
+	RegisterSharedProperty(m_Time, "Time", "Position within the step");
+	RegisterSharedProperty(m_Loop, "Loop", "Loop the pattern");
+
+	RegisterSharedProperty(m_PatSeq, "PatSeq", "Pattern sequence");
 	m_AudioCH->RegisterData("Matrix",ChannelHandler::OUTPUT_REQUEST,&m_Matrix,sizeof(m_Matrix));
 }
 
@@ -173,10 +186,10 @@ PluginInfo &MatrixPlugin::Initialise(const HostInfo *Host)
 void MatrixPlugin::Reset()
 {
 	ResetPorts();
-	m_Current = GetPatSeq(0);
+	AsSigned(m_Current) = GetPatSeq(0);
 	m_GUICurrent = 0;
-	m_Time = 0.0f;
-	m_Step = 0;
+	AsFloat(m_Time) = 0.0f;
+	AsSigned(m_Step) = 0;
 	m_TickTime = 1.0f/(float)m_HostInfo->SAMPLERATE;
 	m_StepTime = 1.0f;
 	m_CurPatSeq = 0;
@@ -196,7 +209,7 @@ void MatrixPlugin::Execute()
 		if (InputExists(1)) m_StepTime = GetInput(1,n);
 		
 		// inc time 
-		m_Time+=m_TickTime;
+		AsFloat(m_Time)+=m_TickTime;
 		
 		SetOutputPitch(0,n,m_CurrentNoteCV);
 		SetOutput(1,n,m_CurrentTriggerCV);
@@ -218,15 +231,15 @@ void MatrixPlugin::Execute()
 				{
 					if (feq(Freq,NoteTable[i],0.01f))
 					{						
-						m_Current=i;
+						AsSigned(m_Current)=i;
 						break;
 					}
 				}
 				
 				// make it so the next note to trigger
 				// will be the first one								
-				m_Time=m_StepTime*(1/m_Matrix[m_Current].Speed);
-				m_Step=-1;
+				AsFloat(m_Time)=m_StepTime*(1/m_Matrix[AsSigned(m_Current)].Speed);
+				AsSigned(m_Step)=-1;
 				ExternalClockTriggered=true;
 				m_Triggered=true;
 			}
@@ -262,33 +275,33 @@ void MatrixPlugin::Execute()
 			// reset the position on a signal from input 1
 			if (InputExists(0) && GetInput(0,n)!=0)
 			{
-				m_Step=-1;
+				AsSigned(m_Step)=-1;
 				ExternalClockTriggered=true;
 				m_CurPatSeq++;
-				if (m_PatSeq[m_CurPatSeq]==-1 || m_CurPatSeq==NUM_PATSEQ) m_CurPatSeq=0;
-				m_Current=m_PatSeq[m_CurPatSeq];
+				if (m_CurPatSeq>=NUM_PATSEQ || GetPatSeq(m_CurPatSeq)==-1) m_CurPatSeq=0;
+				AsSigned(m_Current)=GetPatSeq(m_CurPatSeq);
 			}
 		}
 
 		// An external clock pulse overrides the internal timing
-		if ((!ExternalClock && m_Time>=m_StepTime*(1/m_Matrix[m_Current].Speed)) ||
+		if ((!ExternalClock && AsFloat(m_Time)>=m_StepTime*(1/m_Matrix[AsSigned(m_Current)].Speed)) ||
 			(ExternalClock && ExternalClockTriggered))
 		{
-			m_Time=0;
-			m_Step++;
+			AsFloat(m_Time)=0;
+			AsSigned(m_Step)++;
 
-			if (m_Step >= m_Matrix[m_Current].Length)
+			if (AsSigned(m_Step) >= m_Matrix[AsSigned(m_Current)].Length || AsSigned(m_Step) >= MATX)
 			{
 				SetOutput(18, n, 1);
-				m_Step=0;
+				AsSigned(m_Step)=0;
 				m_CurPatSeq++;
-				if (m_PatSeq[m_CurPatSeq]==-1 || m_CurPatSeq==NUM_PATSEQ) m_CurPatSeq=0;
-				m_Current=m_PatSeq[m_CurPatSeq];
+				if (m_CurPatSeq>=NUM_PATSEQ || GetPatSeq(m_CurPatSeq)==-1) m_CurPatSeq=0;
+				AsSigned(m_Current)=GetPatSeq(m_CurPatSeq);
 			}
 
 			// Reset the values
 			m_CurrentTriggerCV=0;
-			if (m_NoteCut) m_CurrentNoteCV=0;
+			if (AsBoolean(m_NoteCut)) m_CurrentNoteCV=0;
 			for (int t=0; t<NUM_PATTERNS; t++)
 			{
 				SetOutput(t+2,n,0);
@@ -298,11 +311,11 @@ void MatrixPlugin::Execute()
 			// Scan the matrix at current time
 			for (int i=0; i<MATY; i++)
 			{
-				if (m_Matrix[m_Current].Matrix[m_Step][i])
+				if (m_Matrix[AsSigned(m_Current)].Matrix[AsSigned(m_Step)][i])
 				{
-					m_CurrentNoteCV=NoteTable[i+m_Matrix[m_Current].Octave*12];
-					m_CurrentTriggerCV=m_Matrix[m_Current].Volume[m_Step][i];
-					m_TriggerLevel[i]=m_Matrix[m_Current].Volume[m_Step][i];
+					m_CurrentNoteCV=NoteTable[i+m_Matrix[AsSigned(m_Current)].Octave*12];
+					m_CurrentTriggerCV=m_Matrix[AsSigned(m_Current)].Volume[AsSigned(m_Step)][i];
+					m_TriggerLevel[i]=m_Matrix[AsSigned(m_Current)].Volume[AsSigned(m_Step)][i];
 				}
 			}
 
@@ -357,10 +370,10 @@ void MatrixPlugin::ExecuteCommands()
 				m_Matrix[m_GUICurrent].Volume[m_GUIArgs.X][m_GUIArgs.Y]=m_GUIArgs.Volume;
 			break;
 			case SET_CURRENT :
-				m_Current=m_GUIArgs.Num;
+				AsSigned(m_Current)=m_GUIArgs.Num;
 			break;
 			case SET_PATSEQ :
-				m_PatSeq[m_GUIArgs.Y]=m_GUIArgs.Num;
+				SetPatSeq(m_GUIArgs.Y, m_GUIArgs.Num);
 			break;
 		}
 	}
@@ -421,14 +434,14 @@ bool MatrixPlugin::CanTransposeDown()
 
 bool MatrixPlugin::CanTransposeUp()
 {
-     for (int x=0; x<MATX; x++) if (m_Matrix[m_Current].Matrix[x][MATY-1]) return false;
+     for (int x=0; x<MATX; x++) if (m_Matrix[AsSigned(m_Current)].Matrix[x][MATY-1]) return false;
      return true;
 }
 
 void MatrixPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" ");
-	d.Value(m_Current).Separator(" ").Value(m_Time).Separator(" ").Value(m_Step).Separator(" ").Value(m_Loop).Separator(" ").Value(m_NoteCut).Separator(" ").Line();
+	d.Value(AsSigned(m_Current)).Separator(" ").Value(AsFloat(m_Time)).Separator(" ").Value(AsSigned(m_Step)).Separator(" ").Value(AsBoolean(m_Loop)).Separator(" ").Value(AsBoolean(m_NoteCut)).Separator(" ").Line();
 
 	for (int n=0; n<NUM_PATTERNS; n++)
 	{
@@ -446,7 +459,7 @@ void MatrixPlugin::Describe(Spiral::Core::Description &d)
 	d.Line();
 	for (int n=0; n<NUM_PATSEQ; n++)
 	{
-		d.Value(m_PatSeq[n]).Separator(" ");
+		d.Value(GetPatSeq(n)).Separator(" ");
 	}
 
 }
@@ -454,7 +467,7 @@ void MatrixPlugin::Describe(Spiral::Core::Description &d)
 void MatrixPlugin::Apply(Spiral::Core::Description::Reader &r) {
      int version;
      r.Value(version);
-     r.Value(m_Current).Value(m_Time).Value(m_Step).Value(m_Loop).Value(m_NoteCut);
+     r.Value(AsSigned(m_Current)).Value(AsFloat(m_Time)).Value(AsSigned(m_Step)).Value(AsBoolean(m_Loop)).Value(AsBoolean(m_NoteCut));
      for (int n=0; n<NUM_PATTERNS; n++) {
          r.Value(m_Matrix[n].Length).Value(m_Matrix[n].Speed).Value(m_Matrix[n].Octave);
          if (version == 1) {
@@ -490,7 +503,7 @@ void MatrixPlugin::Apply(Spiral::Core::Description::Reader &r) {
         for (int n=0; n<NUM_PATSEQ; n++) {
             r.Value(ps);
             if (n==0 && ps<0) ps = 0;
-            m_PatSeq[n] = ps;
+            SetPatSeq(n, ps);
         }
      }
 }

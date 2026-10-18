@@ -19,24 +19,19 @@
 #ifndef PoshSamplerPLUGIN
 #define PoshSamplerPLUGIN
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 static const int NUM_SAMPLES = 8;
 static const int TRANSBUF_SIZE = 0x10000;
 
 struct SampleDesc {
-       float Volume, Velocity, Pitch, PitchMod;
-       bool Loop, PingPong;
-       int Note, Octave;
+       float Velocity, Pitch;
        bool TriggerUp;
-       float SamplePos;
        int SampleRate;
        bool Stereo;
-       long PlayStart, LoopStart, LoopEnd;
-       bool ReTrig;
 };
 
-class PoshSamplerPlugin : public SpiralPlugin {
+class PoshSamplerPlugin : public Spiral::Core::Device {
    public:
       PoshSamplerPlugin();
       virtual ~PoshSamplerPlugin();
@@ -62,18 +57,50 @@ class PoshSamplerPlugin : public SpiralPlugin {
       void LoadSample (int n, const std::string &Name);
       void SaveSample (int n, const std::string &Name);
       Sample* GetSample (int n) { return m_SampleVec[n]; }
-      float GetVolume (int n) { return m_SampleDescVec[n]->Volume; }
-      float GetPitch (int n) { return m_SampleDescVec[n]->PitchMod; }
-      bool GetReTrig (int n) { return m_SampleDescVec[n]->ReTrig; }
-      bool GetLoop (int n) { return m_SampleDescVec[n]->Loop; }
-      bool GetPingPong (int n) { return m_SampleDescVec[n]->PingPong; }
-      int GetNote (int n) { return m_SampleDescVec[n]->Note; }
-      int GetOctave (int n) { return m_SampleDescVec[n]->Octave+6; }
-      long GetPlayStart (int n) { return m_SampleDescVec[n]->PlayStart; }
-      long GetLoopStart (int n) { return m_SampleDescVec[n]->LoopStart; }
-      long GetLoopEnd (int n) { return m_SampleDescVec[n]->LoopEnd; }
+      float GetVolume (int n) { return SampleFloat (n, SLOT_VOLUME); }
+      float GetPitch (int n) { return SampleFloat (n, SLOT_PITCHMOD); }
+      bool GetReTrig (int n) { return SampleBool (n, SLOT_RETRIG); }
+      bool GetLoop (int n) { return SampleBool (n, SLOT_LOOP); }
+      bool GetPingPong (int n) { return SampleBool (n, SLOT_PINGPONG); }
+      int GetNote (int n) { return SampleSigned (n, SLOT_NOTE); }
+      int GetOctave (int n) { return SampleSigned (n, SLOT_OCTAVE)+6; }
+      long GetPlayStart (int n) { return SampleSigned (n, SLOT_PLAYSTART); }
+      long GetLoopStart (int n) { return SampleSigned (n, SLOT_LOOPSTART); }
+      long GetLoopEnd (int n) { return SampleSigned (n, SLOT_LOOPEND); }
       std::vector<Sample*> m_SampleVec;
       std::vector<SampleDesc*> m_SampleDescVec;
+
+      enum SampleSlot
+      {
+         SLOT_VOLUME,
+         SLOT_PITCHMOD,
+         SLOT_LOOP,
+         SLOT_PINGPONG,
+         SLOT_NOTE,
+         SLOT_OCTAVE,
+         SLOT_SAMPLEPOS,
+         SLOT_PLAYSTART,
+         SLOT_LOOPSTART,
+         SLOT_LOOPEND,
+         SLOT_RETRIG,
+         SLOT_COUNT
+      };
+
+      Spiral::Core::VectorProperty m_Samples;
+
+      Spiral::Core::VectorProperty *NewSampleSettings (int Note);
+
+      Spiral::Core::Property *Slot (int n, SampleSlot s)
+      { return (*(Spiral::Core::VectorProperty *)m_Samples[n])[s]; }
+
+      Spiral::Core::FloatType &SampleFloat (int n, SampleSlot s)
+      { return ((Spiral::Core::FloatProperty *)Slot (n, s))->Value.AsFloat; }
+
+      Spiral::Core::SignedType &SampleSigned (int n, SampleSlot s)
+      { return ((Spiral::Core::SignedProperty *)Slot (n, s))->Value.AsSigned; }
+
+      bool &SampleBool (int n, SampleSlot s)
+      { return ((Spiral::Core::ToggleProperty *)Slot (n, s))->Value.AsBoolean; }
    private:
       void InitializeSampleDescription (SampleDesc* NewDesc, int num, int Note);
       void Cut (int n, long s, long e);
