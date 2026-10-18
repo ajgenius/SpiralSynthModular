@@ -16,12 +16,8 @@
 
 #include "Sample.h"
 #include "Property.h"
-#include "Port.h"
-#include "Device.h"
-#include "Patch.h"
 
-using namespace std;
-using namespace Spiral;
+using namespace Spiral::Core;
 
 Property::Property(const Property &Copy)
 {

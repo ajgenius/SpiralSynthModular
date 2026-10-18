@@ -39,5 +39,13 @@ typedef uint32 PatternID;
 
 typedef float32 AudioType;
 
+typedef int32 SignedType;
+typedef uint32 UnsignedType;
+typedef float32 FloatType;
+
+/* From GLIB gmacros.h. */
+#undef CLAMP
+#define CLAMP(x, low, high)  (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
+
 }
 }

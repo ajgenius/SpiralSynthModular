@@ -14,8 +14,8 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-#ifndef __PROPERTY_H__
-#define __PROPERTY_H__
+#ifndef SPIRALCORE_PROPERTY_H
+#define SPIRALCORE_PROPERTY_H
 
 #include <string>
 #include <vector>
@@ -23,8 +23,6 @@
 
 #include "Types.h"
 #include "Sample.h"
-
-using namespace std;
 
 /* REWORK -
 	Like ports,
@@ -179,6 +177,9 @@ using namespace std;
 */
 namespace Spiral
 {
+namespace Core
+{
+
 	class Property
 	{
 	public:
@@ -197,7 +198,7 @@ namespace Spiral
 		Property(const Property &Copy);
 
 		virtual Property *Duplicate()=0;
-		virtual string ClassName()=0;
+		virtual std::string ClassName()=0;
 
 		virtual void CopyValue(const Property &CopyFrom)=0;
 
@@ -205,11 +206,11 @@ namespace Spiral
 		inline void Reference() { m_References++; }
 		inline void UnReference() { m_References--; }
 
-		inline string GetLabel() { return m_Label; }
-		inline string GetHint() { return m_Hint; }
+		inline std::string GetLabel() { return m_Label; }
+		inline std::string GetHint() { return m_Hint; }
 
-		inline void SetLabel(string Label) { m_Label = Label; }
-		inline void SetHint(string Hint) { m_Hint = Hint; }
+		inline void SetLabel(std::string Label) { m_Label = Label; }
+		inline void SetHint(std::string Hint) { m_Hint = Hint; }
 
 		inline bool IsReadOnly() { return m_ReadOnly; }
 		inline bool IsInternal() { return m_Internal; }
@@ -222,7 +223,7 @@ namespace Spiral
 
 		bool m_ReadOnly, m_Internal, m_ForceUpdate;
 	private:
-		string m_Name, m_Label, m_Hint;
+		std::string m_Name, m_Label, m_Hint;
 		int m_References;
 	};
 
@@ -247,11 +248,52 @@ namespace Spiral
 		};
 	} NumericPropertyValue;
 
+	inline NumericPropertyValue DefaultBoolean(bool value)
+	{
+		NumericPropertyValue v;
+
+		v.Type = NumericPropertyValue::Boolean;
+		v.AsBoolean = value;
+
+		return v;
+	}
+
+	inline NumericPropertyValue DefaultFloat(FloatType value)
+	{
+		NumericPropertyValue v;
+
+		v.Type = NumericPropertyValue::Float;
+		v.AsFloat = value;
+
+		return v;
+	}
+
+	inline NumericPropertyValue DefaultSigned(SignedType value)
+	{
+		NumericPropertyValue v;
+
+		v.Type = NumericPropertyValue::Signed;
+		v.AsSigned = value;
+
+		return v;
+	}
+
+	inline NumericPropertyValue DefaultUnsigned(UnsignedType value)
+	{
+		NumericPropertyValue v;
+
+		v.Type = NumericPropertyValue::Unsigned;
+		v.AsUnsigned = value;
+
+		return v;
+	}
+
+
 	class PropertySet
 	{
 	public:
 		PropertySet() {}
-		PropertySet(vector<NumericPropertyValue> Values);
+		PropertySet(std::vector<NumericPropertyValue> Values);
 		PropertySet(const NumericPropertyValue Values[], UnsignedType Count);
 
 		inline UnsignedType size() { return m_Values.size(); }
@@ -259,17 +301,12 @@ namespace Spiral
 		inline NumericPropertyValue operator[](UnsignedType i) { return m_Values[i]; }
 
 	protected:
-		vector<NumericPropertyValue> m_Values;
+		std::vector<NumericPropertyValue> m_Values;
 	};
 
 	typedef struct
 	{
-		#define DefaultBoolean(value) {NumericPropertyValue::Boolean, {AsBoolean:value}}
-		#define DefaultFloat(value) {NumericPropertyValue::Float, {AsFloat:value}}
-		#define DefaultSigned(value) {NumericPropertyValue::Signed, {AsSigned:value}}
-		#define DefaultUnsigned(value) {NumericPropertyValue::Float, {AsUnsigned:value}}
-
-		const string Name;
+		const std::string Name;
 		const NumericPropertyValue Value;
 	} NamedPropertyValue;
 
@@ -279,19 +316,19 @@ namespace Spiral
 		#define NameArray(...) ((char*[]){__VA_ARGS__})
 
 		NamedPropertySet() {}
-		NamedPropertySet(vector<string> Names,vector<NumericPropertyValue> Values);
+		NamedPropertySet(std::vector<std::string> Names,std::vector<NumericPropertyValue> Values);
 
 		NamedPropertySet(const NamedPropertyValue Values[], UnsignedType Count);
 
-		inline string Names(UnsignedType i) { return m_Names[i]; }
+		inline std::string Names(UnsignedType i) { return m_Names[i]; }
 
-		inline NumericPropertyValue operator[](string name)
+		inline NumericPropertyValue operator[](std::string name)
 		{		
 			return ((PropertySet)(*this))[m_Index[name]];
 		}
 	private:
-		vector<string> m_Names;
-		map<string,SignedType> m_Index;
+		std::vector<std::string> m_Names;
+		std::map<std::string,SignedType> m_Index;
 	};
 
 	class NumericProperty : public Property
@@ -308,8 +345,10 @@ namespace Spiral
 		NumericProperty(SignedType Flags): Property(Flags) {}
 	};
 
-	#define DefaultLinearFlags Property::WriteOnly | LinearProperty::ClampLower | LinearProperty::ClampUpper
-	#define DefaultLogarithmicFlags Property::WriteOnly | LinearProperty::ClampLower | LinearProperty::ClampUpper | LinearProperty::Logarithmic
+	#define DefaultLinearFlags (Spiral::Core::Property::WriteOnly \
+		| Spiral::Core::LinearProperty::ClampLower \
+		| Spiral::Core::LinearProperty::ClampUpper)
+	#define DefaultLogarithmicFlags (DefaultLinearFlags | Spiral::Core::LinearProperty::Logarithmic)
 
 	class LinearProperty : public NumericProperty
 	{
@@ -369,7 +408,8 @@ namespace Spiral
 
 		virtual void Clamp();
 
-		virtual string ClassName()
+
+		virtual std::string ClassName()
 		{
 			return "SignedProperty";
 		}
@@ -398,7 +438,7 @@ namespace Spiral
 
 		virtual void Clamp();
 
-		virtual string ClassName()
+		virtual std::string ClassName()
 		{
 			return "UnsignedProperty";
 		}
@@ -425,7 +465,7 @@ namespace Spiral
 		}
 
 		virtual void Clamp();
-		virtual string ClassName()
+		virtual std::string ClassName()
 		{
 			return "FloatProperty";
 		}
@@ -445,7 +485,7 @@ namespace Spiral
 			return new ToggleProperty(*this);
 		}
 
-		virtual string ClassName()
+		virtual std::string ClassName()
 		{
 			return "ToggleProperty";
 		}
@@ -468,7 +508,7 @@ namespace Spiral
 
 		inline PropertySet Set() { return m_Set; }
 
-		virtual string ClassName()
+		virtual std::string ClassName()
 		{
 			return "SetProperty";
 		}
@@ -482,7 +522,7 @@ namespace Spiral
 		StringProperty() {}
 		virtual ~StringProperty() {}
 
-		StringProperty(SignedType Flags, string InitialValue): Property(Flags) { Value = InitialValue; }
+		StringProperty(SignedType Flags, std::string InitialValue): Property(Flags) { Value = InitialValue; }
 		StringProperty(SignedType Flags, const char *InitialValue): Property(Flags) { Value = InitialValue; }
 
 		StringProperty(const StringProperty &Copy);
@@ -494,12 +534,12 @@ namespace Spiral
 
 		virtual void CopyValue(const Property &CopyFrom);
 
-		virtual string ClassName()
+		virtual std::string ClassName()
 		{
 			return "StringProperty";
 		}
 
-		string Value;
+		std::string Value;
 	protected:
 		StringProperty(SignedType Flags): Property(Flags) {}
 	};
@@ -531,7 +571,7 @@ namespace Spiral
 
 		FloatType Velocity; /* (0 - 1.0f)*127 */
 
-		virtual string ClassName()
+		virtual std::string ClassName()
 		{
 			return "NoteProperty";
 		}
@@ -558,7 +598,7 @@ namespace Spiral
 
 		Sample Value;
 
-		virtual string ClassName()
+		virtual std::string ClassName()
 		{
 			return "SampleProperty";
 		}
@@ -588,7 +628,7 @@ namespace Spiral
 		{
 		}
 
-		VectorProperty(SignedType Flags, vector<Property*> Values);
+		VectorProperty(SignedType Flags, std::vector<Property*> Values);
 
 		VectorProperty(const ComplexProperty &Copy);
 		virtual Property *Duplicate()
@@ -613,16 +653,17 @@ namespace Spiral
 			Values.push_back(Property);
 		}
 
-		virtual string ClassName()
+		virtual std::string ClassName()
 		{
 			return "VectorProperty";
 		}
 
-		vector<Property*> Values;
+		std::vector<Property*> Values;
 
 	private:
 		inline void CopyContents(vector<Property*> Contents);
 	};
+}
 }
 
 #endif
