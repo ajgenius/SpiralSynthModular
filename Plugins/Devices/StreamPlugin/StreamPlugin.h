@@ -19,10 +19,10 @@
 #ifndef StreamPLUGIN
 #define StreamPLUGIN
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 #include "RiffWav.h"
 
-class StreamPlugin : public SpiralPlugin {
+class StreamPlugin : public Spiral::Core::Device {
    public:
       StreamPlugin();
       virtual ~StreamPlugin();
@@ -35,19 +35,23 @@ class StreamPlugin : public SpiralPlugin {
       virtual void Apply(Spiral::Core::Description::Reader &r);
       enum GUICommands { NONE, SET_TIME, LOAD, RESTART, STOP, PLAY };
       // has to be defined in the plugin
-      float GetVolume (void) { return m_GUIArgs.Volume; }
-      float GetPitch (void) { return m_GUIArgs.PitchMod; }
+      float GetVolume (void) { return AsFloat(m_Volume); }
+      float GetPitch (void) { return AsFloat(m_PitchMod); }
    private:
       WavFile m_File;
       Sample m_SampleL, m_SampleR;
-      int m_SampleRate, m_SampleSize, m_StreamPos;
-      float m_GlobalPos, m_Pitch, m_SamplePos, m_Pos;
+      int m_SampleRate, m_SampleSize;
+      float m_SamplePos;
+      Spiral::Core::SignedProperty m_StreamPos;
+      Spiral::Core::FloatProperty m_GlobalPos, m_Pitch, m_Pos;
       enum Mode { PLAYM, STOPM } m_Mode;
       struct GUIArgs {
-	     float  Volume, PitchMod, Time, TimeOut, MaxTime;
+	     float  Time, TimeOut, MaxTime;
 	     char FileName[256];
              bool PlayOut;
       } m_GUIArgs;
+
+      Spiral::Core::FloatProperty m_Volume, m_PitchMod;
       float GetLength (void);
       // Commands
       void SetTime (void);

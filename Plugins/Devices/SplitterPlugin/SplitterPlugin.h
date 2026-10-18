@@ -35,7 +35,7 @@ public:
 	virtual void	    Describe(Spiral::Core::Description &d);
 	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 	
-	int GetChannelCount (void) { return AsUnsigned(m_ChannelCount); }
+	int GetChannelCount (void) { return AsSigned(m_ChannelCount); }
 	void SetChannelCount (int count);
 
 	enum GUICommands { NONE, SETCHANNELCOUNT };
@@ -43,7 +43,7 @@ public:
 	};
 private:
 	GUIArgs m_GUIArgs;
-	Spiral::Core::UnsignedProperty m_ChannelCount;
+	Spiral::Core::SignedProperty m_ChannelCount;
 
 	int m_Version;
 

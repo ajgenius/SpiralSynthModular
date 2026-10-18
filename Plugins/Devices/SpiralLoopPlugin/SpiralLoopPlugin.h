@@ -16,7 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef SpiralLoopPLUGIN
 #define SpiralLoopPLUGIN
@@ -38,7 +38,7 @@ struct SampleDesc
 	bool   Stereo;
 };
 
-class SpiralLoopPlugin : public SpiralPlugin
+class SpiralLoopPlugin : public Spiral::Core::Device
 {
 public:
  	SpiralLoopPlugin();
@@ -80,8 +80,8 @@ public:
 	void SetId(int Id)       				{ m_Id=Id; }
 	void SetPos(int Pos)     				{ m_Pos=Pos; }
 	void SetLength(int Len)  				{ m_LoopPoint=Len; }
-	void SetSpeed(float Speed)				{ m_Speed=Speed; }
-	void SetVolume(float Vol)  				{ m_Volume=Vol; }
+	void SetSpeed(float Speed)				{ AsFloat(m_Speed)=Speed; }
+	void SetVolume(float Vol)  				{ AsFloat(m_Volume)=Vol; }
 	void SetPlaying(bool Playing) 			{ m_Playing=Playing; }
 	void SetRecordingSource(const float *s) { m_RecordingSource=s; }
 	void Record(bool r) 					{ m_Recording=r; if (!r) EndRecordBuf(); }
@@ -95,8 +95,8 @@ public:
 	float 		*GetPosPtr() 				{return &m_Pos;}
 	const int    GetTotalLength() 			{assert(m_StoreBuffer.GetLength()==m_DubBuffer.GetLength()); return m_StoreBuffer.GetLength();}
 	const bool   Delete()   				{return m_DelMe; }
-	const float  GetSpeed() 				{return m_Speed;}
-	const float  GetVolume()     			{ return m_Volume; }
+	const float  GetSpeed() 				{return AsFloat(m_Speed);}
+	const float  GetVolume()     			{ return AsFloat(m_Volume); }
 	const float  GetCurrentAngle() 			{ return m_LoopPoint?(m_Pos/m_LoopPoint)*360.0f:0; }
 	const std::string& GetSampleName()  			{ return m_Sample; }
 	std::vector<TriggerInfo> *GetTriggerVec()    { return &m_TriggerVec; }
@@ -137,8 +137,8 @@ private:
 	bool   m_Recording;
 	bool   m_DelMe;
 	long int m_LoopPoint;
-	float  m_Speed;
-	float  m_Volume;
+	Spiral::Core::FloatProperty  m_Speed;
+	Spiral::Core::FloatProperty  m_Volume;
 	const float *m_RecordingSource;
 	Sample m_StoreBuffer;
 	Sample m_DubBuffer;
@@ -152,7 +152,7 @@ private:
 		
 	int    m_TickTime;
 	int    m_TickCurrent;
-	int    m_TicksPerLoop;
+	Spiral::Core::SignedProperty    m_TicksPerLoop;
 	float  m_TickOutput;
 	
 	bool m_Triggered;

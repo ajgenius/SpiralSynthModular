@@ -85,17 +85,16 @@ LogicPlugin::LogicPlugin()
 
 	m_Operator = SetProperty(Property::WriteOnly, 0, NamedPropertySet(OperatorTypes, sizeof(OperatorTypes)/sizeof(OperatorTypes[0])));
 	RegisterSharedProperty(m_Operator, "Operator", "Operator");
+        m_Version = 2;
+        m_PluginInfo.Name="Logic";
+	m_PluginInfo.Width=80;
+	m_PluginInfo.Height=140;
 
 	m_Inputs = UnsignedProperty(DefaultLinearFlags | Property::ForceUpdate, 2, 2, 256, 1, 1);
 	RegisterSharedProperty(m_Inputs, "Inputs", "Inputs");
 
 	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
-        m_Version = 2;
-        m_PluginInfo.Name="Logic";
-	m_PluginInfo.Width=80;
-	m_PluginInfo.Height=140;
-
         CreatePorts ();
 
 }

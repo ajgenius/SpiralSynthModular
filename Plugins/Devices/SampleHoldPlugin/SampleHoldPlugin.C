@@ -19,6 +19,7 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 

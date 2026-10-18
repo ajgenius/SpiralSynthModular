@@ -17,12 +17,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef WaveShaperPLUGIN
 #define WaveShaperPLUGIN
 
-class WaveShaperPlugin : public SpiralPlugin {
+class WaveShaperPlugin : public Spiral::Core::Device {
   public:
     WaveShaperPlugin();
     virtual ~WaveShaperPlugin ();
@@ -39,8 +39,9 @@ class WaveShaperPlugin : public SpiralPlugin {
     };
   private:
     GUIArgs m_GUIArgs;
-    float *m_wt, m_Coefs[6];
-    int m_Wave;
+    float *m_wt;
+  Spiral::Core::FloatProperty m_Coefs[6];
+    Spiral::Core::SignedProperty m_Wave;
     void calc (void);
     void set (int index, float v);
     friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, WaveShaperPlugin &o);

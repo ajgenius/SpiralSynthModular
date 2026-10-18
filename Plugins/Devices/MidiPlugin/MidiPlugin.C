@@ -24,6 +24,7 @@ using Spiral::Core::MidiEvent;
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 int MidiPlugin::m_RefCount = 0;
 
@@ -75,14 +76,11 @@ string SpiralPlugin_GetGroupName()
 ///////////////////////////////////////////////////////
 
 MidiPlugin::MidiPlugin() :
-m_DeviceNum(0),
 m_NoteLevel(0),
 m_TriggerLevel(0),
 m_PitchBendLevel(0),
 m_ChannelPressureLevel(0),
 m_AfterTouchLevel(0),
-m_NoteCut(false),
-m_ContinuousNotes(false),
 m_CurrentNote(0)
 {
 	m_Version=2;
@@ -110,8 +108,15 @@ m_CurrentNote(0)
 	
 	for (int n=0; n<128; n++) m_ControlLevel[n]=0;
 	
-	m_AudioCH->Register("DeviceNum",&m_DeviceNum);
-	m_AudioCH->Register("NoteCut",&m_NoteCut);
+	SetString(DeviceName, SpiralPlugin_GetName());
+
+	m_DeviceNum = SignedProperty(DefaultLinearFlags, 0, 0, 15, 1, 1);
+	m_NoteCut = ToggleProperty(Property::WriteOnly, false);
+	m_ContinuousNotes = ToggleProperty(Property::WriteOnly, false);
+
+	RegisterSharedProperty(m_DeviceNum, "DeviceNum", "MIDI device number");
+	RegisterSharedProperty(m_NoteCut, "NoteCut", "Clear pitch on note release");
+	RegisterSharedProperty(m_ContinuousNotes, "ContinuousNotes", "Keep the trigger up between notes");
 	m_AudioCH->Register("CC",&m_GUIArgs.s);
 	m_AudioCH->RegisterData("Name",ChannelHandler::INPUT,
 		&m_GUIArgs.Name,sizeof(m_GUIArgs.Name));
@@ -172,7 +177,7 @@ void MidiPlugin::Execute()
 				}
 				
 				MidiEvent NewEvent(MidiEvent::ON,Note,GetInput(1,0)*128.0f);
-				MidiDevice::Get()->SendEvent(m_DeviceNum,NewEvent);
+				MidiDevice::Get()->SendEvent(AsSigned(m_DeviceNum),NewEvent);
 				TriggeredOut=true;
 			}			
 		}
@@ -193,13 +198,13 @@ void MidiPlugin::Execute()
 				}
 
 				MidiEvent NewEvent(MidiEvent::OFF,Note,0.0f);
-				MidiDevice::Get()->SendEvent(m_DeviceNum,NewEvent);
+				MidiDevice::Get()->SendEvent(AsSigned(m_DeviceNum),NewEvent);
 				TriggeredOut=false;
 			}			
 		}		
 	}
 	
-	MidiEvent Event=MidiDevice::Get()->GetEvent(m_DeviceNum);
+	MidiEvent Event=MidiDevice::Get()->GetEvent(AsSigned(m_DeviceNum));
 	// get all the midi events since the last check
 	while(Event.GetType()!=MidiEvent::NONE)
 	{
@@ -216,7 +221,7 @@ void MidiPlugin::Execute()
 			if (Event.GetNote()==m_CurrentNote)
 			{
 				m_TriggerLevel=0;
-				if (m_NoteCut) m_NoteLevel=0;
+				if (AsBoolean(m_NoteCut)) m_NoteLevel=0;
 			}
 		}
 		
@@ -244,7 +249,7 @@ void MidiPlugin::Execute()
 			}
 		}
 		
-		Event=MidiDevice::Get()->GetEvent(m_DeviceNum);
+		Event=MidiDevice::Get()->GetEvent(AsSigned(m_DeviceNum));
 	}
 
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
@@ -264,7 +269,7 @@ void MidiPlugin::Execute()
 	
 	// make sure the trigger is registered if it's 
 	// note is pressed before releasing the previous one.
-	if (Triggered && !m_ContinuousNotes) SetOutput(1,0,0);
+	if (Triggered && !AsBoolean(m_ContinuousNotes)) SetOutput(1,0,0);
 }
 
 void  MidiPlugin::ExecuteCommands()
@@ -302,7 +307,7 @@ void MidiPlugin::DeleteControl()
 
 void MidiPlugin::Describe(Spiral::Core::Description &d) 
 {
-	d.Value(m_Version).Separator(" ").Value(m_DeviceNum).Separator(" ").Value(m_NoteCut).Separator(" ");	
+	d.Value(m_Version).Separator(" ").Value(AsSigned(m_DeviceNum)).Separator(" ").Value(AsBoolean(m_NoteCut)).Separator(" ");	
 	d.Value(m_ControlList.size()).Line();
 	for (unsigned int n=0; n<m_ControlList.size(); n++)
 	{
@@ -319,11 +324,11 @@ void MidiPlugin::Apply(Spiral::Core::Description::Reader &r)
 		
 	switch (version)
 	{
-		case 1:	r.Value(m_DeviceNum).Value(m_NoteCut); break;
+		case 1:	r.Value(AsSigned(m_DeviceNum)).Value(AsBoolean(m_NoteCut)); break;
 		
 		case 2:
 		{
-			r.Value(m_DeviceNum).Value(m_NoteCut); 
+			r.Value(AsSigned(m_DeviceNum)).Value(AsBoolean(m_NoteCut)); 
 			
 			int Num;
 			r.Value(Num);

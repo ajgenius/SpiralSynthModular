@@ -90,18 +90,14 @@ DiskWriterPlugin::DiskWriterPlugin()
 	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 
-	m_Recording = ToggleProperty(Property::WriteOnly | Property::ForceUpdate, false);
-
 	m_BitsPerSample = SetProperty(Property::WriteOnly, 0, PropertySet(BitRates, sizeof(BitRates)/sizeof(BitRates[0])));
 	m_Stereo = ToggleProperty(Property::WriteOnly, true);
-
-	/* Just So The GUI Can Keep track of Current Time Recorded */
+	m_Recording = ToggleProperty(Property::ReadOnly, false);
 	m_TimeRecorded = FloatProperty(Property::ReadOnly, 0, 0, 0, 0, 0);
-
-	RegisterSharedProperty(m_Recording, "Recording", "Recording");
-	RegisterSharedProperty(m_BitsPerSample, "Bits Per Sample", "Bits Per Sample");
-	RegisterSharedProperty(m_Stereo, "Stereo", "Stereo");
-	RegisterSharedProperty(m_TimeRecorded, "Time Recorded", "Time Recorded");
+	RegisterSharedProperty(m_BitsPerSample, "BitsPerSample", "Bit depth");
+	RegisterSharedProperty(m_Stereo, "Stereo", "Stereo or mono");
+	RegisterSharedProperty(m_Recording, "Recording", "Recording now");
+	RegisterSharedProperty(m_TimeRecorded, "TimeRecorded", "Seconds recorded");
 	m_PluginInfo.Name="DiskWriter";
 	m_PluginInfo.Width=160;
 	m_PluginInfo.Height=115;
@@ -111,7 +107,7 @@ DiskWriterPlugin::DiskWriterPlugin()
 	m_PluginInfo.PortTips.push_back("Right Out");
 	m_PluginInfo.PortTips.push_back("Record Controller");
 
-        AsUnsigned(m_BitsPerSample) = 16;
+        AsSigned(m_BitsPerSample) = 16;
         AsBoolean(m_Stereo) = true;
 	AsBoolean(m_Recording) = false;
 	AsFloat(m_TimeRecorded) = 0;
@@ -162,8 +158,8 @@ void DiskWriterPlugin::ExecuteCommands()
 				if (m_Wav.GetSamplerate() != GetHostInfo()->SAMPLERATE) {
 					m_Wav.SetSamplerate(GetHostInfo()->SAMPLERATE);
 				}
-				if (m_Wav.GetBitsPerSample() != AsUnsigned(m_BitsPerSample)) {
-					m_Wav.SetBitsPerSample(AsUnsigned(m_BitsPerSample));
+				if (m_Wav.GetBitsPerSample() != AsSigned(m_BitsPerSample)) {
+					m_Wav.SetBitsPerSample(AsSigned(m_BitsPerSample));
 				}
 				m_Wav.Open(m_GUIArgs.Name,WavFile::WRITE, (AsBoolean(m_Stereo))?(WavFile::STEREO):(WavFile::MONO));
 				AsFloat(m_TimeRecorded) = 0;
@@ -210,7 +206,7 @@ void DiskWriterPlugin::Apply(Spiral::Core::Description::Reader &r)
 		case 1:
 		{
 			//use original fixed defaults
-			AsUnsigned(m_BitsPerSample) = 16;
+			AsSigned(m_BitsPerSample) = 16;
 			AsBoolean(m_Stereo) = true;
 		}
 		break;

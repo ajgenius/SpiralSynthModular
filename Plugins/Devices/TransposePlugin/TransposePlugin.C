@@ -78,10 +78,7 @@ m_Out(0.0),
 m_BufferInitialized(false)
 {
 	m_Amount = SignedProperty(DefaultLinearFlags, 0, -12, 12, 1, 1);
-	m_Aliasing = ToggleProperty(Property::WriteOnly, true);
-
 	RegisterSharedProperty(m_Amount, "Amount", "Amount");
-	RegisterSharedProperty(m_Aliasing, "Aliasing", "Aliasing");
 
 	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);

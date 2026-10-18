@@ -77,14 +77,14 @@ SplitterPlugin::SplitterPlugin()
 	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 
-	m_ChannelCount = UnsignedProperty(DefaultLinearFlags | Property::ForceUpdate, 4, 0, 256, 1, 1);
+	m_ChannelCount = SignedProperty(Property::ForceUpdate|DefaultLinearFlags, 4, 1, 256, 1, 1);
 	RegisterSharedProperty(m_ChannelCount, "Channels", "Channels");
 	m_PluginInfo.Name="Splitter";
 	m_PluginInfo.Width=80;
 	m_PluginInfo.Height=40;
 
 	m_Version = 2;
-	AsUnsigned(m_ChannelCount) = 4;
+	AsSigned(m_ChannelCount) = 4;
 	CreatePorts ();
 
 }
@@ -115,7 +115,7 @@ void SplitterPlugin::CreatePorts (int n, bool AddPorts)
 
 void SplitterPlugin::SetChannelCount (int count) 
 {
-	AsUnsigned(m_ChannelCount) = count;
+	AsSigned(m_ChannelCount) = count;
 
 	UpdatePluginInfoWithHost();
 
@@ -168,7 +168,7 @@ void SplitterPlugin::ExecuteCommands ()
 				m_PluginInfo.NumOutputs = 0;
 				m_PluginInfo.PortTips.clear ();
 
-				CreatePorts (AsUnsigned(m_ChannelCount), true);
+				CreatePorts (AsSigned(m_ChannelCount), true);
 				UpdatePluginInfoWithHost ();
 			}
 			break;

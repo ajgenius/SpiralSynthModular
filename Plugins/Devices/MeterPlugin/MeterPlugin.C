@@ -20,6 +20,7 @@
 #include <stdio.h>
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -59,9 +60,10 @@ string SpiralPlugin_GetGroupName() { return "InputOutput"; }
 MeterPlugin::MeterPlugin():
 m_Data (NULL),
 m_DataSize (0),
-m_DataReady (false),
-m_VUMode (true)
+m_DataReady (false)
 {
+	m_VUMode = ToggleProperty(Property::WriteOnly, true);
+	RegisterSharedProperty(m_VUMode, "VUMode", "VU or min/max");
   m_PluginInfo.Name = "Meter";
   m_PluginInfo.Width = 230;
   m_PluginInfo.Height = 128;
@@ -120,20 +122,20 @@ void MeterPlugin::ExecuteCommands () {
       }	
       break;
 
-      case (SETVU) : m_VUMode = true;
+      case (SETVU) : AsBoolean(m_VUMode) = true;
                      break;
-      case (SETMM) : m_VUMode = false;
+      case (SETMM) : AsBoolean(m_VUMode) = false;
                      break;
     }
   }
 }
 
 void MeterPlugin::Describe(Spiral::Core::Description &d) {
-  d.Value(m_Version).Separator(" ").Value(m_VUMode).Separator(" ");
+  d.Value(m_Version).Separator(" ").Value(AsBoolean(m_VUMode)).Separator(" ");
 }
 
 void MeterPlugin::Apply(Spiral::Core::Description::Reader &r) {
   int Version;
   r.Value(Version);
-  r.Value(m_VUMode);
+  r.Value(AsBoolean(m_VUMode));
 }

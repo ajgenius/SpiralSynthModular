@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef PLUGIN
 #define PLUGIN
 
-class KeyboardPlugin : public SpiralPlugin
+class KeyboardPlugin : public Spiral::Core::Device
 {
 public:
  	KeyboardPlugin();
@@ -35,11 +35,11 @@ public:
 	enum GUICommands{NONE,NOTE_ON,NOTE_OFF};
 	struct GUIArgs
 	{
-		int Note;
 	};
 		
 private:
 	GUIArgs m_GUIArgs;
+	Spiral::Core::SignedProperty m_Note;
 		
 	float m_NoteLevel;
 	float m_TriggerLevel;

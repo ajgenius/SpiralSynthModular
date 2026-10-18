@@ -81,7 +81,7 @@ public:
 private:
 	GUIArgs m_GUIArgs;	
 
-	Spiral::Core::UnsignedProperty m_NumInputs, m_NumOutputs;
+	Spiral::Core::SignedProperty m_NumInputs, m_NumOutputs;
 	
 	int m_Version;
 	

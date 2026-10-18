@@ -22,6 +22,7 @@
 #include "RiffWav.h"
 
 using namespace std;
+using namespace Spiral::Core;
 
 static const float TRIG_THRESH = 0.1;
 static const int   RECBUFFERSIZE = 16384;
@@ -83,15 +84,12 @@ m_Playing(true),
 m_Recording(false),
 m_DelMe(false),
 m_LoopPoint(0),
-m_Speed(1.0f),
-m_Volume(1.0f),
 m_RecordingSource(NULL),
 m_FirstRecord(true),
 m_FixedRecord(false),
 m_RecLength(0),
 m_TickTime(0),
 m_TickCurrent(0),
-m_TicksPerLoop(64),
 m_TickOutput(1.0f),
 m_Triggered(false)
 {
@@ -113,9 +111,15 @@ m_Triggered(false)
 	m_PluginInfo.PortTips.push_back("LoopTrigger 6");
 	m_PluginInfo.PortTips.push_back("LoopTrigger 7");			
 	
-	m_AudioCH->Register("TicksPerLoop",&m_TicksPerLoop);
-	m_AudioCH->Register("Volume",&m_Volume);
-	m_AudioCH->Register("Speed",&m_Speed);
+	SetString(DeviceName, SpiralPlugin_GetName());
+
+	m_TicksPerLoop = SignedProperty(DefaultLinearFlags, 64, 1, 1024, 1, 1);
+	m_Volume = FloatProperty(DefaultLinearFlags, 1.0, 0, 2, 0.001, 0.01);
+	m_Speed = FloatProperty(DefaultLinearFlags, 1.0, 0, 4, 0.001, 0.01);
+
+	RegisterSharedProperty(m_TicksPerLoop, "TicksPerLoop", "Ticks Per Loop");
+	RegisterSharedProperty(m_Volume, "Volume", "Volume");
+	RegisterSharedProperty(m_Speed, "Speed", "Speed");
 	m_AudioCH->Register("Length",&m_GUIArgs.Length);
 	m_AudioCH->Register("Start",&m_GUIArgs.Start);
 	m_AudioCH->Register("End",&m_GUIArgs.End);
@@ -142,7 +146,7 @@ void SpiralLoopPlugin::Reset()
 {
 	ResetPorts();
 	m_TickOutput=-m_TickOutput;
-	m_TickTime=m_StoreBuffer.GetLength()/m_TicksPerLoop;
+	m_TickTime=m_StoreBuffer.GetLength()/AsSigned(m_TicksPerLoop);
 	m_TickCurrent=0;
 }
 
@@ -191,7 +195,7 @@ void SpiralLoopPlugin::Execute()
 	if (m_TickCurrent>=m_TickTime)
 	{
 		m_TickOutput=-m_TickOutput;
-		m_TickTime=m_StoreBuffer.GetLength()/m_TicksPerLoop;
+		m_TickTime=m_StoreBuffer.GetLength()/AsSigned(m_TicksPerLoop);
 		m_TickCurrent=0;
 	}
 	
@@ -250,7 +254,7 @@ void SpiralLoopPlugin::ExecuteCommands()
 void SpiralLoopPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(m_Version).Separator(" "); 
-	d.Value(m_LoopPoint).Separator(" ").Value(m_Speed).Separator(" ").Value(m_Volume).Separator(" ").Value(m_TicksPerLoop).Separator(" ");
+	d.Value(m_LoopPoint).Separator(" ").Value(AsFloat(m_Speed)).Separator(" ").Value(AsFloat(m_Volume)).Separator(" ").Value(AsSigned(m_TicksPerLoop)).Separator(" ");
 	d.Value(m_TriggerVec.size()).Separator(" ");
 	for (vector<TriggerInfo>::iterator i=m_TriggerVec.begin();
 		 i!=m_TriggerVec.end(); i++)
@@ -263,7 +267,7 @@ void SpiralLoopPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int version;
 	r.Value(version);
-	r.Value(m_LoopPoint).Value(m_Speed).Value(m_Volume).Value(m_TicksPerLoop);
+	r.Value(m_LoopPoint).Value(AsFloat(m_Speed)).Value(AsFloat(m_Volume)).Value(AsSigned(m_TicksPerLoop));
 	int size;
 	r.Value(size);
 	
@@ -350,11 +354,11 @@ bool SpiralLoopPlugin::GetOutput(Sample &data)
 		// brute force fix
 		if (Pos>0 && Pos<m_LoopPoint)
 		{
-			data.Set(n,(m_StoreBuffer[m_Pos]+m_DubBuffer[m_Pos])*m_Volume);
+			data.Set(n,(m_StoreBuffer[m_Pos]+m_DubBuffer[m_Pos])*AsFloat(m_Volume));
 		}
 		else data.Set(n,0);
 		
-		m_Pos+=m_Speed;
+		m_Pos+=AsFloat(m_Speed);
 		
 		if (static_cast<int>(m_Pos)>=m_LoopPoint)
 		{
@@ -443,7 +447,7 @@ void SpiralLoopPlugin::RecordBuf(float Pos, int Length)
 			}
 						
 			OldPos=Pos;
-			Pos+=m_Speed;
+			Pos+=AsFloat(m_Speed);
 			
 			if (Pos>=m_StoreBuffer.GetLength())
 			{

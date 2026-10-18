@@ -19,9 +19,9 @@
 #ifndef SCOPEPLUGIN
 #define SCOPEPLUGIN
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
-class ScopePlugin : public SpiralPlugin {
+class ScopePlugin : public Spiral::Core::Device {
    public:
       ScopePlugin();
       virtual ~ScopePlugin();
@@ -35,9 +35,9 @@ class ScopePlugin : public SpiralPlugin {
 	enum GUICommands{NONE,UPDATEDATASIZE};
    private:
       float *m_Data;
-      bool m_DataReady;
-      int m_DataSize;
-      bool m_DataSizeChanged;
+      Spiral::Core::ToggleProperty m_DataReady;
+      Spiral::Core::SignedProperty m_DataSize;
+      Spiral::Core::ToggleProperty m_DataSizeChanged;
 };
 
 #endif

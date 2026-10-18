@@ -19,6 +19,7 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -56,10 +57,14 @@ string SpiralPlugin_GetGroupName() { return "InputOutput"; }
 
 ///////////////////////////////////////////////////////
 
-ScopePlugin::ScopePlugin():
-m_DataReady(false),
-m_DataSize(0)
+ScopePlugin::ScopePlugin()
 {
+	m_DataReady = ToggleProperty(Property::ReadOnly, false);
+	m_DataSize = SignedProperty(Property::ReadOnly, 0, 0, 1048576, 1, 1);
+	m_DataSizeChanged = ToggleProperty(Property::ReadOnly, false);
+	RegisterSharedProperty(m_DataReady, "DataReady", "New data is ready");
+	RegisterSharedProperty(m_DataSize, "DataSize", "Samples available");
+	RegisterSharedProperty(m_DataSizeChanged, "DataSizeChanged", "Buffer size changed");
      m_PluginInfo.Name = "Scope";
      m_PluginInfo.Width = 260;
      m_PluginInfo.Height = 115;
@@ -67,9 +72,6 @@ m_DataSize(0)
      m_PluginInfo.NumOutputs = 1;
      m_PluginInfo.PortTips.push_back("Input");
      m_PluginInfo.PortTips.push_back("Output");
-     m_AudioCH->Register ("DataReady", &m_DataReady, ChannelHandler::OUTPUT);
-     m_AudioCH->Register ("DataSizeChanged", &m_DataSizeChanged, ChannelHandler::OUTPUT);
-     m_AudioCH->Register ("DataSize", &m_DataSize, ChannelHandler::OUTPUT);
 }
 
 ScopePlugin::~ScopePlugin()
@@ -79,9 +81,9 @@ ScopePlugin::~ScopePlugin()
 PluginInfo &ScopePlugin::Initialise(const HostInfo *Host)
 {
 	PluginInfo& Info = SpiralPlugin::Initialise(Host);
-	m_DataSize = m_HostInfo->BUFSIZE;
-	m_Data = new float[m_DataSize];
-	m_AudioCH->RegisterData("AudioData",ChannelHandler::OUTPUT,m_Data,m_DataSize*sizeof(float));
+	AsSigned(m_DataSize) = m_HostInfo->BUFSIZE;
+	m_Data = new float[AsSigned(m_DataSize)];
+	m_AudioCH->RegisterData("AudioData",ChannelHandler::OUTPUT,m_Data,AsSigned(m_DataSize)*sizeof(float));
 	return Info;
 }
 
@@ -90,20 +92,20 @@ PluginInfo &ScopePlugin::Initialise(const HostInfo *Host)
 void ScopePlugin::Reset()
 {
 	ResetPorts();
-	m_DataReady = false;
+	AsBoolean(m_DataReady) = false;
 	delete m_Data;
-	m_DataSize = m_HostInfo->BUFSIZE;
-	m_Data = new float[m_DataSize];
-	m_DataSizeChanged = true;
+	AsSigned(m_DataSize) = m_HostInfo->BUFSIZE;
+	m_Data = new float[AsSigned(m_DataSize)];
+	AsBoolean(m_DataSizeChanged) = true;
 }
 
 void ScopePlugin::Execute() {
      // Just copy the data through.
-     m_DataReady = InputExists (0);
+     AsBoolean(m_DataReady) = InputExists (0);
      if (GetOutputBuf (0)) GetOutputBuf (0)->Zero();
-     if (m_DataReady) {
+     if (AsBoolean(m_DataReady)) {
         GetOutputBuf (0)->Mix (*GetInput(0), 0);
-        memcpy (m_Data, GetInput (0)->GetBuffer (), m_DataSize * sizeof (float));
+        memcpy (m_Data, GetInput (0)->GetBuffer (), AsSigned(m_DataSize) * sizeof (float));
      }
 }
 
@@ -114,8 +116,8 @@ void ScopePlugin::ExecuteCommands()
 		switch (m_AudioCH->GetCommand()) {
 			case UPDATEDATASIZE :
 			{
-				m_AudioCH->ReplaceData("AudioData", m_Data, m_DataSize*sizeof(float));
-				m_DataSizeChanged = false;			
+				m_AudioCH->ReplaceData("AudioData", m_Data, AsSigned(m_DataSize)*sizeof(float));
+				AsBoolean(m_DataSizeChanged) = false;			
 			}	
 			break;
 			

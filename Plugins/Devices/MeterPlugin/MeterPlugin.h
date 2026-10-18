@@ -19,9 +19,9 @@
 #ifndef METERPLUGIN
 #define METERPLUGIN
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
-class MeterPlugin : public SpiralPlugin {
+class MeterPlugin : public Spiral::Core::Device {
   public:
     MeterPlugin();
     virtual ~MeterPlugin();
@@ -31,13 +31,14 @@ class MeterPlugin : public SpiralPlugin {
     virtual void ExecuteCommands();
     virtual void Describe(Spiral::Core::Description &d);
     virtual void Apply(Spiral::Core::Description::Reader &r);
-    int GetVUMode (void) { return m_VUMode; }
+    int GetVUMode (void) { return AsBoolean(m_VUMode); }
     enum GUICommands {NONE, SETVU, SETMM, UPDATEDATASIZE};
   private:
     float *m_Data;
     int m_DataSize;
     // m_VUMode isn't USED for anything, it's here so we can save/load it
-    bool m_DataReady, m_VUMode, m_DataSizeChanged;
+    bool m_DataReady, m_DataSizeChanged;
+    Spiral::Core::ToggleProperty m_VUMode;
 };
 
 #endif

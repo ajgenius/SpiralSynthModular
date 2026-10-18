@@ -75,13 +75,13 @@ m_HeadPos (0),
 m_Buf0 (0),
 m_Buf1 (1)
 {
+
 	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 
 	m_Delay = FloatProperty(DefaultLinearFlags, 0.75, 0.0, 1.0, 0.0001, 0.01);
 	m_Feedback = FloatProperty(DefaultLinearFlags, 0.4, 00, 1.0, 0.0001, 0.01);
 	m_Bounce = ToggleProperty(Property::WriteOnly, false);
-
 	RegisterSharedProperty(m_Delay, "Delay", "Delay");
 	RegisterSharedProperty(m_Feedback, "Feedback", "Feedback");
 	RegisterSharedProperty(m_Bounce, "Bounce", "Stereo Bounce");

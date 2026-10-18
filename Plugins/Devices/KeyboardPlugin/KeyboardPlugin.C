@@ -21,6 +21,7 @@
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -73,6 +74,8 @@ KeyboardPlugin::KeyboardPlugin() :
 m_NoteLevel(0),
 m_TriggerLevel(0)
 {
+	m_Note = SignedProperty(DefaultLinearFlags, 0, 0, 127, 1, 1);
+	RegisterSharedProperty(m_Note, "Note", "Note being played");
 	m_Version=0;
 
 	m_PluginInfo.Name="Keyboard";
@@ -83,7 +86,6 @@ m_TriggerLevel(0)
 	m_PluginInfo.PortTips.push_back("Note CV");
 	m_PluginInfo.PortTips.push_back("Trigger CV");
 		
-	m_AudioCH->Register("Note",&m_GUIArgs.Note);
 }
 
 KeyboardPlugin::~KeyboardPlugin()
@@ -109,7 +111,7 @@ void  KeyboardPlugin::ExecuteCommands()
 		switch (m_AudioCH->GetCommand())
 		{
 			case NOTE_ON  : 
-				m_NoteLevel=NoteTable[m_GUIArgs.Note]; 
+				m_NoteLevel=NoteTable[AsSigned(m_Note)]; 
 				m_TriggerLevel=1.0f; 
 				break;
 			case NOTE_OFF : m_TriggerLevel=0.0f; break;

@@ -33,7 +33,6 @@ public:
 	int GetAmount () { return AsSigned(m_Amount); }
 private:
 	Spiral::Core::SignedProperty m_Amount;
-    Spiral::Core::ToggleProperty m_Aliasing;
 	float m_Out;
 
       	float m_Buffer[2][2];

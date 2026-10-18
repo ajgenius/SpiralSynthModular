@@ -17,9 +17,11 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include "WaveShaperPlugin.h"
+#include <cstdio>
 #include "SpiralIcon.xpm"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -78,16 +80,24 @@ WaveShaperPlugin::WaveShaperPlugin () {
   for (i=0; i<512; i++) m_wt[i] = (i / 256.0 - 1.0);
   m_GUIArgs.FuncPlot = new float[256];
   for (i=0; i<256; i++) m_GUIArgs.FuncPlot[i] = m_wt[i*2];
-  m_Wave = 1;
-  for (i=0; i<6; i++) m_Coefs[i] = 0.0;
-  m_Coefs[0] = 1.0;
+  SetString(DeviceName, SpiralPlugin_GetName());
+  SetUnsigned(DeviceVersion, 1);
+
+  m_Wave = SignedProperty(Property::ReadOnly, 1, 0, 1, 1, 1);
+  for (i=0; i<6; i++)
+  {
+    char key[16], hint[32];
+    snprintf (key, sizeof key, "Coef%d", i);
+    snprintf (hint, sizeof hint, "Coefficient %d", i);
+    m_Coefs[i] = FloatProperty(Property::ReadOnly, i == 0 ? 1.0f : 0.0f, -1.0f, 1.0f, 0.001f, 0.1f);
+    RegisterSharedProperty(m_Coefs[i], key, hint);
+  }
   m_AudioCH->Register ("WaveType", &m_GUIArgs.WaveType);
   m_AudioCH->Register ("CoefNum", &m_GUIArgs.CoefNum);
   m_AudioCH->Register ("CoefVal", &m_GUIArgs.CoefVal);
   m_AudioCH->RegisterData ("WT", ChannelHandler::OUTPUT, m_GUIArgs.FuncPlot, 256 * sizeof (float));
   // The state the GUI shows after a load, read through the channel.
-  m_AudioCH->Register ("Wave", &m_Wave, ChannelHandler::OUTPUT);
-  m_AudioCH->RegisterData ("Coefs", ChannelHandler::OUTPUT, m_Coefs, sizeof (m_Coefs));
+  RegisterSharedProperty(m_Wave, "Wave", "Polynomial wave shaping");
 }
 
 WaveShaperPlugin::~WaveShaperPlugin() {
@@ -107,12 +117,12 @@ void WaveShaperPlugin::ExecuteCommands () {
   if (m_AudioCH->IsCommandWaiting ()) {
     switch (m_AudioCH->GetCommand ()) {
       case (SETWAVETYPE) :
-        m_Wave = m_GUIArgs.WaveType;
+        AsSigned(m_Wave) = m_GUIArgs.WaveType;
         calc ();
         break;
       case (SETCOEF) :
         if ((m_GUIArgs.CoefNum < 0) || (m_GUIArgs.CoefNum > 5)) break;
-        m_Coefs[m_GUIArgs.CoefNum] = m_GUIArgs.CoefVal;
+        AsFloat(m_Coefs[m_GUIArgs.CoefNum]) = m_GUIArgs.CoefVal;
         calc ();
         break;
     }
@@ -152,14 +162,14 @@ void WaveShaperPlugin::set (int index, float v) {
 void WaveShaperPlugin::calc (void) {
   int i;
   float xx,x,y,max;
-  if (m_Wave) {
+  if (AsSigned(m_Wave)) {
     max = 1.0;
     for (i=0; i<512; i++) {
       x = i / 256.0 - 1.0;
       y = 0;
       xx = x;
       for (int j=1; j<7; j++) {
-        y += m_Coefs[j-1] * xx;
+        y += AsFloat(m_Coefs[j-1]) * xx;
 	xx *= x;
       }
       y = fabs(y);
@@ -170,7 +180,7 @@ void WaveShaperPlugin::calc (void) {
       y = 0;
       xx = x;
       for (int j=1; j<7; j++) {
-        y += m_Coefs[j-1] * xx;
+        y += AsFloat(m_Coefs[j-1]) * xx;
         xx *= x;
       }
       y /= max;
@@ -182,14 +192,14 @@ void WaveShaperPlugin::calc (void) {
     for (i=0; i<512; i++) {
       x = (i / 256.0 - 1.0)*M_PI;
       y = 0;
-      for (int j=1; j<7; j++) y += m_Coefs[j-1] * sin(x*(1+(j-1)*3));
+      for (int j=1; j<7; j++) y += AsFloat(m_Coefs[j-1]) * sin(x*(1+(j-1)*3));
       y = fabs(y);
       max = max > y? max:y;
     }
     for (i=0; i<512; i++) {
       x = (i / 256.0 - 1.0)*M_PI;
       y = 0;
-      for (int j=1; j<7; j++) y += m_Coefs[j-1] * sin(x*(1+(j-1)*3));
+      for (int j=1; j<7; j++) y += AsFloat(m_Coefs[j-1]) * sin(x*(1+(j-1)*3));
       y /= max;
       set(i, y);
     }
@@ -200,14 +210,14 @@ void WaveShaperPlugin::calc (void) {
 // Streaming
 
 void WaveShaperPlugin::Describe(Spiral::Core::Description &d) {
-  d.Value(m_Version).Separator(" ").Value(m_Wave);
-  for (int i=0; i<6; i++) d.Separator(" ").Value(m_Coefs[i]);
+  d.Value(m_Version).Separator(" ").Value(AsSigned(m_Wave));
+  for (int i=0; i<6; i++) d.Separator(" ").Value(AsFloat(m_Coefs[i]));
 }
 
 void WaveShaperPlugin::Apply(Spiral::Core::Description::Reader &r) {
   int version;
-  r.Value(version).Value(m_Wave);
-  for (int i=0; i<6; i++) r.Value(m_Coefs[i]);
+  r.Value(version).Value(AsSigned(m_Wave));
+  for (int i=0; i<6; i++) r.Value(AsFloat(m_Coefs[i]));
   calc ();
 }
 

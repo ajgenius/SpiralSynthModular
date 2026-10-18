@@ -19,6 +19,7 @@
 */
 
 #include "WaveShaperPluginGUI.h"
+#include <cstdio>
 #include <FL/fl_draw.H>
 #include <FL/fl_draw.H>
 #include <FL/Fl_Box.H>
@@ -159,9 +160,12 @@ void WaveShaperPluginGUI::UpdateValues (SpiralPlugin *o) {
   int wt = m_GUICH->GetInt ("Wave");
   radio_polynomial->value (wt);
   radio_sines->value (!wt);
-  float coefs[6];
-  m_GUICH->GetData ("Coefs", coefs);
-  for (int j=0; j<6; j++) knob[j]->value (coefs[j]);
+  for (int j=0; j<6; j++)
+  {
+    char key[16];
+    snprintf (key, sizeof key, "Coef%d", j);
+    knob[j]->value (m_GUICH->GetFloat (key));
+  }
   Update ();
 }
 

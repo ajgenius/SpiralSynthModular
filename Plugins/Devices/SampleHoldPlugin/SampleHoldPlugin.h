@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef SampleHoldPLUGIN
 #define SampleHoldPLUGIN
 
-class SampleHoldPlugin : public SpiralPlugin
+class SampleHoldPlugin : public Spiral::Core::Device
 {
 public:
  	SampleHoldPlugin();

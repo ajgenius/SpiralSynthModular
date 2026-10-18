@@ -16,12 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
-#include "SpiralPlugin.h"
+#include "Device.h"
 
 #ifndef OscillatorPLUGIN
 #define OscillatorPLUGIN
 
-class MidiPlugin : public SpiralPlugin
+class MidiPlugin : public Spiral::Core::Device
 {
 public:
  	MidiPlugin();
@@ -35,9 +35,9 @@ public:
 	
 	// has to be defined in the plugin	
 	
-	int  GetDeviceNum()      { return m_DeviceNum; }
-	bool GetNoteCut()        { return m_NoteCut; }
-	bool GetContinuousNotes()        { return m_ContinuousNotes; }
+	int  GetDeviceNum()      { return AsSigned(m_DeviceNum); }
+	bool GetNoteCut()        { return AsBoolean(m_NoteCut); }
+	bool GetContinuousNotes()        { return AsBoolean(m_ContinuousNotes); }
 	
 	enum GUICommands{NONE,ADDCONTROL,DELCONTROL};
 	struct GUIArgs
@@ -52,7 +52,7 @@ private:
 	void AddControl(int s,const std::string &Name);
 	void DeleteControl();
 	
-	int m_DeviceNum;
+	Spiral::Core::SignedProperty m_DeviceNum;
 
 	float m_NoteLevel;
 	float m_TriggerLevel;
@@ -60,8 +60,8 @@ private:
 	float m_ChannelPressureLevel;
 	float m_AfterTouchLevel;
 	float m_ControlLevel[128];
-	bool  m_NoteCut;
-	bool  m_ContinuousNotes;
+	Spiral::Core::ToggleProperty  m_NoteCut;
+	Spiral::Core::ToggleProperty  m_ContinuousNotes;
 	int	  m_CurrentNote;
 	
 	static int m_RefCount;

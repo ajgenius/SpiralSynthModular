@@ -22,6 +22,7 @@
 #include "RiffWav.h"
 
 using namespace std;
+using namespace Spiral::Core;
 
 #include <config.h>
 
@@ -66,11 +67,7 @@ static const float BUFSECONDS = 1.0f;
 StreamPlugin::StreamPlugin() :
 m_SampleRate (44100),
 m_SampleSize (256),
-m_StreamPos (0),
-m_GlobalPos (0),
-m_Pitch (1.0f),
 m_SamplePos (-1),
-m_Pos (0),
 m_Mode(STOPM)
 {
 	m_PluginInfo.Name = "Stream";
@@ -86,12 +83,26 @@ m_Mode(STOPM)
 	m_PluginInfo.PortTips.push_back ("Finish Trigger");
 	m_PluginInfo.PortTips.push_back ("Playing Trigger");
 	m_PluginInfo.PortTips.push_back ("Position CV");
-	m_GUIArgs.Volume = 1.0f;
-	m_GUIArgs.PitchMod = 1.0f;
+	AsFloat(m_Volume) = 1.0f;
+	AsFloat(m_PitchMod) = 1.0f;
         m_GUIArgs.PlayOut = false;
         strcpy (m_GUIArgs.FileName, "");
-	m_AudioCH->Register ("Volume", &m_GUIArgs.Volume);
-	m_AudioCH->Register ("Pitch", &m_GUIArgs.PitchMod, ChannelHandler::INPUT);
+	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 1);
+
+	m_Volume = FloatProperty(DefaultLinearFlags, 1.0, 0, 2, 0.001, 0.01);
+	m_PitchMod = FloatProperty(DefaultLinearFlags, 1.0, 0, 4, 0.001, 0.01);
+
+	RegisterSharedProperty(m_Volume, "Volume", "Volume");
+	RegisterSharedProperty(m_PitchMod, "Pitch", "Pitch Modulation");
+     m_Pos = FloatProperty(Property::Internal, 0, 0, 0x7FFFFF, 1, 1);
+     m_StreamPos = SignedProperty(Property::Internal, 0, 0, 0x7FFFFFFF, 1, 1);
+     m_GlobalPos = FloatProperty(Property::Internal, 0, 0, 0x7FFFFF, 1, 1);
+     m_Pitch = FloatProperty(Property::Internal, 1.0f, 0, 16, 0.001, 0.01);
+     RegisterSharedProperty(m_Pos, "Pos", "Position in the chunk");
+     RegisterSharedProperty(m_StreamPos, "StreamPos", "Chunk position in the file");
+     RegisterSharedProperty(m_GlobalPos, "GlobalPos", "Position in the file");
+     RegisterSharedProperty(m_Pitch, "Pitch Scale", "Sample rate ratio");
 	m_AudioCH->RegisterData ("FileName", ChannelHandler::INPUT,
                                              &m_GUIArgs.FileName, sizeof (m_GUIArgs.FileName));
 	m_AudioCH->RegisterData ("EchoFileName", ChannelHandler::OUTPUT,
@@ -117,10 +128,10 @@ PluginInfo &StreamPlugin::Initialise(const HostInfo *Host)
 void StreamPlugin::Reset()
 {
 	ResetPorts();
-	m_StreamPos = 0;
-	m_GlobalPos = 0;
+	AsSigned(m_StreamPos) = 0;
+	AsFloat(m_GlobalPos) = 0;
 	m_SamplePos = -1;
-	m_Pos = 0;
+	AsFloat(m_Pos) = 0;
 }
 
 
@@ -132,40 +143,40 @@ void StreamPlugin::Execute() {
             if (GetInput (1, n) > 0) m_Mode = PLAYM;
             if (GetInput (2, n) > 0) {
                m_Mode = STOPM;
-               m_Pos = 0;
-               m_GlobalPos = 0;
-               m_StreamPos = 0;
+               AsFloat(m_Pos) = 0;
+               AsFloat(m_GlobalPos) = 0;
+               AsSigned(m_StreamPos) = 0;
             }
 
-            if (m_Pos<0) {
-               m_Pos = m_SampleSize - 1;
-               m_StreamPos -= m_SampleSize;
-               FinTrig = m_StreamPos < 0;
+            if (AsFloat(m_Pos)<0) {
+               AsFloat(m_Pos) = m_SampleSize - 1;
+               AsSigned(m_StreamPos) -= m_SampleSize;
+               FinTrig = AsSigned(m_StreamPos) < 0;
                if (FinTrig) {
-                  m_StreamPos = m_File.GetSize() - m_SampleSize;
-                  m_GlobalPos = m_StreamPos;
+                  AsSigned(m_StreamPos) = m_File.GetSize() - m_SampleSize;
+                  AsFloat(m_GlobalPos) = AsSigned(m_StreamPos);
                }
-               m_File.SeekToChunk (m_StreamPos);
+               m_File.SeekToChunk (AsSigned(m_StreamPos));
 
-               if ((m_File.GetSize() - m_StreamPos) < 256)
-		 m_SampleSize = m_File.GetSize() - m_StreamPos;
+               if ((m_File.GetSize() - AsSigned(m_StreamPos)) < 256)
+		 m_SampleSize = m_File.GetSize() - AsSigned(m_StreamPos);
  	       else
 		 m_SampleSize = 256;
 
                m_File.LoadChunk (m_SampleSize, m_SampleL, m_SampleR);
             }
-            else if (m_Pos >= m_SampleSize) {
-               m_Pos = 0;
-               m_StreamPos += m_SampleSize;
-               FinTrig = m_StreamPos >= m_File.GetSize();
+            else if (AsFloat(m_Pos) >= m_SampleSize) {
+               AsFloat(m_Pos) = 0;
+               AsSigned(m_StreamPos) += m_SampleSize;
+               FinTrig = AsSigned(m_StreamPos) >= m_File.GetSize();
                if (FinTrig) {
-                  m_StreamPos = 0;
-                  m_GlobalPos = 0;
+                  AsSigned(m_StreamPos) = 0;
+                  AsFloat(m_GlobalPos) = 0;
                }
-               m_File.SeekToChunk (m_StreamPos);
+               m_File.SeekToChunk (AsSigned(m_StreamPos));
 
-               if ((m_File.GetSize() - m_StreamPos) < 256)
-		 m_SampleSize = m_File.GetSize() - m_StreamPos;
+               if ((m_File.GetSize() - AsSigned(m_StreamPos)) < 256)
+		 m_SampleSize = m_File.GetSize() - AsSigned(m_StreamPos);
  	       else
 		 m_SampleSize = 256;
 
@@ -176,13 +187,13 @@ void StreamPlugin::Execute() {
             else SetOutput (2, n, 0);
             if (m_Mode==PLAYM) {
               // left and right outputs
-              SetOutput (0, n, m_SampleL[m_Pos] * m_GUIArgs.Volume);
-              SetOutput (1, n, m_SampleR[m_Pos] * m_GUIArgs.Volume);
+              SetOutput (0, n, m_SampleL[AsFloat(m_Pos)] * AsFloat(m_Volume));
+              SetOutput (1, n, m_SampleR[AsFloat(m_Pos)] * AsFloat(m_Volume));
               // play trigger
               SetOutput (3, n, 1);
-              m_Pos += m_GUIArgs.PitchMod + CVPitch;
-              m_GlobalPos += m_GUIArgs.PitchMod + CVPitch;
-              float  plop = m_GlobalPos / (float)m_File.GetSize();
+              AsFloat(m_Pos) += AsFloat(m_PitchMod) + CVPitch;
+              AsFloat(m_GlobalPos) += AsFloat(m_PitchMod) + CVPitch;
+              float  plop = AsFloat(m_GlobalPos) / (float)m_File.GetSize();
               SetOutput (4, n, plop);
             }
             else {
@@ -192,7 +203,7 @@ void StreamPlugin::Execute() {
               SetOutput (4, n, 0);
             }
         }
-        m_GUIArgs.TimeOut = m_GlobalPos / (float)m_SampleRate;
+        m_GUIArgs.TimeOut = AsFloat(m_GlobalPos) / (float)m_SampleRate;
         m_GUIArgs.PlayOut = m_Mode==PLAYM;
      }
 }
@@ -207,8 +218,8 @@ void StreamPlugin::ExecuteCommands() {
             OpenStream();
             break;
 	  case RESTART:
-            m_StreamPos = 0;
-            m_GlobalPos = 0;
+            AsSigned(m_StreamPos) = 0;
+            AsFloat(m_GlobalPos) = 0;
             break;
 	  case STOP:
             m_Mode = STOPM;
@@ -221,14 +232,14 @@ void StreamPlugin::ExecuteCommands() {
 }
 
 void StreamPlugin::SetTime (void) {
-     m_GlobalPos = m_SampleRate * m_GUIArgs.Time;
-     m_StreamPos = (int)(m_SampleRate * m_GUIArgs.Time);
-     m_Pos = m_SampleSize;
+     AsFloat(m_GlobalPos) = m_SampleRate * m_GUIArgs.Time;
+     AsSigned(m_StreamPos) = (int)(m_SampleRate * m_GUIArgs.Time);
+     AsFloat(m_Pos) = m_SampleSize;
 }
 
 void StreamPlugin::OpenStream (void) {
-     m_StreamPos = 0;
-     m_GlobalPos = 0;
+     AsSigned(m_StreamPos) = 0;
+     AsFloat(m_GlobalPos) = 0;
 
      if (m_File.IsOpen ()) m_File.Close ();
      m_File.Open (m_GUIArgs.FileName, WavFile::READ);
@@ -240,9 +251,9 @@ void StreamPlugin::OpenStream (void) {
 
      m_SampleL.Allocate (m_SampleSize);
      m_SampleR.Allocate (m_SampleSize);
-     m_Pitch = m_SampleRate / (float)m_HostInfo->SAMPLERATE;
+     AsFloat(m_Pitch) = m_SampleRate / (float)m_HostInfo->SAMPLERATE;
      if (m_File.IsStereo ()) {
-        m_Pitch *= 2;
+        AsFloat(m_Pitch) *= 2;
         m_GUIArgs.MaxTime = GetLength();
      }
      else m_GUIArgs.MaxTime = GetLength() / 2;
@@ -255,22 +266,22 @@ float StreamPlugin::GetLength (void) {
 
 void StreamPlugin::Describe(Spiral::Core::Description &d) {
      d.Value(m_Version).Separator(" ")
-        .Value(m_GUIArgs.Volume).Separator(" ")
-        .Value(m_GUIArgs.PitchMod).Separator(" ")
+        .Value(AsFloat(m_Volume)).Separator(" ")
+        .Value(AsFloat(m_PitchMod)).Separator(" ")
         .Value(strlen (m_GUIArgs.FileName)).Separator(" ")
         .Value(m_GUIArgs.FileName).Separator(" ")
         // is it really necessary to save this lot??
-        .Value(m_Pos).Separator(" ")
-        .Value(m_StreamPos).Separator(" ")
-        .Value(m_GlobalPos).Separator(" ")
-        .Value(m_Pitch).Separator(" ").Line();
+        .Value(AsFloat(m_Pos)).Separator(" ")
+        .Value(AsSigned(m_StreamPos)).Separator(" ")
+        .Value(AsFloat(m_GlobalPos)).Separator(" ")
+        .Value(AsFloat(m_Pitch)).Separator(" ").Line();
 }
 
 void StreamPlugin::Apply(Spiral::Core::Description::Reader &r) {
      int version;
      r.Value(version);
 
-     r.Value(m_GUIArgs.Volume).Value(m_GUIArgs.PitchMod);
+     r.Value(AsFloat(m_Volume)).Value(AsFloat(m_PitchMod));
      int size;
      std::string FileName;
      r.Value(size);
@@ -280,8 +291,9 @@ void StreamPlugin::Apply(Spiral::Core::Description::Reader &r) {
      m_GUIArgs.FileName[size] = 0;
      if (std::string(m_GUIArgs.FileName) != "None") OpenStream ();
        // is it really necessary to load this lot??
-     r.Value(m_Pos);
-     r.Value(m_StreamPos);
-     r.Value(m_GlobalPos);
-     r.Value(m_Pitch);
+     r.Value(AsFloat(m_Pos));
+     r.Value(AsSigned(m_StreamPos));
+     r.Value(AsFloat(m_GlobalPos));
+     r.Value(AsFloat(m_Pitch));
 }
+

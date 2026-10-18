@@ -114,7 +114,7 @@ m_OutputCount(4)
      	m_PluginInfo.PortTips.clear();
 
 	m_PluginInfo.NumInputs = m_OutputCount;
-	AsUnsigned(m_NumInputs) = m_PluginInfo.NumInputs;
+	AsSigned(m_NumInputs) = m_PluginInfo.NumInputs;
 
 	for (int n=0; n<m_InputCount; n++)
      	{
@@ -124,7 +124,7 @@ m_OutputCount(4)
      	}
 	
 	m_PluginInfo.NumOutputs = m_InputCount;
-	AsUnsigned(m_NumOutputs) = m_PluginInfo.NumOutputs;
+	AsSigned(m_NumOutputs) = m_PluginInfo.NumOutputs;
 
 	for (int n=0; n<m_OutputCount; n++)
 	{
@@ -139,11 +139,11 @@ m_OutputCount(4)
 
 	int PortFlags = DefaultLinearFlags | Property::ForceUpdate;
 
-	m_NumInputs = UnsignedProperty(PortFlags, 4, MIN_PORTS, MAX_PORTS, 1, 1);
-	m_NumOutputs = UnsignedProperty(PortFlags, 4, MIN_PORTS, MAX_PORTS, 1, 1);
+	m_NumInputs = SignedProperty(PortFlags, 4, MIN_PORTS, MAX_PORTS, 1, 1);
+	m_NumOutputs = SignedProperty(PortFlags, 4, MIN_PORTS, MAX_PORTS, 1, 1);
 
-	RegisterSharedProperty(m_NumInputs, "Inputs", "Number of Input Channels");
-	RegisterSharedProperty(m_NumOutputs, "Outputs", "Number of Output Channels");
+	RegisterSharedProperty(m_NumInputs, "NumInputs", "Number of Input Channels");
+	RegisterSharedProperty(m_NumOutputs, "NumOutputs", "Number of Output Channels");
 	m_AudioCH->RegisterData("Port",ChannelHandler::INPUT,&m_GUIArgs.Port,sizeof(m_GUIArgs.Port));
 	m_AudioCH->Register("NumInputPortNames",&m_NumInputPortNames,ChannelHandler::OUTPUT);
 	m_AudioCH->Register("NumOutputPortNames",&m_NumOutputPortNames,ChannelHandler::OUTPUT);
@@ -251,7 +251,7 @@ void JackPlugin::ExecuteCommands()
 			case DISCONNECT_INPUT: m_JackClient->DisconnectInput(m_GUIArgs.PortIndex); break;
 			case DISCONNECT_OUTPUT: m_JackClient->DisconnectOutput(m_GUIArgs.PortIndex); break;
 			case SET_PORT_COUNT :
-				SetNumberPorts (AsUnsigned(m_NumInputs), AsUnsigned(m_NumOutputs));				
+				SetNumberPorts (AsSigned(m_NumInputs), AsSigned(m_NumOutputs));				
 			break;	
 
 			case UPDATE_NAMES :
@@ -394,7 +394,7 @@ void  JackPlugin::CreatePorts (int nInputs, int nOutputs, bool AddPorts) {
 
 void JackPlugin::Describe(Spiral::Core::Description &d) 
 {
-	d.Value(m_Version).Separator(" ").Value(AsUnsigned(m_NumInputs)).Separator(" ").Value(AsUnsigned(m_NumOutputs)).Separator(" ");
+	d.Value(m_Version).Separator(" ").Value(AsSigned(m_NumInputs)).Separator(" ").Value(AsSigned(m_NumOutputs)).Separator(" ");
 }
 
 void JackPlugin::Apply(Spiral::Core::Description::Reader &r) 
@@ -417,20 +417,20 @@ void JackPlugin::Apply(Spiral::Core::Description::Reader &r)
 		case 2:
 		{
 			r.Value(NumInputs).Value(NumOutputs);
-			AsUnsigned(m_NumOutputs) = min(max(NumOutputs, MIN_PORTS), MAX_PORTS);
-			AsUnsigned(m_NumInputs) = min(max(NumInputs, MIN_PORTS), MAX_PORTS);
+			AsSigned(m_NumOutputs) = min(max(NumOutputs, MIN_PORTS), MAX_PORTS);
+			AsSigned(m_NumInputs) = min(max(NumInputs, MIN_PORTS), MAX_PORTS);
 			
-			SetNumberPorts (AsUnsigned(m_NumInputs), AsUnsigned(m_NumOutputs));				
+			SetNumberPorts (AsSigned(m_NumInputs), AsSigned(m_NumOutputs));				
 		}
 		break;
 		
 		case 1:
 		{
 			//use original fixed defaults
-			AsUnsigned(m_NumInputs) = 16;
-			AsUnsigned(m_NumOutputs) = 16;
+			AsSigned(m_NumInputs) = 16;
+			AsSigned(m_NumOutputs) = 16;
 
-			SetNumberPorts (AsUnsigned(m_NumInputs), AsUnsigned(m_NumOutputs));				
+			SetNumberPorts (AsSigned(m_NumInputs), AsSigned(m_NumOutputs));				
 		}
 		break;
 	}	

@@ -79,7 +79,7 @@ m_TrigDelay (0)
 	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 
-	m_ChannelCount = UnsignedProperty(DefaultLinearFlags | Property::ForceUpdate, 2, 0, 256, 1, 1);
+	m_ChannelCount = SignedProperty(Property::ForceUpdate|DefaultLinearFlags, 2, 1, 256, 1, 1);
 	RegisterSharedProperty(m_ChannelCount, "Channels", "Channels");
 
 	m_PluginInfo.Name = "Distributor";
@@ -87,7 +87,7 @@ m_TrigDelay (0)
 	m_PluginInfo.Height=40;
 
 	m_Version = 2;
-	AsUnsigned(m_ChannelCount) = 2;
+	AsSigned(m_ChannelCount) = 2;
 	CreatePorts ();
 
 }
@@ -123,7 +123,7 @@ void DistributorPlugin::CreatePorts (int n, bool AddPorts)
 
 void DistributorPlugin::SetChannelCount (int count) 
 {
-	AsUnsigned(m_ChannelCount) = count;
+	AsSigned(m_ChannelCount) = count;
 
 	UpdatePluginInfoWithHost();
 
