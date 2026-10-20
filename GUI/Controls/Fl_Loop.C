@@ -67,8 +67,8 @@ m_IndColour (FL_BLUE),
 m_MrkColour (FL_YELLOW)
 {
 	box(FL_NO_BOX);
-	m_MidX=(w/2)+x;
-	m_MidY=(h/2)+y-20;
+	m_MidX=w/2;
+	m_MidY=h/2;
 }
 
 void Fl_Loop::SetData(float const *set, const int Len)
