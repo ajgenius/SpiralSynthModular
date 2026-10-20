@@ -112,6 +112,7 @@ int main(int argc, char **argv)
 	// get args
     string cmd_filename="";
     bool cmd_specd = false;
+    string cmd_saveAs="";
 	string cmd_pluginPath=SSMBundlePluginPath();
 	// parse the args
     if (argc>1)
@@ -132,7 +133,8 @@ int main(int argc, char **argv)
 				<<"-v : print version"<<endl
 				<<"--NoGUI : run without GUI (only useful when loading patch from command line"<<endl
 				<<"--Realtime : spawn audio thread with FIFO scheduling (run as root)"<<endl
-				<<"--PluginPath <PATH> : look for plugins in the specified directory"<<endl;
+				<<"--PluginPath <PATH> : look for plugins in the specified directory"<<endl
+				<<"--SaveAs <FILE> : save the loaded patch to FILE and exit (with --NoGUI, a headless re-save)"<<endl;
 				exit(0);
 			}
 			else if (!strcmp(argv[a],"-v")) 
@@ -143,6 +145,11 @@ int main(int argc, char **argv)
 			{
 				a++;
 				cmd_pluginPath=argv[a];
+			}
+			else if (!strcmp(argv[a],"--SaveAs") && a+1<argc)
+			{
+				a++;
+				cmd_saveAs=argv[a];
 			}
 			else 
 			{
@@ -238,6 +245,19 @@ int main(int argc, char **argv)
 
 	// do we need to load a patch on startup? 
     if (cmd_specd) synth->LoadPatch(cmd_filename.c_str());        
+
+	if (!cmd_saveAs.empty())
+	{
+		Fl::check();
+		synth->SavePatch(cmd_saveAs.c_str());
+		synth->FreezeAll();
+		pthread_mutex_lock(&audioStopMutex);
+		audioStopRequested = true;
+		pthread_mutex_unlock(&audioStopMutex);
+		pthread_join(loopthread, NULL);
+		delete synth;
+		return 0;
+	}
 	
 	if (!GUI)
 	{	
