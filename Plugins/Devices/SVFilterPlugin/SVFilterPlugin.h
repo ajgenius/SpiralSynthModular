@@ -37,8 +37,8 @@ public:
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
 	
-	Spiral::Core::FloatProperty GetCutoff()    { return Cutoff; }
-	Spiral::Core::FloatProperty GetResonance() { return Resonance;  } 
+	float GetCutoff()    { return AsFloat(Cutoff); }
+	float GetResonance() { return AsFloat(Resonance); } 
 	
 	void Randomise();
 	void Clear();
