@@ -39,7 +39,7 @@ public:
 	
 private:
 	Spiral::Core::SignedProperty m_Count;
-	int        m_Current;
+	Spiral::Core::SignedProperty m_Current;
 	bool       m_Triggered;
 	float      m_CurrentLevel;
 };

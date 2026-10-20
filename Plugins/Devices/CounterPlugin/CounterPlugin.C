@@ -70,7 +70,6 @@ string SpiralPlugin_GetGroupName()
 ///////////////////////////////////////////////////////
 
 CounterPlugin::CounterPlugin() :
-m_Current(0),
 m_Triggered(false),
 m_CurrentLevel(1.0f)
 {
@@ -87,6 +86,8 @@ m_CurrentLevel(1.0f)
 
 	m_Count = SignedProperty(DefaultLinearFlags, 4, 0, 10000, 1, 1);
 	RegisterSharedProperty(m_Count, "Count", "Count");
+	m_Current = SignedProperty(Property::Internal, 0, 0, 10000, 1, 1);
+	RegisterSharedProperty(m_Current, "Current", "Current count");
 }
 
 CounterPlugin::~CounterPlugin()
@@ -103,7 +104,7 @@ PluginInfo &CounterPlugin::Initialise(const HostInfo *Host)
 void CounterPlugin::Reset()
 {
 	ResetPorts();
-	m_Current = 0;
+	AsSigned(m_Current) = 0;
 	m_Triggered = false;
 	m_CurrentLevel = 1.0f;
 }
@@ -120,7 +121,7 @@ void CounterPlugin::Execute()
 			if(!m_Triggered)
 			{
 				m_Triggered=true;
-				m_Current++;
+				AsSigned(m_Current)++;
 			}
 		}
 		else
@@ -128,14 +129,14 @@ void CounterPlugin::Execute()
 			if (m_Triggered)
 			{
 				m_Triggered=false;
-				m_Current++;
+				AsSigned(m_Current)++;
 			}
 		}
 
-		if (m_Current>=AsSigned(m_Count))
+		if (AsSigned(m_Current)>=AsSigned(m_Count))
 		{
 			m_CurrentLevel=-m_CurrentLevel;
-			m_Current=0;
+			AsSigned(m_Current)=0;
 		}
 		
 		SetOutput(0,n,m_CurrentLevel);
@@ -149,12 +150,12 @@ void CounterPlugin::ExecuteCommands()
 void CounterPlugin::Describe(Spiral::Core::Description &d) 
 {
 	d.Value(m_Version).Line();
-	d.Value(AsSigned(m_Count)).Separator(" ").Value(m_Current).Separator(" ");
+	d.Value(AsSigned(m_Count)).Separator(" ").Value(AsSigned(m_Current)).Separator(" ");
 }
 
 void CounterPlugin::Apply(Spiral::Core::Description::Reader &r) 
 {
 	int version;
 	r.Value(version);
-	r.Value(AsSigned(m_Count)).Value(m_Current);
+	r.Value(AsSigned(m_Count)).Value(AsSigned(m_Current));
 }
