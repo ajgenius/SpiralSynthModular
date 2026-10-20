@@ -42,6 +42,33 @@ struct PortValue
 	bool  Connected;
 };
 
+template <class PropertyClass, class ValueType, ValueType Spiral::Core::NumericPropertyValue::*Member>
+class PortSettings
+{
+public:
+	Spiral::Core::VectorProperty List;
+
+	size_t size() const { return const_cast<Spiral::Core::VectorProperty &>(List).size(); }
+	ValueType &operator[](size_t n) { return ((PropertyClass *)List[n])->Value.*Member; }
+	PropertyClass &At(size_t n) { return *(PropertyClass *)List[n]; }
+	void push_back(ValueType v) { List.Add(Make(v)); }
+	void clear() { while (List.size()) List.RemoveLast(); }
+	void resize(size_t n) { while (List.size() > n) List.RemoveLast(); while (List.size() < n) push_back(ValueType()); }
+private:
+	static PropertyClass *Make(ValueType v);
+};
+
+template <> inline Spiral::Core::FloatProperty *
+PortSettings<Spiral::Core::FloatProperty, Spiral::Core::FloatType, &Spiral::Core::NumericPropertyValue::AsFloat>::Make(Spiral::Core::FloatType v)
+{ return new Spiral::Core::FloatProperty(DefaultLinearFlags, v, -0x7FFFFF, 0x7FFFFF, 0.0001f, 0.01f); }
+
+template <> inline Spiral::Core::ToggleProperty *
+PortSettings<Spiral::Core::ToggleProperty, bool, &Spiral::Core::NumericPropertyValue::AsBoolean>::Make(bool v)
+{ return new Spiral::Core::ToggleProperty(Spiral::Core::Property::WriteOnly, v); }
+
+typedef PortSettings<Spiral::Core::FloatProperty, Spiral::Core::FloatType, &Spiral::Core::NumericPropertyValue::AsFloat> PortFloats;
+typedef PortSettings<Spiral::Core::ToggleProperty, bool, &Spiral::Core::NumericPropertyValue::AsBoolean> PortFlags;
+
 class LADSPAPlugin : public Spiral::Core::Device
 {
 public:
@@ -66,10 +93,10 @@ public:
 	// read. Through the vtable the editor needs no symbol from us at all.
 	virtual const std::vector<LADSPAInfo::PluginEntry> &GetMenuList() const;
 	const char    *GetMaker() { return (const char *)m_Maker; }
-	int            GetPage() { return m_Page; }
-	bool           GetUpdateInputs() { return m_UpdateInputs; }
+	int            GetPage() { return AsSigned(m_Page); }
+	bool           GetUpdateInputs() { return AsBoolean(m_UpdateInputs); }
 	unsigned long  GetInputPortCount() { return m_InputPortCount; }
-	unsigned long  GetUnconnectedInputs() { return m_UnconnectedInputs; }
+	unsigned long  GetUnconnectedInputs() { return AsUnsigned(m_UnconnectedInputs); }
 	const char    *GetInputPortName(unsigned long p)
 	{
 		if (!m_OutData.InputPortNames || p >= m_MaxInputPortCount)
@@ -125,14 +152,10 @@ private:
 	LADSPA_Handle                m_PlugInstHandle;
 
 	std::vector<int>        m_PortID;
-	std::vector<Spiral::Core::FloatProperty*>   m_InputPortMin;
-	std::vector<Spiral::Core::FloatProperty*>   m_InputPortMax;
-	std::vector<Spiral::Core::ToggleProperty*>  m_InputPortClamp;
-	std::vector<Spiral::Core::FloatProperty*>   m_InputPortDefault;
-	void AddPortSetting(std::vector<Spiral::Core::FloatProperty*> &list, const char *prefix, float value);
-	void AddPortSetting(std::vector<Spiral::Core::ToggleProperty*> &list, const char *prefix, bool value);
-	void ClearPortSettings(std::vector<Spiral::Core::FloatProperty*> &list, const char *prefix);
-	void ClearPortSettings(std::vector<Spiral::Core::ToggleProperty*> &list, const char *prefix);
+	PortFloats              m_InputPortMin;
+	PortFloats              m_InputPortMax;
+	PortFlags               m_InputPortClamp;
+	PortFloats              m_InputPortDefault;
 
 	int             m_Version;
 
@@ -141,15 +164,15 @@ private:
 
 	unsigned long   m_PluginIndex;
 	unsigned long   m_UniqueID;
-	int             m_Page;
-	bool            m_UpdateInputs;
+	Spiral::Core::SignedProperty   m_Page;
+	Spiral::Core::ToggleProperty   m_UpdateInputs;
 
 	unsigned long   m_MaxInputPortCount;
 	unsigned long   m_InputPortCount;
 	char            m_Name[256];
 	char            m_Maker[256];
 
-	unsigned long   m_UnconnectedInputs;
+	Spiral::Core::UnsignedProperty m_UnconnectedInputs;
 
 	struct OutputChannelData
 	{

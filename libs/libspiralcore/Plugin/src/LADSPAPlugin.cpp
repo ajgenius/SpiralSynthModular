@@ -70,46 +70,6 @@ const Spiral::Core::DeviceClass &LADSPAPlugin::Class()
 
 static const unsigned long MaxInputPorts = 4096;
 
-void LADSPAPlugin::AddPortSetting(std::vector<FloatProperty*> &list, const char *prefix, float value)
-{
-	char name[256];
-	sprintf(name, "%s%d", prefix, (int)list.size());
-	list.push_back(new FloatProperty(DefaultLinearFlags, value, -0x7FFFFF, 0x7FFFFF, 0.0001, 0.01));
-	RegisterSharedProperty(*list.back(), name, name);
-}
-
-void LADSPAPlugin::AddPortSetting(std::vector<ToggleProperty*> &list, const char *prefix, bool value)
-{
-	char name[256];
-	sprintf(name, "%s%d", prefix, (int)list.size());
-	list.push_back(new ToggleProperty(Property::WriteOnly, value));
-	RegisterSharedProperty(*list.back(), name, name);
-}
-
-void LADSPAPlugin::ClearPortSettings(std::vector<FloatProperty*> &list, const char *prefix)
-{
-	char name[256];
-	while (list.size())
-	{
-		sprintf(name, "%s%d", prefix, (int)list.size() - 1);
-		UnregisterSharedProperty(name);
-		delete list.back();
-		list.pop_back();
-	}
-}
-
-void LADSPAPlugin::ClearPortSettings(std::vector<ToggleProperty*> &list, const char *prefix)
-{
-	char name[256];
-	while (list.size())
-	{
-		sprintf(name, "%s%d", prefix, (int)list.size() - 1);
-		UnregisterSharedProperty(name);
-		delete list.back();
-		list.pop_back();
-	}
-}
-
 LADSPAPlugin::LADSPAPlugin()
 {
 	InstanceCount++;
@@ -120,11 +80,24 @@ LADSPAPlugin::LADSPAPlugin()
 	m_SSMPluginReset = false;
 	m_PluginIndex = 0;
 	m_UniqueID = 0;
-	m_Page = 2;
-	m_UpdateInputs = true;
 	m_InputPortCount = 0;
-	m_UnconnectedInputs = 0;
 	m_Version = 9;
+	SetUnsigned(DeviceVersion, 9);
+
+	m_Page = SignedProperty(DefaultLinearFlags, 2, 0, 16, 1, 1);
+	m_UpdateInputs = ToggleProperty(Property::WriteOnly, true);
+	m_UnconnectedInputs = UnsignedProperty(DefaultLinearFlags, 0, 0, 0, 0, 0);
+	RegisterSharedProperty(m_Page, "Page", "Panel page");
+	RegisterSharedProperty(m_UpdateInputs, "UpdateInputs", "Update inputs");
+	RegisterSharedProperty(m_UnconnectedInputs, "UnconnectedInputs", "Unconnected inputs");
+	m_InputPortMin.List = VectorProperty(Property::WriteOnly);
+	m_InputPortMax.List = VectorProperty(Property::WriteOnly);
+	m_InputPortClamp.List = VectorProperty(Property::WriteOnly);
+	m_InputPortDefault.List = VectorProperty(Property::WriteOnly);
+	RegisterSharedProperty(m_InputPortMin.List, "Min", "Port minimums");
+	RegisterSharedProperty(m_InputPortMax.List, "Max", "Port maximums");
+	RegisterSharedProperty(m_InputPortClamp.List, "Clamp", "Port clamping");
+	RegisterSharedProperty(m_InputPortDefault.List, "Default", "Port defaults");
 
 	m_OutData.InputPortNames = NULL;
 	m_OutData.InputPortSettings = NULL;
@@ -144,9 +117,6 @@ LADSPAPlugin::LADSPAPlugin()
 	m_PluginInfo.NumOutputs=0;
 
 	m_MaxInputPortCount = m_LADSPAInfo->GetMaxInputPortCount();
-
-	SetUnsigned(DeviceVersion, 9);
-
 	if (m_MaxInputPortCount < 1)
 		m_MaxInputPortCount = 1;
 	if (m_MaxInputPortCount > MaxInputPorts)
@@ -249,9 +219,9 @@ void LADSPAPlugin::Execute()
 
 		if (GetInput(n))
 		{
-			if (m_InputPortClamp[n]->Value.AsBoolean) {
-				float Offset=m_InputPortMin[n]->Value.AsFloat;
-				float Scale=m_InputPortMax[n]->Value.AsFloat-m_InputPortMin[n]->Value.AsFloat;
+			if (m_InputPortClamp[n]) {
+				float Offset=m_InputPortMin[n];
+				float Scale=m_InputPortMax[n]-m_InputPortMin[n];
 
 				for (int i=0; i<m_HostInfo->BUFSIZE; i++)
 				{
@@ -267,17 +237,17 @@ void LADSPAPlugin::Execute()
 			if (m_OutData.InputPortValues && n < (int)m_MaxInputPortCount) {
 				m_OutData.InputPortValues[n].Connected = true;
 			}
-			m_InputPortDefault[n]->Value.AsFloat = m_LADSPABufVec[n][0];
+			m_InputPortDefault[n] = m_LADSPABufVec[n][0];
 		}
 		else
 		{
 			for (int i=0; i<m_HostInfo->BUFSIZE; i++) {
-				m_LADSPABufVec[n][i]=m_InputPortDefault[n]->Value.AsFloat;
+				m_LADSPABufVec[n][i]=m_InputPortDefault[n];
 			}
 			if (m_OutData.InputPortValues && n < (int)m_MaxInputPortCount) {
 				if (m_OutData.InputPortValues[n].Connected) {
 					m_OutData.InputPortValues[n].Connected = false;
-					m_InputPortDefault[n]->Value.AsFloat = m_OutData.InputPortValues[n].Value;
+					m_InputPortDefault[n] = m_OutData.InputPortValues[n].Value;
 				}
 			}
 		}
@@ -285,7 +255,7 @@ void LADSPAPlugin::Execute()
 			m_OutData.InputPortValues[n].Value = m_LADSPABufVec[n][0];
 		}
 		if (m_OutData.InputPortDefaults && n < (int)m_MaxInputPortCount) {
-			m_OutData.InputPortDefaults[n] = m_InputPortDefault[n]->Value.AsFloat;
+			m_OutData.InputPortDefaults[n] = m_InputPortDefault[n];
 		}
 	}
 
@@ -310,7 +280,7 @@ void LADSPAPlugin::ExecuteCommands()
 		{
 			case (SETPAGE):
 			{
-				m_Page = m_InData.Page;
+				AsSigned(m_Page) = m_InData.Page;
 			}
 			break;
 			case (SELECTPLUGIN):
@@ -326,7 +296,7 @@ void LADSPAPlugin::ExecuteCommands()
 			break;
 			case (SETUPDATEINPUTS):
 			{
-				m_UpdateInputs = m_InData.UpdateInputs;
+				AsBoolean(m_UpdateInputs) = m_InData.UpdateInputs;
 			}
 			break;
 			case (SETDEFAULT):
@@ -334,7 +304,7 @@ void LADSPAPlugin::ExecuteCommands()
 				if (m_InData.InputPortIndex < m_InputPortDefault.size() &&
 				    m_OutData.InputPortDefaults &&
 				    m_InData.InputPortIndex < m_MaxInputPortCount) {
-					m_InputPortDefault[m_InData.InputPortIndex]->Value.AsFloat = m_InData.InputPortDefault;
+					m_InputPortDefault[m_InData.InputPortIndex] = m_InData.InputPortDefault;
 					m_OutData.InputPortDefaults[m_InData.InputPortIndex] = m_InData.InputPortDefault;
 				}
 			}
@@ -344,7 +314,7 @@ void LADSPAPlugin::ExecuteCommands()
 				if (m_InData.InputPortIndex < m_InputPortMin.size() &&
 				    m_OutData.InputPortSettings &&
 				    m_InData.InputPortIndex < m_MaxInputPortCount) {
-					m_InputPortMin[m_InData.InputPortIndex]->Value.AsFloat = m_InData.InputPortMin;
+					m_InputPortMin[m_InData.InputPortIndex] = m_InData.InputPortMin;
 					m_OutData.InputPortSettings[m_InData.InputPortIndex].Min = m_InData.InputPortMin;
 				}
 			}
@@ -354,7 +324,7 @@ void LADSPAPlugin::ExecuteCommands()
 				if (m_InData.InputPortIndex < m_InputPortMax.size() &&
 				    m_OutData.InputPortSettings &&
 				    m_InData.InputPortIndex < m_MaxInputPortCount) {
-					m_InputPortMax[m_InData.InputPortIndex]->Value.AsFloat = m_InData.InputPortMax;
+					m_InputPortMax[m_InData.InputPortIndex] = m_InData.InputPortMax;
 					m_OutData.InputPortSettings[m_InData.InputPortIndex].Max = m_InData.InputPortMax;
 				}
 			}
@@ -364,7 +334,7 @@ void LADSPAPlugin::ExecuteCommands()
 				if (m_InData.InputPortIndex < m_InputPortClamp.size() &&
 				    m_OutData.InputPortSettings &&
 				    m_InData.InputPortIndex < m_MaxInputPortCount) {
-					m_InputPortClamp[m_InData.InputPortIndex]->Value.AsBoolean = m_InData.InputPortClamp;
+					m_InputPortClamp[m_InData.InputPortIndex] = m_InData.InputPortClamp;
 					m_OutData.InputPortSettings[m_InData.InputPortIndex].Clamp = m_InData.InputPortClamp;
 				}
 			}
@@ -394,12 +364,12 @@ void LADSPAPlugin::Describe(Spiral::Core::Description &d)
 	{
 		case 9:
 		{
-			m_UnconnectedInputs = m_PluginInfo.NumInputs;
+			AsUnsigned(m_UnconnectedInputs) = m_PluginInfo.NumInputs;
 			if (m_OutData.InputPortValues) {
 				for (int p = 0; p < m_PluginInfo.NumInputs; p++) {
 					if (p < (int)m_MaxInputPortCount &&
 					    m_OutData.InputPortValues[p].Connected)
-						m_UnconnectedInputs--;
+						AsUnsigned(m_UnconnectedInputs)--;
 				}
 			}
 
@@ -411,28 +381,27 @@ void LADSPAPlugin::Describe(Spiral::Core::Description &d)
 			assert(m_InputPortMin.size()==m_InputPortMax.size());
 			assert(m_InputPortMin.size()==m_InputPortClamp.size());
 			assert(m_InputPortMin.size()==m_InputPortDefault.size());
-			for (vector<FloatProperty*>::iterator i=m_InputPortMin.begin();
-			     i!=m_InputPortMin.end(); i++)
+			for (size_t i=0; i<m_InputPortMin.size(); i++)
 			{
-				float f = ssm_finite((*i)->Value.AsFloat)?((*i)->Value.AsFloat):0.0f;
-				d.Value(f).Separator(" ");
+				FloatProperty value = m_InputPortMin.At(i);
+				if (!ssm_finite(value.Value.AsFloat)) value.Value.AsFloat = 0.0f;
+				d.Value(value).Separator(" ");
 			}
-			for (vector<FloatProperty*>::iterator i=m_InputPortMax.begin();
-			     i!=m_InputPortMax.end(); i++)
+			for (size_t i=0; i<m_InputPortMax.size(); i++)
 			{
-				float f = ssm_finite((*i)->Value.AsFloat)?((*i)->Value.AsFloat):0.0f;
-				d.Value(f).Separator(" ");
+				FloatProperty value = m_InputPortMax.At(i);
+				if (!ssm_finite(value.Value.AsFloat)) value.Value.AsFloat = 0.0f;
+				d.Value(value).Separator(" ");
 			}
-			for (vector<ToggleProperty*>::iterator i=m_InputPortClamp.begin();
-			     i!=m_InputPortClamp.end(); i++)
+			for (size_t i=0; i<m_InputPortClamp.size(); i++)
 			{
-				d.Value((int)((*i)->Value.AsBoolean)).Separator(" ");
+				d.Value(m_InputPortClamp.At(i)).Separator(" ");
 			}
-			for (vector<FloatProperty*>::iterator i=m_InputPortDefault.begin();
-			     i!=m_InputPortDefault.end(); i++)
+			for (size_t i=0; i<m_InputPortDefault.size(); i++)
 			{
-				float f = ssm_finite((*i)->Value.AsFloat)?((*i)->Value.AsFloat):0.0f;
-				d.Value(f).Separator(" ");
+				FloatProperty value = m_InputPortDefault.At(i);
+				if (!ssm_finite(value.Value.AsFloat)) value.Value.AsFloat = 0.0f;
+				d.Value(value).Separator(" ");
 			}
 		}
 		break;
@@ -462,31 +431,14 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 			r.Value(m_Page);
 			r.Value(m_UpdateInputs);
 			r.Value(UniqueID);
-			r.Value(PortCount);
+			r.Count(m_InputPortMin.List, PortCount);
 			if (PortCount > (int)MaxInputPorts) PortCount = MaxInputPorts;
 			r.Value(m_UnconnectedInputs);
 
-			for (int n=0; n<PortCount; n++)
-			{
-				r.Value(Min);
-				AddPortSetting(m_InputPortMin, "Min", Min);
-			}
-
-			for (int n=0; n<PortCount; n++)
-			{
-				r.Value(Max);
-				AddPortSetting(m_InputPortMax, "Max", Max);
-			}
-			for (int n=0; n<PortCount; n++)
-			{
-				r.Value(Clamp);
-				AddPortSetting(m_InputPortClamp, "Clamp", Clamp);
-			}
-			for (int n=0; n<PortCount; n++)
-			{
-				r.Value(Default);
-				AddPortSetting(m_InputPortDefault, "Default", Default);
-			}
+			for (int n=0; n<PortCount; n++) { m_InputPortMin.push_back(n ? m_InputPortMin[n-1] : 0);         r.Value(m_InputPortMin.At(n)); }
+			for (int n=0; n<PortCount; n++) { m_InputPortMax.push_back(n ? m_InputPortMax[n-1] : 0);         r.Value(m_InputPortMax.At(n)); }
+			for (int n=0; n<PortCount; n++) { m_InputPortClamp.push_back(n ? m_InputPortClamp[n-1] : false); r.Value(m_InputPortClamp.At(n)); }
+			for (int n=0; n<PortCount; n++) { m_InputPortDefault.push_back(n ? m_InputPortDefault[n-1] : 0); r.Value(m_InputPortDefault.At(n)); }
 		}
 		break;
 		case 8:
@@ -500,23 +452,23 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Min);
-				AddPortSetting(m_InputPortMin, "Min", Min);
+				m_InputPortMin.push_back(Min);
 			}
 
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Max);
-				AddPortSetting(m_InputPortMax, "Max", Max);
+				m_InputPortMax.push_back(Max);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Clamp);
-				AddPortSetting(m_InputPortClamp, "Clamp", Clamp);
+				m_InputPortClamp.push_back(Clamp);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Default);
-				AddPortSetting(m_InputPortDefault, "Default", Default);
+				m_InputPortDefault.push_back(Default);
 			}
 		}
 		break;
@@ -530,23 +482,23 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Min);
-				AddPortSetting(m_InputPortMin, "Min", Min);
+				m_InputPortMin.push_back(Min);
 			}
 
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Max);
-				AddPortSetting(m_InputPortMax, "Max", Max);
+				m_InputPortMax.push_back(Max);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Clamp);
-				AddPortSetting(m_InputPortClamp, "Clamp", Clamp);
+				m_InputPortClamp.push_back(Clamp);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Default);
-				AddPortSetting(m_InputPortDefault, "Default", Default);
+				m_InputPortDefault.push_back(Default);
 			}
 		}
 		break;
@@ -559,23 +511,23 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Min);
-				AddPortSetting(m_InputPortMin, "Min", Min);
+				m_InputPortMin.push_back(Min);
 			}
 
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Max);
-				AddPortSetting(m_InputPortMax, "Max", Max);
+				m_InputPortMax.push_back(Max);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Clamp);
-				AddPortSetting(m_InputPortClamp, "Clamp", Clamp);
+				m_InputPortClamp.push_back(Clamp);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Default);
-				AddPortSetting(m_InputPortDefault, "Default", Default);
+				m_InputPortDefault.push_back(Default);
 			}
 		}
 		break;
@@ -589,23 +541,23 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Min);
-				AddPortSetting(m_InputPortMin, "Min", Min);
+				m_InputPortMin.push_back(Min);
 			}
 
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Max);
-				AddPortSetting(m_InputPortMax, "Max", Max);
+				m_InputPortMax.push_back(Max);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Clamp);
-				AddPortSetting(m_InputPortClamp, "Clamp", Clamp);
+				m_InputPortClamp.push_back(Clamp);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Default);
-				AddPortSetting(m_InputPortDefault, "Default", Default);
+				m_InputPortDefault.push_back(Default);
 			}
 		}
 		break;
@@ -619,22 +571,22 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Min);
-				AddPortSetting(m_InputPortMin, "Min", Min);
+				m_InputPortMin.push_back(Min);
 			}
 
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Max);
-				AddPortSetting(m_InputPortMax, "Max", Max);
+				m_InputPortMax.push_back(Max);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Clamp);
-				AddPortSetting(m_InputPortClamp, "Clamp", Clamp);
+				m_InputPortClamp.push_back(Clamp);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
-				AddPortSetting(m_InputPortDefault, "Default", 0.0f);
+				m_InputPortDefault.push_back(0.0f);
 			}
 		}
 		break;
@@ -652,23 +604,23 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Min);
-				AddPortSetting(m_InputPortMin, "Min", Min);
+				m_InputPortMin.push_back(Min);
 			}
 
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Max);
-				AddPortSetting(m_InputPortMax, "Max", Max);
+				m_InputPortMax.push_back(Max);
 			}
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Clamp);
-				AddPortSetting(m_InputPortClamp, "Clamp", Clamp);
+				m_InputPortClamp.push_back(Clamp);
 			}
 
 			for (int n=0; n<PortCount; n++)
 			{
-				AddPortSetting(m_InputPortDefault, "Default", 0.0f);
+				m_InputPortDefault.push_back(0.0f);
 			}
 
 			if (Filename!="None")
@@ -691,23 +643,23 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Min);
-				AddPortSetting(m_InputPortMin, "Min", Min);
+				m_InputPortMin.push_back(Min);
 			}
 
 			for (int n=0; n<PortCount; n++)
 			{
 				r.Value(Max);
-				AddPortSetting(m_InputPortMax, "Max", Max);
+				m_InputPortMax.push_back(Max);
 			}
 
 			for (int n=0; n<PortCount; n++)
 			{
-				AddPortSetting(m_InputPortClamp, "Clamp", true);
+				m_InputPortClamp.push_back(true);
 			}
 
 			for (int n=0; n<PortCount; n++)
 			{
-				AddPortSetting(m_InputPortDefault, "Default", 0.0f);
+				m_InputPortDefault.push_back(0.0f);
 			}
 
 			if (Filename!="None")
@@ -736,10 +688,10 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 	if (Version == 1) {
 		UpdatePlugin(UniqueID);
 	} else {
-		if (Version < 9 && m_Page == 1) m_Page = 2;
+		if (Version < 9 && AsSigned(m_Page) == 1) AsSigned(m_Page) = 2;
 
 		if (SelectPlugin(UniqueID)) {
-			if (Version < 9) m_UnconnectedInputs = m_InputPortCount;
+			if (Version < 9) AsUnsigned(m_UnconnectedInputs) = m_InputPortCount;
 			SetGUIExports();
 		} else {
 			m_UniqueID = UniqueID;
@@ -911,11 +863,11 @@ void LADSPAPlugin::ClearPlugin(void)
 
 	if (! m_SSMPluginReset)
 	{
-		m_Page = 2;
-		m_UpdateInputs = true;
+		AsSigned(m_Page) = 2;
+		AsBoolean(m_UpdateInputs) = true;
 		m_UniqueID = 0;
 		m_InputPortCount = 0;
-		m_UnconnectedInputs = 0;
+		AsUnsigned(m_UnconnectedInputs) = 0;
 		strncpy(m_Name, "None", 5);
 		strncpy(m_Maker, "None", 5);
 		m_Name[4] = '\0';
@@ -941,13 +893,13 @@ void LADSPAPlugin::ClearPlugin(void)
 	}
 
 	m_PortID.clear();
-	ClearPortSettings(m_InputPortMin, "Min");
-	ClearPortSettings(m_InputPortMax, "Max");
-	ClearPortSettings(m_InputPortClamp, "Clamp");
+	m_InputPortMin.clear();
+	m_InputPortMax.clear();
+	m_InputPortClamp.clear();
 
 	if (! m_SSMPluginReset)
 	{
-		ClearPortSettings(m_InputPortDefault, "Default");
+		m_InputPortDefault.clear();
 	}
 }
 
@@ -965,7 +917,7 @@ void LADSPAPlugin::ResetPortSettings(void)
 	// Reset keeps saved defaults for surviving ports. A different installed
 	// descriptor can add or remove inputs; all four setting vectors must agree.
 	if (m_SSMPluginReset && m_InputPortDefault.size() > (size_t)m_PluginInfo.NumInputs)
-		while (m_InputPortDefault.size() > (size_t)m_PluginInfo.NumInputs) { char name[256]; sprintf(name, "Default%d", (int)m_InputPortDefault.size() - 1); UnregisterSharedProperty(name); delete m_InputPortDefault.back(); m_InputPortDefault.pop_back(); }
+		m_InputPortDefault.resize(m_PluginInfo.NumInputs);
 
 	for (int n=0; n<m_PluginInfo.NumInputs; n++)
 	{
@@ -977,11 +929,11 @@ void LADSPAPlugin::ResetPortSettings(void)
 
 		if (!m_PlugDesc->PortRangeHints)
 		{
-			AddPortSetting(m_InputPortMin, "Min", Min);
-			AddPortSetting(m_InputPortMax, "Max", Max);
-			AddPortSetting(m_InputPortClamp, "Clamp", true);
+			m_InputPortMin.push_back(Min);
+			m_InputPortMax.push_back(Max);
+			m_InputPortClamp.push_back(true);
 			if (!m_SSMPluginReset || (size_t)n >= m_InputPortDefault.size())
-				AddPortSetting(m_InputPortDefault, "Default", Default);
+				m_InputPortDefault.push_back(Default);
 			continue;
 		}
 
@@ -1071,13 +1023,13 @@ void LADSPAPlugin::ResetPortSettings(void)
 		Default = 0.0f;
 #endif
 
-		AddPortSetting(m_InputPortMin, "Min", Min);
-		AddPortSetting(m_InputPortMax, "Max", Max);
-		AddPortSetting(m_InputPortClamp, "Clamp", true);
+		m_InputPortMin.push_back(Min);
+		m_InputPortMax.push_back(Max);
+		m_InputPortClamp.push_back(true);
 
 		if (!m_SSMPluginReset || (size_t)n >= m_InputPortDefault.size())
 		{
-			AddPortSetting(m_InputPortDefault, "Default", Default);
+			m_InputPortDefault.push_back(Default);
 		}
 	}
 }
@@ -1119,9 +1071,9 @@ void LADSPAPlugin::SetGUIExports(void)
 			m_OutData.InputPortSettings[p].LogBase = 0.0f;
 		}
 
-		m_OutData.InputPortSettings[p].Min = m_InputPortMin[p]->Value.AsFloat;
-		m_OutData.InputPortSettings[p].Max = m_InputPortMax[p]->Value.AsFloat;
-		m_OutData.InputPortSettings[p].Clamp = m_InputPortClamp[p]->Value.AsBoolean ? true : false;
-		m_OutData.InputPortDefaults[p] = m_InputPortDefault[p]->Value.AsFloat;
+		m_OutData.InputPortSettings[p].Min = m_InputPortMin[p];
+		m_OutData.InputPortSettings[p].Max = m_InputPortMax[p];
+		m_OutData.InputPortSettings[p].Clamp = m_InputPortClamp[p] ? true : false;
+		m_OutData.InputPortDefaults[p] = m_InputPortDefault[p];
 	}
 }
