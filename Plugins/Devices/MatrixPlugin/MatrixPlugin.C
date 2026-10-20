@@ -16,6 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include "MatrixPlugin.h"
+#include <algorithm>
 #include "SpiralIcon.xpm"
 #include "NoteTable.h"
 
@@ -69,6 +70,14 @@ string SpiralPlugin_GetGroupName()
 
 ///////////////////////////////////////////////////////
 
+// A pattern's or a sequence step's name, as the private tree gives them.
+static std::string Numbered(int n)
+{
+	char text[16];
+	snprintf(text, sizeof text, "%d", n);
+	return text;
+}
+
 MatrixPlugin::MatrixPlugin() :
 m_TickTime(1.0f),
 m_StepTime(1.0f),
@@ -82,18 +91,33 @@ m_CopyPattern(0),
 m_PatAdvance(false),
 m_PatReset(false)
 {
-	m_PatSeq = VectorProperty(Property::WriteOnly);
+	// Named as the private tree names them: each step of the sequence and
+	// each pattern by its number, and a pattern's octave, length and speed.
+	m_PatSeq = ListProperty(Property::WriteOnly);
 	for (int n=0; n<NUM_PATSEQ; n++)
-		m_PatSeq.Add(new SignedProperty(DefaultLinearFlags, -1, -1, NUM_PATTERNS - 1, 1, 1));
+	{
+		SignedProperty *step = new SignedProperty(DefaultLinearFlags, -1, -1, NUM_PATTERNS - 1, 1, 1);
+		step->SetLabel(Numbered(n));
+		m_PatSeq.Add(step);
+	}
 
-	m_Patterns = VectorProperty(Property::WriteOnly);
+	m_Patterns = ListProperty(Property::WriteOnly);
 	for (int n=0; n<NUM_PATTERNS; n++)
 	{
-		VectorProperty *pattern = new VectorProperty(Property::WriteOnly);
-		pattern->Add(new SignedProperty(DefaultLinearFlags, 64, 1, MATX, 1, 1));
-		pattern->Add(new FloatProperty(DefaultLinearFlags, 1.0f, 0.0f, 16.0f, 0.001f, 0.1f));
-		pattern->Add(new SignedProperty(DefaultLinearFlags, 0, -6, 6, 1, 1));
-		pattern->Add(new VectorProperty(Property::WriteOnly));
+		MatrixPatternProperty *pattern = new MatrixPatternProperty(Property::WriteOnly);
+		pattern->SetLabel(Numbered(n));
+		UnsignedProperty *octave = new UnsignedProperty(DefaultLinearFlags, 0, 0, 6, 1, 1);
+		octave->SetLabel("Octave");
+		UnsignedProperty *length = new UnsignedProperty(DefaultLinearFlags, 64, 1, MATX, 1, 1);
+		length->SetLabel("Length");
+		FloatProperty *speed = new FloatProperty(DefaultLinearFlags, 1.0f, 0.0f, 16.0f, 0.001f, 0.1f);
+		speed->SetLabel("Speed");
+		UnsignedProperty *triggers = new UnsignedProperty(DefaultLinearFlags, 0, 0, MATRIX_PITCHES - NUM_TRIGGERS, 1, 1);
+		triggers->SetLabel("Triggers");
+		pattern->Add(octave);
+		pattern->Add(length);
+		pattern->Add(speed);
+		pattern->Add(triggers);
 		m_Patterns.Add(pattern);
 	}
 	RegisterSharedProperty(m_Patterns, "Patterns", "Patterns");
@@ -137,12 +161,14 @@ m_PatReset(false)
 		m_Matrix[n].Length=64;
 		m_Matrix[n].Speed=1.0f;
 		m_Matrix[n].Octave=0;
+		m_Matrix[n].Triggers=0;
 		
 		for (int x=0; x<MATX; x++)
-		for (int y=0; y<MATY; y++)
+		for (int y=0; y<MATRIX_PITCHES; y++)
 		{
 			m_Matrix[n].Matrix[x][y]=false;
 			m_Matrix[n].Volume[x][y]=1;
+			m_Matrix[n].End[x][y]=x+1;
 		}
 
 		m_TriggerLevel[n]=0;
@@ -154,15 +180,17 @@ m_PatReset(false)
 	}
 
 	SetString(DeviceName, SpiralPlugin_GetName());
-	SetUnsigned(DeviceVersion, 4);
+	SetUnsigned(DeviceVersion, 7);
 
 	m_Time = FloatProperty(Property::ReadOnly, 0.0f, 0.0f, 1000.0f, 0.0001f, 0.001f);
 	m_Step = SignedProperty(Property::ReadOnly, 0, 0, MATX - 1, 1, 1);
 	m_Current = SignedProperty(Property::ReadOnly, 0, 0, NUM_PATTERNS - 1, 1, 1);
 	m_Loop = ToggleProperty(Property::WriteOnly, true);
 	m_NoteCut = ToggleProperty(Property::WriteOnly, false);
+	m_TriggerSelect = ToggleProperty(Property::WriteOnly, false);
 
 	RegisterSharedProperty(m_NoteCut, "NoteCut", "Cut the note on a new step");
+	RegisterSharedProperty(m_TriggerSelect, "TriggerSelect", "Trigger Select");
 	m_AudioCH->Register("Volume",&m_GUIArgs.Volume,ChannelHandler::INPUT);
 	m_AudioCH->Register("Current",&m_GUICurrent,ChannelHandler::INPUT);
 	m_AudioCH->Register("StepTime",&m_StepTime,ChannelHandler::INPUT);
@@ -179,7 +207,7 @@ m_PatReset(false)
 	RegisterSharedProperty(m_Time, "Time", "Position within the step");
 	RegisterSharedProperty(m_Loop, "Loop", "Loop the pattern");
 
-	RegisterSharedProperty(m_PatSeq, "PatSeq", "Pattern sequence");
+	RegisterSharedProperty(m_PatSeq, "Sequences", "Pattern sequence");
 	m_AudioCH->RegisterData("Matrix",ChannelHandler::OUTPUT_REQUEST,&m_Matrix,sizeof(m_Matrix));
 }
 
@@ -193,8 +221,6 @@ PluginInfo &MatrixPlugin::Initialise(const HostInfo *Host)
 	m_TickTime = 1.0f/(float)m_HostInfo->SAMPLERATE;
 	return Info;
 }
-
-
 
 void MatrixPlugin::Reset()
 {
@@ -285,8 +311,8 @@ void MatrixPlugin::Execute()
 				}
 			}
 			
-			// reset the position on a signal from input 1
-			if (InputExists(0) && GetInput(0,n)!=0)
+			// Reset the position on a signal from input 1
+			if (!AsBoolean(m_TriggerSelect) && InputExists(0) && GetInput(0,n)!=0)
 			{
 				AsSigned(m_Step)=-1;
 				ExternalClockTriggered=true;
@@ -321,29 +347,68 @@ void MatrixPlugin::Execute()
 				m_TriggerLevel[t]=0;
 			}
 
-			// Scan the matrix at current time
-			for (int i=0; i<MATY; i++)
+			// Scan the matrix at current time: a note starting on this step,
+			// or one carrying on from an earlier step until its end. A row
+			// trigger is a pitch from the pattern's trigger rows up.
+			const Pattern &p = m_Matrix[AsSigned(m_Current)];
+			const int step = AsSigned(m_Step), lowest = p.Triggers;
+			bool carried = false;
+			for (int i=0; i<MATRIX_PITCHES; i++)
 			{
-				if (m_Matrix[AsSigned(m_Current)].Matrix[AsSigned(m_Step)][i])
-				{
-					m_CurrentNoteCV=NoteTable[i+m_Matrix[AsSigned(m_Current)].Octave*12];
-					m_CurrentTriggerCV=m_Matrix[AsSigned(m_Current)].Volume[AsSigned(m_Step)][i];
-					m_TriggerLevel[i]=m_Matrix[AsSigned(m_Current)].Volume[AsSigned(m_Step)][i];
-				}
+				const int start = Covering(p, step, i);
+				if (start < 0) continue;
+				m_CurrentNoteCV=NoteTable[i];
+				m_CurrentTriggerCV=p.Volume[start][i];
+				if (i >= lowest && i < lowest + MATY) m_TriggerLevel[i - lowest]=p.Volume[start][i];
+				carried = start != step;
 			}
 
 			// reset the triggers between steps to clear them
-			// otherwise consecutive events wont get triggered
-			SetOutput(1,n,0);
-			for (int t=0; t<NUM_PATTERNS; t++) SetOutput(t+2,n,0);
+			// otherwise consecutive events wont get triggered;
+			// a note carrying on is not triggered again
+			if (!carried) SetOutput(1,n,0);
+			for (int t=0; t<NUM_PATTERNS; t++)
+			{
+				const int start = Covering(p, step, lowest + t);
+				SetOutput(t+2,n,start >= 0 && start != step ? m_TriggerLevel[t] : 0);
+			}
+
 		}
 	}
+}
+
+int MatrixPlugin::Shown(int x, int y) const
+{
+	const int pitch = y + m_Matrix[m_GUICurrent].Octave*12;
+	return x >= 0 && x < MATX && y >= 0 && y < MATY && pitch < MATRIX_PITCHES ? pitch : -1;
+}
+
+// Where the note starting at x stops: its own end, or the next note's start
+// at its pitch, or the grid's edge, whichever comes first.
+int MatrixPlugin::NoteEnd(const Pattern &p, int x, int pitch)
+{
+	const int end = std::max(x + 1, std::min(MATX, (int)p.End[x][pitch]));
+	for (int next = x + 1; next < end; ++next)
+		if (p.Matrix[next][pitch]) return next;
+	return end;
+}
+
+// The start of the note sounding at step at the pitch, or -1.
+int MatrixPlugin::Covering(const Pattern &p, int step, int pitch)
+{
+	if (step < 0 || step >= MATX) return -1;
+	for (int x = step; x >= 0; --x)
+		if (p.Matrix[x][pitch]) return NoteEnd(p, x, pitch) > step ? x : -1;
+	return -1;
 }
 
 void MatrixPlugin::ExecuteCommands()
 {
 	if (m_AudioCH->IsCommandWaiting())
 	{
+		// The cell the editor names is the edited pattern's, in the octave
+		// its grid shows.
+		const int pitch = Shown(m_GUIArgs.X, m_GUIArgs.Y);
 		switch (m_AudioCH->GetCommand())
 		{
 			case MAT_LENGTH   :
@@ -355,17 +420,23 @@ void MatrixPlugin::ExecuteCommands()
 			break;
 
 			case MAT_ACTIVATE :
-				m_Matrix[m_GUICurrent].Matrix[m_GUIArgs.X][m_GUIArgs.Y]=true;
+				if (pitch >= 0)
+				{
+					m_Matrix[m_GUICurrent].Matrix[m_GUIArgs.X][pitch]=true;
+					m_Matrix[m_GUICurrent].End[m_GUIArgs.X][pitch]=m_GUIArgs.X+1;
+				}
 			break;
 
 			case MAT_DEACTIVATE :
-				m_Matrix[m_GUICurrent].Matrix[m_GUIArgs.X][m_GUIArgs.Y]=false;
+				if (pitch >= 0) m_Matrix[m_GUICurrent].Matrix[m_GUIArgs.X][pitch]=false;
 			break;
+			// The grid shows the pattern from another octave; its notes stay
+			// where they are.
 			case MAT_OCTAVE :
-				m_Matrix[m_GUICurrent].Octave=m_GUIArgs.Octave;
+				m_Matrix[m_GUICurrent].Octave=std::max(0, std::min(6, m_GUIArgs.Octave));
 			break;
 			case COPY :
-                                m_CopyPattern = m_GUICurrent;
+				m_CopyPattern = m_GUICurrent;
 			break;
 			case PASTE :
 				PastePattern();
@@ -380,7 +451,7 @@ void MatrixPlugin::ExecuteCommands()
 				if (CanTransposeDown()) TransposeDown();
 			break;
 			case MAT_VOLUME :
-				m_Matrix[m_GUICurrent].Volume[m_GUIArgs.X][m_GUIArgs.Y]=m_GUIArgs.Volume;
+				if (pitch >= 0) m_Matrix[m_GUICurrent].Volume[m_GUIArgs.X][pitch]=m_GUIArgs.Volume;
 			break;
 			case SET_CURRENT :
 				AsSigned(m_Current)=m_GUIArgs.Num;
@@ -392,98 +463,132 @@ void MatrixPlugin::ExecuteCommands()
 	}
 }
 
+// The patterns as the file keeps them, as the private tree does: the octave
+// the grid shows, then each note at its pitch, column by column and the
+// highest first, ending a step after its last at the soonest.
 void MatrixPlugin::PatternsFromGrid()
 {
 	for (int n=0; n<NUM_PATTERNS; n++)
 	{
-		AsSigned(PatternLength(n)) = m_Matrix[n].Length;
+		AsUnsigned(PatternOctave(n)) = m_Matrix[n].Octave;
+		AsUnsigned(PatternLength(n)) = m_Matrix[n].Length;
 		AsFloat(PatternSpeed(n)) = m_Matrix[n].Speed;
-		AsSigned(PatternOctave(n)) = m_Matrix[n].Octave;
+		AsUnsigned(PatternTriggers(n)) = m_Matrix[n].Triggers;
 		ClearNotes(n);
-		for (int y=0; y<MATY; y++)
-			for (int x=0; x<MATX; x++)
-				if (m_Matrix[n].Matrix[x][y]) AddNote(n, x, y, m_Matrix[n].Volume[x][y]);
+		for (int x=0; x<MATX; x++)
+			for (int pitch=MATRIX_PITCHES-1; pitch>=0; pitch--)
+				if (m_Matrix[n].Matrix[x][pitch])
+					AddNote(n, x, pitch, m_Matrix[n].Volume[x][pitch], NoteEnd(m_Matrix[n], x, pitch));
 	}
 }
 
+// The patterns from the file: a note past the grid's steps, or higher than
+// the Matrix plays, is left out.
 void MatrixPlugin::GridFromPatterns()
 {
 	for (int n=0; n<NUM_PATTERNS; n++)
 	{
-		m_Matrix[n].Length = AsSigned(PatternLength(n));
+		m_Matrix[n].Length = AsUnsigned(PatternLength(n));
 		m_Matrix[n].Speed = AsFloat(PatternSpeed(n));
-		m_Matrix[n].Octave = AsSigned(PatternOctave(n));
+		m_Matrix[n].Octave = AsUnsigned(PatternOctave(n));
+		m_Matrix[n].Triggers = AsUnsigned(PatternTriggers(n));
 		for (int x=0; x<MATX; x++)
-			for (int y=0; y<MATY; y++)
+			for (int y=0; y<MATRIX_PITCHES; y++)
+			{
 				m_Matrix[n].Matrix[x][y] = false;
-		for (unsigned int k=0; k<Notes(n).size(); k++)
+				m_Matrix[n].End[x][y] = x + 1;
+			}
+		for (int k=0; k<NoteCount(n); k++)
 		{
-			const int x = AsSigned(NoteX(n, k)), y = AsSigned(NoteY(n, k));
-			if (x < 0 || x >= MATX || y < 0 || y >= MATY) continue;
-			m_Matrix[n].Matrix[x][y] = true;
-			m_Matrix[n].Volume[x][y] = AsFloat(NoteVolume(n, k));
+			const int x = (int)Note(n, k).Start, pitch = NotePitch(Note(n, k));
+			if (x < 0 || x >= MATX || pitch < 0 || pitch >= MATRIX_PITCHES)
+				continue;
+			m_Matrix[n].Matrix[x][pitch] = true;
+			m_Matrix[n].Volume[x][pitch] = Note(n, k).Velocity;
+			m_Matrix[n].End[x][pitch] = (unsigned char)std::max(x + 1, std::min(MATX, (int)Note(n, k).End));
 		}
 	}
 }
 
-void MatrixPlugin::AddNote(int pattern, int x, int y, float volume)
+void MatrixPlugin::SetPitch(NoteProperty &note, int pitch)
 {
-	VectorProperty *note = new VectorProperty(Property::WriteOnly);
-	note->Add(new SignedProperty(DefaultLinearFlags, x, 0, MATX - 1, 1, 1));
-	note->Add(new SignedProperty(DefaultLinearFlags, y, 0, MATY - 1, 1, 1));
-	note->Add(new FloatProperty(DefaultLinearFlags, volume, 0.0f, 1.0f, 0.001f, 0.1f));
-	Notes(pattern).Add(note);
+	pitch = std::max(0, pitch);
+	note.Note = (UnsignedType)(pitch % 12 + 1);
+	note.Octave = (UnsignedType)(pitch / 12);
+}
+
+void MatrixPlugin::AddNote(int pattern, int x, int pitch, float volume, int end)
+{
+	NoteProperty *note = new NoteProperty(DefaultLinearFlags, 1, 0, volume);
+	SetPitch(*note, pitch);
+	note->Start = (UnsignedType)x;
+	note->End = (UnsignedType)std::max(x + 1, end);
+	PatternProperties(pattern).Add(note);
 }
 
 void MatrixPlugin::ClearNotes(int pattern)
 {
-	while (Notes(pattern).size()) Notes(pattern).RemoveLast();
+	while (NoteCount(pattern) > 0) PatternProperties(pattern).RemoveLast();
 }
 
 void MatrixPlugin::PastePattern() {
-     m_Matrix[m_GUICurrent].Length = m_Matrix[m_CopyPattern].Length;
-     m_Matrix[m_GUICurrent].Speed = m_Matrix[m_CopyPattern].Speed;
-     m_Matrix[m_GUICurrent].Octave = m_Matrix[m_CopyPattern].Octave;
-     for (int y=0; y<MATY; y++) {
+     const Pattern &from = m_Matrix[m_CopyPattern];
+     Pattern &to = m_Matrix[m_GUICurrent];
+     to.Length = from.Length;
+     to.Speed = from.Speed;
+     to.Octave = from.Octave;
+     to.Triggers = from.Triggers;
+     for (int y=0; y<MATRIX_PITCHES; y++) {
          for (int x=0; x<MATX; x++) {
-             m_Matrix[m_GUICurrent].Matrix[x][y] = m_Matrix[m_CopyPattern].Matrix[x][y];
+             to.Matrix[x][y] = from.Matrix[x][y];
+             to.End[x][y] = from.End[x][y];
          }
      }
 }
 
 void MatrixPlugin::ClearPattern() {
-     for (int y=0; y<MATY; y++) {
+     for (int y=0; y<MATRIX_PITCHES; y++) {
          for (int x=0; x<MATX; x++) {
              m_Matrix[m_GUICurrent].Matrix[x][y] = 0;
+             m_Matrix[m_GUICurrent].End[x][y] = x + 1;
          }
      }
 }
 
+// Every note of the pattern moves, shown or not, with its volume and end.
 void MatrixPlugin::TransposeUp() {
+     Pattern &p = m_Matrix[m_GUICurrent];
      int x, y;
-     for (y=MATY-1; y>=0; y--) {
+     for (y=MATRIX_PITCHES-1; y>0; y--) {
          for (x=0; x<MATX; x++) {
-             m_Matrix[m_GUICurrent].Matrix[x][y] = m_Matrix[m_GUICurrent].Matrix[x][y-1];
+             p.Matrix[x][y] = p.Matrix[x][y-1];
+             p.Volume[x][y] = p.Volume[x][y-1];
+             p.End[x][y] = p.End[x][y-1];
          }
      }
      for (x=0; x<MATX; x++) {
-         m_Matrix[m_GUICurrent].Matrix[x][0] = 0;
+         p.Matrix[x][0] = 0;
+         p.End[x][0] = x + 1;
      }
 }
 
 void MatrixPlugin::TransposeDown()
 {
+    Pattern &p = m_Matrix[m_GUICurrent];
     int x, y;
-    for (y=0; y<MATY-1; y++)
+    for (y=0; y<MATRIX_PITCHES-1; y++)
 	{
         for (x=0; x<MATX; x++)
 		{
-            m_Matrix[m_GUICurrent].Matrix[x][y] = m_Matrix[m_GUICurrent].Matrix[x][y+1];
+            p.Matrix[x][y] = p.Matrix[x][y+1];
+            p.Volume[x][y] = p.Volume[x][y+1];
+            p.End[x][y] = p.End[x][y+1];
         }
     }
     for (x=0; x<MATX; x++)
 	{
-    	m_Matrix[m_GUICurrent].Matrix[x][MATY-1] = 0;
+    	p.Matrix[x][MATRIX_PITCHES-1] = 0;
+    	p.End[x][MATRIX_PITCHES-1] = x + 1;
     }
 }
 
@@ -495,33 +600,43 @@ bool MatrixPlugin::CanTransposeDown()
 
 bool MatrixPlugin::CanTransposeUp()
 {
-     for (int x=0; x<MATX; x++) if (m_Matrix[AsSigned(m_Current)].Matrix[x][MATY-1]) return false;
+     for (int x=0; x<MATX; x++) if (m_Matrix[m_GUICurrent].Matrix[x][MATRIX_PITCHES-1]) return false;
      return true;
 }
 
+// What the private tree saves of a Matrix, in its order: whether a step cuts
+// the note, the patterns, the pattern sequence and Trigger Select, each list
+// and pattern under the class and name it gives them. Where it is playing is
+// not saved.
 void MatrixPlugin::Describe(Spiral::Core::Description &d)
 {
 	PatternsFromGrid();
 
 	d.Value(DeviceVersion).Separator(" ");
-	d.Value(m_Current).Separator(" ").Value(m_Time).Separator(" ").Value(m_Step).Separator(" ").Value(m_Loop).Separator(" ").Value(m_NoteCut).Separator(" ").Line();
+	d.Value(m_NoteCut).Separator(" ").Line();
 
+	d.Shaped(m_Patterns.GetKey(), m_Patterns.ClassName(), "");
 	for (int n=0; n<NUM_PATTERNS; n++)
 	{
-		d.Value(PatternLength(n)).Separator(" ").Value(PatternSpeed(n)).Separator(" ").Value(PatternOctave(n)).Line();
-
-		for (unsigned int k=0; k<Notes(n).size(); k++)
-		{
-			d.Value(NoteX(n, k)).Separator(" ").Value(NoteY(n, k)).Separator("  ").Value(NoteVolume(n, k)).Separator(" ");
-		}
-		d.Value("-1").Separator(" ");
+		VectorProperty &pattern = PatternProperties(n);
+		d.Shaped(pattern.GetKey(), pattern.ClassName(), pattern.GetLabel());
+		for (int f=0; f<PatternFields; f++)
+			d.Shaped(pattern[f]->GetKey(), "", pattern[f]->GetLabel());
+		d.Value(PatternOctave(n)).Separator(" ").Value(PatternLength(n)).Separator(" ").Value(PatternSpeed(n))
+			.Separator(" ").Value(PatternTriggers(n)).Line();
+		for (int k=0; k<NoteCount(n); k++)
+			d.Value(Note(n, k)).Separator(" ");
+		d.Line();
 	}
-	d.Line();
+
+	d.Shaped(m_PatSeq.GetKey(), m_PatSeq.ClassName(), "");
 	for (int n=0; n<NUM_PATSEQ; n++)
 	{
+		d.Shaped(PatSeq(n).GetKey(), "", PatSeq(n).GetLabel());
 		d.Value(PatSeq(n)).Separator(" ");
 	}
-
+	d.Line();
+	d.Value(m_TriggerSelect);
 }
 
 static bool InGrid(int x, int y) { return x >= 0 && x < MATX && y >= 0 && y < MATY; }
@@ -529,16 +644,43 @@ static bool InGrid(int x, int y) { return x >= 0 && x < MATX && y >= 0 && y < MA
 void MatrixPlugin::Apply(Spiral::Core::Description::Reader &r) {
      int version;
      r.Value(version);
+     if (r.Named()) {
+        ApplyNamed(r, version);
+        return;
+     }
+     // A legacy stream, which kept where the Matrix was playing.
      r.Value(m_Current).Value(m_Time).Value(m_Step).Value(m_Loop).Value(m_NoteCut);
+     if (version > 4) r.Value(m_TriggerSelect);
      for (int n=0; n<NUM_PATTERNS; n++) {
          r.Value(PatternLength(n)).Value(PatternSpeed(n)).Value(PatternOctave(n));
-         m_Matrix[n].Length = AsSigned(PatternLength(n));
+         AsUnsigned(PatternLength(n)) = std::max(1, std::min(MATX, (int)AsUnsigned(PatternLength(n))));
+         AsUnsigned(PatternOctave(n)) = std::min(6u, (unsigned)AsUnsigned(PatternOctave(n)));
+         m_Matrix[n].Length = AsUnsigned(PatternLength(n));
          m_Matrix[n].Speed = AsFloat(PatternSpeed(n));
-         m_Matrix[n].Octave = AsSigned(PatternOctave(n));
-         if (version == 1) {
+         m_Matrix[n].Octave = AsUnsigned(PatternOctave(n));
+         // Its rows were the pattern's octave up, and its trigger rows the
+         // first sixteen of them.
+         const int lowest = m_Matrix[n].Octave*12;
+         m_Matrix[n].Triggers = lowest;
+         AsUnsigned(PatternTriggers(n)) = lowest;
+         for (int x=0; x<MATX; x++)
+             for (int y=0; y<MATRIX_PITCHES; y++)
+                 m_Matrix[n].End[x][y] = x + 1;
+         if (version > 5) {
+            // Version 6 kept its notes' octaves under the pattern's.
+            int count = 0;
+            r.Value(count);
+            ClearNotes(n);
+            for (int k=0; k<count && r.More(); k++) {
+                AddNote(n, 0, 0, 1.0f, 1);
+                r.Value(Note(n, k));
+                SetPitch(Note(n, k), NotePitch(Note(n, k)) + m_Matrix[n].Octave*12);
+            }
+         }
+         else if (version == 1) {
             for (int y=0; y<MATY; y++)
                 for (int x=0; x<MATX; x++)
-                    r.Value(m_Matrix[n].Matrix[x][y]);
+                    r.Value(m_Matrix[n].Matrix[x][lowest + y]);
          }
          else {
             // version > 1
@@ -550,25 +692,81 @@ void MatrixPlugin::Apply(Spiral::Core::Description::Reader &r) {
                   if (x != -1) {
                      if (version == 2) {
                         r.Value(y);
-                        if (InGrid(x, y)) m_Matrix[n].Matrix[x][y] = true;
+                        if (InGrid(x, y)) m_Matrix[n].Matrix[x][lowest + y] = true;
                      }
                      else {
                         // version > 2
                         r.Value(y).Value(vol);
                         if (InGrid(x, y)) {
-                           m_Matrix[n].Matrix[x][y] = true;
-                           m_Matrix[n].Volume[x][y] = vol;
+                           m_Matrix[n].Matrix[x][lowest + y] = true;
+                           m_Matrix[n].Volume[x][lowest + y] = vol;
                         }
                      }
                   }
             }
          }
      }
-     PatternsFromGrid();
+     if (version > 5) GridFromPatterns();
+     else PatternsFromGrid();
      if (version > 3) {
+        int kept[NUM_PATSEQ];
+        bool valid = true;
         for (int n=0; n<NUM_PATSEQ; n++) {
+            kept[n] = GetPatSeq(n);
             r.Value(PatSeq(n));
-            if (n==0 && GetPatSeq(0)<0) SetPatSeq(0, 0);
+            valid = valid && GetPatSeq(n) >= -1 && GetPatSeq(n) < NUM_PATTERNS;
         }
+        for (int n=0; n<NUM_PATSEQ && !valid; n++) SetPatSeq(n, kept[n]);
+        if (GetPatSeq(0)<0) SetPatSeq(0, 0);
      }
+     AsSigned(m_Current) = std::max(0, std::min(NUM_PATTERNS - 1, (int)AsSigned(m_Current)));
+     AsSigned(m_Step) = std::max(-1, std::min(MATX - 1, (int)AsSigned(m_Step)));
+}
+
+// A file's Matrix. Version 7 is what both trees write. Before it, the private
+// tree wrote the patterns as now without their trigger rows, its notes
+// counted from 0, with 12 the next C.
+void MatrixPlugin::ApplyNamed(Spiral::Core::Description::Reader &r, int version)
+{
+	r.Value(m_NoteCut).Value(m_TriggerSelect);
+	for (int n=0; n<NUM_PATTERNS; n++)
+	{
+		r.Value(PatternOctave(n)).Value(PatternLength(n)).Value(PatternSpeed(n));
+		AsUnsigned(PatternOctave(n)) = std::min(6u, (unsigned)AsUnsigned(PatternOctave(n)));
+		// Its trigger rows; a file from before them has its first note
+		// there, and its triggers were the sixteen rows from its octave.
+		const bool marked = version >= 7 && r.Find(PatternTriggers(n).GetKey()) >= 0;
+		AsUnsigned(PatternTriggers(n)) = AsUnsigned(PatternOctave(n)) * 12;
+		if (marked)
+			r.Value(PatternTriggers(n));
+		AsUnsigned(PatternTriggers(n)) = std::min((unsigned)(MATRIX_PITCHES - NUM_TRIGGERS), (unsigned)AsUnsigned(PatternTriggers(n)));
+		int count = 0;
+		r.Count(PatternProperties(n), count);
+		ClearNotes(n);
+		for (int k = marked ? PatternFields : PatternFields - 1; k<count; k++)
+		{
+			char key[64];
+			snprintf(key, sizeof key, "%s[%d]", PatternProperties(n).GetKey().c_str(), k);
+			NoteProperty note(DefaultLinearFlags, 1, 0, 1.0f);
+			note.SetKey(key);
+			r.Value(note);
+			if (version < 7)
+				SetPitch(note, (int)note.Note + (int)note.Octave*12);
+			if (NotePitch(note) >= 0)
+				AddNote(n, (int)note.Start, NotePitch(note), note.Velocity, (int)note.End);
+		}
+		AsUnsigned(PatternLength(n)) = std::max(1, std::min(MATX, (int)AsUnsigned(PatternLength(n))));
+	}
+	GridFromPatterns();
+
+	int kept[NUM_PATSEQ];
+	bool valid = true;
+	for (int n=0; n<NUM_PATSEQ; n++)
+	{
+		kept[n] = GetPatSeq(n);
+		r.Value(PatSeq(n));
+		valid = valid && GetPatSeq(n) >= -1 && GetPatSeq(n) < NUM_PATTERNS;
+	}
+	for (int n=0; n<NUM_PATSEQ && !valid; n++) SetPatSeq(n, kept[n]);
+	if (GetPatSeq(0)<0) SetPatSeq(0, 0);
 }

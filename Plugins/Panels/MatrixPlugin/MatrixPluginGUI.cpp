@@ -342,8 +342,8 @@ void MatrixPluginGUI::UpdateValues(SpiralPlugin *o)
 	for(int x=0; x<MATX; x++)
 	for(int y=0; y<MATY; y++)
 	{
-		m_Matrix[x][y]->value(Plugin->GetPattern()->Matrix[x][y]);
-		m_Matrix[x][y]->SetVolume(Plugin->GetPattern()->Volume[x][y]);
+		m_Matrix[x][y]->value(Plugin->GetPattern()->Matrix[x][y + Plugin->GetPattern()->Octave*12]);
+		m_Matrix[x][y]->SetVolume(Plugin->GetPattern()->Volume[x][y + Plugin->GetPattern()->Octave*12]);
 	}
 
 	for(int n=0; n<NUM_PATSEQ; n++)
@@ -368,8 +368,8 @@ void MatrixPluginGUI::UpdateMatrix()
 	for(int x=0; x<MATX; x++)
 	for(int y=0; y<MATY; y++)
 	{
-		m_Matrix[x][y]->value(p->Matrix[x][y]);
-		m_Matrix[x][y]->SetVolume(p->Volume[x][y]);
+		m_Matrix[x][y]->value(p->Matrix[x][y + p->Octave*12]);
+		m_Matrix[x][y]->SetVolume(p->Volume[x][y + p->Octave*12]);
 	}
 
 }
@@ -407,6 +407,8 @@ void MatrixPluginGUI::cb_Length (Fl_Counter* o, void* v) {
 inline void MatrixPluginGUI::cb_Octave_i (Fl_Counter* o, void* v) {
 	m_GUICH->Set ("Octave", (int)o->value());
 	m_GUICH->SetCommand (MatrixPlugin::MAT_OCTAVE);
+	// The grid shows the pattern from that octave; its notes stay put.
+	UpdateMatrix();
 }
 
 void MatrixPluginGUI::cb_Octave (Fl_Counter* o, void* v) {

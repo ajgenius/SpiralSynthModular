@@ -17,6 +17,7 @@
 */ 
 
 #include "Device.h"
+#include "NoteTable.h"
 
 #ifndef MatrixPLUGIN
 #define MatrixPLUGIN
@@ -25,14 +26,37 @@ static const int MATX         = 64;
 static const int MATY         = 32;
 static const int NUM_PATTERNS = 16;
 static const int NUM_PATSEQ   = 16;
+static const int NUM_TRIGGERS = 16;
+// Every note the Matrix plays, from C in octave 0, as the private tree has
+// them; the grid shows MATY of them.
+static const int MATRIX_PITCHES = sizeof(NoteTable) / sizeof(NoteTable[0]);
 
+// A pattern's notes by step and pitch: each stays at its pitch whatever
+// octave the grid shows them from.
 struct Pattern
 {
 	int Length;
 	float Speed;
-	int Octave;
-	float Volume[MATX][MATY];
-	bool Matrix[MATX][MATY];
+	int Octave; // of the grid's lowest row
+	// The pitch of Trigger 1's row; Triggers 2 to 16 are the rows above. It
+	// stays where it is set, whatever octave the grid shows.
+	int Triggers;
+	float Volume[MATX][MATRIX_PITCHES];
+	bool Matrix[MATX][MATRIX_PITCHES];
+	// Where the note starting in a cell stops, the step after its last; the
+	// next note at the same pitch stops it sooner.
+	unsigned char End[MATX][MATRIX_PITCHES];
+};
+
+// A pattern as the private tree keeps one, and its files name it: its
+// octave, length and speed, then its notes, column by column.
+class MatrixPatternProperty : public Spiral::Core::VectorProperty
+{
+public:
+	MatrixPatternProperty(Spiral::Core::SignedType Flags): VectorProperty(Flags) {}
+	MatrixPatternProperty(const MatrixPatternProperty &Copy): VectorProperty(Copy) {}
+	virtual Spiral::Core::Property *Duplicate() { return new MatrixPatternProperty(*this); }
+	virtual std::string ClassName() { return "MatrixPattern"; }
 };
 
 class MatrixPlugin : public Spiral::Core::Device
@@ -49,6 +73,7 @@ public:
 	virtual void Apply(Spiral::Core::Description::Reader &r);
 		
 	bool  GetNoteCut()               { return AsBoolean(m_NoteCut); }
+	bool  GetTriggerSelect()         { return AsBoolean(m_TriggerSelect); }
 	int   GetCurrent()               { return AsSigned(m_Current); }
 	float GetStepTime()              { return m_StepTime; }
 	Pattern* GetPattern() 			 { return &m_Matrix[AsSigned(m_Current)]; }
@@ -82,30 +107,45 @@ private:
     bool CanTransposeDown();
 	
 	float m_TickTime;
+	// The pitch of the grid's cell, from its octave, or -1 past its cells or
+	// the Matrix's notes.
+	int Shown(int x, int y) const;
 	float m_StepTime;
 	Spiral::Core::FloatProperty  m_Time;
 	Spiral::Core::SignedProperty m_Step;
 	Spiral::Core::ToggleProperty m_Loop;
 	Spiral::Core::ToggleProperty m_NoteCut;
+	Spiral::Core::ToggleProperty m_TriggerSelect;
 	
 	Spiral::Core::SignedProperty m_Current;
 	int   m_GUICurrent;
 	Pattern m_Matrix[NUM_PATTERNS];
 	float m_TriggerLevel[MATY];
-	Spiral::Core::VectorProperty m_PatSeq;
+	Spiral::Core::ListProperty m_PatSeq;
 
-	Spiral::Core::VectorProperty m_Patterns;
+	// The patterns as the file keeps them (version 7, as the private tree
+	// writes them): each its octave, length, speed and trigger rows, then its
+	// notes.
+	Spiral::Core::ListProperty m_Patterns;
+	enum { PatternFields = 4 };
 	Spiral::Core::VectorProperty &PatternProperties(int n) { return *(Spiral::Core::VectorProperty *)m_Patterns[n]; }
-	Spiral::Core::SignedProperty &PatternLength(int n) { return *(Spiral::Core::SignedProperty *)PatternProperties(n)[0]; }
-	Spiral::Core::FloatProperty  &PatternSpeed(int n)  { return *(Spiral::Core::FloatProperty *)PatternProperties(n)[1]; }
-	Spiral::Core::SignedProperty &PatternOctave(int n) { return *(Spiral::Core::SignedProperty *)PatternProperties(n)[2]; }
-	Spiral::Core::VectorProperty &Notes(int n) { return *(Spiral::Core::VectorProperty *)PatternProperties(n)[3]; }
-	Spiral::Core::SignedProperty &NoteX(int n, int k) { return *(Spiral::Core::SignedProperty *)(*(Spiral::Core::VectorProperty *)Notes(n)[k])[0]; }
-	Spiral::Core::SignedProperty &NoteY(int n, int k) { return *(Spiral::Core::SignedProperty *)(*(Spiral::Core::VectorProperty *)Notes(n)[k])[1]; }
-	Spiral::Core::FloatProperty  &NoteVolume(int n, int k) { return *(Spiral::Core::FloatProperty *)(*(Spiral::Core::VectorProperty *)Notes(n)[k])[2]; }
+	Spiral::Core::UnsignedProperty &PatternOctave(int n) { return *(Spiral::Core::UnsignedProperty *)PatternProperties(n)[0]; }
+	Spiral::Core::UnsignedProperty &PatternLength(int n) { return *(Spiral::Core::UnsignedProperty *)PatternProperties(n)[1]; }
+	Spiral::Core::FloatProperty    &PatternSpeed(int n)  { return *(Spiral::Core::FloatProperty *)PatternProperties(n)[2]; }
+	Spiral::Core::UnsignedProperty &PatternTriggers(int n) { return *(Spiral::Core::UnsignedProperty *)PatternProperties(n)[3]; }
+	int NoteCount(int n) { return (int)PatternProperties(n).size() - PatternFields; }
+	Spiral::Core::NoteProperty &Note(int n, int k) { return *(Spiral::Core::NoteProperty *)PatternProperties(n)[PatternFields + k]; }
+	// A note's pitch from C in octave 0: its note counts from 1, C, as the
+	// note property says, and its octave is its own.
+	static int NotePitch(const Spiral::Core::NoteProperty &note)
+		{ return (int)note.Octave * 12 + (int)note.Note - 1; }
+	static void SetPitch(Spiral::Core::NoteProperty &note, int pitch);
 	void PatternsFromGrid();
 	void GridFromPatterns();
-	void AddNote(int pattern, int x, int y, float volume);
+	void ApplyNamed(Spiral::Core::Description::Reader &r, int version);
+	void AddNote(int pattern, int x, int pitch, float volume, int end);
+	static int NoteEnd(const Pattern &p, int x, int pitch);
+	static int Covering(const Pattern &p, int step, int pitch);
 	void ClearNotes(int pattern);
 	int   m_CurPatSeq;
 	
