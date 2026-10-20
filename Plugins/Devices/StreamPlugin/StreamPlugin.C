@@ -86,6 +86,7 @@ m_Mode(STOPM)
 	AsFloat(m_Volume) = 1.0f;
 	AsFloat(m_PitchMod) = 1.0f;
         m_GUIArgs.PlayOut = false;
+        m_GUIArgs.Time = m_GUIArgs.TimeOut = m_GUIArgs.MaxTime = 0;
         strcpy (m_GUIArgs.FileName, "");
 	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
