@@ -210,14 +210,14 @@ void WaveShaperPlugin::calc (void) {
 // Streaming
 
 void WaveShaperPlugin::Describe(Spiral::Core::Description &d) {
-  d.Value(m_Version).Separator(" ").Value(AsSigned(m_Wave));
-  for (int i=0; i<6; i++) d.Separator(" ").Value(AsFloat(m_Coefs[i]));
+  d.Value(DeviceVersion).Separator(" ").Value(m_Wave);
+  for (int i=0; i<6; i++) d.Separator(" ").Value(m_Coefs[i]);
 }
 
 void WaveShaperPlugin::Apply(Spiral::Core::Description::Reader &r) {
   int version;
-  r.Value(version).Value(AsSigned(m_Wave));
-  for (int i=0; i<6; i++) r.Value(AsFloat(m_Coefs[i]));
+  r.Value(version).Value(m_Wave);
+  for (int i=0; i<6; i++) r.Value(m_Coefs[i]);
   calc ();
 }
 

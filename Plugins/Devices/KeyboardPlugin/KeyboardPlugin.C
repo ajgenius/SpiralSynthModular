@@ -77,6 +77,7 @@ m_TriggerLevel(0)
 	m_Note = SignedProperty(DefaultLinearFlags, 0, 0, 127, 1, 1);
 	RegisterSharedProperty(m_Note, "Note", "Note being played");
 	m_Version=0;
+	SetUnsigned(DeviceVersion, 0);
 
 	m_PluginInfo.Name="Keyboard";
 	m_PluginInfo.Width=300;
@@ -121,12 +122,12 @@ void  KeyboardPlugin::ExecuteCommands()
 
 void KeyboardPlugin::Describe(Spiral::Core::Description &d) 
 {
-	d.Value(m_Version).Line();
+	d.Value(DeviceVersion).Line();
 }
 
 void KeyboardPlugin::Apply(Spiral::Core::Description::Reader &r) 
 {
 	int version;
-	r.Value(version);
+	if (r.More()) r.Value(version);
 }
 

@@ -78,9 +78,7 @@ FilterPlugin::FilterPlugin() :
 fs(0),     			// Sampling frequency
 m_LastFC(0),
 m_LastQ(1),
-k(1.0),              // Set overall filter gain
-m_RevCutoffMod(false),
-m_RevResonanceMod(false)
+k(1.0)               // Set overall filter gain
 {
 	m_PluginInfo.Name="Filter";
 	m_PluginInfo.Width=120;
@@ -102,8 +100,10 @@ m_RevResonanceMod(false)
 	RegisterSharedProperty(Q, "Resonance", "Resonance");
 
 
-	m_AudioCH->Register("RevC",&m_RevCutoffMod);
-	m_AudioCH->Register("RevR",&m_RevResonanceMod);
+	m_RevCutoffMod = ToggleProperty(Property::WriteOnly, false);
+	m_RevResonanceMod = ToggleProperty(Property::WriteOnly, false);
+	RegisterSharedProperty(m_RevCutoffMod, "RevC", "Reverse cutoff CV");
+	RegisterSharedProperty(m_RevResonanceMod, "RevR", "Reverse resonance CV");
 	
 }
 

@@ -174,12 +174,12 @@ void DiskWriterPlugin::ExecuteCommands()
 
 void DiskWriterPlugin::Describe(Spiral::Core::Description &d)
 {
-	d.Value(m_Version).Separator(" ").Value(AsUnsigned(m_BitsPerSample)).Separator(" ").Value(AsBoolean(m_Stereo)).Separator(" ");
+	d.Value(DeviceVersion).Separator(" ").Value(AsUnsigned(m_BitsPerSample)).Separator(" ").Value(m_Stereo).Separator(" ");
 }
 
 void DiskWriterPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
-	int Version, BitsPerSample, Stereo;
+	int Version;
 
 	// originally DiskWriter had NO streaming code whatsover
 	// so an old patch has no state for it at all
@@ -197,9 +197,7 @@ void DiskWriterPlugin::Apply(Spiral::Core::Description::Reader &r)
 	{
 		case 2:
 		{
-			r.Value(BitsPerSample).Value(Stereo);
-			AsUnsigned(m_BitsPerSample) = BitsPerSample;
-			AsBoolean(m_Stereo) = Stereo;
+			r.Value(m_BitsPerSample).Value(m_Stereo);
 		}
 		break;
 

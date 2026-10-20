@@ -166,10 +166,10 @@ void StereoMixerPlugin::ExecuteCommands()
 
 void StereoMixerPlugin::Describe(Spiral::Core::Description &d)
 {
-	d.Value(m_Version).Separator(" ");
+	d.Value(DeviceVersion).Separator(" ");
 	for (int n=0; n<NUM_CHANNELS; n++)
 	{
-		d.Value(GetChannel(n)).Separator(" ").Value(GetPan(n)).Separator(" ");
+		d.Value(Channel(n)).Separator(" ").Value(Pan(n)).Separator(" ");
 	}
 }
 
@@ -179,7 +179,7 @@ void StereoMixerPlugin::Apply(Spiral::Core::Description::Reader &r)
 	r.Value(version);
 	for (int n=0; n<NUM_CHANNELS; n++)
 	{
-		r.Value(((Spiral::Core::FloatProperty *)m_ChannelVal[n])->Value.AsFloat).Value(((Spiral::Core::FloatProperty *)m_Pan[n])->Value.AsFloat);
+		r.Value(Channel(n)).Value(Pan(n));
 	}
 }
 

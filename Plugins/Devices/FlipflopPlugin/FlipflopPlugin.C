@@ -85,7 +85,7 @@ m_TriggerSamples(0)
 	m_PluginInfo.PortTips.push_back("Output");
 
 	SetString(DeviceName, SpiralPlugin_GetName());
-	SetUnsigned(DeviceVersion, 1);
+	SetUnsigned(DeviceVersion, 2);
 
 	m_TriggerTime = FloatProperty(DefaultLinearFlags, 0.01, 0, 1, 0.0001f, 0.001f);
 	RegisterSharedProperty(m_TriggerTime, "TriggerTime", "TriggerTime");

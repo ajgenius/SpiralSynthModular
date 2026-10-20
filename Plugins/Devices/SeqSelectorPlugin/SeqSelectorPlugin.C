@@ -214,14 +214,14 @@ void SeqSelectorPlugin::ExecuteCommands()
 
 void SeqSelectorPlugin::Describe(Spiral::Core::Description &d)
 {
-	d.Value(m_Version).Separator(" ");
+	d.Value(DeviceVersion).Separator(" ");
 	d.Value(m_Lines.size()).Separator(" ");
 	
 	for (UnsignedType line=0; line<m_Lines.size(); line++)
 	{
 		for (int n=0; n<NUM_VALUES; n++)
 		{
-			d.Value(LineValue(line, n)).Separator(" ");
+			d.Value(Cell(line, n)).Separator(" ");
 		}
 	}
 }
@@ -232,14 +232,14 @@ void SeqSelectorPlugin::Apply(Spiral::Core::Description::Reader &r)
 	r.Value(version);
 	
 	int Num;
-	r.Value(Num);
+	r.Count(m_Lines, Num);
 	
 	for (int i=0; i<Num; i++)
 	{
 		m_Lines.Add(NewLine());
 		for (int n=0; n<NUM_VALUES; n++)
 		{
-			r.Value(((SignedProperty *)(*(VectorProperty *)m_Lines[i])[n])->Value.AsSigned);
+			r.Value(Cell(i, n));
 		}
 	}	
 }

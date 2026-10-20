@@ -394,12 +394,12 @@ void  JackPlugin::CreatePorts (int nInputs, int nOutputs, bool AddPorts) {
 
 void JackPlugin::Describe(Spiral::Core::Description &d) 
 {
-	d.Value(m_Version).Separator(" ").Value(AsSigned(m_NumInputs)).Separator(" ").Value(AsSigned(m_NumOutputs)).Separator(" ");
+	d.Value(DeviceVersion).Separator(" ").Value(m_NumInputs).Separator(" ").Value(m_NumOutputs).Separator(" ");
 }
 
 void JackPlugin::Apply(Spiral::Core::Description::Reader &r) 
 {
-	int Version, NumInputs, NumOutputs;
+	int Version;
 
 	// an old patch has no state for it at all
 	if (r.More())
@@ -416,9 +416,9 @@ void JackPlugin::Apply(Spiral::Core::Description::Reader &r)
 	{
 		case 2:
 		{
-			r.Value(NumInputs).Value(NumOutputs);
-			AsSigned(m_NumOutputs) = min(max(NumOutputs, MIN_PORTS), MAX_PORTS);
-			AsSigned(m_NumInputs) = min(max(NumInputs, MIN_PORTS), MAX_PORTS);
+			r.Value(m_NumInputs).Value(m_NumOutputs);
+			AsSigned(m_NumOutputs) = min(max(AsSigned(m_NumOutputs), MIN_PORTS), MAX_PORTS);
+			AsSigned(m_NumInputs) = min(max(AsSigned(m_NumInputs), MIN_PORTS), MAX_PORTS);
 			
 			SetNumberPorts (AsSigned(m_NumInputs), AsSigned(m_NumOutputs));				
 		}

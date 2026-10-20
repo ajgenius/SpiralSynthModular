@@ -40,8 +40,8 @@ public:
 
 	double GetCutoff() {return AsFloat(fc);}
 	double GetResonance() {return AsFloat(Q);}
-	bool GetRevCutoffMod() {return m_RevCutoffMod;}
-	bool GetRevResonanceMod() {return m_RevResonanceMod;}
+	bool GetRevCutoffMod() {return AsBoolean(m_RevCutoffMod);}
+	bool GetRevResonanceMod() {return AsBoolean(m_RevResonanceMod);}
 	
 private:
 	// Voice specifics
@@ -57,8 +57,8 @@ private:
     unsigned nInd; 
     double   a0, a1, a2, b0, b1, b2; 
     double   k;          // overall gain factor 
-	bool	 m_RevCutoffMod;
-	bool	 m_RevResonanceMod;
+	Spiral::Core::ToggleProperty m_RevCutoffMod;
+	Spiral::Core::ToggleProperty m_RevResonanceMod;
 
 	friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, FilterPlugin &o);
 	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, FilterPlugin &o);

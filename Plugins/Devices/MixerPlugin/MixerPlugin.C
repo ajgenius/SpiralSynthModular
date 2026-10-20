@@ -183,9 +183,9 @@ void MixerPlugin::RemoveChannel (void) {
 }
 
 void MixerPlugin::Describe(Spiral::Core::Description &d) {
-     d.Value(m_Version).Separator(" ");
+     d.Value(DeviceVersion).Separator(" ");
      d.Value(m_NumChannels).Separator(" ");
-     for (int n=0; n<GetChannels(); n++) d.Value(GetChannel(n)).Separator(" ");
+     for (int n=0; n<m_NumChannels; n++) d.Value(Channel(n)).Separator(" ");
 }
 
 void MixerPlugin::Apply(Spiral::Core::Description::Reader &r) {
@@ -194,14 +194,13 @@ void MixerPlugin::Apply(Spiral::Core::Description::Reader &r) {
      switch (version) {
        case 1: // needs default number of channels
                break;
-       case 2: r.Value(chans);
+       case 2: r.Count(m_ChannelVal, chans);
                SetChannels (chans);
                break;
      }
      // Consume old oversized records without writing beyond the fixed gains.
      for (int n=0; n<chans && !r.Failed(); n++) {
-          float value = 1.0f;
-          r.Value(value);
-          if (n<GetChannels()) SetChannel(n, value);
+          if (n<m_NumChannels) r.Value(Channel(n));
+          else { float value; r.Value(value); }
      }
 }

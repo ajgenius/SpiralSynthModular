@@ -101,6 +101,15 @@ class PoshSamplerPlugin : public Spiral::Core::Device {
 
       bool &SampleBool (int n, SampleSlot s)
       { return ((Spiral::Core::ToggleProperty *)Slot (n, s))->Value.AsBoolean; }
+
+      Spiral::Core::FloatProperty &SlotFloat (int n, SampleSlot s)
+      { return *(Spiral::Core::FloatProperty *)Slot (n, s); }
+
+      Spiral::Core::SignedProperty &SlotSigned (int n, SampleSlot s)
+      { return *(Spiral::Core::SignedProperty *)Slot (n, s); }
+
+      Spiral::Core::ToggleProperty &SlotBool (int n, SampleSlot s)
+      { return *(Spiral::Core::ToggleProperty *)Slot (n, s); }
    private:
       void InitializeSampleDescription (SampleDesc* NewDesc, int num, int Note);
       void Cut (int n, long s, long e);

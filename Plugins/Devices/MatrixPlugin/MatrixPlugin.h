@@ -53,6 +53,7 @@ public:
 	float GetStepTime()              { return m_StepTime; }
 	Pattern* GetPattern() 			 { return &m_Matrix[AsSigned(m_Current)]; }
 	int   GetPatSeq(int n)           { return ((Spiral::Core::SignedProperty *)m_PatSeq[n])->Value.AsSigned; }
+	Spiral::Core::SignedProperty &PatSeq(int n) { return *(Spiral::Core::SignedProperty *)m_PatSeq[n]; }
 	void  SetPatSeq(int n, int Value){ ((Spiral::Core::SignedProperty *)m_PatSeq[n])->Value.AsSigned = Value; }
 		
 	enum GUICommands{NONE,MAT_LENGTH,MAT_SPEED,MAT_ACTIVATE,MAT_DEACTIVATE,
@@ -92,6 +93,20 @@ private:
 	Pattern m_Matrix[NUM_PATTERNS];
 	float m_TriggerLevel[MATY];
 	Spiral::Core::VectorProperty m_PatSeq;
+
+	Spiral::Core::VectorProperty m_Patterns;
+	Spiral::Core::VectorProperty &PatternProperties(int n) { return *(Spiral::Core::VectorProperty *)m_Patterns[n]; }
+	Spiral::Core::SignedProperty &PatternLength(int n) { return *(Spiral::Core::SignedProperty *)PatternProperties(n)[0]; }
+	Spiral::Core::FloatProperty  &PatternSpeed(int n)  { return *(Spiral::Core::FloatProperty *)PatternProperties(n)[1]; }
+	Spiral::Core::SignedProperty &PatternOctave(int n) { return *(Spiral::Core::SignedProperty *)PatternProperties(n)[2]; }
+	Spiral::Core::VectorProperty &Notes(int n) { return *(Spiral::Core::VectorProperty *)PatternProperties(n)[3]; }
+	Spiral::Core::SignedProperty &NoteX(int n, int k) { return *(Spiral::Core::SignedProperty *)(*(Spiral::Core::VectorProperty *)Notes(n)[k])[0]; }
+	Spiral::Core::SignedProperty &NoteY(int n, int k) { return *(Spiral::Core::SignedProperty *)(*(Spiral::Core::VectorProperty *)Notes(n)[k])[1]; }
+	Spiral::Core::FloatProperty  &NoteVolume(int n, int k) { return *(Spiral::Core::FloatProperty *)(*(Spiral::Core::VectorProperty *)Notes(n)[k])[2]; }
+	void PatternsFromGrid();
+	void GridFromPatterns();
+	void AddNote(int pattern, int x, int y, float volume);
+	void ClearNotes(int pattern);
 	int   m_CurPatSeq;
 	
 	float m_CurrentNoteCV;

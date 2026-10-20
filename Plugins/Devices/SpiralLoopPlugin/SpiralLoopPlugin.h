@@ -44,12 +44,19 @@ public:
  	SpiralLoopPlugin();
 	virtual ~SpiralLoopPlugin();
 	
-	struct TriggerInfo
+	void AddTrigger(int Channel, float Time)
 	{
-		int Channel;
-		float Time;
-		bool Triggered;
-	};
+		Spiral::Core::VectorProperty *trigger = new Spiral::Core::VectorProperty(Spiral::Core::Property::WriteOnly);
+		trigger->Add(new Spiral::Core::SignedProperty(DefaultLinearFlags, Channel, 0, 8, 1, 1));
+		trigger->Add(new Spiral::Core::FloatProperty(DefaultLinearFlags, Time, 0.0f, 1.0f, 0.001f, 0.1f));
+		m_Triggers.Add(trigger);
+		m_Fired.push_back(false);
+	}
+	unsigned int TriggerCount() { return m_Triggers.size(); }
+	Spiral::Core::SignedProperty &TriggerChannel(int n)
+	{ return *(Spiral::Core::SignedProperty *)(*(Spiral::Core::VectorProperty *)m_Triggers[n])[0]; }
+	Spiral::Core::FloatProperty &TriggerTime(int n)
+	{ return *(Spiral::Core::FloatProperty *)(*(Spiral::Core::VectorProperty *)m_Triggers[n])[1]; }
 	
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void Execute();
@@ -99,7 +106,6 @@ public:
 	const float  GetVolume()     			{ return AsFloat(m_Volume); }
 	const float  GetCurrentAngle() 			{ return m_LoopPoint?(m_Pos/m_LoopPoint)*360.0f:0; }
 	const std::string& GetSampleName()  			{ return m_Sample; }
-	std::vector<TriggerInfo> *GetTriggerVec()    { return &m_TriggerVec; }
 	
 	void Cut(int Start, int End);
 	void Copy(int Start, int End);
@@ -160,7 +166,8 @@ private:
 	char  m_SampleBuffer[TRANSBUF_SIZE];
 	long  m_SampleSize;
 	
-	std::vector<TriggerInfo> m_TriggerVec;
+	Spiral::Core::VectorProperty m_Triggers;
+	std::vector<bool> m_Fired;
 
 	std::string m_Sample;
 };

@@ -112,6 +112,7 @@ m_Triggered(false)
 	m_PluginInfo.PortTips.push_back("LoopTrigger 7");			
 	
 	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 2);
 
 	m_TicksPerLoop = SignedProperty(DefaultLinearFlags, 64, 1, 1024, 1, 1);
 	m_Volume = FloatProperty(DefaultLinearFlags, 1.0, 0, 2, 0.001, 0.01);
@@ -120,6 +121,9 @@ m_Triggered(false)
 	RegisterSharedProperty(m_TicksPerLoop, "TicksPerLoop", "Ticks Per Loop");
 	RegisterSharedProperty(m_Volume, "Volume", "Volume");
 	RegisterSharedProperty(m_Speed, "Speed", "Speed");
+
+	m_Triggers = VectorProperty(Property::WriteOnly);
+	RegisterSharedPropertyWithKey(m_Triggers, "TRIGGERS", "Triggers", "Trigger points");
 	m_AudioCH->Register("Length",&m_GUIArgs.Length);
 	m_AudioCH->Register("Start",&m_GUIArgs.Start);
 	m_AudioCH->Register("End",&m_GUIArgs.End);
@@ -158,25 +162,20 @@ void SpiralLoopPlugin::Execute()
 	for (int n=0; n<8; n++) GetOutputBuf(n+1)->Zero();
 
 	// get the triggers active this frame
-	for (vector<TriggerInfo>::iterator i=m_TriggerVec.begin();
-		 i!=m_TriggerVec.end(); i++)
+	for (unsigned int i=0; i<m_Triggers.size(); i++)
 	{
-		if (m_Pos > i->Time*m_StoreBuffer.GetLength() &&
-			!i->Triggered)
+		if (m_Pos > AsFloat(TriggerTime(i))*m_StoreBuffer.GetLength() &&
+			!m_Fired[i])
 		{
-			GetOutputBuf(i->Channel+2)->Set(1);
-			i->Triggered=true;
+			GetOutputBuf(AsSigned(TriggerChannel(i))+2)->Set(1);
+			m_Fired[i]=true;
 		}
 	}
 
 	if (GetOutput(*GetOutputBuf(0)))
 	{
 		// if it's looped - reset the triggers
-		for (vector<TriggerInfo>::iterator i=m_TriggerVec.begin();
-		 i!=m_TriggerVec.end(); i++)
-		{
-			i->Triggered=false;
-		}
+		for (unsigned int i=0; i<m_Fired.size(); i++) m_Fired[i]=false;
 		
 		m_TickCurrent=m_TickTime;
 	}	
@@ -231,16 +230,13 @@ void SpiralLoopPlugin::ExecuteCommands()
 		case CHANGE_LENGTH	: m_LoopPoint=(int)(m_StoreBuffer.GetLength()*m_GUIArgs.Length); break;
 		case NEW_TRIGGER	: 
 			{
-				TriggerInfo NewTrigger;
-				NewTrigger.Channel = m_GUIArgs.End;
-				NewTrigger.Time    = m_GUIArgs.Length;
-				if ((int)m_TriggerVec.size()!=m_GUIArgs.Start) cerr<<"no of triggers error!"<<endl;
-				m_TriggerVec.push_back(NewTrigger); break;
+				if ((int)m_Triggers.size()!=m_GUIArgs.Start) cerr<<"no of triggers error!"<<endl;
+				AddTrigger(m_GUIArgs.End, m_GUIArgs.Length); break;
 			}
 		case UPDATE_TRIGGER	: 
 			{
-				m_TriggerVec[m_GUIArgs.Start].Channel = m_GUIArgs.End;
-				m_TriggerVec[m_GUIArgs.Start].Time    = m_GUIArgs.Length;			
+				AsSigned(TriggerChannel(m_GUIArgs.Start)) = m_GUIArgs.End;
+				AsFloat(TriggerTime(m_GUIArgs.Start))    = m_GUIArgs.Length;			
 			}
 		case GETSAMPLE    	: 
 			{
@@ -253,13 +249,12 @@ void SpiralLoopPlugin::ExecuteCommands()
 
 void SpiralLoopPlugin::Describe(Spiral::Core::Description &d)
 {
-	d.Value(m_Version).Separator(" "); 
-	d.Value(m_LoopPoint).Separator(" ").Value(AsFloat(m_Speed)).Separator(" ").Value(AsFloat(m_Volume)).Separator(" ").Value(AsSigned(m_TicksPerLoop)).Separator(" ");
-	d.Value(m_TriggerVec.size()).Separator(" ");
-	for (vector<TriggerInfo>::iterator i=m_TriggerVec.begin();
-		 i!=m_TriggerVec.end(); i++)
+	d.Value(DeviceVersion).Separator(" "); 
+	d.Value(m_LoopPoint).Separator(" ").Value(m_Speed).Separator(" ").Value(m_Volume).Separator(" ").Value(m_TicksPerLoop).Separator(" ");
+	d.Value(m_Triggers.size()).Separator(" ");
+	for (unsigned int i=0; i<m_Triggers.size(); i++)
 	{
-		d.Value(i->Channel).Separator(" ").Value(i->Time).Separator(" ");
+		d.Value(TriggerChannel(i)).Separator(" ").Value(TriggerTime(i)).Separator(" ");
 	}
 }
 
@@ -267,15 +262,16 @@ void SpiralLoopPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int version;
 	r.Value(version);
-	r.Value(m_LoopPoint).Value(AsFloat(m_Speed)).Value(AsFloat(m_Volume)).Value(AsSigned(m_TicksPerLoop));
+	r.Value(m_LoopPoint);
+
+	r.Value(m_Speed).Value(m_Volume).Value(m_TicksPerLoop);
 	int size;
-	r.Value(size);
+	r.Count(m_Triggers, size);
 	
 	for (int n=0; n<size; n++)
 	{
-		TriggerInfo t;
-		r.Value(t.Channel).Value(t.Time);
-		m_TriggerVec.push_back(t);
+		AddTrigger(0, 0);
+		r.Value(TriggerChannel(n)).Value(TriggerTime(n));
 	}
 }
 	
@@ -499,7 +495,7 @@ void SpiralLoopPlugin::EndRecordBuf()
 	{
 		// reallocate the hold buffer for the new size
 		// (if the size has changed)
-		m_DubBuffer.Allocate(m_LoopPoint);			
+		m_DubBuffer.Allocate(m_LoopPoint);
 	}
 }
 
@@ -507,8 +503,8 @@ void SpiralLoopPlugin::Crop()
 {
 	if (m_LoopPoint<m_StoreBuffer.GetLength())
 	{
-		m_StoreBuffer.CropTo(m_LoopPoint);		
-		m_DubBuffer.CropTo(m_LoopPoint); 
+		m_StoreBuffer.CropTo(m_LoopPoint);
+		m_DubBuffer.CropTo(m_LoopPoint);
 	}
 }
 

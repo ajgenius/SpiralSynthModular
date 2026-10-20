@@ -56,6 +56,8 @@ public:
 	Spiral::Core::VectorProperty m_Lines;
 
 	Spiral::Core::VectorProperty *NewLine();
+	Spiral::Core::SignedProperty &Cell(int line, int n)
+	{ return *(Spiral::Core::SignedProperty *)(*(Spiral::Core::VectorProperty *)m_Lines[line])[n]; }
 	int  LineValue(int line, int n)
 	{ return ((Spiral::Core::SignedProperty *)(*(Spiral::Core::VectorProperty *)m_Lines[line])[n])->Value.AsSigned; }
 	void SetLineValue(int line, int n, int v)

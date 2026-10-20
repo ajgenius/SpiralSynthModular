@@ -66,7 +66,11 @@ private:
 	
 	static int m_RefCount;
 	
-	std::vector<int> m_ControlList;
+	Spiral::Core::VectorProperty m_Controls;
+	Spiral::Core::SignedProperty &Control(int n)
+	{ return *(Spiral::Core::SignedProperty *)(*(Spiral::Core::VectorProperty *)m_Controls[n])[0]; }
+	Spiral::Core::StringProperty &ControlName(int n)
+	{ return *(Spiral::Core::StringProperty *)(*(Spiral::Core::VectorProperty *)m_Controls[n])[1]; }
 };
 
 #endif

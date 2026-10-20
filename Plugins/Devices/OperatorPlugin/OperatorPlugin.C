@@ -83,7 +83,7 @@ OperatorPlugin::OperatorPlugin()
 	m_PluginInfo.PortTips.push_back("Output");
 		
 	SetString(DeviceName, SpiralPlugin_GetName());
-	SetUnsigned(DeviceVersion, 1);
+	SetUnsigned(DeviceVersion, 2);
 
 	m_Operator = SignedProperty(DefaultLinearFlags,ADD,NONE,MUL,1,1);
 	RegisterSharedProperty(m_Operator, "Operator", "Operator");

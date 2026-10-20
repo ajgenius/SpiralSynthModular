@@ -103,6 +103,8 @@ m_Mode(STOPM)
      RegisterSharedProperty(m_StreamPos, "StreamPos", "Chunk position in the file");
      RegisterSharedProperty(m_GlobalPos, "GlobalPos", "Position in the file");
      RegisterSharedProperty(m_Pitch, "Pitch Scale", "Sample rate ratio");
+     m_FileName = StringProperty(Property::WriteOnly, "");
+     RegisterSharedPropertyWithKey(m_FileName, "FILENAME", "File Name", "Loaded WAV file");
 	m_AudioCH->RegisterData ("FileName", ChannelHandler::INPUT,
                                              &m_GUIArgs.FileName, sizeof (m_GUIArgs.FileName));
 	m_AudioCH->RegisterData ("EchoFileName", ChannelHandler::OUTPUT,
@@ -238,6 +240,7 @@ void StreamPlugin::SetTime (void) {
 }
 
 void StreamPlugin::OpenStream (void) {
+     m_FileName.Value = m_GUIArgs.FileName;
      AsSigned(m_StreamPos) = 0;
      AsFloat(m_GlobalPos) = 0;
 
@@ -265,35 +268,32 @@ float StreamPlugin::GetLength (void) {
 }
 
 void StreamPlugin::Describe(Spiral::Core::Description &d) {
-     d.Value(m_Version).Separator(" ")
-        .Value(AsFloat(m_Volume)).Separator(" ")
-        .Value(AsFloat(m_PitchMod)).Separator(" ")
-        .Value(strlen (m_GUIArgs.FileName)).Separator(" ")
-        .Value(m_GUIArgs.FileName).Separator(" ")
+     d.Value(DeviceVersion).Separator(" ")
+        .Value(m_Volume).Separator(" ")
+        .Value(m_PitchMod).Separator(" ")
+        .Value(m_FileName.Value.size()).Separator(" ")
+        .Value(m_FileName).Separator(" ")
         // is it really necessary to save this lot??
-        .Value(AsFloat(m_Pos)).Separator(" ")
-        .Value(AsSigned(m_StreamPos)).Separator(" ")
-        .Value(AsFloat(m_GlobalPos)).Separator(" ")
-        .Value(AsFloat(m_Pitch)).Separator(" ").Line();
+        .Value(m_Pos).Separator(" ")
+        .Value(m_StreamPos).Separator(" ")
+        .Value(m_GlobalPos).Separator(" ")
+        .Value(m_Pitch).Separator(" ").Line();
 }
 
 void StreamPlugin::Apply(Spiral::Core::Description::Reader &r) {
      int version;
      r.Value(version);
 
-     r.Value(AsFloat(m_Volume)).Value(AsFloat(m_PitchMod));
+     r.Value(m_Volume).Value(m_PitchMod);
      int size;
-     std::string FileName;
      r.Value(size);
-     r.Value(FileName);   // the counted bytes, one value
-     if (size > 255) size = 255;
-     strncpy (m_GUIArgs.FileName, FileName.c_str(), size);
-     m_GUIArgs.FileName[size] = 0;
-     if (std::string(m_GUIArgs.FileName) != "None") OpenStream ();
+     r.Value(m_FileName);   // the counted bytes, one value
+     strncpy (m_GUIArgs.FileName, m_FileName.Value.c_str(), 255);
+     m_GUIArgs.FileName[255] = 0;
+     if (m_FileName.Value != "None") OpenStream ();
        // is it really necessary to load this lot??
-     r.Value(AsFloat(m_Pos));
-     r.Value(AsSigned(m_StreamPos));
-     r.Value(AsFloat(m_GlobalPos));
-     r.Value(AsFloat(m_Pitch));
+     r.Value(m_Pos);
+     r.Value(m_StreamPos);
+     r.Value(m_GlobalPos);
+     r.Value(m_Pitch);
 }
-

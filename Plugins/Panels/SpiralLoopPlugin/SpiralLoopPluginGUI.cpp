@@ -243,19 +243,17 @@ void SpiralLoopPluginGUI::UpdateValues(SpiralPlugin *o)
 		m_LoopGUI->SetLength(0);
 	}
 	
-	vector<SpiralLoopPlugin::TriggerInfo> *TrigVec=Plugin->GetTriggerVec();
 	int ID=0;
 	
-	for (vector<SpiralLoopPlugin::TriggerInfo>::iterator i=TrigVec->begin();
-		 i!=TrigVec->end(); i++)
+	for (unsigned int i=0; i<Plugin->TriggerCount(); i++)
 	{
 		Fl_Trigger *NewTrigger = new Fl_Trigger(parent()->x(), parent()->y(), 20, 20);
 		NewTrigger->SetCentreX(150);
 		NewTrigger->SetCentreY(150);
 		NewTrigger->SetCentreRadius(125);
-		if(m_SampleSize!=0) NewTrigger->SetAngle(i->Time*360.0f);
+		if(m_SampleSize!=0) NewTrigger->SetAngle(AsFloat(Plugin->TriggerTime(i))*360.0f);
 		NewTrigger->SetID(ID);
-		NewTrigger->SetChannel(i->Channel);
+		NewTrigger->SetChannel(AsSigned(Plugin->TriggerChannel(i)));
 		NewTrigger->callback((Fl_Callback*)cb_Trigger);
 		m_LoopGUI->add(NewTrigger);
 		m_TriggerVec.push_back(NewTrigger);

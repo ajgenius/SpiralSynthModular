@@ -24,6 +24,7 @@
 #include "ChannelHandler.h"
 #include "Types.h"
 #include "Sample.h"
+#include "Description.h"
 
 /* REWORK -
 	Like ports,

@@ -41,6 +41,7 @@ class MixerPlugin : public Spiral::Core::Device, public StablePortLayout {
              bool Peak;
       };
       float GetChannel(int n) { return ((Spiral::Core::FloatProperty *)m_ChannelVal[n])->Value.AsFloat; }
+     Spiral::Core::FloatProperty &Channel(int n) { return *(Spiral::Core::FloatProperty *)m_ChannelVal[n]; }
       void  SetChannel(int n, float s) { ((Spiral::Core::FloatProperty *)m_ChannelVal[n])->Value.AsFloat = s; }
       int GetChannels (void) { return m_NumChannels; }
   private:

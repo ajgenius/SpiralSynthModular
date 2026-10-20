@@ -40,6 +40,10 @@ public:
 	float  GetVal(int n)  { return ((Spiral::Core::FloatProperty *)m_ChannelVal[n])->Value.AsFloat; }
 	float  GetMin(int n)  { return ((Spiral::Core::FloatProperty *)m_MinVal[n])->Value.AsFloat; }
 	float  GetMax(int n)  { return ((Spiral::Core::FloatProperty *)m_MaxVal[n])->Value.AsFloat; }
+	Spiral::Core::StringProperty &Name(int n) { return *(Spiral::Core::StringProperty *)m_Names[n]; }
+	Spiral::Core::FloatProperty &Val(int n) { return *(Spiral::Core::FloatProperty *)m_ChannelVal[n]; }
+	Spiral::Core::FloatProperty &Min(int n) { return *(Spiral::Core::FloatProperty *)m_MinVal[n]; }
+	Spiral::Core::FloatProperty &Max(int n) { return *(Spiral::Core::FloatProperty *)m_MaxVal[n]; }
 
 	enum GUICommands{NONE,SETNUM,SETALL,SETNAME,SETMAX,SETCHANNEL,SETMIN};
 	struct GUIArgs

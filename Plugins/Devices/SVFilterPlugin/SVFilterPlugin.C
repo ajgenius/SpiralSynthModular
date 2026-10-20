@@ -100,7 +100,7 @@ m_n(0.0f)
 	m_PluginInfo.PortTips.push_back("Notch output");
 	m_PluginInfo.PortTips.push_back("Peaking output");
 	SetString(DeviceName, SpiralPlugin_GetName());
-	SetUnsigned(DeviceVersion, 1);
+	SetUnsigned(DeviceVersion, 2);
 
 	Cutoff = FloatProperty(DefaultLinearFlags, 0.0f, 0, 1, 0.0001, 0.001);
 	Resonance = FloatProperty(DefaultLinearFlags, 0.0f, 0, 1, 0.00001, 0.0001);

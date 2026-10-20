@@ -37,6 +37,8 @@ public:
 		
 	float GetChannel(int n) { return ((Spiral::Core::FloatProperty *)m_ChannelVal[n])->Value.AsFloat; }
 	float GetPan(int n) { return ((Spiral::Core::FloatProperty *)m_Pan[n])->Value.AsFloat; }
+	Spiral::Core::FloatProperty &Channel(int n) { return *(Spiral::Core::FloatProperty *)m_ChannelVal[n]; }
+	Spiral::Core::FloatProperty &Pan(int n) { return *(Spiral::Core::FloatProperty *)m_Pan[n]; }
 	
 	enum GUICommands {NONE,SETCH,SETPAN};
 	struct GUIArgs

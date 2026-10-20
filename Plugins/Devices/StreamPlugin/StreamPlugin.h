@@ -52,6 +52,7 @@ class StreamPlugin : public Spiral::Core::Device {
       } m_GUIArgs;
 
       Spiral::Core::FloatProperty m_Volume, m_PitchMod;
+      Spiral::Core::StringProperty m_FileName;
       float GetLength (void);
       // Commands
       void SetTime (void);

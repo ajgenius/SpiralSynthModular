@@ -115,6 +115,7 @@ m_Recording(false)
             m_SampleDescVec.push_back (NewDesc);
         }
         m_Version = 4;
+        SetUnsigned(DeviceVersion, 4);
         m_Current = 0;
         m_AudioCH->Register ("Num", &m_GUIArgs.Num);
         m_AudioCH->Register ("Value", &m_GUIArgs.Value);
@@ -367,20 +368,20 @@ void PoshSamplerPlugin::InitializeSampleDescription (SampleDesc* NewDesc, int nu
 }
 
 void PoshSamplerPlugin::Describe(Spiral::Core::Description &d) {
-     d.Value(m_Version).Separator(" ");
+     d.Value(DeviceVersion).Separator(" ");
      for (int n=0; n<NUM_SAMPLES; n++) {
-         d.Value(SampleFloat (n, SLOT_VOLUME)).Separator(" ")
-              .Value(SampleFloat (n, SLOT_PITCHMOD)).Separator(" ")
-              .Value(SampleBool (n, SLOT_LOOP)).Separator(" ")
-              .Value(SampleBool (n, SLOT_PINGPONG)).Separator(" ")
-              .Value(SampleSigned (n, SLOT_NOTE)).Separator(" ")
-              .Value(SampleSigned (n, SLOT_OCTAVE)).Separator(" ")
-              .Value(SampleFloat (n, SLOT_SAMPLEPOS)).Separator(" ")
-              .Value(SampleSigned (n, SLOT_PLAYSTART)).Separator(" ")
-              .Value(SampleSigned (n, SLOT_LOOPSTART)).Separator(" ")
-              .Value(SampleSigned (n, SLOT_LOOPEND)).Separator(" ")
-              .Value(SampleSigned (n, SLOT_NOTE)).Separator(" ")
-              .Value(SampleBool (n, SLOT_RETRIG)).Separator(" ");
+         d.Value(SlotFloat (n, SLOT_VOLUME)).Separator(" ")
+              .Value(SlotFloat (n, SLOT_PITCHMOD)).Separator(" ")
+              .Value(SlotBool (n, SLOT_LOOP)).Separator(" ")
+              .Value(SlotBool (n, SLOT_PINGPONG)).Separator(" ")
+              .Value(SlotSigned (n, SLOT_NOTE)).Separator(" ")
+              .Value(SlotSigned (n, SLOT_OCTAVE)).Separator(" ")
+              .Value(SlotFloat (n, SLOT_SAMPLEPOS)).Separator(" ")
+              .Value(SlotSigned (n, SLOT_PLAYSTART)).Separator(" ")
+              .Value(SlotSigned (n, SLOT_LOOPSTART)).Separator(" ")
+              .Value(SlotSigned (n, SLOT_LOOPEND)).Separator(" ")
+              .Value(SlotSigned (n, SLOT_NOTE)).Separator(" ")
+              .Value(SlotBool (n, SLOT_RETRIG)).Separator(" ");
      }
 }
 
@@ -388,24 +389,24 @@ void PoshSamplerPlugin::Apply(Spiral::Core::Description::Reader &r) {
      int version;
      r.Value(version);
      for (int n=0; n<NUM_SAMPLES; n++) {
-         r.Value(SampleFloat (n, SLOT_VOLUME))
-              .Value(SampleFloat (n, SLOT_PITCHMOD))
-              .Value(SampleBool (n, SLOT_LOOP))
-              .Value(SampleBool (n, SLOT_PINGPONG))
-              .Value(SampleSigned (n, SLOT_NOTE))
-              .Value(SampleSigned (n, SLOT_OCTAVE))
-              .Value(SampleFloat (n, SLOT_SAMPLEPOS))
-              .Value(SampleSigned (n, SLOT_PLAYSTART))
-              .Value(SampleSigned (n, SLOT_LOOPSTART))
-              .Value(SampleSigned (n, SLOT_LOOPEND))
-              .Value(SampleSigned (n, SLOT_NOTE));
+         r.Value(SlotFloat (n, SLOT_VOLUME))
+              .Value(SlotFloat (n, SLOT_PITCHMOD))
+              .Value(SlotBool (n, SLOT_LOOP))
+              .Value(SlotBool (n, SLOT_PINGPONG))
+              .Value(SlotSigned (n, SLOT_NOTE))
+              .Value(SlotSigned (n, SLOT_OCTAVE))
+              .Value(SlotFloat (n, SLOT_SAMPLEPOS))
+              .Value(SlotSigned (n, SLOT_PLAYSTART))
+              .Value(SlotSigned (n, SLOT_LOOPSTART))
+              .Value(SlotSigned (n, SLOT_LOOPEND))
+              .Value(SlotSigned (n, SLOT_NOTE));
          if (version < 3) {
             int size;
             std::string Buf;
             r.Value(size);
             r.Value(Buf);   // the counted bytes, one value, unused
          }
-         if (version > 3) r.Value(SampleBool (n, SLOT_RETRIG));
+         if (version > 3) r.Value(SlotBool (n, SLOT_RETRIG));
          else SampleBool (n, SLOT_RETRIG) = true;
      }
 }

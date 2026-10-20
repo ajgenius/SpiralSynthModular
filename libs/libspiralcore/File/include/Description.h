@@ -13,6 +13,14 @@ namespace Spiral
 {
 namespace Core
 {
+	class FloatProperty;
+	class SignedProperty;
+	class UnsignedProperty;
+	class ToggleProperty;
+	class SetProperty;
+	class StringProperty;
+	class VectorProperty;
+
 	// A description is the values a device wrote, as the text an ostream
 	// with default flags writes for each operand, and the gaps between them.
 	// With n values there are n + 1 gaps; Write() replays gap, value, gap...
@@ -33,6 +41,13 @@ namespace Core
 			AddValue(text.str());
 			return *this;
 		}
+
+		Description &Value(const FloatProperty &p);
+		Description &Value(const SignedProperty &p);
+		Description &Value(const UnsignedProperty &p);
+		Description &Value(const ToggleProperty &p);
+		Description &Value(const SetProperty &p);
+		Description &Value(const StringProperty &p);
 
 		// A literal between values: s << " ".
 		Description &Separator(const char *text);
@@ -88,6 +103,13 @@ namespace Core
 			Reader &Value(std::string &x);
 			Reader &Value(float &x);
 			Reader &Value(double &x);
+			Reader &Value(FloatProperty &p);
+			Reader &Value(SignedProperty &p);
+			Reader &Value(UnsignedProperty &p);
+			Reader &Value(ToggleProperty &p);
+			Reader &Value(SetProperty &p);
+			Reader &Value(StringProperty &p);
+			Reader &Count(const VectorProperty &p, int &n);
 			// What is left of the span, values and the gaps among them, as a
 			// description of its own; the reader is at its end. For a device
 			// that keeps a state it cannot read and gives it back as it was.

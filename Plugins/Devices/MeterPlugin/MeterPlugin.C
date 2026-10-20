@@ -76,6 +76,8 @@ m_DataReady (false)
   m_AudioCH->Register ("DataSize", &m_DataSize, ChannelHandler::OUTPUT);  
 
   m_Version = 1;
+
+  SetUnsigned(DeviceVersion, 1);
 }
 
 MeterPlugin::~MeterPlugin() {

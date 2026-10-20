@@ -109,6 +109,7 @@ m_CurrentNote(0)
 	for (int n=0; n<128; n++) m_ControlLevel[n]=0;
 	
 	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 2);
 
 	m_DeviceNum = SignedProperty(DefaultLinearFlags, 0, 0, 15, 1, 1);
 	m_NoteCut = ToggleProperty(Property::WriteOnly, false);
@@ -117,6 +118,8 @@ m_CurrentNote(0)
 	RegisterSharedProperty(m_DeviceNum, "DeviceNum", "MIDI device number");
 	RegisterSharedProperty(m_NoteCut, "NoteCut", "Clear pitch on note release");
 	RegisterSharedProperty(m_ContinuousNotes, "ContinuousNotes", "Keep the trigger up between notes");
+	m_Controls = VectorProperty(Property::WriteOnly);
+	RegisterSharedPropertyWithKey(m_Controls, "CONTROLS", "Controls", "Controller output mappings");
 	m_AudioCH->Register("CC",&m_GUIArgs.s);
 	m_AudioCH->RegisterData("Name",ChannelHandler::INPUT,
 		&m_GUIArgs.Name,sizeof(m_GUIArgs.Name));
@@ -149,7 +152,7 @@ void MidiPlugin::Execute()
 	GetOutputBuf(4)->Zero();
 	GetOutputBuf(5)->Zero();
 
-	for (unsigned int c=0; c<m_ControlList.size(); c++)
+	for (unsigned int c=0; c<m_Controls.size(); c++)
 	{
 		GetOutputBuf(c+5)->Zero();	
 	}
@@ -262,9 +265,9 @@ void MidiPlugin::Execute()
 		SetOutput(5,n,MidiDevice::Get()->GetClock());						
 	}
 	
-	for (unsigned int c=0; c<m_ControlList.size(); c++)
+	for (unsigned int c=0; c<m_Controls.size(); c++)
 	{
-		GetOutputBuf(c+5)->Set(m_ControlLevel[m_ControlList[c]]);	
+		GetOutputBuf(c+5)->Set(m_ControlLevel[AsSigned(Control(c))]);	
 	}
 	
 	// make sure the trigger is registered if it's 
@@ -287,7 +290,10 @@ void  MidiPlugin::ExecuteCommands()
 
 void MidiPlugin::AddControl(int s, const string &Name)
 {
-	m_ControlList.push_back(s);
+	VectorProperty *control = new VectorProperty(Property::WriteOnly);
+	control->Add(new SignedProperty(DefaultLinearFlags, s, 0, 127, 1, 1));
+	control->Add(new StringProperty(Property::WriteOnly, Name));
+	m_Controls.Add(control);
 	AddOutput();
 	m_PluginInfo.NumOutputs++;
 	m_PluginInfo.PortTips.push_back(Name);
@@ -296,9 +302,9 @@ void MidiPlugin::AddControl(int s, const string &Name)
 
 void MidiPlugin::DeleteControl()
 {
-	if (m_ControlList.size()==0) return;
+	if (m_Controls.size()==0) return;
 	
-	m_ControlList.pop_back();
+	m_Controls.RemoveLast();
 	RemoveOutput();
 	m_PluginInfo.NumOutputs--;
 	m_PluginInfo.PortTips.pop_back();
@@ -307,12 +313,11 @@ void MidiPlugin::DeleteControl()
 
 void MidiPlugin::Describe(Spiral::Core::Description &d) 
 {
-	d.Value(m_Version).Separator(" ").Value(AsSigned(m_DeviceNum)).Separator(" ").Value(AsBoolean(m_NoteCut)).Separator(" ");	
-	d.Value(m_ControlList.size()).Line();
-	for (unsigned int n=0; n<m_ControlList.size(); n++)
+	d.Value(DeviceVersion).Separator(" ").Value(m_DeviceNum).Separator(" ").Value(m_NoteCut).Separator(" ");	
+	d.Value(m_Controls.size()).Line();
+	for (unsigned int n=0; n<m_Controls.size(); n++)
 	{
-		string PortTip=m_PluginInfo.PortTips[5+n];
-		d.Value(m_ControlList[n]).Separator(" ").Value(PortTip.size()).Separator(" ").Value(PortTip).Line();
+		d.Value(Control(n)).Separator(" ").Value(ControlName(n).Value.size()).Separator(" ").Value(ControlName(n)).Line();
 	}
 	
 }
@@ -324,26 +329,24 @@ void MidiPlugin::Apply(Spiral::Core::Description::Reader &r)
 		
 	switch (version)
 	{
-		case 1:	r.Value(AsSigned(m_DeviceNum)).Value(AsBoolean(m_NoteCut)); break;
+		case 1:	r.Value(m_DeviceNum).Value(m_NoteCut); break;
 		
 		case 2:
 		{
-			r.Value(AsSigned(m_DeviceNum)).Value(AsBoolean(m_NoteCut)); 
+			r.Value(m_DeviceNum).Value(m_NoteCut); 
 			
 			int Num;
-			r.Value(Num);
+			r.Count(m_Controls, Num);
 			
 			for (int n=0; n<Num; n++)
 			{
-				int Control;
-				r.Value(Control);
-				
-				std::string Name;
-				int size;		
+				AddControl(0, "");
+				int size;
+				r.Value(Control(n));
 				r.Value(size);
-				r.Value(Name);   // the counted bytes, one value
-				
-				AddControl(Control, Name);
+
+				r.Value(ControlName(n));   // the counted bytes, one value
+				m_PluginInfo.PortTips[5+n] = ControlName(n).Value;
 			}			
 		}
 	}

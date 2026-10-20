@@ -330,3 +330,29 @@ void VectorProperty::CopyContents(ComplexProperty &Source)
 		if (Theirs) Add(Theirs->Duplicate());
 	}
 }
+
+
+namespace Spiral
+{
+namespace Core
+{
+	Description &Description::Value(const FloatProperty &p)    { return Value(p.Value.AsFloat); }
+	Description &Description::Value(const SignedProperty &p)   { return Value(p.Value.AsSigned); }
+	Description &Description::Value(const UnsignedProperty &p) { return Value(p.Value.AsUnsigned); }
+	Description &Description::Value(const ToggleProperty &p)   { return Value(p.Value.AsBoolean); }
+	Description &Description::Value(const SetProperty &p)      { return Value(p.Value.AsUnsigned); }
+	Description &Description::Value(const StringProperty &p)   { return Value(p.Value); }
+
+	Description::Reader &Description::Reader::Value(FloatProperty &p)    { return Value(p.Value.AsFloat); }
+	Description::Reader &Description::Reader::Value(SignedProperty &p)   { return Value(p.Value.AsSigned); }
+	Description::Reader &Description::Reader::Value(UnsignedProperty &p) { return Value(p.Value.AsUnsigned); }
+	Description::Reader &Description::Reader::Value(ToggleProperty &p)   { return Value(p.Value.AsBoolean); }
+	Description::Reader &Description::Reader::Value(SetProperty &p)      { return Value(p.Value.AsUnsigned); }
+	Description::Reader &Description::Reader::Value(StringProperty &p)   { return Value(p.Value); }
+
+	Description::Reader &Description::Reader::Count(const VectorProperty &, int &n)
+	{
+		return Value(n);
+	}
+}
+}

@@ -161,13 +161,13 @@ void TranslatePlugin::Execute () {
 }
 
 void TranslatePlugin::Describe(Spiral::Core::Description &d) {
-     d.Value(m_Version).Line();
+     d.Value(DeviceVersion).Line();
      d.Value(AsUnsigned(m_Method));
 }
 
 void TranslatePlugin::Apply(Spiral::Core::Description::Reader &r) {
      int version;
      r.Value(version);
-     r.Value(AsUnsigned(m_Method));
+     r.Value(m_Method);
      SetUpTranslatorClass ();
 }

@@ -86,6 +86,18 @@ m_PatReset(false)
 	for (int n=0; n<NUM_PATSEQ; n++)
 		m_PatSeq.Add(new SignedProperty(DefaultLinearFlags, -1, -1, NUM_PATTERNS - 1, 1, 1));
 
+	m_Patterns = VectorProperty(Property::WriteOnly);
+	for (int n=0; n<NUM_PATTERNS; n++)
+	{
+		VectorProperty *pattern = new VectorProperty(Property::WriteOnly);
+		pattern->Add(new SignedProperty(DefaultLinearFlags, 64, 1, MATX, 1, 1));
+		pattern->Add(new FloatProperty(DefaultLinearFlags, 1.0f, 0.0f, 16.0f, 0.001f, 0.1f));
+		pattern->Add(new SignedProperty(DefaultLinearFlags, 0, -6, 6, 1, 1));
+		pattern->Add(new VectorProperty(Property::WriteOnly));
+		m_Patterns.Add(pattern);
+	}
+	RegisterSharedProperty(m_Patterns, "Patterns", "Patterns");
+
 	m_Version=4;
 
 	m_PluginInfo.Name="Matrix";
@@ -142,6 +154,7 @@ m_PatReset(false)
 	}
 
 	SetString(DeviceName, SpiralPlugin_GetName());
+	SetUnsigned(DeviceVersion, 4);
 
 	m_Time = FloatProperty(Property::ReadOnly, 0.0f, 0.0f, 1000.0f, 0.0001f, 0.001f);
 	m_Step = SignedProperty(Property::ReadOnly, 0, 0, MATX - 1, 1, 1);
@@ -379,6 +392,54 @@ void MatrixPlugin::ExecuteCommands()
 	}
 }
 
+void MatrixPlugin::PatternsFromGrid()
+{
+	for (int n=0; n<NUM_PATTERNS; n++)
+	{
+		AsSigned(PatternLength(n)) = m_Matrix[n].Length;
+		AsFloat(PatternSpeed(n)) = m_Matrix[n].Speed;
+		AsSigned(PatternOctave(n)) = m_Matrix[n].Octave;
+		ClearNotes(n);
+		for (int y=0; y<MATY; y++)
+			for (int x=0; x<MATX; x++)
+				if (m_Matrix[n].Matrix[x][y]) AddNote(n, x, y, m_Matrix[n].Volume[x][y]);
+	}
+}
+
+void MatrixPlugin::GridFromPatterns()
+{
+	for (int n=0; n<NUM_PATTERNS; n++)
+	{
+		m_Matrix[n].Length = AsSigned(PatternLength(n));
+		m_Matrix[n].Speed = AsFloat(PatternSpeed(n));
+		m_Matrix[n].Octave = AsSigned(PatternOctave(n));
+		for (int x=0; x<MATX; x++)
+			for (int y=0; y<MATY; y++)
+				m_Matrix[n].Matrix[x][y] = false;
+		for (unsigned int k=0; k<Notes(n).size(); k++)
+		{
+			const int x = AsSigned(NoteX(n, k)), y = AsSigned(NoteY(n, k));
+			if (x < 0 || x >= MATX || y < 0 || y >= MATY) continue;
+			m_Matrix[n].Matrix[x][y] = true;
+			m_Matrix[n].Volume[x][y] = AsFloat(NoteVolume(n, k));
+		}
+	}
+}
+
+void MatrixPlugin::AddNote(int pattern, int x, int y, float volume)
+{
+	VectorProperty *note = new VectorProperty(Property::WriteOnly);
+	note->Add(new SignedProperty(DefaultLinearFlags, x, 0, MATX - 1, 1, 1));
+	note->Add(new SignedProperty(DefaultLinearFlags, y, 0, MATY - 1, 1, 1));
+	note->Add(new FloatProperty(DefaultLinearFlags, volume, 0.0f, 1.0f, 0.001f, 0.1f));
+	Notes(pattern).Add(note);
+}
+
+void MatrixPlugin::ClearNotes(int pattern)
+{
+	while (Notes(pattern).size()) Notes(pattern).RemoveLast();
+}
+
 void MatrixPlugin::PastePattern() {
      m_Matrix[m_GUICurrent].Length = m_Matrix[m_CopyPattern].Length;
      m_Matrix[m_GUICurrent].Speed = m_Matrix[m_CopyPattern].Speed;
@@ -440,26 +501,25 @@ bool MatrixPlugin::CanTransposeUp()
 
 void MatrixPlugin::Describe(Spiral::Core::Description &d)
 {
-	d.Value(m_Version).Separator(" ");
-	d.Value(AsSigned(m_Current)).Separator(" ").Value(AsFloat(m_Time)).Separator(" ").Value(AsSigned(m_Step)).Separator(" ").Value(AsBoolean(m_Loop)).Separator(" ").Value(AsBoolean(m_NoteCut)).Separator(" ").Line();
+	PatternsFromGrid();
+
+	d.Value(DeviceVersion).Separator(" ");
+	d.Value(m_Current).Separator(" ").Value(m_Time).Separator(" ").Value(m_Step).Separator(" ").Value(m_Loop).Separator(" ").Value(m_NoteCut).Separator(" ").Line();
 
 	for (int n=0; n<NUM_PATTERNS; n++)
 	{
-		d.Value(m_Matrix[n].Length).Separator(" ").Value(m_Matrix[n].Speed).Separator(" ").Value(m_Matrix[n].Octave).Line();
+		d.Value(PatternLength(n)).Separator(" ").Value(PatternSpeed(n)).Separator(" ").Value(PatternOctave(n)).Line();
 
-		for (int y=0; y<MATY; y++)
+		for (unsigned int k=0; k<Notes(n).size(); k++)
 		{
-			for (int x=0; x<MATX; x++)
-			{
-				if (m_Matrix[n].Matrix[x][y]) d.Value(x).Separator(" ").Value(y).Separator("  ").Value(m_Matrix[n].Volume[x][y]).Separator(" ");
-			}
+			d.Value(NoteX(n, k)).Separator(" ").Value(NoteY(n, k)).Separator("  ").Value(NoteVolume(n, k)).Separator(" ");
 		}
 		d.Value("-1").Separator(" ");
 	}
 	d.Line();
 	for (int n=0; n<NUM_PATSEQ; n++)
 	{
-		d.Value(GetPatSeq(n)).Separator(" ");
+		d.Value(PatSeq(n)).Separator(" ");
 	}
 
 }
@@ -467,9 +527,12 @@ void MatrixPlugin::Describe(Spiral::Core::Description &d)
 void MatrixPlugin::Apply(Spiral::Core::Description::Reader &r) {
      int version;
      r.Value(version);
-     r.Value(AsSigned(m_Current)).Value(AsFloat(m_Time)).Value(AsSigned(m_Step)).Value(AsBoolean(m_Loop)).Value(AsBoolean(m_NoteCut));
+     r.Value(m_Current).Value(m_Time).Value(m_Step).Value(m_Loop).Value(m_NoteCut);
      for (int n=0; n<NUM_PATTERNS; n++) {
-         r.Value(m_Matrix[n].Length).Value(m_Matrix[n].Speed).Value(m_Matrix[n].Octave);
+         r.Value(PatternLength(n)).Value(PatternSpeed(n)).Value(PatternOctave(n));
+         m_Matrix[n].Length = AsSigned(PatternLength(n));
+         m_Matrix[n].Speed = AsFloat(PatternSpeed(n));
+         m_Matrix[n].Octave = AsSigned(PatternOctave(n));
          if (version == 1) {
             for (int y=0; y<MATY; y++)
                 for (int x=0; x<MATX; x++)
@@ -498,12 +561,11 @@ void MatrixPlugin::Apply(Spiral::Core::Description::Reader &r) {
             }
          }
      }
+     PatternsFromGrid();
      if (version > 3) {
-        int ps;
         for (int n=0; n<NUM_PATSEQ; n++) {
-            r.Value(ps);
-            if (n==0 && ps<0) ps = 0;
-            SetPatSeq(n, ps);
+            r.Value(PatSeq(n));
+            if (n==0 && GetPatSeq(0)<0) SetPatSeq(0, 0);
         }
      }
 }
