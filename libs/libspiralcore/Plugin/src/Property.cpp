@@ -343,12 +343,23 @@ namespace Core
 	Description &Description::Value(const SetProperty &p)      { return Value(p.Value.AsUnsigned); }
 	Description &Description::Value(const StringProperty &p)   { return Value(p.Value); }
 
+	Description &Description::Value(const NoteProperty &p)
+	{
+		Value(p.Note).Separator(" ").Value(p.Octave).Separator(" ").Value(p.Velocity);
+		return Separator(" ").Value(p.Start).Separator(" ").Value(p.End);
+	}
+
 	Description::Reader &Description::Reader::Value(FloatProperty &p)    { return Value(p.Value.AsFloat); }
 	Description::Reader &Description::Reader::Value(SignedProperty &p)   { return Value(p.Value.AsSigned); }
 	Description::Reader &Description::Reader::Value(UnsignedProperty &p) { return Value(p.Value.AsUnsigned); }
 	Description::Reader &Description::Reader::Value(ToggleProperty &p)   { return Value(p.Value.AsBoolean); }
 	Description::Reader &Description::Reader::Value(SetProperty &p)      { return Value(p.Value.AsUnsigned); }
 	Description::Reader &Description::Reader::Value(StringProperty &p)   { return Value(p.Value); }
+
+	Description::Reader &Description::Reader::Value(NoteProperty &p)
+	{
+		return Value(p.Note).Value(p.Octave).Value(p.Velocity).Value(p.Start).Value(p.End);
+	}
 
 	Description::Reader &Description::Reader::Count(const VectorProperty &, int &n)
 	{

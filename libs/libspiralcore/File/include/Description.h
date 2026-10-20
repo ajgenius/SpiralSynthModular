@@ -19,6 +19,7 @@ namespace Core
 	class ToggleProperty;
 	class SetProperty;
 	class StringProperty;
+	class NoteProperty;
 	class VectorProperty;
 
 	// A description is the values a device wrote, as the text an ostream
@@ -48,6 +49,7 @@ namespace Core
 		Description &Value(const ToggleProperty &p);
 		Description &Value(const SetProperty &p);
 		Description &Value(const StringProperty &p);
+		Description &Value(const NoteProperty &p);
 
 		// A literal between values: s << " ".
 		Description &Separator(const char *text);
@@ -120,6 +122,7 @@ namespace Core
 			Reader &Value(ToggleProperty &p);
 			Reader &Value(SetProperty &p);
 			Reader &Value(StringProperty &p);
+			Reader &Value(NoteProperty &p);
 			Reader &Count(const VectorProperty &p, int &n);
 			// What is left of the span, values and the gaps among them, as a
 			// description of its own; the reader is at its end. For a device
