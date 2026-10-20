@@ -215,6 +215,7 @@ namespace Core
 		inline std::string GetLabel() { return m_Label; }
 		inline std::string GetHint() { return m_Hint; }
 
+		inline void SetKey(std::string Key) { m_Name = Key; }
 		inline void SetLabel(std::string Label) { m_Label = Label; }
 		inline void SetHint(std::string Hint) { m_Hint = Hint; }
 

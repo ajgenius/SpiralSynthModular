@@ -134,19 +134,25 @@ namespace Core
 			m_State.Properties.erase(key);
 		}
 
-		inline void RegisterSharedProperty(Property &Initializer, std::string Label, std::string Hint)
+		inline void RegisterSharedPropertyWithKey(Property &Initializer, std::string Key,
+		                                          std::string Label, std::string Hint)
 		{
-			string key = Label;
-			transform (key.begin(), key.end(), key.begin(), (int(*)(int))std::toupper);
+			transform (Key.begin(), Key.end(), Key.begin(), (int(*)(int))std::toupper);
 
-			assert(m_State.Properties[key]==NULL);
+			assert(m_State.Properties[Key]==NULL);
 
-			m_State.Properties[key] = &Initializer;
-			m_State.Properties[key]->SetLabel(Label);
-			m_State.Properties[key]->SetHint(Hint);
+			m_State.Properties[Key] = &Initializer;
+			Initializer.SetKey(Key);
+			Initializer.SetLabel(Label);
+			Initializer.SetHint(Hint);
 
 			if (m_AudioCH && !Initializer.IsInternal())
 				Initializer.RegisterChannel(*m_AudioCH, Label);
+		}
+
+		inline void RegisterSharedProperty(Property &Initializer, std::string Label, std::string Hint)
+		{
+			RegisterSharedPropertyWithKey(Initializer, Label, Label, Hint);
 		}
 	};
 }

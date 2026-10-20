@@ -22,6 +22,7 @@ using namespace Spiral::Core;
 Property::Property(const Property &Copy)
 {
 	m_References = 1;
+	m_Name = Copy.m_Name;
 	m_Label = Copy.m_Label;
 	m_Hint = Copy.m_Hint;
 
