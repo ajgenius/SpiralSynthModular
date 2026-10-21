@@ -22,7 +22,7 @@
 #define SpiralLoopPLUGIN
 
 static const int TRANSBUF_SIZE = 0x10000;
-static const int MAX_TRIGGERS = 8;
+static const int MAX_TRIGGERS = 32;
 
 struct SampleDesc
 {
@@ -46,13 +46,14 @@ public:
 	
 	void AddTrigger(int Channel, float Time)
 	{
-		Spiral::Core::VectorProperty *trigger = new Spiral::Core::VectorProperty(Spiral::Core::Property::WriteOnly);
-		trigger->Add(new Spiral::Core::SignedProperty(DefaultLinearFlags, Channel, 0, 8, 1, 1));
-		trigger->Add(new Spiral::Core::FloatProperty(DefaultLinearFlags, Time, 0.0f, 1.0f, 0.001f, 0.1f));
-		m_Triggers.Add(trigger);
-		m_Fired.push_back(false);
+		const int n = AsSigned(m_TriggerCount);
+		if (n >= MAX_TRIGGERS) return;
+		AsSigned(TriggerChannel(n)) = Channel;
+		AsFloat(TriggerTime(n)) = Time;
+		m_Fired[n] = false;
+		AsSigned(m_TriggerCount) = n + 1;
 	}
-	unsigned int TriggerCount() { return m_Triggers.size(); }
+	unsigned int TriggerCount() { return AsSigned(m_TriggerCount); }
 	Spiral::Core::SignedProperty &TriggerChannel(int n)
 	{ return *(Spiral::Core::SignedProperty *)(*(Spiral::Core::VectorProperty *)m_Triggers[n])[0]; }
 	Spiral::Core::FloatProperty &TriggerTime(int n)
@@ -168,7 +169,8 @@ private:
 	long  m_SampleSize;
 	
 	Spiral::Core::VectorProperty m_Triggers;
-	std::vector<bool> m_Fired;
+	bool m_Fired[MAX_TRIGGERS];
+	Spiral::Core::SignedProperty m_TriggerCount;
 
 	std::string m_Sample;
 };

@@ -124,7 +124,25 @@ m_Triggered(false)
 	RegisterSharedProperty(m_Speed, "Speed", "Speed");
 
 	m_Triggers = VectorProperty(Property::WriteOnly);
+	for (int n=0; n<MAX_TRIGGERS; n++)
+	{
+		VectorProperty *trigger = new VectorProperty(Property::WriteOnly);
+		trigger->Add(new SignedProperty(DefaultLinearFlags, 0, 0, 8, 1, 1));
+		trigger->Add(new FloatProperty(DefaultLinearFlags, 0.0f, 0.0f, 1.0f, 0.001f, 0.1f));
+		m_Triggers.Add(trigger);
+		m_Fired[n] = false;
+	}
 	RegisterSharedPropertyWithKey(m_Triggers, "TRIGGERS", "Triggers", "Trigger points");
+	for (int n=0; n<MAX_TRIGGERS; n++)
+	{
+		char key[24], hint[40];
+		snprintf(key, sizeof key, "TriggerChannel%d", n); snprintf(hint, sizeof hint, "Trigger %d output", n + 1);
+		RegisterSharedProperty(TriggerChannel(n), key, hint);
+		snprintf(key, sizeof key, "TriggerTime%d", n); snprintf(hint, sizeof hint, "Trigger %d position", n + 1);
+		RegisterSharedProperty(TriggerTime(n), key, hint);
+	}
+	m_TriggerCount = SignedProperty(Property::ReadOnly, 0, 0, MAX_TRIGGERS, 1, 1);
+	RegisterSharedProperty(m_TriggerCount, "TriggerCount", "Triggers in use");
 	m_AudioCH->Register("Length",&m_GUIArgs.Length);
 	m_AudioCH->Register("Start",&m_GUIArgs.Start);
 	m_AudioCH->Register("End",&m_GUIArgs.End);
@@ -163,7 +181,7 @@ void SpiralLoopPlugin::Execute()
 	for (int n=0; n<8; n++) GetOutputBuf(n+1)->Zero();
 
 	// get the triggers active this frame
-	for (unsigned int i=0; i<m_Triggers.size(); i++)
+	for (unsigned int i=0; i<TriggerCount(); i++)
 	{
 		if (m_Pos > AsFloat(TriggerTime(i))*m_StoreBuffer.GetLength() &&
 			!m_Fired[i])
@@ -176,7 +194,7 @@ void SpiralLoopPlugin::Execute()
 	if (GetOutput(*GetOutputBuf(0)))
 	{
 		// if it's looped - reset the triggers
-		for (unsigned int i=0; i<m_Fired.size(); i++) m_Fired[i]=false;
+		for (int i=0; i<MAX_TRIGGERS; i++) m_Fired[i]=false;
 		
 		m_TickCurrent=m_TickTime;
 	}	
@@ -231,7 +249,7 @@ void SpiralLoopPlugin::ExecuteCommands()
 		case CHANGE_LENGTH	: m_LoopPoint=(int)(m_StoreBuffer.GetLength()*m_GUIArgs.Length); break;
 		case NEW_TRIGGER	: 
 			{
-				if ((int)m_Triggers.size()!=m_GUIArgs.Start) cerr<<"no of triggers error!"<<endl;
+				if ((int)TriggerCount()!=m_GUIArgs.Start) cerr<<"no of triggers error!"<<endl;
 				AddTrigger(m_GUIArgs.End, m_GUIArgs.Length); break;
 			}
 		case UPDATE_TRIGGER	: 
@@ -251,9 +269,9 @@ void SpiralLoopPlugin::ExecuteCommands()
 void SpiralLoopPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(DeviceVersion).Separator(" "); 
-	d.Value(m_LoopPoint).Key("LOOPPOINT", "").Separator(" ").Value(m_Speed).Separator(" ").Value(m_Volume).Separator(" ").Value(m_TicksPerLoop).Separator(" ");
-	d.Value(m_Triggers.size()).Separator(" ");
-	for (unsigned int i=0; i<m_Triggers.size(); i++)
+	d.Value(m_LoopPoint).Key("LOOPPOINT", "SignedProperty").Separator(" ").Value(m_Speed).Separator(" ").Value(m_Volume).Separator(" ").Value(m_TicksPerLoop).Separator(" ");
+	d.Value(m_TriggerCount).Separator(" ");
+	for (unsigned int i=0; i<TriggerCount(); i++)
 	{
 		d.Value(TriggerChannel(i)).Separator(" ").Value(TriggerTime(i)).Separator(" ");
 	}
@@ -269,12 +287,12 @@ void SpiralLoopPlugin::Apply(Spiral::Core::Description::Reader &r)
 		r.Value(m_LoopPoint);
 
 	r.Value(m_Speed).Value(m_Volume).Value(m_TicksPerLoop);
-	int size;
-	r.Count(m_Triggers, size);
-	
-	for (int n=0; n<size; n++)
+	r.Value(m_TriggerCount);
+	if (AsSigned(m_TriggerCount) < 0) AsSigned(m_TriggerCount) = 0;
+	if (AsSigned(m_TriggerCount) > MAX_TRIGGERS) AsSigned(m_TriggerCount) = MAX_TRIGGERS;
+	for (unsigned int n=0; n<TriggerCount(); n++)
 	{
-		AddTrigger(0, 0);
+		m_Fired[n] = false;
 		r.Value(TriggerChannel(n)).Value(TriggerTime(n));
 	}
 }
