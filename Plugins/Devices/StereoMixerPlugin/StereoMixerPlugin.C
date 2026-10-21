@@ -16,6 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 #include "StereoMixerPlugin.h"
+#include <stdio.h>
 #include "Finite.h"
 #include "SpiralIcon.xpm"
 
@@ -77,6 +78,16 @@ StereoMixerPlugin::StereoMixerPlugin()
 	for (int n=0; n<NUM_CHANNELS; n++) m_Pan.Add(new FloatProperty(DefaultLinearFlags, 0.5f, 0.0f, 1.0f, 0.001f, 0.01f));
 	RegisterSharedProperty(m_ChannelVal, "ChannelVal", "Channel volumes");
 	RegisterSharedProperty(m_Pan, "Pan", "Channel pans");
+	for (int n=0; n<NUM_CHANNELS; n++)
+	{
+		char key[16], hint[32];
+		snprintf(key, sizeof key, "Volume%d", n);
+		snprintf(hint, sizeof hint, "Channel %d volume", n + 1);
+		RegisterSharedProperty(Channel(n), key, hint);
+		snprintf(key, sizeof key, "Pan%d", n);
+		snprintf(hint, sizeof hint, "Channel %d pan", n + 1);
+		RegisterSharedProperty(Pan(n), key, hint);
+	}
 
 	m_PluginInfo.Name="Stereo Mixer";
 	m_PluginInfo.Width=190;

@@ -108,6 +108,18 @@ m_LastRecording(false)
             m_Samples.Add (NewSampleSettings (n));
 
         RegisterSharedProperty (m_Samples, "Samples", "Per-sample settings");
+        {
+            static const char *const names[SLOT_COUNT] = {
+                "VOLUME", "PITCHMOD", "LOOP", "PINGPONG", "NOTE", "OCTAVE",
+                "SAMPLEPOS", "PLAYSTART", "LOOPSTART", "LOOPEND", "RETRIG" };
+            for (int n=0; n<NUM_SAMPLES; n++)
+                for (int s=0; s<SLOT_COUNT; s++) {
+                    char key[24], hint[40];
+                    snprintf (key, sizeof key, "%s%d", names[s], n);
+                    snprintf (hint, sizeof hint, "Sample %d %s", n + 1, names[s]);
+                    RegisterSharedProperty (*Slot (n, (SampleSlot)s), key, hint);
+                }
+        }
 
         for (int n=0; n<NUM_SAMPLES; n++) {
             Sample* NewSample = new Sample;

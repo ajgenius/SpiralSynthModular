@@ -91,6 +91,22 @@ ControllerPlugin::ControllerPlugin()
 	RegisterSharedProperty(m_MinVal, "MinVal", "Lower bounds");
 	RegisterSharedProperty(m_MaxVal, "MaxVal", "Upper bounds");
 	RegisterSharedProperty(m_Names, "Names", "Channel names");
+	for (int n=0; n<MAX_CHANNELS; n++)
+	{
+		char key[16], hint[32];
+		snprintf(key, sizeof key, "Name%d", n);
+		snprintf(hint, sizeof hint, "Channel %d name", n + 1);
+		RegisterSharedProperty(Name(n), key, hint);
+		snprintf(key, sizeof key, "Value%d", n);
+		snprintf(hint, sizeof hint, "Channel %d value", n + 1);
+		RegisterSharedProperty(Val(n), key, hint);
+		snprintf(key, sizeof key, "Min%d", n);
+		snprintf(hint, sizeof hint, "Channel %d lower bound", n + 1);
+		RegisterSharedProperty(Min(n), key, hint);
+		snprintf(key, sizeof key, "Max%d", n);
+		snprintf(hint, sizeof hint, "Channel %d upper bound", n + 1);
+		RegisterSharedProperty(Max(n), key, hint);
+	}
 
 	m_Version=6;
 

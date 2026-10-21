@@ -62,6 +62,12 @@ m_NumChannels(4)
 	m_ChannelVal = VectorProperty(Property::WriteOnly);
 	for (int n=0; n<MAX_CHANNELS; n++) m_ChannelVal.Add(new FloatProperty(DefaultLinearFlags, 1.0f, 0.0f, 2.0f, 0.001f, 0.01f));
 	RegisterSharedProperty(m_ChannelVal, "ChannelVal", "Channel volumes");
+	for (int n=0; n<MAX_CHANNELS; n++) {
+	    char key[16], hint[32];
+	    snprintf (key, sizeof key, "Volume%d", n);
+	    snprintf (hint, sizeof hint, "Channel %d volume", n + 1);
+	    RegisterSharedProperty(Channel(n), key, hint);
+	}
 
         int c;
 
