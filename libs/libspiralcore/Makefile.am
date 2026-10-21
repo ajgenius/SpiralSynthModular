@@ -59,12 +59,12 @@ libspiralcore_la_SOURCES += Plugin/include/SpiralPlugin.h Plugin/src/SpiralPlugi
 if BUILD_LADSPA
 # The LADSPA device (id 22) and its catalog, built in like Output.
 libspiralcore_la_SOURCES += Plugin/include/LADSPAInfo.h Plugin/src/LADSPAInfo.cpp \
-	Plugin/include/LADSPAPlugin.h Plugin/src/LADSPAPlugin.cpp
+	Plugin/include/LADSPAPlugin.h Plugin/src/LADSPAPlugin.cpp Plugin/src/LADSPAPanel.cpp
 AM_CPPFLAGS += $(LADSPA_CFLAGS)
 libspiralcore_la_LIBADD += $(LRDFLIBS)
 else
 EXTRA_DIST += Plugin/include/LADSPAInfo.h Plugin/src/LADSPAInfo.cpp \
-	Plugin/include/LADSPAPlugin.h Plugin/src/LADSPAPlugin.cpp
+	Plugin/include/LADSPAPlugin.h Plugin/src/LADSPAPlugin.cpp Plugin/src/LADSPAPanel.cpp
 endif
 EXTRA_DIST += Plugin/include/LADSPAIcon.xpm
 libspiralcore_la_SOURCES += Plugin/include/PassthroughPlugin.h Plugin/src/PassthroughPlugin.cpp Plugin/include/PluginManifest.h Plugin/src/PluginManifest.cpp

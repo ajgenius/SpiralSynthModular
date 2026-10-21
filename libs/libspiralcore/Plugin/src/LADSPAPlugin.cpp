@@ -63,6 +63,7 @@ const Spiral::Core::DeviceClass &LADSPAPlugin::Class()
 	device.Category = "Filters/FX";
 	device.Icon = SpiralIcon_xpm;
 	device.Create = CreateInstance;
+	device.PanelGenerated = true;
 	return device;
 }
 
@@ -81,6 +82,8 @@ LADSPAPlugin::LADSPAPlugin()
 	m_SSMPluginReset = false;
 	m_PluginIndex = 0;
 	m_UniqueID = 0;
+	m_UniqueIDShown = UnsignedProperty(Property::ReadOnly, 0, 0, 0, 0, 0);
+	RegisterSharedProperty(m_UniqueIDShown, "UniqueID", "LADSPA Plugin ID");
 	m_InputPortCount = 0;
 	m_Version = 10;
 	SetUnsigned(DeviceVersion, 10);
@@ -106,6 +109,7 @@ LADSPAPlugin::LADSPAPlugin()
 	m_OutData.InputPortSettings = NULL;
 	m_OutData.InputPortValues = NULL;
 	m_OutData.InputPortDefaults = NULL;
+	memset(&m_PanelData, 0, sizeof(m_PanelData));
 
 	memset(&m_InData, 0, sizeof(m_InData));
 	strncpy(m_Name, "None", 5);
@@ -133,11 +137,33 @@ LADSPAPlugin::LADSPAPlugin()
 	m_AudioCH->RegisterData("SetInputPortMin", ChannelHandler::INPUT, &(m_InData.InputPortMin), sizeof(m_InData.InputPortMin));
 	m_AudioCH->RegisterData("SetInputPortMax", ChannelHandler::INPUT, &(m_InData.InputPortMax), sizeof(m_InData.InputPortMax));
 	m_AudioCH->RegisterData("SetInputPortClamp", ChannelHandler::INPUT, &(m_InData.InputPortClamp), sizeof(m_InData.InputPortClamp));
+	m_AudioCH->RegisterData("SetInputPortEnabled", ChannelHandler::INPUT, &(m_InData.InputPortEnabled), sizeof(m_InData.InputPortEnabled));
 
-	m_AudioCH->RegisterData("GetName",ChannelHandler::OUTPUT,m_Name,256);
-	m_AudioCH->RegisterData("GetMaker",ChannelHandler::OUTPUT,m_Maker,256);
-	m_AudioCH->RegisterData("GetMaxInputPortCount",ChannelHandler::OUTPUT,&(m_MaxInputPortCount),sizeof(m_MaxInputPortCount));
-	m_AudioCH->RegisterData("GetInputPortCount",ChannelHandler::OUTPUT,&(m_InputPortCount),sizeof(m_InputPortCount));
+	{
+		std::vector<std::string> none, args;
+		m_AudioCH->RegisterCommand("CLEARPLUGIN", CLEARPLUGIN, none);
+		args.clear(); args.push_back("SetUniqueID");
+		m_AudioCH->RegisterCommand("SELECTPLUGIN", SELECTPLUGIN, args, "i");
+		args.clear(); args.push_back("SetPage");
+		m_AudioCH->RegisterCommand("SETPAGE", SETPAGE, args, "i");
+		args.clear(); args.push_back("SetUpdateInputs");
+		m_AudioCH->RegisterCommand("SETUPDATEINPUTS", SETUPDATEINPUTS, args, "i");
+		args.clear(); args.push_back("SetInputPortIndex"); args.push_back("SetInputPortDefault");
+		m_AudioCH->RegisterCommand("SETDEFAULT", SETDEFAULT, args, "if");
+		args.clear(); args.push_back("SetInputPortIndex"); args.push_back("SetInputPortMin");
+		m_AudioCH->RegisterCommand("SETMIN", SETMIN, args, "if");
+		args.clear(); args.push_back("SetInputPortIndex"); args.push_back("SetInputPortMax");
+		m_AudioCH->RegisterCommand("SETMAX", SETMAX, args, "if");
+		args.clear(); args.push_back("SetInputPortIndex"); args.push_back("SetInputPortClamp");
+		m_AudioCH->RegisterCommand("SETCLAMP", SETCLAMP, args, "ii");
+		args.clear(); args.push_back("SetInputPortIndex"); args.push_back("SetInputPortEnabled");
+		m_AudioCH->RegisterCommand("SETPORTENABLED", SETPORTENABLED, args, "ii");
+	}
+
+	m_AudioCH->RegisterData("PluginName",ChannelHandler::OUTPUT,m_Name,256);
+	m_AudioCH->RegisterData("Maker",ChannelHandler::OUTPUT,m_Maker,256);
+	m_AudioCH->RegisterData("MaxPorts",ChannelHandler::OUTPUT,&(m_MaxInputPortCount),sizeof(m_MaxInputPortCount));
+	m_AudioCH->RegisterData("Ports",ChannelHandler::OUTPUT,&(m_InputPortCount),sizeof(m_InputPortCount));
 
 	m_OutData.InputPortNames = (char *)malloc(256 * m_MaxInputPortCount);
 	m_OutData.InputPortSettings = (PortSetting *)malloc(sizeof(PortSetting) * m_MaxInputPortCount);
@@ -151,12 +177,78 @@ LADSPAPlugin::LADSPAPlugin()
 	{
 		memset(m_OutData.InputPortNames, 0, 256 * m_MaxInputPortCount);
 		memset(m_OutData.InputPortSettings, 0, sizeof(PortSetting) * m_MaxInputPortCount);
-		m_AudioCH->RegisterData("GetInputPortNames", ChannelHandler::OUTPUT, m_OutData.InputPortNames, 256 * m_MaxInputPortCount);
+		m_AudioCH->RegisterData("PortName", ChannelHandler::OUTPUT, m_OutData.InputPortNames, 256 * m_MaxInputPortCount);
 		m_AudioCH->RegisterData("GetInputPortSettings", ChannelHandler::OUTPUT, m_OutData.InputPortSettings, sizeof(PortSetting) * m_MaxInputPortCount);
 		m_AudioCH->RegisterData("GetInputPortValues", ChannelHandler::OUTPUT, m_OutData.InputPortValues, sizeof(PortValue) * m_MaxInputPortCount);
-		m_AudioCH->RegisterData("GetInputPortDefaults", ChannelHandler::OUTPUT, m_OutData.InputPortDefaults, sizeof(float) * m_MaxInputPortCount);
+		m_AudioCH->RegisterData("Default", ChannelHandler::OUTPUT, m_OutData.InputPortDefaults, sizeof(float) * m_MaxInputPortCount);
 	} else {
 		cerr<<"LADSPA Plugin: Memory allocation error"<<endl;
+	}
+
+	m_PanelData.Mins = (float *)calloc(m_MaxInputPortCount, sizeof(float));
+	m_PanelData.Maxs = (float *)calloc(m_MaxInputPortCount, sizeof(float));
+	m_PanelData.Clamps = (bool *)calloc(m_MaxInputPortCount, sizeof(bool));
+	m_PanelData.Values = (float *)calloc(m_MaxInputPortCount, sizeof(float));
+	m_PanelData.Connected = (bool *)calloc(m_MaxInputPortCount, sizeof(bool));
+	m_PanelData.Enabled = (bool *)calloc(m_MaxInputPortCount, sizeof(bool));
+	if (m_PanelData.Mins && m_PanelData.Maxs && m_PanelData.Clamps && m_PanelData.Values && m_PanelData.Connected && m_PanelData.Enabled)
+	{
+		m_AudioCH->RegisterData("Min", ChannelHandler::OUTPUT, m_PanelData.Mins, sizeof(float) * m_MaxInputPortCount);
+		m_AudioCH->RegisterData("Max", ChannelHandler::OUTPUT, m_PanelData.Maxs, sizeof(float) * m_MaxInputPortCount);
+		m_AudioCH->RegisterData("Clamp", ChannelHandler::OUTPUT, m_PanelData.Clamps, sizeof(bool) * m_MaxInputPortCount);
+		m_AudioCH->RegisterData("Value", ChannelHandler::OUTPUT, m_PanelData.Values, sizeof(float) * m_MaxInputPortCount);
+		m_AudioCH->RegisterData("Connected", ChannelHandler::OUTPUT, m_PanelData.Connected, sizeof(bool) * m_MaxInputPortCount);
+		m_AudioCH->RegisterData("Enabled", ChannelHandler::OUTPUT, m_PanelData.Enabled, sizeof(bool) * m_MaxInputPortCount);
+	}
+	m_AudioCH->Register("GetPanelGeneration", (int *)&m_PanelData.Generation, ChannelHandler::OUTPUT);
+	UsePorts();
+	RefreshPanelData();
+}
+
+// The port tables are sized for the installed plugin with the most inputs
+// (over a thousand with lsp-plugins); each update copies only this one's.
+void LADSPAPlugin::UsePorts()
+{
+	const unsigned long n = m_InputPortCount < m_MaxInputPortCount ? m_InputPortCount : m_MaxInputPortCount;
+	m_AudioCH->SetUsed("PortName", (int)(256 * n));
+	m_AudioCH->SetUsed("GetInputPortSettings", (int)(sizeof(PortSetting) * n));
+	m_AudioCH->SetUsed("GetInputPortValues", (int)(sizeof(PortValue) * n));
+	m_AudioCH->SetUsed("Default", (int)(sizeof(float) * n));
+	m_AudioCH->SetUsed("Min", (int)(sizeof(float) * n));
+	m_AudioCH->SetUsed("Max", (int)(sizeof(float) * n));
+	m_AudioCH->SetUsed("Clamp", (int)(sizeof(bool) * n));
+	m_AudioCH->SetUsed("Value", (int)(sizeof(float) * n));
+	m_AudioCH->SetUsed("Connected", (int)(sizeof(bool) * n));
+	m_AudioCH->SetUsed("Enabled", (int)(sizeof(bool) * n));
+}
+
+void LADSPAPlugin::RefreshPanelData()
+{
+	AsUnsigned(m_UniqueIDShown) = (UnsignedType)m_UniqueID;
+	if (!m_PanelData.Mins || !m_OutData.InputPortSettings || !m_OutData.InputPortValues)
+		return;
+	for (unsigned long p = 0; p < m_InputPortCount && p < m_MaxInputPortCount; p++)
+	{
+		m_PanelData.Mins[p] = m_OutData.InputPortSettings[p].Min;
+		m_PanelData.Maxs[p] = m_OutData.InputPortSettings[p].Max;
+		m_PanelData.Clamps[p] = m_OutData.InputPortSettings[p].Clamp;
+		m_PanelData.Values[p] = m_OutData.InputPortValues[p].Value;
+		if (m_PanelData.Connected[p] != m_OutData.InputPortValues[p].Connected)
+		{
+			m_PanelData.Connected[p] = m_OutData.InputPortValues[p].Connected;
+			PanelChanged();
+		}
+		const bool offered = p >= (int)m_InputPortEnabled.size() || m_InputPortEnabled[p];
+		if (m_PanelData.Enabled[p] != offered)
+		{
+			m_PanelData.Enabled[p] = offered;
+			PanelChanged();
+		}
+	}
+	if (m_PanelData.Page != AsSigned(m_Page))
+	{
+		m_PanelData.Page = AsSigned(m_Page);
+		PanelChanged();
 	}
 }
 
@@ -288,6 +380,7 @@ void LADSPAPlugin::ExecuteCommands()
 			case (SETPAGE):
 			{
 				AsSigned(m_Page) = m_InData.Page;
+				PanelChanged();
 			}
 			break;
 			case (SELECTPLUGIN):
@@ -345,6 +438,12 @@ void LADSPAPlugin::ExecuteCommands()
 					m_OutData.InputPortSettings[m_InData.InputPortIndex].Clamp = m_InData.InputPortClamp;
 				}
 			}
+			break;
+			case (SETPORTENABLED):
+			{
+				if (m_InData.InputPortIndex < m_InputPortEnabled.size())
+					m_InputPortEnabled[m_InData.InputPortIndex] = m_InData.InputPortEnabled;
+			}
 		}
 	}
 
@@ -361,6 +460,7 @@ void LADSPAPlugin::ExecuteCommands()
 				m_OutData.InputPortValues[p].Connected = false;
 		}
 	}
+	RefreshPanelData();
 }
 
 void LADSPAPlugin::Describe(Spiral::Core::Description &d)
@@ -727,10 +827,12 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 bool LADSPAPlugin::UpdatePlugin(unsigned long UniqueID)
 {
 	ClearPlugin();
+	PanelChanged();
 	if (SelectPlugin(UniqueID)) {
 		ResetPortSettings();
 		SyncPortEnabled();
 		SetGUIExports();
+		RefreshPanelData();
 		return true;
 	}
 
@@ -849,6 +951,7 @@ bool LADSPAPlugin::SelectPlugin(unsigned long UniqueID)
 			m_UniqueID = m_PlugDesc->UniqueID;
 
 			m_InputPortCount = m_PluginInfo.NumInputs;
+			UsePorts();
 
 			size_t lbl_length;
 
@@ -916,6 +1019,7 @@ void LADSPAPlugin::ClearPlugin(void)
 		AsBoolean(m_UpdateInputs) = true;
 		m_UniqueID = 0;
 		m_InputPortCount = 0;
+		UsePorts();
 		AsUnsigned(m_UnconnectedInputs) = 0;
 		strncpy(m_Name, "None", 5);
 		strncpy(m_Maker, "None", 5);

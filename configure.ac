@@ -618,7 +618,6 @@ dnl AC_CHECK_LIB(png, png_get_copyright)
 
 AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
-dnl The LADSPA device is built in, but its editor is still a module.
 PANEL_ONLY="SampleHoldPlugin ScopePlugin ComplexEnvelopePlugin MatrixPlugin \
     AmpPlugin AnotherFilterPlugin BeatMatchPlugin CounterPlugin \
     DelayPlugin EchoPlugin EnvelopePlugin FilterPlugin FlipflopPlugin \
@@ -632,9 +631,6 @@ PANEL_ONLY="SampleHoldPlugin ScopePlugin ComplexEnvelopePlugin MatrixPlugin \
     MidiPlugin JackPlugin SpiralLoopPlugin ControllerPlugin MixerPlugin \
     StereoMixerPlugin PoshSamplerPlugin"
 GUI_PLUGINLIST=""
-if test "$build_ladspa" = "y"; then
-    GUI_PLUGINLIST="LADSPAPlugin"
-fi
 for plugin in $PLUGINLIST; do
     case " $PANEL_ONLY " in
         *" $plugin "*) ;;

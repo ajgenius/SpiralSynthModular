@@ -89,7 +89,7 @@ void ChannelHandler::UpdateDataNow(unsigned long frame)
 					#ifdef CHANNEL_DEBUG
 					cerr<<"memcpy input channel: ["<<i->first<<"]"<<endl;
 					#endif
-	               	memcpy(ch->data,ch->data_buf,ch->size);
+	               	memcpy(ch->data,ch->data_buf,ch->used);
             	} break;
 				
 				case OUTPUT :
@@ -97,7 +97,7 @@ void ChannelHandler::UpdateDataNow(unsigned long frame)
 					#ifdef CHANNEL_DEBUG
 					cerr<<"memcpy output channel: ["<<i->first<<"]"<<endl;
 					#endif
-            	    memcpy(ch->data_buf,ch->data,ch->size);
+            	    memcpy(ch->data_buf,ch->data,ch->used);
             	} break;
 				
 				// one off request type
@@ -174,6 +174,13 @@ void ChannelHandler::UpdateDataNow(unsigned long frame)
 	#endif
 }
 
+void ChannelHandler::SetUsed(const string &ID, int bytes)
+{
+    map<string,Channel*>::iterator i=m_ChannelMap.find(ID);
+    if (i!=m_ChannelMap.end())
+        i->second->used = bytes < 0 ? 0 : bytes > i->second->size ? i->second->size : bytes;
+}
+
 void ChannelHandler::RegisterData(const string &ID, Type t,void* pData, int size)
 {
     // probably don't need to lock here, as if get/set are called before
@@ -196,6 +203,7 @@ void ChannelHandler::RegisterData(const string &ID, Type t,void* pData, int size
 	cerr<<"Registered ["<<ID<<"] "<<NewCh->data_buf<<" "<<size<<endl;
 #endif
     NewCh->size      = size;
+    NewCh->used      = size;
     NewCh->data      = pData;
 	NewCh->requested = false;
 	NewCh->updated   = false;
@@ -248,6 +256,7 @@ void ChannelHandler::ReplaceData(const std::string &ID, void *pData, int size)
     pthread_mutex_lock(m_Mutex);
     i->second->data = pData;
     i->second->size = size;
+    i->second->used = size;
     free(i->second->data_buf);
     i->second->data_buf = malloc(size);
     memcpy(i->second->data_buf,i->second->data,size);

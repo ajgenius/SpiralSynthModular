@@ -46,7 +46,7 @@ SpiralPluginGUI(w,h,o,ch)
 	m_PluginList = PVec;
 
 // Get maximum input port count
-	m_GUICH->GetData("GetMaxInputPortCount",&(m_MaxInputPortCount));
+	m_GUICH->GetData("MaxPorts",&(m_MaxInputPortCount));
 	if (m_MaxInputPortCount < 1)
 		m_MaxInputPortCount = 1;
 
@@ -227,7 +227,7 @@ void LADSPAPluginGUI::Update(void)
 
 	m_GUICH->GetData("GetInputPortCount", &(m_InputPortCount));
 	m_GUICH->GetData("GetInputPortValues", m_InputPortValues);
-	m_GUICH->GetData("GetInputPortDefaults", m_InputPortDefaults);
+	m_GUICH->GetData("Default", m_InputPortDefaults);
 
 // Need to show that a connection is present
 // regardless of Refresh being set
@@ -448,12 +448,12 @@ void LADSPAPluginGUI::ClearPlugin(void)
 void LADSPAPluginGUI::SelectPlugin(void)
 {
 // Now get the new values to populate GUI controls
-	m_GUICH->GetData("GetName", m_Name);
-	m_GUICH->GetData("GetMaker", m_Maker);
+	m_GUICH->GetData("PluginName", m_Name);
+	m_GUICH->GetData("Maker", m_Maker);
 	m_GUICH->GetData("GetInputPortCount", &(m_InputPortCount));
-	m_GUICH->GetData("GetInputPortNames", m_InputPortNames);
+	m_GUICH->GetData("PortName", m_InputPortNames);
 	m_GUICH->GetData("GetInputPortSettings", m_InputPortSettings);
-	m_GUICH->GetData("GetInputPortDefaults", m_InputPortDefaults);
+	m_GUICH->GetData("Default", m_InputPortDefaults);
 
 	SetName((const char *)m_Name);
 	SetMaker((const char *)m_Maker);

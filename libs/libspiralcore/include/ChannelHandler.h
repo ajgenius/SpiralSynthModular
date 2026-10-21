@@ -61,6 +61,9 @@ public:
 		{ RegisterData(ID, t,(void**)pData,sizeof(void*)); }
 	// The frame stamps the snapshot the gui thread will read next.
 	void     UpdateDataNow(unsigned long frame=0);
+	// A table registered for the largest case copies only the bytes in use
+	// each update (all of it until this is said).
+	void     SetUsed(const std::string &ID, int bytes);
 	unsigned long GetFrame() const { return m_Frame; }
 		
 	bool     IsCommandWaiting() { return m_Command[0]; }
@@ -141,6 +144,7 @@ private:
         Type type;
         void *data_buf;
         int   size;
+        int   used;
         void *data;
 		bool requested;
 		bool updated;

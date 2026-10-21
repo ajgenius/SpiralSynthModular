@@ -38,7 +38,11 @@ namespace SpiralPanels
 		m_Box->copy_label(TextOf(node.Get("text")).c_str());
 		m_Box->labelsize((int)NumberOf(node.Get("size"), 10));
 		const std::string align = TextOf(node.Get("align"));
-		m_Box->align(FL_ALIGN_INSIDE | (align == "left" ? FL_ALIGN_LEFT : align == "right" ? FL_ALIGN_RIGHT : FL_ALIGN_CENTER));
+		const bool clip = node.Get("clip") && node.Get("clip")->AsBool();
+		m_Box->align(FL_ALIGN_INSIDE | (clip ? FL_ALIGN_CLIP : 0) |
+			(align == "left" ? FL_ALIGN_LEFT : align == "right" ? FL_ALIGN_RIGHT : FL_ALIGN_CENTER));
+		if (TextOf(node.Get("font")) == "courier")
+			m_Box->labelfont(FL_COURIER);
 		const Spumoni::JSON *texts = node.Get("texts");
 		if (texts && texts->GetType() == Spumoni::JSON::Array)
 		{

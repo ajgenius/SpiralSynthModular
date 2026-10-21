@@ -136,17 +136,21 @@ public:
 		SETDEFAULT,
 		SETMIN,
 		SETMAX,
-		SETCLAMP
+		SETCLAMP,
+		SETPORTENABLED
 	};
+
+	virtual bool     GeneratePanel(const std::string &Directory, std::string &Document);
+	virtual unsigned PanelGeneration();
 
 private:
 	bool UpdatePlugin(unsigned long UniqueID);
 	bool SelectPlugin(unsigned long UniqueID);
 	void ClearPlugin(void);
 	void ResetPortSettings(void);
+	void SyncPortEnabled(void);
 	void SetGUIExports(void);
 	void SyncPortTypes(void);
-	void SyncPortEnabled(void);
 
 	bool m_SSMPluginReset;
 
@@ -168,6 +172,7 @@ private:
 
 	unsigned long   m_PluginIndex;
 	unsigned long   m_UniqueID;
+	Spiral::Core::UnsignedProperty m_UniqueIDShown;
 	Spiral::Core::SignedProperty   m_Page;
 	Spiral::Core::ToggleProperty   m_UpdateInputs;
 
@@ -196,9 +201,25 @@ private:
 		float         InputPortMin;
 		float         InputPortMax;
 		bool          InputPortClamp;
+		bool          InputPortEnabled;
 	};
 
 	OutputChannelData     m_OutData;
+	struct PanelChannelData
+	{
+		float        *Mins;
+		float        *Maxs;
+		bool         *Clamps;
+		float        *Values;
+		bool         *Connected;
+		bool         *Enabled;
+		int           Page;
+		unsigned      Generation;
+	};
+	PanelChannelData      m_PanelData;
+	void RefreshPanelData();
+	void UsePorts();
+	void PanelChanged() { m_PanelData.Generation++; }
 	InputChannelData      m_InData;
 };
 
