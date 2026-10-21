@@ -81,6 +81,10 @@ m_TrigDelay (0)
 
 	m_ChannelCount = SignedProperty(Property::ForceUpdate|DefaultLinearFlags, 2, 1, 256, 1, 1);
 	RegisterSharedProperty(m_ChannelCount, "Channels", "Channels");
+	{
+		std::vector<std::string> none, args;
+		m_AudioCH->RegisterCommand("SETCHANNELCOUNT", SETCHANNELCOUNT, none);
+	}
 
 	m_PluginInfo.Name = "Distributor";
 	m_PluginInfo.Width=80;

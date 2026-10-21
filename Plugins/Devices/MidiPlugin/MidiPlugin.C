@@ -123,6 +123,12 @@ m_CurrentNote(0)
 	m_AudioCH->Register("CC",&m_GUIArgs.s);
 	m_AudioCH->RegisterData("Name",ChannelHandler::INPUT,
 		&m_GUIArgs.Name,sizeof(m_GUIArgs.Name));
+	{
+		std::vector<std::string> none, args;
+		args.clear(); args.push_back("CC"); args.push_back("Name");
+		m_AudioCH->RegisterCommand("ADDCONTROL", ADDCONTROL, args);
+		m_AudioCH->RegisterCommand("DELCONTROL", DELCONTROL, none);
+	}
 }
 
 MidiPlugin::~MidiPlugin()

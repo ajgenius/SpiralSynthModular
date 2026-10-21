@@ -39,9 +39,8 @@ public:
 		
 	int  GetBegin()      { return AsSigned(m_Begin); }
 	int  GetEnd()        { return AsSigned(m_End); }
-	bool GetUseRange()   { return AsBoolean(m_UseRange); }
-			
-	enum GUICommands{NONE,SET_BEGIN,SET_END,RANGE,ADD_LINE,REM_LINE,SET_VAL};
+
+	enum GUICommands{NONE,ADD_LINE=4,REM_LINE,SET_VAL};
 	
 	struct GUIArgs
 	{
@@ -68,11 +67,15 @@ public:
 private:
 
 	GUIArgs m_GUIArgs;
-	
-	unsigned int m_Pos;
+	enum { MAX_ECHO_LINES = 128 };
+	void RefreshEcho();
+	int m_EchoValues[MAX_ECHO_LINES * NUM_VALUES];
+
+	Spiral::Core::UnsignedProperty m_Pos;
 	Spiral::Core::SignedProperty m_Begin;
 	Spiral::Core::SignedProperty m_End;
 	Spiral::Core::ToggleProperty m_UseRange;
+	Spiral::Core::UnsignedProperty m_LineCount;
 	bool m_Triggered;
 };
 

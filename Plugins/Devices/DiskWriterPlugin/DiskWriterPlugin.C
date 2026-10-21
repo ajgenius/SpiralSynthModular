@@ -116,6 +116,14 @@ DiskWriterPlugin::DiskWriterPlugin()
 	m_Version = 3;
 
 	m_AudioCH->RegisterData("Filename",ChannelHandler::INPUT,m_GUIArgs.Name,256);
+	{
+		std::vector<std::string> none, args;
+		m_AudioCH->RegisterCommand("CLOSEWAV", CLOSEWAV, none);
+		args.clear(); args.push_back("Filename");
+		m_AudioCH->RegisterCommand("OPENWAV", OPENWAV, args, "s");
+		m_AudioCH->RegisterCommand("RECORD", RECORD, none);
+		m_AudioCH->RegisterCommand("STOP", STOP, none);
+	}
 }
 
 DiskWriterPlugin::~DiskWriterPlugin()

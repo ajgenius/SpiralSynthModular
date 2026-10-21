@@ -42,6 +42,7 @@ public:
 	// Its state is the subpatch's own object in the file, not a description.
 	virtual void Describe(Spiral::Core::Description &d) {}
 	virtual void Apply(Spiral::Core::Description::Reader &r) {}
+	virtual bool GeneratePanel(const std::string &Directory, std::string &Document);
 
 	// The settings the subpatch runs with, on the GUI thread.
 	const Spiral::Core::SubPatchConfig &Config() const { return m_Config; }

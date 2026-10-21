@@ -1,0 +1,896 @@
+{
+  "host_version": "0.3.43",
+  "panel": {
+    "auto_width": false,
+    "children": [
+      {
+        "bounds": [
+          0,
+          0,
+          396,
+          199
+        ],
+        "children": [
+          {
+            "bounds": [
+              3,
+              6,
+              50,
+              20
+            ],
+            "file": {
+              "extension": ".wav",
+              "save": false,
+              "title": {
+                "default": "Load a sample",
+                "key": "plugin.32.panel.load.title"
+              },
+              "then": [
+                {
+                  "property": "COMMAND",
+                  "value": "LOAD",
+                  "with": [
+                    "{index}",
+                    "text"
+                  ]
+                }
+              ]
+            },
+            "name": "load-{index}",
+            "sets": {
+              "attribute": "reload",
+              "control": "wave-{index}"
+            },
+            "text": {
+              "default": "Load",
+              "key": "plugin.32.panel.load.text"
+            },
+            "tooltip": {
+              "default": "Load a wav into this sample",
+              "key": "plugin.32.panel.load.tooltip"
+            },
+            "type": "FileChoosingButton",
+            "visible_when": {
+              "equals": "{index}",
+              "property": "CURRENTSAMPLE"
+            }
+          },
+          {
+            "bounds": [
+              53,
+              6,
+              50,
+              20
+            ],
+            "file": {
+              "extension": ".wav",
+              "save": true,
+              "title": {
+                "default": "Save the sample",
+                "key": "plugin.32.panel.save.title"
+              },
+              "then": [
+                {
+                  "property": "COMMAND",
+                  "value": "SAVE",
+                  "with": [
+                    "{index}",
+                    "text"
+                  ]
+                }
+              ]
+            },
+            "name": "save-{index}",
+            "text": {
+              "default": "Save",
+              "key": "plugin.32.panel.save.text"
+            },
+            "tooltip": {
+              "default": "Save this sample as a wav",
+              "key": "plugin.32.panel.save.tooltip"
+            },
+            "type": "FileChoosingButton",
+            "visible_when": {
+              "equals": "{index}",
+              "property": "CURRENTSAMPLE"
+            }
+          },
+          {
+            "bounds": [
+              3,
+              26,
+              75,
+              20
+            ],
+            "name": "loop-{index}",
+            "property": "LOOP{index}",
+            "text": {
+              "default": "Loop",
+              "key": "plugin.32.panel.loop.text"
+            },
+            "tooltip": {
+              "default": "Play the sample round between its loop points",
+              "key": "plugin.32.panel.loop.tooltip"
+            },
+            "type": "Button",
+            "visible_when": {
+              "equals": "{index}",
+              "property": "CURRENTSAMPLE"
+            }
+          },
+          {
+            "bounds": [
+              78,
+              26,
+              75,
+              20
+            ],
+            "name": "pingpong-{index}",
+            "property": "PINGPONG{index}",
+            "text": {
+              "default": "PingPong",
+              "key": "plugin.32.panel.pingpong.text"
+            },
+            "tooltip": {
+              "default": "Loop forwards then backwards",
+              "key": "plugin.32.panel.pingpong.tooltip"
+            },
+            "type": "Button",
+            "visible_when": {
+              "equals": "{index}",
+              "property": "CURRENTSAMPLE"
+            }
+          },
+          {
+            "bounds": [
+              3,
+              46,
+              75,
+              20
+            ],
+            "name": "pos-marker-{index}",
+            "pressed": true,
+            "sets": {
+              "attribute": "position_marker",
+              "control": "wave-{index}"
+            },
+            "text": {
+              "default": "PosMarker",
+              "key": "plugin.32.panel.pos-marker.text"
+            },
+            "toggle": true,
+            "tooltip": {
+              "default": "Show the play position on the waveform",
+              "key": "plugin.32.panel.pos-marker.tooltip"
+            },
+            "type": "Button",
+            "visible_when": {
+              "equals": "{index}",
+              "property": "CURRENTSAMPLE"
+            }
+          },
+          {
+            "bounds": [
+              78,
+              46,
+              75,
+              20
+            ],
+            "name": "retrig-{index}",
+            "property": "RETRIG{index}",
+            "text": {
+              "default": "Re-Trigger",
+              "key": "plugin.32.panel.retrig.text"
+            },
+            "tooltip": {
+              "default": "A trigger restarts the sample while it plays",
+              "key": "plugin.32.panel.retrig.tooltip"
+            },
+            "type": "Button",
+            "visible_when": {
+              "equals": "{index}",
+              "property": "CURRENTSAMPLE"
+            }
+          },
+          {
+            "bounds": [
+              158,
+              6,
+              50,
+              50
+            ],
+            "max": 2,
+            "min": 0,
+            "name": "volume-{index}",
+            "property": "VOLUME{index}",
+            "step": 0.001,
+            "tooltip": {
+              "default": "The sample's level",
+              "key": "plugin.32.panel.volume.tooltip"
+            },
+            "type": "Knob",
+            "visible_when": {
+              "equals": "{index}",
+              "property": "CURRENTSAMPLE"
+            }
+          },
+          {
+            "bounds": [
+              218,
+              6,
+              50,
+              50
+            ],
+            "max": 10,
+            "min": 0,
+            "name": "pitch-{index}",
+            "property": "PITCHMOD{index}",
+            "step": 0.001,
+            "tooltip": {
+              "default": "The sample's pitch, 1 as recorded",
+              "key": "plugin.32.panel.pitch.tooltip"
+            },
+            "type": "Knob",
+            "visible_when": {
+              "equals": "{index}",
+              "property": "CURRENTSAMPLE"
+            }
+          },
+          {
+            "bounds": [
+              278,
+              6,
+              50,
+              50
+            ],
+            "mapping": {
+              "offset": -6
+            },
+            "max": 6,
+            "min": -6,
+            "name": "octave-{index}",
+            "property": "OCTAVE{index}",
+            "step": 1,
+            "tooltip": {
+              "default": "The sample's octave, 6 as recorded",
+              "key": "plugin.32.panel.octave.tooltip"
+            },
+            "type": "Knob",
+            "visible_when": {
+              "equals": "{index}",
+              "property": "CURRENTSAMPLE"
+            }
+          },
+          {
+            "bounds": [
+              338,
+              36,
+              45,
+              20
+            ],
+            "max": 131,
+            "min": 0,
+            "name": "note-{index}",
+            "property": "NOTE{index}",
+            "step": 1,
+            "tooltip": {
+              "default": "The note that triggers this sample",
+              "key": "plugin.32.panel.note.tooltip"
+            },
+            "type": "Spinner",
+            "visible_when": {
+              "equals": "{index}",
+              "property": "CURRENTSAMPLE"
+            }
+          },
+          {
+            "bounds": [
+              3,
+              71,
+              390,
+              100
+            ],
+            "loop_end": "LOOPEND{index}",
+            "loop_start": "LOOPSTART{index}",
+            "name": "wave-{index}",
+            "play_start": "PLAYSTART{index}",
+            "pos": "SAMPLEPOS{index}",
+            "sample": {
+              "buffer": "SampleBuffer",
+              "command": "GETSAMPLE",
+              "size": "SampleSize"
+            },
+            "tooltip": {
+              "default": "The sample: drag a range, drag the play start, loop start and loop end markers, middle-drag to pan, right-drag to draw at full zoom",
+              "key": "plugin.32.panel.wave.tooltip"
+            },
+            "type": "SampleWaveform",
+            "visible_when": {
+              "equals": "{index}",
+              "property": "CURRENTSAMPLE"
+            },
+            "write": [
+              {
+                "property": "COMMAND",
+                "value": "SETPLAYPOINTS",
+                "with": [
+                  "{index}",
+                  {
+                    "attribute": "play_start",
+                    "control": "wave-{index}"
+                  },
+                  {
+                    "attribute": "loop_end",
+                    "control": "wave-{index}"
+                  },
+                  {
+                    "attribute": "loop_start",
+                    "control": "wave-{index}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "bounds": [
+              3,
+              176,
+              42,
+              20
+            ],
+            "name": "cut-{index}",
+            "sets": {
+              "attribute": "reload",
+              "control": "wave-{index}"
+            },
+            "text": {
+              "default": "Cut",
+              "key": "plugin.32.panel.cut.text"
+            },
+            "tooltip": {
+              "default": "Cut the selected range",
+              "key": "plugin.32.panel.cut.tooltip"
+            },
+            "type": "Button",
+            "visible_when": {
+              "equals": "{index}",
+              "property": "CURRENTSAMPLE"
+            },
+            "write": [
+              {
+                "property": "COMMAND",
+                "value": "CUT",
+                "with": [
+                  "{index}",
+                  {
+                    "attribute": "range_start",
+                    "control": "wave-{index}"
+                  },
+                  {
+                    "attribute": "range_end",
+                    "control": "wave-{index}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "bounds": [
+              45,
+              176,
+              42,
+              20
+            ],
+            "name": "copy-{index}",
+            "sets": {
+              "attribute": "reload",
+              "control": "wave-{index}"
+            },
+            "text": {
+              "default": "Copy",
+              "key": "plugin.32.panel.copy.text"
+            },
+            "tooltip": {
+              "default": "Copy the selected range",
+              "key": "plugin.32.panel.copy.tooltip"
+            },
+            "type": "Button",
+            "visible_when": {
+              "equals": "{index}",
+              "property": "CURRENTSAMPLE"
+            },
+            "write": [
+              {
+                "property": "COMMAND",
+                "value": "COPY",
+                "with": [
+                  "{index}",
+                  {
+                    "attribute": "range_start",
+                    "control": "wave-{index}"
+                  },
+                  {
+                    "attribute": "range_end",
+                    "control": "wave-{index}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "bounds": [
+              87,
+              176,
+              42,
+              20
+            ],
+            "name": "paste-{index}",
+            "sets": {
+              "attribute": "reload",
+              "control": "wave-{index}"
+            },
+            "text": {
+              "default": "Paste",
+              "key": "plugin.32.panel.paste.text"
+            },
+            "tooltip": {
+              "default": "Paste the selected range",
+              "key": "plugin.32.panel.paste.tooltip"
+            },
+            "type": "Button",
+            "visible_when": {
+              "equals": "{index}",
+              "property": "CURRENTSAMPLE"
+            },
+            "write": [
+              {
+                "property": "COMMAND",
+                "value": "PASTE",
+                "with": [
+                  "{index}",
+                  {
+                    "attribute": "range_start",
+                    "control": "wave-{index}"
+                  },
+                  {
+                    "attribute": "range_end",
+                    "control": "wave-{index}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "bounds": [
+              129,
+              176,
+              42,
+              20
+            ],
+            "name": "mix-{index}",
+            "sets": {
+              "attribute": "reload",
+              "control": "wave-{index}"
+            },
+            "text": {
+              "default": "Mix",
+              "key": "plugin.32.panel.mix.text"
+            },
+            "tooltip": {
+              "default": "Mix the selected range",
+              "key": "plugin.32.panel.mix.tooltip"
+            },
+            "type": "Button",
+            "visible_when": {
+              "equals": "{index}",
+              "property": "CURRENTSAMPLE"
+            },
+            "write": [
+              {
+                "property": "COMMAND",
+                "value": "MIX",
+                "with": [
+                  "{index}",
+                  {
+                    "attribute": "range_start",
+                    "control": "wave-{index}"
+                  },
+                  {
+                    "attribute": "range_end",
+                    "control": "wave-{index}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "bounds": [
+              171,
+              176,
+              42,
+              20
+            ],
+            "name": "crop-{index}",
+            "sets": {
+              "attribute": "reload",
+              "control": "wave-{index}"
+            },
+            "text": {
+              "default": "Crop",
+              "key": "plugin.32.panel.crop.text"
+            },
+            "tooltip": {
+              "default": "Crop the selected range",
+              "key": "plugin.32.panel.crop.tooltip"
+            },
+            "type": "Button",
+            "visible_when": {
+              "equals": "{index}",
+              "property": "CURRENTSAMPLE"
+            },
+            "write": [
+              {
+                "property": "COMMAND",
+                "value": "CROP",
+                "with": [
+                  "{index}",
+                  {
+                    "attribute": "range_start",
+                    "control": "wave-{index}"
+                  },
+                  {
+                    "attribute": "range_end",
+                    "control": "wave-{index}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "bounds": [
+              213,
+              176,
+              42,
+              20
+            ],
+            "name": "reverse-{index}",
+            "sets": {
+              "attribute": "reload",
+              "control": "wave-{index}"
+            },
+            "text": {
+              "default": "Reverse",
+              "key": "plugin.32.panel.reverse.text"
+            },
+            "tooltip": {
+              "default": "Reverse the selected range",
+              "key": "plugin.32.panel.reverse.tooltip"
+            },
+            "type": "Button",
+            "visible_when": {
+              "equals": "{index}",
+              "property": "CURRENTSAMPLE"
+            },
+            "write": [
+              {
+                "property": "COMMAND",
+                "value": "REV",
+                "with": [
+                  "{index}",
+                  {
+                    "attribute": "range_start",
+                    "control": "wave-{index}"
+                  },
+                  {
+                    "attribute": "range_end",
+                    "control": "wave-{index}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "bounds": [
+              255,
+              176,
+              42,
+              20
+            ],
+            "name": "amp-{index}",
+            "sets": {
+              "attribute": "reload",
+              "control": "wave-{index}"
+            },
+            "text": {
+              "default": "Amp",
+              "key": "plugin.32.panel.amp.text"
+            },
+            "tooltip": {
+              "default": "Amp the selected range",
+              "key": "plugin.32.panel.amp.tooltip"
+            },
+            "type": "Button",
+            "visible_when": {
+              "equals": "{index}",
+              "property": "CURRENTSAMPLE"
+            },
+            "write": [
+              {
+                "property": "COMMAND",
+                "value": "AMP",
+                "with": [
+                  "{index}",
+                  {
+                    "attribute": "range_start",
+                    "control": "wave-{index}"
+                  },
+                  {
+                    "attribute": "range_end",
+                    "control": "wave-{index}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "bounds": [
+              297,
+              176,
+              42,
+              20
+            ],
+            "name": "zoom-in-{index}",
+            "sets": {
+              "attribute": "zoom_in",
+              "control": "wave-{index}"
+            },
+            "text": {
+              "default": "Zoom +",
+              "key": "plugin.32.panel.zoom-in.text"
+            },
+            "tooltip": {
+              "default": "Zoom in while held",
+              "key": "plugin.32.panel.zoom-in.tooltip"
+            },
+            "type": "Button",
+            "repeat": true,
+            "visible_when": {
+              "equals": "{index}",
+              "property": "CURRENTSAMPLE"
+            }
+          },
+          {
+            "bounds": [
+              339,
+              176,
+              42,
+              20
+            ],
+            "name": "zoom-out-{index}",
+            "sets": {
+              "attribute": "zoom_out",
+              "control": "wave-{index}"
+            },
+            "text": {
+              "default": "Zoom -",
+              "key": "plugin.32.panel.zoom-out.text"
+            },
+            "tooltip": {
+              "default": "Zoom out while held",
+              "key": "plugin.32.panel.zoom-out.tooltip"
+            },
+            "type": "Button",
+            "repeat": true,
+            "visible_when": {
+              "equals": "{index}",
+              "property": "CURRENTSAMPLE"
+            }
+          }
+        ],
+        "max_count": 8,
+        "name": "samples",
+        "step_x": 0,
+        "step_y": 0,
+        "type": "Repeat"
+      },
+      {
+        "bounds": [
+          103,
+          6,
+          50,
+          20
+        ],
+        "color_role": "record",
+        "name": "record",
+        "property": "RECORDING",
+        "text": {
+          "default": "Record",
+          "key": "plugin.32.panel.record.text"
+        },
+        "tooltip": {
+          "default": "Record the input into the current sample",
+          "key": "plugin.32.panel.record.tooltip"
+        },
+        "type": "Button",
+        "write": [
+          {
+            "property": "COMMAND",
+            "value": "SETREC",
+            "with": [
+              1
+            ]
+          }
+        ],
+        "write_off": [
+          {
+            "property": "COMMAND",
+            "value": "SETREC",
+            "with": [
+              0
+            ]
+          }
+        ]
+      },
+      {
+        "bounds": [
+          158,
+          56,
+          50,
+          12
+        ],
+        "name": "volume-label",
+        "size": 10,
+        "text": {
+          "default": "Volume",
+          "key": "plugin.32.panel.volume-label.text"
+        },
+        "type": "Label"
+      },
+      {
+        "bounds": [
+          218,
+          56,
+          50,
+          12
+        ],
+        "name": "pitch-label",
+        "size": 10,
+        "text": {
+          "default": "Pitch",
+          "key": "plugin.32.panel.pitch-label.text"
+        },
+        "type": "Label"
+      },
+      {
+        "bounds": [
+          278,
+          56,
+          50,
+          12
+        ],
+        "name": "octave-label",
+        "size": 10,
+        "text": {
+          "default": "Octave",
+          "key": "plugin.32.panel.octave-label.text"
+        },
+        "type": "Label"
+      },
+      {
+        "bounds": [
+          338,
+          1,
+          45,
+          20
+        ],
+        "max": 7,
+        "min": 0,
+        "name": "sample",
+        "property": "CURRENTSAMPLE",
+        "step": 1,
+        "tooltip": {
+          "default": "The sample shown and edited",
+          "key": "plugin.32.panel.sample.tooltip"
+        },
+        "type": "Spinner"
+      },
+      {
+        "bounds": [
+          338,
+          21,
+          45,
+          12
+        ],
+        "name": "sample-label",
+        "size": 10,
+        "text": {
+          "default": "Sample",
+          "key": "plugin.32.panel.sample-label.text"
+        },
+        "type": "Label"
+      },
+      {
+        "bounds": [
+          338,
+          56,
+          45,
+          12
+        ],
+        "name": "note-label",
+        "size": 10,
+        "text": {
+          "default": "Trig Note",
+          "key": "plugin.32.panel.note-label.text"
+        },
+        "type": "Label"
+      }
+    ],
+    "height": 199,
+    "help": {
+      "default": "Eight samples, one shown at a time: Load and Save it, set its Volume, Pitch and Octave, the note that triggers it, whether it loops (and ping-pongs) and re-triggers. Drag on the waveform to select a range for Cut, Copy, Paste, Mix, Crop, Reverse and Amp; drag the play start, loop start and loop end markers; Zoom while held. Record takes the input into the current sample.",
+      "key": "plugin.32.panel.help"
+    },
+    "schema_version": 1,
+    "width": 396
+  },
+  "plugin_id": 32,
+  "properties": [
+    {
+      "class": "StringProperty",
+      "default": "",
+      "display_name": {
+        "default": "COMMAND",
+        "key": "plugin.32.property.COMMAND"
+      },
+      "hint": {
+        "default": "Command",
+        "key": "plugin.32.property.COMMAND.hint"
+      },
+      "internal": true,
+      "omitted": "internal",
+      "property": "COMMAND",
+      "read_only": false,
+      "type": "string"
+    },
+    {
+      "class": "StringProperty",
+      "default": "PoshSampler",
+      "display_name": {
+        "default": "DeviceType",
+        "key": "plugin.32.property.DEVICETYPE"
+      },
+      "hint": {
+        "default": "DeviceType",
+        "key": "plugin.32.property.DEVICETYPE.hint"
+      },
+      "internal": false,
+      "omitted": "identity",
+      "property": "DEVICETYPE",
+      "read_only": true,
+      "type": "string"
+    },
+    {
+      "class": "UnsignedProperty",
+      "default": 4,
+      "display_name": {
+        "default": "DeviceVersion",
+        "key": "plugin.32.property.DEVICEVERSION"
+      },
+      "hint": {
+        "default": "DeviceVersion",
+        "key": "plugin.32.property.DEVICEVERSION.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 0,
+      "min": 0,
+      "omitted": "identity",
+      "page": 0,
+      "property": "DEVICEVERSION",
+      "read_only": true,
+      "step": 0,
+      "type": "integer"
+    }
+  ],
+  "schema_version": 1
+}

@@ -17,6 +17,7 @@
 */ 
 
 #include "Device.h"
+#include <string.h>
 
 #ifndef ControllerPLUGIN
 #define ControllerPLUGIN
@@ -46,26 +47,19 @@ public:
 	Spiral::Core::FloatProperty &Min(int n) { return *(Spiral::Core::FloatProperty *)m_MinVal[n]; }
 	Spiral::Core::FloatProperty &Max(int n) { return *(Spiral::Core::FloatProperty *)m_MaxVal[n]; }
 
-	enum GUICommands{NONE,SETNUM,SETALL,SETNAME,SETMAX,SETCHANNEL,SETMIN};
-	struct GUIArgs
-	{
-		int Number;
-		float Value;
-		float Min;
-		float Max;
-		char Name[256];
-	};
-
 private:
-	GUIArgs m_GUIArgs;
+	char  m_NameChannel[MAX_CHANNELS][256];
+	void SyncNames();
 
 	void SetNum(int n);
-	void SetName(int n, char* name)     { ((Spiral::Core::StringProperty *)m_Names[n])->Value = name; };
+	void SetName(int n, const char* name)
+		{ ((Spiral::Core::StringProperty *)m_Names[n])->Value = name;
+		  strncpy(m_NameChannel[n], name, 255); m_NameChannel[n][255] = 0; };
 	void SetChannel(int n, float value) { ((Spiral::Core::FloatProperty *)m_ChannelVal[n])->Value.AsFloat = value; };
 	void SetMax(int n, float max)       { ((Spiral::Core::FloatProperty *)m_MaxVal[n])->Value.AsFloat = max; };
 	void SetMin(int n, float min)       { ((Spiral::Core::FloatProperty *)m_MinVal[n])->Value.AsFloat = min; };
 
-	void SetAll(int n, char *name, float max, float value, float min)
+	void SetAll(int n, const char *name, float max, float value, float min)
 		{ SetName(n, name);
 		  SetMax(n, max);
 		  SetChannel(n, value);

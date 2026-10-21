@@ -78,14 +78,12 @@ string SpiralPlugin_GetGroupName()
 
 SpiralLoopPlugin::SpiralLoopPlugin() : 
 m_Id(0),
-m_Pos(0),
 m_IntPos(0),
 m_OldPos(0),
 m_PlayBufPos(0),
 m_Playing(true),
 m_Recording(false),
 m_DelMe(false),
-m_LoopPoint(0),
 m_RecordingSource(NULL),
 m_FirstRecord(true),
 m_FixedRecord(false),
@@ -123,7 +121,8 @@ m_Triggered(false)
 	RegisterSharedProperty(m_TicksPerLoop, "TicksPerLoop", "Ticks Per Loop");
 	RegisterSharedProperty(m_Volume, "Volume", "Volume");
 	RegisterSharedProperty(m_Speed, "Speed", "Speed");
-
+	m_LoopPoint = SignedProperty(Property::ReadOnly, 0, 0, 2147483647, 1, 1);
+	RegisterSharedProperty(m_LoopPoint, "LoopPoint", "Loop length in samples");
 	m_Triggers = VectorProperty(Property::WriteOnly);
 	for (int n=0; n<MAX_TRIGGERS; n++)
 	{
@@ -147,10 +146,45 @@ m_Triggered(false)
 	m_AudioCH->Register("Length",&m_GUIArgs.Length);
 	m_AudioCH->Register("Start",&m_GUIArgs.Start);
 	m_AudioCH->Register("End",&m_GUIArgs.End);
-	m_AudioCH->Register("Pos",&m_Pos,ChannelHandler::OUTPUT);
+	m_Pos = FloatProperty(Property::ReadOnly, 0, 0, 0x7FFFFF, 1, 1);
+	RegisterSharedProperty(m_Pos, "Pos", "The playhead");
 	m_AudioCH->RegisterData("Name",ChannelHandler::INPUT,&m_GUIArgs.Name,sizeof(m_GUIArgs.Name));
 	m_AudioCH->RegisterData("SampleBuffer",ChannelHandler::OUTPUT_REQUEST,&m_SampleBuffer,TRANSBUF_SIZE);
 	m_AudioCH->Register("SampleSize",&m_SampleSize,ChannelHandler::OUTPUT_REQUEST);
+	{
+		std::vector<std::string> none, args;
+		args.clear(); args.push_back("Length");
+		m_AudioCH->RegisterCommand("CHANGE_LENGTH", CHANGE_LENGTH, args);
+		args.clear(); args.push_back("Start"); args.push_back("End");
+		m_AudioCH->RegisterCommand("COPY", COPY, args);
+		m_AudioCH->RegisterCommand("CROP", CROP, none);
+		args.clear(); args.push_back("Start"); args.push_back("End");
+		m_AudioCH->RegisterCommand("CUT", CUT, args);
+		m_AudioCH->RegisterCommand("DOUBLE", DOUBLE, none);
+		m_AudioCH->RegisterCommand("ENDRECORD", ENDRECORD, none);
+		m_AudioCH->RegisterCommand("GETSAMPLE", GETSAMPLE, none);
+		m_AudioCH->RegisterCommand("HALF", HALF, none);
+		m_AudioCH->RegisterCommand("KEEPDUB", KEEPDUB, none);
+		args.clear(); args.push_back("Name");
+		m_AudioCH->RegisterCommand("LOAD", LOAD, args, "s");
+		args.clear(); args.push_back("Start"); args.push_back("End"); args.push_back("Length");
+		m_AudioCH->RegisterCommand("NEW_TRIGGER", NEW_TRIGGER, args);
+		m_AudioCH->RegisterCommand("OVERDUB", OVERDUB, none);
+		args.clear(); args.push_back("Start");
+		m_AudioCH->RegisterCommand("PASTE", PASTE, args);
+		args.clear(); args.push_back("Start");
+		m_AudioCH->RegisterCommand("PASTEMIX", PASTEMIX, args);
+		m_AudioCH->RegisterCommand("RECORD", RECORD, none);
+		args.clear(); args.push_back("Start"); args.push_back("End");
+		m_AudioCH->RegisterCommand("REVERSE_RANGE", REVERSE_RANGE, args);
+		args.clear(); args.push_back("Name");
+		m_AudioCH->RegisterCommand("SAVE", SAVE, args, "s");
+		m_AudioCH->RegisterCommand("START", START, none);
+		m_AudioCH->RegisterCommand("STOP", STOP, none);
+		m_AudioCH->RegisterCommand("UNDODUB", UNDODUB, none);
+		args.clear(); args.push_back("Start"); args.push_back("End");
+		m_AudioCH->RegisterCommand("ZERO_RANGE", ZERO_RANGE, args);
+	}
 
 	m_Version=2;
 }
@@ -184,7 +218,7 @@ void SpiralLoopPlugin::Execute()
 	// get the triggers active this frame
 	for (unsigned int i=0; i<TriggerCount(); i++)
 	{
-		if (m_Pos > AsFloat(TriggerTime(i))*m_StoreBuffer.GetLength() &&
+		if (AsFloat(m_Pos) > AsFloat(TriggerTime(i))*m_StoreBuffer.GetLength() &&
 			!m_Fired[i])
 		{
 			GetOutputBuf(AsSigned(TriggerChannel(i))+2)->Set(1);
@@ -247,16 +281,11 @@ void SpiralLoopPlugin::ExecuteCommands()
 		case CROP			: Crop(); break;
 		case KEEPDUB		: MixDub(); break;
 		case UNDODUB		: ClearDub(); break;
-		case CHANGE_LENGTH	: m_LoopPoint=(int)(m_StoreBuffer.GetLength()*m_GUIArgs.Length); break;
+		case CHANGE_LENGTH	: AsSigned(m_LoopPoint)=(int)(m_StoreBuffer.GetLength()*m_GUIArgs.Length); break;
 		case NEW_TRIGGER	: 
 			{
 				if ((int)TriggerCount()!=m_GUIArgs.Start) cerr<<"no of triggers error!"<<endl;
 				AddTrigger(m_GUIArgs.End, m_GUIArgs.Length); break;
-			}
-		case UPDATE_TRIGGER	: 
-			{
-				AsSigned(TriggerChannel(m_GUIArgs.Start)) = m_GUIArgs.End;
-				AsFloat(TriggerTime(m_GUIArgs.Start))    = m_GUIArgs.Length;			
 			}
 		case GETSAMPLE    	: 
 			{
@@ -270,7 +299,7 @@ void SpiralLoopPlugin::ExecuteCommands()
 void SpiralLoopPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(DeviceVersion).Separator(" "); 
-	d.Value(m_LoopPoint).Key("LOOPPOINT", "SignedProperty").Separator(" ").Value(m_Speed).Separator(" ").Value(m_Volume).Separator(" ").Value(m_TicksPerLoop).Separator(" ");
+	d.Value(m_LoopPoint).Separator(" ").Value(m_Speed).Separator(" ").Value(m_Volume).Separator(" ").Value(m_TicksPerLoop).Separator(" ");
 	d.Value(m_TriggerCount).Separator(" ");
 	for (unsigned int i=0; i<TriggerCount(); i++)
 	{
@@ -282,12 +311,7 @@ void SpiralLoopPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int version;
 	r.Value(version);
-	if (r.Named())
-		r.At(r.Find("LOOPPOINT"), m_LoopPoint);
-	else
-		r.Value(m_LoopPoint);
-
-	r.Value(m_Speed).Value(m_Volume).Value(m_TicksPerLoop);
+	r.Value(m_LoopPoint).Value(m_Speed).Value(m_Volume).Value(m_TicksPerLoop);
 	r.Value(m_TriggerCount);
 	if (AsSigned(m_TriggerCount) < 0) AsSigned(m_TriggerCount) = 0;
 	if (AsSigned(m_TriggerCount) > MAX_TRIGGERS) AsSigned(m_TriggerCount) = MAX_TRIGGERS;
@@ -297,7 +321,7 @@ void SpiralLoopPlugin::Apply(Spiral::Core::Description::Reader &r)
 		r.Value(TriggerChannel(n)).Value(TriggerTime(n));
 	}
 }
-	
+
 bool SpiralLoopPlugin::SaveExternalFiles(const string &Dir)
 {
 	ostringstream temp;
@@ -355,7 +379,7 @@ bool SpiralLoopPlugin::GetOutput(Sample &data)
 	
 	if (m_Recording)
 	{	
-		RecordBuf(m_Pos, data.GetLength());
+		RecordBuf(AsFloat(m_Pos), data.GetLength());
 			
 		if (!m_StoreBuffer.GetLength())
 		{
@@ -368,25 +392,25 @@ bool SpiralLoopPlugin::GetOutput(Sample &data)
 	
 	for (int n=0; n<data.GetLength(); n++)
 	{		
-		Pos=static_cast<int>(m_Pos);
+		Pos=static_cast<int>(AsFloat(m_Pos));
 				
 		// brute force fix
-		if (Pos>0 && Pos<m_LoopPoint)
+		if (Pos>0 && Pos<AsSigned(m_LoopPoint))
 		{
-			data.Set(n,(m_StoreBuffer[m_Pos]+m_DubBuffer[m_Pos])*AsFloat(m_Volume));
+			data.Set(n,(m_StoreBuffer[AsFloat(m_Pos)]+m_DubBuffer[AsFloat(m_Pos)])*AsFloat(m_Volume));
 		}
 		else data.Set(n,0);
 		
-		m_Pos+=AsFloat(m_Speed);
+		AsFloat(m_Pos)+=AsFloat(m_Speed);
 		
-		if (static_cast<int>(m_Pos)>=m_LoopPoint)
+		if (static_cast<int>(AsFloat(m_Pos))>=AsSigned(m_LoopPoint))
 		{
 			ret=true;
-			m_Pos=0;
+			AsFloat(m_Pos)=0;
 		}
 	}
 	
-	m_IntPos=static_cast<int>(m_Pos);
+	m_IntPos=static_cast<int>(AsFloat(m_Pos));
 	
 	return ret;
 }
@@ -394,10 +418,10 @@ bool SpiralLoopPlugin::GetOutput(Sample &data)
 void SpiralLoopPlugin::AllocateMem(int Length)
 {		
 	// We might need to keep these values (if loading workspace)
-	if (m_LoopPoint>Length) m_LoopPoint=Length;
-	if (m_Pos>Length) m_Pos=0;
+	if (AsSigned(m_LoopPoint)>Length) AsSigned(m_LoopPoint)=Length;
+	if (AsFloat(m_Pos)>Length) AsFloat(m_Pos)=0;
 	
-	if (m_LoopPoint==0) m_LoopPoint=Length;
+	if (AsSigned(m_LoopPoint)==0) AsSigned(m_LoopPoint)=Length;
 	
 	if (!m_StoreBuffer.Allocate(Length) || 
 	    !m_DubBuffer.Allocate(Length))
@@ -413,7 +437,7 @@ void SpiralLoopPlugin::Clear()
 	m_DubBuffer.Clear();
 	m_FixedRecord=false;
 	m_FirstRecord=true;
-	m_LoopPoint=0;
+	AsSigned(m_LoopPoint)=0;
 }
 
 void SpiralLoopPlugin::RecordBuf(float Pos, int Length)
@@ -443,7 +467,7 @@ void SpiralLoopPlugin::RecordBuf(float Pos, int Length)
 	
 	if (m_FixedRecord)
 	{
-		m_RecLength=m_LoopPoint;
+		m_RecLength=AsSigned(m_LoopPoint);
 				
 		if (Pos>=m_StoreBuffer.GetLength())
 		{
@@ -510,22 +534,22 @@ void SpiralLoopPlugin::RecordBuf(float Pos, int Length)
 void SpiralLoopPlugin::EndRecordBuf()
 {
 	m_FirstRecord=true;	
-	m_LoopPoint=m_StoreBuffer.GetLength();
+	AsSigned(m_LoopPoint)=m_StoreBuffer.GetLength();
 	
 	if (!m_FixedRecord)
 	{
 		// reallocate the hold buffer for the new size
 		// (if the size has changed)
-		m_DubBuffer.Allocate(m_LoopPoint);
+		m_DubBuffer.Allocate(AsSigned(m_LoopPoint));			
 	}
 }
 
 void SpiralLoopPlugin::Crop()
 {
-	if (m_LoopPoint<m_StoreBuffer.GetLength())
+	if (AsSigned(m_LoopPoint)<m_StoreBuffer.GetLength())
 	{
-		m_StoreBuffer.CropTo(m_LoopPoint);
-		m_DubBuffer.CropTo(m_LoopPoint);
+		m_StoreBuffer.CropTo(AsSigned(m_LoopPoint));		
+		m_DubBuffer.CropTo(AsSigned(m_LoopPoint)); 
 	}
 }
 
@@ -535,7 +559,7 @@ void SpiralLoopPlugin::Double()
 	
 	m_StoreBuffer.Add(m_StoreBuffer);
 	m_DubBuffer.Add(m_DubBuffer);
-	m_LoopPoint=m_StoreBuffer.GetLength();
+	AsSigned(m_LoopPoint)=m_StoreBuffer.GetLength();
 }
 
 void SpiralLoopPlugin::MatchLength(int Len)
@@ -570,13 +594,13 @@ void SpiralLoopPlugin::Cut(int Start, int End)
 	m_StoreBuffer.GetRegion(m_CopyBuffer,Start,End);
 	m_StoreBuffer.Remove(Start,End);
 	
-	if (m_StoreBuffer.GetLength()<m_LoopPoint)
+	if (m_StoreBuffer.GetLength()<AsSigned(m_LoopPoint))
 	{
-		m_LoopPoint=m_StoreBuffer.GetLength();
+		AsSigned(m_LoopPoint)=m_StoreBuffer.GetLength();
 	}
-	if (m_Pos>m_LoopPoint)
+	if (AsFloat(m_Pos)>AsSigned(m_LoopPoint))
 	{
-		m_Pos=0;
+		AsFloat(m_Pos)=0;
 	}
 	
 	m_DubBuffer.Allocate(m_StoreBuffer.GetLength());
@@ -591,13 +615,13 @@ void SpiralLoopPlugin::Paste(int Start)
 { 
 	m_StoreBuffer.Insert(m_CopyBuffer,Start); 
 	
-	if (m_StoreBuffer.GetLength()<m_LoopPoint)
+	if (m_StoreBuffer.GetLength()<AsSigned(m_LoopPoint))
 	{
-		m_LoopPoint=m_StoreBuffer.GetLength();
+		AsSigned(m_LoopPoint)=m_StoreBuffer.GetLength();
 	}
-	if (m_Pos>m_LoopPoint)
+	if (AsFloat(m_Pos)>AsSigned(m_LoopPoint))
 	{
-		m_Pos=0;
+		AsFloat(m_Pos)=0;
 	}
 	
 	m_DubBuffer.Allocate(m_StoreBuffer.GetLength());
@@ -626,13 +650,13 @@ void SpiralLoopPlugin::Halve()
 	m_StoreBuffer.Shrink(m_StoreBuffer.GetLength()/2);
 	m_DubBuffer.Shrink(m_DubBuffer.GetLength()/2);
 
-	if (m_StoreBuffer.GetLength()<m_LoopPoint)
+	if (m_StoreBuffer.GetLength()<AsSigned(m_LoopPoint))
 	{
-		m_LoopPoint=m_StoreBuffer.GetLength();
+		AsSigned(m_LoopPoint)=m_StoreBuffer.GetLength();
 	}
-	if (m_Pos>m_LoopPoint)
+	if (AsFloat(m_Pos)>AsSigned(m_LoopPoint))
 	{
-		m_Pos=0;
+		AsFloat(m_Pos)=0;
 	}
 }
 

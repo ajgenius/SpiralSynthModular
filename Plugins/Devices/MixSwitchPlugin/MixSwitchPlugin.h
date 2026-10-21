@@ -31,18 +31,15 @@ class MixSwitchPlugin : public Spiral::Core::Device {
     virtual void ExecuteCommands();
     virtual void Describe(Spiral::Core::Description &d);
     virtual void Apply(Spiral::Core::Description::Reader &r);
-    int GetSwitch (void) { return AsSigned(m_SwitchPos); }
+    int GetSwitch (void) { return m_Position; }
     int GetChans (void) { return m_PluginInfo.NumInputs - 2; }
-    enum GUICommands { NONE, SETCHANS };
-    struct GUIArgs {
-      int Switch, Echo;
-      bool Auto;
-    };
   private:
-    GUIArgs m_GUIArgs;
     void SetChans (int n);
   Spiral::Core::SignedProperty m_Chans;
     Spiral::Core::SignedProperty m_SwitchPos;
+    Spiral::Core::UnsignedProperty m_Echo;
+    Spiral::Core::ToggleProperty m_Auto;
+    int m_Position;
     bool m_Triggered;
     void CreatePorts (int n = 2, bool AddPorts = false);
     friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, MixSwitchPlugin &o);

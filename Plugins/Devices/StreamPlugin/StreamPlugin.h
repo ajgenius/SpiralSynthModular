@@ -46,10 +46,11 @@ class StreamPlugin : public Spiral::Core::Device {
       Spiral::Core::FloatProperty m_GlobalPos, m_Pitch, m_Pos;
       enum Mode { PLAYM, STOPM } m_Mode;
       struct GUIArgs {
-	     float  Time, TimeOut, MaxTime;
+	     float  Time;
 	     char FileName[256];
-             bool PlayOut;
       } m_GUIArgs;
+      Spiral::Core::FloatProperty m_TimeOut, m_MaxTime;
+      Spiral::Core::ToggleProperty m_Playing;
 
       Spiral::Core::FloatProperty m_Volume, m_PitchMod;
       Spiral::Core::StringProperty m_FileName;

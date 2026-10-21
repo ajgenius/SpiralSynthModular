@@ -61,14 +61,17 @@ int SpiralPlugin_GetType()
 ///////////////////////////////////////////////////////
 
 SplitSwitchPlugin::SplitSwitchPlugin () :
+m_Position (0),
 m_Triggered (false)
 {
 	m_SwitchPos = SignedProperty(DefaultLinearFlags, 0, 0, 100, 1, 1);
+	RegisterSharedProperty(m_SwitchPos, "Switch", "Selected output");
   m_Chans = SignedProperty(DefaultLinearFlags, 2, 1, 256, 1, 1);
-  RegisterSharedProperty(m_Chans, "Chans", "Number of channels");
-  RegisterSharedProperty(m_SwitchPos, "Switch", "Selected output");
-  m_GUIArgs.Switch = 1;
-  m_GUIArgs.Echo = 1;
+  RegisterSharedPropertyWithKey(m_Chans, "Chans", "Chans", "Number of channels");
+  m_Echo = UnsignedProperty(Property::ReadOnly, 0, 0, 0, 0, 0);
+  RegisterSharedProperty(m_Echo, "Echo", "The output in effect");
+  m_Auto = ToggleProperty(Property::ReadOnly, false);
+  RegisterSharedProperty(m_Auto, "Auto", "Switched by the CV or the clock");
   m_PluginInfo.Name = "SplitSwitch";
   m_PluginInfo.Width = 80;
   m_PluginInfo.Height = 80;
@@ -83,12 +86,6 @@ m_Triggered (false)
 
 	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
-  // Switch Position <- GUI
-  m_AudioCH->Register ("Switch", &m_GUIArgs.Switch);
-  // Switch Position -> GUI
-  m_AudioCH->Register ("Echo", &m_GUIArgs.Echo, ChannelHandler::OUTPUT);
-  // Auto Mode (Switch position is controlled by CV or Clock = True, Switch Position controlled by GUI = False
-  m_AudioCH->Register ("Auto", &m_GUIArgs.Auto, ChannelHandler::OUTPUT);
 }
 
 SplitSwitchPlugin::~SplitSwitchPlugin () {
@@ -101,12 +98,7 @@ PluginInfo &SplitSwitchPlugin::Initialise (const HostInfo *Host) {
 
 
 void SplitSwitchPlugin::ExecuteCommands () {
-  if (m_AudioCH->IsCommandWaiting ()) {
-    switch (m_AudioCH->GetCommand()) {
-      case (SETCHANS)  : SetChans (AsSigned(m_Chans));
-                         break;
-    }
-  }
+  if (AsSigned(m_Chans) != GetChans ()) SetChans (AsSigned(m_Chans));
 }
 
 void SplitSwitchPlugin::SetChans (int n) {
@@ -133,9 +125,8 @@ void SplitSwitchPlugin::Reset()
 {
 	ResetPorts();
 	m_Triggered=false;
-	AsSigned(m_Chans) = 2;
-	m_GUIArgs.Switch = 1;
-	m_GUIArgs.Echo = 1;
+	m_Position = AsSigned(m_SwitchPos);
+	AsUnsigned(m_Echo) = m_Position;
 }
 
 void SplitSwitchPlugin::Execute() {
@@ -145,13 +136,13 @@ void SplitSwitchPlugin::Execute() {
   if (InputExists (2)) {
     for (n=0; n<m_HostInfo->BUFSIZE; n++) {
       if (InputExists (0)) {
-        m_GUIArgs.Auto = true;
+        AsBoolean(m_Auto) = true;
         // Check the Switch Pos CV Value
         const float selection = fabs (GetInput (0, n));
-        AsSigned(m_SwitchPos) = Spiral::Core::IsFinite (selection) && selection < NumChans + 1 ? lrint (selection) : 1;
+        m_Position = Spiral::Core::IsFinite (selection) && selection < NumChans + 1 ? lrint (selection) : 1;
       }
       else if (InputExists (1)) {
-        m_GUIArgs.Auto = true;
+        AsBoolean(m_Auto) = true;
         // Check the trigger CV value
         if (GetInput (1, n) < 0.01) {
           m_Triggered = false;
@@ -159,18 +150,18 @@ void SplitSwitchPlugin::Execute() {
         else {
           if (!m_Triggered) {
             m_Triggered = true;
-            AsSigned(m_SwitchPos) = (AsSigned(m_SwitchPos)+1);
+            m_Position = m_Position + 1;
           }
         }
       }
       else {
-        m_GUIArgs.Auto = false;
-        AsSigned(m_SwitchPos)=(m_GUIArgs.Switch);
+        AsBoolean(m_Auto) = false;
+        m_Position = AsSigned(m_SwitchPos);
       }
-      if (AsSigned(m_SwitchPos) > NumChans) AsSigned(m_SwitchPos) = 1;
-      m_GUIArgs.Echo = AsSigned(m_SwitchPos);
-      SetOutput (0, n, AsSigned(m_SwitchPos));
-      SetOutput (AsSigned(m_SwitchPos), n, GetInput (2, n));
+      if (m_Position > NumChans) m_Position = 1;
+      AsUnsigned(m_Echo) = m_Position;
+      SetOutput (0, n, m_Position);
+      SetOutput (m_Position, n, GetInput (2, n));
     }
   }
 }
@@ -184,4 +175,6 @@ void SplitSwitchPlugin::Apply(Spiral::Core::Description::Reader &r) {
   r.Value(Version).Value(m_Chans).Value(m_SwitchPos);
   m_Chans.Clamp();
   SetChans (AsSigned(m_Chans));
+  m_Position = AsSigned(m_SwitchPos);
+  AsUnsigned(m_Echo) = m_Position;
 }

@@ -1,0 +1,152 @@
+{
+  "host_version": "0.3.42",
+  "panel": {
+    "children": [
+      {
+        "bounds": [
+          13,
+          6,
+          20,
+          70
+        ],
+        "inverted": false,
+        "name": "cutoff-slider",
+        "property": "CUTOFF",
+        "type": "Slider",
+        "vertical": true
+      },
+      {
+        "bounds": [
+          13,
+          76,
+          20,
+          11
+        ],
+        "name": "cutoff-label",
+        "text": {
+          "default": "Cutoff",
+          "key": "plugin.12.panel.cutoff-label.text"
+        },
+        "type": "Label"
+      },
+      {
+        "bounds": [
+          56,
+          4,
+          45,
+          45
+        ],
+        "name": "resonance-knob",
+        "property": "RESONANCE",
+        "style": "dot",
+        "type": "Knob"
+      },
+      {
+        "bounds": [
+          56,
+          49,
+          45,
+          11
+        ],
+        "name": "emphasis-label",
+        "text": {
+          "default": "Emphasis",
+          "key": "plugin.12.panel.emphasis-label.text"
+        },
+        "type": "Label"
+      }
+    ],
+    "height": 94,
+    "help": {
+      "default": "A 12db approximation of Chamberlin two-pole filter.\nState Variable Filter with low, band and highpass modes plus\nnotch and peaking outputs that you can use simulaneously.\n\nIt was broken for ages, but it's fixed now - dave",
+      "key": "plugin.12.panel.help"
+    },
+    "schema_version": 1,
+    "width": 116
+  },
+  "plugin_id": 12,
+  "properties": [
+    {
+      "class": "FloatProperty",
+      "default": 0,
+      "display_name": {
+        "default": "Cutoff",
+        "key": "plugin.12.property.CUTOFF"
+      },
+      "hint": {
+        "default": "Cutoff",
+        "key": "plugin.12.property.CUTOFF.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 1,
+      "min": 0,
+      "page": 0.0010000000474974513,
+      "property": "CUTOFF",
+      "read_only": false,
+      "step": 9.999999747378752e-05,
+      "type": "number"
+    },
+    {
+      "class": "StringProperty",
+      "default": "SVFilter",
+      "display_name": {
+        "default": "DeviceType",
+        "key": "plugin.12.property.DEVICETYPE"
+      },
+      "hint": {
+        "default": "DeviceType",
+        "key": "plugin.12.property.DEVICETYPE.hint"
+      },
+      "internal": false,
+      "omitted": "identity",
+      "property": "DEVICETYPE",
+      "read_only": true,
+      "type": "string"
+    },
+    {
+      "class": "UnsignedProperty",
+      "default": 2,
+      "display_name": {
+        "default": "DeviceVersion",
+        "key": "plugin.12.property.DEVICEVERSION"
+      },
+      "hint": {
+        "default": "DeviceVersion",
+        "key": "plugin.12.property.DEVICEVERSION.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 0,
+      "min": 0,
+      "omitted": "identity",
+      "page": 0,
+      "property": "DEVICEVERSION",
+      "read_only": true,
+      "step": 0,
+      "type": "integer"
+    },
+    {
+      "class": "FloatProperty",
+      "default": 0,
+      "display_name": {
+        "default": "Resonance",
+        "key": "plugin.12.property.RESONANCE"
+      },
+      "hint": {
+        "default": "Resonance",
+        "key": "plugin.12.property.RESONANCE.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 1,
+      "min": 0,
+      "page": 9.999999747378752e-05,
+      "property": "RESONANCE",
+      "read_only": false,
+      "step": 9.999999747378752e-06,
+      "type": "number"
+    }
+  ],
+  "schema_version": 1
+}

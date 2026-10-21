@@ -21,10 +21,12 @@
 #include "DeviceSource.h"
 #include "PanelControlRegistry.h"
 #include "JSON.h"
+#include "Fl_VirtualScrollArea.H"
 #include <FL/Fl.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Input_.H>
+#include <FL/fl_draw.H>
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
@@ -76,6 +78,7 @@ namespace SpiralPanels
 					}
 				}
 			Fl_Group::draw();
+			m_Owner.DrawOverlay();
 		}
 
 	private:
@@ -96,10 +99,18 @@ namespace SpiralPanels
 		m_Inverted(false),
 		m_ComputerKeys(node.Get("computer_keys") && node.Get("computer_keys")->AsBool()),
 		m_Octave(4),
-		m_Held(ComputerKeyCount, -1)
+		m_Held(ComputerKeyCount, -1),
+		m_Status(TextOf(node.Get("status"))),
+		m_Framed(false),
+		m_FramedOctave(-1)
 	{
 		const int keys = (int)NumberOf(node.Get("note_count"), 60);
 		const int KeyWidth = (int)NumberOf(node.Get("white_key_width"), 10);
+		// Where a document gives them, black keys of their own size, set into
+		// the white key before them, as in the private tree.
+		const int BlackWidth = (int)NumberOf(node.Get("black_key_width"), KeyWidth);
+		const int BlackHeight = (int)NumberOf(node.Get("black_key_height"), m_H * 3 / 5);
+		const int BlackOffset = (int)NumberOf(node.Get("black_key_offset"), KeyWidth / 2);
 		const Spumoni::JSON *notes = node.Get("notes");
 		if (notes && notes->GetType() == Spumoni::JSON::Object)
 		{
@@ -152,7 +163,7 @@ namespace SpiralPanels
 				Count++;
 				continue;
 			}
-			Fl_Button *key = new Fl_Button(m_X + Pos + KeyWidth / 2, m_Y, KeyWidth, m_H * 3 / 5, "");
+			Fl_Button *key = new Fl_Button(m_X + Pos + BlackOffset, m_Y, BlackWidth, BlackHeight, "");
 			key->box(FL_THIN_UP_BOX);
 			key->labelsize(10);
 			key->when(FL_WHEN_CHANGED);
@@ -181,6 +192,104 @@ namespace SpiralPanels
 	void PanelPianoKeys::Refresh()
 	{
 		Load();
+		RefreshFocus();
+	}
+
+	Fl_Button *PanelPianoKeys::Key(int note) const
+	{
+		const int index = note - m_First;
+		return index >= 0 && index < (int)m_Keys.size() ? m_Keys[index] : NULL;
+	}
+
+	// The keys' group, or a key clicked inside it, has the keyboard.
+	bool PanelPianoKeys::Focused() const
+	{
+		return m_ComputerKeys && Fl::focus() && Fl::focus()->inside(m_Group);
+	}
+
+	// The last note the computer keys reach: two octaves and a fourth up, or
+	// the top key, which the keys past it share.
+	int PanelPianoKeys::LastMapped() const
+	{
+		return std::min(m_First + (int)m_Keys.size() - 1, m_Octave * 12 + ComputerKeyCount - 1);
+	}
+
+	// While the keys have the computer keyboard, as in the private tree's
+	// Keyboard: the keys it plays are tinted, and framed and lettered by
+	// DrawOverlay, and the status line says which octaves they are.
+	void PanelPianoKeys::RefreshFocus()
+	{
+		const bool focused = Focused();
+		const int first = m_Octave * 12, last = LastMapped();
+		if (focused != m_Framed || m_Octave != m_FramedOctave)
+		{
+			for (size_t n = 0; n < m_Keys.size(); ++n)
+			{
+				const int note = m_First + (int)n;
+				const Fl_Color base = IsBlack(note) ? FL_BLACK : FL_WHITE;
+				if (m_Keys[n])
+					m_Keys[n]->color(focused && note >= first && note <= last ?
+						fl_color_average(FL_SELECTION_COLOR, base, 0.35f) : base);
+			}
+			m_Group->redraw();
+			m_Framed = focused;
+			m_FramedOctave = m_Octave;
+		}
+
+		if (m_Status.empty())
+			return;
+		char text[64];
+		if (focused)
+			std::snprintf(text, sizeof(text), "Octaves %d-%d (F%d) | F1-F11", m_Octave, last / 12, m_Octave + 1);
+		else
+			std::snprintf(text, sizeof(text), "Hover panel to play | F1-F11: octave");
+		if (m_StatusText == text)
+			return;
+		PanelControl *status = m_Panel.FindControl(m_Status);
+		if (status && status->Widget())
+		{
+			status->Widget()->copy_label(text);
+			m_StatusText = text;
+		}
+	}
+
+	void PanelPianoKeys::DrawOverlay()
+	{
+		if (!Focused())
+			return;
+		const int first = m_Octave * 12, last = LastMapped();
+		const Fl_Button *from = Key(first), *to = Key(last);
+		if (!from || !to)
+			return;
+		fl_color(FL_SELECTION_COLOR);
+		fl_line_style(FL_SOLID, 2);
+		fl_rect(from->x() + 1, m_Group->y() + 1, to->x() + to->w() - from->x() - 2, m_Group->h() - 2);
+		fl_line_style(0);
+
+		// Each key's computer key; the top key, shared by the keys past it, is marked +.
+		for (int i = 0; i < ComputerKeyCount; ++i)
+		{
+			const int note = first + i;
+			const Fl_Button *key = Key(note);
+			if (!key)
+				break;
+			const bool black = IsBlack(note);
+			char label[3] = { ComputerKeys[i], 0, 0 };
+			if (note == m_First + (int)m_Keys.size() - 1 && i < ComputerKeyCount - 1)
+				label[1] = '+';
+			fl_font(FL_HELVETICA, label[1] ? 8 : black ? 9 : 11);
+			fl_color(black ? FL_WHITE : fl_rgb_color(20, 18, 15));
+			fl_draw(label, key->x(), key->y() + key->h() - (black ? 14 : 24), key->w(), 12, FL_ALIGN_CENTER);
+		}
+	}
+
+	// The chosen octave scrolled to the left of the view.
+	void PanelPianoKeys::ShowOctave()
+	{
+		Fl_VirtualScrollArea *area = dynamic_cast<Fl_VirtualScrollArea *>(m_Group->parent());
+		const Fl_Button *key = Key(m_Octave * 12);
+		if (area && key)
+			area->SetView(area->ViewX() + key->x() - area->x(), 0);
 	}
 
 	void PanelPianoKeys::Changed(Fl_Widget *widget, void *data)
@@ -217,6 +326,7 @@ namespace SpiralPanels
 				// Hovering takes the keys without sounding a note, unless a text field is being edited.
 				if (!dynamic_cast<Fl_Input_ *>(Fl::focus()))
 					Fl::focus(m_Group);
+				RefreshFocus();
 				return true;
 
 			case FL_FOCUS:
@@ -224,6 +334,7 @@ namespace SpiralPanels
 
 			case FL_UNFOCUS:
 				ReleaseKeys();
+				RefreshFocus();
 				return true;
 
 			case FL_KEYDOWN:
@@ -241,6 +352,8 @@ namespace SpiralPanels
 		if (event == FL_KEYDOWN && key >= FL_F + 1 && key <= FL_F + 11)
 		{
 			m_Octave = key - (FL_F + 1);
+			ShowOctave();
+			RefreshFocus();
 			return true;
 		}
 

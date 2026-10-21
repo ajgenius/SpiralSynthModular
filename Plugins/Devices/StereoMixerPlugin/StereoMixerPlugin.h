@@ -22,7 +22,6 @@
 #define StereoMixerPLUGIN
 
 static const int MAX_CHANNELS = 10;
-static const int NUM_CHANNELS = 4; // the editor's strips
 
 class StereoMixerPlugin : public Spiral::Core::Device, public StablePortLayout
 {
@@ -42,16 +41,7 @@ public:
 	Spiral::Core::FloatProperty &Channel(int n) { return *(Spiral::Core::FloatProperty *)m_ChannelVal[n]; }
 	Spiral::Core::FloatProperty &Pan(int n) { return *(Spiral::Core::FloatProperty *)m_Pan[n]; }
 	
-	enum GUICommands {NONE,SETCH,SETPAN};
-	struct GUIArgs
-	{
-		int Num;
-		float Value;
-	};
-	
 private:
-	GUIArgs m_GUIArgs;
-
 	void SetChannel(int n, float s) { ((Spiral::Core::FloatProperty *)m_ChannelVal[n])->Value.AsFloat = s; }
 	void SetPan(int n, float s) { ((Spiral::Core::FloatProperty *)m_Pan[n])->Value.AsFloat = s; }
 	void SetChannels(int num);

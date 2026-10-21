@@ -99,7 +99,6 @@ m_LastNote(-1)
 	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 	
-	m_AudioCH->Register("Note",&m_Note);
 }
 
 NoteSnapPlugin::~NoteSnapPlugin()
@@ -153,14 +152,6 @@ void NoteSnapPlugin::Execute()
 
 void NoteSnapPlugin::ExecuteCommands()
 {
-	if (m_AudioCH->IsCommandWaiting())
-	{
-		switch (m_AudioCH->GetCommand())
-		{
-			case NOTE_ON  : SetFilter(m_Note, true); break;
-			case NOTE_OFF : SetFilter(m_Note, false); break;
-		}
-	}
 }
 	
 void NoteSnapPlugin::Migrate(Spiral::Core::Description &d)

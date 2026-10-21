@@ -1,0 +1,321 @@
+{
+  "host_version": "0.3.43",
+  "panel": {
+    "children": [
+      {
+        "bounds": [
+          95,
+          1,
+          30,
+          30
+        ],
+        "color_role": "status.on",
+        "name": "attached",
+        "property": "CONNECTED",
+        "type": "LEDButton"
+      },
+      {
+        "bounds": [
+          3,
+          1,
+          25,
+          25
+        ],
+        "delta": {
+          "amount": -1,
+          "property": [
+            "NUMINPUTS",
+            "NUMOUTPUTS"
+          ]
+        },
+        "name": "remove",
+        "text": {
+          "default": "-",
+          "key": "plugin.31.panel.remove.text"
+        },
+        "type": "Button"
+      },
+      {
+        "bounds": [
+          28,
+          1,
+          25,
+          25
+        ],
+        "delta": {
+          "amount": 1,
+          "property": [
+            "NUMINPUTS",
+            "NUMOUTPUTS"
+          ]
+        },
+        "name": "add",
+        "text": {
+          "default": "+",
+          "key": "plugin.31.panel.add.text"
+        },
+        "type": "Button"
+      },
+      {
+        "bounds": [
+          3,
+          31,
+          215,
+          20
+        ],
+        "name": "attach",
+        "text": {
+          "default": "Attach",
+          "key": "plugin.31.panel.attach.text"
+        },
+        "type": "Button",
+        "write": [
+          {
+            "property": "COMMAND",
+            "value": "ATTACH"
+          }
+        ]
+      },
+      {
+        "bounds": [
+          3,
+          51,
+          215,
+          20
+        ],
+        "name": "detach",
+        "text": {
+          "default": "Detach",
+          "key": "plugin.31.panel.detach.text"
+        },
+        "type": "Button",
+        "write": [
+          {
+            "property": "COMMAND",
+            "value": "DETACH"
+          }
+        ]
+      },
+      {
+        "bounds": [
+          3,
+          76,
+          215,
+          128
+        ],
+        "connected": "CONNECTED",
+        "inputs": {
+          "connect": "CONNECT_INPUT",
+          "connections": "INPUTCONNECTIONS",
+          "count": "NUMINPUTS",
+          "disconnect": "DISCONNECT_INPUT",
+          "label": "Input %d",
+          "names": "OUTPUTPORTNAMES",
+          "names_count": "NUMOUTPUTPORTNAMES"
+        },
+        "name": "ports",
+        "outputs": {
+          "connect": "CONNECT_OUTPUT",
+          "connections": "OUTPUTCONNECTIONS",
+          "count": "NUMOUTPUTS",
+          "disconnect": "DISCONNECT_OUTPUT",
+          "label": "Output %d",
+          "names": "INPUTPORTNAMES",
+          "names_count": "NUMINPUTPORTNAMES"
+        },
+        "type": "PortList",
+        "list": "UPDATE_NAMES",
+        "refresh": "CHECK_PORT_CHANGES"
+      }
+    ],
+    "height": 214,
+    "help": {
+      "default": "The number of JACK ports each way (2 to 64), applied when changed, and attaching to or detaching from the JACK server. Connecting ports stays in the editor.",
+      "key": "plugin.31.panel.help"
+    },
+    "schema_version": 1,
+    "width": 221
+  },
+  "plugin_id": 31,
+  "properties": [
+    {
+      "class": "StringProperty",
+      "default": "",
+      "display_name": {
+        "default": "COMMAND",
+        "key": "plugin.31.property.COMMAND"
+      },
+      "hint": {
+        "default": "Command",
+        "key": "plugin.31.property.COMMAND.hint"
+      },
+      "internal": true,
+      "omitted": "internal",
+      "property": "COMMAND",
+      "read_only": false,
+      "type": "string"
+    },
+    {
+      "class": "ToggleProperty",
+      "default": false,
+      "display_name": {
+        "default": "Connected",
+        "key": "plugin.31.property.CONNECTED"
+      },
+      "hint": {
+        "default": "Connected",
+        "key": "plugin.31.property.CONNECTED.hint"
+      },
+      "internal": false,
+      "property": "CONNECTED",
+      "read_only": true,
+      "type": "boolean"
+    },
+    {
+      "class": "StringProperty",
+      "default": "Jack",
+      "display_name": {
+        "default": "DeviceType",
+        "key": "plugin.31.property.DEVICETYPE"
+      },
+      "hint": {
+        "default": "DeviceType",
+        "key": "plugin.31.property.DEVICETYPE.hint"
+      },
+      "internal": false,
+      "omitted": "identity",
+      "property": "DEVICETYPE",
+      "read_only": true,
+      "type": "string"
+    },
+    {
+      "class": "UnsignedProperty",
+      "default": 2,
+      "display_name": {
+        "default": "DeviceVersion",
+        "key": "plugin.31.property.DEVICEVERSION"
+      },
+      "hint": {
+        "default": "DeviceVersion",
+        "key": "plugin.31.property.DEVICEVERSION.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 0,
+      "min": 0,
+      "omitted": "identity",
+      "page": 0,
+      "property": "DEVICEVERSION",
+      "read_only": true,
+      "step": 0,
+      "type": "integer"
+    },
+    {
+      "class": "IntProperty",
+      "default": 0,
+      "display_name": {
+        "default": "Numinputportnames",
+        "key": "plugin.31.property.NUMINPUTPORTNAMES"
+      },
+      "hint": {
+        "default": "Numinputportnames",
+        "key": "plugin.31.property.NUMINPUTPORTNAMES.hint"
+      },
+      "internal": false,
+      "property": "NUMINPUTPORTNAMES",
+      "read_only": true,
+      "type": "integer"
+    },
+    {
+      "class": "IntProperty",
+      "default": 4,
+      "display_name": {
+        "default": "Inputs",
+        "key": "plugin.31.property.NUMINPUTS"
+      },
+      "hint": {
+        "default": "Number of inputs",
+        "key": "plugin.31.property.NUMINPUTS.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 64,
+      "min": 2,
+      "page": 1,
+      "property": "NUMINPUTS",
+      "read_only": false,
+      "step": 1,
+      "type": "integer"
+    },
+    {
+      "class": "IntProperty",
+      "default": 0,
+      "display_name": {
+        "default": "Numoutputportnames",
+        "key": "plugin.31.property.NUMOUTPUTPORTNAMES"
+      },
+      "hint": {
+        "default": "Numoutputportnames",
+        "key": "plugin.31.property.NUMOUTPUTPORTNAMES.hint"
+      },
+      "internal": false,
+      "property": "NUMOUTPUTPORTNAMES",
+      "read_only": true,
+      "type": "integer"
+    },
+    {
+      "class": "IntProperty",
+      "default": 4,
+      "display_name": {
+        "default": "Outputs",
+        "key": "plugin.31.property.NUMOUTPUTS"
+      },
+      "hint": {
+        "default": "Number of outputs",
+        "key": "plugin.31.property.NUMOUTPUTS.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 64,
+      "min": 2,
+      "page": 1,
+      "property": "NUMOUTPUTS",
+      "read_only": false,
+      "step": 1,
+      "type": "integer"
+    },
+    {
+      "class": "StringProperty",
+      "default": "",
+      "display_name": {
+        "default": "Port",
+        "key": "plugin.31.property.PORT"
+      },
+      "hint": {
+        "default": "Port",
+        "key": "plugin.31.property.PORT.hint"
+      },
+      "internal": true,
+      "property": "PORT",
+      "read_only": false,
+      "type": "string"
+    },
+    {
+      "class": "IntProperty",
+      "default": 0,
+      "display_name": {
+        "default": "Portindex",
+        "key": "plugin.31.property.PORTINDEX"
+      },
+      "hint": {
+        "default": "Portindex",
+        "key": "plugin.31.property.PORTINDEX.hint"
+      },
+      "internal": true,
+      "property": "PORTINDEX",
+      "read_only": false,
+      "type": "integer"
+    }
+  ],
+  "schema_version": 1
+}

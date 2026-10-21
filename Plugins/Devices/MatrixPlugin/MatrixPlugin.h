@@ -83,7 +83,7 @@ public:
 		
 	enum GUICommands{NONE,MAT_LENGTH,MAT_SPEED,MAT_ACTIVATE,MAT_DEACTIVATE,
 					 MAT_OCTAVE,COPY,PASTE,CLEAR,TUP,TDOWN,MAT_VOLUME,
-					 SET_CURRENT,SET_PATSEQ};
+					 SET_CURRENT,SET_PATSEQ,MAT_END,MAT_TRIGGERS};
 	
 	struct GUIArgs
 	{
@@ -93,6 +93,7 @@ public:
 		int X,Y;
 		int Octave;
 		float Volume;
+		int End;
 	};
 	
 private:
@@ -110,6 +111,13 @@ private:
 	// The pitch of the grid's cell, from its octave, or -1 past its cells or
 	// the Matrix's notes.
 	int Shown(int x, int y) const;
+	void RefreshEcho();
+	bool EchoStale();
+	int   m_Echoed;
+	bool  m_EchoGrid[MATX][MATY];
+	float m_EchoVolume[MATX][MATY];
+	unsigned char m_EchoEnd[MATX][MATY];
+	int   m_EchoPatSeq[NUM_PATSEQ];
 	float m_StepTime;
 	Spiral::Core::FloatProperty  m_Time;
 	Spiral::Core::SignedProperty m_Step;
@@ -118,7 +126,16 @@ private:
 	Spiral::Core::ToggleProperty m_TriggerSelect;
 	
 	Spiral::Core::SignedProperty m_Current;
-	int   m_GUICurrent;
+	Spiral::Core::SignedProperty m_Pattern;
+	int Edited() const
+	{
+		const int n = m_Pattern.Value.AsSigned;
+		return n >= 0 && n < NUM_PATTERNS ? n : 0;
+	}
+	Spiral::Core::SignedProperty m_Length;
+	Spiral::Core::FloatProperty  m_Speed;
+	Spiral::Core::SignedProperty m_Octave;
+	Spiral::Core::SignedProperty m_TriggerRow;
 	Pattern m_Matrix[NUM_PATTERNS];
 	float m_TriggerLevel[MATY];
 	Spiral::Core::ListProperty m_PatSeq;

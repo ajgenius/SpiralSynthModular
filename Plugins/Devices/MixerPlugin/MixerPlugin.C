@@ -67,7 +67,13 @@ m_NumChannels(4)
 	    snprintf (key, sizeof key, "Volume%d", n);
 	    snprintf (hint, sizeof hint, "Channel %d volume", n + 1);
 	    RegisterSharedProperty(Channel(n), key, hint);
+	    snprintf (key, sizeof key, "Peak%d", n);
+	    snprintf (hint, sizeof hint, "Channel %d peaked", n + 1);
+	    m_InPeak[n] = ToggleProperty(Property::ReadOnly, false);
+	    RegisterSharedProperty(m_InPeak[n], key, hint);
 	}
+	m_Peak = ToggleProperty(Property::ReadOnly, false);
+	RegisterSharedProperty(m_Peak, "Peak", "The mix peaked");
 	m_Channels = UnsignedProperty(DefaultLinearFlags, m_NumChannels, 2, MAX_CHANNELS, 1, 1);
 	RegisterSharedProperty(m_Channels, "Channels", "Number of channels");
 
@@ -80,19 +86,11 @@ m_NumChannels(4)
         m_PluginInfo.Name = "Mixer";
 	m_PluginInfo.Width = 80;
 	m_PluginInfo.Height = 150;
-        for (c=0; c<MAX_CHANNELS; c++) {
-            SetChannel(c, 1.0f);
-            m_GUIArgs.inPeak[c] = false;
-        }
-        m_GUIArgs.Peak = false;
+        for (c=0; c<MAX_CHANNELS; c++) SetChannel(c, 1.0f);
         m_PluginInfo.NumInputs = m_NumChannels;
         m_PluginInfo.NumOutputs = 1;
         for (c=1; c<=m_NumChannels; c++) AddInputTip (c);
         m_PluginInfo.PortTips.push_back ("Output");
-	m_AudioCH->Register ("Value", &m_GUIArgs.Value);
-	m_AudioCH->Register ("Num", &m_GUIArgs.Num);
-	m_AudioCH->Register ("Peak", &m_GUIArgs.Peak, ChannelHandler::OUTPUT);
-	m_AudioCH->RegisterData ("inPeak", ChannelHandler::OUTPUT, m_GUIArgs.inPeak, MAX_CHANNELS * sizeof (bool));
 }
 
 MixerPlugin::~MixerPlugin() {
@@ -127,28 +125,19 @@ void MixerPlugin::Execute () {
                      out = mixed;
                  }
              }
-             m_GUIArgs.inPeak[c] = (in > 1.0);
+             AsBoolean(m_InPeak[c]) = (in > 1.0);
          }
          SetOutput (0, n, out);
-         m_GUIArgs.Peak = (out > 1.0);
+         AsBoolean(m_Peak) = (out > 1.0);
      }
 }
 
 void MixerPlugin::ExecuteCommands() {
-     if (m_AudioCH->IsCommandWaiting()) {
-        switch (m_AudioCH->GetCommand()) {
-          case SETMIX:
-               if (m_GUIArgs.Num >= 0 && m_GUIArgs.Num < m_NumChannels)
-                   SetChannel(m_GUIArgs.Num, m_GUIArgs.Value);
-               break;
-          case ADDCHAN:
-               AddChannel ();
-               break;
-          case REMOVECHAN:
-               RemoveChannel ();
-               break;
-        }
-      }
+     if ((int)AsUnsigned(m_Channels) != m_NumChannels) {
+         while (m_NumChannels < (int)AsUnsigned(m_Channels) && m_NumChannels < MAX_CHANNELS) AddChannel ();
+         while (m_NumChannels > (int)AsUnsigned(m_Channels) && m_NumChannels > 2) RemoveChannel ();
+         AsUnsigned(m_Channels) = m_NumChannels;
+     }
 }
 
 void MixerPlugin::SetChannels (int num) {
@@ -219,4 +208,5 @@ void MixerPlugin::Apply(Spiral::Core::Description::Reader &r) {
           if (n<m_NumChannels) r.Value(Channel(n));
           else { float value; r.Value(value); }
      }
+     AsUnsigned(m_Channels) = m_NumChannels;
 }

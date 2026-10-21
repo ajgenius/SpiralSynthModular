@@ -71,7 +71,7 @@ public:
 	
 	enum GUICommands{NONE,START,STOP,RECORD,OVERDUB,ENDRECORD,LOAD,SAVE,CUT,
 					 COPY,PASTE,PASTEMIX,ZERO_RANGE,REVERSE_RANGE,SELECT_ALL,DOUBLE,HALF,
-					 MOVE,CROP,KEEPDUB,UNDODUB,CHANGE_LENGTH,NEW_TRIGGER,UPDATE_TRIGGER,
+					 MOVE,CROP,KEEPDUB,UNDODUB,CHANGE_LENGTH,NEW_TRIGGER,
 					 GETSAMPLE};	
 	
 	void LoadWav(const char *Filename);
@@ -86,26 +86,26 @@ public:
 	void Crop();
 	
 	void SetId(int Id)       				{ m_Id=Id; }
-	void SetPos(int Pos)     				{ m_Pos=Pos; }
-	void SetLength(int Len)  				{ m_LoopPoint=Len; }
+	void SetPos(int Pos)     				{ AsFloat(m_Pos)=Pos; }
+	void SetLength(int Len)  				{ AsSigned(m_LoopPoint)=Len; }
 	void SetSpeed(float Speed)				{ AsFloat(m_Speed)=Speed; }
 	void SetVolume(float Vol)  				{ AsFloat(m_Volume)=Vol; }
 	void SetPlaying(bool Playing) 			{ m_Playing=Playing; }
 	void SetRecordingSource(const float *s) { m_RecordingSource=s; }
 	void Record(bool r) 					{ m_Recording=r; if (!r) EndRecordBuf(); }
 	void DelMe()              				{ m_DelMe=true; }
-	void Trigger()							{ m_Pos=0; SetPlaying(true); }
+	void Trigger()							{ AsFloat(m_Pos)=0; SetPlaying(true); }
 	
 	const bool   IsPlaying() 				{return m_Playing;}
 	const float *GetLoopPtr() 				{return m_StoreBuffer.GetBuffer();}
 	const int    GetId() 					{return m_Id;}
-	const int    GetLoopLength() 			{return m_LoopPoint;}
-	float 		*GetPosPtr() 				{return &m_Pos;}
+	const int    GetLoopLength() 			{return AsSigned(m_LoopPoint);}
+	float 		*GetPosPtr() 				{return &AsFloat(m_Pos);}
 	const int    GetTotalLength() 			{assert(m_StoreBuffer.GetLength()==m_DubBuffer.GetLength()); return m_StoreBuffer.GetLength();}
 	const bool   Delete()   				{return m_DelMe; }
 	const float  GetSpeed() 				{return AsFloat(m_Speed);}
 	const float  GetVolume()     			{ return AsFloat(m_Volume); }
-	const float  GetCurrentAngle() 			{ return m_LoopPoint?(m_Pos/m_LoopPoint)*360.0f:0; }
+	const float  GetCurrentAngle() 			{ return AsSigned(m_LoopPoint)?(AsFloat(m_Pos)/AsSigned(m_LoopPoint))*360.0f:0; }
 	const std::string& GetSampleName()  			{ return m_Sample; }
 	
 	void Cut(int Start, int End);
@@ -137,14 +137,14 @@ private:
 	void EndRecordBuf();
 
 	int    m_Id;
-	float  m_Pos;
+	Spiral::Core::FloatProperty m_Pos;
 	int    m_IntPos;
 	float  m_OldPos;
 	int    m_PlayBufPos;
 	bool   m_Playing;
 	bool   m_Recording;
 	bool   m_DelMe;
-	long int m_LoopPoint;
+	Spiral::Core::SignedProperty m_LoopPoint;
 	Spiral::Core::FloatProperty  m_Speed;
 	Spiral::Core::FloatProperty  m_Volume;
 	const float *m_RecordingSource;

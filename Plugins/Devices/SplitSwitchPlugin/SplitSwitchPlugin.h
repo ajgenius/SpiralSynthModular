@@ -31,19 +31,15 @@ class SplitSwitchPlugin : public Spiral::Core::Device {
     virtual void ExecuteCommands ();
     virtual void Describe(Spiral::Core::Description &d);
     virtual void Apply(Spiral::Core::Description::Reader &r);
-    int GetSwitch (void) { return AsSigned(m_SwitchPos); }
+    int GetSwitch (void) { return m_Position; }
     int GetChans (void) { return m_PluginInfo.NumOutputs - 1; }
-    enum GUICommands { NONE, SETCHANS };
-    struct GUIArgs {
-      int Switch, Echo;
-      bool Auto;
-    };
   private:
-    GUIArgs m_GUIArgs;
     void SetChans (int n);
   Spiral::Core::SignedProperty m_Chans;
-    void SetSwitch (int n);
     Spiral::Core::SignedProperty m_SwitchPos;
+    Spiral::Core::UnsignedProperty m_Echo;
+    Spiral::Core::ToggleProperty m_Auto;
+    int m_Position;
     bool m_Triggered;
     friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, SplitSwitchPlugin &o);
     friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, SplitSwitchPlugin &o);

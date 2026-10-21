@@ -32,16 +32,13 @@ class WaveShaperPlugin : public Spiral::Core::Device {
     virtual void ExecuteCommands();
     virtual void Describe(Spiral::Core::Description &d);
     virtual void Apply(Spiral::Core::Description::Reader &r);
-    enum GUICommands { NONE, SETWAVETYPE, SETCOEF };
-    struct GUIArgs {
-      int WaveType, CoefNum;
-      float CoefVal, *FuncPlot;
-    };
   private:
-    GUIArgs m_GUIArgs;
     float *m_wt;
+    float *m_FuncPlot;
   Spiral::Core::FloatProperty m_Coefs[6];
     Spiral::Core::SignedProperty m_Wave;
+    float m_CalcCoefs[6];
+    bool m_CalcWave;
     void calc (void);
     void set (int index, float v);
     friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, WaveShaperPlugin &o);

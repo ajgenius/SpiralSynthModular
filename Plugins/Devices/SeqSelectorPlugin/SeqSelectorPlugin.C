@@ -15,6 +15,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
+#include <cstring>
 #include "SeqSelectorPlugin.h"
 #include "SpiralIcon.xpm"
 #include "NoteTable.h"
@@ -101,23 +102,32 @@ SeqSelectorPlugin::SeqSelectorPlugin()
 	m_PluginInfo.PortTips.push_back("CV Seven");	
 	m_PluginInfo.PortTips.push_back("CV Eight");	
 	
-	m_Pos=0;
 	m_Triggered=false;
 
 	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 	
-	m_Begin = SignedProperty(DefaultLinearFlags | Property::Internal, 0, 0, 255, 1, 1);
+	m_Begin = SignedProperty(DefaultLinearFlags, 0, 0, 255, 1, 1);
 	RegisterSharedProperty(m_Begin, "Begin", "First line of the range");
-	m_End = SignedProperty(DefaultLinearFlags | Property::Internal, 0, 0, 255, 1, 1);
+	m_End = SignedProperty(DefaultLinearFlags, 0, 0, 255, 1, 1);
 	RegisterSharedProperty(m_End, "End", "Line after the last of the range");
-	m_UseRange = ToggleProperty(Property::WriteOnly | Property::Internal, false);
+	m_UseRange = ToggleProperty(Property::WriteOnly, false);
 	RegisterSharedProperty(m_UseRange, "UseRange", "Play the range, not every line");
-	
+	m_Pos = UnsignedProperty(Property::ReadOnly, 0, 0, 255, 1, 1);
+	RegisterSharedProperty(m_Pos, "Position", "The line playing");
+	m_LineCount = UnsignedProperty(Property::ReadOnly, 0, 0, 255, 1, 1);
+	RegisterSharedProperty(m_LineCount, "Line Count", "Lines in the sequence");
+
 	m_AudioCH->Register("Num",&m_GUIArgs.Num);
 	m_AudioCH->Register("Line",&m_GUIArgs.Line);
 	m_AudioCH->Register("Val",&m_GUIArgs.Val);
-	m_AudioCH->Register("Pos",(int*)&m_Pos,ChannelHandler::OUTPUT);
+	m_AudioCH->RegisterData("Lines",ChannelHandler::OUTPUT,m_EchoValues,sizeof(m_EchoValues));
+	std::vector<std::string> none, cell;
+	cell.push_back("Line"); cell.push_back("Num"); cell.push_back("Val");
+	m_AudioCH->RegisterCommand("ADD_LINE", ADD_LINE, none);
+	m_AudioCH->RegisterCommand("REM_LINE", REM_LINE, none);
+	m_AudioCH->RegisterCommand("SET_VAL", SET_VAL, cell);
+	RefreshEcho();
 }
 
 SeqSelectorPlugin::~SeqSelectorPlugin()
@@ -134,7 +144,7 @@ PluginInfo &SeqSelectorPlugin::Initialise(const HostInfo *Host)
 void SeqSelectorPlugin::Reset()
 {
 	ResetPorts();
-	m_Pos=0;
+	AsUnsigned(m_Pos)=0;
 	m_Triggered=false;
 	AsBoolean(m_UseRange)=false;
 }
@@ -154,26 +164,26 @@ void SeqSelectorPlugin::Execute()
 		{			
 			if (m_Triggered==true && m_Lines.size()>0)			
 			{								
-				m_Pos++;
+				AsUnsigned(m_Pos)++;
 				
 				if (AsBoolean(m_UseRange))
 				{
-					if (m_Pos>=(unsigned)AsSigned(m_End))
+					if (AsUnsigned(m_Pos)>=(unsigned)AsSigned(m_End))
 					{
-						m_Pos=AsSigned(m_Begin);
+						AsUnsigned(m_Pos)=AsSigned(m_Begin);
 					}
 				}
 				else
 				{
-					if (m_Pos>=m_Lines.size())
+					if (AsUnsigned(m_Pos)>=m_Lines.size())
 					{
-						m_Pos=0;
+						AsUnsigned(m_Pos)=0;
 					}
 				}
 								
 				for(int i=0; i<8; i++)
 				{
-					const int value = LineValue(m_Pos, i);
+					const int value = LineValue(AsUnsigned(m_Pos), i);
 					SetOutputPitch(i,n,value < 0 || value > 131 ? -1 : NoteTable[value]);
 				}														
 			}					
@@ -191,15 +201,21 @@ void SeqSelectorPlugin::Execute()
 	}
 }
 
+void SeqSelectorPlugin::RefreshEcho()
+{
+	AsUnsigned(m_LineCount) = m_Lines.size();
+	memset(m_EchoValues, 0, sizeof(m_EchoValues));
+	for (unsigned l = 0; l < m_Lines.size() && l < MAX_ECHO_LINES; ++l)
+		for (int n = 0; n < NUM_VALUES; ++n)
+			m_EchoValues[l * NUM_VALUES + n] = LineValue(l, n);
+}
+
 void SeqSelectorPlugin::ExecuteCommands()
 {
 	if (m_AudioCH->IsCommandWaiting())
 	{
 		switch (m_AudioCH->GetCommand())
 		{
-			case SET_BEGIN : AsSigned(m_Begin)=m_GUIArgs.Line; break;
-			case SET_END   : AsSigned(m_End)=m_GUIArgs.Line; break;
-			case RANGE     : AsBoolean(m_UseRange)=m_GUIArgs.Val; break;
 			case ADD_LINE  : 
 				{
 					VectorProperty *Added = NewLine();
@@ -217,6 +233,7 @@ void SeqSelectorPlugin::ExecuteCommands()
 			case SET_VAL   : SetLineValue(m_GUIArgs.Line, m_GUIArgs.Num, m_GUIArgs.Val); break;
 			default: break;
 		}
+		RefreshEcho();
 	}
 }
 
@@ -276,6 +293,7 @@ void SeqSelectorPlugin::Apply(Spiral::Core::Description::Reader &r)
 				SetLineValue(line, n, std::max(-1, std::min(131, LineValue(line, n))));
 	}
 	r.Value(m_Begin).Value(m_End).Value(m_UseRange);
+	RefreshEcho();
 }
 
 void SeqSelectorPlugin::Migrate(Spiral::Core::Description &d)

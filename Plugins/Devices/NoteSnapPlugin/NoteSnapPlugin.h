@@ -36,8 +36,6 @@ public:
 	bool GetFilter(int n) { return m_Filter[n].Value.AsBoolean; }
 	void SetFilter(int n, bool v) { m_Filter[n].Value.AsBoolean = v; }
 
-	enum GUICommands{NONE,NOTE_ON,NOTE_OFF};
-
 private:
 
 	int  m_Note;

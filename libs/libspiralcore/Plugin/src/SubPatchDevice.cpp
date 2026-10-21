@@ -13,6 +13,7 @@ const DeviceClass &SubPatchDevice::Class()
 	device.Name = "SubPatch";
 	device.Category = "SubPatch";
 	device.Create = CreateInstance;
+	device.PanelGenerated = true;
 	return device;
 }
 
@@ -147,4 +148,25 @@ void SubPatchDevice::PortsChanged()
 			m_PluginInfo.PortTypes.push_back(0);
 		}
 	}
+}
+
+// Private's subpatch panel, the rows public can run: an isolated subpatch,
+// its transport and buffer are not here yet, so those are shown but cannot
+// be changed. Its Link Name has no channel here.
+bool SubPatchDevice::GeneratePanel(const std::string &, std::string &Document)
+{
+	Document =
+		"{\"panel\":{\"schema_version\":1,\"width\":400,\"height\":82,"
+		"\"help\":\"Virtual shares the parent graph. Inline owns a graph on the parent audio thread. "
+		"Isolated owns an audio thread and communicates through internal buffers or JACK; it is not here yet.\","
+		"\"children\":["
+		"{\"type\":\"Label\",\"bounds\":[4,4,134,22],\"text\":\"Mode\"},"
+		"{\"type\":\"Choice\",\"name\":\"MODE\",\"bounds\":[140,4,256,22],\"property\":\"MODE\",\"items\":["
+		"{\"value\":0,\"text\":\"Virtual\"},{\"value\":1,\"text\":\"Inline\"},{\"value\":2,\"text\":\"Isolated\"}]},"
+		"{\"type\":\"Label\",\"bounds\":[4,30,134,22],\"text\":\"Transport\"},"
+		"{\"type\":\"Choice\",\"name\":\"LINK\",\"bounds\":[140,30,256,22],\"property\":\"LINK\",\"enabled\":false,\"items\":["
+		"{\"value\":0,\"text\":\"Internal buffers\"},{\"value\":1,\"text\":\"JACK\"}]},"
+		"{\"type\":\"Label\",\"bounds\":[4,56,134,22],\"text\":\"Buffer frames\"},"
+		"{\"type\":\"Spinner\",\"name\":\"BUFFER FRAMES\",\"bounds\":[140,56,256,22],\"property\":\"BUFFER FRAMES\",\"enabled\":false}]}}";
+	return true;
 }

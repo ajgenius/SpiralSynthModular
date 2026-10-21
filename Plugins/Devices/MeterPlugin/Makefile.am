@@ -10,3 +10,5 @@ install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/MeterPlugin_DSP.la"
 uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/MeterPlugin_DSP.so"
+
+include $(top_srcdir)/Plugins/Devices/default-ui.am

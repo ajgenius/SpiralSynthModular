@@ -61,15 +61,17 @@ int SpiralPlugin_GetType()
 ///////////////////////////////////////////////////////
 
 MixSwitchPlugin::MixSwitchPlugin () :
+m_Position (1),
 m_Triggered (false)
 {
-	m_SwitchPos = SignedProperty(DefaultLinearFlags | Property::Internal, 1, 0, 100, 1, 1);
+	m_SwitchPos = SignedProperty(DefaultLinearFlags, 1, 0, 100, 1, 1);
+	RegisterSharedProperty(m_SwitchPos, "Switch Position", "Selected input");
   m_Chans = SignedProperty(DefaultLinearFlags, 2, 1, 100, 1, 1);
   RegisterSharedProperty(m_Chans, "Channels", "Number of channels");
-  RegisterSharedProperty(m_SwitchPos, "Switch Position", "Selected input");
-  m_GUIArgs.Switch = 1;
-  m_GUIArgs.Echo = 1;
-  m_GUIArgs.Auto = false;
+  m_Echo = UnsignedProperty(Property::ReadOnly, 1, 0, 0, 0, 0);
+  RegisterSharedProperty(m_Echo, "Echo", "The input in effect");
+  m_Auto = ToggleProperty(Property::ReadOnly, false);
+  RegisterSharedProperty(m_Auto, "Auto", "Switched by the CV or the clock");
   m_PluginInfo.Name = "MixSwitch";
   m_PluginInfo.Width = 80;
   m_PluginInfo.Height = 80;
@@ -77,12 +79,6 @@ m_Triggered (false)
 
 	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
-  // Switch Position <- GUI
-  m_AudioCH->Register ("Switch", &m_GUIArgs.Switch);
-  // Switch Position -> GUI
-  m_AudioCH->Register ("Echo", &m_GUIArgs.Echo, ChannelHandler::OUTPUT);
-  // Auto Mode (Switch position is controlled by CV or Clock = True, Switch Position controlled by GUI = False
-  m_AudioCH->Register ("Auto", &m_GUIArgs.Auto, ChannelHandler::OUTPUT);
 }
 
 MixSwitchPlugin::~MixSwitchPlugin () {
@@ -95,12 +91,7 @@ PluginInfo &MixSwitchPlugin::Initialise (const HostInfo *Host) {
 
 
 void MixSwitchPlugin::ExecuteCommands () {
-  if (m_AudioCH->IsCommandWaiting ()) {
-    switch (m_AudioCH->GetCommand()) {
-      case SETCHANS : SetChans (AsSigned(m_Chans));
-                      break;
-    }
-  }
+  if (AsSigned(m_Chans) != GetChans ()) SetChans (AsSigned(m_Chans));
 }
 void MixSwitchPlugin::CreatePorts (int n, bool AddPorts) {
   int c;
@@ -143,13 +134,8 @@ void MixSwitchPlugin::SetChans (int n) {
 void MixSwitchPlugin::Reset()
 {
 	ResetPorts();
-	AsSigned(m_SwitchPos) = 1;
+	m_Position = 1;
 	m_Triggered = false;
-
-	AsSigned(m_Chans) = 2;
-	m_GUIArgs.Switch = 1;
-	m_GUIArgs.Echo = 1;
-	m_GUIArgs.Auto = false;
 }
 
 void MixSwitchPlugin::Execute() {
@@ -158,13 +144,13 @@ void MixSwitchPlugin::Execute() {
   int NumChans = m_PluginInfo.NumInputs - 2;
   for (int n=0; n<m_HostInfo->BUFSIZE; n++) {
     if (InputExists (0)) {
-      m_GUIArgs.Auto = true;
+      AsBoolean(m_Auto) = true;
       // Check the Switch Pos CV Value
       const float selection = fabs (GetInput (0, n));
-      AsSigned(m_SwitchPos) = Spiral::Core::IsFinite (selection) && selection < NumChans + 1 ? lrint (selection) : 1;
+      m_Position = Spiral::Core::IsFinite (selection) && selection < NumChans + 1 ? lrint (selection) : 1;
     }
     else if (InputExists (1)) {
-      m_GUIArgs.Auto = true;
+      AsBoolean(m_Auto) = true;
       // Check the trigger CV value
       if (GetInput (1, n) < 0.01) {
         m_Triggered = false;
@@ -172,18 +158,18 @@ void MixSwitchPlugin::Execute() {
       else {
         if (!m_Triggered) {
           m_Triggered = true;
-          AsSigned(m_SwitchPos) = AsSigned(m_SwitchPos) + 1;
+          m_Position = m_Position + 1;
         }
       }
     }
     else {
-      m_GUIArgs.Auto = false;
-      AsSigned(m_SwitchPos) = m_GUIArgs.Switch;
+      AsBoolean(m_Auto) = false;
+      m_Position = AsSigned(m_SwitchPos);
     }
-    if (AsSigned(m_SwitchPos) > NumChans) AsSigned(m_SwitchPos) = 1;
-    m_GUIArgs.Echo = AsSigned(m_SwitchPos);
-    SetOutput (0, n, AsSigned(m_SwitchPos));
-    p = AsSigned(m_SwitchPos) + 1; // SwitchPos 1 = Port 2, and so on
+    if (m_Position > NumChans) m_Position = 1;
+    AsUnsigned(m_Echo) = m_Position;
+    SetOutput (0, n, m_Position);
+    p = m_Position + 1; // SwitchPos 1 = Port 2, and so on
     if (InputExists (p)) f=GetInput (p, n);
     else f=0.0;
     SetOutput (1, n, f);

@@ -63,7 +63,7 @@ public:
 
         void SetNumberPorts (int nInputs, int nOutputs);
 
-	enum GUICommands{NONE,UPDATE_NAMES,SET_PORT_COUNT,CHECK_PORT_CHANGES,ATTACH,DETACH,CONNECT_INPUT,CONNECT_OUTPUT,DISCONNECT_INPUT,DISCONNECT_OUTPUT};
+	enum GUICommands{NONE,UPDATE_NAMES,CHECK_PORT_CHANGES,ATTACH,DETACH,CONNECT_INPUT,CONNECT_OUTPUT,DISCONNECT_INPUT,DISCONNECT_OUTPUT};
 
 	struct GUIArgs
 	{
@@ -86,10 +86,13 @@ private:
 	int m_Version;
 	
 	// slightly clumsy, but we have to share this data with the gui
-	int  m_NumInputPortNames;
+	Spiral::Core::SignedProperty m_NumInputPortNames;
 	char m_InputPortNames[MAX_PORTS][256];
-	int  m_NumOutputPortNames;
+	Spiral::Core::SignedProperty m_NumOutputPortNames;
 	char m_OutputPortNames[MAX_PORTS][256];
+	char m_InputConnections[MAX_PORTS][256];
+	char m_OutputConnections[MAX_PORTS][256];
+	void RefreshConnectionEcho();
 
 	void GetPortNames(std::vector<std::string> &InputNames,std::vector<std::string> &OutputNames) { m_JackClient->GetPortNames(InputNames,OutputNames); }
 	void ConnectInput(int n, const std::string &JackPort)  { m_JackClient->ConnectInput(n,JackPort); }
@@ -98,7 +101,7 @@ private:
         void CreatePorts (int nInputs, int nOutputs, bool );
 
 	bool		m_UpdateNames;
-	bool		m_Connected;	
+	Spiral::Core::ToggleProperty m_Connected;
 	JackClient 	*m_JackClient;
 	int		m_JackInstanceID;
 	

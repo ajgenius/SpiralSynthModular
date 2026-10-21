@@ -1,0 +1,151 @@
+{
+  "host_version": "0.3.43",
+  "panel": {
+    "children": [
+      {
+        "bounds": [
+          6,
+          4,
+          40,
+          40
+        ],
+        "name": "attack-knob",
+        "property": "ATTACK",
+        "style": "dot",
+        "type": "Knob"
+      },
+      {
+        "bounds": [
+          6,
+          44,
+          40,
+          11
+        ],
+        "name": "attack-label",
+        "text": {
+          "default": "Attack",
+          "key": "plugin.19.panel.attack-label.text"
+        },
+        "type": "Label"
+      },
+      {
+        "bounds": [
+          62,
+          4,
+          40,
+          40
+        ],
+        "name": "decay-knob",
+        "property": "DECAY",
+        "style": "dot",
+        "type": "Knob"
+      },
+      {
+        "bounds": [
+          62,
+          44,
+          40,
+          11
+        ],
+        "name": "decay-label",
+        "text": {
+          "default": "Decay",
+          "key": "plugin.19.panel.decay-label.text"
+        },
+        "type": "Label"
+      }
+    ],
+    "height": 64,
+    "help": {
+      "default": "How fast the envelope follows a rising and a falling input.",
+      "key": "plugin.19.panel.help"
+    },
+    "schema_version": 1,
+    "width": 116
+  },
+  "plugin_id": 19,
+  "properties": [
+    {
+      "class": "FloatProperty",
+      "default": 0.5,
+      "display_name": {
+        "default": "Attack",
+        "key": "plugin.19.property.ATTACK"
+      },
+      "hint": {
+        "default": "Attack",
+        "key": "plugin.19.property.ATTACK.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 1,
+      "min": 0,
+      "page": 0.1,
+      "property": "ATTACK",
+      "read_only": false,
+      "step": 0.001,
+      "type": "number"
+    },
+    {
+      "class": "FloatProperty",
+      "default": 0.5,
+      "display_name": {
+        "default": "Decay",
+        "key": "plugin.19.property.DECAY"
+      },
+      "hint": {
+        "default": "Decay",
+        "key": "plugin.19.property.DECAY.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 1,
+      "min": 0,
+      "page": 0.1,
+      "property": "DECAY",
+      "read_only": false,
+      "step": 0.001,
+      "type": "number"
+    },
+    {
+      "class": "StringProperty",
+      "default": "EnvFollower",
+      "display_name": {
+        "default": "DeviceType",
+        "key": "plugin.19.property.DEVICETYPE"
+      },
+      "hint": {
+        "default": "DeviceType",
+        "key": "plugin.19.property.DEVICETYPE.hint"
+      },
+      "internal": false,
+      "omitted": "identity",
+      "property": "DEVICETYPE",
+      "read_only": true,
+      "type": "string"
+    },
+    {
+      "class": "UnsignedProperty",
+      "default": 1,
+      "display_name": {
+        "default": "DeviceVersion",
+        "key": "plugin.19.property.DEVICEVERSION"
+      },
+      "hint": {
+        "default": "DeviceVersion",
+        "key": "plugin.19.property.DEVICEVERSION.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 0,
+      "min": 0,
+      "omitted": "identity",
+      "page": 0,
+      "property": "DEVICEVERSION",
+      "read_only": true,
+      "step": 0,
+      "type": "integer"
+    }
+  ],
+  "schema_version": 1
+}

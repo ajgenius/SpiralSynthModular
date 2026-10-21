@@ -79,6 +79,10 @@ SplitterPlugin::SplitterPlugin()
 
 	m_ChannelCount = SignedProperty(Property::ForceUpdate|DefaultLinearFlags, 4, 1, 256, 1, 1);
 	RegisterSharedProperty(m_ChannelCount, "Channels", "Channels");
+	{
+		std::vector<std::string> none, args;
+		m_AudioCH->RegisterCommand("SETCHANNELCOUNT", SETCHANNELCOUNT, none);
+	}
 	m_PluginInfo.Name="Splitter";
 	m_PluginInfo.Width=80;
 	m_PluginInfo.Height=40;

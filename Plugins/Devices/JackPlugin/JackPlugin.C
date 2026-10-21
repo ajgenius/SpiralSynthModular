@@ -80,7 +80,6 @@ string SpiralPlugin_GetGroupName()
 
 JackPlugin::JackPlugin() :
 m_UpdateNames(false),
-m_Connected(false),
 m_RingFrames(0),
 m_NativeRate(0),
 m_CaptureFrame(0),
@@ -145,12 +144,34 @@ m_OutputCount(4)
 	RegisterSharedProperty(m_NumInputs, "Inputs", "Number of Input Channels");
 	RegisterSharedProperty(m_NumOutputs, "Outputs", "Number of Output Channels");
 	m_AudioCH->RegisterData("Port",ChannelHandler::INPUT,&m_GUIArgs.Port,sizeof(m_GUIArgs.Port));
-	m_AudioCH->Register("NumInputPortNames",&m_NumInputPortNames,ChannelHandler::OUTPUT);
-	m_AudioCH->Register("NumOutputPortNames",&m_NumOutputPortNames,ChannelHandler::OUTPUT);
+	m_NumInputPortNames = SignedProperty(Property::ReadOnly, 0, 0, MAX_PORTS, 1, 1);
+	m_NumOutputPortNames = SignedProperty(Property::ReadOnly, 0, 0, MAX_PORTS, 1, 1);
+	m_Connected = ToggleProperty(Property::ReadOnly, false);
+	RegisterSharedProperty(m_NumInputPortNames, "NumInputPortNames", "Jack input ports found");
+	RegisterSharedProperty(m_NumOutputPortNames, "NumOutputPortNames", "Jack output ports found");
+	RegisterSharedProperty(m_Connected, "Connected", "Attached to Jack");
 	m_AudioCH->RegisterData("InputPortNames",ChannelHandler::OUTPUT,&m_InputPortNames,sizeof(m_InputPortNames));
 	m_AudioCH->RegisterData("OutputPortNames",ChannelHandler::OUTPUT,&m_OutputPortNames,sizeof(m_OutputPortNames));
 	m_AudioCH->Register("UpdateNames",&m_UpdateNames,ChannelHandler::OUTPUT);	
-	m_AudioCH->Register("Connected",&m_Connected,ChannelHandler::OUTPUT);	
+	memset(m_InputConnections, 0, sizeof(m_InputConnections));
+	memset(m_OutputConnections, 0, sizeof(m_OutputConnections));
+	m_AudioCH->RegisterData("InputConnections",ChannelHandler::OUTPUT,&m_InputConnections,sizeof(m_InputConnections));
+	m_AudioCH->RegisterData("OutputConnections",ChannelHandler::OUTPUT,&m_OutputConnections,sizeof(m_OutputConnections));
+	{
+		std::vector<std::string> none, args;
+		m_AudioCH->RegisterCommand("ATTACH", ATTACH, none);
+		m_AudioCH->RegisterCommand("CHECK_PORT_CHANGES", CHECK_PORT_CHANGES, none);
+		args.clear(); args.push_back("PortIndex"); args.push_back("Port");
+		m_AudioCH->RegisterCommand("CONNECT_INPUT", CONNECT_INPUT, args);
+		args.clear(); args.push_back("PortIndex"); args.push_back("Port");
+		m_AudioCH->RegisterCommand("CONNECT_OUTPUT", CONNECT_OUTPUT, args);
+		m_AudioCH->RegisterCommand("DETACH", DETACH, none);
+		args.clear(); args.push_back("PortIndex");
+		m_AudioCH->RegisterCommand("DISCONNECT_INPUT", DISCONNECT_INPUT, args);
+		args.clear(); args.push_back("PortIndex");
+		m_AudioCH->RegisterCommand("DISCONNECT_OUTPUT", DISCONNECT_OUTPUT, args);
+		m_AudioCH->RegisterCommand("UPDATE_NAMES", UPDATE_NAMES, none);
+	}
 }
 
 JackPlugin::~JackPlugin()
@@ -240,19 +261,23 @@ void JackPlugin::Execute()
 void JackPlugin::ExecuteCommands()
 {
 	if (m_IsDead) return;
+	const int inputs = std::max(MIN_PORTS, std::min(MAX_PORTS, (int)AsSigned(m_NumInputs)));
+	const int outputs = std::max(MIN_PORTS, std::min(MAX_PORTS, (int)AsSigned(m_NumOutputs)));
+	if (inputs != m_OutputCount || outputs != m_InputCount)
+	{
+		SetNumberPorts (inputs, outputs);
+		RefreshConnectionEcho();
+	}
 	
 	if (m_AudioCH->IsCommandWaiting())
 	{
 		switch (m_AudioCH->GetCommand()) {
-			case ATTACH: Attach(); break;
-			case DETACH: Detach(); break;
-			case CONNECT_INPUT: ConnectInput(m_GUIArgs.PortIndex, m_GUIArgs.Port); break;
-			case CONNECT_OUTPUT: ConnectOutput(m_GUIArgs.PortIndex, m_GUIArgs.Port); break;
-			case DISCONNECT_INPUT: m_JackClient->DisconnectInput(m_GUIArgs.PortIndex); break;
-			case DISCONNECT_OUTPUT: m_JackClient->DisconnectOutput(m_GUIArgs.PortIndex); break;
-			case SET_PORT_COUNT :
-				SetNumberPorts (AsSigned(m_NumInputs), AsSigned(m_NumOutputs));				
-			break;	
+			case ATTACH: Attach(); RefreshConnectionEcho(); break;
+			case DETACH: Detach(); RefreshConnectionEcho(); break;
+			case CONNECT_INPUT: ConnectInput(m_GUIArgs.PortIndex, m_GUIArgs.Port); RefreshConnectionEcho(); break;
+			case CONNECT_OUTPUT: ConnectOutput(m_GUIArgs.PortIndex, m_GUIArgs.Port); RefreshConnectionEcho(); break;
+			case DISCONNECT_INPUT: m_JackClient->DisconnectInput(m_GUIArgs.PortIndex); RefreshConnectionEcho(); break;
+			case DISCONNECT_OUTPUT: m_JackClient->DisconnectOutput(m_GUIArgs.PortIndex); RefreshConnectionEcho(); break;
 
 			case UPDATE_NAMES :
 			{
@@ -276,19 +301,31 @@ void JackPlugin::ExecuteCommands()
 					c++;
 				}
 		
-				m_NumInputPortNames=std::min((int)InputNames.size(), MAX_PORTS);
-				m_NumOutputPortNames=std::min((int)OutputNames.size(), MAX_PORTS);
+				AsSigned(m_NumInputPortNames)=std::min((int)InputNames.size(), MAX_PORTS);
+				AsSigned(m_NumOutputPortNames)=std::min((int)OutputNames.size(), MAX_PORTS);
 			}
 
 			break;
 			
 			case CHECK_PORT_CHANGES :
+				RefreshConnectionEcho();
 				break;
 
 			default : break;
 		}
 	}
-	m_Connected=m_JackClient->IsAttached();
+	AsBoolean(m_Connected)=m_JackClient->IsAttached();
+}
+
+void JackPlugin::RefreshConnectionEcho()
+{
+	for (int n=0; n<MAX_PORTS; n++)
+	{
+		const std::string in = n < m_InputCount ? m_JackClient->GetInputConnection(n) : std::string();
+		const std::string out = n < m_OutputCount ? m_JackClient->GetOutputConnection(n) : std::string();
+		snprintf(m_InputConnections[n], sizeof(m_InputConnections[n]), "%s", in.c_str());
+		snprintf(m_OutputConnections[n], sizeof(m_OutputConnections[n]), "%s", out.c_str());
+	}
 }
 
 bool JackPlugin::Kill()

@@ -38,6 +38,7 @@ namespace SpiralPanels
 		virtual void Refresh();
 		void Act(int a, int note, int delta);
 		bool Typed(int event);
+		void DrawOverlay();
 
 	protected:
 		PanelPianoKeys(Panel &panel, const Spumoni::JSON &node);
@@ -45,6 +46,11 @@ namespace SpiralPanels
 		static void Changed(Fl_Widget *widget, void *data);
 		void Press(int note, bool down);
 		void ReleaseKeys();
+		Fl_Button *Key(int note) const;
+		bool Focused() const;
+		int LastMapped() const;
+		void RefreshFocus();
+		void ShowOctave();
 
 		std::string m_On, m_Off;
 		int m_First;
@@ -56,6 +62,10 @@ namespace SpiralPanels
 		bool m_ComputerKeys;
 		int m_Octave;
 		std::vector<int> m_Held; // the note each computer key is playing, or -1
+		std::string m_Status;    // the Label under the keys that says their octaves, if any
+		std::string m_StatusText;
+		bool m_Framed;           // the focus and octave the keys are tinted for
+		int m_FramedOctave;
 	};
 }
 

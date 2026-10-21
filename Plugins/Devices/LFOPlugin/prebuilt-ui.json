@@ -1,0 +1,316 @@
+{
+  "host_version": "0.3.43",
+  "panel": {
+    "children": [
+      {
+        "bounds": [
+          -2,
+          -4,
+          23,
+          23
+        ],
+        "choice": 0,
+        "name": "wave-sine",
+        "property": "WAVE TYPE",
+        "tooltip": {
+          "default": "Sine",
+          "key": "plugin.124.panel.wave-sine.tooltip"
+        },
+        "type": "RadioButton",
+        "glyph": "sine"
+      },
+      {
+        "bounds": [
+          -2,
+          17,
+          23,
+          23
+        ],
+        "choice": 1,
+        "name": "wave-triangle",
+        "property": "WAVE TYPE",
+        "tooltip": {
+          "default": "Triangle",
+          "key": "plugin.124.panel.wave-triangle.tooltip"
+        },
+        "type": "RadioButton",
+        "glyph": "triangle"
+      },
+      {
+        "bounds": [
+          -2,
+          39,
+          23,
+          23
+        ],
+        "choice": 2,
+        "name": "wave-square",
+        "property": "WAVE TYPE",
+        "tooltip": {
+          "default": "Square",
+          "key": "plugin.124.panel.wave-square.tooltip"
+        },
+        "type": "RadioButton",
+        "glyph": "square"
+      },
+      {
+        "bounds": [
+          -2,
+          60,
+          23,
+          23
+        ],
+        "choice": 3,
+        "name": "wave-saw",
+        "property": "WAVE TYPE",
+        "tooltip": {
+          "default": "Saw",
+          "key": "plugin.124.panel.wave-saw.tooltip"
+        },
+        "type": "RadioButton",
+        "glyph": "saw"
+      },
+      {
+        "bounds": [
+          48,
+          -4,
+          119,
+          88
+        ],
+        "name": "tabs",
+        "page_padding": 0,
+        "pages": [
+          {
+            "children": [
+              {
+                "bounds": [
+                  35,
+                  6,
+                  50,
+                  50
+                ],
+                "mapping": "reciprocal",
+                "max": 0.008333333333333333,
+                "min": 10,
+                "name": "period-knob",
+                "property": "FREQUENCY",
+                "scale_ticks": 20,
+                "step": 0.001,
+                "tooltip": "Period in seconds; 0 stops the LFO.",
+                "type": "Knob"
+              },
+              {
+                "bounds": [
+                  35,
+                  56,
+                  50,
+                  11
+                ],
+                "name": "period-label",
+                "text": {
+                  "default": "Period",
+                  "key": "plugin.124.panel.period-label.text"
+                },
+                "type": "Label"
+              }
+            ],
+            "title": {
+              "default": "Control",
+              "key": "plugin.124.panel.tabs.page.0"
+            }
+          },
+          {
+            "children": [
+              {
+                "bounds": [
+                  5,
+                  6,
+                  110,
+                  20
+                ],
+                "digits": 3,
+                "mapping": "reciprocal",
+                "max": 0.008333333333333333,
+                "min": 10,
+                "name": "period-spinner",
+                "page": 0.1,
+                "property": "FREQUENCY",
+                "simple": false,
+                "step": 0.001,
+                "tooltip": "Period in seconds; 0 stops the LFO.",
+                "type": "Spinner"
+              },
+              {
+                "bounds": [
+                  5,
+                  26,
+                  110,
+                  11
+                ],
+                "name": "period-secs-label",
+                "text": {
+                  "default": "Period (Secs)",
+                  "key": "plugin.124.panel.period-secs-label.text"
+                },
+                "type": "Label"
+              },
+              {
+                "bounds": [
+                  5,
+                  40,
+                  110,
+                  20
+                ],
+                "digits": 3,
+                "max": 10,
+                "min": 0.008333333333333333,
+                "name": "freq-spinner",
+                "property": "FREQUENCY",
+                "simple": false,
+                "step": 0.001,
+                "type": "Spinner"
+              },
+              {
+                "bounds": [
+                  5,
+                  60,
+                  110,
+                  11
+                ],
+                "name": "freq-label",
+                "text": {
+                  "default": "Freq (Hz)",
+                  "key": "plugin.124.panel.freq-label.text"
+                },
+                "type": "Label"
+              }
+            ],
+            "title": {
+              "default": "Numbers",
+              "key": "plugin.124.panel.tabs.page.1"
+            }
+          }
+        ],
+        "tab_height": 14,
+        "type": "Notebook"
+      }
+    ],
+    "height": 84,
+    "help": {
+      "default": "A very low frequency oscillator. Also produces inverted and \"cosine\"\noutputs (output phase shifted by 180 degrees)\nPeriod length goes down to 2 minutes :]\n",
+      "key": "plugin.124.panel.help"
+    },
+    "schema_version": 1,
+    "width": 176
+  },
+  "plugin_id": 124,
+  "properties": [
+    {
+      "class": "StringProperty",
+      "default": "LFO",
+      "display_name": {
+        "default": "DeviceType",
+        "key": "plugin.124.property.DEVICETYPE"
+      },
+      "hint": {
+        "default": "DeviceType",
+        "key": "plugin.124.property.DEVICETYPE.hint"
+      },
+      "internal": false,
+      "omitted": "identity",
+      "property": "DEVICETYPE",
+      "read_only": true,
+      "type": "string"
+    },
+    {
+      "class": "UnsignedProperty",
+      "default": 1,
+      "display_name": {
+        "default": "DeviceVersion",
+        "key": "plugin.124.property.DEVICEVERSION"
+      },
+      "hint": {
+        "default": "DeviceVersion",
+        "key": "plugin.124.property.DEVICEVERSION.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 0,
+      "min": 0,
+      "omitted": "identity",
+      "page": 0,
+      "property": "DEVICEVERSION",
+      "read_only": true,
+      "step": 0,
+      "type": "integer"
+    },
+    {
+      "class": "FloatProperty",
+      "default": 0.1,
+      "display_name": {
+        "default": "Frequency",
+        "key": "plugin.124.property.FREQUENCY"
+      },
+      "hint": {
+        "default": "Frequency in Hz (period is its reciprocal)",
+        "key": "plugin.124.property.FREQUENCY.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 10,
+      "min": 0.008333333333333333,
+      "page": 0.1,
+      "property": "FREQUENCY",
+      "read_only": false,
+      "step": 0.001,
+      "type": "number"
+    },
+    {
+      "choices": [
+        {
+          "display_name": {
+            "default": "Sine",
+            "key": "plugin.124.property.WAVE TYPE.choice.0"
+          },
+          "value": 0
+        },
+        {
+          "display_name": {
+            "default": "Triangle",
+            "key": "plugin.124.property.WAVE TYPE.choice.1"
+          },
+          "value": 1
+        },
+        {
+          "display_name": {
+            "default": "Square",
+            "key": "plugin.124.property.WAVE TYPE.choice.2"
+          },
+          "value": 2
+        },
+        {
+          "display_name": {
+            "default": "Saw",
+            "key": "plugin.124.property.WAVE TYPE.choice.3"
+          },
+          "value": 3
+        }
+      ],
+      "class": "SetProperty",
+      "default": 0,
+      "display_name": {
+        "default": "Wave type",
+        "key": "plugin.124.property.WAVE TYPE"
+      },
+      "hint": {
+        "default": "Wave type",
+        "key": "plugin.124.property.WAVE TYPE.hint"
+      },
+      "internal": false,
+      "property": "WAVE TYPE",
+      "read_only": false,
+      "type": "integer"
+    }
+  ],
+  "schema_version": 1
+}

@@ -44,17 +44,16 @@ class PoshSamplerPlugin : public Spiral::Core::Device {
       virtual void Migrate(Spiral::Core::Description &d);
       virtual bool SaveExternalFiles (const std::string &Dir);
       virtual void LoadExternalFiles (const std::string &Dir, int withID=-1);
-      enum GUICommands {NONE, LOAD, SAVE, SETVOL, SETPITCH, SETLOOP, SETPING, SETNOTE, SETOCT,
-                        SETPLAYPOINTS, SETREC, CUT, COPY, PASTE, CROP, MIX, REV, AMP, SETCURRENT,
-	                GETSAMPLE, SETRETRIG, GETLOOP, GETPING, GETRETRIG, GETVOL, GETPITCH, GETOCT,
-                        GETNOTE};
+      enum GUICommands {NONE, LOAD, SAVE, SETPLAYPOINTS, SETREC, CUT, COPY, PASTE, CROP, MIX,
+                        REV, AMP, SETCURRENT, GETSAMPLE};
       struct GUIArgs {
-         int Num, Int, IntEcho;
-         float Value, ValEcho;
-         bool Boole, BoolEcho;
+         int Num;
+         bool Boole;
          long Start, End, LoopStart;
          char Name[256];
       };
+      Spiral::Core::UnsignedProperty m_CurrentSample;
+      Spiral::Core::ToggleProperty m_RecordingProp;
       void LoadSample (int n, const std::string &Name);
       void SaveSample (int n, const std::string &Name);
       Sample* GetSample (int n) { return m_SampleVec[n]; }
@@ -125,7 +124,7 @@ class PoshSamplerPlugin : public Spiral::Core::Device {
       Sample m_CopyBuffer;
       bool m_Recording, m_LastRecording;
       char m_SampleBuffer[TRANSBUF_SIZE];
-      long m_SampleSize, m_CurrentPlayPos;
+      long m_SampleSize;
       float m_InitialPitch[NUM_SAMPLES];
 };
 

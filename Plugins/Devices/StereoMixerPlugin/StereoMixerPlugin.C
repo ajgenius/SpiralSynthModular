@@ -114,8 +114,6 @@ m_MovedFrom(4)
 		SetPan(n, 0.5f);		
 	}
 	
-	m_AudioCH->Register("Num",&m_GUIArgs.Num);
-	m_AudioCH->Register("Value",&m_GUIArgs.Value);
 }
 
 StereoMixerPlugin::~StereoMixerPlugin()
@@ -166,14 +164,6 @@ void StereoMixerPlugin::Execute()
 
 void StereoMixerPlugin::ExecuteCommands()
 {
-	if (m_AudioCH->IsCommandWaiting())
-	{
-		switch (m_AudioCH->GetCommand())
-		{
-			case (SETCH) : SetChannel(m_GUIArgs.Num,m_GUIArgs.Value); break;
-			case (SETPAN) : SetPan(m_GUIArgs.Num,m_GUIArgs.Value); break;		
-		}
-	}
 	if ((int)AsUnsigned(m_Channels) != m_NumChannels)
 		SetChannels(AsUnsigned(m_Channels));
 }

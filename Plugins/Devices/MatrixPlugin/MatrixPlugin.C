@@ -15,6 +15,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
+#include <cstring>
 #include "MatrixPlugin.h"
 #include <algorithm>
 #include "SpiralIcon.xpm"
@@ -81,7 +82,6 @@ static std::string Numbered(int n)
 MatrixPlugin::MatrixPlugin() :
 m_TickTime(1.0f),
 m_StepTime(1.0f),
-m_GUICurrent(0),
 m_CurPatSeq(0),
 m_CurrentNoteCV(0),
 m_CurrentTriggerCV(0),
@@ -185,6 +185,11 @@ m_PatReset(false)
 	m_Time = FloatProperty(Property::ReadOnly, 0.0f, 0.0f, 1000.0f, 0.0001f, 0.001f);
 	m_Step = SignedProperty(Property::ReadOnly, 0, 0, MATX - 1, 1, 1);
 	m_Current = SignedProperty(Property::ReadOnly, 0, 0, NUM_PATTERNS - 1, 1, 1);
+	m_Pattern = SignedProperty(DefaultLinearFlags, 0, 0, NUM_PATTERNS - 1, 1, 1);
+	m_Length = SignedProperty(Property::ReadOnly, MATX, 1, MATX, 1, 1);
+	m_Speed = FloatProperty(Property::ReadOnly, 1.0f, 0.0f, 50.0f, 0.125f, 0.125f);
+	m_Octave = SignedProperty(Property::ReadOnly, 0, 0, 6, 1, 1);
+	m_TriggerRow = SignedProperty(Property::ReadOnly, 0, -MATRIX_PITCHES, MATRIX_PITCHES, 1, 1);
 	m_Loop = ToggleProperty(Property::WriteOnly, true);
 	m_NoteCut = ToggleProperty(Property::WriteOnly, false);
 	m_TriggerSelect = ToggleProperty(Property::WriteOnly, false);
@@ -192,23 +197,60 @@ m_PatReset(false)
 	RegisterSharedProperty(m_NoteCut, "NoteCut", "Cut the note on a new step");
 	RegisterSharedProperty(m_TriggerSelect, "TriggerSelect", "Trigger Select");
 	m_AudioCH->Register("Volume",&m_GUIArgs.Volume,ChannelHandler::INPUT);
-	m_AudioCH->Register("Current",&m_GUICurrent,ChannelHandler::INPUT);
 	m_AudioCH->Register("StepTime",&m_StepTime,ChannelHandler::INPUT);
 	m_AudioCH->Register("Num",&m_GUIArgs.Num,ChannelHandler::INPUT);
-	m_AudioCH->Register("Length",&m_GUIArgs.Length,ChannelHandler::INPUT);
-	m_AudioCH->Register("Speed",&m_GUIArgs.Speed,ChannelHandler::INPUT);
+	m_AudioCH->Register("SetLength",&m_GUIArgs.Length,ChannelHandler::INPUT);
+	m_AudioCH->Register("SetSpeed",&m_GUIArgs.Speed,ChannelHandler::INPUT);
 	m_AudioCH->Register("X",&m_GUIArgs.X,ChannelHandler::INPUT);
 	m_AudioCH->Register("Y",&m_GUIArgs.Y,ChannelHandler::INPUT);
-	m_AudioCH->Register("Octave",&m_GUIArgs.Octave,ChannelHandler::INPUT);
+	m_AudioCH->Register("SetOctave",&m_GUIArgs.Octave,ChannelHandler::INPUT);
+	m_AudioCH->Register("SetEnd",&m_GUIArgs.End,ChannelHandler::INPUT);
 	RegisterSharedProperty(m_Step, "Step", "Current step");
 	m_AudioCH->Register("PatSeqStep",&m_CurPatSeq,ChannelHandler::OUTPUT);
-	RegisterSharedProperty(m_Current, "Current", "Current pattern");
+	RegisterSharedProperty(m_Current, "Current", "The pattern playing");
+	RegisterSharedProperty(m_Pattern, "Pattern", "The pattern shown and edited");
+	RegisterSharedProperty(m_Length, "Length", "Pattern length");
+	RegisterSharedProperty(m_Speed, "Speed", "Pattern speed");
+	RegisterSharedProperty(m_Octave, "Octave", "Pattern octave");
+	RegisterSharedProperty(m_TriggerRow, "TriggerRow", "Trigger 1's row on the grid");
 
 	RegisterSharedProperty(m_Time, "Time", "Position within the step");
 	RegisterSharedProperty(m_Loop, "Loop", "Loop the pattern");
 
 	RegisterSharedProperty(m_PatSeq, "Sequences", "Pattern sequence");
-	m_AudioCH->RegisterData("Matrix",ChannelHandler::OUTPUT_REQUEST,&m_Matrix,sizeof(m_Matrix));
+	m_AudioCH->RegisterData("Grid",ChannelHandler::OUTPUT,m_EchoGrid,sizeof(m_EchoGrid));
+	m_AudioCH->RegisterData("GridVolume",ChannelHandler::OUTPUT,m_EchoVolume,sizeof(m_EchoVolume));
+	m_AudioCH->RegisterData("PatSeq",ChannelHandler::OUTPUT,m_EchoPatSeq,sizeof(m_EchoPatSeq));
+	m_AudioCH->RegisterData("GridEnd",ChannelHandler::OUTPUT,m_EchoEnd,sizeof(m_EchoEnd));
+	{
+		std::vector<std::string> none, args;
+		m_AudioCH->RegisterCommand("CLEAR", CLEAR, none);
+		m_AudioCH->RegisterCommand("COPY", COPY, none);
+		args.clear(); args.push_back("X"); args.push_back("Y");
+		m_AudioCH->RegisterCommand("MAT_ACTIVATE", MAT_ACTIVATE, args);
+		args.clear(); args.push_back("X"); args.push_back("Y");
+		m_AudioCH->RegisterCommand("MAT_DEACTIVATE", MAT_DEACTIVATE, args);
+		args.clear(); args.push_back("SetLength");
+		m_AudioCH->RegisterCommand("MAT_LENGTH", MAT_LENGTH, args);
+		args.clear(); args.push_back("SetOctave");
+		m_AudioCH->RegisterCommand("MAT_OCTAVE", MAT_OCTAVE, args);
+		args.clear(); args.push_back("SetSpeed");
+		m_AudioCH->RegisterCommand("MAT_SPEED", MAT_SPEED, args, "f");
+		args.clear(); args.push_back("X"); args.push_back("Y"); args.push_back("Volume");
+		m_AudioCH->RegisterCommand("MAT_VOLUME", MAT_VOLUME, args, "iif");
+		m_AudioCH->RegisterCommand("PASTE", PASTE, none);
+		args.clear(); args.push_back("Num");
+		m_AudioCH->RegisterCommand("SET_CURRENT", SET_CURRENT, args);
+		args.clear(); args.push_back("Y"); args.push_back("Num");
+		m_AudioCH->RegisterCommand("SET_PATSEQ", SET_PATSEQ, args);
+		args.clear(); args.push_back("X"); args.push_back("Y"); args.push_back("SetEnd");
+		m_AudioCH->RegisterCommand("MAT_END", MAT_END, args);
+		args.clear(); args.push_back("Y");
+		m_AudioCH->RegisterCommand("MAT_TRIGGERS", MAT_TRIGGERS, args);
+		m_AudioCH->RegisterCommand("TDOWN", TDOWN, none);
+		m_AudioCH->RegisterCommand("TUP", TUP, none);
+	}
+	RefreshEcho();
 }
 
 MatrixPlugin::~MatrixPlugin()
@@ -226,7 +268,7 @@ void MatrixPlugin::Reset()
 {
 	ResetPorts();
 	AsSigned(m_Current) = GetPatSeq(0);
-	m_GUICurrent = 0;
+	AsSigned(m_Pattern) = 0;
 	AsFloat(m_Time) = 0.0f;
 	AsSigned(m_Step) = 0;
 	m_TickTime = 1.0f/(float)m_HostInfo->SAMPLERATE;
@@ -379,8 +421,30 @@ void MatrixPlugin::Execute()
 
 int MatrixPlugin::Shown(int x, int y) const
 {
-	const int pitch = y + m_Matrix[m_GUICurrent].Octave*12;
+	const int pitch = y + m_Matrix[Edited()].Octave*12;
 	return x >= 0 && x < MATX && y >= 0 && y < MATY && pitch < MATRIX_PITCHES ? pitch : -1;
+}
+
+// What the grid shows of the edited pattern: its rows from its octave up.
+void MatrixPlugin::RefreshEcho()
+{
+	const int current = Edited();
+	const Pattern &p = m_Matrix[current];
+	m_Echoed = current;
+	AsSigned(m_Length) = p.Length;
+	AsFloat(m_Speed) = p.Speed;
+	AsSigned(m_Octave) = p.Octave;
+	AsSigned(m_TriggerRow) = p.Triggers - p.Octave*12;
+	for (int n=0; n<NUM_PATSEQ; n++) m_EchoPatSeq[n] = GetPatSeq(n);
+	for (int x=0; x<MATX; x++)
+		for (int y=0; y<MATY; y++)
+		{
+			const int pitch = Shown(x, y);
+			const bool on = pitch >= 0 && p.Matrix[x][pitch];
+			m_EchoGrid[x][y] = on;
+			m_EchoVolume[x][y] = pitch >= 0 ? p.Volume[x][pitch] : 1.0f;
+			m_EchoEnd[x][y] = on ? (unsigned char)NoteEnd(p, x, pitch) : 0;
+		}
 }
 
 // Where the note starting at x stops: its own end, or the next note's start
@@ -402,41 +466,69 @@ int MatrixPlugin::Covering(const Pattern &p, int step, int pitch)
 	return -1;
 }
 
+// Whether the panel chose another pattern, or wrote the pattern sequence:
+// both are properties it writes, with no command.
+bool MatrixPlugin::EchoStale()
+{
+	if (Edited() != m_Echoed)
+		return true;
+	for (int n=0; n<NUM_PATSEQ; n++)
+		if (m_EchoPatSeq[n] != GetPatSeq(n))
+			return true;
+	return false;
+}
+
 void MatrixPlugin::ExecuteCommands()
 {
-	if (m_AudioCH->IsCommandWaiting())
+	// The echo (the edited pattern's grid and volumes, 10 KB) is copied again
+	// only when a command or the panel may have changed what it shows; Apply
+	// refreshes it itself.
+	const bool command = m_AudioCH->IsCommandWaiting();
+	if (command)
 	{
-		// The cell the editor names is the edited pattern's, in the octave
+		// The cell the panel names is the edited pattern's, in the octave
 		// its grid shows.
 		const int pitch = Shown(m_GUIArgs.X, m_GUIArgs.Y);
 		switch (m_AudioCH->GetCommand())
 		{
 			case MAT_LENGTH   :
-				m_Matrix[m_GUICurrent].Length=m_GUIArgs.Length;
+				m_Matrix[Edited()].Length=m_GUIArgs.Length;
 			break;
 
 			case MAT_SPEED    :
-				m_Matrix[m_GUICurrent].Speed=m_GUIArgs.Speed;
+				m_Matrix[Edited()].Speed=m_GUIArgs.Speed;
 			break;
 
 			case MAT_ACTIVATE :
 				if (pitch >= 0)
 				{
-					m_Matrix[m_GUICurrent].Matrix[m_GUIArgs.X][pitch]=true;
-					m_Matrix[m_GUICurrent].End[m_GUIArgs.X][pitch]=m_GUIArgs.X+1;
+					m_Matrix[Edited()].Matrix[m_GUIArgs.X][pitch]=true;
+					m_Matrix[Edited()].End[m_GUIArgs.X][pitch]=m_GUIArgs.X+1;
 				}
 			break;
 
+			case MAT_END :
+				if (pitch >= 0)
+					m_Matrix[Edited()].End[m_GUIArgs.X][pitch]=
+						(unsigned char)std::max(m_GUIArgs.X+1, std::min(MATX, m_GUIArgs.End));
+			break;
+
 			case MAT_DEACTIVATE :
-				if (pitch >= 0) m_Matrix[m_GUICurrent].Matrix[m_GUIArgs.X][pitch]=false;
+				if (pitch >= 0) m_Matrix[Edited()].Matrix[m_GUIArgs.X][pitch]=false;
 			break;
 			// The grid shows the pattern from another octave; its notes stay
 			// where they are.
 			case MAT_OCTAVE :
-				m_Matrix[m_GUICurrent].Octave=std::max(0, std::min(6, m_GUIArgs.Octave));
+				m_Matrix[Edited()].Octave=std::max(0, std::min(6, m_GUIArgs.Octave));
+			break;
+			// Trigger 1 moves to the grid's row Y, and the other fifteen
+			// with it.
+			case MAT_TRIGGERS :
+				m_Matrix[Edited()].Triggers=std::max(0, std::min(MATRIX_PITCHES - NUM_TRIGGERS,
+					m_GUIArgs.Y + m_Matrix[Edited()].Octave*12));
 			break;
 			case COPY :
-				m_CopyPattern = m_GUICurrent;
+				m_CopyPattern = Edited();
 			break;
 			case PASTE :
 				PastePattern();
@@ -451,7 +543,7 @@ void MatrixPlugin::ExecuteCommands()
 				if (CanTransposeDown()) TransposeDown();
 			break;
 			case MAT_VOLUME :
-				if (pitch >= 0) m_Matrix[m_GUICurrent].Volume[m_GUIArgs.X][pitch]=m_GUIArgs.Volume;
+				if (pitch >= 0) m_Matrix[Edited()].Volume[m_GUIArgs.X][pitch]=m_GUIArgs.Volume;
 			break;
 			case SET_CURRENT :
 				AsSigned(m_Current)=m_GUIArgs.Num;
@@ -461,6 +553,8 @@ void MatrixPlugin::ExecuteCommands()
 			break;
 		}
 	}
+	if (command || EchoStale())
+		RefreshEcho();
 }
 
 // The patterns as the file keeps them, as the private tree does: the octave
@@ -533,7 +627,7 @@ void MatrixPlugin::ClearNotes(int pattern)
 
 void MatrixPlugin::PastePattern() {
      const Pattern &from = m_Matrix[m_CopyPattern];
-     Pattern &to = m_Matrix[m_GUICurrent];
+     Pattern &to = m_Matrix[Edited()];
      to.Length = from.Length;
      to.Speed = from.Speed;
      to.Octave = from.Octave;
@@ -549,15 +643,15 @@ void MatrixPlugin::PastePattern() {
 void MatrixPlugin::ClearPattern() {
      for (int y=0; y<MATRIX_PITCHES; y++) {
          for (int x=0; x<MATX; x++) {
-             m_Matrix[m_GUICurrent].Matrix[x][y] = 0;
-             m_Matrix[m_GUICurrent].End[x][y] = x + 1;
+             m_Matrix[Edited()].Matrix[x][y] = 0;
+             m_Matrix[Edited()].End[x][y] = x + 1;
          }
      }
 }
 
 // Every note of the pattern moves, shown or not, with its volume and end.
 void MatrixPlugin::TransposeUp() {
-     Pattern &p = m_Matrix[m_GUICurrent];
+     Pattern &p = m_Matrix[Edited()];
      int x, y;
      for (y=MATRIX_PITCHES-1; y>0; y--) {
          for (x=0; x<MATX; x++) {
@@ -574,7 +668,7 @@ void MatrixPlugin::TransposeUp() {
 
 void MatrixPlugin::TransposeDown()
 {
-    Pattern &p = m_Matrix[m_GUICurrent];
+    Pattern &p = m_Matrix[Edited()];
     int x, y;
     for (y=0; y<MATRIX_PITCHES-1; y++)
 	{
@@ -594,13 +688,13 @@ void MatrixPlugin::TransposeDown()
 
 bool MatrixPlugin::CanTransposeDown()
 {
-    for (int x=0; x<MATX; x++) if (m_Matrix[m_GUICurrent].Matrix[x][0]) return false;
+    for (int x=0; x<MATX; x++) if (m_Matrix[Edited()].Matrix[x][0]) return false;
     return true;
 }
 
 bool MatrixPlugin::CanTransposeUp()
 {
-     for (int x=0; x<MATX; x++) if (m_Matrix[m_GUICurrent].Matrix[x][MATRIX_PITCHES-1]) return false;
+     for (int x=0; x<MATX; x++) if (m_Matrix[Edited()].Matrix[x][MATRIX_PITCHES-1]) return false;
      return true;
 }
 
@@ -721,6 +815,7 @@ void MatrixPlugin::Apply(Spiral::Core::Description::Reader &r) {
      }
      AsSigned(m_Current) = std::max(0, std::min(NUM_PATTERNS - 1, (int)AsSigned(m_Current)));
      AsSigned(m_Step) = std::max(-1, std::min(MATX - 1, (int)AsSigned(m_Step)));
+     RefreshEcho();
 }
 
 // A file's Matrix. Version 7 is what both trees write. Before it, the private
@@ -769,4 +864,5 @@ void MatrixPlugin::ApplyNamed(Spiral::Core::Description::Reader &r, int version)
 	}
 	for (int n=0; n<NUM_PATSEQ && !valid; n++) SetPatSeq(n, kept[n]);
 	if (GetPatSeq(0)<0) SetPatSeq(0, 0);
+	RefreshEcho();
 }

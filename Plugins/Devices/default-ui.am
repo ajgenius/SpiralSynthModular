@@ -1,0 +1,9 @@
+# A device ships its panel: prebuilt-ui.json installs as default-ui.json beside
+# the module, and the host's shared panel editor reads it when the device has
+# no editor module. The same file and name the private tree uses.
+EXTRA_DIST += prebuilt-ui.json
+nodist_plugin_DATA = default-ui.json
+default-ui.json: $(srcdir)/prebuilt-ui.json
+	cp $(srcdir)/prebuilt-ui.json $@
+all-local: default-ui.json
+CLEANFILES = default-ui.json

@@ -1,0 +1,443 @@
+{
+  "host_version": "0.3.43",
+  "panel": {
+    "children": [
+      {
+        "bounds": [
+          1,
+          6,
+          268,
+          195
+        ],
+        "name": "plot",
+        "type": "FunctionPlot",
+        "samples": {
+          "property": "WT"
+        }
+      },
+      {
+        "bounds": [
+          1,
+          204,
+          65,
+          20
+        ],
+        "choice": 1,
+        "name": "mode-poly",
+        "property": "WAVETYPE",
+        "text": {
+          "default": "Poly",
+          "key": "plugin.50.panel.mode-poly.text"
+        },
+        "tooltip": {
+          "default": "Sum of a_i * x^i, i =1..6",
+          "key": "plugin.50.panel.mode-poly.tooltip"
+        },
+        "type": "RadioButton"
+      },
+      {
+        "bounds": [
+          1,
+          224,
+          65,
+          20
+        ],
+        "choice": 0,
+        "name": "mode-sines",
+        "property": "WAVETYPE",
+        "text": {
+          "default": "Sines",
+          "key": "plugin.50.panel.mode-sines.text"
+        },
+        "tooltip": {
+          "default": "Sum of a_i * sin(pi*x*(1+3*i)), i =0..5",
+          "key": "plugin.50.panel.mode-sines.tooltip"
+        },
+        "type": "RadioButton"
+      },
+      {
+        "bounds": [
+          68,
+          206,
+          30,
+          30
+        ],
+        "name": "coef-0-knob",
+        "property": "COEF0",
+        "style": "dot",
+        "tooltip": {
+          "default": "Coefficient 1",
+          "key": "plugin.50.panel.coef-0-knob.tooltip"
+        },
+        "type": "Knob"
+      },
+      {
+        "bounds": [
+          68,
+          236,
+          30,
+          12
+        ],
+        "name": "coef-0-label",
+        "size": 8,
+        "text": {
+          "default": "1",
+          "key": "plugin.50.panel.coef-0-label.text"
+        },
+        "type": "Label"
+      },
+      {
+        "bounds": [
+          103,
+          206,
+          30,
+          30
+        ],
+        "name": "coef-1-knob",
+        "property": "COEF1",
+        "style": "dot",
+        "tooltip": {
+          "default": "Coefficient 2",
+          "key": "plugin.50.panel.coef-1-knob.tooltip"
+        },
+        "type": "Knob"
+      },
+      {
+        "bounds": [
+          103,
+          236,
+          30,
+          12
+        ],
+        "name": "coef-1-label",
+        "size": 8,
+        "text": {
+          "default": "2",
+          "key": "plugin.50.panel.coef-1-label.text"
+        },
+        "type": "Label"
+      },
+      {
+        "bounds": [
+          138,
+          206,
+          30,
+          30
+        ],
+        "name": "coef-2-knob",
+        "property": "COEF2",
+        "style": "dot",
+        "tooltip": {
+          "default": "Coefficient 3",
+          "key": "plugin.50.panel.coef-2-knob.tooltip"
+        },
+        "type": "Knob"
+      },
+      {
+        "bounds": [
+          138,
+          236,
+          30,
+          12
+        ],
+        "name": "coef-2-label",
+        "size": 8,
+        "text": {
+          "default": "3",
+          "key": "plugin.50.panel.coef-2-label.text"
+        },
+        "type": "Label"
+      },
+      {
+        "bounds": [
+          173,
+          206,
+          30,
+          30
+        ],
+        "name": "coef-3-knob",
+        "property": "COEF3",
+        "style": "dot",
+        "tooltip": {
+          "default": "Coefficient 4",
+          "key": "plugin.50.panel.coef-3-knob.tooltip"
+        },
+        "type": "Knob"
+      },
+      {
+        "bounds": [
+          173,
+          236,
+          30,
+          12
+        ],
+        "name": "coef-3-label",
+        "size": 8,
+        "text": {
+          "default": "4",
+          "key": "plugin.50.panel.coef-3-label.text"
+        },
+        "type": "Label"
+      },
+      {
+        "bounds": [
+          208,
+          206,
+          30,
+          30
+        ],
+        "name": "coef-4-knob",
+        "property": "COEF4",
+        "style": "dot",
+        "tooltip": {
+          "default": "Coefficient 5",
+          "key": "plugin.50.panel.coef-4-knob.tooltip"
+        },
+        "type": "Knob"
+      },
+      {
+        "bounds": [
+          208,
+          236,
+          30,
+          12
+        ],
+        "name": "coef-4-label",
+        "size": 8,
+        "text": {
+          "default": "5",
+          "key": "plugin.50.panel.coef-4-label.text"
+        },
+        "type": "Label"
+      },
+      {
+        "bounds": [
+          243,
+          206,
+          30,
+          30
+        ],
+        "name": "coef-5-knob",
+        "property": "COEF5",
+        "style": "dot",
+        "tooltip": {
+          "default": "Coefficient 6",
+          "key": "plugin.50.panel.coef-5-knob.tooltip"
+        },
+        "type": "Knob"
+      },
+      {
+        "bounds": [
+          243,
+          236,
+          30,
+          12
+        ],
+        "name": "coef-5-label",
+        "size": 8,
+        "text": {
+          "default": "6",
+          "key": "plugin.50.panel.coef-5-label.text"
+        },
+        "type": "Label"
+      }
+    ],
+    "height": 244,
+    "help": {
+      "default": "WaveShaper simulates analogue wave shaping. Polynomial mode sums coefficients of x through x^6. Sines sums harmonics 1, 4, 7, 10, 13 and 16 of sin(pi*x). The six knobs range from -1 to +1. The transfer curve shows input horizontally and output vertically, both from -1 to +1. Curves exceeding unit amplitude are normalised, as in the DSP. Input is clipped to this range.",
+      "key": "plugin.50.panel.help"
+    },
+    "schema_version": 1,
+    "width": 274
+  },
+  "plugin_id": 50,
+  "properties": [
+    {
+      "class": "FloatProperty",
+      "default": 1,
+      "display_name": {
+        "default": "Coefficient 1",
+        "key": "plugin.50.property.COEF0"
+      },
+      "hint": {
+        "default": "Coefficient 1",
+        "key": "plugin.50.property.COEF0.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 1,
+      "min": -1,
+      "page": 0.1,
+      "property": "COEF0",
+      "read_only": false,
+      "step": 0.001,
+      "type": "number"
+    },
+    {
+      "class": "FloatProperty",
+      "default": 0,
+      "display_name": {
+        "default": "Coefficient 2",
+        "key": "plugin.50.property.COEF1"
+      },
+      "hint": {
+        "default": "Coefficient 2",
+        "key": "plugin.50.property.COEF1.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 1,
+      "min": -1,
+      "page": 0.1,
+      "property": "COEF1",
+      "read_only": false,
+      "step": 0.001,
+      "type": "number"
+    },
+    {
+      "class": "FloatProperty",
+      "default": 0,
+      "display_name": {
+        "default": "Coefficient 3",
+        "key": "plugin.50.property.COEF2"
+      },
+      "hint": {
+        "default": "Coefficient 3",
+        "key": "plugin.50.property.COEF2.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 1,
+      "min": -1,
+      "page": 0.1,
+      "property": "COEF2",
+      "read_only": false,
+      "step": 0.001,
+      "type": "number"
+    },
+    {
+      "class": "FloatProperty",
+      "default": 0,
+      "display_name": {
+        "default": "Coefficient 4",
+        "key": "plugin.50.property.COEF3"
+      },
+      "hint": {
+        "default": "Coefficient 4",
+        "key": "plugin.50.property.COEF3.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 1,
+      "min": -1,
+      "page": 0.1,
+      "property": "COEF3",
+      "read_only": false,
+      "step": 0.001,
+      "type": "number"
+    },
+    {
+      "class": "FloatProperty",
+      "default": 0,
+      "display_name": {
+        "default": "Coefficient 5",
+        "key": "plugin.50.property.COEF4"
+      },
+      "hint": {
+        "default": "Coefficient 5",
+        "key": "plugin.50.property.COEF4.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 1,
+      "min": -1,
+      "page": 0.1,
+      "property": "COEF4",
+      "read_only": false,
+      "step": 0.001,
+      "type": "number"
+    },
+    {
+      "class": "FloatProperty",
+      "default": 0,
+      "display_name": {
+        "default": "Coefficient 6",
+        "key": "plugin.50.property.COEF5"
+      },
+      "hint": {
+        "default": "Coefficient 6",
+        "key": "plugin.50.property.COEF5.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 1,
+      "min": -1,
+      "page": 0.1,
+      "property": "COEF5",
+      "read_only": false,
+      "step": 0.001,
+      "type": "number"
+    },
+    {
+      "class": "StringProperty",
+      "default": "WaveShaper",
+      "display_name": {
+        "default": "DeviceType",
+        "key": "plugin.50.property.DEVICETYPE"
+      },
+      "hint": {
+        "default": "DeviceType",
+        "key": "plugin.50.property.DEVICETYPE.hint"
+      },
+      "internal": false,
+      "omitted": "identity",
+      "property": "DEVICETYPE",
+      "read_only": true,
+      "type": "string"
+    },
+    {
+      "class": "UnsignedProperty",
+      "default": 1,
+      "display_name": {
+        "default": "DeviceVersion",
+        "key": "plugin.50.property.DEVICEVERSION"
+      },
+      "hint": {
+        "default": "DeviceVersion",
+        "key": "plugin.50.property.DEVICEVERSION.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 0,
+      "min": 0,
+      "omitted": "identity",
+      "page": 0,
+      "property": "DEVICEVERSION",
+      "read_only": true,
+      "step": 0,
+      "type": "integer"
+    },
+    {
+      "class": "IntProperty",
+      "default": 1,
+      "display_name": {
+        "default": "Mode",
+        "key": "plugin.50.property.WAVETYPE"
+      },
+      "hint": {
+        "default": "1 polynomial, 0 sines",
+        "key": "plugin.50.property.WAVETYPE.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 1,
+      "min": 0,
+      "page": 1,
+      "property": "WAVETYPE",
+      "read_only": false,
+      "step": 1,
+      "type": "integer"
+    }
+  ],
+  "schema_version": 1
+}

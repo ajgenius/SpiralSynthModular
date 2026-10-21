@@ -33,13 +33,6 @@ class MixerPlugin : public Spiral::Core::Device, public StablePortLayout {
       virtual void Describe(Spiral::Core::Description &d);
       virtual void Apply(Spiral::Core::Description::Reader &r);
       // has to be defined in the plugin
-      enum GUICommands { NONE, SETMIX, ADDCHAN, REMOVECHAN };
-      struct GUIArgs {
-	     int Num;
-	     float Value;
-             bool inPeak[MAX_CHANNELS];
-             bool Peak;
-      };
       float GetChannel(int n) { return ((Spiral::Core::FloatProperty *)m_ChannelVal[n])->Value.AsFloat; }
      Spiral::Core::FloatProperty &Channel(int n) { return *(Spiral::Core::FloatProperty *)m_ChannelVal[n]; }
       void  SetChannel(int n, float s) { ((Spiral::Core::FloatProperty *)m_ChannelVal[n])->Value.AsFloat = s; }
@@ -48,10 +41,11 @@ class MixerPlugin : public Spiral::Core::Device, public StablePortLayout {
       void AddChannel (void);
       void RemoveChannel (void);
       void AddInputTip (int Channel);
-      GUIArgs m_GUIArgs;
       int m_NumChannels;
       void SetChannels (int num);
 	Spiral::Core::VectorProperty m_ChannelVal;
+	Spiral::Core::ToggleProperty m_InPeak[MAX_CHANNELS];
+	Spiral::Core::ToggleProperty m_Peak;
 	Spiral::Core::UnsignedProperty m_Channels;
 };
 

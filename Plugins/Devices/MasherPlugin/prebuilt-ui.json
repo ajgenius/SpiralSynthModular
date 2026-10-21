@@ -1,0 +1,247 @@
+{
+  "host_version": "0.3.42",
+  "panel": {
+    "children": [
+      {
+        "bounds": [
+          3,
+          6,
+          40,
+          40
+        ],
+        "name": "grainpitch-knob",
+        "property": "GRAINPITCH",
+        "style": "dot",
+        "type": "Knob"
+      },
+      {
+        "bounds": [
+          3,
+          46,
+          40,
+          11
+        ],
+        "name": "grainpitch-label",
+        "text": {
+          "default": "GrainPitch",
+          "key": "plugin.54.panel.grainpitch-label.text"
+        },
+        "type": "Label"
+      },
+      {
+        "bounds": [
+          68,
+          6,
+          40,
+          40
+        ],
+        "name": "randomness-knob",
+        "property": "RANDOMNESS",
+        "style": "dot",
+        "type": "Knob"
+      },
+      {
+        "bounds": [
+          68,
+          46,
+          40,
+          11
+        ],
+        "name": "randomness-label",
+        "text": {
+          "default": "Randomness",
+          "key": "plugin.54.panel.randomness-label.text"
+        },
+        "type": "Label"
+      },
+      {
+        "bounds": [
+          3,
+          66,
+          40,
+          40
+        ],
+        "min": 1,
+        "max": 999,
+        "name": "grainstoresize-knob",
+        "property": "GRAINSTORESIZE",
+        "style": "dot",
+        "type": "Knob"
+      },
+      {
+        "bounds": [
+          3,
+          106,
+          40,
+          11
+        ],
+        "name": "num-grains-label",
+        "text": {
+          "default": "Num Grains",
+          "key": "plugin.54.panel.num-grains-label.text"
+        },
+        "type": "Label"
+      },
+      {
+        "bounds": [
+          68,
+          66,
+          40,
+          40
+        ],
+        "name": "density-knob",
+        "property": "DENSITY",
+        "style": "dot",
+        "type": "Knob"
+      },
+      {
+        "bounds": [
+          68,
+          106,
+          40,
+          11
+        ],
+        "name": "density-label",
+        "text": {
+          "default": "Density",
+          "key": "plugin.54.panel.density-label.text"
+        },
+        "type": "Label"
+      }
+    ],
+    "height": 124,
+    "help": {
+      "default": "Top secret sample masher plugin. Granulates the incoming stream and\ncarries out various patented algorithms on the result.\n\nTruth is I don't really know how it works, but makes sounds like\ntttttthhhIIiissssSSSSSSsssssSsSSsS.",
+      "key": "plugin.54.panel.help"
+    },
+    "schema_version": 1,
+    "width": 116
+  },
+  "plugin_id": 54,
+  "properties": [
+    {
+      "class": "SignedProperty",
+      "default": 10,
+      "display_name": {
+        "default": "Density",
+        "key": "plugin.54.property.DENSITY"
+      },
+      "hint": {
+        "default": "Density",
+        "key": "plugin.54.property.DENSITY.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 1000,
+      "min": 0,
+      "page": 1,
+      "property": "DENSITY",
+      "read_only": false,
+      "step": 1,
+      "type": "integer"
+    },
+    {
+      "class": "StringProperty",
+      "default": "Masher",
+      "display_name": {
+        "default": "DeviceType",
+        "key": "plugin.54.property.DEVICETYPE"
+      },
+      "hint": {
+        "default": "DeviceType",
+        "key": "plugin.54.property.DEVICETYPE.hint"
+      },
+      "internal": false,
+      "omitted": "identity",
+      "property": "DEVICETYPE",
+      "read_only": true,
+      "type": "string"
+    },
+    {
+      "class": "UnsignedProperty",
+      "default": 1,
+      "display_name": {
+        "default": "DeviceVersion",
+        "key": "plugin.54.property.DEVICEVERSION"
+      },
+      "hint": {
+        "default": "DeviceVersion",
+        "key": "plugin.54.property.DEVICEVERSION.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 0,
+      "min": 0,
+      "omitted": "identity",
+      "page": 0,
+      "property": "DEVICEVERSION",
+      "read_only": true,
+      "step": 0,
+      "type": "integer"
+    },
+    {
+      "class": "FloatProperty",
+      "default": 1,
+      "display_name": {
+        "default": "GrainPitch",
+        "key": "plugin.54.property.GRAINPITCH"
+      },
+      "hint": {
+        "default": "GrainPitch",
+        "key": "plugin.54.property.GRAINPITCH.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 5,
+      "min": 0,
+      "page": 0.009999999776482582,
+      "property": "GRAINPITCH",
+      "read_only": false,
+      "step": 0.0010000000474974513,
+      "type": "number"
+    },
+    {
+      "class": "SignedProperty",
+      "default": 2,
+      "display_name": {
+        "default": "GrainStoreSize",
+        "key": "plugin.54.property.GRAINSTORESIZE"
+      },
+      "hint": {
+        "default": "GrainStoreSize",
+        "key": "plugin.54.property.GRAINSTORESIZE.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 999,
+      "min": 1,
+      "page": 1,
+      "property": "GRAINSTORESIZE",
+      "read_only": false,
+      "step": 1,
+      "type": "integer"
+    },
+    {
+      "class": "SignedProperty",
+      "default": 0,
+      "display_name": {
+        "default": "Randomness",
+        "key": "plugin.54.property.RANDOMNESS"
+      },
+      "hint": {
+        "default": "Randomness",
+        "key": "plugin.54.property.RANDOMNESS.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 100,
+      "min": 0,
+      "page": 1,
+      "property": "RANDOMNESS",
+      "read_only": false,
+      "step": 1,
+      "type": "integer"
+    }
+  ],
+  "schema_version": 1
+}

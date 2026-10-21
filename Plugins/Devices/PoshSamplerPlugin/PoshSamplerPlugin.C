@@ -125,6 +125,10 @@ m_LastRecording(false)
                     RegisterSharedProperty (*Slot (n, (SampleSlot)s), key, hint);
                 }
         }
+        m_CurrentSample = UnsignedProperty (DefaultLinearFlags, 0, 0, NUM_SAMPLES - 1, 1, 1);
+        RegisterSharedProperty (m_CurrentSample, "CurrentSample", "The sample shown");
+        m_RecordingProp = ToggleProperty (Property::ReadOnly, false);
+        RegisterSharedProperty (m_RecordingProp, "Recording", "Recording into the sample");
 
         for (int n=0; n<NUM_SAMPLES; n++) {
             Sample* NewSample = new Sample;
@@ -137,19 +141,41 @@ m_LastRecording(false)
         SetUnsigned(DeviceVersion, 4);
         m_Current = 0;
         m_AudioCH->Register ("Num", &m_GUIArgs.Num);
-        m_AudioCH->Register ("Value", &m_GUIArgs.Value);
         m_AudioCH->Register ("Bool", &m_GUIArgs.Boole);
-        m_AudioCH->Register ("Int", &m_GUIArgs.Int);
         m_AudioCH->Register ("Start", &m_GUIArgs.Start);
         m_AudioCH->Register ("End", &m_GUIArgs.End);
         m_AudioCH->Register ("LoopStart", &m_GUIArgs.LoopStart);
         m_AudioCH->RegisterData ("Name", ChannelHandler::INPUT, &m_GUIArgs.Name, sizeof (m_GUIArgs.Name));
-        m_AudioCH->Register ("PlayPos", &m_CurrentPlayPos, ChannelHandler::OUTPUT);
         m_AudioCH->RegisterData ("SampleBuffer", ChannelHandler::OUTPUT_REQUEST, &m_SampleBuffer, TRANSBUF_SIZE);
         m_AudioCH->Register ("SampleSize", &m_SampleSize, ChannelHandler::OUTPUT_REQUEST);
-        m_AudioCH->Register ("BoolEcho", &m_GUIArgs.BoolEcho, ChannelHandler::OUTPUT);
-        m_AudioCH->Register ("ValEcho", &m_GUIArgs.ValEcho, ChannelHandler::OUTPUT);
-        m_AudioCH->Register ("IntEcho", &m_GUIArgs.IntEcho, ChannelHandler::OUTPUT);
+        {
+        	std::vector<std::string> none, args;
+        	args.clear(); args.push_back("Num"); args.push_back("Start"); args.push_back("End");
+        	m_AudioCH->RegisterCommand("AMP", AMP, args, "iii");
+        	args.clear(); args.push_back("Num"); args.push_back("Start"); args.push_back("End");
+        	m_AudioCH->RegisterCommand("COPY", COPY, args, "iii");
+        	args.clear(); args.push_back("Num"); args.push_back("Start"); args.push_back("End");
+        	m_AudioCH->RegisterCommand("CROP", CROP, args, "iii");
+        	args.clear(); args.push_back("Num"); args.push_back("Start"); args.push_back("End");
+        	m_AudioCH->RegisterCommand("CUT", CUT, args, "iii");
+        	m_AudioCH->RegisterCommand("GETSAMPLE", GETSAMPLE, none);
+        	args.clear(); args.push_back("Num"); args.push_back("Name");
+        	m_AudioCH->RegisterCommand("LOAD", LOAD, args, "is");
+        	args.clear(); args.push_back("Num"); args.push_back("Start"); args.push_back("End");
+        	m_AudioCH->RegisterCommand("MIX", MIX, args, "iii");
+        	args.clear(); args.push_back("Num"); args.push_back("Start"); args.push_back("End");
+        	m_AudioCH->RegisterCommand("PASTE", PASTE, args, "iii");
+        	args.clear(); args.push_back("Num"); args.push_back("Start"); args.push_back("End");
+        	m_AudioCH->RegisterCommand("REV", REV, args, "iii");
+        	args.clear(); args.push_back("Num"); args.push_back("Name");
+        	m_AudioCH->RegisterCommand("SAVE", SAVE, args, "is");
+        	args.clear(); args.push_back("Num");
+        	m_AudioCH->RegisterCommand("SETCURRENT", SETCURRENT, args, "i");
+        	args.clear(); args.push_back("Num"); args.push_back("Start"); args.push_back("End"); args.push_back("LoopStart");
+        	m_AudioCH->RegisterCommand("SETPLAYPOINTS", SETPLAYPOINTS, args, "iiii");
+        	args.clear(); args.push_back("Bool");
+        	m_AudioCH->RegisterCommand("SETREC", SETREC, args, "i");
+        }
 }
 
 PoshSamplerPlugin::~PoshSamplerPlugin() {
@@ -266,9 +292,6 @@ void PoshSamplerPlugin::Execute() {
         }
      }
      m_LastRecording = m_Recording;
-     if (SampleFloat (m_Current, SLOT_SAMPLEPOS) > 0) {
-        m_CurrentPlayPos = (long)SampleFloat (m_Current, SLOT_SAMPLEPOS);
-     }
 }
 
 void PoshSamplerPlugin::ExecuteCommands() {
@@ -279,24 +302,6 @@ void PoshSamplerPlugin::ExecuteCommands() {
              break;
           case SAVE:
              SaveSample (m_GUIArgs.Num, m_GUIArgs.Name);
-             break;
-          case SETVOL:
-             SampleFloat (m_GUIArgs.Num, SLOT_VOLUME)=m_GUIArgs.Value;
-             break;
-          case SETPITCH:
-             SampleFloat (m_GUIArgs.Num, SLOT_PITCHMOD)=m_GUIArgs.Value;
-             break;
-          case SETLOOP:
-             SampleBool (m_GUIArgs.Num, SLOT_LOOP)=m_GUIArgs.Boole;
-             break;
-          case SETPING:
-             SampleBool (m_GUIArgs.Num, SLOT_PINGPONG)=m_GUIArgs.Boole;
-             break;
-          case SETNOTE:
-             SampleSigned (m_GUIArgs.Num, SLOT_NOTE)=m_GUIArgs.Int;
-             break;
-          case SETOCT:
-             SampleSigned (m_GUIArgs.Num, SLOT_OCTAVE)=m_GUIArgs.Int-6;
              break;
           case SETPLAYPOINTS:
              SampleSigned (m_GUIArgs.Num, SLOT_PLAYSTART)=m_GUIArgs.Start;
@@ -329,38 +334,18 @@ void PoshSamplerPlugin::ExecuteCommands() {
              break;
           case SETCURRENT:
              m_Current = m_GUIArgs.Num;
+             AsUnsigned (m_CurrentSample) = m_Current;
              break;
           case GETSAMPLE:
              m_AudioCH->SetupBulkTransfer ((void*)m_SampleVec[m_Current]->GetBuffer());
-             m_SampleSize = m_SampleVec[m_Current]->GetLengthInBytes();
+             m_SampleSize = m_SampleVec[m_Current]->GetLength();
              break;
-          case SETRETRIG:
-             SampleBool (m_GUIArgs.Num, SLOT_RETRIG) = m_GUIArgs.Boole;
-             break;
-          case GETLOOP:
-             m_GUIArgs.BoolEcho = SampleBool (m_Current, SLOT_LOOP);
-             break;
-          case GETPING:
-             m_GUIArgs.BoolEcho = SampleBool (m_Current, SLOT_PINGPONG);
-             break;
-          case GETRETRIG:
-             m_GUIArgs.BoolEcho = SampleBool (m_Current, SLOT_RETRIG);
-             break;
-          case GETVOL:
-             m_GUIArgs.ValEcho = SampleFloat (m_Current, SLOT_VOLUME);
-             break;
-          case GETPITCH:
-             m_GUIArgs.ValEcho = SampleFloat (m_Current, SLOT_PITCHMOD);
-             break;
-          case GETOCT:
-             m_GUIArgs.IntEcho = SampleSigned (m_Current, SLOT_OCTAVE) + 6;
-             break;
-          case GETNOTE:
-             m_GUIArgs.IntEcho = SampleSigned (m_Current, SLOT_NOTE);
-             break;
-        };
+        }
      }
+     m_Current = AsUnsigned (m_CurrentSample);
+     AsBoolean (m_RecordingProp) = m_Recording;
 }
+
 
 VectorProperty *PoshSamplerPlugin::NewSampleSettings (int Note)
 {
@@ -373,10 +358,10 @@ VectorProperty *PoshSamplerPlugin::NewSampleSettings (int Note)
 	s->Add (new SignedProperty (DefaultLinearFlags, Note, 0, 131, 1, 1));
 	s->Add (new SignedProperty (DefaultLinearFlags, 0, -6, 6, 1, 1));
 
-	s->Add (new FloatProperty  (Property::WriteOnly, -1, -1, INT_MAX, 1, 1));
-	s->Add (new SignedProperty (Property::WriteOnly, 0, 0, INT_MAX, 1, 1));
-	s->Add (new SignedProperty (Property::WriteOnly, 0, 0, INT_MAX, 1, 1));
-	s->Add (new SignedProperty (Property::WriteOnly, INT_MAX, 0, INT_MAX, 1, 1));
+	s->Add (new FloatProperty  (Property::ReadOnly, -1, -1, INT_MAX, 1, 1));
+	s->Add (new SignedProperty (Property::ReadOnly, 0, 0, INT_MAX, 1, 1));
+	s->Add (new SignedProperty (Property::ReadOnly, 0, 0, INT_MAX, 1, 1));
+	s->Add (new SignedProperty (Property::ReadOnly, INT_MAX, 0, INT_MAX, 1, 1));
 	s->Add (new ToggleProperty (Property::WriteOnly, true));
 
 	return s;

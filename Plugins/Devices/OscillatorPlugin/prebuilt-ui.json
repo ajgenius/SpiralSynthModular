@@ -1,0 +1,528 @@
+{
+  "host_version": "0.3.43",
+  "panel": {
+    "children": [
+      {
+        "bounds": [
+          0,
+          10,
+          23,
+          23
+        ],
+        "choice": 1,
+        "name": "wave-square",
+        "property": "WAVE TYPE",
+        "tooltip": "Square",
+        "type": "RadioButton",
+        "glyph": "square"
+      },
+      {
+        "bounds": [
+          0,
+          44,
+          23,
+          23
+        ],
+        "choice": 2,
+        "name": "wave-saw",
+        "property": "WAVE TYPE",
+        "tooltip": "Saw",
+        "type": "RadioButton",
+        "glyph": "saw"
+      },
+      {
+        "bounds": [
+          0,
+          78,
+          23,
+          23
+        ],
+        "choice": 3,
+        "name": "wave-noise",
+        "property": "WAVE TYPE",
+        "tooltip": "Noise",
+        "type": "RadioButton",
+        "glyph": "noise"
+      },
+      {
+        "bounds": [
+          42,
+          -4,
+          168,
+          124
+        ],
+        "name": "tabs",
+        "page_padding": 0,
+        "pages": [
+          {
+            "children": [
+              {
+                "bounds": [
+                  54,
+                  8,
+                  60,
+                  60
+                ],
+                "mapping": "sqrt",
+                "min": 0,
+                "max": 2,
+                "name": "fine-knob",
+                "property": "FINE TUNE",
+                "type": "Knob"
+              },
+              {
+                "bounds": [
+                  54,
+                  68,
+                  60,
+                  11
+                ],
+                "name": "fine-label",
+                "text": "Fine Tune",
+                "type": "Label"
+              },
+              {
+                "bounds": [
+                  116,
+                  3,
+                  40,
+                  40
+                ],
+                "name": "octave-knob",
+                "property": "OCTAVE",
+                "type": "Knob"
+              },
+              {
+                "bounds": [
+                  116,
+                  43,
+                  40,
+                  11
+                ],
+                "name": "octave-label",
+                "text": "Octave",
+                "type": "Label"
+              },
+              {
+                "bounds": [
+                  116,
+                  55,
+                  40,
+                  40
+                ],
+                "name": "mod-knob",
+                "property": "MODAMOUNT",
+                "type": "Knob"
+              },
+              {
+                "bounds": [
+                  116,
+                  95,
+                  40,
+                  11
+                ],
+                "name": "mod-label",
+                "text": "Mod Depth",
+                "type": "Label"
+              },
+              {
+                "bounds": [
+                  64,
+                  82,
+                  40,
+                  20
+                ],
+                "name": "reset",
+                "text": "Reset",
+                "type": "Button",
+                "write": [
+                  {
+                    "property": "FINE TUNE",
+                    "value": 1
+                  }
+                ]
+              },
+              {
+                "bounds": [
+                  6,
+                  8,
+                  20,
+                  86
+                ],
+                "inverted": true,
+                "name": "pulse-slider",
+                "property": "PULSE WIDTH",
+                "show_trough": true,
+                "type": "Slider"
+              },
+              {
+                "bounds": [
+                  6,
+                  94,
+                  20,
+                  11
+                ],
+                "name": "pulse-slider-label",
+                "text": {
+                  "default": "PW",
+                  "key": "plugin.4.panel.pulse-slider-label.text"
+                },
+                "type": "Label"
+              },
+              {
+                "bounds": [
+                  30,
+                  8,
+                  20,
+                  86
+                ],
+                "name": "hold-slider",
+                "property": "SAMPLE & HOLD LENGTH",
+                "show_trough": true,
+                "type": "Slider"
+              },
+              {
+                "bounds": [
+                  30,
+                  94,
+                  20,
+                  11
+                ],
+                "name": "hold-slider-label",
+                "text": {
+                  "default": "SH",
+                  "key": "plugin.4.panel.hold-slider-label.text"
+                },
+                "type": "Label"
+              }
+            ],
+            "title": "Control"
+          },
+          {
+            "children": [
+              {
+                "bounds": [
+                  70,
+                  8,
+                  90,
+                  20
+                ],
+                "mapping": {
+                  "pow2": "OCTAVE",
+                  "scale": 13.75
+                },
+                "name": "freq-spinner",
+                "page": 10,
+                "property": "FINE TUNE",
+                "simple": false,
+                "step": 0.1,
+                "type": "Spinner"
+              },
+              {
+                "bounds": [
+                  70,
+                  28,
+                  90,
+                  11
+                ],
+                "name": "freq-label",
+                "text": {
+                  "default": "Freq (Hz)",
+                  "key": "plugin.4.panel.freq-label.text"
+                },
+                "type": "Label"
+              },
+              {
+                "bounds": [
+                  84,
+                  42,
+                  64,
+                  20
+                ],
+                "name": "octave-spinner",
+                "property": "OCTAVE",
+                "type": "Spinner"
+              },
+              {
+                "bounds": [
+                  84,
+                  62,
+                  64,
+                  11
+                ],
+                "name": "octave-number-label",
+                "text": "Octave",
+                "type": "Label"
+              },
+              {
+                "bounds": [
+                  84,
+                  74,
+                  64,
+                  20
+                ],
+                "mapping": "percent",
+                "name": "mod-spinner",
+                "property": "MODAMOUNT",
+                "step": 1,
+                "type": "Spinner"
+              },
+              {
+                "bounds": [
+                  84,
+                  94,
+                  64,
+                  11
+                ],
+                "name": "mod-number-label",
+                "text": "Mod (%)",
+                "type": "Label"
+              },
+              {
+                "bounds": [
+                  10,
+                  8,
+                  55,
+                  20
+                ],
+                "mapping": "percent",
+                "name": "pulse-spinner",
+                "property": "PULSE WIDTH",
+                "type": "Spinner"
+              },
+              {
+                "bounds": [
+                  10,
+                  28,
+                  55,
+                  11
+                ],
+                "name": "pulse-label",
+                "text": "PW (%)",
+                "type": "Label"
+              },
+              {
+                "bounds": [
+                  10,
+                  74,
+                  55,
+                  20
+                ],
+                "name": "hold-spinner",
+                "property": "SAMPLE & HOLD LENGTH",
+                "type": "Spinner"
+              },
+              {
+                "bounds": [
+                  10,
+                  94,
+                  55,
+                  11
+                ],
+                "name": "hold-label",
+                "text": "S&H (Secs)",
+                "type": "Label"
+              }
+            ],
+            "title": "Numbers"
+          }
+        ],
+        "tab_height": 14,
+        "type": "Notebook"
+      }
+    ],
+    "height": 124,
+    "help": {
+      "default": "The Oscillator generates raw waveforms from CV controls. Three wave \nshapes are included, Square wave, Triangle wave and white noise.\n\nIn the square and triangle shapes, the Frequency CV controls the pitch \nof the signal generated, and the pulse-width turns the squarewave into \na pulse wave of varying harmonics, and the triangle wave into a sawtooth,\nor reverse sawtooth wave.\n\nThe sample & hold CV changes the time between samples with the white noise.\nThis is usful for making the Oscillator into a random CV generator.\n\nThe plugin window allows you to select the wave shape, set the octave and\nfine tune the frequency (use the reset button to reset the frequency back\nto it's default value). There are also controls to set the pulse-width,\nsample and hold manually, and control the modulation depth of the input CV's.\n\nThe frequency can be set extremely low on this oscillator, so you can use\nit as an LFO for controlling other plugins."
+    },
+    "schema_version": 1,
+    "width": 206
+  },
+  "plugin_id": 4,
+  "properties": [
+    {
+      "class": "StringProperty",
+      "default": "Oscillator",
+      "display_name": {
+        "default": "DeviceType",
+        "key": "plugin.4.property.DEVICETYPE"
+      },
+      "hint": {
+        "default": "DeviceType",
+        "key": "plugin.4.property.DEVICETYPE.hint"
+      },
+      "internal": false,
+      "omitted": "identity",
+      "property": "DEVICETYPE",
+      "read_only": true,
+      "type": "string"
+    },
+    {
+      "class": "UnsignedProperty",
+      "default": 1,
+      "display_name": {
+        "default": "DeviceVersion",
+        "key": "plugin.4.property.DEVICEVERSION"
+      },
+      "hint": {
+        "default": "DeviceVersion",
+        "key": "plugin.4.property.DEVICEVERSION.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 0,
+      "min": 0,
+      "omitted": "identity",
+      "page": 0,
+      "property": "DEVICEVERSION",
+      "read_only": true,
+      "step": 0,
+      "type": "integer"
+    },
+    {
+      "class": "FloatProperty",
+      "default": 1,
+      "display_name": {
+        "default": "Fine tune",
+        "key": "plugin.4.property.FINE TUNE"
+      },
+      "hint": {
+        "default": "Frequency multiplier (the knob shows its square root)",
+        "key": "plugin.4.property.FINE TUNE.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 2,
+      "min": 0,
+      "page": 0.1,
+      "property": "FINE TUNE",
+      "read_only": false,
+      "step": 1e-06,
+      "type": "number"
+    },
+    {
+      "class": "FloatProperty",
+      "default": 1,
+      "display_name": {
+        "default": "Mod depth",
+        "key": "plugin.4.property.MODAMOUNT"
+      },
+      "hint": {
+        "default": "Mod depth",
+        "key": "plugin.4.property.MODAMOUNT.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 2,
+      "min": 0,
+      "page": 0.1,
+      "property": "MODAMOUNT",
+      "read_only": false,
+      "step": 0.001,
+      "type": "number"
+    },
+    {
+      "class": "IntProperty",
+      "default": 0,
+      "display_name": {
+        "default": "Octave",
+        "key": "plugin.4.property.OCTAVE"
+      },
+      "hint": {
+        "default": "Octave",
+        "key": "plugin.4.property.OCTAVE.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 3,
+      "min": -3,
+      "page": 1,
+      "property": "OCTAVE",
+      "read_only": false,
+      "step": 1,
+      "type": "integer"
+    },
+    {
+      "class": "FloatProperty",
+      "default": 0.5,
+      "display_name": {
+        "default": "Pulse width",
+        "key": "plugin.4.property.PULSE WIDTH"
+      },
+      "hint": {
+        "default": "Pulse width",
+        "key": "plugin.4.property.PULSE WIDTH.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 1,
+      "min": 0,
+      "page": 0.1,
+      "property": "PULSE WIDTH",
+      "read_only": false,
+      "step": 0.01,
+      "type": "number"
+    },
+    {
+      "class": "FloatProperty",
+      "default": 0.1,
+      "display_name": {
+        "default": "Sample & hold length",
+        "key": "plugin.4.property.SAMPLE & HOLD LENGTH"
+      },
+      "hint": {
+        "default": "Sample & hold length",
+        "key": "plugin.4.property.SAMPLE & HOLD LENGTH.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 0.2,
+      "min": 0,
+      "page": 0.1,
+      "property": "SAMPLE & HOLD LENGTH",
+      "read_only": false,
+      "step": 0.001,
+      "type": "number"
+    },
+    {
+      "choices": [
+        {
+          "display_name": {
+            "default": "Square",
+            "key": "plugin.4.property.WAVE TYPE.choice.0"
+          },
+          "value": 1
+        },
+        {
+          "display_name": {
+            "default": "Saw",
+            "key": "plugin.4.property.WAVE TYPE.choice.1"
+          },
+          "value": 2
+        },
+        {
+          "display_name": {
+            "default": "Noise",
+            "key": "plugin.4.property.WAVE TYPE.choice.2"
+          },
+          "value": 3
+        }
+      ],
+      "class": "SetProperty",
+      "default": 1,
+      "display_name": {
+        "default": "Wave type",
+        "key": "plugin.4.property.WAVE TYPE"
+      },
+      "hint": {
+        "default": "Wave type",
+        "key": "plugin.4.property.WAVE TYPE.hint"
+      },
+      "internal": false,
+      "property": "WAVE TYPE",
+      "read_only": false,
+      "type": "integer"
+    }
+  ],
+  "schema_version": 1
+}

@@ -1,0 +1,300 @@
+{
+  "host_version": "0.3.43",
+  "panel": {
+    "children": [
+      {
+        "bounds": [
+          -2,
+          1,
+          23,
+          23
+        ],
+        "choice": 16,
+        "enabled_when": {
+          "equals": 0,
+          "property": "RECORDING"
+        },
+        "name": "bits-16",
+        "property": "BITS PER SAMPLE",
+        "text": {
+          "default": "16bit",
+          "key": "plugin.41.panel.bits-16.text"
+        },
+        "type": "LEDButton"
+      },
+      {
+        "bounds": [
+          -2,
+          24,
+          23,
+          23
+        ],
+        "choice": 24,
+        "enabled_when": {
+          "equals": 0,
+          "property": "RECORDING"
+        },
+        "name": "bits-24",
+        "property": "BITS PER SAMPLE",
+        "text": {
+          "default": "24bit",
+          "key": "plugin.41.panel.bits-24.text"
+        },
+        "type": "LEDButton"
+      },
+      {
+        "bounds": [
+          -2,
+          47,
+          23,
+          23
+        ],
+        "choice": 32,
+        "enabled_when": {
+          "equals": 0,
+          "property": "RECORDING"
+        },
+        "name": "bits-32",
+        "property": "BITS PER SAMPLE",
+        "text": {
+          "default": "32bit",
+          "key": "plugin.41.panel.bits-32.text"
+        },
+        "type": "LEDButton"
+      },
+      {
+        "bounds": [
+          48,
+          6,
+          108,
+          38
+        ],
+        "digits": 4,
+        "format": "time",
+        "name": "time",
+        "property": "TIME RECORDED",
+        "type": "SevenSegment"
+      },
+      {
+        "bounds": [
+          103,
+          49,
+          10,
+          18
+        ],
+        "enabled_when": {
+          "equals": 0,
+          "property": "RECORDING"
+        },
+        "name": "stereo",
+        "property": "STEREO",
+        "size": 12,
+        "text": {
+          "default": "Stereo",
+          "key": "plugin.41.panel.stereo.text"
+        },
+        "type": "CheckBox"
+      },
+      {
+        "bounds": [
+          -2,
+          71,
+          75,
+          20
+        ],
+        "file": {
+          "extension": ".wav",
+          "save": true,
+          "title": {
+            "default": "Pick a Wav file to save to",
+            "key": "plugin.41.panel.open.title"
+          },
+          "then": [
+            {
+              "property": "COMMAND",
+              "value": "OPENWAV",
+              "with": [
+                "text"
+              ]
+            }
+          ]
+        },
+        "name": "open",
+        "text": {
+          "default": "Open",
+          "key": "plugin.41.panel.open.text"
+        },
+        "type": "FileChoosingButton",
+        "write_off": [
+          {
+            "property": "COMMAND",
+            "value": "CLOSEWAV"
+          }
+        ]
+      },
+      {
+        "bounds": [
+          83,
+          71,
+          75,
+          20
+        ],
+        "name": "record",
+        "property": "RECORDING",
+        "text": {
+          "default": "Record",
+          "key": "plugin.41.panel.record.text"
+        },
+        "type": "Button",
+        "write": [
+          {
+            "property": "COMMAND",
+            "value": "RECORD"
+          }
+        ],
+        "write_off": [
+          {
+            "property": "COMMAND",
+            "value": "STOP"
+          }
+        ]
+      }
+    ],
+    "height": 99,
+    "help": {
+      "default": "Stereo or mono, the bit depth, and recording: Open picks the WAV file, Record and Stop write to it, Close finishes it.",
+      "key": "plugin.41.panel.help"
+    },
+    "schema_version": 1,
+    "width": 156
+  },
+  "plugin_id": 41,
+  "properties": [
+    {
+      "class": "IntProperty",
+      "default": 16,
+      "display_name": {
+        "default": "Bits Per Sample",
+        "key": "plugin.41.property.BITS PER SAMPLE"
+      },
+      "hint": {
+        "default": "Bits Per Sample",
+        "key": "plugin.41.property.BITS PER SAMPLE.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 0,
+      "min": 0,
+      "page": 1,
+      "property": "BITS PER SAMPLE",
+      "read_only": false,
+      "step": 1,
+      "type": "integer"
+    },
+    {
+      "class": "StringProperty",
+      "default": "",
+      "display_name": {
+        "default": "COMMAND",
+        "key": "plugin.41.property.COMMAND"
+      },
+      "hint": {
+        "default": "Command",
+        "key": "plugin.41.property.COMMAND.hint"
+      },
+      "internal": true,
+      "omitted": "internal",
+      "property": "COMMAND",
+      "read_only": false,
+      "type": "string"
+    },
+    {
+      "class": "StringProperty",
+      "default": "DiskWriter",
+      "display_name": {
+        "default": "DeviceType",
+        "key": "plugin.41.property.DEVICETYPE"
+      },
+      "hint": {
+        "default": "DeviceType",
+        "key": "plugin.41.property.DEVICETYPE.hint"
+      },
+      "internal": false,
+      "omitted": "identity",
+      "property": "DEVICETYPE",
+      "read_only": true,
+      "type": "string"
+    },
+    {
+      "class": "UnsignedProperty",
+      "default": 2,
+      "display_name": {
+        "default": "DeviceVersion",
+        "key": "plugin.41.property.DEVICEVERSION"
+      },
+      "hint": {
+        "default": "DeviceVersion",
+        "key": "plugin.41.property.DEVICEVERSION.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 0,
+      "min": 0,
+      "omitted": "identity",
+      "page": 0,
+      "property": "DEVICEVERSION",
+      "read_only": true,
+      "step": 0,
+      "type": "integer"
+    },
+    {
+      "class": "ToggleProperty",
+      "default": false,
+      "display_name": {
+        "default": "Recording",
+        "key": "plugin.41.property.RECORDING"
+      },
+      "hint": {
+        "default": "Recording",
+        "key": "plugin.41.property.RECORDING.hint"
+      },
+      "internal": false,
+      "property": "RECORDING",
+      "read_only": true,
+      "type": "boolean"
+    },
+    {
+      "class": "ToggleProperty",
+      "default": true,
+      "display_name": {
+        "default": "Stereo",
+        "key": "plugin.41.property.STEREO"
+      },
+      "hint": {
+        "default": "Stereo",
+        "key": "plugin.41.property.STEREO.hint"
+      },
+      "internal": false,
+      "property": "STEREO",
+      "read_only": false,
+      "type": "boolean"
+    },
+    {
+      "class": "FloatProperty",
+      "default": 0,
+      "display_name": {
+        "default": "Timerecorded",
+        "key": "plugin.41.property.TIME RECORDED"
+      },
+      "hint": {
+        "default": "Timerecorded",
+        "key": "plugin.41.property.TIME RECORDED.hint"
+      },
+      "internal": false,
+      "property": "TIME RECORDED",
+      "read_only": true,
+      "type": "number"
+    }
+  ],
+  "schema_version": 1
+}

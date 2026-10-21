@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <algorithm>
+#include <string.h>
 #include "ControllerPlugin.h"
 #include "SpiralIcon.xpm"
 
@@ -80,11 +81,11 @@ ControllerPlugin::ControllerPlugin()
 	m_NumChannels = UnsignedProperty(DefaultLinearFlags, 4, 1, MAX_CHANNELS, 1, 1);
 	RegisterSharedProperty(m_NumChannels, "Channels", "Number of channels");
 	m_ChannelVal = VectorProperty(Property::WriteOnly);
-	for (int n=0; n<MAX_CHANNELS; n++) m_ChannelVal.Add(new FloatProperty(DefaultLinearFlags, 0.0f, 0.0f, 1.0f, 0.001f, 0.01f));
+	for (int n=0; n<MAX_CHANNELS; n++) m_ChannelVal.Add(new FloatProperty(DefaultLinearFlags, 0.0f, -0x7FFFFF, 0x7FFFFF, 0.0001f, 0.01f));
 	m_MinVal = VectorProperty(Property::WriteOnly);
-	for (int n=0; n<MAX_CHANNELS; n++) m_MinVal.Add(new FloatProperty(DefaultLinearFlags, 0.0f, 0.0f, 1.0f, 0.001f, 0.01f));
+	for (int n=0; n<MAX_CHANNELS; n++) m_MinVal.Add(new FloatProperty(DefaultLinearFlags, 0.0f, -0x7FFFFF, 0x7FFFFF, 0.0001f, 0.01f));
 	m_MaxVal = VectorProperty(Property::WriteOnly);
-	for (int n=0; n<MAX_CHANNELS; n++) m_MaxVal.Add(new FloatProperty(DefaultLinearFlags, 0.0f, 0.0f, 1.0f, 0.001f, 0.01f));
+	for (int n=0; n<MAX_CHANNELS; n++) m_MaxVal.Add(new FloatProperty(DefaultLinearFlags, 0.0f, -0x7FFFFF, 0x7FFFFF, 0.0001f, 0.01f));
 	m_Names = VectorProperty(Property::WriteOnly);
 	for (int n=0; n<MAX_CHANNELS; n++) m_Names.Add(new StringProperty(Property::WriteOnly, ""));
 	RegisterSharedProperty(m_ChannelVal, "ChannelVal", "Channel values");
@@ -93,10 +94,18 @@ ControllerPlugin::ControllerPlugin()
 	RegisterSharedProperty(m_Names, "Names", "Channel names");
 	for (int n=0; n<MAX_CHANNELS; n++)
 	{
+		SetChannel(n, 0.0f);
+		SetMin(n, -1.0f);
+		SetMax(n, 1.0f);
+		SetName(n, "Name");
+	}
+	for (int n=0; n<MAX_CHANNELS; n++)
+	{
 		char key[16], hint[32];
 		snprintf(key, sizeof key, "Name%d", n);
 		snprintf(hint, sizeof hint, "Channel %d name", n + 1);
 		RegisterSharedProperty(Name(n), key, hint);
+		m_AudioCH->RegisterData(key, ChannelHandler::INPUT, m_NameChannel[n], sizeof m_NameChannel[n]);
 		snprintf(key, sizeof key, "Value%d", n);
 		snprintf(hint, sizeof hint, "Channel %d value", n + 1);
 		RegisterSharedProperty(Val(n), key, hint);
@@ -120,19 +129,15 @@ ControllerPlugin::ControllerPlugin()
 	m_PluginInfo.PortTips.push_back("CV 3");
 	m_PluginInfo.PortTips.push_back("CV 4");
 
+}
+
+void ControllerPlugin::SyncNames()
+{
 	for (int n=0; n<MAX_CHANNELS; n++)
 	{
-		SetChannel(n, 0.0f);
-		SetMin(n, -1.0f);
-		SetMax(n, 1.0f);
-		SetName(n, "Name");
+		strncpy(m_NameChannel[n],GetName(n).c_str(),255);
+		m_NameChannel[n][255]=0;
 	}
-	
-	m_AudioCH->Register("Number",&m_GUIArgs.Number);
-	m_AudioCH->Register("Value",&m_GUIArgs.Value);
-	m_AudioCH->Register("Min",&m_GUIArgs.Min);
-	m_AudioCH->Register("Max",&m_GUIArgs.Max);
-	m_AudioCH->RegisterData("Name",ChannelHandler::INPUT,m_GUIArgs.Name,256);
 }
 
 ControllerPlugin::~ControllerPlugin()
@@ -159,30 +164,10 @@ void ControllerPlugin::Execute()
 
 void ControllerPlugin::ExecuteCommands()
 {
-	if (m_AudioCH->IsCommandWaiting())
-	{
-		switch (m_AudioCH->GetCommand())
-		{
-			case (SETNUM)     :
-				SetNum(m_GUIArgs.Number);
-			break;
-			case (SETALL)     :
-				SetAll(m_GUIArgs.Number, m_GUIArgs.Name, m_GUIArgs.Max, m_GUIArgs.Value, m_GUIArgs.Min);
-			break;
-			case (SETNAME)    :
-				SetName(m_GUIArgs.Number, m_GUIArgs.Name);
-			break;
-			case (SETMAX)     :
-				SetMax(m_GUIArgs.Number, m_GUIArgs.Max);
-			break;
-			case (SETCHANNEL) :
-				SetChannel(m_GUIArgs.Number, m_GUIArgs.Value);
-			break;
-			case (SETMIN)     :
-				SetMin(m_GUIArgs.Number, m_GUIArgs.Min);
-			break;
-        }
-	}
+	for (int n=0; n<MAX_CHANNELS; n++)
+		if (GetName(n) != m_NameChannel[n]) Name(n).Value = m_NameChannel[n];
+	if ((int)AsUnsigned(m_NumChannels) != m_PluginInfo.NumOutputs)
+		SetNum(AsUnsigned(m_NumChannels));
 }
 
 void ControllerPlugin::SetNum(int n)
@@ -190,27 +175,26 @@ void ControllerPlugin::SetNum(int n)
 	// once to clear the connections with the current info
 	UpdatePluginInfoWithHost();
 
-	if (AsUnsigned(m_NumChannels)<n)
+	while (m_PluginInfo.NumOutputs<n)
 	{
 		char t[256];
-		sprintf(t,"CV %d",n);
+		sprintf(t,"CV %d",m_PluginInfo.NumOutputs+1);
 		m_PluginInfo.PortTips.push_back(t);
 		AddOutput();
 		m_PluginInfo.NumOutputs++;
 	}
-	else
+	while (m_PluginInfo.NumOutputs>n && !m_PluginInfo.PortTips.empty())
 	{
-		vector<string>::iterator i=m_PluginInfo.PortTips.end();
-		m_PluginInfo.PortTips.erase(i--);
+		m_PluginInfo.PortTips.pop_back();
 		RemoveOutput();
 		m_PluginInfo.NumOutputs--;
 	}
-	
+
 	AsUnsigned(m_NumChannels)=n;
 	m_PluginInfo.NumOutputs=n;
 
 	// do the actual update
-	UpdatePluginInfoWithHost();	
+	UpdatePluginInfoWithHost();
 }
 
 // use with caution
@@ -310,6 +294,7 @@ void ControllerPlugin::Apply(Spiral::Core::Description::Reader &r)
 
 			m_PluginInfo.NumOutputs=GetNum();
 			UpdatePluginInfoWithHost();
+			SyncNames();
 		} break;
 		case 4:
 		{
@@ -336,6 +321,7 @@ void ControllerPlugin::Apply(Spiral::Core::Description::Reader &r)
 
 			m_PluginInfo.NumOutputs=GetNum();
 			UpdatePluginInfoWithHost();
+			SyncNames();
 		} break;
 		case 3:
 		{
@@ -372,6 +358,7 @@ void ControllerPlugin::Apply(Spiral::Core::Description::Reader &r)
 
 			m_PluginInfo.NumOutputs=GetNum();
 			UpdatePluginInfoWithHost();
+			SyncNames();
 		} break;
 
 		default :

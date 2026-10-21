@@ -66,6 +66,12 @@ mixer_ports_test_SOURCES = tests/mixer-ports.cpp Plugins/Devices/MixerPlugin/Mix
 mixer_ports_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir) -I$(srcdir)/Plugins/Devices/MixerPlugin
 mixer_ports_test_LDADD = $(SpiralSynthModular_LDADD)
 
+# Every shipped panel loads with nothing refused, and a handler drives a device.
+check_PROGRAMS += panel-handlers-test
+panel_handlers_test_SOURCES = tests/panel-handlers.cpp Plugins/Devices/MixerPlugin/MixerPlugin.C SpiralInfo.C
+panel_handlers_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir) -I$(srcdir)/Plugins/Devices/MixerPlugin -I$(srcdir)/libs/libSpumoni/include
+panel_handlers_test_LDADD = $(SpiralSynthModular_LDADD)
+
 check_PROGRAMS += mixer-signal-test stereo-mixer-signal-test
 mixer_signal_test_SOURCES = tests/mixer-signal.cpp Plugins/Devices/MixerPlugin/MixerPlugin.C
 mixer_signal_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/Devices/MixerPlugin

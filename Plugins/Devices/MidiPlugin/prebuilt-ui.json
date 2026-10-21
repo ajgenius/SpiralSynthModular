@@ -1,0 +1,395 @@
+{
+  "host_version": "0.3.43",
+  "panel": {
+    "children": [
+      {
+        "bounds": [
+          10,
+          1,
+          56,
+          20
+        ],
+        "digits": 0,
+        "name": "channel",
+        "property": "DEVICENUM",
+        "simple": true,
+        "size": 14,
+        "step": 1,
+        "type": "Spinner"
+      },
+      {
+        "bounds": [
+          10,
+          21,
+          56,
+          16
+        ],
+        "name": "channel-label",
+        "size": 14,
+        "text": {
+          "default": "Channel",
+          "key": "plugin.2.panel.channel-label.text"
+        },
+        "type": "Label"
+      },
+      {
+        "bounds": [
+          -2,
+          38,
+          80,
+          20
+        ],
+        "name": "note-cut",
+        "property": "NOTECUT",
+        "text": {
+          "default": "Note Cut",
+          "key": "plugin.2.panel.note-cut.text"
+        },
+        "type": "Button"
+      },
+      {
+        "bounds": [
+          -2,
+          58,
+          80,
+          20
+        ],
+        "name": "continuous-notes",
+        "property": "CONTINUOUSNOTES",
+        "text": {
+          "default": "Cont Notes",
+          "key": "plugin.2.panel.continuous-notes.text"
+        },
+        "type": "Button"
+      },
+      {
+        "bounds": [
+          -2,
+          78,
+          80,
+          20
+        ],
+        "list": {
+          "options": [
+            "0   Bank Select",
+            "1   Modulation Wheel (coarse)",
+            "2   Breath controller (coarse)",
+            "3   None",
+            "4   Foot Pedal (coarse)",
+            "5   Portamento Time (coarse)",
+            "6   Data Entry (coarse)",
+            "7   Volume (coarse)",
+            "8   Balance (coarse)",
+            "9   None",
+            "10  Pan position (coarse)",
+            "11  Expression (coarse)",
+            "12  Effect Control 1 (coarse)",
+            "13  Effect Control 2 (coarse)",
+            "14  None",
+            "15  None",
+            "16  General Purpose Slider 1",
+            "17  General Purpose Slider 2",
+            "18  General Purpose Slider 3",
+            "19  General Purpose Slider 4",
+            "20  None",
+            "21  None",
+            "22  None",
+            "23  None",
+            "24  None",
+            "25  None",
+            "26  None",
+            "27  None",
+            "28  None",
+            "29  None",
+            "30  None",
+            "31  None",
+            "32  Bank Select (fine)",
+            "33  Modulation Wheel (fine)",
+            "34  Breath controller (fine)",
+            "35  None",
+            "36  Foot Pedal (fine)",
+            "37  Portamento Time (fine)",
+            "38  Data Entry (fine)",
+            "39  Volume (fine)",
+            "40  Balance (fine)",
+            "41  None",
+            "42  Pan position (fine)",
+            "43  Expression (fine)",
+            "44  Effect Control 1 (fine)",
+            "45  Effect Control 2 (fine)",
+            "46  None",
+            "47  None",
+            "48  None",
+            "49  None",
+            "50  None",
+            "51  None",
+            "52  None",
+            "53  None",
+            "54  None",
+            "55  None",
+            "56  None",
+            "57  None",
+            "58  None",
+            "59  None",
+            "60  None",
+            "61  None",
+            "62  None",
+            "63  None",
+            "64  Hold Pedal (on/off)",
+            "65  Portamento (on/off)",
+            "66  Sustenuto Pedal (on/off)",
+            "67  Soft Pedal (on/off)",
+            "68  Legato Pedal (on/off)",
+            "69  Hold 2 Pedal (on/off)",
+            "70  Sound Variation",
+            "71  Sound Timbre",
+            "72  Sound Release Time",
+            "73  Sound Attack Time",
+            "74  Sound Brightness",
+            "75  Sound Control 6",
+            "76  Sound Control 7",
+            "77  Sound Control 8",
+            "78  Sound Control 9",
+            "79  Sound Control 10",
+            "80  General Purpose Button 1 (on/off)",
+            "81  General Purpose Button 2 (on/off)",
+            "82  General Purpose Button 3 (on/off)",
+            "83  General Purpose Button 4 (on/off)",
+            "84  None",
+            "85  None",
+            "86  None",
+            "87  None",
+            "88  None",
+            "89  None",
+            "90  None",
+            "91  Effects Level",
+            "92  Tremulo Level",
+            "93  Chorus Level",
+            "94  Celeste Level",
+            "95  Phaser Level",
+            "96  Data Button increment",
+            "97  Data Button decrement",
+            "98  Non-registered Parameter (fine)",
+            "99  Non-registered Parameter (coarse)",
+            "100 Registered Parameter (fine)",
+            "101 Registered Parameter (coarse)",
+            "102 None",
+            "103 None",
+            "104 None",
+            "105 None",
+            "106 None",
+            "107 None",
+            "108 None",
+            "109 None",
+            "110 None",
+            "111 None",
+            "112 None",
+            "113 None",
+            "114 None",
+            "115 None",
+            "116 None",
+            "117 None",
+            "118 None",
+            "119 None",
+            "120 All Sound Off",
+            "121 All Controllers Off",
+            "122 Local Keyboard (on/off)",
+            "123 All Notes Off",
+            "124 Omni Mode Off",
+            "125 Omni Mode On",
+            "126 Mono Operation",
+            "127 Poly Operation"
+          ]
+        },
+        "name": "add-control",
+        "text": {
+          "default": "Add Control",
+          "key": "plugin.2.panel.add-control.text"
+        },
+        "type": "Button",
+        "write": [
+          {
+            "property": "COMMAND",
+            "value": "ADDCONTROL",
+            "with": [
+              "value",
+              "text"
+            ]
+          }
+        ]
+      },
+      {
+        "bounds": [
+          -2,
+          98,
+          80,
+          20
+        ],
+        "name": "remove-control",
+        "text": {
+          "default": "Remove Control",
+          "key": "plugin.2.panel.remove-control.text"
+        },
+        "type": "Button",
+        "write": [
+          {
+            "property": "COMMAND",
+            "value": "DELCONTROL"
+          }
+        ]
+      }
+    ],
+    "height": 124,
+    "help": {
+      "default": "The MIDI channel to listen on (0 for all) and whether a new note cuts the last.",
+      "key": "plugin.2.panel.help"
+    },
+    "schema_version": 1,
+    "width": 76
+  },
+  "plugin_id": 2,
+  "properties": [
+    {
+      "class": "IntProperty",
+      "default": 0,
+      "display_name": {
+        "default": "Cc",
+        "key": "plugin.2.property.CC"
+      },
+      "hint": {
+        "default": "Cc",
+        "key": "plugin.2.property.CC.hint"
+      },
+      "internal": true,
+      "property": "CC",
+      "read_only": false,
+      "type": "integer"
+    },
+    {
+      "class": "StringProperty",
+      "default": "",
+      "display_name": {
+        "default": "COMMAND",
+        "key": "plugin.2.property.COMMAND"
+      },
+      "hint": {
+        "default": "Command",
+        "key": "plugin.2.property.COMMAND.hint"
+      },
+      "internal": true,
+      "omitted": "internal",
+      "property": "COMMAND",
+      "read_only": false,
+      "type": "string"
+    },
+    {
+      "class": "ToggleProperty",
+      "default": false,
+      "display_name": {
+        "default": "Continuousnotes",
+        "key": "plugin.2.property.CONTINUOUSNOTES"
+      },
+      "hint": {
+        "default": "Continuousnotes",
+        "key": "plugin.2.property.CONTINUOUSNOTES.hint"
+      },
+      "internal": false,
+      "property": "CONTINUOUSNOTES",
+      "read_only": false,
+      "type": "boolean"
+    },
+    {
+      "class": "IntProperty",
+      "default": 0,
+      "display_name": {
+        "default": "Device",
+        "key": "plugin.2.property.DEVICENUM"
+      },
+      "hint": {
+        "default": "MIDI device/channel",
+        "key": "plugin.2.property.DEVICENUM.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 16,
+      "min": 0,
+      "page": 1,
+      "property": "DEVICENUM",
+      "read_only": false,
+      "step": 1,
+      "type": "integer"
+    },
+    {
+      "class": "StringProperty",
+      "default": "Midi",
+      "display_name": {
+        "default": "DeviceType",
+        "key": "plugin.2.property.DEVICETYPE"
+      },
+      "hint": {
+        "default": "DeviceType",
+        "key": "plugin.2.property.DEVICETYPE.hint"
+      },
+      "internal": false,
+      "omitted": "identity",
+      "property": "DEVICETYPE",
+      "read_only": true,
+      "type": "string"
+    },
+    {
+      "class": "UnsignedProperty",
+      "default": 2,
+      "display_name": {
+        "default": "DeviceVersion",
+        "key": "plugin.2.property.DEVICEVERSION"
+      },
+      "hint": {
+        "default": "DeviceVersion",
+        "key": "plugin.2.property.DEVICEVERSION.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 0,
+      "min": 0,
+      "omitted": "identity",
+      "page": 0,
+      "property": "DEVICEVERSION",
+      "read_only": true,
+      "step": 0,
+      "type": "integer"
+    },
+    {
+      "class": "StringProperty",
+      "default": "",
+      "display_name": {
+        "default": "Name",
+        "key": "plugin.2.property.NAME"
+      },
+      "hint": {
+        "default": "Name",
+        "key": "plugin.2.property.NAME.hint"
+      },
+      "internal": true,
+      "property": "NAME",
+      "read_only": false,
+      "type": "string"
+    },
+    {
+      "class": "ToggleProperty",
+      "default": false,
+      "display_name": {
+        "default": "Note cut",
+        "key": "plugin.2.property.NOTECUT"
+      },
+      "hint": {
+        "default": "Cut notes",
+        "key": "plugin.2.property.NOTECUT.hint"
+      },
+      "internal": false,
+      "property": "NOTECUT",
+      "read_only": false,
+      "type": "boolean"
+    }
+  ],
+  "schema_version": 1
+}

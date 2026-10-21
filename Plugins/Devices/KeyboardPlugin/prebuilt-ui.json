@@ -1,0 +1,151 @@
+{
+  "host_version": "0.3.43",
+  "panel": {
+    "children": [
+      {
+        "always": true,
+        "bounds": [
+          0,
+          6,
+          424,
+          76
+        ],
+        "children": [
+          {
+            "bounds": [
+              0,
+              0,
+              0,
+              58
+            ],
+            "computer_keys": true,
+            "first_note": 0,
+            "name": "keys",
+            "note_count": 132,
+            "note_off": "NOTE_OFF",
+            "note_on": "NOTE_ON",
+            "type": "PianoKeys",
+            "white_key_width": 14,
+            "status": "keyboard-status",
+            "tooltip": {
+              "default": "Computer keys play notes. F1-F11 change octave.",
+              "key": "plugin.16.panel.keys.tooltip"
+            },
+            "black_key_width": 10,
+            "black_key_height": 36,
+            "black_key_offset": 10
+          }
+        ],
+        "name": "keys-scroll",
+        "horizontal": true,
+        "vertical": false,
+        "type": "VirtualScrollArea",
+        "view": [
+          392,
+          0
+        ]
+      },
+      {
+        "align": "left",
+        "bounds": [
+          4,
+          84,
+          416,
+          22
+        ],
+        "name": "keyboard-status",
+        "size": 11,
+        "text": "",
+        "type": "Label"
+      }
+    ],
+    "height": 110,
+    "help": {
+      "default": "This plugin provides you with a soft-keyboard if you don't have midi.\nYou can either use the mouse to play the keyboard GUI, or it will also\npick up PC keyboard presses once the pointer has been over it.\n\nThe keyboard map follows the SoundTracker standard - i.e:\nz=C4 s=C#4 x=D4 ... q=C5 2=C#5 w=D5...\nThe function keys F1-F11 choose the octave and scroll it into view.\n\nWhile the keyboard has the PC keys, the keys they play are highlighted\nand lettered, and the line underneath shows their octaves. At the top\noctave the PC keys past the last key share it (marked +).",
+      "key": "plugin.16.panel.help"
+    },
+    "schema_version": 1,
+    "width": 424
+  },
+  "plugin_id": 16,
+  "properties": [
+    {
+      "class": "StringProperty",
+      "default": "",
+      "display_name": {
+        "default": "COMMAND",
+        "key": "plugin.16.property.COMMAND"
+      },
+      "hint": {
+        "default": "Command",
+        "key": "plugin.16.property.COMMAND.hint"
+      },
+      "internal": true,
+      "omitted": "internal",
+      "property": "COMMAND",
+      "read_only": false,
+      "type": "string"
+    },
+    {
+      "class": "StringProperty",
+      "default": "Keyboard",
+      "display_name": {
+        "default": "DeviceType",
+        "key": "plugin.16.property.DEVICETYPE"
+      },
+      "hint": {
+        "default": "DeviceType",
+        "key": "plugin.16.property.DEVICETYPE.hint"
+      },
+      "internal": false,
+      "omitted": "identity",
+      "property": "DEVICETYPE",
+      "read_only": true,
+      "type": "string"
+    },
+    {
+      "class": "UnsignedProperty",
+      "default": 1,
+      "display_name": {
+        "default": "DeviceVersion",
+        "key": "plugin.16.property.DEVICEVERSION"
+      },
+      "hint": {
+        "default": "DeviceVersion",
+        "key": "plugin.16.property.DEVICEVERSION.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 0,
+      "min": 0,
+      "omitted": "identity",
+      "page": 0,
+      "property": "DEVICEVERSION",
+      "read_only": true,
+      "step": 0,
+      "type": "integer"
+    },
+    {
+      "class": "IntProperty",
+      "default": 0,
+      "display_name": {
+        "default": "Note",
+        "key": "plugin.16.property.NOTE"
+      },
+      "hint": {
+        "default": "Note",
+        "key": "plugin.16.property.NOTE.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 131,
+      "min": 0,
+      "page": 1,
+      "property": "NOTE",
+      "read_only": false,
+      "step": 1,
+      "type": "integer"
+    }
+  ],
+  "schema_version": 1
+}

@@ -78,30 +78,26 @@ WaveShaperPlugin::WaveShaperPlugin () {
   m_PluginInfo.PortTips.push_back ("Out");
   m_wt = new float[512];
   for (i=0; i<512; i++) m_wt[i] = (i / 256.0 - 1.0);
-  m_GUIArgs.FuncPlot = new float[256];
-  for (i=0; i<256; i++) m_GUIArgs.FuncPlot[i] = m_wt[i*2];
+  m_FuncPlot = new float[256];
+  for (i=0; i<256; i++) m_FuncPlot[i] = m_wt[i*2];
   SetString(DeviceName, SpiralPlugin_GetName());
   SetUnsigned(DeviceVersion, 1);
 
-  m_Wave = SignedProperty(Property::ReadOnly, 1, 0, 1, 1, 1);
+  m_Wave = SignedProperty(Property::WriteOnly, 1, 0, 1, 1, 1);
   for (i=0; i<6; i++)
   {
     char key[16], hint[32];
     snprintf (key, sizeof key, "Coef%d", i);
     snprintf (hint, sizeof hint, "Coefficient %d", i);
-    m_Coefs[i] = FloatProperty(Property::ReadOnly, i == 0 ? 1.0f : 0.0f, -1.0f, 1.0f, 0.001f, 0.1f);
+    m_Coefs[i] = FloatProperty(DefaultLinearFlags, i == 0 ? 1.0f : 0.0f, -1.0f, 1.0f, 0.001f, 0.1f);
     RegisterSharedProperty(m_Coefs[i], key, hint);
   }
-  m_AudioCH->Register ("WaveType", &m_GUIArgs.WaveType);
-  m_AudioCH->Register ("CoefNum", &m_GUIArgs.CoefNum);
-  m_AudioCH->Register ("CoefVal", &m_GUIArgs.CoefVal);
-  m_AudioCH->RegisterData ("WT", ChannelHandler::OUTPUT, m_GUIArgs.FuncPlot, 256 * sizeof (float));
-  // The state the GUI shows after a load, read through the channel.
+  m_AudioCH->RegisterData ("WT", ChannelHandler::OUTPUT, m_FuncPlot, 256 * sizeof (float));
   RegisterSharedProperty(m_Wave, "WaveType", "Polynomial wave shaping");
 }
 
 WaveShaperPlugin::~WaveShaperPlugin() {
-  delete [] m_GUIArgs.FuncPlot;
+  delete [] m_FuncPlot;
   delete [] m_wt;
 }
 
@@ -114,19 +110,9 @@ PluginInfo &WaveShaperPlugin::Initialise (const HostInfo *Host) {
 
 
 void WaveShaperPlugin::ExecuteCommands () {
-  if (m_AudioCH->IsCommandWaiting ()) {
-    switch (m_AudioCH->GetCommand ()) {
-      case (SETWAVETYPE) :
-        AsSigned(m_Wave) = m_GUIArgs.WaveType;
-        calc ();
-        break;
-      case (SETCOEF) :
-        if ((m_GUIArgs.CoefNum < 0) || (m_GUIArgs.CoefNum > 5)) break;
-        AsFloat(m_Coefs[m_GUIArgs.CoefNum]) = m_GUIArgs.CoefVal;
-        calc ();
-        break;
-    }
-  }
+  bool changed = (AsSigned(m_Wave) != 0) != m_CalcWave;
+  for (int i=0; i<6; i++) changed = changed || AsFloat(m_Coefs[i]) != m_CalcCoefs[i];
+  if (changed) calc ();
 }
 
 void WaveShaperPlugin::Reset()
@@ -162,6 +148,8 @@ void WaveShaperPlugin::set (int index, float v) {
 void WaveShaperPlugin::calc (void) {
   int i;
   float xx,x,y,max;
+  m_CalcWave = AsSigned(m_Wave) != 0;
+  for (i=0; i<6; i++) m_CalcCoefs[i] = AsFloat(m_Coefs[i]);
   if (AsSigned(m_Wave)) {
     max = 1.0;
     for (i=0; i<512; i++) {
@@ -204,7 +192,7 @@ void WaveShaperPlugin::calc (void) {
       set(i, y);
     }
   }
-  for (i=0; i<256; i++) m_GUIArgs.FuncPlot[i] = m_wt[i*2];
+  for (i=0; i<256; i++) m_FuncPlot[i] = m_wt[i*2];
 }
 
 // Streaming

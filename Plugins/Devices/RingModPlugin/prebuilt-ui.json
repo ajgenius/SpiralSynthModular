@@ -1,0 +1,104 @@
+{
+  "host_version": "0.3.42",
+  "panel": {
+    "children": [
+      {
+        "bounds": [
+          13,
+          -2,
+          50,
+          50
+        ],
+        "name": "amount-knob",
+        "property": "AMOUNT",
+        "style": "dot",
+        "type": "Knob"
+      },
+      {
+        "bounds": [
+          13,
+          48,
+          50,
+          11
+        ],
+        "name": "amount-label",
+        "text": {
+          "default": "Amount",
+          "key": "plugin.10.panel.amount-label.text"
+        },
+        "type": "Label"
+      }
+    ],
+    "height": 64,
+    "help": {
+      "default": "A ring modulator, multiplies two inputs together.\nAn extra dial sets the amount of modulation. The\nring modulation effect creates an extra harmonic\nin the signal, although this is often out of tune\nwith the other signals, its useful for creating bell\nor struck metallic sounds.\n",
+      "key": "plugin.10.panel.help"
+    },
+    "schema_version": 1,
+    "width": 76
+  },
+  "plugin_id": 10,
+  "properties": [
+    {
+      "class": "FloatProperty",
+      "default": 1,
+      "display_name": {
+        "default": "Amount",
+        "key": "plugin.10.property.AMOUNT"
+      },
+      "hint": {
+        "default": "Amount",
+        "key": "plugin.10.property.AMOUNT.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 3,
+      "min": 0,
+      "page": 0.0010000000474974513,
+      "property": "AMOUNT",
+      "read_only": false,
+      "step": 9.999999747378752e-05,
+      "type": "number"
+    },
+    {
+      "class": "StringProperty",
+      "default": "RingMod",
+      "display_name": {
+        "default": "DeviceType",
+        "key": "plugin.10.property.DEVICETYPE"
+      },
+      "hint": {
+        "default": "DeviceType",
+        "key": "plugin.10.property.DEVICETYPE.hint"
+      },
+      "internal": false,
+      "omitted": "identity",
+      "property": "DEVICETYPE",
+      "read_only": true,
+      "type": "string"
+    },
+    {
+      "class": "UnsignedProperty",
+      "default": 1,
+      "display_name": {
+        "default": "DeviceVersion",
+        "key": "plugin.10.property.DEVICEVERSION"
+      },
+      "hint": {
+        "default": "DeviceVersion",
+        "key": "plugin.10.property.DEVICEVERSION.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 0,
+      "min": 0,
+      "omitted": "identity",
+      "page": 0,
+      "property": "DEVICEVERSION",
+      "read_only": true,
+      "step": 0,
+      "type": "integer"
+    }
+  ],
+  "schema_version": 1
+}

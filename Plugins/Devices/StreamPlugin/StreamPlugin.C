@@ -86,8 +86,7 @@ m_Mode(STOPM)
 	m_PluginInfo.PortTips.push_back ("Position CV");
 	AsFloat(m_Volume) = 1.0f;
 	AsFloat(m_PitchMod) = 1.0f;
-        m_GUIArgs.PlayOut = false;
-        m_GUIArgs.Time = m_GUIArgs.TimeOut = m_GUIArgs.MaxTime = 0;
+        m_GUIArgs.Time = 0;
         strcpy (m_GUIArgs.FileName, "");
 	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
@@ -97,6 +96,14 @@ m_Mode(STOPM)
 
 	RegisterSharedProperty(m_Volume, "Volume", "Volume");
 	RegisterSharedProperty(m_PitchMod, "Pitch", "Pitch Modulation");
+	m_TimeOut = FloatProperty(Property::ReadOnly, 0, 0, 86400, 0.01, 1);
+	m_MaxTime = FloatProperty(Property::ReadOnly, 0, 0, 86400, 0.01, 1);
+	m_Playing = ToggleProperty(Property::ReadOnly, false);
+	RegisterSharedProperty(m_TimeOut, "TimeOut", "Current playback time");
+	RegisterSharedProperty(m_MaxTime, "MaxTime", "Loaded stream length");
+	RegisterSharedProperty(m_Playing, "Playing", "Playback state");
+     m_FileName = StringProperty(Property::WriteOnly, "");
+     RegisterSharedPropertyWithKey(m_FileName, "FILENAME", "File Name", "Loaded WAV file");
      m_Pos = FloatProperty(Property::Internal, 0, 0, 0x7FFFFF, 1, 1);
      m_StreamPos = SignedProperty(Property::Internal, 0, 0, 0x7FFFFFFF, 1, 1);
      m_GlobalPos = FloatProperty(Property::Internal, 0, 0, 0x7FFFFF, 1, 1);
@@ -105,16 +112,19 @@ m_Mode(STOPM)
      RegisterSharedProperty(m_StreamPos, "StreamPos", "Chunk position in the file");
      RegisterSharedProperty(m_GlobalPos, "GlobalPos", "Position in the file");
      RegisterSharedProperty(m_Pitch, "Pitch Scale", "Sample rate ratio");
-     m_FileName = StringProperty(Property::WriteOnly, "");
-     RegisterSharedPropertyWithKey(m_FileName, "FILENAME", "File Name", "Loaded WAV file");
-	m_AudioCH->RegisterData ("FileName", ChannelHandler::INPUT,
+	m_AudioCH->RegisterData ("File", ChannelHandler::INPUT,
                                              &m_GUIArgs.FileName, sizeof (m_GUIArgs.FileName));
-	m_AudioCH->RegisterData ("EchoFileName", ChannelHandler::OUTPUT,
+	m_AudioCH->RegisterData ("FileName", ChannelHandler::OUTPUT,
                                              &m_GUIArgs.FileName, sizeof (m_GUIArgs.FileName));
 	m_AudioCH->Register ("Time", &m_GUIArgs.Time);
-	m_AudioCH->Register ("TimeOut", &m_GUIArgs.TimeOut, ChannelHandler::OUTPUT);
-	m_AudioCH->Register ("MaxTime", &m_GUIArgs.MaxTime, ChannelHandler::OUTPUT);
-	m_AudioCH->Register ("Playing", &m_GUIArgs.PlayOut, ChannelHandler::OUTPUT);
+	std::vector<std::string> none, file, time;
+	file.push_back ("File");
+	time.push_back ("Time");
+	m_AudioCH->RegisterCommand ("SET_TIME", SET_TIME, time);
+	m_AudioCH->RegisterCommand ("LOAD", LOAD, file);
+	m_AudioCH->RegisterCommand ("RESTART", RESTART, none);
+	m_AudioCH->RegisterCommand ("STOP", STOP, none);
+	m_AudioCH->RegisterCommand ("PLAY", PLAY, none);
 }
 
 StreamPlugin::~StreamPlugin()
@@ -210,8 +220,8 @@ void StreamPlugin::Execute() {
               SetOutput (4, n, 0);
             }
         }
-        m_GUIArgs.TimeOut = AsFloat(m_GlobalPos) / (float)m_SampleRate;
-        m_GUIArgs.PlayOut = m_Mode==PLAYM;
+        AsFloat(m_TimeOut) = AsFloat(m_GlobalPos) / (float)m_SampleRate;
+        AsBoolean(m_Playing) = m_Mode==PLAYM;
      }
 }
 
@@ -262,9 +272,9 @@ void StreamPlugin::OpenStream (void) {
      AsFloat(m_Pitch) = m_SampleRate / (float)m_HostInfo->SAMPLERATE;
      if (m_File.IsStereo ()) {
         AsFloat(m_Pitch) *= 2;
-        m_GUIArgs.MaxTime = GetLength();
+        AsFloat(m_MaxTime) = GetLength();
      }
-     else m_GUIArgs.MaxTime = GetLength() / 2;
+     else AsFloat(m_MaxTime) = GetLength() / 2;
 }
 
 float StreamPlugin::GetLength (void) {

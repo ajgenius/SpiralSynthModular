@@ -43,6 +43,14 @@ private:
 		
 	float m_NoteLevel;
 	float m_TriggerLevel;
+
+	// Keys held down, oldest first: the newest sets the pitch.
+	enum { MAX_HELD = 64 };
+	int m_Held[MAX_HELD];
+	int m_HeldCount;
+	bool m_Retrigger;
+
+	void Play(int note);
 };
 
 #endif

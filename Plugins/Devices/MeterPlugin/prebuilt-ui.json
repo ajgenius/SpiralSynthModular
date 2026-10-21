@@ -1,0 +1,201 @@
+{
+  "host_version": "0.3.43",
+  "panel": {
+    "children": [
+      {
+        "bounds": [
+          0,
+          4,
+          54,
+          20
+        ],
+        "name": "bypass",
+        "sets": {
+          "attribute": "bypass",
+          "control": "meter"
+        },
+        "text": {
+          "default": "Bypass",
+          "key": "plugin.123.panel.bypass.text"
+        },
+        "toggle": true,
+        "type": "Button"
+      },
+      {
+        "bounds": [
+          116,
+          4,
+          54,
+          20
+        ],
+        "choice": 1,
+        "name": "vu",
+        "property": "VUMODE",
+        "text": {
+          "default": "VU",
+          "key": "plugin.123.panel.vu.text"
+        },
+        "type": "Button"
+      },
+      {
+        "bounds": [
+          172,
+          4,
+          54,
+          20
+        ],
+        "choice": 0,
+        "name": "mm",
+        "property": "VUMODE",
+        "text": {
+          "default": "Min/Max",
+          "key": "plugin.123.panel.mm.text"
+        },
+        "type": "Button"
+      },
+      {
+        "bounds": [
+          0,
+          26,
+          224,
+          40
+        ],
+        "digits": 8,
+        "follows": {
+          "attribute": "datum",
+          "control": "meter"
+        },
+        "name": "digits",
+        "type": "SevenSegment"
+      },
+      {
+        "bounds": [
+          0,
+          68,
+          226,
+          20
+        ],
+        "name": "meter",
+        "property": "VUMODE",
+        "samples": {
+          "port": "in:0"
+        },
+        "type": "MeterBar"
+      },
+      {
+        "bounds": [
+          0,
+          90,
+          84,
+          20
+        ],
+        "follows": {
+          "attribute": "min",
+          "control": "meter"
+        },
+        "format": "%1.5f",
+        "name": "min",
+        "type": "LCD"
+      },
+      {
+        "bounds": [
+          86,
+          90,
+          54,
+          20
+        ],
+        "name": "reset",
+        "sets": {
+          "attribute": "reset",
+          "control": "meter"
+        },
+        "text": {
+          "default": "Reset",
+          "key": "plugin.123.panel.reset.text"
+        },
+        "type": "Button"
+      },
+      {
+        "bounds": [
+          142,
+          90,
+          84,
+          20
+        ],
+        "follows": {
+          "attribute": "max",
+          "control": "meter"
+        },
+        "format": "%1.5f",
+        "name": "max",
+        "type": "LCD"
+      }
+    ],
+    "height": 112,
+    "help": {
+      "default": "Shows the level of its input: VU is the peak of |x| from 0 to 1, MM the minimum and maximum from -1 to 1.",
+      "key": "plugin.123.panel.help"
+    },
+    "schema_version": 1,
+    "width": 226
+  },
+  "plugin_id": 123,
+  "properties": [
+    {
+      "class": "StringProperty",
+      "default": "Meter",
+      "display_name": {
+        "default": "DeviceType",
+        "key": "plugin.123.property.DEVICETYPE"
+      },
+      "hint": {
+        "default": "DeviceType",
+        "key": "plugin.123.property.DEVICETYPE.hint"
+      },
+      "internal": false,
+      "omitted": "identity",
+      "property": "DEVICETYPE",
+      "read_only": true,
+      "type": "string"
+    },
+    {
+      "class": "UnsignedProperty",
+      "default": 1,
+      "display_name": {
+        "default": "DeviceVersion",
+        "key": "plugin.123.property.DEVICEVERSION"
+      },
+      "hint": {
+        "default": "DeviceVersion",
+        "key": "plugin.123.property.DEVICEVERSION.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 0,
+      "min": 0,
+      "omitted": "identity",
+      "page": 0,
+      "property": "DEVICEVERSION",
+      "read_only": true,
+      "step": 0,
+      "type": "integer"
+    },
+    {
+      "class": "ToggleProperty",
+      "default": true,
+      "display_name": {
+        "default": "VU mode",
+        "key": "plugin.123.property.VUMODE"
+      },
+      "hint": {
+        "default": "Use an absolute 0 to 1 display instead of signed min/max",
+        "key": "plugin.123.property.VUMODE.hint"
+      },
+      "internal": false,
+      "property": "VUMODE",
+      "read_only": false,
+      "type": "boolean"
+    }
+  ],
+  "schema_version": 1
+}

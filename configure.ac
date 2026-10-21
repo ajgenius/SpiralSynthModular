@@ -619,21 +619,33 @@ dnl AC_CHECK_LIB(png, png_get_copyright)
 AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
 dnl The LADSPA device is built in, but its editor is still a module.
+PANEL_ONLY="SampleHoldPlugin ComplexEnvelopePlugin MatrixPlugin \
+    AmpPlugin AnotherFilterPlugin BeatMatchPlugin CounterPlugin \
+    DelayPlugin EchoPlugin EnvelopePlugin FilterPlugin FlipflopPlugin \
+    FormantFilterPlugin LogicPlugin MasherPlugin MixSwitchPlugin \
+    MoogFilterPlugin NoisePlugin OperatorPlugin RingModPlugin \
+    SVFilterPlugin SmoothPlugin SplitSwitchPlugin SwitchPlugin \
+    TranslatePlugin TrigPlugin XFadePlugin DistributorPlugin \
+    SplitterPlugin TransposePlugin EnvFollowerPlugin SeqSelectorPlugin \
+    WaveShaperPlugin OscillatorPlugin WaveTablePlugin LFOPlugin \
+    KeyboardPlugin NoteSnapPlugin MeterPlugin DiskWriterPlugin StreamPlugin \
+    MidiPlugin JackPlugin SpiralLoopPlugin ControllerPlugin MixerPlugin \
+    StereoMixerPlugin PoshSamplerPlugin"
 GUI_PLUGINLIST=""
 if test "$build_ladspa" = "y"; then
     GUI_PLUGINLIST="LADSPAPlugin"
 fi
 for plugin in $PLUGINLIST; do
-    case "$plugin" in
-        SampleHoldPlugin|ComplexEnvelopePlugin) ;;
+    case " $PANEL_ONLY " in
+        *" $plugin "*) ;;
         *) GUI_PLUGINLIST="$GUI_PLUGINLIST $plugin" ;;
     esac
 done
 dnl The same exclusion over every plugin, for the distribution list.
 ALL_GUI_PLUGINLIST="LADSPAPlugin"
 for plugin in $ALL_PLUGINLIST; do
-    case "$plugin" in
-        SampleHoldPlugin|ComplexEnvelopePlugin) ;;
+    case " $PANEL_ONLY " in
+        *" $plugin "*) ;;
         *) ALL_GUI_PLUGINLIST="$ALL_GUI_PLUGINLIST $plugin" ;;
     esac
 done
@@ -669,54 +681,8 @@ Plugins/Midi/OSS/Makefile
 Plugins/Devices/Makefile
 Plugins/Panels/Makefile
 third-party/swh-plugins/Makefile
-Plugins/Panels/AmpPlugin/Makefile
-Plugins/Panels/AnotherFilterPlugin/Makefile
-Plugins/Panels/BeatMatchPlugin/Makefile
-Plugins/Panels/ControllerPlugin/Makefile
-Plugins/Panels/CounterPlugin/Makefile
-Plugins/Panels/DelayPlugin/Makefile
-Plugins/Panels/DiskWriterPlugin/Makefile
-Plugins/Panels/DistributorPlugin/Makefile
-Plugins/Panels/EchoPlugin/Makefile
-Plugins/Panels/EnvFollowerPlugin/Makefile
-Plugins/Panels/EnvelopePlugin/Makefile
-Plugins/Panels/FilterPlugin/Makefile
-Plugins/Panels/FlipflopPlugin/Makefile
-Plugins/Panels/FormantFilterPlugin/Makefile
-Plugins/Panels/JackPlugin/Makefile
-Plugins/Panels/KeyboardPlugin/Makefile
 Plugins/Panels/LADSPAPlugin/Makefile
-Plugins/Panels/LFOPlugin/Makefile
-Plugins/Panels/LogicPlugin/Makefile
-Plugins/Panels/MasherPlugin/Makefile
-Plugins/Panels/MatrixPlugin/Makefile
-Plugins/Panels/MeterPlugin/Makefile
-Plugins/Panels/MidiPlugin/Makefile
-Plugins/Panels/MixSwitchPlugin/Makefile
-Plugins/Panels/MixerPlugin/Makefile
-Plugins/Panels/MoogFilterPlugin/Makefile
-Plugins/Panels/NoisePlugin/Makefile
-Plugins/Panels/NoteSnapPlugin/Makefile
-Plugins/Panels/OperatorPlugin/Makefile
-Plugins/Panels/OscillatorPlugin/Makefile
-Plugins/Panels/PoshSamplerPlugin/Makefile
-Plugins/Panels/RingModPlugin/Makefile
-Plugins/Panels/SVFilterPlugin/Makefile
 Plugins/Panels/ScopePlugin/Makefile
-Plugins/Panels/SeqSelectorPlugin/Makefile
-Plugins/Panels/SmoothPlugin/Makefile
-Plugins/Panels/SpiralLoopPlugin/Makefile
-Plugins/Panels/SplitSwitchPlugin/Makefile
-Plugins/Panels/SplitterPlugin/Makefile
-Plugins/Panels/StereoMixerPlugin/Makefile
-Plugins/Panels/StreamPlugin/Makefile
-Plugins/Panels/SwitchPlugin/Makefile
-Plugins/Panels/TranslatePlugin/Makefile
-Plugins/Panels/TransposePlugin/Makefile
-Plugins/Panels/TrigPlugin/Makefile
-Plugins/Panels/WaveShaperPlugin/Makefile
-Plugins/Panels/WaveTablePlugin/Makefile
-Plugins/Panels/XFadePlugin/Makefile
 Plugins/Devices/AmpPlugin/Makefile
 Plugins/Devices/AnotherFilterPlugin/Makefile
 Plugins/Devices/BeatMatchPlugin/Makefile

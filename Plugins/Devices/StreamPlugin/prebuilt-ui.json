@@ -1,0 +1,486 @@
+{
+  "host_version": "0.3.43",
+  "panel": {
+    "children": [
+      {
+        "bounds": [
+          3,
+          1,
+          168,
+          38
+        ],
+        "digits": 6,
+        "format": "time",
+        "name": "time",
+        "property": "TIMEOUT",
+        "type": "SevenSegment"
+      },
+      {
+        "bounds": [
+          178,
+          -4,
+          50,
+          50
+        ],
+        "max": 2,
+        "min": 0,
+        "name": "volume",
+        "property": "VOLUME",
+        "step": 0.001,
+        "type": "Knob"
+      },
+      {
+        "bounds": [
+          178,
+          46,
+          50,
+          12
+        ],
+        "name": "volume-label",
+        "text": {
+          "default": "Volume",
+          "key": "plugin.281.panel.volume-label.text"
+        },
+        "type": "Label"
+      },
+      {
+        "bounds": [
+          3,
+          41,
+          170,
+          20
+        ],
+        "box": "up",
+        "name": "filename",
+        "placeholder": "Nothing Loaded",
+        "property": "FILENAME",
+        "size": 8,
+        "type": "LCD"
+      },
+      {
+        "bounds": [
+          3,
+          64,
+          235,
+          20
+        ],
+        "mapping": {
+          "offset": -10
+        },
+        "max": 10,
+        "min": -10,
+        "name": "pitch",
+        "property": "PITCH",
+        "step": 0.001,
+        "style": "plain",
+        "type": "Slider",
+        "value_label": "%1.3f",
+        "vertical": false
+      },
+      {
+        "bounds": [
+          3,
+          86,
+          235,
+          20
+        ],
+        "max": {
+          "property": "MAXTIME"
+        },
+        "min": 0,
+        "name": "position",
+        "property": "TIMEOUT",
+        "style": "plain",
+        "type": "Slider",
+        "vertical": false,
+        "write": [
+          {
+            "property": "COMMAND",
+            "value": "SET_TIME",
+            "with": [
+              "value"
+            ]
+          }
+        ]
+      },
+      {
+        "bounds": [
+          0,
+          110,
+          30,
+          30
+        ],
+        "file": {
+          "extension": ".wav",
+          "save": false,
+          "title": {
+            "default": "Open a file to stream",
+            "key": "plugin.281.panel.load.title"
+          },
+          "then": [
+            {
+              "property": "COMMAND",
+              "value": "LOAD",
+              "with": [
+                "text"
+              ]
+            }
+          ]
+        },
+        "name": "load",
+        "size": 9,
+        "text": {
+          "default": "Load",
+          "key": "plugin.281.panel.load.text"
+        },
+        "type": "FileChoosingButton"
+      },
+      {
+        "bounds": [
+          30,
+          110,
+          30,
+          30
+        ],
+        "label": "symbol",
+        "name": "restart",
+        "size": 10,
+        "text": {
+          "default": "@|<",
+          "key": "plugin.281.panel.restart.text"
+        },
+        "type": "Button",
+        "write": [
+          {
+            "property": "COMMAND",
+            "value": "RESTART"
+          }
+        ]
+      },
+      {
+        "bounds": [
+          60,
+          110,
+          30,
+          30
+        ],
+        "label": "symbol",
+        "name": "play",
+        "property": "PLAYING",
+        "size": 10,
+        "text": {
+          "default": "@>",
+          "key": "plugin.281.panel.play.text"
+        },
+        "text_when": {
+          "off": {
+            "default": "@>",
+            "key": "plugin.281.panel.play.text"
+          },
+          "on": "@||",
+          "property": "PLAYING"
+        },
+        "type": "Button",
+        "write": [
+          {
+            "property": "COMMAND",
+            "value": "PLAY"
+          }
+        ],
+        "write_off": [
+          {
+            "property": "COMMAND",
+            "value": "STOP"
+          }
+        ]
+      },
+      {
+        "bounds": [
+          90,
+          110,
+          30,
+          30
+        ],
+        "name": "reset",
+        "size": 9,
+        "text": {
+          "default": "Reset",
+          "key": "plugin.281.panel.reset.text"
+        },
+        "type": "Button",
+        "write": [
+          {
+            "property": "PITCH",
+            "value": 1
+          }
+        ]
+      },
+      {
+        "bounds": [
+          120,
+          110,
+          30,
+          30
+        ],
+        "delta": {
+          "factor": -1,
+          "property": "PITCH"
+        },
+        "label": "symbol",
+        "max": 2,
+        "min": -2,
+        "name": "reverse",
+        "size": 10,
+        "text": {
+          "default": "@<-",
+          "key": "plugin.281.panel.reverse.text"
+        },
+        "type": "Button"
+      },
+      {
+        "bounds": [
+          150,
+          110,
+          30,
+          30
+        ],
+        "delta": {
+          "factor": 0.5,
+          "property": "PITCH"
+        },
+        "max": 2,
+        "min": -2,
+        "name": "half",
+        "size": 9,
+        "text": {
+          "default": "/2",
+          "key": "plugin.281.panel.half.text"
+        },
+        "type": "Button"
+      },
+      {
+        "bounds": [
+          180,
+          110,
+          30,
+          30
+        ],
+        "delta": {
+          "factor": 2,
+          "property": "PITCH"
+        },
+        "max": 2,
+        "min": -2,
+        "name": "double",
+        "size": 9,
+        "text": {
+          "default": "X2",
+          "key": "plugin.281.panel.double.text"
+        },
+        "type": "Button"
+      },
+      {
+        "bounds": [
+          210,
+          110,
+          30,
+          30
+        ],
+        "delta": {
+          "amount": 1,
+          "property": "TIMEOUT"
+        },
+        "name": "nudge",
+        "size": 9,
+        "text": {
+          "default": "Nudge",
+          "key": "plugin.281.panel.nudge.text"
+        },
+        "type": "Button",
+        "repeat": true,
+        "write": [
+          {
+            "property": "COMMAND",
+            "value": "SET_TIME",
+            "with": [
+              "value"
+            ]
+          }
+        ]
+      }
+    ],
+    "height": 144,
+    "help": {
+      "default": "Volume and pitch of the streamed file, and its transport; Open chooses the WAV file to stream.",
+      "key": "plugin.281.panel.help"
+    },
+    "schema_version": 1,
+    "width": 241
+  },
+  "plugin_id": 281,
+  "properties": [
+    {
+      "class": "StringProperty",
+      "default": "",
+      "display_name": {
+        "default": "COMMAND",
+        "key": "plugin.281.property.COMMAND"
+      },
+      "hint": {
+        "default": "Command",
+        "key": "plugin.281.property.COMMAND.hint"
+      },
+      "internal": true,
+      "omitted": "internal",
+      "property": "COMMAND",
+      "read_only": false,
+      "type": "string"
+    },
+    {
+      "class": "StringProperty",
+      "default": "Stream",
+      "display_name": {
+        "default": "DeviceType",
+        "key": "plugin.281.property.DEVICETYPE"
+      },
+      "hint": {
+        "default": "DeviceType",
+        "key": "plugin.281.property.DEVICETYPE.hint"
+      },
+      "internal": false,
+      "omitted": "identity",
+      "property": "DEVICETYPE",
+      "read_only": true,
+      "type": "string"
+    },
+    {
+      "class": "UnsignedProperty",
+      "default": 1,
+      "display_name": {
+        "default": "DeviceVersion",
+        "key": "plugin.281.property.DEVICEVERSION"
+      },
+      "hint": {
+        "default": "DeviceVersion",
+        "key": "plugin.281.property.DEVICEVERSION.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 0,
+      "min": 0,
+      "omitted": "identity",
+      "page": 0,
+      "property": "DEVICEVERSION",
+      "read_only": true,
+      "step": 0,
+      "type": "integer"
+    },
+    {
+      "class": "StringProperty",
+      "default": "",
+      "display_name": {
+        "default": "File name",
+        "key": "plugin.281.property.FILENAME"
+      },
+      "hint": {
+        "default": "File name",
+        "key": "plugin.281.property.FILENAME.hint"
+      },
+      "internal": true,
+      "property": "FILENAME",
+      "read_only": false,
+      "type": "string"
+    },
+    {
+      "class": "FloatProperty",
+      "default": 1,
+      "display_name": {
+        "default": "Maxtime",
+        "key": "plugin.281.property.MAXTIME"
+      },
+      "hint": {
+        "default": "Maxtime",
+        "key": "plugin.281.property.MAXTIME.hint"
+      },
+      "internal": false,
+      "property": "MAXTIME",
+      "read_only": true,
+      "type": "number"
+    },
+    {
+      "class": "FloatProperty",
+      "default": 1,
+      "display_name": {
+        "default": "Pitch",
+        "key": "plugin.281.property.PITCH"
+      },
+      "hint": {
+        "default": "Pitch",
+        "key": "plugin.281.property.PITCH.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 2,
+      "min": -2,
+      "page": 0.1,
+      "property": "PITCH",
+      "read_only": false,
+      "step": 0.001,
+      "type": "number"
+    },
+    {
+      "class": "ToggleProperty",
+      "default": false,
+      "display_name": {
+        "default": "Playing",
+        "key": "plugin.281.property.PLAYING"
+      },
+      "hint": {
+        "default": "Playing",
+        "key": "plugin.281.property.PLAYING.hint"
+      },
+      "internal": false,
+      "property": "PLAYING",
+      "read_only": true,
+      "type": "boolean"
+    },
+    {
+      "class": "FloatProperty",
+      "default": 0,
+      "display_name": {
+        "default": "Timeout",
+        "key": "plugin.281.property.TIMEOUT"
+      },
+      "hint": {
+        "default": "Timeout",
+        "key": "plugin.281.property.TIMEOUT.hint"
+      },
+      "internal": false,
+      "property": "TIMEOUT",
+      "read_only": true,
+      "type": "number"
+    },
+    {
+      "class": "FloatProperty",
+      "default": 1,
+      "display_name": {
+        "default": "Volume",
+        "key": "plugin.281.property.VOLUME"
+      },
+      "hint": {
+        "default": "Volume",
+        "key": "plugin.281.property.VOLUME.hint"
+      },
+      "internal": false,
+      "logarithmic": false,
+      "max": 2,
+      "min": 0,
+      "page": 0.1,
+      "property": "VOLUME",
+      "read_only": false,
+      "step": 0.001,
+      "type": "number"
+    }
+  ],
+  "schema_version": 1
+}
