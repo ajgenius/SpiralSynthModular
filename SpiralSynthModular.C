@@ -187,6 +187,7 @@ m_Frozen(false),
 m_NextID(0),
 m_MainMenu(NULL),
 m_SysMenu(NULL),
+m_WantChrome(false),
 m_Topbar(NULL),
 m_Canvas(NULL),
 m_CanvasScroll(NULL),
@@ -516,8 +517,11 @@ SpiralWindowType *SynthModular::CreateWindow()
         // two keep their own items: FLTK inserts its own Window menu into the
         // system bar's array, so neither can be handed the other's.
 #ifdef __APPLE__
-        m_SysMenu = new Fl_Sys_Menu_Bar (0, 0, MAIN_WIDTH, 1, "");
-        m_SysMenu->user_data((void*)(this));
+        if (m_WantChrome)
+        {
+                m_SysMenu = new Fl_Sys_Menu_Bar (0, 0, MAIN_WIDTH, 1, "");
+                m_SysMenu->user_data((void*)(this));
+        }
 #endif
         MenuAdd ("File/New", cb_New, (void*)(this), FL_MENU_DIVIDER);
         MenuAdd ("File/Load", cb_Load, (void*)(this), 0);
@@ -753,13 +757,17 @@ void SynthModular::LoadPlugins (string pluginPath) {
      int SWidth  = 256;
      int SHeight = 256;
      Fl_Pixmap pic (SSM_xpm);
-     Fl_Double_Window* Splash = new Fl_Double_Window ((Fl::w()/2) - (SWidth/2), (Fl::h()/2) - (SHeight/2),
+     Fl_Double_Window* Splash = NULL;
+     Fl_Box *splashtext = NULL;
+     if (m_WantChrome)
+     {
+     Splash = new Fl_Double_Window ((Fl::w()/2) - (SWidth/2), (Fl::h()/2) - (SHeight/2),
                                                        SWidth, SHeight, "SSM");
      Splash->border(0);
      Fl_Box* pbut = new Fl_Box (0, 8, SWidth, SHeight, "");
      pbut->box (FL_NO_BOX);
      pic.label (pbut);
-     Fl_Box *splashtext = new Fl_Box (5, SHeight-20, 200, 20, "Loading...");
+     splashtext = new Fl_Box (5, SHeight-20, 200, 20, "Loading...");
      splashtext->labelsize (10);
      splashtext->box (FL_NO_BOX);
      splashtext->align (FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
@@ -774,6 +782,7 @@ void SynthModular::LoadPlugins (string pluginPath) {
      Splash->add (splashtext);
      Splash->add (splashversion);
      Splash->show();
+     }
      string PluginRoot = pluginPath.empty() ? SpiralInfo::PLUGIN_PATH : pluginPath;
      if (!PluginRoot.empty() && PluginRoot[PluginRoot.size()-1] != '/') PluginRoot += '/';
      // Audio backend modules sit beside the device plugins under audio/;
@@ -865,8 +874,8 @@ void SynthModular::LoadPlugins (string pluginPath) {
             the_group->redraw();
             // m_NextPluginButton++;
             Fl::check();
-            splashtext->label (PluginName->c_str());
-            Splash->redraw();
+            if (splashtext) splashtext->label (PluginName->c_str());
+            if (Splash) Splash->redraw();
          }
      }
      map<string,Fl_Pack*>::iterator PlugGrp;
@@ -884,8 +893,11 @@ void SynthModular::LoadPlugins (string pluginPath) {
      m_GroupTab->value(PlugGrp->second);
      MenuDropPlaceholders();
      m_Canvas->AddAboutPatch();
-     Splash->hide();
-     delete Splash;
+     if (Splash)
+     {
+            Splash->hide();
+            delete Splash;
+     }
 }
 
 //////////////////////////////////////////////////////////

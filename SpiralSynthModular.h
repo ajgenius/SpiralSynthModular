@@ -112,6 +112,7 @@ public:
 	SynthModular();
 	~SynthModular();
 
+	void WantChrome(bool want) { m_WantChrome = want; }
 	SpiralWindowType * CreateWindow();
 	void LoadPlugins(string pluginPath);
 	void Update();
@@ -219,6 +220,7 @@ private:
         // Created on macOS only: elsewhere Fl_Sys_Menu_Bar is another in-window
         // bar, and a second strip is not what it is for.
         Fl_Sys_Menu_Bar *m_SysMenu;
+        bool             m_WantChrome;
         Fl_Pack *m_Topbar, *m_ToolbarPanel, *m_Toolbar;
         Fl_Group *m_GroupFiller;
 	Fl_Button *m_Load, *m_Save, *m_New, *m_Options, *m_NewComment;

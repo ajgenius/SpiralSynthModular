@@ -177,6 +177,7 @@ int main(int argc, char **argv)
 	synth=new SynthModular;
 
 	// setup the synth
+	synth->WantChrome(GUI);
 	Fl_Window* win = synth->CreateWindow();
 	
 	// LADSPA plugins shipped with the application sit beside the device
