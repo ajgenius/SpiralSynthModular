@@ -58,7 +58,7 @@ public:
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
 
-	unsigned long  GetUniqueID() { return AsUnsigned(m_UniqueID); }
+	unsigned long  GetUniqueID() { return m_UniqueID; }
 	const char    *GetName() { return (const char *)m_Name; }
 	// Virtual, and defined in the module that owns m_LADSPAInfo. An inline body
 	// here makes every caller reference that static directly, and the editor
@@ -140,7 +140,7 @@ private:
 	static int                  InstanceCount;
 
 	unsigned long   m_PluginIndex;
-	Spiral::Core::UnsignedProperty m_UniqueID;
+	unsigned long   m_UniqueID;
 	int             m_Page;
 	bool            m_UpdateInputs;
 

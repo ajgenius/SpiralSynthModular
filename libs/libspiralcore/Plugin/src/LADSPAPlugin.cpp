@@ -68,6 +68,8 @@ const Spiral::Core::DeviceClass &LADSPAPlugin::Class()
 ///////////////////////////////////////////////////////
 
 
+static const unsigned long MaxInputPorts = 4096;
+
 void LADSPAPlugin::AddPortSetting(std::vector<FloatProperty*> &list, const char *prefix, float value)
 {
 	char name[256];
@@ -117,6 +119,7 @@ LADSPAPlugin::LADSPAPlugin()
 	m_PlugInstHandle = NULL;
 	m_SSMPluginReset = false;
 	m_PluginIndex = 0;
+	m_UniqueID = 0;
 	m_Page = 2;
 	m_UpdateInputs = true;
 	m_InputPortCount = 0;
@@ -142,19 +145,12 @@ LADSPAPlugin::LADSPAPlugin()
 
 	m_MaxInputPortCount = m_LADSPAInfo->GetMaxInputPortCount();
 
-	/* This is a strange one - foreign number - we have no idea what is valid
-		not even for a set property, without loading other things first 
-		maybe we can do that though..... hmm.
-	*/
-	m_UniqueID = UnsignedProperty(DefaultLinearFlags | Property::ForceUpdate, 0, 0, 0, 0, 0);
-	RegisterSharedProperty(m_UniqueID, "Unique ID", "LADSPA Plugin ID");
-
 	SetUnsigned(DeviceVersion, 9);
 
 	if (m_MaxInputPortCount < 1)
 		m_MaxInputPortCount = 1;
-	if (m_MaxInputPortCount > 4096)
-		m_MaxInputPortCount = 4096;
+	if (m_MaxInputPortCount > MaxInputPorts)
+		m_MaxInputPortCount = MaxInputPorts;
 
 	m_AudioCH->RegisterData("SetUniqueID", ChannelHandler::INPUT,&(m_InData.UniqueID), sizeof(m_InData.UniqueID));
 	m_AudioCH->RegisterData("SetPage", ChannelHandler::INPUT,&(m_InData.Page), sizeof(m_InData.Page));
@@ -227,7 +223,7 @@ void LADSPAPlugin::Reset()
 	ResetPorts();
 
 	m_SSMPluginReset = true;
-	UpdatePlugin(AsUnsigned(m_UniqueID));
+	UpdatePlugin(m_UniqueID);
 	m_SSMPluginReset = false;
 }
 
@@ -409,7 +405,7 @@ void LADSPAPlugin::Describe(Spiral::Core::Description &d)
 
 			d.Value(m_Page).Separator(" ");
 			d.Value(m_UpdateInputs).Separator(" ");
-			d.Value(AsUnsigned(m_UniqueID)).Separator(" ");
+			d.Value(m_UniqueID).Separator(" ");
 			d.Value(m_InputPortMin.size()).Separator(" ");
 			d.Value(m_UnconnectedInputs).Separator(" ");
 			assert(m_InputPortMin.size()==m_InputPortMax.size());
@@ -451,9 +447,9 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 	float Gain = 0.0f;
 	unsigned long UniqueID = 0;
 	int PortCount = 0;
-	float Min, Max;
-	bool Clamp;
-	float Default;
+	float Min = 0.0f, Max = 0.0f;
+	bool Clamp = false;
+	float Default = 0.0f;
 
 	ClearPlugin();
 
@@ -467,6 +463,7 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 			r.Value(m_UpdateInputs);
 			r.Value(UniqueID);
 			r.Value(PortCount);
+			if (PortCount > (int)MaxInputPorts) PortCount = MaxInputPorts;
 			r.Value(m_UnconnectedInputs);
 
 			for (int n=0; n<PortCount; n++)
@@ -498,6 +495,7 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 			r.Value(m_UpdateInputs);
 			r.Value(UniqueID);
 			r.Value(PortCount);
+			if (PortCount > (int)MaxInputPorts) PortCount = MaxInputPorts;
 
 			for (int n=0; n<PortCount; n++)
 			{
@@ -527,6 +525,7 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 			r.Value(m_Page);
 			r.Value(UniqueID);
 			r.Value(PortCount);
+			if (PortCount > (int)MaxInputPorts) PortCount = MaxInputPorts;
 
 			for (int n=0; n<PortCount; n++)
 			{
@@ -555,6 +554,7 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 		{
 			r.Value(UniqueID);
 			r.Value(PortCount);
+			if (PortCount > (int)MaxInputPorts) PortCount = MaxInputPorts;
 
 			for (int n=0; n<PortCount; n++)
 			{
@@ -584,6 +584,7 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 			r.Value(Gain);
 			r.Value(UniqueID);
 			r.Value(PortCount);
+			if (PortCount > (int)MaxInputPorts) PortCount = MaxInputPorts;
 
 			for (int n=0; n<PortCount; n++)
 			{
@@ -613,6 +614,7 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 			r.Value(Gain);
 			r.Value(UniqueID);
 			r.Value(PortCount);
+			if (PortCount > (int)MaxInputPorts) PortCount = MaxInputPorts;
 
 			for (int n=0; n<PortCount; n++)
 			{
@@ -645,6 +647,7 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 			r.Value(Filename);
 			r.Value(Label);
 			r.Value(PortCount);
+			if (PortCount > (int)MaxInputPorts) PortCount = MaxInputPorts;
 
 			for (int n=0; n<PortCount; n++)
 			{
@@ -683,6 +686,7 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 			r.Value(Filename);
 			r.Value(Label);
 			r.Value(PortCount);
+			if (PortCount > (int)MaxInputPorts) PortCount = MaxInputPorts;
 
 			for (int n=0; n<PortCount; n++)
 			{
@@ -738,7 +742,7 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 			if (Version < 9) m_UnconnectedInputs = m_InputPortCount;
 			SetGUIExports();
 		} else {
-			AsUnsigned(m_UniqueID) = UniqueID;
+			m_UniqueID = UniqueID;
 			if (UniqueID)
 				cerr << "Error loading LADSPA Plugin " << UniqueID << ".\n";
 			strncpy(m_Name, "Missing LADSPA plugin", 255);
@@ -761,7 +765,7 @@ bool LADSPAPlugin::UpdatePlugin(unsigned long UniqueID)
 	m_SSMPluginReset = false;
 	if (UniqueID)
 	{
-		AsUnsigned(m_UniqueID) = UniqueID;
+		m_UniqueID = UniqueID;
 		cerr << "Error loading LADSPA Plugin " << UniqueID << ".\n";
 	}
 
@@ -870,7 +874,7 @@ bool LADSPAPlugin::SelectPlugin(unsigned long UniqueID)
 			SyncPortTypes();
 			UpdatePluginInfoWithHost();
 
-			AsUnsigned(m_UniqueID) = m_PlugDesc->UniqueID;
+			m_UniqueID = m_PlugDesc->UniqueID;
 
 			m_InputPortCount = m_PluginInfo.NumInputs;
 
@@ -902,14 +906,14 @@ void LADSPAPlugin::ClearPlugin(void)
 		m_PlugDesc = NULL;
 		m_PlugInstHandle = NULL;
 
-		m_LADSPAInfo->DiscardDescriptorByID(AsUnsigned(m_UniqueID));
+		m_LADSPAInfo->DiscardDescriptorByID(m_UniqueID);
 	}
 
 	if (! m_SSMPluginReset)
 	{
 		m_Page = 2;
 		m_UpdateInputs = true;
-		AsUnsigned(m_UniqueID) = 0;
+		m_UniqueID = 0;
 		m_InputPortCount = 0;
 		m_UnconnectedInputs = 0;
 		strncpy(m_Name, "None", 5);
