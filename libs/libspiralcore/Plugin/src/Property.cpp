@@ -16,6 +16,7 @@
 
 #include "Sample.h"
 #include "Property.h"
+#include "Finite.h"
 
 using namespace Spiral::Core;
 
@@ -365,6 +366,9 @@ namespace Core
 		return *this;
 	}
 
+	template <class T> static bool Usable(const T &) { return true; }
+	static bool Usable(float v) { return IsFinite(v); }
+
 	template <class T>
 	static bool Into(Description::Reader &r, const Description &d, const Property &p, T &x)
 	{
@@ -372,7 +376,12 @@ namespace Core
 			return !r.Value(x).Failed();
 
 		const int at = d.Find(p.GetKey());
-		return at < 0 || r.At((size_t)at, x);
+		T v = x;
+		if (at >= 0 && !r.At((size_t)at, v))
+			return false;
+		if (Usable(v))
+			x = v;
+		return true;
 	}
 
 	Description::Reader &Description::Reader::Value(FloatProperty &p)    { if (!Into(*this, m_Description, p, p.Value.AsFloat)) m_Failed = true; return *this; }

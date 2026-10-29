@@ -44,9 +44,10 @@ namespace Spumoni
 		// Ver 1: per-branch assets/ only.
 		// Ver 2: package-wide content-addressed assets via Store (shared across
 		//        branches). Payload versions and app format are independent.
-		// Journals are not part of this tree. Layout::MetadataName, when set,
-		// still writes an optional application file beside the manifest.
-		static const long FormatVersion = 2;
+		// Ver 3: registered application metadata may live in a separate file,
+		//        named by Layout::MetadataName, as the private tree has it.
+		// Journals are not part of this tree.
+		static const long FormatVersion = 3;
 
 		// * "Spumoni Package Ver 1": the manifest's "package" member.
 		static std::string FormatName();

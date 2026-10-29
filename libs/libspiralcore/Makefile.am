@@ -160,7 +160,9 @@ dist_schema_DATA = \
     File/schemas/SpiralPositionalText.history.json
 AM_CPPFLAGS += -DSPIRALCORE_SCHEMA_DIR='"$(abs_srcdir)/File/schemas"'
 libspiralcore_la_SOURCES += File/include/PositionalReader.h \
+	File/include/FileVersion.h \
 	File/include/PatchFile.h File/src/PositionalReader.cpp \
+	File/src/FileVersion.cpp \
 	File/src/PatchFile.cpp
 libspiralcore_la_SOURCES += File/src/DescriptionJSON.cpp
 check_PROGRAMS += positional-reader-test description-json-test

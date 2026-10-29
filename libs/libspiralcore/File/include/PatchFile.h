@@ -24,6 +24,8 @@
 
 #include <string>
 
+namespace Spumoni { class JSON; }
+
 namespace Spiral
 {
 	namespace File
@@ -31,6 +33,17 @@ namespace Spiral
 		class PatchFile
 		{
 		public:
+			static bool Read(const Spumoni::JSON &document, Core::PatchDescription &out,
+				std::string &error);
+			static bool ReadText(const std::string &text, Core::PatchDescription &out,
+				std::string &error);
+			static bool ReadBody(const Spumoni::JSON &body, Core::PatchDescription &out,
+				std::string &error);
+			static bool Text(const Core::PatchDescription &definition, std::string &json,
+				std::string &error);
+			static bool WriteFile(const Core::PatchDescription &definition, const char *path,
+				std::string &error);
+
 			static void Properties(const Core::Description &described, Core::DeviceDescription &out);
 			static void Describe(const Core::DeviceDescription &device, Core::Description &out);
 		private:
