@@ -47,6 +47,7 @@
 #include "LADSPAPlugin.h"
 #endif
 #include "PatchProject.h"
+#include "PatchFile.h"
 #include <memory>
 #include <FL/fl_ask.H>
 #include <FL/Fl_Choice.H>
@@ -1656,6 +1657,169 @@ iostream &operator>>(iostream &s, SynthModular &o)
 }
 
 //////////////////////////////////////////////////////////
+
+void Describe(Spiral::Core::PatchDescription &patch, SynthModular &o, const string &sidecars)
+{
+	char text[32];
+
+	o.FreezeAll();
+
+	patch.Clear();
+	patch.Values["application"] = "SpiralSynthModular";
+
+	// make external files dir
+	bool ExternalDirUsed=false;
+	string directoryError;
+	Spumoni::Path::MakeDirectories(sidecars, directoryError);
+
+	for (map<int,DeviceWin*>::iterator i = o.m_DeviceWinMap.begin(); i != o.m_DeviceWinMap.end(); i++)
+	{
+		if (!i->second->m_DeviceGUI) continue;
+		if (!i->second->m_Device && i->second->m_PluginID != COMMENT_ID) continue;
+
+		Spiral::Core::ObjectDescription &object = patch.AddObject();
+		snprintf(text, sizeof text, "%d", i->second->m_DeviceGUI->x()); object.SetValue("x", text);
+		snprintf(text, sizeof text, "%d", i->second->m_DeviceGUI->y()); object.SetValue("y", text);
+		object.SetValue("collapsed", i->second->m_DeviceGUI->GetPluginWindow()
+			&& !i->second->m_DeviceGUI->GetPluginWindow()->visible() ? "true" : "false");
+
+		if (i->second->m_PluginID == COMMENT_ID)
+		{
+			object.SetValue("text", ((Fl_CommentGUI*)(i->second->m_DeviceGUI))->GetComment());
+			continue;
+		}
+
+		object.SetValue("text", SavedDeviceName(i->second));
+
+		Spiral::Core::DeviceDescription &device = object.AddDevice();
+		snprintf(text, sizeof text, "%d", i->first); device.SetValue("patch_id", text);
+		snprintf(text, sizeof text, "%d", i->second->m_PluginID); device.SetValue("id", text);
+		device.SetValue("name", SavedDeviceName(i->second));
+
+		Spiral::Core::Description described;
+		i->second->m_Device->Describe(described);
+		Spiral::File::PatchFile::Properties(described, device);
+
+		// save external files
+		if (i->second->m_Device->SaveExternalFiles(sidecars))
+		{
+			ExternalDirUsed=true;
+		}
+	}
+
+	::Describe(patch, *o.m_Canvas);
+
+	// remove it if it wasn't used
+	if (!ExternalDirUsed)
+	{
+		// i guess rmdir won't work if there is something in the dir
+		// anyway, but best to be on the safe side. (could do rm -rf) :)
+		rmdir(sidecars.c_str());
+	}
+
+	o.ThawAll();
+}
+
+void SynthModular::Apply(const Spiral::Core::PatchDescription &patch, const string &sidecars, bool merge)
+{
+	FreezeAll();
+
+	std::map<std::string, int> ids;
+	if (merge) Fl_Canvas::ClearSelection(m_Canvas);
+
+	for (size_t n = 0; n < patch.Objects.size(); n++)
+	{
+		const Spiral::Core::ObjectDescription &object = patch.Objects[n];
+		const int x = atoi(object.Value("x").c_str()), y = atoi(object.Value("y").c_str());
+
+		if (object.IsComment())
+		{
+			DeviceWin *temp = NewComment(COMMENT_ID, x, y);
+			if (!temp) continue;
+			const int ID = m_NextID++;
+			temp->m_DeviceGUI->SetID(ID);
+			m_DeviceWinMap[ID] = temp;
+			((Fl_CommentGUI*)(temp->m_DeviceGUI))->SetComment(object.Value("text"));
+			if (merge) Fl_Canvas::AppendSelection(ID, m_Canvas);
+			continue;
+		}
+
+		for (size_t d = 0; d < object.Devices.size(); d++)
+		{
+			const Spiral::Core::DeviceDescription &device = object.Devices[d];
+			const string PatchID = device.Value("patch_id");
+			const int PluginID = atoi(device.Value("id").c_str());
+			const string Name = device.Value("name");
+
+			if (ids.find(PatchID) != ids.end())
+			{
+				SpiralInfo::Alert("Duplicate device ID found in file - aborting load");
+				ThawAll();
+				return;
+			}
+			char *end = NULL;
+			int ID = (int)strtol(PatchID.c_str(), &end, 10);
+			if (merge || PatchID.empty() || *end || ID < 0 || m_DeviceWinMap.find(ID) != m_DeviceWinMap.end())
+				ID = m_NextID++;
+			ids[PatchID] = ID;
+
+			DeviceWin *temp = NewDeviceWin(PluginID, x, y);
+			if (!temp)
+			{
+				SpiralInfo::Alert("Error in patch, can't really recover data from here on.");
+				ThawAll();
+				return;
+			}
+
+			temp->m_DeviceGUI->SetID(ID);
+			temp->m_DeviceGUI->SetName(Name);
+
+			if (UnavailablePlugin *missingDevice = dynamic_cast<UnavailablePlugin*>(temp->m_Device))
+			{
+				missingDevice->SetSavedName(Name);
+				string label = Name.empty() ? string("Plugin") : Name;
+				temp->m_DeviceGUI->SetName(label + " (unavailable)");
+				cerr << "SSM: Missing plugin " << label << " (" << PluginID
+					<< "); preserving its state and wires.\n";
+			}
+
+			temp->m_Device->SetUpdateInfoCallback(ID, cb_UpdatePluginInfo);
+			m_DeviceWinMap[ID] = temp;
+
+			Spiral::Core::Description state;
+			Spiral::File::PatchFile::Describe(device, state);
+			temp->m_Device->Migrate(state);
+			Spiral::Core::Description::Reader values(state);
+			temp->m_Device->Apply(values);
+
+			temp->m_Device->LoadExternalFiles(sidecars.empty() ? m_FilePath + "_files/" : sidecars);
+
+			temp->m_Device->GetChannelHandler()->FlushChannels();
+
+			if (temp->m_DeviceGUI->GetPluginWindow())
+			{
+				((SpiralPluginGUI*)(temp->m_DeviceGUI->GetPluginWindow()))->UpdateValues(temp->m_Device);
+				if (object.Value("collapsed") == "true")
+				{
+					temp->m_DeviceGUI->Minimise();
+				}
+				else
+				{
+					temp->m_DeviceGUI->Maximise();
+					temp->m_DeviceGUI->position(x, y);
+				}
+			}
+
+			if (merge) Fl_Canvas::AppendSelection(ID, m_Canvas);
+			else if (m_NextID <= ID) m_NextID = ID + 1;
+		}
+	}
+
+	::Apply(patch, *m_Canvas, ids);
+	if (!merge) m_Canvas->CenterPatch();
+
+	ThawAll();
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////
 

@@ -41,6 +41,7 @@
 #include "Fl_Canvas.h"
 #include "Fl_BoundaryDrawer.h"
 #include "SpiralPlugin.h"
+#include "PatchDescription.h"
 #include "ChannelHandler.h"
 using Spiral::Core::ChannelHandler;
 #include "SettingsWindow.h"
@@ -129,6 +130,7 @@ public:
 	// is chrome too, and the canvas scroll takes what the two leave.
 	void LayoutChrome();
 	void LoadPatch(const char *fn, const char *branchId = NULL);
+	void Apply(const Spiral::Core::PatchDescription &patch, const string &sidecars, bool merge = false);
 	void SavePatch(const char *fn);
 
 	void FreezeAll()
@@ -315,6 +317,7 @@ private:
 		((SynthModular*)o)->cb_ChangeBufferAndSampleRate_i(NewBufferSize, NewSamplerate);
 	}
 	friend istream &operator>>(istream &s, SynthModular &o);
+	friend void Describe(Spiral::Core::PatchDescription &patch, SynthModular &o, const string &sidecars);
 };
 
 iostream &operator>>(iostream &s, SynthModular &o);

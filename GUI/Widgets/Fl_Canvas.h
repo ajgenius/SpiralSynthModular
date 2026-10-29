@@ -25,6 +25,7 @@
 #include "GraphSort.h"
 #include "Fl_DeviceGUI.h"
 #include "Description.h"
+#include "PatchDescription.h"
 
 #ifndef CANVAS_WIDGET
 #define CANVAS_WIDGET
@@ -185,6 +186,8 @@ private:
 	int m_StartSelectX, m_StartSelectY, m_EndSelectX,m_EndSelectY;
 	friend istream &operator>>(istream &s, Fl_Canvas &o);
 	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, Fl_Canvas &o);
+	friend void Describe(Spiral::Core::PatchDescription &patch, Fl_Canvas &o);
+	friend void Apply(const Spiral::Core::PatchDescription &patch, Fl_Canvas &o, const std::map<std::string, int> &ids);
 	// Callbacks
         static void cb_OnDrag_s (Fl_Widget* widget, int x, int y, void* data);
         inline void cb_OnDrag_i (Fl_Widget* widget, int x,int y);
@@ -198,6 +201,8 @@ private:
 
 istream &operator>>(istream &s, Fl_Canvas &o);
 Spiral::Core::Description &Describe(Spiral::Core::Description &d, Fl_Canvas &o);
+void Describe(Spiral::Core::PatchDescription &patch, Fl_Canvas &o);
+void Apply(const Spiral::Core::PatchDescription &patch, Fl_Canvas &o, const std::map<std::string, int> &ids);
 ostream &operator<<(ostream &s, Fl_Canvas &o);   // the description, written
 
 #endif

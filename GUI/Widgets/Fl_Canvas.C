@@ -19,6 +19,9 @@
 #include <FL/fl_draw.H>
 #include <FL/Fl_Scroll.H>
 #include "Fl_Canvas.h"
+#include <map>
+#include <cstdlib>
+#include <cstdio>
 #include "Fl_DeviceGUI.h"
 #include <algorithm>
 #include <iostream>
@@ -1267,6 +1270,55 @@ Spiral::Core::Description &Describe(Spiral::Core::Description &d, Fl_Canvas &o)
 	}
 
 	return d;
+}
+
+void Describe(Spiral::Core::PatchDescription &patch, Fl_Canvas &o)
+{
+	char text[32];
+
+	for (vector<CanvasWire>::iterator i = o.m_WireVec.begin(); i != o.m_WireVec.end(); i++)
+	{
+		Spiral::Core::WireDescription &wire = patch.AddWire();
+		snprintf(text, sizeof text, "%d", i->OutputID);   wire.FromDevice = text;
+		snprintf(text, sizeof text, "%d", i->OutputPort); wire.FromPort = text;
+		snprintf(text, sizeof text, "%d", i->InputID);    wire.ToDevice = text;
+		snprintf(text, sizeof text, "%d", i->InputPort);  wire.ToPort = text;
+	}
+}
+
+void Apply(const Spiral::Core::PatchDescription &patch, Fl_Canvas &o, const std::map<std::string, int> &ids)
+{
+	for (size_t n = 0; n < patch.Wires.size(); n++)
+	{
+		const Spiral::Core::WireDescription &wire = patch.Wires[n];
+		std::map<std::string, int>::const_iterator from = ids.find(wire.FromDevice), to = ids.find(wire.ToDevice);
+		CanvasWire NewWire;
+		NewWire.OutputID = from == ids.end() ? -1 : from->second;
+		NewWire.OutputPort = atoi(wire.FromPort.c_str());
+		NewWire.InputID = to == ids.end() ? -1 : to->second;
+		NewWire.InputPort = atoi(wire.ToPort.c_str());
+
+		Fl_DeviceGUI *source = o.FindDevice(NewWire.OutputID);
+		Fl_DeviceGUI *destination = o.FindDevice(NewWire.InputID);
+		if (!source || !destination
+			|| NewWire.OutputPort < 0 || NewWire.OutputPort >= source->GetInfo()->NumOutputs
+			|| NewWire.InputPort < 0 || NewWire.InputPort >= destination->GetInfo()->NumInputs)
+		{
+			std::cerr << "SSM: Skipping unavailable wire "
+				<< NewWire.OutputID << ":" << NewWire.OutputPort << " -> "
+				<< NewWire.InputID << ":" << NewWire.InputPort << ".\n";
+			continue;
+		}
+		NewWire.OutputTerminal = source->IsTerminal();
+		NewWire.InputTerminal = destination->IsTerminal();
+		if (source->AddConnection(NewWire.OutputPort + source->GetInfo()->NumInputs) &&
+			destination->AddConnection(NewWire.InputPort))
+		{
+			o.m_WireVec.push_back(NewWire);
+			o.cb_Connection(&o, (void*)&NewWire);
+			o.m_Graph.AddConnection(NewWire.OutputID, NewWire.OutputTerminal, NewWire.InputID, NewWire.InputTerminal);
+		}
+	}
 }
 
 ostream &operator<<(ostream &s, Fl_Canvas &o)

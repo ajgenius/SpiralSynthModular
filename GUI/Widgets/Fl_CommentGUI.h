@@ -33,6 +33,9 @@ public:
 	virtual void	    Describe(Spiral::Core::Description &d);
 	void                StreamOut(ostream &s);   // the description, written
 	virtual void	    StreamIn(istream &s);
+	const string &GetComment() const { return m_Comment; }
+	void SetComment(const string &text) { m_Comment = text; NewText(); }
+
 protected:
 	string m_Comment;
 private:

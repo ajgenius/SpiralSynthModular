@@ -49,6 +49,7 @@ EXTRA_DIST += Audio/AUDIO-TRANSPORT.md
 libspiralcore_la_SOURCES += Audio/include/AudioClient.h
 
 libspiralcore_la_SOURCES += Plugin/include/PluginManager.h Plugin/src/PluginManager.cpp
+libspiralcore_la_SOURCES += Plugin/include/PatchDescription.h
 libspiralcore_la_SOURCES += Plugin/include/Device.h Plugin/src/Device.cpp
 libspiralcore_la_SOURCES += Plugin/include/Property.h Plugin/src/Property.cpp
 libspiralcore_la_SOURCES += Plugin/include/AudioDriver.h
@@ -140,7 +141,9 @@ dist_schema_DATA = \
     File/schemas/SpiralPositionalText-0.2.x.AUTHORS \
     File/schemas/SpiralPositionalText.history.json
 AM_CPPFLAGS += -DSPIRALCORE_SCHEMA_DIR='"$(abs_srcdir)/File/schemas"'
-libspiralcore_la_SOURCES += File/include/PositionalReader.h File/src/PositionalReader.cpp
+libspiralcore_la_SOURCES += File/include/PositionalReader.h \
+	File/include/PatchFile.h File/src/PositionalReader.cpp \
+	File/src/PatchFile.cpp
 libspiralcore_la_SOURCES += File/src/DescriptionJSON.cpp
 check_PROGRAMS += positional-reader-test description-json-test
 positional_reader_test_SOURCES = File/tests/positional-reader.cpp
