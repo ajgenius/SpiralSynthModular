@@ -113,6 +113,7 @@ public:
 	// The state read back from a description, in the order Describe gave
 	// it; the host finds the description.
 	virtual void        Apply(Spiral::Core::Description::Reader &r)=0;
+	virtual void        Migrate(Spiral::Core::Description &d) {}
 
 	// stuff here gets saved in filename_files directory
 	// you must return true if this feature is used.

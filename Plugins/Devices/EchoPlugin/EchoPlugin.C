@@ -168,3 +168,12 @@ void EchoPlugin::Apply(Spiral::Core::Description::Reader &r)
         if (version>1) r.Value(AsBoolean(m_Bounce)); else AsBoolean(m_Bounce) = false;
 }
 
+void EchoPlugin::Migrate(Spiral::Core::Description &d)
+{
+	if (d.Version() != 1)
+		return;
+
+	if (d.Values().size() == 3)
+		d.Value(false);
+	d.SetValue(0, 2);
+}

@@ -203,3 +203,13 @@ void OperatorPlugin::Apply(Spiral::Core::Description::Reader &r)
 		AsSigned(m_Operator)=(OperatorType)t;
 	}
 }
+
+void OperatorPlugin::Migrate(Spiral::Core::Description &d)
+{
+	if (d.Version() != 1)
+		return;
+
+	if (d.Values().size() == 2)
+		d.Value(AsSigned(m_Operator));
+	d.SetValue(0, 2);
+}

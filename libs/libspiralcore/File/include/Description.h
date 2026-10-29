@@ -58,6 +58,15 @@ namespace Core
 		const std::vector<std::string> &Values() const { return m_Values; }
 		const std::vector<std::string> &Between() const { return m_Between; }
 
+		int Version() const;
+		int Field(size_t index, const std::string &key) const;
+		template <class T> void SetValue(size_t index, const T &v)
+		{
+			std::ostringstream text;
+			text << v;
+			m_Values[index] = text.str();
+		}
+
 		// The stream the StreamOut would have written.
 		void Write(std::ostream &s) const;
 

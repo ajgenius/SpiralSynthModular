@@ -191,3 +191,13 @@ void FlipflopPlugin::Apply(Spiral::Core::Description::Reader &r)
 		r.Value(AsFloat(m_TriggerTime)).Value(AsBoolean(m_Monostable));
 	}
 }
+
+void FlipflopPlugin::Migrate(Spiral::Core::Description &d)
+{
+	if (d.Version() != 1)
+		return;
+
+	if (d.Values().size() == 1)
+		d.Value(AsFloat(m_TriggerTime)).Value(AsBoolean(m_Monostable));
+	d.SetValue(0, 2);
+}

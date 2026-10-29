@@ -184,3 +184,13 @@ void NoteSnapPlugin::Apply(Spiral::Core::Description::Reader &r)
 		}
 	}
 }
+
+void NoteSnapPlugin::Migrate(Spiral::Core::Description &d)
+{
+	if (!d.Values().empty())
+		return;
+
+	d.Value(1);
+	for (int n=0; n<12; n++)
+		d.Value(true);
+}

@@ -139,6 +139,7 @@ static bool ApplyDeviceState(iostream &s, const string &text, int PluginID, Spir
 		string error;
 		if (reader->ReadState(PluginID, text, at, state, consumed, error))
 		{
+			plugin->Migrate(state);
 			Spiral::Core::Description::Reader values(state);
 			plugin->Apply(values);
 			s.seekg(at + consumed);

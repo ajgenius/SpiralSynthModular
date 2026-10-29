@@ -19,6 +19,18 @@ namespace Core
 		m_Between.push_back("");
 	}
 
+	int Description::Version() const
+	{
+		if (m_Values.empty())
+			return -1;
+		return atoi(m_Values[0].c_str());
+	}
+
+	int Description::Field(size_t index, const std::string &) const
+	{
+		return index < m_Values.size() ? (int)index : -1;
+	}
+
 	Description &Description::Separator(const char *text)
 	{
 		m_Between.back() += text;

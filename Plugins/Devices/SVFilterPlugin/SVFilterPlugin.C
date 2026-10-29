@@ -197,3 +197,16 @@ void SVFilterPlugin::Clear()
 	m_p=0.0f;
 	m_n=0.0f;
 }
+
+void SVFilterPlugin::Migrate(Spiral::Core::Description &d)
+{
+	if (d.Version() != 1)
+		return;
+
+	if (d.Values().size() == 3)
+	{
+		d.SetValue(1, AsFloat(Cutoff));
+		d.SetValue(2, AsFloat(Resonance));
+	}
+	d.SetValue(0, 2);
+}
