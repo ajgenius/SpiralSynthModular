@@ -524,6 +524,8 @@ void MatrixPlugin::Describe(Spiral::Core::Description &d)
 
 }
 
+static bool InGrid(int x, int y) { return x >= 0 && x < MATX && y >= 0 && y < MATY; }
+
 void MatrixPlugin::Apply(Spiral::Core::Description::Reader &r) {
      int version;
      r.Value(version);
@@ -540,19 +542,20 @@ void MatrixPlugin::Apply(Spiral::Core::Description::Reader &r) {
          }
          else {
             // version > 1
-            float vol;
-            int x=0, y=0;
-            while (x!=-1) {
+            float vol = 1.0f;
+            int x=0;
+            while (x!=-1 && r.More()) {
+                  int y = -1;
                   r.Value(x);
                   if (x != -1) {
                      if (version == 2) {
                         r.Value(y);
-                        if (y != -1) m_Matrix[n].Matrix[x][y] = true;
+                        if (InGrid(x, y)) m_Matrix[n].Matrix[x][y] = true;
                      }
                      else {
                         // version > 2
                         r.Value(y).Value(vol);
-                        if (y != -1) {
+                        if (InGrid(x, y)) {
                            m_Matrix[n].Matrix[x][y] = true;
                            m_Matrix[n].Volume[x][y] = vol;
                         }

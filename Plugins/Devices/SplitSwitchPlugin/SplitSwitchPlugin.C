@@ -182,5 +182,6 @@ void SplitSwitchPlugin::Describe(Spiral::Core::Description &d) {
 void SplitSwitchPlugin::Apply(Spiral::Core::Description::Reader &r) {
   int Version;
   r.Value(Version).Value(m_Chans).Value(m_SwitchPos);
+  m_Chans.Clamp();
   SetChans (AsSigned(m_Chans));
 }

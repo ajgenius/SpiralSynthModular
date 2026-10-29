@@ -197,5 +197,6 @@ void MixSwitchPlugin::Describe(Spiral::Core::Description &d) {
 void MixSwitchPlugin::Apply(Spiral::Core::Description::Reader &r) {
   int Version;
   r.Value(Version).Value(m_Chans).Value(m_SwitchPos);
+  m_Chans.Clamp();
   SetChans (AsSigned(m_Chans));
 }

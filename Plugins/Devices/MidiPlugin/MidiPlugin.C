@@ -338,7 +338,7 @@ void MidiPlugin::Apply(Spiral::Core::Description::Reader &r)
 			int Num;
 			r.Count(m_Controls, Num);
 			
-			for (int n=0; n<Num; n++)
+			for (int n=0; n<Num && r.More(); n++)
 			{
 				AddControl(0, "");
 				int size;

@@ -287,6 +287,7 @@ void ControllerPlugin::Apply(Spiral::Core::Description::Reader &r)
 			Clear();
 
 			r.Value(m_NumChannels);
+			m_NumChannels.Clamp();
 			string name;
 			for (int n=0; n<GetNum(); n++)
 			{

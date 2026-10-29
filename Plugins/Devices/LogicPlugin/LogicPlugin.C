@@ -210,6 +210,7 @@ void LogicPlugin::Apply(Spiral::Core::Description::Reader &r) {
       break;
     case 3:
       r.Value(m_Inputs);
+      m_Inputs.Clamp();
       SetInputs (AsUnsigned(m_Inputs));
       r.Value(m_Operator);
       break;

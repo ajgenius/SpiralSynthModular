@@ -183,7 +183,7 @@ void SplitterPlugin::Describe(Spiral::Core::Description &d)
 
 void SplitterPlugin::Apply(Spiral::Core::Description::Reader &r) 
 {
-	int Version, Channels;
+	int Version;
 
 	// an old patch has no state for it at all
 	if (r.More())
@@ -200,8 +200,9 @@ void SplitterPlugin::Apply(Spiral::Core::Description::Reader &r)
 	{
 		case 2:
 		{
-			r.Value(Channels);
-			SetChannelCount (Channels);
+			r.Value(m_ChannelCount);
+			m_ChannelCount.Clamp();
+			SetChannelCount (AsSigned(m_ChannelCount));
 		}
 		break;
 		

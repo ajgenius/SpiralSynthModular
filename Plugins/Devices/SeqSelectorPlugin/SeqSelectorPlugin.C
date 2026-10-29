@@ -240,7 +240,7 @@ void SeqSelectorPlugin::Apply(Spiral::Core::Description::Reader &r)
 	int Num;
 	r.Count(m_Lines, Num);
 	
-	for (int i=0; i<Num; i++)
+	for (int i=0; i<Num && r.More(); i++)
 	{
 		m_Lines.Add(NewLine());
 		for (int n=0; n<NUM_VALUES; n++)
