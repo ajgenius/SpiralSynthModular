@@ -4,6 +4,7 @@
 
 #include "JSON.h"
 #include "Directory.h"
+#include "FileVersion.h"
 #include <memory>
 
 namespace Spiral
@@ -15,10 +16,11 @@ namespace Spiral
 		public:
 			virtual void Describe(Spumoni::JSON &root, const Spumoni::Identity &identity) const
 			{
-				root.SetOwned("format", Spumoni::JSON::MakeString("SpiralSynthModular File Ver 9"));
+				root.SetOwned("format", Spumoni::JSON::MakeString(Version::ProjectHeader()));
+
 				Spumoni::JSON *main = Spumoni::JSON::MakeObject();
-				main->SetOwned("name", Spumoni::JSON::MakeString("patch.spiral.legacy.ssm"));
-				main->SetOwned("format", Spumoni::JSON::MakeString("SpiralSynthModular File Ver 4"));
+				main->SetOwned("name", Spumoni::JSON::MakeString("patch.spiral.json"));
+				main->SetOwned("format", Spumoni::JSON::MakeString(Version::PatchHeader()));
 				root.SetOwned("main", main);
 
 				Spumoni::JSON *application = Spumoni::JSON::MakeObject();
@@ -70,16 +72,33 @@ namespace Spiral
 				if (!format && !main)
 					return true;
 
+				// Ver 9 is the first this host wrote; the patch payload may be
+				// any JSON version up to this host's own.
 				const Spumoni::JSON *member = main ? main->Get("name") : NULL;
 				const Spumoni::JSON *header = main ? main->Get("format") : NULL;
-				if (!format || format->GetType() != Spumoni::JSON::String
-					|| format->Text() != "SpiralSynthModular File Ver 9"
+				long found = 0;
+				const Version::Status project = format && format->GetType() == Spumoni::JSON::String
+					? Version::Check(format->Text(), Version::ProjectKind, Version::Project, found)
+					: Version::Foreign;
+				if ((project != Version::Current && !(project == Version::Older && found >= 9))
 					|| !member || member->GetType() != Spumoni::JSON::String
-					|| member->Text() != "patch.spiral.legacy.ssm"
-					|| !header || header->GetType() != Spumoni::JSON::String
-					|| header->Text() != "SpiralSynthModular File Ver 4")
+					|| !header || header->GetType() != Spumoni::JSON::String)
 				{
-					error = "Unsupported project version or main payload; this host reads positional Ver 4 packages";
+					error = "Unsupported project version or main payload";
+					return false;
+				}
+
+				long payload = 0;
+				const Version::Status patch = Version::Check(header->Text(), Version::PatchKind,
+					Version::Patch, payload);
+				const bool positional = member->Text() == "patch.spiral.legacy.ssm"
+					&& header->Text() == "SpiralSynthModular File Ver 4";
+				const bool json = member->Text() == "patch.spiral.json"
+					&& (patch == Version::Current || patch == Version::Older);
+				if (!positional && !json)
+				{
+					error = "Unsupported main payload; this host reads positional Ver 4 and "
+						+ Version::PatchHeader() + " or older packages";
 					return false;
 				}
 
@@ -240,10 +259,12 @@ namespace Spiral
 		Project::Project(const std::string &path)
 			: Spumoni::Project(Format())
 			, m_Source(new Spumoni::SourcePart("patch.spiral.legacy.ssm"))
+			, m_Patch(new Spumoni::SourcePart("patch.spiral.json"))
 			, m_Sidecars(new SidecarPart)
 			, m_License(new LicensePart(*this))
 		{
 			AddPart(*m_Source);
+			AddPart(*m_Patch);
 			AddPart(*m_Sidecars);
 			AddPart(*m_License);
 			m_SourcePath = path;
@@ -252,6 +273,7 @@ namespace Spiral
 		Project::~Project()
 		{
 			delete m_Source;
+			delete m_Patch;
 			delete m_Sidecars;
 			delete m_License;
 		}
@@ -259,6 +281,7 @@ namespace Spiral
 		void Project::OnReset()
 		{
 			m_Source->Clear();
+			m_Patch->Clear();
 			m_Sidecars->Clear();
 		}
 

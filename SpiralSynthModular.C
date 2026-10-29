@@ -168,6 +168,16 @@ static bool ApplyDeviceState(iostream &s, const string &text, int PluginID, Spir
 	SpiralInfo::Alert("No file contract - cannot load a patch");
 	return false;
 }
+static std::string JSONDocument(std::istream &s)
+{
+	std::streampos here = s.tellg();
+	int c = s.peek();
+	while (c == ' ' || c == '\t' || c == '\r' || c == '\n') { s.get(); c = s.peek(); }
+	if (c != '{') { s.clear(); s.seekg(here); return ""; }
+	std::string text((std::istreambuf_iterator<char>(s)), std::istreambuf_iterator<char>());
+	return text;
+}
+
 static int Numbers[512];
 
 static const int MAIN_WIDTH     = 700;
@@ -2689,7 +2699,7 @@ inline void SynthModular::cb_Save_i (Fl_Widget *o, void *v) {
        if (Spiral::File::Project::PathLooksLikePackage(m_FilePath))
           SaveBranch();
        else
-          SavePatch(m_FilePath.c_str());
+          cb_SaveAs_i(o, v);
 }
 
 void SynthModular::cb_Save (Fl_Widget *o, void *v) {
@@ -2697,8 +2707,7 @@ void SynthModular::cb_Save (Fl_Widget *o, void *v) {
 }
 
 inline void SynthModular::cb_SaveAs_i (Fl_Widget *o, void *v) {
-       char *fn=fl_file_chooser("Save a patch",
-          "SSM Patches (*.{ssm,ssmp})\tSSM Project (*.ssmp)\tLegacy SSM (*.ssm)", NULL);
+       char *fn=fl_file_chooser("Save a patch", "SSM Project (*.ssmp)", NULL);
        if (fn && *fn!='\0') {
           ifstream ifl (fn);
           if (ifl) {
@@ -2724,41 +2733,57 @@ void SynthModular::cb_SaveAs (Fl_Widget *o, void *v) {
 inline void SynthModular::cb_Merge_i (Fl_Widget *o, void *v) {
        char *fn = fl_file_chooser ("Merge a patch",
           "SSM Patches (*.{ssm,ssmp})\tSSM Project (*.ssmp)\tLegacy SSM (*.ssm)", NULL);
-       if (fn && *fn!='\0') {
-          iostream *stream = NULL;
-          ifstream in;
-          fstream inf;
-          std::stringstream packaged;
-          std::auto_ptr<Spiral::File::Project> project;
-          std::string sidecars;
-          if (Spiral::File::Project::PathLooksLikePackage(fn)) {
-             project.reset(new Spiral::File::Project(fn));
-             std::string error;
-             if (!project->OpenPackage("", error)) {
-                fl_message("%s", error.c_str());
-                return;
-             }
-             if (project->Source().Empty()) {
-                fl_message("This SSM Project has no patch in it.");
-                return;
-             }
-             packaged.str(project->Source().Bytes());
-             stream = &packaged;
-             sidecars = project->SidecarDirectory();
+       if (fn && *fn!='\0')
+          MergePatch(fn);
+}
+
+// A patch file's devices join this patch, on the page shown, selected.
+void SynthModular::MergePatch(const char *fn) {
+       iostream *stream = NULL;
+       ifstream in;
+       fstream inf;
+       std::stringstream packaged;
+       std::auto_ptr<Spiral::File::Project> project;
+       std::string sidecars;
+       if (Spiral::File::Project::PathLooksLikePackage(fn)) {
+          project.reset(new Spiral::File::Project(fn));
+          std::string error;
+          if (!project->OpenPackage("", error)) {
+             fl_message("%s", error.c_str());
+             return;
           }
-          else {
-             in.open(fn);
-             if (!in)
-                return;
-             inf.open(fn, ios::in);
-             stream = &inf;
+          if (project->Source().Empty() && !project->HasPatch()) {
+             fl_message("This SSM Project has no patch in it.");
+             return;
           }
-          m_MergeFilePath = fn;
+          packaged.str(project->Source().Bytes());
+          stream = &packaged;
+          sidecars = project->SidecarDirectory();
+       }
+       else {
+          in.open(fn);
+          if (!in)
+             return;
+          inf.open(fn, ios::in);
+          stream = &inf;
+       }
+       m_MergeFilePath = fn;
+       std::string json = project.get() && project->HasPatch() ? project->Patch().Bytes() : JSONDocument(*stream);
+       if (!json.empty()) {
+          Spiral::Core::PatchDescription patch;
+          std::string error;
+          if (!Spiral::File::PatchFile::ReadText(json, patch, error)) {
+             fl_message("%s", error.c_str());
+             return;
+          }
+          Apply(patch, sidecars, true);
+       }
+       else {
           StreamPatchIn(*stream, true, sidecars);
           m_Canvas->StreamSelectionWiresIn(*stream, m_Copied.m_DeviceIds, true);
-          if (stream == &inf)
-             inf.close();
        }
+       if (stream == &inf)
+          inf.close();
 }
 
 void SynthModular::cb_Merge (Fl_Widget *o, void *v) {
@@ -3411,7 +3436,7 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 			fl_message("%s", error.empty() ? "Error opening SSM Project" : error.c_str());
 			return;
 		}
-		if (project->Source().Empty())
+		if (project->Source().Empty() && !project->HasPatch())
 		{
 			fl_message("This SSM Project has no patch in it.");
 			return;
@@ -3438,7 +3463,22 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 	ClearUp();
 	m_Document = document;
 	if (m_Drawer) m_Drawer->Refresh();
-	StreamPatchIn(*stream, false, sidecars);
+	std::string json = project.get() && project->HasPatch() ? project->Patch().Bytes() : JSONDocument(*stream);
+	if (!json.empty())
+	{
+		Spiral::Core::PatchDescription patch;
+		std::string error;
+		if (!Spiral::File::PatchFile::ReadText(json, patch, error))
+		{
+			fl_message("%s", error.c_str());
+			return;
+		}
+		Apply(patch, sidecars);
+	}
+	else
+	{
+		StreamPatchIn(*stream, false, sidecars);
+	}
 	if (stream == &inf)
 		inf.close();
 
@@ -3448,7 +3488,44 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 
 void SynthModular::SavePatch(const char *fn)
 {
-	fl_message("%s", string("Not saved: this build does not write patches (" + string(fn) + ")").c_str());
+	if (Spiral::File::Project::PathLooksLikePackage(fn))
+	{
+		// A fresh project, then SaveAs. Constructing on the destination
+		// would treat a not-yet-opened package as the current file.
+		Spiral::File::Project project("");
+		std::string error;
+		if (!project.BeginSidecars(error))
+		{
+			fl_message("%s", error.c_str());
+			return;
+		}
+
+		Spiral::Core::PatchDescription patch;
+		std::string json;
+		::Describe(patch, *this, project.SidecarDirectory());
+		if (!Spiral::File::PatchFile::Text(patch, json, error))
+		{
+			fl_message("%s", error.c_str());
+			return;
+		}
+		project.Patch().Set(json);
+		project.SetDocument(m_Document);
+		if (!project.SaveAs(fn, error))
+		{
+			fl_message("%s", error.empty() ? "Error saving SSM Project" : error.c_str());
+			return;
+		}
+	}
+	else
+	{
+		fl_message("Save As writes a project (.ssmp).");
+		return;
+	}
+
+	m_FilePath = fn;
+	m_BranchID.clear();
+	TITLEBAR = LABEL + " " + fn;
+	m_TopWindow->label(TITLEBAR.c_str());
 }
 
 
@@ -3466,8 +3543,78 @@ static std::string MenuLabel(const std::string &name)
 
 void SynthModular::SaveBranch(bool ask)
 {
-	(void)ask;
-	fl_message("Not saved: this build does not write patches.");
+	if (!Spiral::File::Project::PathLooksLikePackage(m_FilePath))
+	{
+		fl_message("Save As an SSM Project before saving a branch.");
+		return;
+	}
+
+	Spiral::File::Project project(m_FilePath);
+	std::string error;
+	bool opened = m_BranchID.empty()
+		? project.OpenPackage("", error)
+		: project.SwitchBranch(m_BranchID, error);
+	if (!opened)
+	{
+		fl_message("%s", error.empty() ? "Error opening SSM Project" : error.c_str());
+		return;
+	}
+
+	const Spumoni::Identity &identity = project.GetIdentity();
+	int choice = 2;
+	if (ask)
+	{
+		choice = fl_choice("Save Patch", "Cancel", "Create New Save Point", "Replace Current Save Point");
+		if (choice == 0)
+			return;
+	}
+
+	bool replace = choice != 1;
+	std::string name;
+	if (!replace)
+	{
+		std::string suggested = Spumoni::Project::SuggestedSavePointName(identity);
+		const char *entered = fl_input("Save Point Name", suggested.c_str());
+		if (!entered)
+			return;
+		name = entered;
+		if (name.find_first_not_of(" \t\r\n") == std::string::npos)
+		{
+			fl_message("A new save point needs a name.");
+			return;
+		}
+	}
+	else if (!identity.ActiveBranchName.empty())
+		name = identity.ActiveBranchName;
+	else
+		name = project.BranchNameFromPath(m_FilePath);
+
+	if (!project.BeginSidecars(error))
+	{
+		fl_message("%s", error.c_str());
+		return;
+	}
+
+	Spiral::Core::PatchDescription patch;
+	std::string json;
+	::Describe(patch, *this, project.SidecarDirectory());
+	if (!Spiral::File::PatchFile::Text(patch, json, error))
+	{
+		fl_message("%s", error.c_str());
+		return;
+	}
+	project.Patch().Set(json);
+	project.SetDocument(m_Document);
+	if (!project.CreateSavePoint(name, replace, error))
+	{
+		fl_message("%s", error.empty() ? "Error saving SSM Project" : error.c_str());
+		return;
+	}
+
+	m_BranchID = project.GetIdentity().ActiveBranchID;
+	m_SavePointCount = project.GetIdentity().Branches.size();
+	TITLEBAR = LABEL + " " + m_FilePath;
+	m_TopWindow->label(TITLEBAR.c_str());
 }
 
 // Add another patch to this project as a branch of its own. Unlike a save
@@ -3496,12 +3643,12 @@ inline void SynthModular::cb_ImportBranch_i (Fl_Widget *o, void *v)
 	if (Spiral::File::Project::PathLooksLikePackage(fn))
 	{
 		Spiral::File::Project source(fn);
-		if (!source.OpenPackage("", error) || source.Source().Empty())
+		if (!source.OpenPackage("", error) || (source.Source().Empty() && !source.HasPatch()))
 		{
 			fl_message("%s", error.empty() ? "Error opening SSM Project" : error.c_str());
 			return;
 		}
-		imported = source.Source().Bytes();
+		imported = source.HasPatch() ? source.Patch().Bytes() : source.Source().Bytes();
 	}
 	else
 	{
@@ -3534,7 +3681,9 @@ inline void SynthModular::cb_ImportBranch_i (Fl_Widget *o, void *v)
 		return;
 	}
 
-	project.Source().Set(imported);
+	std::istringstream importedStream(imported);
+	if (!JSONDocument(importedStream).empty()) project.Patch().Set(imported);
+	else project.Source().Set(imported);
 	if (!project.CreateSavePoint(name, false, error, true))
 	{
 		fl_message("%s", error.empty() ? "Error importing branch" : error.c_str());

@@ -80,6 +80,10 @@ namespace Spiral
 			const Spumoni::SourcePart &Source() const { return *m_Source; }
 			Spumoni::SourcePart &Source() { return *m_Source; }
 
+			const Spumoni::SourcePart &Patch() const { return *m_Patch; }
+			Spumoni::SourcePart &Patch() { return *m_Patch; }
+			bool HasPatch() const { return m_Patch && !m_Patch->Empty(); }
+
 			// The document as the file states it, read back out of the
 			// metadata text the load kept. Empty for a project that claims
 			// nothing, and for anything that is not a package at all.
@@ -102,13 +106,14 @@ namespace Spiral
 			static bool PathLooksLikePackage(const std::string &path);
 
 		protected:
-			virtual bool HasContent() const { return m_Source && !m_Source->Empty(); }
+			virtual bool HasContent() const { return (m_Source && !m_Source->Empty()) || HasPatch(); }
 			virtual void OnReset();
 
 		private:
 			class SidecarPart;
 			class LicensePart;
 			Spumoni::SourcePart *m_Source;
+			Spumoni::SourcePart *m_Patch;
 			SidecarPart *m_Sidecars;
 			LicensePart *m_License;
 		};

@@ -136,6 +136,7 @@ public:
 	// is chrome too, and the canvas scroll takes what the two leave.
 	void LayoutChrome();
 	void LoadPatch(const char *fn, const char *branchId = NULL);
+	void MergePatch(const char *fn);
 	void Apply(const Spiral::Core::PatchDescription &patch, const string &sidecars, bool merge = false);
 	bool ApplyPage(const Spiral::Core::PatchDescription &patch, const string &sidecars, bool merge, int page,
 		std::map<std::string, int> &ids);
