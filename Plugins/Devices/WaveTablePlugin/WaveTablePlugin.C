@@ -19,6 +19,8 @@
 #include <cmath>
 #include "Finite.h"
 #include "SpiralIcon.xpm"
+#include <stdlib.h>
+#include <algorithm>
 
 using namespace std;
 using namespace Spiral::Core;
@@ -93,7 +95,7 @@ m_TableLength(DEFAULT_TABLE_LEN)
 	};
 
 	m_Type = SetProperty(Property::WriteOnly, 0, NamedPropertySet(WaveTypes, sizeof(WaveTypes)/sizeof(WaveTypes[0])));
-	m_Octave = SignedProperty(DefaultLinearFlags,0,-3,3,1,1);
+	m_Octave = SignedProperty(DefaultLinearFlags,OCTAVE_ORIGIN,0,10,1,1);
 	m_FineFreq = FloatProperty(DefaultLinearFlags,1, 0, 1.414, 0.000001, 0.0001);
 	m_ModAmount = FloatProperty(DefaultLinearFlags, 1.0f, 0, 2.0f, 0.001, 0.01);
 
@@ -103,7 +105,7 @@ m_TableLength(DEFAULT_TABLE_LEN)
 	RegisterSharedProperty(m_ModAmount, "ModAmount", "ModAmount");
 
 	SetString(DeviceName, SpiralPlugin_GetName());
-	SetUnsigned(DeviceVersion, 1);
+	SetUnsigned(DeviceVersion, 2);
 	m_CyclePos=0;	
 	m_Note=0;
 	
@@ -233,8 +235,7 @@ void WaveTablePlugin::Execute()
 		}
 
 		Freq*=AsFloat(m_FineFreq);
-		if (AsSigned(m_Octave)>0) Freq*=1<<(AsSigned(m_Octave));
-		if (AsSigned(m_Octave)<0) Freq/=1<<(-AsSigned(m_Octave));
+		Freq=ldexpf(Freq,OctaveShift());
 		
 		Incr = Freq*(m_TableLength/(float)m_HostInfo->SAMPLERATE);
 		m_CyclePos+=Incr;
@@ -259,6 +260,22 @@ void WaveTablePlugin::Apply(Spiral::Core::Description::Reader &r)
 	int version;
 	r.Value(version);
 	::Apply(r, *this);
+}
+
+void WaveTablePlugin::Migrate(Spiral::Core::Description &d)
+{
+	if (d.Version() < 0 || d.Version() >= 2)
+		return;
+
+	int type = d.Field(1, "Wave Type");
+	if (type >= 0)
+		d.SetValue(type, std::min(std::max(atoi(d.Values()[type].c_str()), (int)SINE), (int)INVSINE));
+
+	int octave = d.Field(2, "Octave");
+	if (octave >= 0)
+		d.SetValue(octave, std::min(std::max(atoi(d.Values()[octave].c_str()) + OCTAVE_ORIGIN, 0), 10));
+
+	d.SetValue(0, 2);
 }
 
 Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, WaveTablePlugin &o)

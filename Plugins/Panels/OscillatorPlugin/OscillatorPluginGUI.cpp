@@ -111,10 +111,10 @@ m_FineFreq (0)
         m_Octave->color (Info->GUI_COLOUR);
 	m_Octave->type (Fl_Knob::LINELIN);
         m_Octave->labelsize (10);
-        m_Octave->maximum (6);
+        m_Octave->maximum (10);
         m_Octave->step (1);
         m_Octave->value (3);
-	m_Octave->scaleticks (6);
+	m_Octave->scaleticks (10);
 	m_Octave->cursor (50);
 	m_Octave->callback ((Fl_Callback*)cb_Octave);
 	m_CtlGroup->add (m_Octave);
@@ -182,10 +182,10 @@ m_FineFreq (0)
         m_NumOctave->color (Info->GUI_COLOUR);
         m_NumOctave->labelsize (10);
         m_NumOctave->textsize (10);
-        m_NumOctave->minimum (-3);
-        m_NumOctave->maximum (3);
+        m_NumOctave->minimum (0);
+        m_NumOctave->maximum (10);
         m_NumOctave->step (1);
-        m_NumOctave->value (0);
+        m_NumOctave->value (3);
         m_NumOctave->callback ((Fl_Callback*)cb_NumOctave);
         m_NumGroup->add (m_NumOctave);
 
@@ -234,7 +234,7 @@ void OscillatorPluginGUI::UpdateValues (SpiralPlugin *o) {
      m_NumModAmount->value (val * 100);
 
      m_NumOctave->value (Plugin->GetOctave());
-     m_Octave->value ((int)m_NumOctave->value() + 3);
+     m_Octave->value (m_NumOctave->value());
      m_FineTune->value (sqrt (Plugin->GetFineFreq()));
      UpdateFreq();
 }
@@ -242,7 +242,7 @@ void OscillatorPluginGUI::UpdateValues (SpiralPlugin *o) {
 // Utility functions
 
 float OscillatorPluginGUI::CalcFineFreq (float Fine) {
-      int oct = (int)m_NumOctave->value();
+      int oct = (int)m_NumOctave->value() - OscillatorPlugin::OCTAVE_ORIGIN;
       m_FineFreq = Fine * Fine;
       float fr = 110.0f * m_FineFreq;
       if (oct > 0) fr *= 1 << oct;
@@ -324,7 +324,7 @@ void OscillatorPluginGUI::cb_Reset (Fl_Button* o, void* v) {
 }
 
 inline void OscillatorPluginGUI::cb_Octave_i (Fl_Knob* o, void* v) {
-       m_NumOctave->value ((int)m_Octave->value() - 3);
+       m_NumOctave->value (m_Octave->value());
        UpdateFreq();
        m_GUICH->Set ("Octave", (int)m_NumOctave->value ());
 }
@@ -366,7 +366,7 @@ void OscillatorPluginGUI::cb_NumSHLen (Fl_Counter* o, void* v) {
 }
 
 inline void OscillatorPluginGUI::cb_NumFreq_i (Fl_Counter* o, void* v) {
-       int oct = (int)m_NumOctave->value();
+       int oct = (int)m_NumOctave->value() - OscillatorPlugin::OCTAVE_ORIGIN;
        float fr = o->value ();
        if (oct > 0) fr /= 1 << oct;
        if (oct < 0) fr *= 1 << (-oct);
@@ -380,7 +380,7 @@ void OscillatorPluginGUI::cb_NumOctave (Fl_Counter* o, void* v) {
 }
 
 inline void OscillatorPluginGUI::cb_NumOctave_i (Fl_Counter* o, void* v) {
-       m_Octave->value ((int)m_NumOctave->value() + 3);
+       m_Octave->value (m_NumOctave->value());
        UpdateFreq();
        m_GUICH->Set ("Octave", (int)m_NumOctave->value ());
 }

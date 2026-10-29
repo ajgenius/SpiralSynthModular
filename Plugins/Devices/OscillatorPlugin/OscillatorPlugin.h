@@ -33,9 +33,11 @@ public:
 
 	virtual void	    Describe(Spiral::Core::Description &d);
 	virtual void	    Apply(Spiral::Core::Description::Reader &r);
+	virtual void	    Migrate(Spiral::Core::Description &d);
 
 	typedef char Type;
 	enum {NONE,SQUARE,SAW,NOISE};
+	enum {OCTAVE_ORIGIN=3};
 
 	void ModulateFreq(Sample *data) {m_FreqModBuf=data;}
 	void ModulatePulseWidth(Sample *data) {m_PulseWidthModBuf=data;}
@@ -43,6 +45,7 @@ public:
 
 	void NoteTrigger(int V,int s,int v);
 	int   GetOctave() {return AsSigned(m_Octave);}
+	int   OctaveShift() {return AsSigned(m_Octave)-OCTAVE_ORIGIN;}
 	float GetFineFreq() {return AsFloat(m_FineFreq);}
 	float GetPulseWidth() {return AsFloat(m_PulseWidth);}
 	Type  GetType() {return (Type)AsUnsigned(m_Type);}

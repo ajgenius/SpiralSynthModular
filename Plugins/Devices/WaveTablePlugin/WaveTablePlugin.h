@@ -36,17 +36,20 @@ public:
 
 	virtual void	    Describe(Spiral::Core::Description &d);
 	virtual void	    Apply(Spiral::Core::Description::Reader &r);
+	virtual void	    Migrate(Spiral::Core::Description &d);
 	
 	// has to be defined in the plugin	
 
 	typedef char Type;
 	enum {SINE,SQUARE,SAW,REVSAW,TRIANGLE,PULSE1,PULSE2,INVSINE};
+	enum {OCTAVE_ORIGIN=3};
 	
 	void WriteWaves();
 	void NoteTrigger(int V,int s,int v);
 	
 	Type GetType()      { return (Type)AsUnsigned(m_Type); }
 	int  GetOctave()    { return AsSigned(m_Octave); }
+	int  OctaveShift()  { return AsSigned(m_Octave)-OCTAVE_ORIGIN; }
 	float GetFineFreq() { return AsFloat(m_FineFreq); } 
 	float GetModAmount(){ return AsFloat(m_ModAmount); }
 	

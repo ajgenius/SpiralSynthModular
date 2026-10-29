@@ -22,6 +22,7 @@
 #include <limits.h>
 #include "SpiralIcon.xpm"
 #include <stdlib.h>
+#include <algorithm>
 
 using namespace std;
 using namespace Spiral::Core;
@@ -94,7 +95,7 @@ m_SHModBuf(NULL)
 	};
 
 	m_Type = SetProperty(Property::WriteOnly, SQUARE, NamedPropertySet(WaveTypes, sizeof(WaveTypes)/sizeof(WaveTypes[0])));
-	m_Octave = SignedProperty(DefaultLinearFlags,0,-3,3,1,1);
+	m_Octave = SignedProperty(DefaultLinearFlags,OCTAVE_ORIGIN,0,10,1,1);
 	m_FineFreq = FloatProperty(DefaultLinearFlags,1, 0, 1.414, 0.000001, 0.0001);
 	m_PulseWidth = FloatProperty(DefaultLinearFlags, 0.5f, 0, 1, 0.01, 0.1);
 	m_ModAmount = FloatProperty(DefaultLinearFlags, 1.0f, 0, 2.0f, 0.001, 0.01);
@@ -108,7 +109,7 @@ m_SHModBuf(NULL)
 	RegisterSharedProperty(m_SHLen, "Sample & Hold Length", "Sample & Hold Length");
 
 	SetString(DeviceName, SpiralPlugin_GetName());
-	SetUnsigned(DeviceVersion, 1);
+	SetUnsigned(DeviceVersion, 2);
 
 	m_CyclePos=0;
 	m_Note=0;
@@ -170,8 +171,7 @@ void OscillatorPlugin::Execute()
 			if (InputExists(0)) Freq=GetInputPitch(0,n);
 			else Freq=110;
 			Freq*=AsFloat(m_FineFreq);
-			if (AsSigned(m_Octave)>0) Freq*=1<<(AsSigned(m_Octave));
-			if (AsSigned(m_Octave)<0) Freq/=1<<(-AsSigned(m_Octave));
+			Freq=ldexpf(Freq,OctaveShift());
 			CycleLen = m_HostInfo->SAMPLERATE/Freq;
 			PW = BoundedCycleOffset((AsFloat(m_PulseWidth)+GetInput(IN_PW,n)*AsFloat(m_ModAmount)) * CycleLen);
 
@@ -190,8 +190,7 @@ void OscillatorPlugin::Execute()
 			if (InputExists(0)) Freq=GetInputPitch(0,n);
 			else Freq=110;
 			Freq*=AsFloat(m_FineFreq);
-			if (AsSigned(m_Octave)>0) Freq*=1<<(AsSigned(m_Octave));
-			if (AsSigned(m_Octave)<0) Freq/=1<<(-AsSigned(m_Octave));
+			Freq=ldexpf(Freq,OctaveShift());
 			CycleLen = m_HostInfo->SAMPLERATE/Freq;
 			PW = BoundedCycleOffset((AsFloat(m_PulseWidth)+GetInput(IN_PW,n)*AsFloat(m_ModAmount)) * CycleLen);
 
@@ -247,6 +246,22 @@ void OscillatorPlugin::Apply(Spiral::Core::Description::Reader &r)
 	::Apply(r, *this);
 }
 
+void OscillatorPlugin::Migrate(Spiral::Core::Description &d)
+{
+	if (d.Version() < 0 || d.Version() >= 2)
+		return;
+
+	int type = d.Field(1, "Wave Type");
+	if (type >= 0)
+		d.SetValue(type, std::min(std::max(atoi(d.Values()[type].c_str()), (int)NONE), (int)NOISE));
+
+	int octave = d.Field(2, "Octave");
+	if (octave >= 0)
+		d.SetValue(octave, std::min(std::max(atoi(d.Values()[octave].c_str()) + OCTAVE_ORIGIN, 0), 10));
+
+	d.SetValue(0, 2);
+}
+
 Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, OscillatorPlugin &o)
 {
 	float dummy=0;
@@ -260,7 +275,7 @@ Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, O
 Spiral::Core::Description &Describe(Spiral::Core::Description &d, OscillatorPlugin &o)
 {
 	float dummy=0;
-	d.Value((int)AsUnsigned(o.m_Type)).Separator(" ").Value(o.m_Octave).Separator(" ").Value(o.m_FineFreq).Separator(" ").Value(o.m_PulseWidth).Separator(" ")
+	d.Value(o.m_Type).Separator(" ").Value(o.m_Octave).Separator(" ").Value(o.m_FineFreq).Separator(" ").Value(o.m_PulseWidth).Separator(" ")
 	.Value(dummy).Separator(" ").Value(o.m_SHLen).Separator(" ").Value(o.m_ModAmount).Separator(" ");
 	return d;
 }
