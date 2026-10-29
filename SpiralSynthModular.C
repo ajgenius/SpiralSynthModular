@@ -258,6 +258,8 @@ void SynthModular::ClearUp(bool synchronize)
 {
 	if (synchronize) FreezeAll();
 
+	m_Canvas->Clear();
+
 	for(map<int,DeviceWin*>::iterator i=m_DeviceWinMap.begin();
 		i!=m_DeviceWinMap.end(); i++)
 	{
@@ -274,14 +276,13 @@ void SynthModular::ClearUp(bool synchronize)
 		}
 
 		// On shutdown, destroy GUI instances while their modules and DSP
-		// objects are still present. Widget destructors detach from the canvas.
+		// objects are still present.
 		if (!synchronize) delete i->second->m_DeviceGUI;
 		delete i->second->m_Device;
 		i->second->m_Device=NULL;
 		if (!synchronize) delete i->second;
 	}
 
-	m_Canvas->Clear();
 	// The next patch is placed at its saved window coordinates: from the
 	// same view every time, not from wherever the last one left it.
 	m_Canvas->ResetView();
