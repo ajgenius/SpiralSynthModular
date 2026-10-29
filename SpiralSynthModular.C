@@ -1657,108 +1657,6 @@ iostream &operator>>(iostream &s, SynthModular &o)
 
 //////////////////////////////////////////////////////////
 
-Spiral::Core::Description &Describe(Spiral::Core::Description &d, SynthModular &o)
-{
-	return Describe(d, o, o.m_FilePath + "_files/");
-}
-
-Spiral::Core::Description &Describe(Spiral::Core::Description &d, SynthModular &o, const string &sidecars)
-{
-	o.FreezeAll();
-
-	d.Value("SpiralSynthModular File Ver").Separator(" ").Value(FILE_VERSION).Line();
-
-	// make external files dir
-	bool ExternalDirUsed=false;
-	string directoryError;
-	Spumoni::Path::MakeDirectories(sidecars, directoryError);
-
-	if (FILE_VERSION>2)
-	{
-		d.Value(o.m_TopWindow->x()).Separator(" ").Value(o.m_TopWindow->y()).Separator(" ");
-		d.Value(o.m_TopWindow->w()).Separator(" ").Value(o.m_TopWindow->h()).Separator(" ");
-		d.Value(0).Separator(" ").Value(0).Separator(" ");
-		d.Value(0).Separator(" ").Value(0).Line();
-	}
-
-	// save out the SynthModular
-	d.Value("SectionList").Line();
-	d.Value(o.m_DeviceWinMap.size()).Line();
-
-	for(map<int,DeviceWin*>::iterator i=o.m_DeviceWinMap.begin();
-		i!=o.m_DeviceWinMap.end(); i++)
-	{
-		if (i->second->m_DeviceGUI && ((i->second->m_Device) || (i->second->m_PluginID==COMMENT_ID)))
-		{
-			d.Line();
-			d.Value("Device").Separator(" ");
-			d.Value(i->first).Separator(" "); // save the id
-			d.Value("Plugin").Separator(" ");
-			d.Value(i->second->m_PluginID).Line();
-			d.Value(i->second->m_DeviceGUI->x()).Separator(" ");
-			d.Value(i->second->m_DeviceGUI->y()).Separator(" ");
-			string savedName = SavedDeviceName(i->second);
-			d.Value(savedName.size()).Separator(" ");
-			d.Value(savedName).Separator(" ");
-
-			if (i->second->m_DeviceGUI->GetPluginWindow())
-			{
-				d.Value(i->second->m_DeviceGUI->GetPluginWindow()->visible()).Separator(" ");
-				d.Value(i->second->m_DeviceGUI->GetPluginWindow()->x()).Separator(" ");
-				d.Value(i->second->m_DeviceGUI->GetPluginWindow()->y()).Separator(" ");
-			}
-			else
-			{
-				d.Value(0).Separator(" ").Value(0).Separator(" ").Value(0);
-			}
-
-			d.Line();
-
-			if (i->second->m_PluginID==COMMENT_ID)
-			{
-				// save the comment gui
-				((Fl_CommentGUI*)(i->second->m_DeviceGUI))->Describe(d);
-			}
-			else
-			{
-				// save the plugin
-				i->second->m_Device->Describe(d);
-			}
-			d.Line();
-
-			// save external files
-			if (i->second->m_Device && i->second->m_Device->SaveExternalFiles(sidecars))
-			{
-				ExternalDirUsed=true;
-			}
-		}
-	}
-
-	d.Line();
-	::Describe(d, *o.m_Canvas);
-	d.Line();
-
-	// remove it if it wasn't used
-	if (!ExternalDirUsed)
-	{
-		// i guess rmdir won't work if there is something in the dir
-		// anyway, but best to be on the safe side. (could do rm -rf) :)
-		rmdir(sidecars.c_str());
-	}
-
-	o.ThawAll();
-
-	return d;
-}
-
-ostream &operator<<(ostream &s, SynthModular &o)
-{
-	Spiral::Core::Description d;
-	Describe(d, o);
-	d.Write(s);
-	return s;
-}
-
 //////////////////////////////////////////////////////////////////////////////////////////
 
 // Callbacks
@@ -2370,45 +2268,7 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 
 void SynthModular::SavePatch(const char *fn)
 {
-	if (Spiral::File::Project::PathLooksLikePackage(fn))
-	{
-		// A fresh project, then SaveAs. Constructing on the destination
-		// would treat a not-yet-opened package as the current file.
-		Spiral::File::Project project("");
-		std::string error;
-		if (!project.BeginSidecars(error))
-		{
-			fl_message("%s", error.c_str());
-			return;
-		}
-
-		std::ostringstream bytes;
-		Spiral::Core::Description description;
-		Describe(description, *this, project.SidecarDirectory()).Write(bytes);
-		project.Source().Set(bytes.str());
-		project.SetDocument(m_Document);
-		if (!project.SaveAs(fn, error))
-		{
-			fl_message("%s", error.empty() ? "Error saving SSM Project" : error.c_str());
-			return;
-		}
-	}
-	else
-	{
-		ofstream of(fn);
-		if (!of)
-		{
-			fl_message("%s", string("Error saving " + string(fn)).c_str());
-			return;
-		}
-		Spiral::Core::Description description;
-		Describe(description, *this, string(fn) + "_files/").Write(of);
-	}
-
-	m_FilePath = fn;
-	m_BranchID.clear();
-	TITLEBAR = LABEL + " " + fn;
-	m_TopWindow->label(TITLEBAR.c_str());
+	fl_message("%s", string("Not saved: this build does not write patches (" + string(fn) + ")").c_str());
 }
 
 
@@ -2426,73 +2286,8 @@ static std::string MenuLabel(const std::string &name)
 
 void SynthModular::SaveBranch(bool ask)
 {
-	if (!Spiral::File::Project::PathLooksLikePackage(m_FilePath))
-	{
-		fl_message("Save As an SSM Project before saving a branch.");
-		return;
-	}
-
-	Spiral::File::Project project(m_FilePath);
-	std::string error;
-	bool opened = m_BranchID.empty()
-		? project.OpenPackage("", error)
-		: project.SwitchBranch(m_BranchID, error);
-	if (!opened)
-	{
-		fl_message("%s", error.empty() ? "Error opening SSM Project" : error.c_str());
-		return;
-	}
-
-	const Spumoni::Identity &identity = project.GetIdentity();
-	int choice = 2;
-	if (ask)
-	{
-		choice = fl_choice("Save Patch", "Cancel", "Create New Save Point", "Replace Current Save Point");
-		if (choice == 0)
-			return;
-	}
-
-	bool replace = choice != 1;
-	std::string name;
-	if (!replace)
-	{
-		std::string suggested = Spumoni::Project::SuggestedSavePointName(identity);
-		const char *entered = fl_input("Save Point Name", suggested.c_str());
-		if (!entered)
-			return;
-		name = entered;
-		if (name.find_first_not_of(" \t\r\n") == std::string::npos)
-		{
-			fl_message("A new save point needs a name.");
-			return;
-		}
-	}
-	else if (!identity.ActiveBranchName.empty())
-		name = identity.ActiveBranchName;
-	else
-		name = project.BranchNameFromPath(m_FilePath);
-
-	if (!project.BeginSidecars(error))
-	{
-		fl_message("%s", error.c_str());
-		return;
-	}
-
-	std::ostringstream bytes;
-	Spiral::Core::Description description;
-	Describe(description, *this, project.SidecarDirectory()).Write(bytes);
-	project.Source().Set(bytes.str());
-	project.SetDocument(m_Document);
-	if (!project.CreateSavePoint(name, replace, error))
-	{
-		fl_message("%s", error.empty() ? "Error saving SSM Project" : error.c_str());
-		return;
-	}
-
-	m_BranchID = project.GetIdentity().ActiveBranchID;
-	m_SavePointCount = project.GetIdentity().Branches.size();
-	TITLEBAR = LABEL + " " + m_FilePath;
-	m_TopWindow->label(TITLEBAR.c_str());
+	(void)ask;
+	fl_message("Not saved: this build does not write patches.");
 }
 
 // Add another patch to this project as a branch of its own. Unlike a save

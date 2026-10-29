@@ -315,14 +315,8 @@ private:
 		((SynthModular*)o)->cb_ChangeBufferAndSampleRate_i(NewBufferSize, NewSamplerate);
 	}
 	friend istream &operator>>(istream &s, SynthModular &o);
-	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, SynthModular &o);
-	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, SynthModular &o, const string &sidecars);
-	friend ostream &operator<<(ostream &s, SynthModular &o);
 };
 
 iostream &operator>>(iostream &s, SynthModular &o);
-Spiral::Core::Description &Describe(Spiral::Core::Description &d, SynthModular &o);
-Spiral::Core::Description &Describe(Spiral::Core::Description &d, SynthModular &o, const string &sidecars);
-ostream &operator<<(ostream &s, SynthModular &o);
 
 #endif
