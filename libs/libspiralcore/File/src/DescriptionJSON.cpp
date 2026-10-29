@@ -54,6 +54,8 @@ namespace Core
 			error = "\"between\" needs one entry more than \"values\"";
 			return false;
 		}
+		d.m_Keys.assign(d.m_Values.size(), "");
+		d.m_Classes.assign(d.m_Values.size(), "");
 		out = d;
 		return true;
 	}

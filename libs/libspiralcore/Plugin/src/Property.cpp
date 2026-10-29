@@ -336,34 +336,91 @@ namespace Spiral
 {
 namespace Core
 {
-	Description &Description::Value(const FloatProperty &p)    { return Value(p.Value.AsFloat); }
-	Description &Description::Value(const SignedProperty &p)   { return Value(p.Value.AsSigned); }
-	Description &Description::Value(const UnsignedProperty &p) { return Value(p.Value.AsUnsigned); }
-	Description &Description::Value(const ToggleProperty &p)   { return Value(p.Value.AsBoolean); }
-	Description &Description::Value(const SetProperty &p)      { return Value(p.Value.AsUnsigned); }
-	Description &Description::Value(const StringProperty &p)   { return Value(p.Value); }
+	template <class T>
+	static Description &Keyed(Description &d, const T &value, const Property &p, const std::string &cls)
+	{
+		d.Value(value);
+		return d.Key(p.GetKey(), cls);
+	}
+
+	Description &Description::Value(const FloatProperty &p)    { return Keyed(*this, p.Value.AsFloat, p, "FloatProperty"); }
+	Description &Description::Value(const SignedProperty &p)   { return Keyed(*this, p.Value.AsSigned, p, "SignedProperty"); }
+	Description &Description::Value(const UnsignedProperty &p) { return Keyed(*this, p.Value.AsUnsigned, p, "UnsignedProperty"); }
+	Description &Description::Value(const ToggleProperty &p)   { return Keyed(*this, p.Value.AsBoolean, p, "ToggleProperty"); }
+	Description &Description::Value(const SetProperty &p)      { return Keyed(*this, p.Value.AsUnsigned, p, "SetProperty"); }
+	Description &Description::Value(const StringProperty &p)   { return Keyed(*this, p.Value, p, "StringProperty"); }
 
 	Description &Description::Value(const NoteProperty &p)
 	{
-		Value(p.Note).Separator(" ").Value(p.Octave).Separator(" ").Value(p.Velocity);
-		return Separator(" ").Value(p.Start).Separator(" ").Value(p.End);
+		const std::string key = p.GetKey();
+		Value(p.Note);     if (!key.empty()) Key(key, "NoteProperty");
+		Separator(" ");
+		Value(p.Octave);   if (!key.empty()) Key(key + ".octave", "NoteProperty");
+		Separator(" ");
+		Value(p.Velocity); if (!key.empty()) Key(key + ".velocity", "NoteProperty");
+		Separator(" ");
+		Value(p.Start);    if (!key.empty()) Key(key + ".start", "NoteProperty");
+		Separator(" ");
+		Value(p.End);      if (!key.empty()) Key(key + ".end", "NoteProperty");
+		return *this;
 	}
 
-	Description::Reader &Description::Reader::Value(FloatProperty &p)    { return Value(p.Value.AsFloat); }
-	Description::Reader &Description::Reader::Value(SignedProperty &p)   { return Value(p.Value.AsSigned); }
-	Description::Reader &Description::Reader::Value(UnsignedProperty &p) { return Value(p.Value.AsUnsigned); }
-	Description::Reader &Description::Reader::Value(ToggleProperty &p)   { return Value(p.Value.AsBoolean); }
-	Description::Reader &Description::Reader::Value(SetProperty &p)      { return Value(p.Value.AsUnsigned); }
-	Description::Reader &Description::Reader::Value(StringProperty &p)   { return Value(p.Value); }
+	template <class T>
+	static bool Into(Description::Reader &r, const Description &d, const Property &p, T &x)
+	{
+		if (!d.Named())
+			return !r.Value(x).Failed();
+
+		const int at = d.Find(p.GetKey());
+		return at < 0 || r.At((size_t)at, x);
+	}
+
+	Description::Reader &Description::Reader::Value(FloatProperty &p)    { if (!Into(*this, m_Description, p, p.Value.AsFloat)) m_Failed = true; return *this; }
+	Description::Reader &Description::Reader::Value(SignedProperty &p)   { if (!Into(*this, m_Description, p, p.Value.AsSigned)) m_Failed = true; return *this; }
+	Description::Reader &Description::Reader::Value(UnsignedProperty &p) { if (!Into(*this, m_Description, p, p.Value.AsUnsigned)) m_Failed = true; return *this; }
+	Description::Reader &Description::Reader::Value(ToggleProperty &p)   { if (!Into(*this, m_Description, p, p.Value.AsBoolean)) m_Failed = true; return *this; }
+	Description::Reader &Description::Reader::Value(SetProperty &p)      { if (!Into(*this, m_Description, p, p.Value.AsUnsigned)) m_Failed = true; return *this; }
+	Description::Reader &Description::Reader::Value(StringProperty &p)   { if (!Into(*this, m_Description, p, p.Value)) m_Failed = true; return *this; }
 
 	Description::Reader &Description::Reader::Value(NoteProperty &p)
 	{
-		return Value(p.Note).Value(p.Octave).Value(p.Velocity).Value(p.Start).Value(p.End);
+		if (!m_Description.Named())
+			return Value(p.Note).Value(p.Octave).Value(p.Velocity).Value(p.Start).Value(p.End);
+
+		const std::string key = p.GetKey();
+		int at = m_Description.Find(key);
+		if (at >= 0) At((size_t)at, p.Note);
+		at = m_Description.Find(key + ".octave");
+		if (at >= 0) At((size_t)at, p.Octave);
+		at = m_Description.Find(key + ".velocity");
+		if (at >= 0) At((size_t)at, p.Velocity);
+		at = m_Description.Find(key + ".start");
+		if (at >= 0) At((size_t)at, p.Start);
+		at = m_Description.Find(key + ".end");
+		if (at >= 0) At((size_t)at, p.End);
+		return *this;
 	}
 
-	Description::Reader &Description::Reader::Count(const VectorProperty &, int &n)
+	Description::Reader &Description::Reader::Count(const VectorProperty &p, int &n)
 	{
-		return Value(n);
+		if (!m_Description.Named())
+			return Value(n);
+
+		std::string prefix = p.GetKey() + "[";
+		for (size_t c = 0; c < prefix.size(); c++) prefix[c] = (char)toupper((unsigned char)prefix[c]);
+		const std::vector<std::string> &keys = m_Description.Keys();
+		int count = 0;
+		for (size_t i = 0; i < keys.size(); i++)
+		{
+			if (keys[i].size() <= prefix.size()) continue;
+			std::string head = keys[i].substr(0, prefix.size());
+			for (size_t c = 0; c < head.size(); c++) head[c] = (char)toupper((unsigned char)head[c]);
+			if (head != prefix) continue;
+			const int index = atoi(keys[i].c_str() + prefix.size());
+			if (index + 1 > count) count = index + 1;
+		}
+		n = count;
+		return *this;
 	}
 }
 }

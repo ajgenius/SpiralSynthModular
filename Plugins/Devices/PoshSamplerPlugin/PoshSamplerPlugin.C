@@ -433,7 +433,7 @@ void PoshSamplerPlugin::Apply(Spiral::Core::Description::Reader &r) {
               .Value(SlotSigned (n, SLOT_LOOPSTART))
               .Value(SlotSigned (n, SLOT_LOOPEND))
               .Value(SlotSigned (n, SLOT_NOTE));
-         if (version < 3) {
+         if (version < 3 && !r.Named()) {
             int size;
             std::string Buf;
             r.Value(size);

@@ -266,7 +266,7 @@ Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, O
 {
 	float dummy=0;
 	r.Value(o.m_Type).Value(o.m_Octave).Value(o.m_FineFreq).Value(o.m_PulseWidth);
-	r.Value(dummy);
+	if (!r.Named()) r.Value(dummy);
 
 	r.Value(o.m_SHLen).Value(o.m_ModAmount);
 	return r;

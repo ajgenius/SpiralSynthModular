@@ -291,7 +291,7 @@ void StreamPlugin::Apply(Spiral::Core::Description::Reader &r) {
 
      r.Value(m_Volume).Value(m_PitchMod);
      int size;
-     r.Value(size);
+     if (!r.Named()) r.Value(size);
      r.Value(m_FileName);   // the counted bytes, one value
      strncpy (m_GUIArgs.FileName, m_FileName.Value.c_str(), 255);
      m_GUIArgs.FileName[255] = 0;

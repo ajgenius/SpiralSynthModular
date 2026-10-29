@@ -251,7 +251,7 @@ void SpiralLoopPlugin::ExecuteCommands()
 void SpiralLoopPlugin::Describe(Spiral::Core::Description &d)
 {
 	d.Value(DeviceVersion).Separator(" "); 
-	d.Value(m_LoopPoint).Separator(" ").Value(m_Speed).Separator(" ").Value(m_Volume).Separator(" ").Value(m_TicksPerLoop).Separator(" ");
+	d.Value(m_LoopPoint).Key("LOOPPOINT", "").Separator(" ").Value(m_Speed).Separator(" ").Value(m_Volume).Separator(" ").Value(m_TicksPerLoop).Separator(" ");
 	d.Value(m_Triggers.size()).Separator(" ");
 	for (unsigned int i=0; i<m_Triggers.size(); i++)
 	{
@@ -263,7 +263,10 @@ void SpiralLoopPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int version;
 	r.Value(version);
-	r.Value(m_LoopPoint);
+	if (r.Named())
+		r.At(r.Find("LOOPPOINT"), m_LoopPoint);
+	else
+		r.Value(m_LoopPoint);
 
 	r.Value(m_Speed).Value(m_Volume).Value(m_TicksPerLoop);
 	int size;

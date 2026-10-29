@@ -51,6 +51,8 @@ namespace Core
 		Description &Value(const StringProperty &p);
 		Description &Value(const NoteProperty &p);
 
+		Description &Key(const std::string &key, const std::string &propertyClass);
+
 		// A literal between values: s << " ".
 		Description &Separator(const char *text);
 
@@ -59,6 +61,10 @@ namespace Core
 
 		const std::vector<std::string> &Values() const { return m_Values; }
 		const std::vector<std::string> &Between() const { return m_Between; }
+		const std::vector<std::string> &Keys() const { return m_Keys; }
+		const std::vector<std::string> &Classes() const { return m_Classes; }
+		bool Named() const { return m_Named; }
+		int Find(const std::string &key) const;
 
 		int Version() const;
 		long SavedAs() const { return m_SavedAs; }
@@ -124,12 +130,25 @@ namespace Core
 			Reader &Value(StringProperty &p);
 			Reader &Value(NoteProperty &p);
 			Reader &Count(const VectorProperty &p, int &n);
+			int Find(const std::string &key) const { return m_Description.Find(key); }
+			template <class T> bool At(size_t index, T &x)
+			{
+				if (index >= m_End) return false;
+				std::istringstream text(m_Description.Values()[index]);
+				T v;
+				if (!(text >> v)) return false;
+				x = v;
+				return true;
+			}
+			bool At(size_t index, std::string &x);
+			bool At(size_t index, float &x);
 			// What is left of the span, values and the gaps among them, as a
 			// description of its own; the reader is at its end. For a device
 			// that keeps a state it cannot read and gives it back as it was.
 			void Rest(Description &out);
 			// Values left in the span.
 			bool More() const { return m_At < m_End; }
+			bool Named() const { return m_Description.Named(); }
 			size_t Position() const { return m_At; }
 			bool Failed() const { return m_Failed; }
 		private:
@@ -145,6 +164,9 @@ namespace Core
 
 		std::vector<std::string> m_Values;
 		std::vector<std::string> m_Between;   // ! always m_Values.size() + 1 entries
+		std::vector<std::string> m_Keys;
+		std::vector<std::string> m_Classes;
+		bool m_Named;
 		long m_SavedAs;
 	};
 }

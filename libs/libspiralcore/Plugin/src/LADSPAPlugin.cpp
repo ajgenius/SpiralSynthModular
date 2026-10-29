@@ -382,7 +382,7 @@ void LADSPAPlugin::Describe(Spiral::Core::Description &d)
 
 			d.Value(m_Page).Separator(" ");
 			d.Value(m_UpdateInputs).Separator(" ");
-			d.Value(m_UniqueID).Separator(" ");
+			d.Value(m_UniqueID).Key("UNIQUE ID", "").Separator(" ");
 			d.Value(m_InputPortMin.size()).Separator(" ");
 			d.Value(m_UnconnectedInputs).Separator(" ");
 			assert(m_InputPortMin.size()==m_InputPortMax.size());
@@ -441,7 +441,10 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 		{
 			r.Value(m_Page);
 			r.Value(m_UpdateInputs);
-			r.Value(UniqueID);
+			if (r.Named())
+				r.At(r.Find("UNIQUE ID"), UniqueID);
+			else
+				r.Value(UniqueID);
 			r.Count(m_InputPortMin.List, PortCount);
 			if (PortCount > (int)MaxInputPorts) PortCount = MaxInputPorts;
 			r.Value(m_UnconnectedInputs);

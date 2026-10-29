@@ -275,7 +275,7 @@ void ControllerPlugin::Apply(Spiral::Core::Description::Reader &r)
 			for (int n=0; n<GetNum(); n++)
 			{
 				int size,dummy;
-				r.Value(size);
+				if (!r.Named()) r.Value(size);
 				r.Value(Name(n));   // the counted bytes, one value, "" for size 0
 				r.Value(Min(n));
 				r.Value(Max(n));
@@ -333,11 +333,11 @@ void ControllerPlugin::Apply(Spiral::Core::Description::Reader &r)
 
 			char Buf[4096];
 			int size,dummy;
-			r.Value(dummy);
+			if (!r.Named()) r.Value(dummy);
 			r.Value(m_NumChannels);
 			for (int n=0; n<GetNum(); n++)
 			{
-				r.Value(size);
+				if (!r.Named()) r.Value(size);
 				r.Value(Name(n));
 				r.Value(Min(n));
 				r.Value(Max(n));
@@ -375,7 +375,7 @@ void ControllerPlugin::Migrate(Spiral::Core::Description &d)
 
 	int written = atoi(d.Values()[count].c_str());
 	d.SetValue(count, std::min(std::max(written, 1), MAX_CHANNELS));
-	if (version == 3)
+	if (version == 3 && !d.Named())
 	{
 		size_t again = 3 + std::max(written, 0);
 		if (again < d.Values().size())

@@ -343,7 +343,7 @@ void MidiPlugin::Apply(Spiral::Core::Description::Reader &r)
 				AddControl(0, "");
 				int size;
 				r.Value(Control(n));
-				r.Value(size);
+				if (!r.Named()) r.Value(size);
 
 				r.Value(ControlName(n));   // the counted bytes, one value
 				m_PluginInfo.PortTips[5+n] = ControlName(n).Value;

@@ -18,6 +18,7 @@
 #define SPIRALCORE_PROPERTY_H
 
 #include <string>
+#include <cstdio>
 #include <vector>
 #include <map>
 
@@ -213,10 +214,11 @@ namespace Core
 		inline void Reference() { m_References++; }
 		inline void UnReference() { m_References--; }
 
+		inline std::string GetKey() const { return m_Name; }
 		inline std::string GetLabel() { return m_Label; }
 		inline std::string GetHint() { return m_Hint; }
 
-		inline void SetKey(std::string Key) { m_Name = Key; }
+		virtual void SetKey(std::string Key) { m_Name = Key; }
 		inline void SetLabel(std::string Label) { m_Label = Label; }
 		inline void SetHint(std::string Hint) { m_Hint = Hint; }
 
@@ -698,6 +700,14 @@ namespace Core
 
 			New->Reference();
 			Values.push_back(New);
+			if (!GetKey().empty()) New->SetKey(ChildKey(Values.size() - 1));
+		}
+
+		virtual void SetKey(std::string Key)
+		{
+			ComplexProperty::SetKey(Key);
+			for (UnsignedType i = 0; i < Values.size(); i++)
+				if (Values[i]) Values[i]->SetKey(ChildKey(i));
 		}
 
 		virtual void RemoveLast()
@@ -722,6 +732,12 @@ namespace Core
 		std::vector<Property*> Values;
 
 	private:
+		std::string ChildKey(UnsignedType i)
+		{
+			char index[32];
+			snprintf(index, sizeof index, "[%u]", (unsigned)i);
+			return GetKey() + index;
+		}
 		void CopyContents(ComplexProperty &Source);
 		void Release();
 	};
