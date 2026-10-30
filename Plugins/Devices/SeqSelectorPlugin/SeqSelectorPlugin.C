@@ -103,9 +103,14 @@ SeqSelectorPlugin::SeqSelectorPlugin()
 	m_Triggered=false;
 
 	SetString(DeviceName, SpiralPlugin_GetName());
-	SetUnsigned(DeviceVersion, 1);
+	SetUnsigned(DeviceVersion, 2);
 	
-	m_UseRange=false;	
+	m_Begin = SignedProperty(DefaultLinearFlags | Property::Internal, 0, 0, 255, 1, 1);
+	RegisterSharedProperty(m_Begin, "Begin", "First line of the range");
+	m_End = SignedProperty(DefaultLinearFlags | Property::Internal, 0, 0, 255, 1, 1);
+	RegisterSharedProperty(m_End, "End", "Line after the last of the range");
+	m_UseRange = ToggleProperty(Property::WriteOnly | Property::Internal, false);
+	RegisterSharedProperty(m_UseRange, "UseRange", "Play the range, not every line");
 	
 	m_AudioCH->Register("Num",&m_GUIArgs.Num);
 	m_AudioCH->Register("Line",&m_GUIArgs.Line);
@@ -129,7 +134,7 @@ void SeqSelectorPlugin::Reset()
 	ResetPorts();
 	m_Pos=0;
 	m_Triggered=false;
-	m_UseRange=false;	
+	AsBoolean(m_UseRange)=false;
 }
 
 void SeqSelectorPlugin::Execute()
@@ -149,11 +154,11 @@ void SeqSelectorPlugin::Execute()
 			{								
 				m_Pos++;
 				
-				if (m_UseRange)
+				if (AsBoolean(m_UseRange))
 				{
-					if (m_Pos>=m_End)
+					if (m_Pos>=(unsigned)AsSigned(m_End))
 					{
-						m_Pos=m_Begin;
+						m_Pos=AsSigned(m_Begin);
 					}
 				}
 				else
@@ -189,9 +194,9 @@ void SeqSelectorPlugin::ExecuteCommands()
 	{
 		switch (m_AudioCH->GetCommand())
 		{
-			case SET_BEGIN : m_Begin=m_GUIArgs.Line; break;
-			case SET_END   : m_End=m_GUIArgs.Line; break;
-			case RANGE     : m_UseRange=m_GUIArgs.Val; break;
+			case SET_BEGIN : AsSigned(m_Begin)=m_GUIArgs.Line; break;
+			case SET_END   : AsSigned(m_End)=m_GUIArgs.Line; break;
+			case RANGE     : AsBoolean(m_UseRange)=m_GUIArgs.Val; break;
 			case ADD_LINE  : 
 				{
 					VectorProperty *Added = NewLine();
@@ -224,6 +229,7 @@ void SeqSelectorPlugin::Describe(Spiral::Core::Description &d)
 			d.Value(Cell(line, n)).Separator(" ");
 		}
 	}
+	d.Value(m_Begin).Separator(" ").Value(m_End).Separator(" ").Value(m_UseRange);
 }
 
 void SeqSelectorPlugin::Apply(Spiral::Core::Description::Reader &r)
@@ -242,4 +248,14 @@ void SeqSelectorPlugin::Apply(Spiral::Core::Description::Reader &r)
 			r.Value(Cell(i, n));
 		}
 	}	
+	r.Value(m_Begin).Value(m_End).Value(m_UseRange);
+}
+
+void SeqSelectorPlugin::Migrate(Spiral::Core::Description &d)
+{
+	if (d.Version() != 1)
+		return;
+
+	d.Value(0).Value(0).Value(false);
+	d.SetValue(0, 2);
 }

@@ -35,9 +35,11 @@ public:
 	virtual void ExecuteCommands();
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
+	virtual void Migrate(Spiral::Core::Description &d);
 		
-	int  GetBegin()      { return m_Begin; }
-	int  GetEnd()        { return m_End; }
+	int  GetBegin()      { return AsSigned(m_Begin); }
+	int  GetEnd()        { return AsSigned(m_End); }
+	bool GetUseRange()   { return AsBoolean(m_UseRange); }
 			
 	enum GUICommands{NONE,SET_BEGIN,SET_END,RANGE,ADD_LINE,REM_LINE,SET_VAL};
 	
@@ -68,9 +70,9 @@ private:
 	GUIArgs m_GUIArgs;
 	
 	unsigned int m_Pos;
-	unsigned int m_Begin;
-	unsigned int m_End;
-	bool m_UseRange;
+	Spiral::Core::SignedProperty m_Begin;
+	Spiral::Core::SignedProperty m_End;
+	Spiral::Core::ToggleProperty m_UseRange;
 	bool m_Triggered;
 };
 

@@ -247,6 +247,9 @@ void SeqSelectorPluginGUI::UpdateValues(SpiralPlugin *o)
 		for (int i=0; i<8; i++) temp[i]=Plugin->LineValue(n, i);
 		AddLine(temp);
 	}
+	m_Begin->value(Plugin->GetBegin());
+	m_End->value(Plugin->GetEnd());
+	m_UseRange->value(Plugin->GetUseRange());
 }
 
 inline void SeqSelectorPluginGUI::cb_New_i(Fl_Button* o, void* v)
