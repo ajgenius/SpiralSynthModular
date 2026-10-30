@@ -178,7 +178,7 @@ void SplitterPlugin::ExecuteCommands ()
 
 void SplitterPlugin::Describe(Spiral::Core::Description &d) 
 {
-	d.Value(m_Version).Separator(" ").Value(GetChannelCount()).Separator(" ");
+	d.Value(m_Version).Separator(" ").Value(m_ChannelCount).Separator(" ");
 }
 
 void SplitterPlugin::Apply(Spiral::Core::Description::Reader &r) 

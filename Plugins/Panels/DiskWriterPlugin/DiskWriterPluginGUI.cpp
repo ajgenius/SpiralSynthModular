@@ -80,7 +80,7 @@ SpiralPluginGUI(w,h,o,ch)
 
 void DiskWriterPluginGUI::Update()
 {
-     float t=m_GUICH->GetFloat ("TimeRecorded");
+     float t=m_GUICH->GetFloat ("Time Recorded");
      bool recording=m_GUICH->GetBool ("Recording");
 
      if (recording)
@@ -202,17 +202,17 @@ void DiskWriterPluginGUI::cb_Record_i(Fl_Button* o)
 
 void DiskWriterPluginGUI::cb_16bits_i(Fl_Button* o)
 {
-	m_GUICH->Set("BitsPerSample",16);
+	m_GUICH->Set("Bits Per Sample",16);
 }
 
 void DiskWriterPluginGUI::cb_24bits_i(Fl_Button* o)
 {
-	m_GUICH->Set("BitsPerSample",24);
+	m_GUICH->Set("Bits Per Sample",24);
 }
 
 void DiskWriterPluginGUI::cb_32bits_i(Fl_Button* o)
 {
-	m_GUICH->Set("BitsPerSample",32);
+	m_GUICH->Set("Bits Per Sample",32);
 }
 
 void DiskWriterPluginGUI::cb_Stereo_i(Fl_Button* o)

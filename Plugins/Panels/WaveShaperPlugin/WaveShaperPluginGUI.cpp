@@ -157,7 +157,7 @@ SpiralPluginGUI(w, h, o, ch)
 // The device's state after a load, through the channel the host has
 // just flushed, so nothing here depends on the device's class.
 void WaveShaperPluginGUI::UpdateValues (SpiralPlugin *o) {
-  int wt = m_GUICH->GetInt ("Wave");
+  int wt = m_GUICH->GetInt ("WaveType");
   radio_polynomial->value (wt);
   radio_sines->value (!wt);
   for (int j=0; j<6; j++)

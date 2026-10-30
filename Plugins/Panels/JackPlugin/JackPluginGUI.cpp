@@ -299,8 +299,8 @@ void  JackPluginGUI::cb_Remove_i(Fl_Button* o)
 	        RemoveOutput() ;		
 	        RemoveInput() ;	
 
-		m_GUICH->Set ("NumInputs", int(m_OutputName.size()));
-		m_GUICH->Set ("NumOutputs", n-1);
+		m_GUICH->Set ("Inputs", int(m_OutputName.size()));
+		m_GUICH->Set ("Outputs", n-1);
 		m_GUICH->SetCommand (JackPlugin::SET_PORT_COUNT);
                 m_GUICH->Wait ();
                 
@@ -325,8 +325,8 @@ void  JackPluginGUI::cb_Add_i(Fl_Button* o)
         
        if (n < MAX_PORTS && m_InputName.size() < MAX_PORTS)
        {
-		m_GUICH->Set ("NumInputs", n+1);
-		m_GUICH->Set ("NumOutputs", int(m_InputName.size()) + 1);
+		m_GUICH->Set ("Inputs", n+1);
+		m_GUICH->Set ("Outputs", int(m_InputName.size()) + 1);
 		m_GUICH->SetCommand (JackPlugin::SET_PORT_COUNT);
                 m_GUICH->Wait ();
                 

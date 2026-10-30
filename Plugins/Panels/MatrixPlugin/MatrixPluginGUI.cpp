@@ -317,7 +317,7 @@ void MatrixPluginGUI::Update()
 		m_Flash[m_LastLight]->value(0);
 		m_LastLight=Light;
 
-                m_PlayPattern->value (m_GUICH->GetInt("EchoCur"));
+                m_PlayPattern->value (m_GUICH->GetInt("Current"));
 
 		int PatSeqLight=m_GUICH->GetInt("PatSeqStep");
 		if (PatSeqLight!=m_LastPatSeqLight)

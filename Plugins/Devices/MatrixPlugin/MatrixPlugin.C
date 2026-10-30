@@ -174,7 +174,7 @@ m_PatReset(false)
 	m_AudioCH->Register("Octave",&m_GUIArgs.Octave,ChannelHandler::INPUT);
 	RegisterSharedProperty(m_Step, "Step", "Current step");
 	m_AudioCH->Register("PatSeqStep",&m_CurPatSeq,ChannelHandler::OUTPUT);
-	RegisterSharedProperty(m_Current, "EchoCur", "Current pattern");
+	RegisterSharedProperty(m_Current, "Current", "Current pattern");
 
 	RegisterSharedProperty(m_Time, "Time", "Position within the step");
 	RegisterSharedProperty(m_Loop, "Loop", "Loop the pattern");

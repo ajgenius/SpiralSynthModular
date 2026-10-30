@@ -76,7 +76,7 @@ ControllerPlugin::ControllerPlugin()
 	SetUnsigned(DeviceVersion, 5);
 
 	m_NumChannels = UnsignedProperty(DefaultLinearFlags, 4, 1, MAX_CHANNELS, 1, 1);
-	RegisterSharedProperty(m_NumChannels, "Num", "Number of channels");
+	RegisterSharedProperty(m_NumChannels, "Channels", "Number of channels");
 	m_ChannelVal = VectorProperty(Property::WriteOnly);
 	for (int n=0; n<MAX_CHANNELS; n++) m_ChannelVal.Add(new FloatProperty(DefaultLinearFlags, 0.0f, 0.0f, 1.0f, 0.001f, 0.01f));
 	m_MinVal = VectorProperty(Property::WriteOnly);

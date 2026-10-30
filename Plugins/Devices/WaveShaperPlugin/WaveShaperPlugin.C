@@ -97,7 +97,7 @@ WaveShaperPlugin::WaveShaperPlugin () {
   m_AudioCH->Register ("CoefVal", &m_GUIArgs.CoefVal);
   m_AudioCH->RegisterData ("WT", ChannelHandler::OUTPUT, m_GUIArgs.FuncPlot, 256 * sizeof (float));
   // The state the GUI shows after a load, read through the channel.
-  RegisterSharedProperty(m_Wave, "Wave", "Polynomial wave shaping");
+  RegisterSharedProperty(m_Wave, "WaveType", "Polynomial wave shaping");
 }
 
 WaveShaperPlugin::~WaveShaperPlugin() {

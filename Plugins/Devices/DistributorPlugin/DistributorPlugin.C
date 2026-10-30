@@ -216,7 +216,7 @@ void DistributorPlugin::ExecuteCommands ()
 
 void DistributorPlugin::Describe(Spiral::Core::Description &d) 
 {
-	d.Value(m_Version).Separator(" ").Value(GetChannelCount()).Separator(" ");
+	d.Value(m_Version).Separator(" ").Value(m_ChannelCount).Separator(" ");
 }
 
 void DistributorPlugin::Apply(Spiral::Core::Description::Reader &r)

@@ -94,10 +94,10 @@ DiskWriterPlugin::DiskWriterPlugin()
 	m_Stereo = ToggleProperty(Property::WriteOnly, true);
 	m_Recording = ToggleProperty(Property::ReadOnly, false);
 	m_TimeRecorded = FloatProperty(Property::ReadOnly, 0, 0, 0, 0, 0);
-	RegisterSharedProperty(m_BitsPerSample, "BitsPerSample", "Bit depth");
+	RegisterSharedProperty(m_BitsPerSample, "Bits Per Sample", "Bit depth");
 	RegisterSharedProperty(m_Stereo, "Stereo", "Stereo or mono");
 	RegisterSharedProperty(m_Recording, "Recording", "Recording now");
-	RegisterSharedProperty(m_TimeRecorded, "TimeRecorded", "Seconds recorded");
+	RegisterSharedProperty(m_TimeRecorded, "Time Recorded", "Seconds recorded");
 	m_PluginInfo.Name="DiskWriter";
 	m_PluginInfo.Width=160;
 	m_PluginInfo.Height=115;

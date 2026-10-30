@@ -66,7 +66,7 @@ m_Triggered (false)
 	m_SwitchPos = SignedProperty(DefaultLinearFlags, 0, 0, 100, 1, 1);
   m_Chans = SignedProperty(DefaultLinearFlags, 2, 1, 256, 1, 1);
   RegisterSharedProperty(m_Chans, "Chans", "Number of channels");
-  RegisterSharedProperty(m_SwitchPos, "SwitchPos", "Selected output");
+  RegisterSharedProperty(m_SwitchPos, "Switch", "Selected output");
   m_GUIArgs.Switch = 1;
   m_GUIArgs.Echo = 1;
   m_PluginInfo.Name = "SplitSwitch";
@@ -176,7 +176,7 @@ void SplitSwitchPlugin::Execute() {
 }
 
 void SplitSwitchPlugin::Describe(Spiral::Core::Description &d) {
-  d.Value(m_Version).Separator(" ").Value(AsSigned(m_Chans)).Separator(" ").Value(AsSigned(m_SwitchPos)).Separator(" ");
+  d.Value(m_Version).Separator(" ").Value(m_Chans).Separator(" ").Value(m_SwitchPos).Separator(" ");
 }
 
 void SplitSwitchPlugin::Apply(Spiral::Core::Description::Reader &r) {

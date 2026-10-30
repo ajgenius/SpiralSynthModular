@@ -69,13 +69,16 @@ string SpiralPlugin_GetGroupName()
 
 ///////////////////////////////////////////////////////
 
+static const std::string notes[12]={"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+
 NoteSnapPlugin::NoteSnapPlugin() :
 m_Out(0)
 {
-	m_Filter = VectorProperty(Property::WriteOnly);
-	for (int n=0; n<12; n++) m_Filter.Add(new ToggleProperty(Property::WriteOnly, false));
-
-	RegisterSharedProperty(m_Filter, "Filter", "Semitones let through");
+	for (int n=0; n<12; n++)
+	{
+		m_Filter[n] = ToggleProperty(Property::WriteOnly, false);
+		RegisterSharedProperty(m_Filter[n], notes[n], notes[n]);
+	}
 
 	m_PluginInfo.Name="Note Snap";
 	m_PluginInfo.Width=80;
@@ -180,7 +183,7 @@ void NoteSnapPlugin::Apply(Spiral::Core::Description::Reader &r)
 		r.Value(version);
 		for (int n=0; n<12; n++)
 		{
-			r.Value(((Spiral::Core::ToggleProperty *)m_Filter[n])->Value.AsBoolean);
+			r.Value(m_Filter[n].Value.AsBoolean);
 		}
 	}
 }

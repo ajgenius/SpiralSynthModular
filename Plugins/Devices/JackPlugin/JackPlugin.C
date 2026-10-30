@@ -142,8 +142,8 @@ m_OutputCount(4)
 	m_NumInputs = SignedProperty(PortFlags, 4, MIN_PORTS, MAX_PORTS, 1, 1);
 	m_NumOutputs = SignedProperty(PortFlags, 4, MIN_PORTS, MAX_PORTS, 1, 1);
 
-	RegisterSharedProperty(m_NumInputs, "NumInputs", "Number of Input Channels");
-	RegisterSharedProperty(m_NumOutputs, "NumOutputs", "Number of Output Channels");
+	RegisterSharedProperty(m_NumInputs, "Inputs", "Number of Input Channels");
+	RegisterSharedProperty(m_NumOutputs, "Outputs", "Number of Output Channels");
 	m_AudioCH->RegisterData("Port",ChannelHandler::INPUT,&m_GUIArgs.Port,sizeof(m_GUIArgs.Port));
 	m_AudioCH->Register("NumInputPortNames",&m_NumInputPortNames,ChannelHandler::OUTPUT);
 	m_AudioCH->Register("NumOutputPortNames",&m_NumOutputPortNames,ChannelHandler::OUTPUT);
