@@ -249,19 +249,6 @@ void WaveTablePlugin::Execute()
 	}
 }
 
-void WaveTablePlugin::Describe(Spiral::Core::Description &d)
-{
-	d.Value(m_Version).Separator(" ");
-	::Describe(d, *this);
-}
-
-void WaveTablePlugin::Apply(Spiral::Core::Description::Reader &r)
-{
-	int version;
-	r.Value(version);
-	::Apply(r, *this);
-}
-
 void WaveTablePlugin::Migrate(Spiral::Core::Description &d)
 {
 	if (d.Version() < 0 || d.Version() >= 2)
@@ -276,16 +263,4 @@ void WaveTablePlugin::Migrate(Spiral::Core::Description &d)
 		d.SetValue(octave, std::min(std::max(atoi(d.Values()[octave].c_str()) + OCTAVE_ORIGIN, 0), 10));
 
 	d.SetValue(0, 2);
-}
-
-Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, WaveTablePlugin &o)
-{
-	r.Value((int&)AsUnsigned(o.m_Type)).Value(AsSigned(o.m_Octave)).Value(AsFloat(o.m_FineFreq)).Value(AsFloat(o.m_ModAmount));
-	return r;
-}
-
-Spiral::Core::Description &Describe(Spiral::Core::Description &d, WaveTablePlugin &o)
-{
-	d.Value((int)AsUnsigned(o.m_Type)).Separator(" ").Value(AsSigned(o.m_Octave)).Separator(" ").Value(AsFloat(o.m_FineFreq)).Separator(" ").Value(AsFloat(o.m_ModAmount)).Separator(" ");
-	return d;
 }

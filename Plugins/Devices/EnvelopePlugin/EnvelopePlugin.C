@@ -103,8 +103,8 @@ m_Current(0)
 	RegisterSharedProperty(m_Decay, "Decay", "Decay");
 	RegisterSharedProperty(m_Sustain, "Sustain", "Sustain");
 	RegisterSharedProperty(m_Release, "Release", "Release");
-	RegisterSharedProperty(m_TrigThresh, "Threshold", "Threshold");
 	RegisterSharedProperty(m_Volume, "Volume", "Volume");
+	RegisterSharedProperty(m_TrigThresh, "Threshold", "Threshold");
 
 
 
@@ -229,17 +229,4 @@ void EnvelopePlugin::Execute()
 
 		}
 	} 	
-}
-
-void EnvelopePlugin::Describe(Spiral::Core::Description &d)
-{
-	d.Value(m_Version).Separator(" ").Value(AsFloat(m_Attack)).Separator(" ").Value(AsFloat(m_Decay)).Separator(" ").Value(AsFloat(m_Sustain)).Separator(" ")
-	.Value(AsFloat(m_Release)).Separator(" ").Value(AsFloat(m_Volume)).Separator(" ").Value(AsFloat(m_TrigThresh));
-}
-
-void EnvelopePlugin::Apply(Spiral::Core::Description::Reader &r)
-{
-	int version;
-	r.Value(version);
-	r.Value(AsFloat(m_Attack)).Value(AsFloat(m_Decay)).Value(AsFloat(m_Sustain)).Value(AsFloat(m_Release)).Value(AsFloat(m_Volume)).Value(AsFloat(m_TrigThresh));
 }

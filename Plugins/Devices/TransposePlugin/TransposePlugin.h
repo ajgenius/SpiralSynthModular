@@ -28,8 +28,6 @@ public:
 	virtual PluginInfo& Initialise (const HostInfo *Host);
 	virtual void Execute ();
 	//virtual void ExecuteCommands ();
-	virtual void Describe(Spiral::Core::Description &d);
-	virtual void Apply(Spiral::Core::Description::Reader &r);
 	int GetAmount () { return AsSigned(m_Amount); }
 private:
 	Spiral::Core::SignedProperty m_Amount;

@@ -155,19 +155,6 @@ void EchoPlugin::Execute()
 //{
 //}
 
-void EchoPlugin::Describe(Spiral::Core::Description &d)
-{
-	d.Value(m_Version).Separator(" ").Value(AsFloat(m_Delay)).Separator(" ").Value(AsFloat(m_Feedback)).Separator(" ").Value(AsBoolean(m_Bounce)).Separator(" ");
-}
-
-void EchoPlugin::Apply(Spiral::Core::Description::Reader &r)
-{
-	int version;
-	r.Value(version);
-	r.Value(AsFloat(m_Delay)).Value(AsFloat(m_Feedback));
-        if (version>1) r.Value(AsBoolean(m_Bounce)); else AsBoolean(m_Bounce) = false;
-}
-
 void EchoPlugin::Migrate(Spiral::Core::Description &d)
 {
 	if (d.Version() != 1)

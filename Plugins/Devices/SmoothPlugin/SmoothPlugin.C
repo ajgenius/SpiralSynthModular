@@ -122,16 +122,4 @@ void SmoothPlugin::Execute()
 	}
 }
 
-void SmoothPlugin::Describe(Spiral::Core::Description &d) 
-{
-	d.Value(m_Version).Separator(" ");
-	d.Value(AsFloat(m_Up)).Separator(" ").Value(AsFloat(m_Down));
-}
-
-void SmoothPlugin::Apply(Spiral::Core::Description::Reader &r)
-{
-	r.Value(m_Version);
-	r.Value(AsFloat(m_Up)).Value(AsFloat(m_Down));
-}
-
  

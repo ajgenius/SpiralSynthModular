@@ -30,8 +30,6 @@ public:
 	virtual PluginInfo& Initialise(const HostInfo *Host);
 	virtual void 		Execute();
 	virtual void 		ExecuteCommands();
-	virtual void	    Describe(Spiral::Core::Description &d);
-	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 	virtual std::string GetGroupName() { return "Maths/Logic"; }
 	
 	bool      GetMix() { return AsBoolean(m_Mix); }

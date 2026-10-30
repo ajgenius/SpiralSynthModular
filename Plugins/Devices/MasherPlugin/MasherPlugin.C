@@ -95,14 +95,14 @@ m_WriteGrain(0)
 	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 
-	m_GrainPitch = FloatProperty(DefaultLinearFlags,1,0,5,0.001,0.01);
-	RegisterSharedProperty(m_GrainPitch, "GrainPitch", "GrainPitch");
 	m_GrainStoreSize = SignedProperty(DefaultLinearFlags,MAX_GRAINSTORE_SIZE, 0, MAX_GRAINSTORE_SIZE, 1, 1);
 	RegisterSharedProperty(m_GrainStoreSize, "GrainStoreSize", "GrainStoreSize");
 	m_Density = SignedProperty(DefaultLinearFlags,10, 0, MAX_GRAINSTORE_SIZE, 1, 1);
 	RegisterSharedProperty(m_Density, "Density", "Density");
 	m_Randomness = SignedProperty(DefaultLinearFlags,0,0,100,1,1);
 	RegisterSharedProperty(m_Randomness, "Randomness", "Randomness");
+	m_GrainPitch = FloatProperty(DefaultLinearFlags,1,0,5,0.001,0.01);
+	RegisterSharedProperty(m_GrainPitch, "GrainPitch", "GrainPitch");
 	
 	
 	
@@ -214,15 +214,3 @@ void MasherPlugin::Randomise()
 {
 }
 	
-void MasherPlugin::Describe(Spiral::Core::Description &d)
-{
-	d.Value(m_Version).Separator(" ");
-	d.Value(AsSigned(m_GrainStoreSize)).Separator(" ").Value(AsSigned(m_Density)).Separator(" ").Value(AsSigned(m_Randomness)).Separator(" ").Value(AsFloat(m_GrainPitch)).Separator(" ");
-}
-
-void MasherPlugin::Apply(Spiral::Core::Description::Reader &r)
-{	
-	int version;
-	r.Value(version);
-	r.Value(AsSigned(m_GrainStoreSize)).Value(AsSigned(m_Density)).Value(AsSigned(m_Randomness)).Value(AsFloat(m_GrainPitch));
-}

@@ -22,6 +22,7 @@
 #include <cctype>
 #include <map>
 #include <string>
+#include <vector>
 
 #include "ChannelHandler.h"
 #include "Property.h"
@@ -41,6 +42,9 @@ namespace Core
 		virtual bool LoadProperties(std::map<std::string, Property *> &properties);
 		bool CopyDevice(Device *device);
 		virtual bool UpdateProperty(std::string name) { return true; }
+
+		virtual void Describe(Description &d);
+		virtual void Apply(Description::Reader &r);
 
 		/* Shared Properties */
 		inline Property* DuplicateProperty(std::string &Key)
@@ -99,6 +103,7 @@ namespace Core
 			/* Per Instance Properties */
 			std::map<std::string, Property *> Properties;
 			std::map<Property *, Property *> UpdateData; /* For ProcessUpdate */
+			std::vector<Property *> Order;
 		} m_State;
 
 
@@ -131,6 +136,8 @@ namespace Core
 			transform (key.begin(), key.end(), key.begin(), (int(*)(int))std::toupper);
 
 			m_State.UpdateData.erase(m_State.Properties[key]);
+			m_State.Order.erase(std::remove(m_State.Order.begin(), m_State.Order.end(), m_State.Properties[key]),
+			                    m_State.Order.end());
 			m_State.Properties.erase(key);
 		}
 
@@ -142,6 +149,7 @@ namespace Core
 			assert(m_State.Properties[Key]==NULL);
 
 			m_State.Properties[Key] = &Initializer;
+			m_State.Order.push_back(&Initializer);
 			Initializer.SetKey(Key);
 			Initializer.SetLabel(Label);
 			Initializer.SetHint(Hint);

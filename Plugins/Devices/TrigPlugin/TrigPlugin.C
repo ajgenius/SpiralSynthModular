@@ -135,18 +135,3 @@ void TrigPlugin::Execute()
 void TrigPlugin::ExecuteCommands()
 {
 }
-
-void TrigPlugin::Describe(Spiral::Core::Description &d)
-{
-	d.Value(m_Version).Line();
-	d.Value((int)AsSigned(m_Operator)).Separator(" ");
-}
-
-void TrigPlugin::Apply(Spiral::Core::Description::Reader &r)
-{
-	int version;
-	r.Value(version);
-	int t;
-	r.Value(t);
-	AsSigned(m_Operator)=(OperatorType)t;
-}

@@ -164,15 +164,3 @@ void BeatMatchPlugin::ExecuteCommands()
 {
 }
 	
-void BeatMatchPlugin::Describe(Spiral::Core::Description &d) 
-{
-	d.Value(m_Version).Line();
-	d.Value(AsFloat(m_Sensitivity)).Separator(" ");
-}
-
-void BeatMatchPlugin::Apply(Spiral::Core::Description::Reader &r) 
-{
-	int version;
-	r.Value(version);
-	r.Value(AsFloat(m_Sensitivity));
-}

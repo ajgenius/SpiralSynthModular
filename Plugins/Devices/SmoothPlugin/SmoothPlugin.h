@@ -30,8 +30,6 @@ public:
 	virtual PluginInfo& Initialise(const HostInfo *Host);
 	virtual void 		Execute();
 	virtual void		Reset();
-	virtual void	    Describe(Spiral::Core::Description &d);
-	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 	
 	float GetUp()        { return AsFloat(m_Up); }
 	float GetDown()      { return AsFloat(m_Down); }

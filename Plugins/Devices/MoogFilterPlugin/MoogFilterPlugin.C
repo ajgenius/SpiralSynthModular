@@ -210,14 +210,3 @@ void MoogFilterPlugin::Randomise()
 {
 }
 	
-void MoogFilterPlugin::Describe(Spiral::Core::Description &d)
-{
-	d.Value(m_Version).Separator(" ").Value(AsFloat(Cutoff)).Separator(" ").Value(AsFloat(Resonance)).Separator(" ");
-}
-
-void MoogFilterPlugin::Apply(Spiral::Core::Description::Reader &r)
-{	
-	int version;
-	r.Value(version);
-	r.Value(AsFloat(Cutoff)).Value(AsFloat(Resonance));
-}

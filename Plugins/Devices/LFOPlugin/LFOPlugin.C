@@ -165,18 +165,6 @@ void LFOPlugin::Execute() {
      }
 }
 
-void LFOPlugin::Describe(Spiral::Core::Description &d) {
-     d.Value(m_Version).Separator(" ").Value((int)AsUnsigned(m_Type)).Separator(" ").Value(AsFloat(m_Freq)).Separator(" ");
-}
-
-void LFOPlugin::Apply(Spiral::Core::Description::Reader &r) {
-     int version;
-     r.Value(version);
-     int type = static_cast<int>(AsUnsigned(m_Type));
-     if (!r.Value(type).Failed()) AsUnsigned(m_Type) = static_cast<Type>(type);
-     r.Value(AsFloat(m_Freq));
-}
-
 void LFOPlugin::Migrate(Spiral::Core::Description &d)
 {
 	if (d.Version() < 0 || d.Version() >= 2)
@@ -188,4 +176,3 @@ void LFOPlugin::Migrate(Spiral::Core::Description &d)
 
 	d.SetValue(0, 2);
 }
-

@@ -127,15 +127,3 @@ void SwitchPlugin::ExecuteCommands()
 {
 }
 	
-void SwitchPlugin::Describe(Spiral::Core::Description &d) 
-{
-	d.Value(m_Version).Line();
-	d.Value(AsBoolean(m_Mix)).Separator(" ");
-}
-
-void SwitchPlugin::Apply(Spiral::Core::Description::Reader &r) 
-{
-	int version;
-	r.Value(version);
-	r.Value(AsBoolean(m_Mix));
-}

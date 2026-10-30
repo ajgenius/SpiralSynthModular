@@ -30,8 +30,6 @@ public:
 	virtual PluginInfo& Initialise(const HostInfo *Host);
 	virtual void 		Execute();
 	virtual void 		ExecuteCommands();
-	virtual void	    Describe(Spiral::Core::Description &d);
-	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 	virtual void	    Migrate(Spiral::Core::Description &d);
 
 	enum OperatorType{NONE,ADD,SUB,DIV,MUL};

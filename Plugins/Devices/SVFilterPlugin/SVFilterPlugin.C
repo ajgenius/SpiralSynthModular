@@ -172,23 +172,6 @@ void SVFilterPlugin::Randomise()
 {
 }
 
-void SVFilterPlugin::Describe(Spiral::Core::Description &d) {
-     d.Value(m_Version).Separator(" ").Value(AsFloat(Cutoff)).Separator(" ").Value(AsFloat(Resonance)).Separator(" ");
-}
-
-void SVFilterPlugin::Apply(Spiral::Core::Description::Reader &r) {
-     int version;
-     double dummy;
-     r.Value(version);
-     switch (version) {
-       case 1: // r.Value(fc).Value(q);
-               r.Value(dummy).Value(dummy);
-               break;
-       case 2: r.Value(AsFloat(Cutoff)).Value(AsFloat(Resonance));
-               break;
-     }
-}
-
 void SVFilterPlugin::Clear()
 {
 	m_h=0.0f;

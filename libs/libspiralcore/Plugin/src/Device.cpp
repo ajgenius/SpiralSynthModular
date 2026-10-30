@@ -34,6 +34,24 @@ Device::~Device()
 {
 }
 
+void Device::Describe(Description &d)
+{
+	d.Value(DeviceVersion);
+	for (std::vector<Property *>::iterator p = m_State.Order.begin(); p != m_State.Order.end(); ++p)
+	{
+		d.Separator(" ");
+		(*p)->Describe(d);
+	}
+}
+
+void Device::Apply(Description::Reader &r)
+{
+	int version;
+	r.Value(version);
+	for (std::vector<Property *>::iterator p = m_State.Order.begin(); p != m_State.Order.end(); ++p)
+		(*p)->Restore(r);
+}
+
 bool Device::LoadProperties(std::map<std::string, Property *> &properties)
 {
 	/* See if this is a versioned set of properties */

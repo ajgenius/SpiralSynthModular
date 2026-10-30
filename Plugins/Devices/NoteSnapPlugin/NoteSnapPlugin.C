@@ -159,35 +159,6 @@ void NoteSnapPlugin::ExecuteCommands()
 	}
 }
 	
-void NoteSnapPlugin::Describe(Spiral::Core::Description &d) 
-{
-	d.Value(m_Version).Line();
-	for (int n=0; n<12; n++)
-	{
-		d.Value(GetFilter(n)).Separator(" ");
-	}
-
-}
-
-void NoteSnapPlugin::Apply(Spiral::Core::Description::Reader &r) 
-{
-// Pre-version 1 - no state
-	if (!r.More()) {
-		for (int n=0; n<12; n++)
-		{
-		// Use default (no notes filtered)
-			SetFilter(n, true);
-		}
-	} else {
-		int version;
-		r.Value(version);
-		for (int n=0; n<12; n++)
-		{
-			r.Value(m_Filter[n].Value.AsBoolean);
-		}
-	}
-}
-
 void NoteSnapPlugin::Migrate(Spiral::Core::Description &d)
 {
 	if (!d.Values().empty())

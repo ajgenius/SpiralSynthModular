@@ -132,14 +132,3 @@ void TransposePlugin::Execute () {
 		SetOutputPitch (0, n, m_Out);
 	}
 }
-
-void TransposePlugin::Describe(Spiral::Core::Description &d) {
-     d.Value(m_Version).Line();
-     d.Value(AsSigned(m_Amount));
-}
-
-void TransposePlugin::Apply(Spiral::Core::Description::Reader &r) {
-     int version;
-     r.Value(version);
-     r.Value(AsSigned(m_Amount));
-}

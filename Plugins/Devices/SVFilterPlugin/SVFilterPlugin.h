@@ -34,8 +34,6 @@ public:
 	virtual void Execute();
 	virtual void Reset();
 	
-	virtual void Describe(Spiral::Core::Description &d);
-	virtual void Apply(Spiral::Core::Description::Reader &r);
 	virtual void Migrate(Spiral::Core::Description &d);
 	
 	float GetCutoff()    { return AsFloat(Cutoff); }

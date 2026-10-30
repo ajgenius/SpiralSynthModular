@@ -131,13 +131,3 @@ void MeterPlugin::ExecuteCommands () {
     }
   }
 }
-
-void MeterPlugin::Describe(Spiral::Core::Description &d) {
-  d.Value(m_Version).Separator(" ").Value(AsBoolean(m_VUMode)).Separator(" ");
-}
-
-void MeterPlugin::Apply(Spiral::Core::Description::Reader &r) {
-  int Version;
-  r.Value(Version);
-  r.Value(AsBoolean(m_VUMode));
-}

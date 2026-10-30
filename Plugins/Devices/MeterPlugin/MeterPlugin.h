@@ -29,8 +29,6 @@ class MeterPlugin : public Spiral::Core::Device {
     virtual void Execute();
     virtual void Reset();
     virtual void ExecuteCommands();
-    virtual void Describe(Spiral::Core::Description &d);
-    virtual void Apply(Spiral::Core::Description::Reader &r);
     int GetVUMode (void) { return AsBoolean(m_VUMode); }
     enum GUICommands {NONE, SETVU, SETMM, UPDATEDATASIZE};
   private:

@@ -147,15 +147,3 @@ void CounterPlugin::ExecuteCommands()
 {
 }
 	
-void CounterPlugin::Describe(Spiral::Core::Description &d) 
-{
-	d.Value(m_Version).Line();
-	d.Value(AsSigned(m_Count)).Separator(" ").Value(AsSigned(m_Current)).Separator(" ");
-}
-
-void CounterPlugin::Apply(Spiral::Core::Description::Reader &r) 
-{
-	int version;
-	r.Value(version);
-	r.Value(AsSigned(m_Count)).Value(AsSigned(m_Current));
-}

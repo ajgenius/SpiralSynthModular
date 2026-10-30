@@ -29,8 +29,6 @@ public:
 	
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void Execute();
-	virtual void Describe(Spiral::Core::Description &d);
-	virtual void Apply(Spiral::Core::Description::Reader &r);
 			
 	float GetMix()        { return AsFloat(m_Mix); }
 	

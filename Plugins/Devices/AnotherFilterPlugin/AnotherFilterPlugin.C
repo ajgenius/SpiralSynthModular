@@ -151,15 +151,3 @@ void AnotherFilterPlugin::Randomise()
 {
 }
 	
-void AnotherFilterPlugin::Describe(Spiral::Core::Description &d)
-{
-	d.Value(m_Version).Separator(" ").Value(AsFloat(Cutoff)).Separator(" ").Value(AsFloat(Resonance)).Separator(" ");
-}
-
-void AnotherFilterPlugin::Apply(Spiral::Core::Description::Reader &r)
-{	
-	int version;
-	r.Value(version);
-	r.Value(AsFloat(Cutoff)).Value(AsFloat(Resonance));
-}
-

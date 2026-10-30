@@ -32,8 +32,6 @@ public:
 	virtual void		Reset();
 	
 	virtual void 		ExecuteCommands();
-	virtual void	    Describe(Spiral::Core::Description &d);
-	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 
 	int        GetCount() { return AsSigned(m_Count); }
 	

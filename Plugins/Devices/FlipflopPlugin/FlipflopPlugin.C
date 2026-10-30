@@ -176,22 +176,6 @@ void FlipflopPlugin::ExecuteCommands()
 {
 }
 	
-void FlipflopPlugin::Describe(Spiral::Core::Description &d) 
-{
-	d.Value(m_Version).Separator(" ");
-	d.Value(AsFloat(m_TriggerTime)).Separator(" ").Value(AsBoolean(m_Monostable)).Separator(" ").Line();
-}
-
-void FlipflopPlugin::Apply(Spiral::Core::Description::Reader &r) 
-{
-	int version;
-	r.Value(version);
-	if (version>1)
-	{
-		r.Value(AsFloat(m_TriggerTime)).Value(AsBoolean(m_Monostable));
-	}
-}
-
 void FlipflopPlugin::Migrate(Spiral::Core::Description &d)
 {
 	if (d.Version() != 1)

@@ -210,6 +210,9 @@ namespace Core
 
 		virtual ComplexProperty *AsComplex() { return NULL; }
 
+		virtual bool Describe(Description &d) const { return false; }
+		virtual bool Restore(Description::Reader &r) { return false; }
+
 		inline bool IsReferenced() { return (m_References!=0); }
 		inline void Reference() { m_References++; }
 		inline void UnReference() { m_References--; }
@@ -428,6 +431,9 @@ namespace Core
 			channels.Register(Label, (int *)&Value.AsSigned, ChannelDirection());
 		}
 
+		virtual bool Describe(Description &d) const { d.Value(*this); return true; }
+		virtual bool Restore(Description::Reader &r) { r.Value(*this); return true; }
+
 		virtual std::string ClassName()
 		{
 			return "SignedProperty";
@@ -462,6 +468,9 @@ namespace Core
 			channels.Register(Label, (int *)&Value.AsUnsigned, ChannelDirection());
 		}
 
+		virtual bool Describe(Description &d) const { d.Value(*this); return true; }
+		virtual bool Restore(Description::Reader &r) { r.Value(*this); return true; }
+
 		virtual std::string ClassName()
 		{
 			return "UnsignedProperty";
@@ -494,6 +503,9 @@ namespace Core
 			channels.Register(Label, &Value.AsFloat, ChannelDirection());
 		}
 
+		virtual bool Describe(Description &d) const { d.Value(*this); return true; }
+		virtual bool Restore(Description::Reader &r) { r.Value(*this); return true; }
+
 		virtual std::string ClassName()
 		{
 			return "FloatProperty";
@@ -518,6 +530,9 @@ namespace Core
 		{
 			channels.Register(Label, &Value.AsBoolean, ChannelDirection());
 		}
+
+		virtual bool Describe(Description &d) const { d.Value(*this); return true; }
+		virtual bool Restore(Description::Reader &r) { r.Value(*this); return true; }
 
 		virtual std::string ClassName()
 		{
@@ -547,6 +562,9 @@ namespace Core
 			channels.Register(Label, (int *)&Value.AsUnsigned, ChannelDirection());
 		}
 
+		virtual bool Describe(Description &d) const { d.Value(*this); return true; }
+		virtual bool Restore(Description::Reader &r) { r.Value(*this); return true; }
+
 		virtual std::string ClassName()
 		{
 			return "SetProperty";
@@ -572,6 +590,9 @@ namespace Core
 		}
 
 		virtual void CopyValue(const Property &CopyFrom);
+
+		virtual bool Describe(Description &d) const { d.Value(*this); return true; }
+		virtual bool Restore(Description::Reader &r) { r.Value(*this); return true; }
 
 		virtual std::string ClassName()
 		{

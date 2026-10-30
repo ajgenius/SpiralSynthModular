@@ -244,14 +244,3 @@ void FormantFilterPlugin::Clear()
 	}
 }
 	
-void FormantFilterPlugin::Describe(Spiral::Core::Description &d)
-{
-	d.Value(m_Version).Separator(" ").Value(AsFloat(m_Vowel)).Separator(" ");
-}
-
-void FormantFilterPlugin::Apply(Spiral::Core::Description::Reader &r)
-{	
-	int version;
-	r.Value(version);
-	r.Value(AsFloat(m_Vowel));
-}

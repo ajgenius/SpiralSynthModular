@@ -154,15 +154,3 @@ void DelayPlugin::Execute () {
 void DelayPlugin::Randomise()
 {
 }
-
-void DelayPlugin::Describe(Spiral::Core::Description &d)
-{
-	d.Value(m_Version).Separator(" ").Value(AsFloat(m_Delay)).Separator(" ").Value(AsFloat(m_Mix)).Separator(" ");
-}
-
-void DelayPlugin::Apply(Spiral::Core::Description::Reader &r)
-{	
-	int version;
-	r.Value(version);
-	r.Value(AsFloat(m_Delay)).Value(AsFloat(m_Mix));
-}

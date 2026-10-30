@@ -210,18 +210,6 @@ void FilterPlugin::Execute()
 	}		
 }
 	
-void FilterPlugin::Describe(Spiral::Core::Description &d)
-{
-	d.Value(m_Version).Separator(" ").Value(AsFloat(fc)).Separator(" ").Value(AsFloat(Q)).Separator(" ").Value(m_RevCutoffMod).Separator(" ").Value(m_RevResonanceMod).Separator(" ");
-}
-
-void FilterPlugin::Apply(Spiral::Core::Description::Reader &r)
-{	
-	int version;
-	r.Value(version);
-	r.Value(AsFloat(fc)).Value(AsFloat(Q)).Value(m_RevCutoffMod).Value(m_RevResonanceMod);
-}
-
 void FilterPlugin::SetupCoeffs()
 {
 	ProtoCoef[0].a0 = 1.0; 

@@ -34,8 +34,6 @@ public:
 	virtual void 		Execute();
 	virtual void		Reset();
 
-	virtual void	    Describe(Spiral::Core::Description &d);
-	virtual void	    Apply(Spiral::Core::Description::Reader &r);
 	virtual void	    Migrate(Spiral::Core::Description &d);
 	
 	// has to be defined in the plugin	
@@ -68,11 +66,7 @@ private:
 	Sample m_Table[NUM_TABLES];
 	int    m_TableLength;
 	
-	friend Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, WaveTablePlugin &o);
-	friend Spiral::Core::Description &Describe(Spiral::Core::Description &d, WaveTablePlugin &o);
 };
 
-Spiral::Core::Description::Reader &Apply(Spiral::Core::Description::Reader &r, WaveTablePlugin &o);
-Spiral::Core::Description &Describe(Spiral::Core::Description &d, WaveTablePlugin &o);
 
 #endif

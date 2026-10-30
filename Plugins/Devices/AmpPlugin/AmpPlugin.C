@@ -121,14 +121,3 @@ void AmpPlugin::Randomise()
 {
 }
 	
-void AmpPlugin::Describe(Spiral::Core::Description &d)
-{
-	d.Value(m_Version).Separator(" ").Value(AsFloat(m_Gain)).Separator(" ").Value(AsFloat(m_DC)).Separator(" ");
-}
-
-void AmpPlugin::Apply(Spiral::Core::Description::Reader &r)
-{	
-	int version;
-	r.Value(version);
-	r.Value(AsFloat(m_Gain)).Value(AsFloat(m_DC));
-}

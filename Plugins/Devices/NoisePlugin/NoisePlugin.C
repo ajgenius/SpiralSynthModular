@@ -136,17 +136,6 @@ void NoisePlugin::Execute()
 	}
 }
 
-void NoisePlugin::Describe(Spiral::Core::Description &d)
-{
-	d.Value(DeviceVersion).Separator(" ").Value(m_Type);
-}
-
-void NoisePlugin::Apply(Spiral::Core::Description::Reader &r)
-{
-	int version;
-	r.Value(version).Value(m_Type);
-}
-
 void NoisePlugin::Migrate(Spiral::Core::Description &d)
 {
 	if (d.Version() < 0 || d.Version() >= 2)

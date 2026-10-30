@@ -85,8 +85,8 @@ m_Value(0)
 	m_Decay = FloatProperty(DefaultLinearFlags, 0.5, 0, 1, 0.001, 0.01);
 	m_Attack = FloatProperty(DefaultLinearFlags, 0.5, 0, 1, 0.001, 0.01);
 
-	RegisterSharedProperty(m_Decay, "Decay", "Decay");
 	RegisterSharedProperty(m_Attack, "Attack", "Attack");
+	RegisterSharedProperty(m_Decay, "Decay", "Decay");
 
 
 }
@@ -120,16 +120,4 @@ void EnvFollowerPlugin::Execute()
 		
 		SetOutput(0,n,m_Value);
 	}
-}
-
-void EnvFollowerPlugin::Describe(Spiral::Core::Description &d) 
-{
-	d.Value(m_Version).Separator(" ");
-	d.Value(AsFloat(m_Attack)).Separator(" ").Value(AsFloat(m_Decay));
-}
-
-void EnvFollowerPlugin::Apply(Spiral::Core::Description::Reader &r)
-{
-	r.Value(m_Version);
-	r.Value(AsFloat(m_Attack)).Value(AsFloat(m_Decay));
 }

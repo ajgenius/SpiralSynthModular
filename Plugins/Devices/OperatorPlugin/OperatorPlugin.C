@@ -85,10 +85,10 @@ OperatorPlugin::OperatorPlugin()
 	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 
-	m_Operator = SignedProperty(DefaultLinearFlags,ADD,NONE,MUL,1,1);
-	RegisterSharedProperty(m_Operator, "Operator", "Operator");
 	m_Constant = FloatProperty(DefaultLinearFlags,0,0,1,0.01,0.1);
 	RegisterSharedProperty(m_Constant, "Constant", "Constant");
+	m_Operator = SignedProperty(DefaultLinearFlags,ADD,NONE,MUL,1,1);
+	RegisterSharedProperty(m_Operator, "Operator", "Operator");
 
 
 }
@@ -182,26 +182,6 @@ void OperatorPlugin::Execute()
 
 void OperatorPlugin::ExecuteCommands()
 {
-}
-
-void OperatorPlugin::Describe(Spiral::Core::Description &d)
-{
-	d.Value(m_Version).Line();
-	d.Value(AsFloat(m_Constant)).Separator(" ");
-	d.Value((int)AsSigned(m_Operator)).Separator(" ");
-}
-
-void OperatorPlugin::Apply(Spiral::Core::Description::Reader &r) 
-{
-	int version;
-	r.Value(version);
-	r.Value(AsFloat(m_Constant));
-	if (version>1)
-	{
-		int t;
-		r.Value(t);
-		AsSigned(m_Operator)=(OperatorType)t;
-	}
 }
 
 void OperatorPlugin::Migrate(Spiral::Core::Description &d)
