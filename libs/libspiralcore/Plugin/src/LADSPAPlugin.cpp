@@ -81,8 +81,8 @@ LADSPAPlugin::LADSPAPlugin()
 	m_PluginIndex = 0;
 	m_UniqueID = 0;
 	m_InputPortCount = 0;
-	m_Version = 9;
-	SetUnsigned(DeviceVersion, 9);
+	m_Version = 10;
+	SetUnsigned(DeviceVersion, 10);
 
 	m_Page = SignedProperty(DefaultLinearFlags, 2, 0, 16, 1, 1);
 	m_UpdateInputs = ToggleProperty(Property::WriteOnly, true);
@@ -94,10 +94,12 @@ LADSPAPlugin::LADSPAPlugin()
 	m_InputPortMax.List = VectorProperty(Property::WriteOnly);
 	m_InputPortClamp.List = VectorProperty(Property::WriteOnly);
 	m_InputPortDefault.List = VectorProperty(Property::WriteOnly);
+	m_InputPortEnabled.List = VectorProperty(Property::WriteOnly);
 	RegisterSharedProperty(m_InputPortMin.List, "Min", "Port minimums");
 	RegisterSharedProperty(m_InputPortMax.List, "Max", "Port maximums");
 	RegisterSharedProperty(m_InputPortClamp.List, "Clamp", "Port clamping");
 	RegisterSharedProperty(m_InputPortDefault.List, "Default", "Port defaults");
+	RegisterSharedProperty(m_InputPortEnabled.List, "Enabled", "Ports offered for wiring");
 
 	m_OutData.InputPortNames = NULL;
 	m_OutData.InputPortSettings = NULL;
@@ -237,6 +239,8 @@ void LADSPAPlugin::Execute()
 			if (m_OutData.InputPortValues && n < (int)m_MaxInputPortCount) {
 				m_OutData.InputPortValues[n].Connected = true;
 			}
+			if (n < (int)m_InputPortEnabled.size() && !m_InputPortEnabled[n])
+				m_InputPortEnabled[n] = true;
 			m_InputPortDefault[n] = m_LADSPABufVec[n][0];
 		}
 		else
@@ -364,6 +368,7 @@ void LADSPAPlugin::Describe(Spiral::Core::Description &d)
 
 	switch (m_Version)
 	{
+		case 10:
 		case 9:
 		{
 			AsUnsigned(m_UnconnectedInputs) = m_PluginInfo.NumInputs;
@@ -405,6 +410,9 @@ void LADSPAPlugin::Describe(Spiral::Core::Description &d)
 				if (!ssm_finite(value.Value.AsFloat)) value.Value.AsFloat = 0.0f;
 				d.Value(value).Separator(" ");
 			}
+			if (m_Version > 9)
+				for (size_t i=0; i<m_InputPortEnabled.size(); i++)
+					d.Value(m_InputPortEnabled.At(i)).Separator(" ");
 		}
 		break;
 		default:
@@ -428,6 +436,7 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 
 	switch (Version)
 	{
+		case 10:
 		case 9:
 		{
 			r.Value(m_Page);
@@ -441,6 +450,8 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 			for (int n=0; n<PortCount; n++) { m_InputPortMax.push_back(n ? m_InputPortMax[n-1] : 0);         r.Value(m_InputPortMax.At(n)); }
 			for (int n=0; n<PortCount; n++) { m_InputPortClamp.push_back(n ? m_InputPortClamp[n-1] : false); r.Value(m_InputPortClamp.At(n)); }
 			for (int n=0; n<PortCount; n++) { m_InputPortDefault.push_back(n ? m_InputPortDefault[n-1] : 0); r.Value(m_InputPortDefault.At(n)); }
+			if (Version > 9)
+				for (int n=0; n<PortCount; n++) { m_InputPortEnabled.push_back(n ? m_InputPortEnabled[n-1] : true); r.Value(m_InputPortEnabled.At(n)); }
 		}
 		break;
 		case 8:
@@ -694,8 +705,10 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 
 		if (SelectPlugin(UniqueID)) {
 			if (Version < 9) AsUnsigned(m_UnconnectedInputs) = m_InputPortCount;
+			SyncPortEnabled();
 			SetGUIExports();
 		} else {
+			SyncPortEnabled();
 			m_UniqueID = UniqueID;
 			if (UniqueID)
 				cerr << "Error loading LADSPA Plugin " << UniqueID << ".\n";
@@ -712,6 +725,7 @@ bool LADSPAPlugin::UpdatePlugin(unsigned long UniqueID)
 	ClearPlugin();
 	if (SelectPlugin(UniqueID)) {
 		ResetPortSettings();
+		SyncPortEnabled();
 		SetGUIExports();
 		return true;
 	}
@@ -898,11 +912,19 @@ void LADSPAPlugin::ClearPlugin(void)
 	m_InputPortMin.clear();
 	m_InputPortMax.clear();
 	m_InputPortClamp.clear();
+	m_InputPortEnabled.clear();
 
 	if (! m_SSMPluginReset)
 	{
 		m_InputPortDefault.clear();
 	}
+}
+
+void LADSPAPlugin::SyncPortEnabled(void)
+{
+	while (m_InputPortEnabled.size() < m_InputPortMin.size())
+		m_InputPortEnabled.push_back(true);
+	m_InputPortEnabled.resize(m_InputPortMin.size());
 }
 
 void LADSPAPlugin::SyncPortTypes(void)

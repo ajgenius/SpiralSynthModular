@@ -144,6 +144,7 @@ private:
 	void ResetPortSettings(void);
 	void SetGUIExports(void);
 	void SyncPortTypes(void);
+	void SyncPortEnabled(void);
 
 	bool m_SSMPluginReset;
 
@@ -155,6 +156,7 @@ private:
 	PortFloats              m_InputPortMin;
 	PortFloats              m_InputPortMax;
 	PortFlags               m_InputPortClamp;
+	PortFlags               m_InputPortEnabled;
 	PortFloats              m_InputPortDefault;
 
 	int             m_Version;
