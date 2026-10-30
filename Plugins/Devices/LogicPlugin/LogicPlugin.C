@@ -16,6 +16,8 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include <stdio.h>
+#include <stdlib.h>
+#include <algorithm>
 #include "LogicPlugin.h"
 #include "SpiralIcon.xpm"
 #include "NoteTable.h"
@@ -85,7 +87,7 @@ LogicPlugin::LogicPlugin()
 
 	m_Operator = SetProperty(Property::WriteOnly, 0, NamedPropertySet(OperatorTypes, sizeof(OperatorTypes)/sizeof(OperatorTypes[0])));
 	RegisterSharedProperty(m_Operator, "Operator", "Operator");
-        m_Version = 2;
+        m_Version = 3;
         m_PluginInfo.Name="Logic";
 	m_PluginInfo.Width=80;
 	m_PluginInfo.Height=140;
@@ -94,7 +96,7 @@ LogicPlugin::LogicPlugin()
 	RegisterSharedProperty(m_Inputs, "Inputs", "Inputs");
 
 	SetString(DeviceName, SpiralPlugin_GetName());
-	SetUnsigned(DeviceVersion, 2);
+	SetUnsigned(DeviceVersion, 3);
         CreatePorts ();
 
 }
@@ -195,7 +197,7 @@ void LogicPlugin::CreatePorts (int n, bool AddPorts) {
 
 void LogicPlugin::Describe(Spiral::Core::Description &d)
 {
-	d.Value(m_Version).Separator(" ").Value(m_PluginInfo.NumInputs).Separator(" ").Value(AsUnsigned(m_Operator));
+	d.Value(DeviceVersion).Separator(" ").Value(m_Inputs).Separator(" ").Value(m_Operator);
 }
 
 void LogicPlugin::Apply(Spiral::Core::Description::Reader &r) {
@@ -206,11 +208,25 @@ void LogicPlugin::Apply(Spiral::Core::Description::Reader &r) {
       r.Value(datum); // Version 1 saved a constant that is not used now
       SetInputs (2);
       break;
-    case 2:
-      r.Value(datum);
-      SetInputs (datum);
-      r.Value(datum);
-      AsUnsigned(m_Operator) = (OperatorType)datum;
+    case 3:
+      r.Value(m_Inputs);
+      SetInputs (AsUnsigned(m_Inputs));
+      r.Value(m_Operator);
       break;
   }
+}
+
+void LogicPlugin::Migrate(Spiral::Core::Description &d)
+{
+	if (d.Version() != 2)
+		return;
+
+	int inputs = d.Field(1, "Inputs");
+	if (inputs >= 0)
+		d.SetValue(inputs, std::min(std::max(atoi(d.Values()[inputs].c_str()), (int)m_Inputs.Min.AsUnsigned), (int)m_Inputs.Max.AsUnsigned));
+	int op = d.Field(2, "Operator");
+	if (op >= 0)
+		d.SetValue(op, std::min(std::max(atoi(d.Values()[op].c_str()), (int)NONE), (int)XNOR));
+
+	d.SetValue(0, 3);
 }

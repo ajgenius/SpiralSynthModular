@@ -20,6 +20,8 @@
 #include <cmath>
 #include "Finite.h"
 #include "SpiralIcon.xpm"
+#include <stdlib.h>
+#include <algorithm>
 
 using namespace std;
 using namespace Spiral::Core;
@@ -78,7 +80,7 @@ m_TableLength (DEFAULT_TABLE_LEN) {
 	RegisterSharedProperty(m_Freq, "Frequency", "Frequency");
 
 	SetString(DeviceName, SpiralPlugin_GetName());
-	SetUnsigned(DeviceVersion, 1);
+	SetUnsigned(DeviceVersion, 2);
 	m_CyclePos = 0;
 	m_Note = 0;
 	m_PluginInfo.Name = "LFO";
@@ -173,5 +175,17 @@ void LFOPlugin::Apply(Spiral::Core::Description::Reader &r) {
      int type = static_cast<int>(AsUnsigned(m_Type));
      if (!r.Value(type).Failed()) AsUnsigned(m_Type) = static_cast<Type>(type);
      r.Value(AsFloat(m_Freq));
+}
+
+void LFOPlugin::Migrate(Spiral::Core::Description &d)
+{
+	if (d.Version() < 0 || d.Version() >= 2)
+		return;
+
+	int type = d.Field(1, "Wave Type");
+	if (type >= 0)
+		d.SetValue(type, std::min(std::max(atoi(d.Values()[type].c_str()), (int)SINE), (int)SAW));
+
+	d.SetValue(0, 2);
 }
 

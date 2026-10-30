@@ -66,6 +66,7 @@ class TranslatePlugin : public Spiral::Core::Device {
       virtual void ExecuteCommands ();
       virtual void Describe(Spiral::Core::Description &d);
       virtual void Apply(Spiral::Core::Description::Reader &r);
+      virtual void Migrate(Spiral::Core::Description &d);
       enum TranMethod { tr_Pass, tr_NoteToFreq, tr_FreqToNote, tr_NoteToVolt, tr_VoltToNote };
       int GetMethod (void) { return AsUnsigned(m_Method); }
    private:

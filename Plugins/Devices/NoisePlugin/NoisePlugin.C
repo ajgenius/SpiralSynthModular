@@ -16,6 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include "NoisePlugin.h"
+#include <algorithm>
 #include <limits.h>
 #include "SpiralIcon.xpm"
 #include <stdlib.h>
@@ -82,7 +83,7 @@ NoisePlugin::NoisePlugin()
 	RegisterSharedProperty(m_Type, "NoiseType", "NoiseType");	
 
 	SetString(DeviceName, SpiralPlugin_GetName());
-	SetUnsigned(DeviceVersion, 1);
+	SetUnsigned(DeviceVersion, 2);
 	m_PluginInfo.Name="Noise";
 	m_PluginInfo.Width=80;
 	m_PluginInfo.Height=60;
@@ -137,13 +138,27 @@ void NoisePlugin::Execute()
 
 void NoisePlugin::Describe(Spiral::Core::Description &d)
 {
-	d.Value(m_Version).Separator(" ").Value((char)AsUnsigned(m_Type));
+	d.Value(DeviceVersion).Separator(" ").Value(m_Type);
 }
 
 void NoisePlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int version;
-	char t;
-	r.Value(version).Value(t);
-	AsUnsigned(m_Type)=(Type)t;
+	r.Value(version).Value(m_Type);
+}
+
+void NoisePlugin::Migrate(Spiral::Core::Description &d)
+{
+	if (d.Version() < 0 || d.Version() >= 2)
+		return;
+
+	if (d.Values().size() > 1 && !d.Values()[1].empty())
+	{
+		int type = (unsigned char)d.Values()[1][0];
+		if (type >= '0' && type <= '9')
+			type -= '0';
+		d.SetValue(1, std::min(type, (int)PINK));
+	}
+
+	d.SetValue(0, 2);
 }

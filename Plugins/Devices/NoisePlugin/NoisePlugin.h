@@ -31,6 +31,7 @@ public:
 	virtual void 		Execute();
 	virtual void	    Describe(Spiral::Core::Description &d);
 	virtual void	    Apply(Spiral::Core::Description::Reader &r);
+	virtual void	    Migrate(Spiral::Core::Description &d);
 
 	enum Type {WHITE,PINK};	
 	Type GetType() {return (Type)AsUnsigned(m_Type);}

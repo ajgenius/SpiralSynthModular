@@ -20,6 +20,8 @@
 #include "Finite.h"
 #include "SpiralIcon.xpm"
 #include "NoteTable.h"
+#include <stdlib.h>
+#include <algorithm>
 
 using namespace std;
 using namespace Spiral::Core;
@@ -101,7 +103,7 @@ m_Translator (NULL)
 	RegisterSharedProperty(m_Method, "Method", "Method");
 
 	SetString(DeviceName, SpiralPlugin_GetName());
-	SetUnsigned(DeviceVersion, 1);
+	SetUnsigned(DeviceVersion, 2);
     m_PluginInfo.Name = "Translate";
     m_PluginInfo.Width = 150;
     m_PluginInfo.Height = 60;
@@ -164,7 +166,7 @@ void TranslatePlugin::Execute () {
 
 void TranslatePlugin::Describe(Spiral::Core::Description &d) {
      d.Value(DeviceVersion).Line();
-     d.Value(AsUnsigned(m_Method));
+     d.Value(m_Method);
 }
 
 void TranslatePlugin::Apply(Spiral::Core::Description::Reader &r) {
@@ -172,4 +174,16 @@ void TranslatePlugin::Apply(Spiral::Core::Description::Reader &r) {
      r.Value(version);
      r.Value(m_Method);
      SetUpTranslatorClass ();
+}
+
+void TranslatePlugin::Migrate(Spiral::Core::Description &d)
+{
+	if (d.Version() < 0 || d.Version() >= 2)
+		return;
+
+	int method = d.Field(1, "Method");
+	if (method >= 0)
+		d.SetValue(method, std::min(std::max(atoi(d.Values()[method].c_str()), (int)tr_Pass), (int)tr_VoltToNote));
+
+	d.SetValue(0, 2);
 }

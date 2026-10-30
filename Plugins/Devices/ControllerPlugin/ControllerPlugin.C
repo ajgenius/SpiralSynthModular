@@ -17,6 +17,8 @@
 */ 
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <algorithm>
 #include "ControllerPlugin.h"
 #include "SpiralIcon.xpm"
 
@@ -73,7 +75,7 @@ string SpiralPlugin_GetGroupName()
 ControllerPlugin::ControllerPlugin()
 {
 	SetString(DeviceName, SpiralPlugin_GetName());
-	SetUnsigned(DeviceVersion, 5);
+	SetUnsigned(DeviceVersion, 6);
 
 	m_NumChannels = UnsignedProperty(DefaultLinearFlags, 4, 1, MAX_CHANNELS, 1, 1);
 	RegisterSharedProperty(m_NumChannels, "Channels", "Number of channels");
@@ -90,7 +92,7 @@ ControllerPlugin::ControllerPlugin()
 	RegisterSharedProperty(m_MaxVal, "MaxVal", "Upper bounds");
 	RegisterSharedProperty(m_Names, "Names", "Channel names");
 
-	m_Version=5;
+	m_Version=6;
 
 	m_PluginInfo.Name="CV";
 	m_PluginInfo.Width=240;
@@ -209,9 +211,9 @@ void ControllerPlugin::Describe(Spiral::Core::Description &d)
 
 	switch (m_Version)
 	{
-		case 5:
+		case 6:
 		{
-			d.Value(AsUnsigned(m_NumChannels)).Line();
+			d.Value(m_NumChannels).Line();
 			for (int n=0; n<GetNum(); n++)
 			{
 				d.Value(GetName(n).size()).Separator(" ");
@@ -223,7 +225,7 @@ void ControllerPlugin::Describe(Spiral::Core::Description &d)
 		} break;
 		case 4:
 		{
-			d.Value(AsUnsigned(m_NumChannels)).Line();
+			d.Value(m_NumChannels).Line();
 			for (int n=0; n<GetNum(); n++)
 			{
 				d.Value(Name(n)).Separator(" ");
@@ -234,13 +236,13 @@ void ControllerPlugin::Describe(Spiral::Core::Description &d)
 		} break;
 		case 3:
 		{
-			d.Value(AsUnsigned(m_NumChannels)).Separator(" ");
+			d.Value(m_NumChannels).Separator(" ");
 			for (int n=0; n<GetNum(); n++)
 			{
 				d.Value(Val(n)).Separator(" ");
 			}
 			d.Value(1).Line();
-			d.Value(AsUnsigned(m_NumChannels)).Separator(" ");
+			d.Value(m_NumChannels).Separator(" ");
 			for (int n=0; n<GetNum(); n++)
 			{
 				d.Value(GetName(n).size()).Separator(" ");
@@ -264,7 +266,7 @@ void ControllerPlugin::Apply(Spiral::Core::Description::Reader &r)
 
 	switch (version)
 	{
-		case 5:
+		case 6:
 		{
 			Clear();
 
@@ -359,4 +361,27 @@ void ControllerPlugin::Apply(Spiral::Core::Description::Reader &r)
 			cerr<<"ControllerPlugin - I dont support this streaming version any more"<<endl;
 		break;
 	}
+}
+
+void ControllerPlugin::Migrate(Spiral::Core::Description &d)
+{
+	int version = d.Version();
+	if (version < 3 || version > 5)
+		return;
+
+	int count = d.Field(1, "Channels");
+	if (count < 0)
+		return;
+
+	int written = atoi(d.Values()[count].c_str());
+	d.SetValue(count, std::min(std::max(written, 1), MAX_CHANNELS));
+	if (version == 3)
+	{
+		size_t again = 3 + std::max(written, 0);
+		if (again < d.Values().size())
+			d.SetValue(again, std::min(std::max(atoi(d.Values()[again].c_str()), 1), MAX_CHANNELS));
+	}
+
+	if (version == 5)
+		d.SetValue(0, 6);
 }

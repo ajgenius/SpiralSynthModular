@@ -28,6 +28,7 @@
 //#include <limits.h>
 #include "DiskWriterPlugin.h"
 #include "SpiralIcon.xpm"
+#include <stdlib.h>
 
 using namespace std;
 using namespace Spiral::Core;
@@ -88,7 +89,7 @@ const NumericPropertyValue BitRates[] =
 DiskWriterPlugin::DiskWriterPlugin()
 {
 	SetString(DeviceName, SpiralPlugin_GetName());
-	SetUnsigned(DeviceVersion, 2);
+	SetUnsigned(DeviceVersion, 3);
 
 	m_BitsPerSample = SetProperty(Property::WriteOnly, 0, PropertySet(BitRates, sizeof(BitRates)/sizeof(BitRates[0])));
 	m_Stereo = ToggleProperty(Property::WriteOnly, true);
@@ -112,7 +113,7 @@ DiskWriterPlugin::DiskWriterPlugin()
 	AsBoolean(m_Recording) = false;
 	AsFloat(m_TimeRecorded) = 0;
 
-	m_Version = 2;
+	m_Version = 3;
 
 	m_AudioCH->RegisterData("Filename",ChannelHandler::INPUT,m_GUIArgs.Name,256);
 }
@@ -174,7 +175,7 @@ void DiskWriterPlugin::ExecuteCommands()
 
 void DiskWriterPlugin::Describe(Spiral::Core::Description &d)
 {
-	d.Value(DeviceVersion).Separator(" ").Value(AsUnsigned(m_BitsPerSample)).Separator(" ").Value(m_Stereo).Separator(" ");
+	d.Value(DeviceVersion).Separator(" ").Value(m_BitsPerSample).Separator(" ").Value(m_Stereo).Separator(" ");
 }
 
 void DiskWriterPlugin::Apply(Spiral::Core::Description::Reader &r)
@@ -195,7 +196,7 @@ void DiskWriterPlugin::Apply(Spiral::Core::Description::Reader &r)
 
 	switch (Version)
 	{
-		case 2:
+		case 3:
 		{
 			r.Value(m_BitsPerSample).Value(m_Stereo);
 		}
@@ -209,4 +210,19 @@ void DiskWriterPlugin::Apply(Spiral::Core::Description::Reader &r)
 		}
 		break;
 	}
+}
+
+void DiskWriterPlugin::Migrate(Spiral::Core::Description &d)
+{
+	if (d.Version() != 2)
+		return;
+
+	int bits = d.Field(1, "Bits Per Sample");
+	if (bits >= 0)
+	{
+		int depth = atoi(d.Values()[bits].c_str());
+		d.SetValue(bits, depth < 24 ? 16 : depth < 32 ? 24 : 32);
+	}
+
+	d.SetValue(0, 3);
 }
