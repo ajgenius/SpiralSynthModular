@@ -391,3 +391,37 @@ void ChannelHandler::Wait()
 		}	
 	}
 }
+
+int ChannelHandler::ChannelSize(const string &ID, Type *t)
+{
+	map<string,Channel*>::iterator i=m_ChannelMap.find(ID);
+	if (i==m_ChannelMap.end()) return -1;
+	if (t) *t=i->second->type;
+	return i->second->size;
+}
+
+void ChannelHandler::ChannelNames(vector<string> &names) const
+{
+	for (map<string,Channel*>::const_iterator i=m_ChannelMap.begin(); i!=m_ChannelMap.end(); ++i)
+		names.push_back(i->first);
+}
+
+bool ChannelHandler::Peek(const string &ID, int offset, void *dest, int size)
+{
+	map<string,Channel*>::iterator i=m_ChannelMap.find(ID);
+	if (i==m_ChannelMap.end() || offset<0 || offset+size>i->second->size) return false;
+	pthread_mutex_lock(m_Mutex);
+	memcpy(dest,((char*)i->second->data_buf)+offset,size);
+	pthread_mutex_unlock(m_Mutex);
+	return true;
+}
+
+bool ChannelHandler::SetDataAt(const string &ID, int offset, const void *src, int size)
+{
+	map<string,Channel*>::iterator i=m_ChannelMap.find(ID);
+	if (i==m_ChannelMap.end() || i->second->type!=INPUT || offset<0 || offset+size>i->second->size) return false;
+	pthread_mutex_lock(m_Mutex);
+	memcpy(((char*)i->second->data_buf)+offset,src,size);
+	pthread_mutex_unlock(m_Mutex);
+	return true;
+}

@@ -45,11 +45,12 @@ public:
 
 	// The settings the subpatch runs with, on the GUI thread.
 	const Spiral::Core::SubPatchConfig &Config() const { return m_Config; }
-	// Runs with these, and sets its properties to them.
+	// Runs with these, and writes them through the properties' channels so
+	// the panel shows them.
 	void SetConfig(const Spiral::Core::SubPatchConfig &config);
-	// Takes what its properties were set to since the last look; true when
-	// that changed what runs. Isolated is not here yet, so a change to it is
-	// put back.
+	// Takes what the panel, or a MIDI binding, set its properties to since
+	// the last look; true when that changed what runs. Isolated is not here
+	// yet, so a change to it is put back.
 	bool TakeSettings();
 
 	// The ports on its edge, inputs and outputs in their order. After a

@@ -134,6 +134,7 @@ libspiralcore_la_SOURCES += File/include/Description.h File/src/Description.cpp
 libspiralcore_la_SOURCES += Data/include/DataSource.h Data/src/DataSource.cpp \
 	Data/include/Binding.h Data/src/Binding.cpp \
 	Data/include/MemorySource.h Data/src/MemorySource.cpp \
+	Data/include/PropertySource.h Data/src/PropertySource.cpp \
 	Data/include/ValueRule.h Data/src/ValueRule.cpp Data/include/Handlers.h Data/src/Handlers.cpp
 libspiralcore_la_SOURCES += File/include/PatchProject.h File/src/PatchProject.cpp
 libspiralcore_la_SOURCES += File/include/License.h File/src/License.cpp File/src/LicenseTexts.inc

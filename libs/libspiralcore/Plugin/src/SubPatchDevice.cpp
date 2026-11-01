@@ -64,9 +64,13 @@ SubPatchDevice::SubPatchDevice(): m_Step(NULL), m_Host(NULL)
 SubPatchConfig SubPatchDevice::Settings()
 {
 	SubPatchConfig config;
-	const int mode = (int)AsUnsigned(m_Mode), link = (int)AsUnsigned(m_Link);
-	const int frames = (int)AsUnsigned(m_BufferFrames), voices = (int)AsUnsigned(m_Voices);
-	const bool poly = AsBoolean(m_PolyOutput);
+	int mode = 0, link = 0, frames = 0, voices = 1;
+	bool poly = false;
+	m_AudioCH->Peek("Mode", 0, &mode, sizeof(mode));
+	m_AudioCH->Peek("Link", 0, &link, sizeof(link));
+	m_AudioCH->Peek("Buffer Frames", 0, &frames, sizeof(frames));
+	m_AudioCH->Peek("Voices", 0, &voices, sizeof(voices));
+	m_AudioCH->Peek("Poly Output", 0, &poly, sizeof(poly));
 	config.Mode = Modes[mode >= 0 && mode < 3 ? mode : 0];
 	config.Link = Links[link >= 0 && link < 2 ? link : 0];
 	config.BufferFrames = frames;
@@ -85,11 +89,11 @@ void SubPatchDevice::SetConfig(const SubPatchConfig &config)
 	const int link = IndexOf(Links, 2, SubPatchConfig::LinkSpelling(config.Link));
 	const int frames = (int)config.BufferFrames, voices = (int)config.Voices;
 	const bool poly = config.PolyOutput;
-	AsUnsigned(m_Mode) = mode;
-	AsUnsigned(m_Link) = link;
-	AsUnsigned(m_BufferFrames) = frames;
-	AsUnsigned(m_Voices) = voices;
-	AsBoolean(m_PolyOutput) = poly;
+	m_AudioCH->SetDataAt("Mode", 0, &mode, sizeof(mode));
+	m_AudioCH->SetDataAt("Link", 0, &link, sizeof(link));
+	m_AudioCH->SetDataAt("Buffer Frames", 0, &frames, sizeof(frames));
+	m_AudioCH->SetDataAt("Voices", 0, &voices, sizeof(voices));
+	m_AudioCH->SetDataAt("Poly Output", 0, &poly, sizeof(poly));
 	m_LinkName.Value = config.LinkName;
 }
 

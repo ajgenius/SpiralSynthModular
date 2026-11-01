@@ -20,6 +20,7 @@
 #include <pthread.h>
 #include <string>
 #include <map>
+#include <vector>
 #include <iostream>
 
 namespace Spiral
@@ -117,6 +118,11 @@ public:
 	
 	// delays for one or more updates. use for syncing commands
 	void          Wait();
+
+	int           ChannelSize(const std::string &ID, Type *t=NULL);
+	void          ChannelNames(std::vector<std::string> &names) const;
+	bool          Peek(const std::string &ID, int offset, void *dest, int size);
+	bool          SetDataAt(const std::string &ID, int offset, const void *src, int size);
 	
 private:
 
