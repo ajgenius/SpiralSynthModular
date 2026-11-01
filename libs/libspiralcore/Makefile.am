@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
-AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include -I$(srcdir)/File/include -I$(srcdir)/Plugin/include -I$(srcdir)/Audio/include -I$(srcdir)/Midi/include -I$(top_srcdir)/libs/libSpumoni/include
+AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include -I$(srcdir)/File/include -I$(srcdir)/Data/include -I$(srcdir)/Plugin/include -I$(srcdir)/Audio/include -I$(srcdir)/Midi/include -I$(top_srcdir)/libs/libSpumoni/include
 lib_LTLIBRARIES = libspiralcore.la
 libspiralcore_la_SOURCES = \
     include/Allocator.h \
@@ -79,6 +79,15 @@ native_midi_test_LDADD = libspiralcore.la
 check_PROGRAMS += audio-backend-test
 audio_backend_test_SOURCES = Audio/tests/audio-backend.cpp
 audio_backend_test_LDADD = libspiralcore.la
+# A panel file's bindings and handlers, against the fixtures shared with the
+# private tree (Foundation/libSSMUI/tests there): both trees must agree.
+check_PROGRAMS += value-rule-test handlers-test
+value_rule_test_SOURCES = Data/tests/value-rule.cpp
+value_rule_test_LDADD = libspiralcore.la
+handlers_test_SOURCES = Data/tests/handlers.cpp
+handlers_test_LDADD = libspiralcore.la
+EXTRA_DIST += Data/tests/bindings.json Data/tests/handlers.json
+
 check_PROGRAMS += plugin-manager-test
 plugin_manager_test_SOURCES = Plugin/tests/plugin-manager.cpp
 plugin_manager_test_LDADD = libspiralcore.la
@@ -110,7 +119,7 @@ plugin-manager-root: $(check_LTLIBRARIES)
 	cp .libs/stranger_Probe.so plugin-manager-root/probe/
 	cp .libs/probe_Probe.so plugin-manager-root/probe/variant_Native.so
 check_DATA = plugin-manager-root
-TESTS_ENVIRONMENT = PLUGIN_MANAGER_ROOT=$(abs_builddir)/plugin-manager-root
+TESTS_ENVIRONMENT = PLUGIN_MANAGER_ROOT=$(abs_builddir)/plugin-manager-root SRCDIR=$(abs_srcdir)
 clean-local:
 	rm -rf plugin-manager-root
 
@@ -122,6 +131,10 @@ ring_buffer_test_LDADD = libspiralcore.la
 # The description: a device's state as positional tokens, the form the
 # files have always been written in.
 libspiralcore_la_SOURCES += File/include/Description.h File/src/Description.cpp
+libspiralcore_la_SOURCES += Data/include/DataSource.h Data/src/DataSource.cpp \
+	Data/include/Binding.h Data/src/Binding.cpp \
+	Data/include/MemorySource.h Data/src/MemorySource.cpp \
+	Data/include/ValueRule.h Data/src/ValueRule.cpp Data/include/Handlers.h Data/src/Handlers.cpp
 libspiralcore_la_SOURCES += File/include/PatchProject.h File/src/PatchProject.cpp
 libspiralcore_la_SOURCES += File/include/License.h File/src/License.cpp File/src/LicenseTexts.inc
 check_PROGRAMS += description-test description-reader-test
