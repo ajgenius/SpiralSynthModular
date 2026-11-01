@@ -21,6 +21,7 @@
 #include "RiffWav.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <sstream>
 
 using namespace std;
 using namespace Spiral::Core;
@@ -534,15 +535,13 @@ void PoshSamplerPlugin::Amp(int n, long s, long e)
 	}
 }
 
-// The sprintf's in here should use strstream, but the current implementation (GCC 2.95.3) is buggy
-
 bool PoshSamplerPlugin::SaveExternalFiles (const string &Dir) {
-     char temp[256];
      for (int n=0; n<NUM_SAMPLES; n++) {
          // if it's not empty
          if (m_SampleVec[n]->GetLength() != 0) {
-            sprintf (temp, "%sPoshSampler%d_%d.wav", Dir.c_str(), GetID(), n);
-            SaveSample (n, temp);
+            ostringstream temp;
+            temp << Dir << "PoshSampler" << GetID() << "_" << n << ".wav";
+            SaveSample (n, temp.str());
          }
      }
      return true;
@@ -550,9 +549,9 @@ bool PoshSamplerPlugin::SaveExternalFiles (const string &Dir) {
 
 void PoshSamplerPlugin::LoadExternalFiles(const string &Dir, int withID) {
      int UseID = (withID==-1) ? GetID() : withID;
-     char temp[256];
      for (int n=0; n<NUM_SAMPLES;  n++) {
-         sprintf (temp, "%sPoshSampler%d_%d.wav", Dir.c_str(), UseID, n);
-         LoadSample (n, temp);
+         ostringstream temp;
+         temp << Dir << "PoshSampler" << UseID << "_" << n << ".wav";
+         LoadSample (n, temp.str());
      }
 }

@@ -20,6 +20,7 @@
 #include "NoteTable.h"
 
 #include "RiffWav.h"
+#include <sstream>
 
 using namespace std;
 using namespace Spiral::Core;
@@ -299,17 +300,17 @@ void SpiralLoopPlugin::Apply(Spiral::Core::Description::Reader &r)
 	
 bool SpiralLoopPlugin::SaveExternalFiles(const string &Dir)
 {
-	char temp[256];
-	sprintf(temp,"%sSpiralLoopSample%d.wav",Dir.c_str(),SpiralPlugin_GetID());	
-	SaveWav(temp);
+	ostringstream temp;
+	temp<<Dir<<"SpiralLoopSample"<<SpiralPlugin_GetID()<<".wav";
+	SaveWav(temp.str().c_str());
 	return true;
 }
 
 void SpiralLoopPlugin::LoadExternalFiles(const string &Dir, int withID)
 {
-	char temp[256];
-	sprintf(temp,"%sSpiralLoopSample%d.wav",Dir.c_str(),withID == -1 ? SpiralPlugin_GetID() : withID);
-	LoadWav(temp);
+	ostringstream temp;
+	temp<<Dir<<"SpiralLoopSample"<<(withID == -1 ? SpiralPlugin_GetID() : withID)<<".wav";
+	LoadWav(temp.str().c_str());
 }
 
 
