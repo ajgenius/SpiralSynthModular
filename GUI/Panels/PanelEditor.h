@@ -20,9 +20,18 @@
 #define SPIRAL_PANELS_PANEL_EDITOR_H
 
 #include "SpiralPluginGUI.h"
+#include <map>
 #include <string>
 
 class Fl_Button;
+
+namespace Spiral
+{
+	namespace Core
+	{
+		class StateValue;
+	}
+}
 
 namespace SpiralPanels
 {
@@ -38,6 +47,8 @@ namespace SpiralPanels
 		virtual void Update();
 
 		Panel *GetPanel() const { return m_Panel; }
+		void SaveState(std::map<std::string, Spiral::Core::StateValue> &state) const;
+		void LoadState(const std::map<std::string, Spiral::Core::StateValue> &state);
 		void SetLayout(size_t index);
 		void SetMode(size_t index);
 

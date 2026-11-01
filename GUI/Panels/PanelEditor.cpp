@@ -175,6 +175,18 @@ namespace SpiralPanels
 			m_Mode->position(x() + w() - (m_Layout ? 38 : 24), y() + 2);
 	}
 
+	void PanelEditor::SaveState(std::map<std::string, Spiral::Core::StateValue> &state) const
+	{
+		if (m_Panel)
+			m_Panel->SaveState(state);
+	}
+
+	void PanelEditor::LoadState(const std::map<std::string, Spiral::Core::StateValue> &state)
+	{
+		if (m_Panel)
+			m_Panel->LoadState(state);
+	}
+
 	void PanelEditor::SetLayout(size_t index)
 	{
 		if (!m_Panel || index >= m_Panel->LayoutCount())

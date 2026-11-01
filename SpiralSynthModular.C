@@ -2036,6 +2036,8 @@ void DescribePage(Spiral::Core::PatchDescription &patch, SynthModular &o, const 
 		object.SetValue("text", SavedDeviceName(i->second));
 		snprintf(text, sizeof text, "%d", i->second->m_PluginID); device.SetValue("id", text);
 		device.SetValue("name", SavedDeviceName(i->second));
+		if (SpiralPanels::PanelEditor *editor = dynamic_cast<SpiralPanels::PanelEditor *>(i->second->m_DeviceGUI->GetPluginWindow()))
+			editor->SaveState(object.State);
 
 		Spiral::Core::Description described;
 		i->second->m_Device->Describe(described);
@@ -2249,6 +2251,8 @@ bool SynthModular::ApplyPage(const Spiral::Core::PatchDescription &patch, const 
 			{
 				if (SpiralPluginGUI *gui = dynamic_cast<SpiralPluginGUI *>(temp->m_DeviceGUI->GetPluginWindow()))
 					gui->UpdateValues(temp->m_Device);
+				SpiralPanels::PanelEditor *editor = dynamic_cast<SpiralPanels::PanelEditor *>(temp->m_DeviceGUI->GetPluginWindow());
+				if (editor) editor->LoadState(object.State);
 				if (object.Value("collapsed") == "true")
 				{
 					temp->m_DeviceGUI->Minimise();

@@ -21,9 +21,12 @@
 #include "PanelControlRegistry.h"
 #include "PanelProperty.h"
 #include "DeviceSource.h"
+#include "PatchDescription.h"
 #include "JSON.h"
 #include <FL/Fl_Group.H>
 #include <cstdio>
+#include <cstdlib>
+#include <sstream>
 #include <algorithm>
 
 namespace SpiralPanels
@@ -38,6 +41,7 @@ namespace SpiralPanels
 	Panel::Panel(int x, int y, SpiralPlugin *plugin):
 		Fl_Group(x, y, 1, 1),
 		m_Source(new DeviceSource(plugin)),
+		m_State(NULL),
 		m_Loading(false),
 		m_Width(1),
 		m_Layout(0),
@@ -61,6 +65,8 @@ namespace SpiralPanels
 		m_Layouts.clear();
 		m_Layout = 0;
 		m_Binder.Clear();
+		delete m_State;
+		m_State = NULL;
 		for (size_t i = 0; i < m_Controls.size(); ++i)
 			delete m_Controls[i];
 		m_Controls.clear();
@@ -113,9 +119,37 @@ namespace SpiralPanels
 			}
 		}
 
+		const Spumoni::JSON *state = document.Get("state");
+		if (state && state->GetType() == Spumoni::JSON::Array)
+		{
+			m_State = new Spiral::Data::MemorySource();
+			std::vector<ControlValue> initial;
+			for (size_t i = 0; i < state->Size(); ++i)
+			{
+				PanelProperty *property = PanelProperty::FromJSON(*state->At(i));
+				if (!property)
+					continue;
+				if (m_Properties.count(property->Name()))
+					delete m_Properties[property->Name()];
+				m_Properties[property->Name()] = property;
+				m_State->AddField(property->Name(), property->Type, false, property->Label);
+				ControlValue value(property->Default());
+				if (property->Type == PanelProperty::String)
+					value = ControlValue(std::string());
+				else if (property->Type == PanelProperty::Boolean)
+					value = ControlValue(property->Default() != 0);
+				else
+					value.type = property->Type;
+				initial.push_back(value);
+			}
+			m_State->AddRow(initial);
+			m_State->Seek(0);
+			m_State->Observe(this);
+		}
+
 		for (std::map<std::string, PanelProperty *>::iterator i = m_Properties.begin(); i != m_Properties.end(); ++i)
 		{
-			if (std::find(identities.begin(), identities.end(), i->first) != identities.end())
+			if (std::find(identities.begin(), identities.end(), i->first) != identities.end() || IsState(*i->second))
 				continue;
 
 			if (!i->second->IsCommand() && m_Source->FindField(i->first) < 0 && !m_Source->AddElement(*i->second))
@@ -149,7 +183,67 @@ namespace SpiralPanels
 	void Panel::Bind()
 	{
 		for (size_t i = 0; i < m_Controls.size(); ++i)
-			m_Controls[i]->BindTo(m_Binder, *m_Source);
+		{
+			const PanelProperty *property = m_Controls[i]->Property();
+			m_Controls[i]->BindTo(m_Binder, property ? SourceOf(*property) : *m_Source);
+		}
+	}
+
+	bool Panel::IsState(const PanelProperty &property) const
+	{
+		return m_State && m_State->FindField(property.Name()) >= 0;
+	}
+
+	Spiral::Data::DataSource &Panel::SourceOf(const PanelProperty &property) const
+	{
+		if (IsState(property))
+			return *m_State;
+		return *m_Source;
+	}
+
+	void Panel::SaveState(std::map<std::string, Spiral::Core::StateValue> &state) const
+	{
+		using Spiral::Core::StateValue;
+		for (int i = 0; m_State && i < m_State->FieldCount(); ++i)
+		{
+			ControlValue value;
+			if (!m_State->Get(i, value))
+				continue;
+			const std::string &key = m_State->Field(i).Key;
+			if (value.type == ControlValue::String)
+				state[key] = StateValue(StateValue::String, value.text);
+			else if (value.type == ControlValue::Boolean)
+				state[key] = StateValue(StateValue::Boolean, value.boolean ? "true" : "false");
+			else
+			{
+				std::ostringstream text;
+				text << value.number;
+				state[key] = StateValue(StateValue::Number, text.str());
+			}
+		}
+	}
+
+	void Panel::LoadState(const std::map<std::string, Spiral::Core::StateValue> &state)
+	{
+		using Spiral::Core::StateValue;
+		for (std::map<std::string, StateValue>::const_iterator i = state.begin(); i != state.end(); ++i)
+		{
+			const int field = m_State ? m_State->FindField(i->first) : -1;
+			if (field < 0)
+				continue;
+			ControlValue value;
+			if (i->second.Type == StateValue::String)
+				value = ControlValue(i->second.Text);
+			else if (i->second.Type == StateValue::Boolean)
+				value = ControlValue(i->second.Text == "true");
+			else
+			{
+				value = ControlValue(std::strtod(i->second.Text.c_str(), NULL));
+				if (m_State->Field(field).Type == ControlValue::Integer)
+					value.type = ControlValue::Integer;
+			}
+			m_State->Set(field, value);
+		}
 	}
 
 	void Panel::BuildChildren(const Spumoni::JSON &children, int originX, int originY)
@@ -425,7 +519,8 @@ namespace SpiralPanels
 		if (m_Loading || property.IsReadOnly())
 			return false;
 
-		return m_Source->Set(m_Source->FindField(property.Name()), ControlValue(value));
+		Spiral::Data::DataSource &source = SourceOf(property);
+		return source.Set(source.FindField(property.Name()), ControlValue(value));
 	}
 
 	void Panel::DataChanged(Spiral::Data::DataSource &source, int field)
@@ -456,13 +551,15 @@ namespace SpiralPanels
 	{
 		if (m_Loading || property.IsReadOnly())
 			return;
-		m_Source->Set(m_Source->FindField(property.Name()), ControlValue(text));
+		Spiral::Data::DataSource &source = SourceOf(property);
+		source.Set(source.FindField(property.Name()), ControlValue(text));
 	}
 
 	double Panel::Read(const PanelProperty &property) const
 	{
 		ControlValue value;
-		if (!m_Source->Get(m_Source->FindField(property.Name()), value))
+		Spiral::Data::DataSource &source = SourceOf(property);
+		if (!source.Get(source.FindField(property.Name()), value))
 			return property.Default();
 		return value.type == ControlValue::Boolean ? (value.boolean ? 1 : 0) : value.number;
 	}
@@ -470,7 +567,8 @@ namespace SpiralPanels
 	std::string Panel::ReadText(const PanelProperty &property) const
 	{
 		ControlValue value;
-		return m_Source->Get(m_Source->FindField(property.Name()), value) ? value.text : std::string();
+		Spiral::Data::DataSource &source = SourceOf(property);
+		return source.Get(source.FindField(property.Name()), value) ? value.text : std::string();
 	}
 
 	bool Panel::Scope::HasField(const std::string &name) const

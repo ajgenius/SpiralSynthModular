@@ -182,10 +182,22 @@ namespace Core
 		std::string ToPort;
 	};
 
+	class StateValue
+	{
+	public:
+		enum Kind { Number, Boolean, String };
+		Kind Type;
+		std::string Text;
+
+		StateValue(): Type(String) {}
+		StateValue(Kind type, const std::string &text): Type(type), Text(text) {}
+	};
+
 	class ObjectDescription
 	{
 	public:
 		std::map<std::string, std::string> Values;
+		std::map<std::string, StateValue> State;
 
 		std::vector<DeviceDescription> Devices;
 

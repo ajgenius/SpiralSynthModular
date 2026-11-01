@@ -20,6 +20,7 @@
 #define SPIRAL_PANELS_PANEL_H
 
 #include "Binding.h"
+#include "MemorySource.h"
 #include "Handlers.h"
 #include "ValueRule.h"
 #include <FL/Fl_Group.H>
@@ -28,6 +29,14 @@
 #include <vector>
 
 class SpiralPlugin;
+
+namespace Spiral
+{
+	namespace Core
+	{
+		class StateValue;
+	}
+}
 
 namespace Spumoni
 {
@@ -63,6 +72,9 @@ namespace SpiralPanels
 		double Read(const PanelProperty &property) const;
 		std::string ReadText(const PanelProperty &property) const;
 		DeviceSource *Source() const { return m_Source; }
+		bool IsState(const PanelProperty &property) const;
+		void SaveState(std::map<std::string, Spiral::Core::StateValue> &state) const;
+		void LoadState(const std::map<std::string, Spiral::Core::StateValue> &state);
 		SpiralPlugin *Plugin() const;
 
 		const std::string &Help() const { return m_Help; }
@@ -157,7 +169,9 @@ namespace SpiralPanels
 		size_t m_Mode;
 
 		void Bind();
+		Spiral::Data::DataSource &SourceOf(const PanelProperty &property) const;
 		DeviceSource *m_Source;
+		Spiral::Data::MemorySource *m_State;
 		Spiral::Data::Binder m_Binder;
 		std::map<std::string, PanelProperty *> m_Properties;
 		std::vector<PanelControl *> m_Controls;
