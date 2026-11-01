@@ -36,6 +36,8 @@ class SpiralPluginGUI : public SpiralGUIType {
       virtual void Update ();
       // called while audio thread is suspended, so direct access to the spiralplugin is acceptable
       virtual void UpdateValues (SpiralPlugin *o) = 0;
+      // The help the title bar's '?' shows.
+      void ShowHelp ();
    protected:
       ChannelHandler *m_GUICH;
       virtual const std::string GetHelpText (const std::string &loc);

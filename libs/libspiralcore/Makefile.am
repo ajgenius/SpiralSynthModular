@@ -55,7 +55,7 @@ libspiralcore_la_SOURCES += Plugin/include/Property.h Plugin/src/Property.cpp
 libspiralcore_la_SOURCES += Plugin/include/AudioDriver.h
 libspiralcore_la_SOURCES += Plugin/include/BackendPath.h Plugin/src/BackendPath.cpp
 libspiralcore_la_SOURCES += Plugin/include/DeviceClassRegistry.h Plugin/src/DeviceClassRegistry.cpp Plugin/include/EditorClassRegistry.h Plugin/src/EditorClassRegistry.cpp
-libspiralcore_la_SOURCES += Plugin/include/SpiralPlugin.h Plugin/src/SpiralPlugin.cpp Audio/include/OutputAudioClient.h Audio/src/OutputAudioClient.cpp Audio/include/AudioTransportHub.h Audio/src/AudioTransportHub.cpp Plugin/include/OutputPlugin.h Plugin/src/OutputPlugin.cpp Plugin/include/OutputIcon.xpm
+libspiralcore_la_SOURCES += Plugin/include/SpiralPlugin.h Plugin/src/SpiralPlugin.cpp Audio/include/OutputAudioClient.h Audio/src/OutputAudioClient.cpp Audio/include/AudioTransportHub.h Audio/src/AudioTransportHub.cpp Plugin/include/OutputPlugin.h Plugin/src/OutputPlugin.cpp Plugin/include/OutputIcon.xpm Plugin/include/SubPatchDevice.h Plugin/src/SubPatchDevice.cpp
 if BUILD_LADSPA
 # The LADSPA device (id 22) and its catalog, built in like Output.
 libspiralcore_la_SOURCES += Plugin/include/LADSPAInfo.h Plugin/src/LADSPAInfo.cpp \

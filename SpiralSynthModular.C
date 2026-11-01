@@ -43,6 +43,7 @@
 #include "DeviceClassRegistry.h"
 #include "EditorClassRegistry.h"
 #include "OutputPlugin.h"
+#include "SubPatchDevice.h"
 #include "OutputPluginGUI.h"
 #ifdef HAVE_LADSPA
 #include "LADSPAPlugin.h"
@@ -194,6 +195,7 @@ m_Topbar(NULL),
 m_Canvas(NULL),
 m_CanvasScroll(NULL),
 m_Drawer(NULL),
+m_Breadcrumb(NULL),
 m_TopWindow(NULL),
 m_SavePointCount(0),
 m_MenuStateKnown(false),
@@ -202,7 +204,11 @@ m_MenuPaste(false),
 m_MenuSavePoints(false),
 m_MenuPackage(false)
 {
-	pthread_mutex_init(&m_CycleLock, NULL);
+	pthread_mutexattr_t recursive;
+	pthread_mutexattr_init(&recursive);
+	pthread_mutexattr_settype(&recursive, PTHREAD_MUTEX_RECURSIVE);
+	pthread_mutex_init(&m_CycleLock, &recursive);
+	pthread_mutexattr_destroy(&recursive);
 	/* Shared Audio State Information  */
 	m_Info.BUFSIZE = SpiralInfo::BUFSIZE;
 	m_Info.SAMPLERATE = SpiralInfo::SAMPLERATE;
@@ -388,61 +394,85 @@ void SynthModular::RenderAudio()
 	}
 
 	// run the plugins (only ones connected to anything)
-	const list<int> &ExecutionOrder = m_Canvas->GetGraph()->GetSortedList();
+	const list<int> &ExecutionOrder = m_Canvas->ExecutionOrder();
 	for (list<int>::const_reverse_iterator i=ExecutionOrder.rbegin();
 		 i!=ExecutionOrder.rend(); i++)
-	{
 		// use the graphsort order to remove internal latency
-		map<int,DeviceWin*>::iterator di=m_DeviceWinMap.find(*i);
-		if (di!=m_DeviceWinMap.end() && di->second->m_Device  && (! di->second->m_Device->IsDead()) && (!m_Info.PAUSED || m_ResetingAudioThread))
-		{
-			#ifdef DEBUG_PLUGINS
-			cerr<<"Executing plugin "<<di->second->m_PluginID<<endl;
-			#endif
-
-			if (m_ResetingAudioThread)
-			{
-				di->second->m_Device->Reset();
-			}
-			else
-			{
-				di->second->m_Device->Execute();
-				di->second->m_Device->StampOutputs(m_Info.FRAME);
-
-				// If this is an audio device see if we need to ProcessAudio here
-				if (di->second->m_Device->IsAudioDriver())
-				{
-					AudioDriver *driver = ((AudioDriver *)di->second->m_Device);
-
-					if (driver->ProcessType() == AudioDriver::MANUAL)
-					{
-						driver->ProcessAudio();
-					}
-				}
-			}
-
-			#ifdef DEBUG_PLUGINS
-			cerr<<"Finished executing"<<endl;
-			#endif
-		}
-	}
+		RunDevice(*i);
 
 	//we can safely turn this off here
 	m_ResetingAudioThread = false;
+}
+
+void SynthModular::cb_RunDevice(int id, void *host)
+{
+	((SynthModular *)host)->RunDevice(id);
+}
+
+// One device's step in the run: it runs, or resets.
+void SynthModular::RunDevice(int id)
+{
+	map<int,DeviceWin*>::iterator di=m_DeviceWinMap.find(id);
+	if (di!=m_DeviceWinMap.end() && di->second->m_Device  && (! di->second->m_Device->IsDead()) && (!m_Info.PAUSED || m_ResetingAudioThread))
+	{
+		#ifdef DEBUG_PLUGINS
+		cerr<<"Executing plugin "<<di->second->m_PluginID<<endl;
+		#endif
+
+		if (m_ResetingAudioThread)
+		{
+			di->second->m_Device->Reset();
+		}
+		else
+		{
+			di->second->m_Device->Execute();
+			di->second->m_Device->StampOutputs(m_Info.FRAME);
+
+			// If this is an audio device see if we need to ProcessAudio here
+			if (di->second->m_Device->IsAudioDriver())
+			{
+				AudioDriver *driver = ((AudioDriver *)di->second->m_Device);
+
+				if (driver->ProcessType() == AudioDriver::MANUAL)
+				{
+					driver->ProcessAudio();
+				}
+			}
+		}
+
+		#ifdef DEBUG_PLUGINS
+		cerr<<"Finished executing"<<endl;
+		#endif
+	}
 }
 
 //////////////////////////////////////////////////////////
 
 void SynthModular::UpdatePluginGUIs()
 {
+	if (m_Breadcrumb)
+	{
+		// The first crumb is the patch's file name, without its extension.
+		string root = m_FilePath;
+		const size_t slash = root.find_last_of("/\\");
+		if (slash != string::npos) root = root.substr(slash + 1);
+		const size_t dot = root.find_last_of('.');
+		if (dot != string::npos && dot > 0) root = root.substr(0, dot);
+		m_Breadcrumb->SetRoot(root);
+		m_Breadcrumb->Refresh();
+	}
+
+	SyncSubPatches();
+
 	// see if any need deleting
 	for (map<int,DeviceWin*>::iterator i=m_DeviceWinMap.begin();
 		 i!=m_DeviceWinMap.end(); )
 	{
 		if (i->second->m_DeviceGUI && i->second->m_DeviceGUI->GetPluginWindow())
 		{
-			SpiralPluginGUI *GUI=(SpiralPluginGUI *)i->second->m_DeviceGUI->GetPluginWindow();
-			GUI->Update();
+			SpiralGUIType *window = i->second->m_DeviceGUI->GetPluginWindow();
+			if (SpiralPluginGUI *GUI = dynamic_cast<SpiralPluginGUI *>(window))
+				GUI->Update();
 		}
 
 		if (i->second->m_DeviceGUI && i->second->m_DeviceGUI->Killed())
@@ -470,6 +500,11 @@ void SynthModular::UpdatePluginGUIs()
 			{
 				i->second->m_DeviceGUI->GetPluginWindow()->hide();
 			}
+
+			if (m_Canvas->IsBox(i->first))
+				for (map<int,DeviceWin*>::iterator m = m_DeviceWinMap.begin(); m != m_DeviceWinMap.end(); ++m)
+					if (m->second->m_DeviceGUI && m_Canvas->PageOf(m->first) == i->first)
+						Fl_DeviceGUI::Kill(m->second->m_DeviceGUI);
 
 			//Remove Device GUI from canvas
 			m_Canvas->RemoveDevice(i->second->m_DeviceGUI);
@@ -697,6 +732,7 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_TopWindow->resizable(m_CanvasScroll);
 
 	m_Canvas = new Fl_Canvas(-5000, -5000, 10000, 10000, "");
+	m_Canvas->SetGraphLock(&m_CycleLock);
         m_Canvas->type(1);
 	m_Canvas->box(FL_FLAT_BOX);
         m_Canvas->labeltype(FL_ENGRAVED_LABEL);
@@ -711,8 +747,17 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_Canvas->SetPasteDeviceGroupCallback((Fl_Callback*)cb_Paste);
         m_Canvas->SetMergePatchCallback((Fl_Callback*)cb_Merge);
         m_Canvas->SetAboutPatchCallback((Fl_Callback*)cb_AboutPatch);
+	m_Canvas->SetGroupCallback((Fl_Callback*)cb_Group);
+	m_Canvas->SetUngroupCallback((Fl_Callback*)cb_Ungroup);
+	m_Canvas->SetPageCallback((Fl_Callback*)cb_PageShown);
 
 	m_CanvasScroll->add(m_Canvas);
+
+	// Where the canvas is in the patch, along its bottom edge.
+	m_Breadcrumb = new Fl_Breadcrumb (0, MAIN_HEIGHT - Fl_Breadcrumb::Height(), MAIN_WIDTH, Fl_Breadcrumb::Height());
+	m_Breadcrumb->color(SpiralInfo::GUICOL_Tool);
+	m_Breadcrumb->Bind(m_Canvas);
+	m_TopWindow->add(m_Breadcrumb);
 
 	// The drawer starts as a rail at the canvas's right edge; drag the
 	// bar or ask for About Patch to open it. Always bound: a patch that
@@ -724,6 +769,7 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_Drawer->CollapseChanged = cb_DrawerCollapse;
 	m_Drawer->CollapseChangedData = this;
 	m_Drawer->Bind(&m_Document);
+	m_Drawer->BindPorts(m_Canvas);
 	m_TopWindow->add(m_Drawer);
 
 	m_SettingsWindow = new SettingsWindow;
@@ -799,6 +845,7 @@ void SynthModular::LoadPlugins (string pluginPath) {
      // Built-in devices first: a module of the same ID is not loaded.
      Spiral::Core::DeviceClassRegistry::Get()->Register(OutputPlugin::Class());
      Spiral::Core::EditorClassRegistry::Get()->Register(OutputPluginGUI::Class());
+     Spiral::Core::DeviceClassRegistry::Get()->Register(SubPatchDevice::Class());
 #ifdef HAVE_LADSPA
      Spiral::Core::DeviceClassRegistry::Get()->Register(LADSPAPlugin::Class());
 #endif
@@ -810,6 +857,8 @@ void SynthModular::LoadPlugins (string pluginPath) {
      for (vector<Spiral::Core::DeviceClass*>::const_iterator i=Devices.begin(); i!=Devices.end(); i++) {
          const Spiral::Core::DeviceClass *info = *i;
          int ID = info->ID;
+         // A subpatch is made by grouping, not from the toolbar.
+         if (ID == SubPatchDevice::Class().ID) continue;
          if (SpiralInfo::USEPLUGINLIST && !ListedModule(info->Module)) continue;
          {
             #ifdef DEBUG_PLUGINS
@@ -1131,6 +1180,7 @@ void SynthModular::AddDevice(int n, int x=-1, int y=-1)
 		temp->m_DeviceGUI->SetID(ID);
 		temp->m_Device->SetUpdateInfoCallback(ID,cb_UpdatePluginInfo);
 		m_DeviceWinMap[ID]=temp;
+		m_Canvas->SetPageOf(ID, m_Canvas->Page());
 	}
 }
 
@@ -1173,6 +1223,259 @@ DeviceWin* SynthModular::NewComment(int n, int x=-1, int y=-1)
 
 //////////////////////////////////////////////////////////
 
+// The device a subpatch is hosted in, its edge ports already given, with
+// its settings and its panel.
+DeviceWin* SynthModular::NewSubPatch(int x, int y, const string &name, SubPatchDevice *device,
+	const Spiral::Core::SubPatchConfig &config)
+{
+	DeviceWin *nlw = new DeviceWin;
+	nlw->m_Device = device;
+	nlw->m_PluginID = SubPatchDevice::Class().ID;
+	device->SetUpdateCallback(cb_Update);
+	device->SetParent((void*)this);
+	device->SetMemberStep(cb_RunDevice, this);
+	device->Initialise(&m_Info);
+	device->SetConfig(config);
+	device->PortsChanged();
+
+	const PluginInfo &edge = device->GetPluginInfo();
+	DeviceGUIInfo Info;
+	Info.XPos = x;
+	Info.YPos = y;
+	Info.NumInputs = edge.NumInputs;
+	Info.NumOutputs = edge.NumOutputs;
+	Info.PortTips = edge.PortTips;
+	Info.PortTypes = edge.PortTypes;
+	const int ports = Info.NumInputs > Info.NumOutputs ? Info.NumInputs : Info.NumOutputs;
+	Info.Width = 80;
+	Info.Height = 20 + ports * 12;
+	Info.Name = name;
+
+	Fl_Group *prev = Fl_Group::current();
+	Fl_Group::current(NULL);
+	const Spiral::Core::EditorClass *Editor = Spiral::Core::EditorClassRegistry::Get()->Find(nlw->m_PluginID);
+	SpiralGUIType *panel = Editor ? Editor->CreateEditor(device) : NULL;
+	if (panel) panel->end();
+	Fl_Group::current(prev);
+	if (panel) panel->position(x + 10, y);
+	nlw->m_DeviceGUI = new Fl_DeviceGUI(Info, panel, NULL);
+	nlw->m_DeviceGUI->end();
+	Fl_Group::current(prev);
+	nlw->m_DeviceGUI->SetName(name);
+	Fl_Canvas::SetDeviceCallbacks(nlw->m_DeviceGUI, m_Canvas);
+	m_Canvas->add(nlw->m_DeviceGUI);
+	m_Canvas->redraw();
+	return nlw;
+}
+
+static bool HostIO(int plugin)
+{
+	return plugin == 0 || plugin == 2 || plugin == 31 || plugin == 40;
+}
+
+static bool HoldsBox(Fl_Canvas *canvas)
+{
+	const CanvasGroup selection = canvas->Selection();
+	for (size_t s = 0; s < selection.m_DeviceIds.size(); ++s)
+		if (canvas->IsBox(selection.m_DeviceIds[s]))
+		{
+			fl_alert("A SubPatch can't be cut or copied yet.");
+			return true;
+		}
+	return false;
+}
+
+// The new subpatch's edge port standing for a member's port, added the
+// first time, named after the port it stands for.
+static int EdgePort(Fl_Canvas *canvas, vector<BoundaryPort> &ports, bool input, int holder, int port)
+{
+	for (size_t k = 0; k < ports.size(); ++k)
+		if (ports[k].InnerID == holder && ports[k].InnerPort == port)
+			return (int)k;
+	const string label = canvas->PortName(holder, input, port);
+	string name = label;
+	for (unsigned suffix = 2; !name.empty(); ++suffix)
+	{
+		bool taken = false;
+		for (size_t k = 0; k < ports.size() && !taken; ++k)
+			taken = ports[k].Name == name;
+		if (!taken)
+			break;
+		char number[16];
+		snprintf(number, sizeof number, " %u", suffix);
+		name = label + number;
+	}
+	ports.push_back(BoundaryPort(holder, port, name));
+	return (int)ports.size() - 1;
+}
+
+void SynthModular::GroupSelection(const string &title)
+{
+	const CanvasGroup selection = m_Canvas->Selection();
+	const int page = m_Canvas->Page();
+	std::set<int> members;
+	int left = 0, top = 0, right = 0, bottom = 0;
+	for (size_t s = 0; s < selection.m_DeviceIds.size(); ++s)
+	{
+		map<int,DeviceWin*>::iterator i = m_DeviceWinMap.find(selection.m_DeviceIds[s]);
+		if (i == m_DeviceWinMap.end() || !i->second->m_DeviceGUI)
+			continue;
+		if (HostIO(i->second->m_PluginID))
+			continue;
+		Fl_DeviceGUI *gui = i->second->m_DeviceGUI;
+		if (members.empty() || gui->x() < left) left = gui->x();
+		if (members.empty() || gui->y() < top) top = gui->y();
+		if (members.empty() || gui->x() + gui->w() > right) right = gui->x() + gui->w();
+		if (members.empty() || gui->y() + gui->h() > bottom) bottom = gui->y() + gui->h();
+		members.insert(i->first);
+	}
+	if (members.empty())
+		return;
+
+	SubPatchDevice *box = new SubPatchDevice;
+	const vector<CanvasWire> &wires = m_Canvas->Wires();
+	for (size_t w = 0; w < wires.size(); ++w)
+	{
+		const int source = m_Canvas->Holder(wires[w].OutputID, page);
+		const int dest = m_Canvas->Holder(wires[w].InputID, page);
+		const bool fromInside = members.count(source) != 0, toInside = members.count(dest) != 0;
+		if (fromInside == toInside)
+			continue;
+		const int holder = fromInside ? source : dest;
+		const int port = fromInside ? m_Canvas->PortThrough(source, false, wires[w].OutputID, wires[w].OutputPort)
+		                            : m_Canvas->PortThrough(dest, true, wires[w].InputID, wires[w].InputPort);
+		if (port < 0)
+			continue;
+		EdgePort(m_Canvas, fromInside ? box->Outputs : box->Inputs, !fromInside, holder, port);
+	}
+
+	// Where the page's own edge is bound to a member, it binds through the
+	// new subpatch's edge instead, as a wire crossing it does.
+	vector<pair<BoundaryPort *, int> > rebound;
+	SubPatchDevice *outer = m_Canvas->Box(page);
+	for (int input = 1; outer && input >= 0; --input)
+	{
+		vector<BoundaryPort> &edge = input ? outer->Inputs : outer->Outputs;
+		for (size_t k = 0; k < edge.size(); ++k)
+			if (members.count(edge[k].InnerID))
+				rebound.push_back(make_pair(&edge[k], EdgePort(m_Canvas, input ? box->Inputs : box->Outputs,
+					input != 0, edge[k].InnerID, edge[k].InnerPort)));
+	}
+
+	const int ID = m_NextID++;
+	DeviceWin *win = NewSubPatch((left + right) / 2 - 50, (top + bottom) / 2 - 20, title, box,
+		Spiral::Core::SubPatchConfig());
+	win->m_DeviceGUI->SetID(ID);
+	m_DeviceWinMap[ID] = win;
+	m_Canvas->SetBox(ID, box);
+	m_Canvas->SetPageOf(ID, page);
+	for (std::set<int>::iterator m = members.begin(); m != members.end(); ++m)
+		m_Canvas->SetPageOf(*m, ID);
+	for (size_t r = 0; r < rebound.size(); ++r)
+	{
+		rebound[r].first->InnerID = ID;
+		rebound[r].first->InnerPort = rebound[r].second;
+	}
+	m_Canvas->ShowPage(page);
+}
+
+void SynthModular::UngroupSelection()
+{
+	const CanvasGroup selection = m_Canvas->Selection();
+	for (size_t s = 0; s < selection.m_DeviceIds.size(); ++s)
+	{
+		const int box = selection.m_DeviceIds[s];
+		map<int,DeviceWin*>::iterator win = m_DeviceWinMap.find(box);
+		const SubPatchDevice *ungrouped = m_Canvas->Box(box);
+		if (win == m_DeviceWinMap.end() || !ungrouped)
+			continue;
+		const int page = m_Canvas->PageOf(box);
+		for (map<int,DeviceWin*>::iterator m = m_DeviceWinMap.begin(); m != m_DeviceWinMap.end(); ++m)
+			if (m_Canvas->PageOf(m->first) == box)
+				m_Canvas->SetPageOf(m->first, page);
+		for (map<int,DeviceWin*>::iterator q = m_DeviceWinMap.begin(); q != m_DeviceWinMap.end(); ++q)
+		{
+			SubPatchDevice *outer = m_Canvas->Box(q->first);
+			if (!outer || q->first == box)
+				continue;
+			for (int input = 1; input >= 0; --input)
+			{
+				vector<BoundaryPort> &ports = input ? outer->Inputs : outer->Outputs;
+				const vector<BoundaryPort> &through = input ? ungrouped->Inputs : ungrouped->Outputs;
+				for (size_t k = 0; k < ports.size(); ++k)
+					if (ports[k].InnerID == box && ports[k].InnerPort >= 0 && ports[k].InnerPort < (int)through.size())
+					{
+						ports[k].InnerID = through[ports[k].InnerPort].InnerID;
+						ports[k].InnerPort = through[ports[k].InnerPort].InnerPort;
+					}
+			}
+		}
+		m_Canvas->RemoveBox(box);
+		Fl_DeviceGUI::Kill(win->second->m_DeviceGUI);
+	}
+	m_Canvas->ShowPage(m_Canvas->Page());
+}
+
+// A subpatch's settings live in its device, which its panel, MIDI and the
+// drawer change; a change made through its properties is taken here, and
+// the canvas schedules it again.
+void SynthModular::SyncSubPatches()
+{
+	bool changed = false;
+	for (map<int,DeviceWin*>::iterator i = m_DeviceWinMap.begin(); i != m_DeviceWinMap.end(); ++i)
+	{
+		SubPatchDevice *device = m_Canvas->Box(i->first);
+		if (!device)
+			continue;
+		const Spiral::Core::SubPatchConfig was = device->Config();
+		if (!device->TakeSettings())
+			continue;
+		if (device->Config().Mode != was.Mode)
+			m_Canvas->SetBoxMode(i->first, device->Config().Mode);
+		changed = true;
+	}
+	if (changed && m_Drawer)
+		m_Drawer->Refresh();
+}
+
+void SynthModular::cb_Group(Fl_Widget *o, void *v)
+{
+	SynthModular *synth = (SynthModular *)v;
+	const CanvasGroup selection = synth->m_Canvas->Selection();
+	size_t blocked = 0;
+	for (size_t s = 0; s < selection.m_DeviceIds.size(); ++s)
+	{
+		map<int,DeviceWin*>::iterator i = synth->m_DeviceWinMap.find(selection.m_DeviceIds[s]);
+		if (i != synth->m_DeviceWinMap.end() && HostIO(i->second->m_PluginID))
+			++blocked;
+	}
+	if (blocked && blocked == selection.m_DeviceIds.size())
+	{
+		fl_alert("You can't group Jack, Output, MIDI or Keyboard into a SubPatch.");
+		return;
+	}
+	if (blocked && fl_choice("You can't group Jack, Output, MIDI or Keyboard into a SubPatch.\n"
+		"Continue without them?", "Cancel", "Continue", NULL) != 1)
+		return;
+	const char *title = fl_input("Group name:", "Group");
+	if (title)
+		synth->GroupSelection(title);
+}
+
+void SynthModular::cb_Ungroup(Fl_Widget *o, void *v)
+{
+	((SynthModular *)v)->UngroupSelection();
+}
+
+void SynthModular::cb_PageShown(Fl_Widget *o, void *v)
+{
+	SynthModular *synth = (SynthModular *)v;
+	if (synth->m_Drawer)
+		synth->m_Drawer->Refresh();
+}
+
+//////////////////////////////////////////////////////////
+
 void SynthModular::AddComment(int n)
 {
 	//cerr<<"Adding "<<m_NextID<<endl;
@@ -1183,6 +1486,7 @@ void SynthModular::AddComment(int n)
 		//cerr<<"adding comment "<<ID<<endl;
 		temp->m_DeviceGUI->SetID(ID);
 		m_DeviceWinMap[ID]=temp;
+		m_Canvas->SetPageOf(ID, m_Canvas->Page());
 	}
 }
 
@@ -1394,12 +1698,17 @@ void SynthModular::LayoutChrome()
 	}
 
 	// The drawer is chrome at the right edge, as wide as its rail or its
-	// open panel; the canvas scroll takes the rest.
+	// open panel; the breadcrumb runs along the bottom beside it, and the
+	// canvas scroll takes the rest.
 	const int DrawerWidth = m_Drawer ? m_Drawer->CurrentWidth() : 0;
+	const int CrumbHeight = m_Breadcrumb ? m_Breadcrumb->h() : 0;
 	if (m_Drawer)
 		m_Drawer->resize(m_TopWindow->w() - DrawerWidth, ChromeHeight,
 		                 DrawerWidth, m_TopWindow->h() - ChromeHeight);
-	m_CanvasScroll->resize(0, ChromeHeight, m_TopWindow->w() - DrawerWidth, m_TopWindow->h() - ChromeHeight);
+	m_CanvasScroll->resize(0, ChromeHeight, m_TopWindow->w() - DrawerWidth,
+	                       m_TopWindow->h() - ChromeHeight - CrumbHeight);
+	if (m_Breadcrumb)
+		m_Breadcrumb->resize(0, m_TopWindow->h() - CrumbHeight, m_TopWindow->w() - DrawerWidth, CrumbHeight);
 	m_TopWindow->redraw();
 }
 
@@ -1624,8 +1933,8 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 					// set the GUI up with the loaded values
 					// looks messy, but if we do it here, the plugin and it's gui can remain
 					// totally seperated.
-					((SpiralPluginGUI*)(m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow()))->
-						UpdateValues(m_DeviceWinMap[ID]->m_Device);
+					if (SpiralPluginGUI *gui = dynamic_cast<SpiralPluginGUI *>(m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow()))
+						gui->UpdateValues(m_DeviceWinMap[ID]->m_Device);
 
 					// position the plugin window in the main window
 					//m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow()->position(px,py);
@@ -1696,23 +2005,22 @@ iostream &operator>>(iostream &s, SynthModular &o)
 
 //////////////////////////////////////////////////////////
 
-void Describe(Spiral::Core::PatchDescription &patch, SynthModular &o, const string &sidecars)
+static string BindPath(Fl_Canvas &canvas, int id, bool input, int port)
+{
+	char text[64];
+	snprintf(text, sizeof text, "%s/%d/%s/%d", canvas.IsBox(id) ? "SubPatch" : "Device", id, input ? "Input" : "Output", port);
+	return text;
+}
+
+void DescribePage(Spiral::Core::PatchDescription &patch, SynthModular &o, const string &sidecars, int page, bool &external)
 {
 	char text[32];
-
-	o.FreezeAll();
-
-	patch.Clear();
-	patch.Values["application"] = "SpiralSynthModular";
-
-	// make external files dir
-	bool ExternalDirUsed=false;
-	string directoryError;
-	Spumoni::Path::MakeDirectories(sidecars, directoryError);
 
 	for (map<int,DeviceWin*>::iterator i = o.m_DeviceWinMap.begin(); i != o.m_DeviceWinMap.end(); i++)
 	{
 		if (!i->second->m_DeviceGUI) continue;
+		if (o.m_Canvas->PageOf(i->first) != page) continue;
+		const bool box = o.m_Canvas->IsBox(i->first);
 		if (!i->second->m_Device && i->second->m_PluginID != COMMENT_ID) continue;
 
 		Spiral::Core::ObjectDescription &object = patch.AddObject();
@@ -1727,10 +2035,33 @@ void Describe(Spiral::Core::PatchDescription &patch, SynthModular &o, const stri
 			continue;
 		}
 
-		object.SetValue("text", SavedDeviceName(i->second));
-
 		Spiral::Core::DeviceDescription &device = object.AddDevice();
 		snprintf(text, sizeof text, "%d", i->first); device.SetValue("patch_id", text);
+
+		if (box)
+		{
+			object.SetValue("text", i->second->m_DeviceGUI->GetName());
+			device.SetValue("name", "SubPatch");
+			DescribePage(device.MakeSubPatch(), o, sidecars, i->first, external);
+			if (const SubPatchDevice *described = o.m_Canvas->Box(i->first))
+			{
+				device.Config = described->Config();
+				for (int input = 1; input >= 0; --input)
+				{
+					const vector<BoundaryPort> &ports = input ? described->Inputs : described->Outputs;
+					for (size_t k = 0; k < ports.size(); ++k)
+					{
+						(input ? device.Inputs : device.Outputs).push_back(Spiral::Core::PortName(ports[k].Name));
+						if (ports[k].InnerID >= 0)
+							device.Binds.push_back(Spiral::Core::PortBind(input != 0, (unsigned)k,
+								BindPath(*o.m_Canvas, ports[k].InnerID, input != 0, ports[k].InnerPort)));
+					}
+				}
+			}
+			continue;
+		}
+
+		object.SetValue("text", SavedDeviceName(i->second));
 		snprintf(text, sizeof text, "%d", i->second->m_PluginID); device.SetValue("id", text);
 		device.SetValue("name", SavedDeviceName(i->second));
 
@@ -1741,11 +2072,26 @@ void Describe(Spiral::Core::PatchDescription &patch, SynthModular &o, const stri
 		// save external files
 		if (i->second->m_Device->SaveExternalFiles(sidecars))
 		{
-			ExternalDirUsed=true;
+			external=true;
 		}
 	}
 
-	::Describe(patch, *o.m_Canvas);
+	::Describe(patch, *o.m_Canvas, page);
+}
+
+void Describe(Spiral::Core::PatchDescription &patch, SynthModular &o, const string &sidecars)
+{
+	o.FreezeAll();
+
+	patch.Clear();
+	patch.Values["application"] = "SpiralSynthModular";
+
+	// make external files dir
+	bool ExternalDirUsed=false;
+	string directoryError;
+	Spumoni::Path::MakeDirectories(sidecars, directoryError);
+
+	DescribePage(patch, o, sidecars, -1, ExternalDirUsed);
 
 	// remove it if it wasn't used
 	if (!ExternalDirUsed)
@@ -1765,6 +2111,42 @@ void SynthModular::Apply(const Spiral::Core::PatchDescription &patch, const stri
 	std::map<std::string, int> ids;
 	if (merge) Fl_Canvas::ClearSelection(m_Canvas);
 
+	if (ApplyPage(patch, sidecars, merge, merge ? m_Canvas->Page() : -1, ids) && !merge)
+		m_Canvas->CenterPatch();
+
+	ThawAll();
+}
+
+static bool ParseBindPath(const string &path, string &id, bool &input, int &port)
+{
+	vector<string> parts;
+	string::size_type at = 0;
+	for (string::size_type slash; (slash = path.find('/', at)) != string::npos; at = slash + 1)
+		parts.push_back(path.substr(at, slash - at));
+	parts.push_back(path.substr(at));
+	if (parts.size() != 4 || (parts[0] != "Device" && parts[0] != "SubPatch") || (parts[2] != "Input" && parts[2] != "Output"))
+		return false;
+	id = parts[1];
+	input = parts[2] == "Input";
+	port = atoi(parts[3].c_str());
+	return true;
+}
+
+bool SynthModular::ApplyPage(const Spiral::Core::PatchDescription &patch, const string &sidecars, bool merge, int page,
+	std::map<std::string, int> &ids)
+{
+	const bool shown = page == m_Canvas->Page();
+
+	for (size_t n = 0; !merge && n < patch.Objects.size(); n++)
+		for (size_t d = 0; d < patch.Objects[n].Devices.size(); d++)
+		{
+			const string PatchID = patch.Objects[n].Devices[d].Value("patch_id");
+			char *end = NULL;
+			const int ID = (int)strtol(PatchID.c_str(), &end, 10);
+			if (!PatchID.empty() && !*end && ID >= 0 && m_DeviceWinMap.find(ID) == m_DeviceWinMap.end() && m_NextID <= ID)
+				m_NextID = ID + 1;
+		}
+
 	for (size_t n = 0; n < patch.Objects.size(); n++)
 	{
 		const Spiral::Core::ObjectDescription &object = patch.Objects[n];
@@ -1777,8 +2159,10 @@ void SynthModular::Apply(const Spiral::Core::PatchDescription &patch, const stri
 			const int ID = m_NextID++;
 			temp->m_DeviceGUI->SetID(ID);
 			m_DeviceWinMap[ID] = temp;
+			m_Canvas->SetPageOf(ID, page);
 			((Fl_CommentGUI*)(temp->m_DeviceGUI))->SetComment(object.Value("text"));
-			if (merge) Fl_Canvas::AppendSelection(ID, m_Canvas);
+			if (!shown) temp->m_DeviceGUI->hide();
+			else if (merge) Fl_Canvas::AppendSelection(ID, m_Canvas);
 			continue;
 		}
 
@@ -1792,21 +2176,70 @@ void SynthModular::Apply(const Spiral::Core::PatchDescription &patch, const stri
 			if (ids.find(PatchID) != ids.end())
 			{
 				SpiralInfo::Alert("Duplicate device ID found in file - aborting load");
-				ThawAll();
-				return;
+				return false;
 			}
 			char *end = NULL;
 			int ID = (int)strtol(PatchID.c_str(), &end, 10);
 			if (merge || PatchID.empty() || *end || ID < 0 || m_DeviceWinMap.find(ID) != m_DeviceWinMap.end())
 				ID = m_NextID++;
 			ids[PatchID] = ID;
+			if (!merge && m_NextID <= ID) m_NextID = ID + 1;
+
+			if (device.IsSubPatch())
+			{
+				SubPatchDevice *box = new SubPatchDevice;
+				for (size_t k = 0; k < device.Inputs.size(); ++k)
+					box->Inputs.push_back(BoundaryPort(-1, -1, device.Inputs[k].Name, device.Inputs[k].Type));
+				for (size_t k = 0; k < device.Outputs.size(); ++k)
+					box->Outputs.push_back(BoundaryPort(-1, -1, device.Outputs[k].Name,
+						device.Outputs[k].Type));
+				for (size_t b = 0; b < device.Binds.size(); ++b)
+				{
+					vector<BoundaryPort> &ports = device.Binds[b].OuterIsInput ? box->Inputs : box->Outputs;
+					if (ports.size() <= device.Binds[b].OuterIndex)
+						ports.resize(device.Binds[b].OuterIndex + 1);
+				}
+				const string title = object.Value("text").empty() ? string("SubPatch") : object.Value("text");
+				DeviceWin *temp = NewSubPatch(x, y, title, box, device.Config);
+				temp->m_DeviceGUI->SetID(ID);
+				if (temp->m_DeviceGUI->GetPluginWindow() && object.Value("collapsed") == "false")
+				{
+					temp->m_DeviceGUI->Maximise();
+					temp->m_DeviceGUI->position(x, y);
+				}
+				m_DeviceWinMap[ID] = temp;
+				m_Canvas->SetPageOf(ID, page);
+				m_Canvas->SetBox(ID, box);
+				std::map<std::string, int> inner;
+				if (device.Inner() && !ApplyPage(*device.Inner(), sidecars, merge, ID, inner))
+					return false;
+				for (size_t b = 0; b < device.Binds.size(); ++b)
+				{
+					string innerId;
+					bool input;
+					int port;
+					std::map<std::string, int>::const_iterator found;
+					if (!ParseBindPath(device.Binds[b].InnerPath, innerId, input, port)
+					    || (found = inner.find(innerId)) == inner.end() || input != device.Binds[b].OuterIsInput)
+					{
+						cerr << "SSM: SubPatch bind " << device.Binds[b].InnerPath << " leads nowhere.\n";
+						continue;
+					}
+					BoundaryPort &bound = (input ? box->Inputs : box->Outputs)[device.Binds[b].OuterIndex];
+					bound.InnerID = found->second;
+					bound.InnerPort = port;
+				}
+				m_Canvas->SetBox(ID, box);
+				if (!shown) temp->m_DeviceGUI->hide();
+				else if (merge) Fl_Canvas::AppendSelection(ID, m_Canvas);
+				continue;
+			}
 
 			DeviceWin *temp = NewDeviceWin(PluginID, x, y);
 			if (!temp)
 			{
 				SpiralInfo::Alert("Error in patch, can't really recover data from here on.");
-				ThawAll();
-				return;
+				return false;
 			}
 
 			temp->m_DeviceGUI->SetID(ID);
@@ -1823,6 +2256,7 @@ void SynthModular::Apply(const Spiral::Core::PatchDescription &patch, const stri
 
 			temp->m_Device->SetUpdateInfoCallback(ID, cb_UpdatePluginInfo);
 			m_DeviceWinMap[ID] = temp;
+			m_Canvas->SetPageOf(ID, page);
 
 			Spiral::Core::Description state;
 			Spiral::File::PatchFile::Describe(device, state);
@@ -1836,7 +2270,8 @@ void SynthModular::Apply(const Spiral::Core::PatchDescription &patch, const stri
 
 			if (temp->m_DeviceGUI->GetPluginWindow())
 			{
-				((SpiralPluginGUI*)(temp->m_DeviceGUI->GetPluginWindow()))->UpdateValues(temp->m_Device);
+				if (SpiralPluginGUI *gui = dynamic_cast<SpiralPluginGUI *>(temp->m_DeviceGUI->GetPluginWindow()))
+					gui->UpdateValues(temp->m_Device);
 				if (object.Value("collapsed") == "true")
 				{
 					temp->m_DeviceGUI->Minimise();
@@ -1848,8 +2283,8 @@ void SynthModular::Apply(const Spiral::Core::PatchDescription &patch, const stri
 				}
 			}
 
-			if (merge) Fl_Canvas::AppendSelection(ID, m_Canvas);
-			else if (m_NextID <= ID) m_NextID = ID + 1;
+			if (!shown) temp->m_DeviceGUI->hide();
+			else if (merge) Fl_Canvas::AppendSelection(ID, m_Canvas);
 		}
 	}
 
@@ -1863,9 +2298,7 @@ void SynthModular::Apply(const Spiral::Core::PatchDescription &patch, const stri
 			NoteUnavailablePort(m_DeviceWinMap, to->second, true, atoi(patch.Wires[w].ToPort.c_str()));
 	}
 	::Apply(patch, *m_Canvas, ids);
-	if (!merge) m_Canvas->CenterPatch();
-
-	ThawAll();
+	return true;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -2035,7 +2468,7 @@ void SynthModular::cb_Close (Fl_Widget *o, void *v) {
 // Cut
 
 inline void SynthModular::cb_Cut_i(Fl_Widget *o, void *v) {
-       if (! m_Canvas->HaveSelection()) return;
+       if (! m_Canvas->HaveSelection() || HoldsBox(m_Canvas)) return;
        // show some warning here
        cb_Copy_i (o, v);  // should we be calling an inline function here??????
        for (unsigned int i=0; i<m_Canvas->Selection().m_DeviceIds.size(); i++) {
@@ -2056,7 +2489,7 @@ void SynthModular::cb_Cut (Fl_Widget *o, void *v) {
 // Copy
 
 inline void SynthModular::cb_Copy_i (Fl_Widget *o, void *v) {
-       if (! m_Canvas->HaveSelection()) return;
+       if (! m_Canvas->HaveSelection() || HoldsBox(m_Canvas)) return;
        m_Copied.devices.open ("___temp.ssmcopytmp", ios::out);
        m_Copied.devicecount = 0;
        m_Copied.m_DeviceIds.clear();

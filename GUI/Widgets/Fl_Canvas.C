@@ -23,6 +23,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include "Fl_DeviceGUI.h"
+#include "SpiralPluginGUI.h"
 #include <algorithm>
 #include <iostream>
 #include "SpiralInfo.h"
@@ -55,6 +56,15 @@ cb_CopyDeviceGroup(NULL),
 cb_PasteDeviceGroup(NULL),
 cb_MergePatch(NULL),
 cb_AboutPatch(NULL),
+cb_GroupDevices(NULL),
+cb_UngroupDevices(NULL),
+cb_PageChanged(NULL),
+m_Page(-1),
+m_Owned(false),
+m_Order(0),
+m_GraphLock(NULL),
+m_StripInput(false),
+m_StripPort(-1),
 m_CanPaste(false),
 m_Selecting(false),
 m_UpdateTimer(0)
@@ -193,6 +203,7 @@ void Fl_Canvas::draw()
 			}
 		}
   	}
+	DrawStrips();
 	DrawSelection();
 }
 
@@ -354,6 +365,14 @@ void Fl_Canvas::PopupEditMenu (Fl_Group *group) {
      if ((cb_CutDeviceGroup) && (m_HaveSelection)) cut->activate(); else cut->deactivate();
      if ((cb_PasteDeviceGroup) && (m_CanPaste)) paste->activate(); else paste->deactivate();
      if (m_HaveSelection) deleteitems->activate(); else deleteitems->deactivate();
+     Fl_Menu_Item *groupItem=(Fl_Menu_Item*)&(m_Menu->menu()[6]);
+     Fl_Menu_Item *ungroupItem=(Fl_Menu_Item*)&(m_Menu->menu()[7]);
+     Fl_Menu_Item *backItem=(Fl_Menu_Item*)&(m_Menu->menu()[8]);
+     bool box = false;
+     for (unsigned int i=0; i<m_Selection.m_DeviceIds.size(); i++) box = box || IsBox(m_Selection.m_DeviceIds[i]);
+     if (cb_GroupDevices && m_HaveSelection) groupItem->activate(); else groupItem->deactivate();
+     if (cb_UngroupDevices && box) ungroupItem->activate(); else ungroupItem->deactivate();
+     if (m_Page != -1) backItem->activate(); else backItem->deactivate();
      m_Menu->popup();
      group->remove(m_Menu);
 }
@@ -372,7 +391,10 @@ void Fl_Canvas::AddPluginName (const string &s, int ID) {
         m_Menu->add ("Edit/Copy Currently Selected Devices", 0, (Fl_Callback*)cb_CopyDeviceGroup, user_data());
         m_Menu->add ("Edit/Paste Previously Copied Devices", 0, (Fl_Callback*)cb_PasteDeviceGroup, user_data(), FL_MENU_DIVIDER);
         m_Menu->add ("Edit/Merge Existing Patch", 0, (Fl_Callback*)cb_MergePatch, user_data(), FL_MENU_DIVIDER);
-        m_Menu->add ("Edit/Delete Currently Selected Devices", 0, (Fl_Callback*)cb_DeleteDeviceGroup, this);
+        m_Menu->add ("Edit/Delete Currently Selected Devices", 0, (Fl_Callback*)cb_DeleteDeviceGroup, this, FL_MENU_DIVIDER);
+        m_Menu->add ("Edit/Group Selected Devices into a SubPatch", 0, (Fl_Callback*)cb_GroupDevices, user_data());
+        m_Menu->add ("Edit/Ungroup Selected SubPatch", 0, (Fl_Callback*)cb_UngroupDevices, user_data());
+        m_Menu->add ("Edit/Back to Parent Patch", 0, (Fl_Callback*)cb_ParentPage, this);
      }
      m_Menu->add (s.c_str(), 0, (Fl_Callback*)cb_AddDeviceFromMenu, &Numbers[ID]);
 }
@@ -457,6 +479,26 @@ void Fl_Canvas::DrawWires()
 			return;
 		}
 
+		const int SourceHolder = Holder(i->OutputID, m_Page);
+		const int DestHolder = Holder(i->InputID, m_Page);
+		if (SourceHolder == -1 || DestHolder == -1 || (SourceHolder == DestHolder && SourceHolder != i->OutputID))
+			continue;
+		int sx, sy, dx, dy;
+		{
+			const int k = PortThrough(SourceHolder, false, i->OutputID, i->OutputPort);
+			Fl_DeviceGUI *Shown = FindDevice(SourceHolder);
+			if (k < 0 || !Shown) continue;
+			sx = Shown->GetPortX(k + Shown->GetInfo()->NumInputs);
+			sy = Shown->GetPortY(k + Shown->GetInfo()->NumInputs);
+		}
+		{
+			const int k = PortThrough(DestHolder, true, i->InputID, i->InputPort);
+			Fl_DeviceGUI *Shown = FindDevice(DestHolder);
+			if (k < 0 || !Shown) continue;
+			dx = Shown->GetPortX(k);
+			dy = Shown->GetPortY(k);
+		}
+
          Fl_Color col = (Fl_Color) WIRE_COL0;
          switch (SourceDevice->GetPortType(i->OutputPort+SourceDevice->GetInfo()->NumInputs)) {
              case 0:     col = (Fl_Color) WIRE_COL0; break;
@@ -481,14 +523,12 @@ void Fl_Canvas::DrawWires()
                     ep1_mid_y,
                     ep2_mid_y;
                 
-                ep1_x = SourceDevice->GetPortX(i->OutputPort+SourceDevice->GetInfo()->NumInputs);
-                
-                ep1_y = SourceDevice->GetPortY(i->OutputPort+SourceDevice->GetInfo()->NumInputs);
+                ep1_x = sx;
+                ep1_y = sy;
                 ep1_mid_y = ep1_y + 7.5;
-                
-                
-                ep2_x = DestDevice->GetPortX(i->InputPort);
-                ep2_y = DestDevice->GetPortY(i->InputPort);
+
+                ep2_x = dx;
+                ep2_y = dy;
                 ep2_mid_y = 7.5 + ep2_y;
                 
                 ep1_mid_x = fabs(ep1_x-ep2_x)/2;
@@ -518,13 +558,21 @@ void Fl_Canvas::DrawWires()
 
 bool Fl_Canvas::UserMakingConnection()
 {
-	return 	(m_IncompleteWire.InputID!=-1 || m_IncompleteWire.OutputID!=-1);
+	return 	(m_IncompleteWire.InputID!=-1 || m_IncompleteWire.OutputID!=-1 || m_StripPort>=0);
 }
 
 ////////////////////////////////////////////////////////////////////////
 
 void Fl_Canvas::DrawIncompleteWire()
 {
+	if (m_StripPort >= 0)
+	{
+		int px, py;
+		StripPoint(m_StripInput, m_StripPort, px, py);
+		fl_color(FL_DARK_YELLOW);
+		fl_line(px, py, Fl::event_x(), Fl::event_y());
+	}
+
 	// draw the wire we are currently connecting
 	if(m_IncompleteWire.InputID!=-1)
 	{
@@ -587,6 +635,7 @@ void Fl_Canvas::DrawIncompleteWire()
 
 void Fl_Canvas::ClearIncompleteWire()
 {
+	m_StripPort = -1;
 	// Turn off both ports
 	if (m_IncompleteWire.OutputID!=-1)
 	{
@@ -604,6 +653,12 @@ void Fl_Canvas::ClearIncompleteWire()
 //  Event handlers for the canvas and the deviceGUIs
 
 int Fl_Canvas::handle (int event) {
+    bool stripInput;
+    int stripPort;
+    if (event==FL_PUSH && StripAt(Fl::event_x(), Fl::event_y(), stripInput, stripPort)) {
+       StripClicked(stripInput, stripPort, Fl::event_button() == 3);
+       return 1;
+    }
     if (Fl_Group::handle (event)) return 1;
     if (event==FL_PUSH) {
        ClearIncompleteWire();
@@ -726,6 +781,10 @@ inline void Fl_Canvas::cb_OnDragClick_i(Fl_Widget* widget, int event, int button
 
 
        int ID = ((Fl_DeviceGUI*)widget->parent())->GetID();
+       if (Fl::event_clicks() > 0 && IsBox(ID)) {
+          ShowPage(ID);
+          return;
+       }
        std::vector<int>::iterator device_iter = std::find(
            m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), ID);
        if ((shift_state & FL_SHIFT) != 0) {
@@ -749,6 +808,18 @@ inline void Fl_Canvas::cb_OnDragClick_i(Fl_Widget* widget, int event, int button
 
 void Fl_Canvas::PortClicked(Fl_DeviceGUI* Device, int Type, int Port, bool Value)
 {
+	if (Value && m_StripPort >= 0)
+	{
+		const bool input = m_StripInput;
+		const int port = m_StripPort;
+		ClearIncompleteWire();
+		if (input == (Type==Fl_DeviceGUI::INPUT))
+		{
+			BindBoxPort(m_Page, input, port, Device->GetID(), Port);
+			return;
+		}
+	}
+
 	if(Value) // Turned on the port
 	{
 		if(m_IncompleteWire.InputID==-1 || m_IncompleteWire.OutputID==-1)
@@ -785,12 +856,20 @@ void Fl_Canvas::PortClicked(Fl_DeviceGUI* Device, int Type, int Port, bool Value
 			// if both have now been set...
 			if (m_IncompleteWire.InputID!=-1 && m_IncompleteWire.OutputID!=-1)
 			{
+				if (!ResolveWire(m_IncompleteWire))
+				{
+					ClearIncompleteWire();
+					return;
+				}
 				m_WireVec.push_back(m_IncompleteWire);
 
 				// send the connect callback
 				cb_Connection(this,(void*)&m_IncompleteWire);
+				LockGraph();
 				m_Graph.AddConnection(m_IncompleteWire.OutputID,m_IncompleteWire.OutputTerminal,
 									  m_IncompleteWire.InputID,m_IncompleteWire.InputTerminal);
+				UnlockGraph();
+				Reschedule();
 
 				// Turn on both ports
 				Fl_DeviceGUI* ODGUI = FindDevice(m_IncompleteWire.OutputID);
@@ -808,6 +887,9 @@ void Fl_Canvas::PortClicked(Fl_DeviceGUI* Device, int Type, int Port, bool Value
 	else // Turned off the port
 	{
 		// Find connections using this port
+		int ID = Device->GetID();
+		if (IsBox(ID) && !Resolve(ID, Type==Fl_DeviceGUI::INPUT, Port, ID, Port))
+			return;
 		bool Found=true;
 
 		while (Found)
@@ -817,8 +899,8 @@ void Fl_Canvas::PortClicked(Fl_DeviceGUI* Device, int Type, int Port, bool Value
 			for(vector<CanvasWire>::iterator i=m_WireVec.begin();
 				i!=m_WireVec.end(); i++)
 			{
-				if ((Type==Fl_DeviceGUI::OUTPUT && i->OutputID==Device->GetID() && i->OutputPort==Port) ||
-					(Type==Fl_DeviceGUI::INPUT && i->InputID==Device->GetID() && i->InputPort==Port))
+				if ((Type==Fl_DeviceGUI::OUTPUT && i->OutputID==ID && i->OutputPort==Port) ||
+					(Type==Fl_DeviceGUI::INPUT && i->InputID==ID && i->InputPort==Port))
 				{
 					// Turn off both ports
 					Fl_DeviceGUI* ODGUI = FindDevice(i->OutputID);
@@ -829,7 +911,9 @@ void Fl_Canvas::PortClicked(Fl_DeviceGUI* Device, int Type, int Port, bool Value
 
 					// send the unconnect callback
 					cb_Unconnect(this,(void*)&(*i));
+					LockGraph();
 					m_Graph.RemoveConnection(i->OutputID,i->InputID);
+					UnlockGraph();
 
 					// Remove the wire
 					m_WireVec.erase(i);
@@ -840,6 +924,7 @@ void Fl_Canvas::PortClicked(Fl_DeviceGUI* Device, int Type, int Port, bool Value
 			}
 		}
 
+		Reschedule();
 		redraw();
 
 		// Clear the current m_Selection
@@ -881,6 +966,7 @@ void Fl_Canvas::PruneConnections(Fl_DeviceGUI* Device, int inputs, int outputs)
 			}
 		}
 	}
+	Reschedule();
 }
 
 void Fl_Canvas::RemoveWire(vector<CanvasWire>::iterator i)
@@ -895,7 +981,9 @@ void Fl_Canvas::RemoveWire(vector<CanvasWire>::iterator i)
 
 	// send the unconnect callback
 	cb_Unconnect(this,(void*)&(*i));
+	LockGraph();
 	m_Graph.RemoveConnection(i->OutputID,i->InputID);
+	UnlockGraph();
 
 	m_WireVec.erase(i);
 }
@@ -918,6 +1006,8 @@ void Fl_Canvas::MoveInputs(Fl_DeviceGUI* Device, const vector<int> &to)
 		if (i->InputID==Device->GetID() && i->InputPort>=0 && i->InputPort<(int)to.size())
 			i->InputPort=to[i->InputPort];
 	}
+	// So do the boundary ports bound to them.
+	RenumberBinds(Device->GetID(), true, to);
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -936,6 +1026,18 @@ void Fl_Canvas::RestorePortConnections(Fl_DeviceGUI* Device)
 void Fl_Canvas::RemoveDevice(Fl_DeviceGUI* Device)
 {
 	ClearConnections(Device);
+	const int ID = Device->GetID();
+	for (map<int,SubPatchDevice*>::iterator b = m_Boxes.begin(); b != m_Boxes.end(); ++b)
+	{
+		for (size_t k = 0; k < b->second->Inputs.size(); ++k)
+			if (b->second->Inputs[k].InnerID == ID) b->second->Inputs[k].InnerID = -1;
+		for (size_t k = 0; k < b->second->Outputs.size(); ++k)
+			if (b->second->Outputs[k].InnerID == ID) b->second->Outputs[k].InnerID = -1;
+	}
+	m_PageOf.erase(ID);
+	m_Boxes.erase(ID);
+	Reschedule();
+	if (m_Page == ID) ShowPage(-1);
 	remove(Device);
 	redraw();
 }
@@ -944,7 +1046,9 @@ void Fl_Canvas::RemoveDevice(Fl_DeviceGUI* Device)
 
 void Fl_Canvas::Clear()
 {
+	LockGraph();
 	m_Graph.Clear();
+	UnlockGraph();
 
 	int kids=children();
 
@@ -954,7 +1058,638 @@ void Fl_Canvas::Clear()
 	}
 
 	m_WireVec.clear();
+	m_PageOf.clear();
+	m_Boxes.clear();
+	m_Page = -1;
+	Reschedule();
 	redraw();
+}
+
+////////////////////////////////////////////////////////////////////////
+
+void Fl_Canvas::ShowPage(int box)
+{
+	const int shown = m_Page;
+	m_Page = (box == -1 || IsBox(box)) ? box : -1;
+	for (int n = 0; n < children(); n++)
+	{
+		Fl_DeviceGUI *device = AsDevice(child(n));
+		if (!device)
+			continue;
+		if (PageOf(device->GetID()) == m_Page)
+			device->show();
+		else
+			device->hide();
+	}
+	ClearIncompleteWire();
+	ClearSelection(this);
+	if (m_Page != shown) CenterPatch();
+	redraw();
+	if (cb_PageChanged) cb_PageChanged(this, user_data());
+}
+
+// The device menu, in the private tree's order: where the device sits,
+// its name, deleting it, then grouping, then what the device is. A
+// subpatch's own settings are on its panel. A device outside the
+// selection is chosen alone, as a click on it would.
+void Fl_Canvas::DeviceMenu(Fl_DeviceGUI *device)
+{
+	const int id = device->GetID();
+	if (std::find(m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), id) == m_Selection.m_DeviceIds.end())
+	{
+		m_Selection.Clear();
+		m_Selection.m_DeviceIds.push_back(id);
+		m_HaveSelection = true;
+		redraw();
+	}
+	const size_t selected = m_Selection.m_DeviceIds.size();
+	SubPatchDevice *box = selected == 1 ? Box(id) : NULL;
+	SpiralPluginGUI *gui = dynamic_cast<SpiralPluginGUI *>(device->GetPluginWindow());
+
+	enum { Front = 1, Back, RenameIt, DeleteIt, GroupIt, Open, UngroupIt, Info };
+	Fl_Group *current = Fl_Group::current();
+	Fl_Group::current(NULL);
+	Fl_Menu_Button menu(0, 0, 0, 0);
+	Fl_Group::current(current);
+	menu.textsize(10);
+	menu.add("Bring to Front", 0, NULL, (void *)Front);
+	menu.add("Send to Back", 0, NULL, (void *)Back, FL_MENU_DIVIDER);
+	menu.add("Rename Device", 0, NULL, (void *)RenameIt, FL_MENU_DIVIDER);
+	menu.add("Delete", 0, NULL, (void *)DeleteIt, FL_MENU_DIVIDER);
+	int last = -1;
+	if (selected > 1 && cb_GroupDevices)
+		last = menu.add("Group", 0, NULL, (void *)GroupIt);
+	if (box)
+	{
+		last = menu.add("Open Subpatch", 0, NULL, (void *)Open);
+		if (cb_UngroupDevices)
+			last = menu.add("Ungroup", 0, NULL, (void *)UngroupIt);
+	}
+	if (last >= 0 && gui)
+		menu.mode(last, menu.mode(last) | FL_MENU_DIVIDER);
+	if (gui)
+		menu.add("Info", 0, NULL, (void *)Info);
+
+	const Fl_Menu_Item *picked = menu.menu()->popup(Fl::event_x(), Fl::event_y(), NULL, NULL, &menu);
+	if (!picked)
+		return;
+	const long action = (long)picked->user_data();
+	switch (action)
+	{
+		case Front:
+			insert(*device, children());
+			redraw();
+			break;
+		case Back:
+			insert(*device, 0);
+			redraw();
+			break;
+		case RenameIt:
+			device->Rename();
+			break;
+		case DeleteIt:
+			if (selected > 1)
+				cb_DeleteDeviceGroup(this, this);
+			else
+				device->Delete();
+			break;
+		case GroupIt:
+			cb_GroupDevices(this, user_data());
+			break;
+		case Open:
+			ShowPage(id);
+			break;
+		case UngroupIt:
+			cb_UngroupDevices(this, user_data());
+			break;
+		case Info:
+			if (gui) gui->ShowHelp();
+			break;
+	}
+}
+
+string Fl_Canvas::BoxTitle(int id)
+{
+	Fl_DeviceGUI *device = FindDevice(id);
+	return device ? device->GetName() : string();
+}
+
+vector<int> Fl_Canvas::BoxesOn(int page) const
+{
+	vector<int> boxes;
+	for (map<int,SubPatchDevice*>::const_iterator b = m_Boxes.begin(); b != m_Boxes.end(); ++b)
+		if (PageOf(b->first) == page)
+			boxes.push_back(b->first);
+	return boxes;
+}
+
+int Fl_Canvas::PageOf(int id) const
+{
+	map<int,int>::const_iterator i = m_PageOf.find(id);
+	return i == m_PageOf.end() ? -1 : i->second;
+}
+
+void Fl_Canvas::SetPageOf(int id, int page)
+{
+	if (page == -1)
+		m_PageOf.erase(id);
+	else
+		m_PageOf[id] = page;
+	Reschedule();
+}
+
+SubPatchDevice *Fl_Canvas::Box(int id)
+{
+	map<int,SubPatchDevice*>::iterator i = m_Boxes.find(id);
+	return i == m_Boxes.end() ? NULL : i->second;
+}
+
+void Fl_Canvas::RemoveBox(int id)
+{
+	m_Boxes.erase(id);
+	Reschedule();
+	if (m_Page == id)
+		ShowPage(PageOf(id));
+}
+
+bool Fl_Canvas::Resolve(int id, bool input, int port, int &device, int &devicePort) const
+{
+	for (int depth = 0; depth < 64; ++depth)
+	{
+		map<int,SubPatchDevice*>::const_iterator box = m_Boxes.find(id);
+		if (box == m_Boxes.end())
+		{
+			device = id;
+			devicePort = port;
+			return true;
+		}
+		const vector<BoundaryPort> &ports = input ? box->second->Inputs : box->second->Outputs;
+		if (port < 0 || port >= (int)ports.size() || ports[port].InnerID < 0)
+			return false;
+		id = ports[port].InnerID;
+		port = ports[port].InnerPort;
+	}
+	return false;
+}
+
+int Fl_Canvas::Holder(int id, int page) const
+{
+	for (int depth = 0; depth < 64; ++depth)
+	{
+		const int up = PageOf(id);
+		if (up == page)
+			return id;
+		if (up == -1)
+			return -1;
+		id = up;
+	}
+	return -1;
+}
+
+int Fl_Canvas::PortThrough(int holder, bool input, int device, int port) const
+{
+	if (holder == device)
+		return port;
+	map<int,SubPatchDevice*>::const_iterator box = m_Boxes.find(holder);
+	if (box == m_Boxes.end())
+		return -1;
+	const int count = (int)(input ? box->second->Inputs.size() : box->second->Outputs.size());
+	for (int k = 0; k < count; ++k)
+	{
+		int d, p;
+		if (Resolve(holder, input, k, d, p) && d == device && p == port)
+			return k;
+	}
+	return -1;
+}
+
+void Fl_Canvas::WiresOnPage(int page, vector<CanvasWire> &out) const
+{
+	for (vector<CanvasWire>::const_iterator i = m_WireVec.begin(); i != m_WireVec.end(); ++i)
+	{
+		const int source = Holder(i->OutputID, page);
+		const int dest = Holder(i->InputID, page);
+		if (source == -1 || dest == -1 || (source == dest && source != i->OutputID))
+			continue;
+		CanvasWire wire = *i;
+		wire.OutputID = source;
+		wire.OutputPort = PortThrough(source, false, i->OutputID, i->OutputPort);
+		wire.InputID = dest;
+		wire.InputPort = PortThrough(dest, true, i->InputID, i->InputPort);
+		if (wire.OutputPort >= 0 && wire.InputPort >= 0)
+			out.push_back(wire);
+	}
+}
+
+bool Fl_Canvas::ResolveWire(CanvasWire &wire) const
+{
+	if (!Resolve(wire.OutputID, false, wire.OutputPort, wire.OutputID, wire.OutputPort)
+	    || !Resolve(wire.InputID, true, wire.InputPort, wire.InputID, wire.InputPort))
+		return false;
+	Fl_DeviceGUI *source = const_cast<Fl_Canvas *>(this)->FindDevice(wire.OutputID);
+	Fl_DeviceGUI *dest = const_cast<Fl_Canvas *>(this)->FindDevice(wire.InputID);
+	if (!source || !dest)
+		return false;
+	wire.OutputTerminal = source->IsTerminal();
+	wire.InputTerminal = dest->IsTerminal();
+	return true;
+}
+
+void Fl_Canvas::StripPoint(bool input, int index, int &x, int &y) const
+{
+	const Fl_Widget *view = parent() ? parent() : this;
+	x = input ? view->x() + 14 : view->x() + view->w() - 30;
+	y = view->y() + 46 + index * 24;
+}
+
+void Fl_Canvas::DrawStrips()
+{
+	map<int,SubPatchDevice*>::const_iterator box = m_Boxes.find(m_Page);
+	if (box == m_Boxes.end())
+		return;
+	Fl_DeviceGUI *shown = FindDevice(m_Page);
+	const Fl_Widget *view = parent() ? parent() : this;
+	const Fl_Color text = fl_contrast(FL_BLACK, color());
+	fl_font(FL_HELVETICA, 10);
+	fl_color(text);
+	const string mode = box->second->Config().Mode == "Virtual" ? string() : " (" + box->second->Config().Mode + ")";
+	const string title = "SubPatch: " + (shown ? shown->GetName() : string()) + mode + "    (Edit > Back to Parent Patch)";
+	fl_draw(title.c_str(), view->x() + 10, view->y() + 20);
+	for (int input = 1; input >= 0; --input)
+	{
+		const vector<BoundaryPort> &ports = input ? box->second->Inputs : box->second->Outputs;
+		for (size_t k = 0; k < ports.size(); ++k)
+		{
+			int px, py;
+			StripPoint(input != 0, (int)k, px, py);
+			Fl_DeviceGUI *inner = ports[k].InnerID < 0 ? NULL : FindDevice(ports[k].InnerID);
+			if (inner && inner->visible())
+			{
+				const int at = input ? ports[k].InnerPort : ports[k].InnerPort + inner->GetInfo()->NumInputs;
+				fl_color(FL_DARK_YELLOW);
+				fl_line_style(FL_SOLID, 2);
+				fl_line(px, py, inner->GetPortX(at), inner->GetPortY(at));
+				fl_line_style(FL_SOLID, 0);
+			}
+			fl_color(FL_DARK_YELLOW);
+			fl_rectf(px - PortSize, py - PortSize, PortSize * 2, PortSize * 2);
+			fl_color(text);
+			if (input)
+				fl_draw(ports[k].Name.c_str(), px + PortSize + 4, py + 4);
+			else
+				fl_draw(ports[k].Name.c_str(), px - PortSize - 4 - (int)fl_width(ports[k].Name.c_str()), py + 4);
+		}
+	}
+}
+
+bool Fl_Canvas::StripAt(int x, int y, bool &input, int &port)
+{
+	SubPatchDevice *box = Box(m_Page);
+	for (int side = 1; box && side >= 0; --side)
+	{
+		const int count = (int)(side ? box->Inputs.size() : box->Outputs.size());
+		for (int k = 0; k < count; ++k)
+		{
+			int px, py;
+			StripPoint(side != 0, k, px, py);
+			if (abs(x - px) <= PortSize + 2 && abs(y - py) <= PortSize + 2)
+			{
+				input = side != 0;
+				port = k;
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+void Fl_Canvas::StripClicked(bool input, int port, bool unbind)
+{
+	const CanvasWire pending = m_IncompleteWire;
+	ClearIncompleteWire();
+	if (unbind)
+		UnbindBoxPort(m_Page, input, port);
+	else if (input && pending.InputID != -1 && pending.OutputID == -1)
+		BindBoxPort(m_Page, true, port, pending.InputID, pending.InputPort);
+	else if (!input && pending.OutputID != -1 && pending.InputID == -1)
+		BindBoxPort(m_Page, false, port, pending.OutputID, pending.OutputPort);
+	else
+	{
+		m_StripInput = input;
+		m_StripPort = port;
+	}
+	redraw();
+}
+
+string Fl_Canvas::Name(int id)
+{
+	Fl_DeviceGUI *device = FindDevice(id);
+	return device ? device->GetName() : string();
+}
+
+string Fl_Canvas::PortName(int id, bool input, int port)
+{
+	if (const SubPatchDevice *box = Box(id))
+	{
+		const vector<BoundaryPort> &ports = input ? box->Inputs : box->Outputs;
+		return port >= 0 && port < (int)ports.size() ? ports[port].Name : string();
+	}
+	Fl_DeviceGUI *device = FindDevice(id);
+	if (!device)
+		return string();
+	const DeviceGUIInfo *info = device->GetInfo();
+	const int at = input ? port : info->NumInputs + port;
+	return at >= 0 && at < (int)info->PortTips.size() ? info->PortTips[at] : string();
+}
+
+void Fl_Canvas::WiresThrough(int box, bool input, int port, vector<CanvasWire> &out) const
+{
+	const int page = PageOf(box);
+	for (vector<CanvasWire>::const_iterator i = m_WireVec.begin(); i != m_WireVec.end(); ++i)
+	{
+		const int innerID = input ? i->InputID : i->OutputID;
+		const int innerPort = input ? i->InputPort : i->OutputPort;
+		const int outerID = input ? i->OutputID : i->InputID;
+		if (Holder(innerID, page) == box && Holder(outerID, page) != box
+		    && PortThrough(box, input, innerID, innerPort) == port)
+			out.push_back(*i);
+	}
+}
+
+void Fl_Canvas::EraseWire(const CanvasWire &wire)
+{
+	for (vector<CanvasWire>::iterator i = m_WireVec.begin(); i != m_WireVec.end(); ++i)
+	{
+		if (i->OutputID != wire.OutputID || i->OutputPort != wire.OutputPort
+		    || i->InputID != wire.InputID || i->InputPort != wire.InputPort)
+			continue;
+		if (Fl_DeviceGUI *source = FindDevice(i->OutputID))
+			source->RemoveConnection(i->OutputPort + source->GetInfo()->NumInputs);
+		if (Fl_DeviceGUI *dest = FindDevice(i->InputID))
+			dest->RemoveConnection(i->InputPort);
+		cb_Unconnect(this, (void*)&(*i));
+		LockGraph();
+		m_Graph.RemoveConnection(i->OutputID, i->InputID);
+		UnlockGraph();
+		m_WireVec.erase(i);
+		Reschedule();
+		return;
+	}
+}
+
+void Fl_Canvas::AddWire(CanvasWire wire)
+{
+	Fl_DeviceGUI *source = FindDevice(wire.OutputID);
+	Fl_DeviceGUI *dest = FindDevice(wire.InputID);
+	if (!source || !dest)
+		return;
+	wire.OutputTerminal = source->IsTerminal();
+	wire.InputTerminal = dest->IsTerminal();
+	m_WireVec.push_back(wire);
+	cb_Connection(this, (void*)&wire);
+	LockGraph();
+	m_Graph.AddConnection(wire.OutputID, wire.OutputTerminal, wire.InputID, wire.InputTerminal);
+	UnlockGraph();
+	Reschedule();
+	source->AddConnection(wire.OutputPort + source->GetInfo()->NumInputs);
+	dest->AddConnection(wire.InputPort);
+}
+
+bool Fl_Canvas::BindBoxPort(int box, bool input, int port, int id, int idPort)
+{
+	SubPatchDevice *edited = Box(box);
+	if (!edited || port < 0 || port >= (int)(input ? edited->Inputs.size() : edited->Outputs.size()) || PageOf(id) != box)
+		return false;
+	BoundaryPort &bound = (input ? edited->Inputs : edited->Outputs)[port];
+	if (bound.InnerID == id && bound.InnerPort == idPort)
+		return true;
+	int device, devicePort;
+	const bool reaches = Resolve(id, input, idPort, device, devicePort);
+	vector<CanvasWire> through;
+	WiresThrough(box, input, port, through);
+	if (input && reaches)
+		for (vector<CanvasWire>::const_iterator i = m_WireVec.begin(); i != m_WireVec.end(); ++i)
+			if (i->InputID == device && i->InputPort == devicePort)
+				return false;
+	for (size_t w = 0; w < through.size(); ++w)
+		EraseWire(through[w]);
+	bound.InnerID = id;
+	bound.InnerPort = idPort;
+	for (size_t w = 0; reaches && w < through.size(); ++w)
+	{
+		CanvasWire moved = through[w];
+		(input ? moved.InputID : moved.OutputID) = device;
+		(input ? moved.InputPort : moved.OutputPort) = devicePort;
+		AddWire(moved);
+	}
+	redraw();
+	return true;
+}
+
+void Fl_Canvas::UnbindBoxPort(int box, bool input, int port)
+{
+	SubPatchDevice *edited = Box(box);
+	if (!edited || port < 0 || port >= (int)(input ? edited->Inputs.size() : edited->Outputs.size()))
+		return;
+	vector<CanvasWire> through;
+	WiresThrough(box, input, port, through);
+	for (size_t w = 0; w < through.size(); ++w)
+		EraseWire(through[w]);
+	(input ? edited->Inputs : edited->Outputs)[port].InnerID = -1;
+	redraw();
+}
+
+void Fl_Canvas::AddBoxPort(int box, bool input, const string &name)
+{
+	SubPatchDevice *edited = Box(box);
+	if (!edited)
+		return;
+	(input ? edited->Inputs : edited->Outputs).push_back(BoundaryPort(-1, -1, name));
+	RefreshBox(box);
+}
+
+void Fl_Canvas::RemoveBoxPort(int box, bool input, int port)
+{
+	SubPatchDevice *edited = Box(box);
+	if (!edited || port < 0 || port >= (int)(input ? edited->Inputs.size() : edited->Outputs.size()))
+		return;
+	UnbindBoxPort(box, input, port);
+	vector<BoundaryPort> &ports = input ? edited->Inputs : edited->Outputs;
+	vector<int> moved;
+	for (int k = 0; k < (int)ports.size(); ++k)
+		moved.push_back(k < port ? k : k == port ? -1 : k - 1);
+	ports.erase(ports.begin() + port);
+	RenumberBinds(box, input, moved);
+	RefreshBox(box);
+}
+
+bool Fl_Canvas::MoveBoxPort(int box, bool input, int from, int to)
+{
+	SubPatchDevice *edited = Box(box);
+	if (!edited)
+		return false;
+	vector<BoundaryPort> &ports = input ? edited->Inputs : edited->Outputs;
+	if (from < 0 || to < 0 || from >= (int)ports.size() || to >= (int)ports.size())
+		return false;
+	const BoundaryPort port = ports[from];
+	ports.erase(ports.begin() + from);
+	ports.insert(ports.begin() + to, port);
+	vector<int> moved;
+	for (int k = 0; k < (int)ports.size(); ++k)
+		moved.push_back(k == from ? to : from < to && k > from && k <= to ? k - 1
+			: to < from && k >= to && k < from ? k + 1 : k);
+	RenumberBinds(box, input, moved);
+	RefreshBox(box);
+	return true;
+}
+
+void Fl_Canvas::RenameBoxPort(int box, bool input, int port, const string &name)
+{
+	SubPatchDevice *edited = Box(box);
+	if (!edited || port < 0 || port >= (int)(input ? edited->Inputs.size() : edited->Outputs.size()))
+		return;
+	(input ? edited->Inputs : edited->Outputs)[port].Name = name;
+	RefreshBox(box);
+}
+
+void Fl_Canvas::RenumberBinds(int box, bool input, const vector<int> &moved)
+{
+	for (map<int,SubPatchDevice*>::iterator outer = m_Boxes.begin(); outer != m_Boxes.end(); ++outer)
+	{
+		vector<BoundaryPort> &ports = input ? outer->second->Inputs : outer->second->Outputs;
+		for (size_t k = 0; k < ports.size(); ++k)
+			if (ports[k].InnerID == box && ports[k].InnerPort >= 0 && ports[k].InnerPort < (int)moved.size())
+			{
+				ports[k].InnerPort = moved[ports[k].InnerPort];
+				if (ports[k].InnerPort < 0)
+					ports[k].InnerID = -1;
+			}
+	}
+}
+
+// The device's ports, laid out on its box as a subpatch's are.
+void Fl_Canvas::RefreshBox(int box)
+{
+	SubPatchDevice *shown = Box(box);
+	Fl_DeviceGUI *device = FindDevice(box);
+	if (!shown || !device)
+		return;
+	shown->PortsChanged();
+	const PluginInfo &ports = shown->GetPluginInfo();
+	DeviceGUIInfo info = *device->GetInfo();
+	info.NumInputs = ports.NumInputs;
+	info.NumOutputs = ports.NumOutputs;
+	info.PortTips = ports.PortTips;
+	info.PortTypes = ports.PortTypes;
+	info.Height = 20 + 12 * (info.NumInputs > info.NumOutputs ? info.NumInputs : info.NumOutputs);
+	device->SetupPorts(info, false, true);
+	redraw();
+}
+
+void Fl_Canvas::SetBoxMode(int box, const string &mode)
+{
+	SubPatchDevice *edited = Box(box);
+	if (!edited)
+		return;
+	Spiral::Core::SubPatchConfig config = edited->Config();
+	config.Mode = mode;
+	edited->SetConfig(config);
+	Reschedule();
+	redraw();
+}
+
+bool Fl_Canvas::Owns(int box) const
+{
+	map<int,SubPatchDevice*>::const_iterator i = m_Boxes.find(box);
+	return i != m_Boxes.end() && i->second->Config().Mode != "Virtual";
+}
+
+int Fl_Canvas::Scheduled(int id, int scope) const
+{
+	int result = id;
+	for (int depth = 0; depth < 64; ++depth)
+	{
+		const int up = PageOf(id);
+		if (up == scope)
+			return result;
+		if (up == -1)
+			return -1;
+		if (Owns(up))
+			result = up;
+		id = up;
+	}
+	return -1;
+}
+
+void Fl_Canvas::LockGraph()
+{
+	if (m_GraphLock)
+		pthread_mutex_lock(m_GraphLock);
+}
+
+void Fl_Canvas::UnlockGraph()
+{
+	if (m_GraphLock)
+		pthread_mutex_unlock(m_GraphLock);
+}
+
+void Fl_Canvas::Reschedule()
+{
+	LockGraph();
+	m_Owned = false;
+	for (map<int,SubPatchDevice*>::const_iterator b = m_Boxes.begin(); b != m_Boxes.end(); ++b)
+	{
+		b->second->ClearGraph();
+		m_Owned = m_Owned || Owns(b->first);
+	}
+	if (!m_Owned)
+	{
+		UnlockGraph();
+		return;
+	}
+
+	// The patch's own graph here; a subpatch that owns its graph sorts what
+	// it holds in its device, and is one node in the graph it sits in.
+	GraphSort root;
+	map<int,GraphSort*> graphs;
+	graphs[-1] = &root;
+	for (map<int,SubPatchDevice*>::const_iterator b = m_Boxes.begin(); b != m_Boxes.end(); ++b)
+		if (Owns(b->first))
+			graphs[b->first] = &b->second->Graph();
+
+	map<int,bool> terminal;
+	for (int pass = 0; pass < 2; ++pass)
+		for (vector<CanvasWire>::const_iterator w = m_WireVec.begin(); w != m_WireVec.end(); ++w)
+			for (map<int,GraphSort*>::iterator g = graphs.begin(); g != graphs.end(); ++g)
+			{
+				const int source = Scheduled(w->OutputID, g->first);
+				const int dest = Scheduled(w->InputID, g->first);
+				if (pass == 0)
+				{
+					if (source != -1) terminal[source] = terminal[source] || w->OutputTerminal;
+					if (dest != -1) terminal[dest] = terminal[dest] || w->InputTerminal;
+				}
+				else if (source == -1 && dest == -1)
+					continue;
+				else if (source == -1 || dest == -1)
+					g->second->AddNode(source == -1 ? dest : source, terminal[source == -1 ? dest : source]);
+				else if (source != dest || source == w->OutputID)
+					g->second->AddConnection(source, terminal[source], dest, terminal[dest]);
+				else
+					g->second->AddNode(source, terminal[source]);
+			}
+
+	const int next = 1 - m_Order;
+	m_Orders[next] = root.GetSortedList();
+	m_Order = next;
+	UnlockGraph();
+}
+
+void Fl_Canvas::cb_ParentPage(Fl_Widget *, void *data)
+{
+	Fl_Canvas *canvas = (Fl_Canvas *)data;
+	if (canvas->m_Page != -1)
+		canvas->ShowPage(canvas->PageOf(canvas->m_Page));
 }
 
 // A patch is laid out at the window coordinates its devices were saved at,
@@ -985,7 +1720,7 @@ void Fl_Canvas::CenterPatch()
 {
 	Fl_Scroll *scroll = dynamic_cast<Fl_Scroll*>(parent());
 
-	if (!scroll || !children()) return;
+	if (!scroll) return;
 
 	// Offsets inside the canvas, not window coordinates. Scrolling moves the
 	// canvas and every device on it together, so these differences read the
@@ -993,22 +1728,24 @@ void Fl_Canvas::CenterPatch()
 	// takes. Asking the scroll where it is instead only works once it has
 	// been drawn: fresh, xposition() reads 0 while the canvas sits at -5000,
 	// and a position worked out from that lands outside the canvas.
-	int left = child(0)->x() - x();
-	int top = child(0)->y() - y();
-	int right = left + child(0)->w();
-	int bottom = top + child(0)->h();
+	int left = 0, top = 0, right = 0, bottom = 0;
+	bool any = false;
 
-	for (int n=1; n<children(); n++)
+	for (int n=0; n<children(); n++)
 	{
 		Fl_Widget *o = child(n);
+		if (!o->visible()) continue;
 		const int ox = o->x() - x();
 		const int oy = o->y() - y();
 
-		left = std::min(left, ox);
-		top = std::min(top, oy);
-		right = std::max(right, ox + o->w());
-		bottom = std::max(bottom, oy + o->h());
+		left = any ? std::min(left, ox) : ox;
+		top = any ? std::min(top, oy) : oy;
+		right = any ? std::max(right, ox + o->w()) : ox + o->w();
+		bottom = any ? std::max(bottom, oy + o->h()) : oy + o->h();
+		any = true;
 	}
+
+	if (!any) return;
 
 	// The page is what the scroll shows once its scrollbars are taken off.
 	const int PageW = scroll->w() - scroll->scrollbar.w();
@@ -1190,7 +1927,10 @@ void Fl_Canvas::StreamWiresIn(istream &s, bool merge, bool paste)
 				m_WireVec.push_back(NewWire);
 					// Notify connection by callback
 				cb_Connection(this,(void*)&NewWire);
+				LockGraph();
 				m_Graph.AddConnection(NewWire.OutputID,NewWire.OutputTerminal,NewWire.InputID,NewWire.InputTerminal);
+				UnlockGraph();
+				Reschedule();
 			}
 		}
 	}
@@ -1237,7 +1977,10 @@ void Fl_Canvas::StreamWiresIn(istream &s, bool merge, bool paste)
 
 				// Notify connection by callback
 				cb_Connection(this,(void*)&NewWire);
+				LockGraph();
 				m_Graph.AddConnection(NewWire.OutputID,false,NewWire.InputID,false);
+				UnlockGraph();
+				Reschedule();
 			}
 		}
 	}
@@ -1297,11 +2040,13 @@ Spiral::Core::Description &Describe(Spiral::Core::Description &d, Fl_Canvas &o)
 	return d;
 }
 
-void Describe(Spiral::Core::PatchDescription &patch, Fl_Canvas &o)
+void Describe(Spiral::Core::PatchDescription &patch, Fl_Canvas &o, int page)
 {
 	char text[32];
+	vector<CanvasWire> wires;
+	o.WiresOnPage(page, wires);
 
-	for (vector<CanvasWire>::iterator i = o.m_WireVec.begin(); i != o.m_WireVec.end(); i++)
+	for (vector<CanvasWire>::iterator i = wires.begin(); i != wires.end(); i++)
 	{
 		Spiral::Core::WireDescription &wire = patch.AddWire();
 		snprintf(text, sizeof text, "%d", i->OutputID);   wire.FromDevice = text;
@@ -1322,6 +2067,11 @@ void Apply(const Spiral::Core::PatchDescription &patch, Fl_Canvas &o, const std:
 		NewWire.OutputPort = atoi(wire.FromPort.c_str());
 		NewWire.InputID = to == ids.end() ? -1 : to->second;
 		NewWire.InputPort = atoi(wire.ToPort.c_str());
+		if ((o.IsBox(NewWire.OutputID) || o.IsBox(NewWire.InputID)) && !o.ResolveWire(NewWire))
+		{
+			std::cerr << "SSM: Skipping a wire whose subpatch port leads nowhere.\n";
+			continue;
+		}
 
 		Fl_DeviceGUI *source = o.FindDevice(NewWire.OutputID);
 		Fl_DeviceGUI *destination = o.FindDevice(NewWire.InputID);
@@ -1341,7 +2091,10 @@ void Apply(const Spiral::Core::PatchDescription &patch, Fl_Canvas &o, const std:
 		{
 			o.m_WireVec.push_back(NewWire);
 			o.cb_Connection(&o, (void*)&NewWire);
+			o.LockGraph();
 			o.m_Graph.AddConnection(NewWire.OutputID, NewWire.OutputTerminal, NewWire.InputID, NewWire.InputTerminal);
+			o.UnlockGraph();
+			o.Reschedule();
 		}
 	}
 }

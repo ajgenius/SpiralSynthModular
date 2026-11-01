@@ -23,9 +23,13 @@
 #include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Text_Editor.H>
 #include <FL/Fl_Check_Button.H>
+#include <FL/Fl_Choice.H>
 #include "PatchProject.h"
 #include <string>
 #include <vector>
+
+class Fl_Canvas;
+class SubPatchDevice;
 
 class Fl_BoundaryDrawer: public Fl_Group
 {
@@ -53,6 +57,9 @@ public:
 	void Bind(Spiral::File::DocumentSection *document);
 	bool Bound() const;
 	bool ShowsDocument() const;
+
+	void BindPorts(Fl_Canvas *canvas);
+	bool ShowsPorts() const;
 
 	/* A vertical drag bar, like a GTK paned: drag the rail to set the
 	   panel width. The width is remembered for this process only, not
@@ -94,11 +101,22 @@ public:
 	bool AddCredit();
 	bool RemoveCredit(size_t row);
 
+	size_t PortRows() const;
+	std::string PortName(size_t row) const;
+	bool PortIsInput(size_t row) const;
+	bool RenamePort(size_t row, const std::string &name, std::string &error, bool refresh = true);
+	bool MatchConnectedName(size_t row, std::string &error);
+	bool RemovePort(size_t row, std::string &error);
+	bool AddPort(bool input, std::string &error);
+	bool MovePort(size_t fromRow, size_t toRow, std::string &error);
+	void DropPortRow(size_t fromRow, int y);
+
 	/* Re-read the bound document after it changed under the panel. */
 	void Refresh();
 
 private:
 	Spiral::File::DocumentSection *m_Document;
+	Fl_Canvas *m_Canvas;
 
 	bool m_Collapsed;
 	bool m_SplitDrag;
@@ -126,6 +144,15 @@ private:
 	std::vector<Fl_Input *> m_CreditRoles;
 	std::vector<Fl_Button *> m_CreditRemove;
 	Fl_Button *m_AddCredit;
+	Fl_Group *m_PortSection;
+	Fl_Choice *m_Mode;
+	std::vector<Fl_Box *> m_PortHeaders;
+	std::vector<Fl_Button *> m_PortHandles;
+	std::vector<Fl_Input *> m_PortNames;
+	std::vector<Fl_Button *> m_PortMatch;
+	std::vector<Fl_Button *> m_PortRemove;
+	Fl_Button *m_AddInput;
+	Fl_Button *m_AddOutput;
 
 	static void FieldEdited(Fl_Widget *, void *);
 	static void AboutEdited(Fl_Widget *, void *);
@@ -138,6 +165,19 @@ private:
 	static void AddClicked(Fl_Widget *, void *);
 	static void RemoveClicked(Fl_Widget *, void *);
 	static void RemoveCommitted(void *);
+	static void ModePicked(Fl_Widget *, void *);
+	static void NameEdited(Fl_Widget *, void *);
+	static void MatchClicked(Fl_Widget *, void *);
+	static void AddPortClicked(Fl_Widget *, void *);
+	static void AddPortCommitted(void *);
+	static void RemovePortClicked(Fl_Widget *, void *);
+	static void RemovePortCommitted(void *);
+	static void DragCommitted(void *);
+
+	SubPatchDevice *SubPatch() const;
+	void ShowSections();
+	void PlacePorts();
+	int RowNear(size_t fromRow, int y) const;
 
 	void Changed();
 	void Relayout();
@@ -147,6 +187,10 @@ private:
 	void NoteLayout();
 
 	size_t m_RemoveRow;
+	size_t m_RemovePortRow;
+	bool m_AddPortInput;
+	size_t m_DragFrom;
+	int m_DragY;
 };
 
 #endif

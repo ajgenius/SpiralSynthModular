@@ -40,6 +40,7 @@
 #include "Fl_CommentGUI.h"
 #include "Fl_Canvas.h"
 #include "Fl_BoundaryDrawer.h"
+#include "Fl_Breadcrumb.h"
 #include "SpiralPlugin.h"
 #include "PatchDescription.h"
 #include "ChannelHandler.h"
@@ -131,6 +132,13 @@ public:
 	void LayoutChrome();
 	void LoadPatch(const char *fn, const char *branchId = NULL);
 	void Apply(const Spiral::Core::PatchDescription &patch, const string &sidecars, bool merge = false);
+	bool ApplyPage(const Spiral::Core::PatchDescription &patch, const string &sidecars, bool merge, int page,
+		std::map<std::string, int> &ids);
+	DeviceWin* NewSubPatch(int x, int y, const string &name, SubPatchDevice *device,
+		const Spiral::Core::SubPatchConfig &config);
+	void GroupSelection(const string &title);
+	void UngroupSelection();
+	void SyncSubPatches();
 	void SavePatch(const char *fn);
 
 	void FreezeAll()
@@ -186,6 +194,8 @@ private:
 	DeviceWin* NewComment(int n, int x, int y);
 
 	void RenderAudio();
+	void RunDevice(int id);
+	static void cb_RunDevice(int id, void *host);
 	pthread_mutex_t m_CycleLock;
 	HostInfo m_Info;
 	bool m_ResetingAudioThread, m_HostNeedsUpdate, m_Frozen;
@@ -234,6 +244,7 @@ private:
 	// Chrome beside the canvas scroll, not inside it: the scroll gets
 	// what the drawer leaves.
 	Fl_BoundaryDrawer *m_Drawer;
+	Fl_Breadcrumb *m_Breadcrumb;
 	map<string,Fl_Pack*> m_PluginGroupMap;
 	SettingsWindow  *m_SettingsWindow;
 	SpiralWindowType* m_TopWindow;
@@ -283,6 +294,9 @@ private:
 	// Canvas popup: open the drawer on the patch's own entry.
 	inline void cb_AboutPatch_i (Fl_Widget *o, void *v);
 	static void cb_AboutPatch (Fl_Widget *o, void *v);
+	static void cb_Group (Fl_Widget *o, void *v);
+	static void cb_Ungroup (Fl_Widget *o, void *v);
+	static void cb_PageShown (Fl_Widget *o, void *v);
         // Help menu
         inline void cb_About_i (Fl_Widget *o, void *v);
 	static void cb_About (Fl_Widget *o, void *v);
@@ -318,6 +332,8 @@ private:
 	}
 	friend istream &operator>>(istream &s, SynthModular &o);
 	friend void Describe(Spiral::Core::PatchDescription &patch, SynthModular &o, const string &sidecars);
+	friend void DescribePage(Spiral::Core::PatchDescription &patch, SynthModular &o, const string &sidecars, int page,
+		bool &external);
 };
 
 iostream &operator>>(iostream &s, SynthModular &o);

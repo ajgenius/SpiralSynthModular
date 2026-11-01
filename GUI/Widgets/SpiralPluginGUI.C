@@ -118,6 +118,11 @@ inline void SpiralPluginGUI::cb_Help_i(Fl_Button* o, void* v)
 	}
 	else cb_Help_close_i(m_HelpWin, NULL);
 }
+void SpiralPluginGUI::ShowHelp()
+{
+	cb_Help_i(m_Help, NULL);
+}
+
 void SpiralPluginGUI::cb_Help(Fl_Button* o, void* v)
 { ((SpiralPluginGUI*)(o->parent()))->cb_Help_i(o,v); }
 

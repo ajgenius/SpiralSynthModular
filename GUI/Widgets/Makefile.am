@@ -10,6 +10,8 @@ lib_LTLIBRARIES = libSpiralWidgets.la
 libSpiralWidgets_la_SOURCES =					\
 					Fl_BoundaryDrawer.h	\
 					Fl_BoundaryDrawer.cpp	\
+					Fl_Breadcrumb.h	\
+					Fl_Breadcrumb.cpp	\
 					Fl_Canvas.h		\
 					Fl_Canvas.C		\
 					Fl_CommentGUI.h		\

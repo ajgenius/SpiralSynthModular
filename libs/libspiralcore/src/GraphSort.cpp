@@ -245,6 +245,16 @@ void GraphSort::Dump()
 	}
 }
 
+void GraphSort::AddNode(int ID, bool Terminal)
+{
+	if (m_Graph.find(ID)!=m_Graph.end()) return;
+
+	Node newnode;
+	newnode.IsTerminal = Terminal;
+	m_Graph[ID]=newnode;
+	Sort();
+}
+
 void GraphSort::AddConnection(int SID, bool STerminal, int DID, bool DTerminal)
 {
 	map<int,Node>::iterator si=m_Graph.find(SID);

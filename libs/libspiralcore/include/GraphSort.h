@@ -45,6 +45,7 @@ public:
 	void TestSort();
 	void OrigSort();
 
+	void AddNode(int ID, bool Terminal);
 	void AddConnection(int SID, bool STerminal, int DID, bool DTerminal);
 	void RemoveConnection(int SID, int DID);
 	void Clear();

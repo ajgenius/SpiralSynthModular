@@ -87,6 +87,8 @@ m_Minimised (true)
 
 	m_Menu->add("rename", 0, (Fl_Callback*)cb_Rename,this);
 	m_Menu->add("delete", 0, (Fl_Callback*)cb_Delete,this);
+	// The canvas brings up the device menu (Fl_Canvas::DeviceMenu).
+	m_Menu->hide();
 
 	int Centx=x()+w()/2;
 	int Centy=y()+h()/2;
@@ -129,7 +131,32 @@ void Fl_DeviceGUI::cb_Resize (Fl_DeviceGUI *o) {
 
 
 int Fl_DeviceGUI::handle (int event) {
+    // A right click on the title or the icon, or anywhere the controls
+    // leave it, brings up the device menu, which the canvas fills in.
+    Fl_Canvas *canvas = dynamic_cast<Fl_Canvas*>(parent());
+    const bool menu = canvas && event == FL_PUSH && Fl::event_button() == FL_RIGHT_MOUSE;
+    if (menu && ((m_DragBar && Fl::event_inside(m_DragBar)) ||
+                 (m_IconButton && m_IconButton->visible() && Fl::event_inside(m_IconButton))))
+    {
+       canvas->DeviceMenu(this);
+       return 1;
+    }
+
     int t=Fl_Group::handle(event);
+    if (menu && !t)
+    {
+       canvas->DeviceMenu(this);
+       return 1;
+    }
+
+    // A minimised subpatch has no icon to click: a click on its body
+    // opens its panel instead.
+    if (event == FL_PUSH && !t && Fl::event_button() == FL_LEFT_MOUSE && m_Minimised && m_PluginWindow
+        && !m_IconButton && !(m_DragBar && Fl::event_inside(m_DragBar)))
+    {
+       Maximise();
+       return 1;
+    }
 
     // IF we are starting a drag in select mode, don't change state
     if (event == FL_PUSH 
@@ -391,6 +418,11 @@ inline void Fl_DeviceGUI::cb_Rename_i(Fl_Menu_Button* o, void* v)
 }
 void Fl_DeviceGUI::cb_Rename(Fl_Menu_Button* o, void* v)
 {((Fl_DeviceGUI*)(o->parent()))->cb_Rename_i(o,v);}
+
+void Fl_DeviceGUI::Rename()
+{
+	cb_Rename_i(m_Menu, NULL);
+}
 
 inline void Fl_DeviceGUI::cb_Delete_i(Fl_Menu_Button* o, void* v)
 {

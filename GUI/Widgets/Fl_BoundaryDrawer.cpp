@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "Fl_BoundaryDrawer.h"
+#include "Fl_Canvas.h"
 #include "License.h"
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
@@ -24,6 +25,8 @@ namespace
 	const int Panel = 320;
 	const int PanelMax = 560;
 	const int RemoveW = 22;
+	const int HandleW = 16;
+	const int MatchW = 48;
 	const int MenuW = 26;
 	const int ViewW = 56;
 	int SessionPanel = 0;
@@ -245,8 +248,50 @@ namespace
 
 				row->damage(FL_DAMAGE_ALL);
 				draw_child(*row);
+				draw_outside_label(*row);
 			}
 		}
+	};
+
+	class Fl_PortHandle: public Fl_Button
+	{
+	public:
+		Fl_PortHandle(int x, int y, int w, int h, Fl_BoundaryDrawer *drawer, size_t row):
+			Fl_Button(x, y, w, h, "::"),
+			m_Drawer(drawer),
+			m_Row(row),
+			m_Drag(false)
+		{
+			box(FL_FLAT_BOX);
+			labelsize(10);
+			tooltip("Drag to reorder this boundary port");
+		}
+
+		int handle(int event)
+		{
+			if (event == FL_PUSH && Fl::event_button() == FL_LEFT_MOUSE)
+			{
+				m_Drag = true;
+				return 1;
+			}
+
+			if (event == FL_DRAG && m_Drag)
+				return 1;
+
+			if (event == FL_RELEASE && m_Drag)
+			{
+				m_Drag = false;
+				m_Drawer->DropPortRow(m_Row, Fl::event_y());
+				return 1;
+			}
+
+			return Fl_Button::handle(event);
+		}
+
+	private:
+		Fl_BoundaryDrawer *m_Drawer;
+		size_t m_Row;
+		bool m_Drag;
 	};
 }
 
@@ -254,12 +299,13 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 	Fl_Group(x, y, w, h),
 	CollapseChanged(NULL), CollapseChangedData(NULL),
 	DocumentChanged(NULL), DocumentChangedData(NULL),
-	m_Document(NULL),
+	m_Document(NULL), m_Canvas(NULL),
 	m_Collapsed(SessionCollapsed()), m_SplitDrag(false), m_SplitX(0), m_SplitW(Rail),
 	m_DocumentSection(NULL), m_CreditSection(NULL),
 	m_About(NULL), m_AboutBuffer(NULL),
 	m_License(NULL), m_LicenseMenu(NULL), m_Bundle(NULL), m_ViewLicense(NULL), m_Dates(NULL), m_CreditHeader(NULL),
-	m_AddCredit(NULL), m_RemoveRow(0)
+	m_AddCredit(NULL), m_PortSection(NULL), m_Mode(NULL), m_AddInput(NULL), m_AddOutput(NULL),
+	m_RemoveRow(0), m_RemovePortRow(0), m_AddPortInput(false), m_DragFrom(0), m_DragY(0)
 {
 	box(FL_NO_BOX);
 
@@ -362,17 +408,26 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 	m_CreditSection->resizable(NULL);
 	m_CreditSection->end();
 
+	m_PortSection = new Fl_CreditRows(x + Rail + Pad, y + Pad,
+		std::max(0, w - Rail - 2 * Pad), std::max(0, h - 2 * Pad));
+	m_PortSection->resizable(NULL);
+	m_PortSection->end();
+
 	end();
 	resizable(NULL);
 
 	// Nothing bound yet, so nothing to show.
 	m_DocumentSection->hide();
 	m_CreditSection->hide();
+	m_PortSection->hide();
 }
 
 Fl_BoundaryDrawer::~Fl_BoundaryDrawer()
 {
 	Fl::remove_timeout(RemoveCommitted, this);
+	Fl::remove_timeout(AddPortCommitted, this);
+	Fl::remove_timeout(RemovePortCommitted, this);
+	Fl::remove_timeout(DragCommitted, this);
 
 	// The editor is a child and goes with the group; the buffer is ours.
 	if (m_About)
@@ -395,6 +450,7 @@ void Fl_BoundaryDrawer::draw()
 	// rail is a shade off it, with a grip in the middle.
 	m_DocumentSection->color(color());
 	m_CreditSection->color(color());
+	m_PortSection->color(color());
 
 	fl_color(color());
 	fl_rectf(x(), y(), w(), h());
@@ -465,6 +521,14 @@ void Fl_BoundaryDrawer::SetPanelWidth(int panel)
 		m_Collapsed = false;
 	}
 
+	ShowSections();
+	redraw();
+}
+
+void Fl_BoundaryDrawer::ShowSections()
+{
+	// Collapsed is the rail alone. The sections stay built so opening
+	// does not have to recreate the fields.
 	if (ShowsDocument() && !m_Collapsed)
 	{
 		m_DocumentSection->show();
@@ -476,7 +540,10 @@ void Fl_BoundaryDrawer::SetPanelWidth(int panel)
 		m_CreditSection->hide();
 	}
 
-	redraw();
+	if (ShowsPorts() && !m_Collapsed)
+		m_PortSection->show();
+	else
+		m_PortSection->hide();
 }
 
 int Fl_BoundaryDrawer::RailWidth() const
@@ -501,7 +568,7 @@ bool Fl_BoundaryDrawer::Collapsed() const
 
 bool Fl_BoundaryDrawer::PanelShown() const
 {
-	return !m_Collapsed && ShowsDocument();
+	return !m_Collapsed && (ShowsDocument() || ShowsPorts());
 }
 
 void Fl_BoundaryDrawer::SetCollapsed(bool collapsed)
@@ -579,7 +646,10 @@ void Fl_BoundaryDrawer::Relayout()
 	m_CreditSection->resize(contentX + Pad, m_DocumentSection->y() + m_DocumentSection->h() + Pad,
 		contentW, std::max(0, h() - m_DocumentSection->h() - 3 * Pad));
 
+	m_PortSection->resize(contentX + Pad, y() + Pad, contentW, std::max(0, h() - 2 * Pad));
+
 	PlaceCredits();
+	PlacePorts();
 	NoteLayout();
 }
 
@@ -601,7 +671,23 @@ bool Fl_BoundaryDrawer::Bound() const
 
 bool Fl_BoundaryDrawer::ShowsDocument() const
 {
-	return Bound();
+	return Bound() && !ShowsPorts();
+}
+
+void Fl_BoundaryDrawer::BindPorts(Fl_Canvas *canvas)
+{
+	m_Canvas = canvas;
+	Refresh();
+}
+
+SubPatchDevice *Fl_BoundaryDrawer::SubPatch() const
+{
+	return m_Canvas ? m_Canvas->Box(m_Canvas->Page()) : NULL;
+}
+
+bool Fl_BoundaryDrawer::ShowsPorts() const
+{
+	return SubPatch() != NULL;
 }
 
 void Fl_BoundaryDrawer::Repopulate()
@@ -723,19 +809,99 @@ void Fl_BoundaryDrawer::Repopulate()
 		PlaceCredits();
 	}
 
-	// Collapsed is the rail alone. The sections stay built so opening
-	// does not have to recreate the fields.
-	if (ShowsDocument() && !m_Collapsed)
+	m_PortSection->clear();
+	m_PortSection->resizable(NULL);
+	m_Mode = NULL;
+	m_PortHeaders.clear();
+	m_PortHandles.clear();
+	m_PortNames.clear();
+	m_PortMatch.clear();
+	m_PortRemove.clear();
+	m_AddInput = NULL;
+	m_AddOutput = NULL;
+
+	if (const SubPatchDevice *box = SubPatch())
 	{
-		m_DocumentSection->show();
-		m_CreditSection->show();
-	}
-	else
-	{
-		m_DocumentSection->hide();
-		m_CreditSection->hide();
+		Fl_Group *prev = Fl_Group::current();
+		m_PortSection->begin();
+
+		const std::string scopeName = m_Canvas->Name(m_Canvas->Page());
+
+		m_Mode = new Fl_Choice(m_PortSection->x() + LabelWidth, m_PortSection->y(),
+			std::max(0, m_PortSection->w() - LabelWidth), RowHeight - 2, "Mode");
+		m_Mode->align(FL_ALIGN_LEFT);
+		PlasticButton(m_Mode);
+		m_Mode->textsize(10);
+		m_Mode->tooltip("Virtual shares the parent's graph; Inline runs its own");
+		m_Mode->add("Virtual");
+		m_Mode->add("Inline");
+		m_Mode->add("Isolated", 0, NULL, NULL, box->Config().Mode == "Isolated" ? 0 : FL_MENU_INACTIVE);
+		m_Mode->value(box->Config().Mode == "Inline" ? 1 : box->Config().Mode == "Isolated" ? 2 : 0);
+		m_Mode->callback(ModePicked, this);
+
+		for (int section = 0; section < 2; ++section)
+		{
+			const bool input = section == 0;
+			const size_t count = input ? box->Inputs.size() : box->Outputs.size();
+			const size_t base = input ? 0 : box->Inputs.size();
+			std::string headingText = Counted(input ? "Inputs" : "Outputs", count);
+
+			if (input && !scopeName.empty())
+				headingText = scopeName + "  " + headingText;
+
+			Fl_Box *heading = new Fl_Box(m_PortSection->x(), m_PortSection->y(),
+				m_PortSection->w(), RowHeight - 2);
+			heading->copy_label(headingText.c_str());
+			heading->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+			heading->labelsize(10);
+			heading->labelfont(FL_BOLD);
+			m_PortHeaders.push_back(heading);
+
+			for (size_t i = 0; i < count; ++i)
+			{
+				Fl_Button *handle = new Fl_PortHandle(m_PortSection->x(), m_PortSection->y(),
+					HandleW, RowHeight - 2, this, base + i);
+				Fl_Input *name = new Fl_PanelInput(m_PortSection->x(), m_PortSection->y(),
+					m_PortSection->w(), RowHeight - 2);
+				Fl_Button *match = new Fl_Button(m_PortSection->x(), m_PortSection->y(),
+					MatchW, RowHeight - 2, "Match");
+				Fl_Button *remove = new Fl_Button(m_PortSection->x(), m_PortSection->y(),
+					RemoveW, RowHeight - 2, "x");
+
+				PlasticInput(name);
+				name->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+				name->callback(NameEdited, this);
+				name->value((input ? box->Inputs : box->Outputs)[i].Name.c_str());
+				PlasticButton(match);
+				match->tooltip("Use the connected device port's name");
+				match->callback(MatchClicked, this);
+				PlasticButton(remove);
+				remove->tooltip("Remove this boundary port");
+				remove->callback(RemovePortClicked, this);
+				m_PortHandles.push_back(handle);
+				m_PortNames.push_back(name);
+				m_PortMatch.push_back(match);
+				m_PortRemove.push_back(remove);
+			}
+
+			Fl_Button *add = new Fl_Button(m_PortSection->x(), m_PortSection->y(),
+				88, RowHeight - 2, input ? "+ Input" : "+ Output");
+			PlasticButton(add);
+			add->callback(AddPortClicked, this);
+			add->tooltip(input ? "Add a boundary input" : "Add a boundary output");
+
+			if (input)
+				m_AddInput = add;
+			else
+				m_AddOutput = add;
+		}
+
+		m_PortSection->end();
+		Fl_Group::current(prev);
+		PlacePorts();
 	}
 
+	ShowSections();
 	NoteLayout();
 	redraw();
 
@@ -786,6 +952,9 @@ void Fl_BoundaryDrawer::NoteLayout()
 
 	if (m_CreditSection)
 		m_CreditSection->init_sizes();
+
+	if (m_PortSection)
+		m_PortSection->init_sizes();
 
 	init_sizes();
 }
@@ -1083,4 +1252,315 @@ void Fl_BoundaryDrawer::RemoveCommitted(void *data)
 	Fl_BoundaryDrawer *self = static_cast<Fl_BoundaryDrawer *>(data);
 
 	self->RemoveCredit(self->m_RemoveRow);
+}
+
+void Fl_BoundaryDrawer::PlacePorts()
+{
+	if (!m_PortSection)
+		return;
+
+	const int rowH = RowHeight - 2;
+	const int x = m_PortSection->x();
+	const int w = m_PortSection->w();
+	int y = m_PortSection->y();
+	size_t row = 0;
+	const SubPatchDevice *box = SubPatch();
+
+	if (m_Mode)
+	{
+		m_Mode->resize(x + LabelWidth, y, std::max(0, w - LabelWidth), rowH);
+		y += RowHeight;
+	}
+	const size_t nIn = box ? box->Inputs.size() : 0;
+	const size_t nOut = box ? box->Outputs.size() : 0;
+
+	for (int section = 0; section < 2; ++section)
+	{
+		const size_t count = section == 0 ? nIn : nOut;
+
+		if ((size_t)section < m_PortHeaders.size())
+		{
+			m_PortHeaders[section]->resize(x, y, w, rowH);
+			y += RowHeight;
+		}
+
+		for (size_t i = 0; i < count && row < m_PortNames.size(); ++i, ++row)
+		{
+			const int nameW = std::max(0, w - HandleW - MatchW - RemoveW - 8);
+
+			m_PortHandles[row]->resize(x, y, HandleW, rowH);
+			m_PortNames[row]->resize(x + HandleW + 2, y, nameW, rowH);
+			m_PortMatch[row]->resize(x + w - MatchW - RemoveW - 2, y, MatchW, rowH);
+			m_PortRemove[row]->resize(x + w - RemoveW, y, RemoveW, rowH);
+			y += RowHeight;
+		}
+
+		if (Fl_Button *add = section == 0 ? m_AddInput : m_AddOutput)
+		{
+			add->resize(x, y, std::max(1, std::min(w, 96)), rowH);
+			y += RowHeight;
+		}
+	}
+}
+
+size_t Fl_BoundaryDrawer::PortRows() const
+{
+	const SubPatchDevice *box = SubPatch();
+
+	return box ? box->Inputs.size() + box->Outputs.size() : 0;
+}
+
+bool Fl_BoundaryDrawer::PortIsInput(size_t row) const
+{
+	const SubPatchDevice *box = SubPatch();
+
+	return box && row < box->Inputs.size();
+}
+
+std::string Fl_BoundaryDrawer::PortName(size_t row) const
+{
+	const SubPatchDevice *box = SubPatch();
+
+	if (!box || row >= PortRows())
+		return std::string();
+
+	return PortIsInput(row) ? box->Inputs[row].Name : box->Outputs[row - box->Inputs.size()].Name;
+}
+
+bool Fl_BoundaryDrawer::RenamePort(size_t row, const std::string &name, std::string &error,
+	bool refresh)
+{
+	const SubPatchDevice *box = SubPatch();
+
+	if (!box || row >= PortRows())
+	{
+		error = "No such boundary port";
+		return false;
+	}
+
+	const bool input = PortIsInput(row);
+	m_Canvas->RenameBoxPort(m_Canvas->Page(), input, (int)(input ? row : row - box->Inputs.size()), name);
+
+	if (refresh)
+		Repopulate();
+
+	return true;
+}
+
+bool Fl_BoundaryDrawer::MatchConnectedName(size_t row, std::string &error)
+{
+	const SubPatchDevice *box = SubPatch();
+
+	if (!box || row >= PortRows())
+	{
+		error = "No such boundary port";
+		return false;
+	}
+
+	const bool input = PortIsInput(row);
+	const BoundaryPort &port = input ? box->Inputs[row] : box->Outputs[row - box->Inputs.size()];
+
+	if (port.InnerID < 0)
+	{
+		error = "That boundary port is not connected";
+		return false;
+	}
+
+	const std::string name = m_Canvas->PortName(port.InnerID, input, port.InnerPort);
+
+	if (!RenamePort(row, name, error, false))
+		return false;
+
+	if (row < m_PortNames.size())
+		m_PortNames[row]->value(name.c_str());
+
+	return true;
+}
+
+bool Fl_BoundaryDrawer::AddPort(bool input, std::string &error)
+{
+	if (!ShowsPorts())
+	{
+		error = "Open a subpatch to add a boundary port";
+		return false;
+	}
+
+	m_Canvas->AddBoxPort(m_Canvas->Page(), input, std::string());
+	Repopulate();
+
+	return true;
+}
+
+bool Fl_BoundaryDrawer::RemovePort(size_t row, std::string &error)
+{
+	const SubPatchDevice *box = SubPatch();
+
+	if (!box || row >= PortRows())
+	{
+		error = "No such boundary port";
+		return false;
+	}
+
+	const bool input = PortIsInput(row);
+	m_Canvas->RemoveBoxPort(m_Canvas->Page(), input, (int)(input ? row : row - box->Inputs.size()));
+	Repopulate();
+
+	return true;
+}
+
+bool Fl_BoundaryDrawer::MovePort(size_t fromRow, size_t toRow, std::string &error)
+{
+	if (fromRow == toRow)
+		return true;
+
+	const SubPatchDevice *box = SubPatch();
+
+	if (!box || fromRow >= PortRows() || toRow >= PortRows())
+	{
+		error = "No such boundary port";
+		return false;
+	}
+
+	if (PortIsInput(fromRow) != PortIsInput(toRow))
+	{
+		error = "Boundary ports stay in their own section";
+		return false;
+	}
+
+	const bool input = PortIsInput(fromRow);
+	const size_t base = input ? 0 : box->Inputs.size();
+
+	if (!m_Canvas->MoveBoxPort(m_Canvas->Page(), input, (int)(fromRow - base), (int)(toRow - base)))
+		return false;
+
+	Repopulate();
+
+	return true;
+}
+
+int Fl_BoundaryDrawer::RowNear(size_t fromRow, int y) const
+{
+	const SubPatchDevice *box = SubPatch();
+
+	if (!box || fromRow >= m_PortNames.size())
+		return -1;
+
+	const size_t nIn = box->Inputs.size();
+	const bool input = fromRow < nIn;
+	const size_t begin = input ? 0 : nIn;
+	const size_t end = input ? nIn : m_PortNames.size();
+	int best = (int)fromRow;
+	int bestDist = 1000000;
+
+	for (size_t i = begin; i < end && i < m_PortNames.size(); ++i)
+	{
+		const int centre = m_PortNames[i]->y() + m_PortNames[i]->h() / 2;
+		const int dist = y > centre ? y - centre : centre - y;
+
+		if (dist < bestDist)
+		{
+			bestDist = dist;
+			best = (int)i;
+		}
+	}
+
+	return best;
+}
+
+void Fl_BoundaryDrawer::DropPortRow(size_t fromRow, int y)
+{
+	m_DragFrom = fromRow;
+	m_DragY = y;
+	Fl::remove_timeout(DragCommitted, this);
+	Fl::add_timeout(0, DragCommitted, this);
+}
+
+void Fl_BoundaryDrawer::DragCommitted(void *data)
+{
+	Fl_BoundaryDrawer *self = static_cast<Fl_BoundaryDrawer *>(data);
+	const int target = self->RowNear(self->m_DragFrom, self->m_DragY);
+	std::string error;
+
+	if (target >= 0 && (size_t)target != self->m_DragFrom)
+		self->MovePort(self->m_DragFrom, (size_t)target, error);
+}
+
+void Fl_BoundaryDrawer::ModePicked(Fl_Widget *, void *data)
+{
+	Fl_BoundaryDrawer *self = static_cast<Fl_BoundaryDrawer *>(data);
+
+	if (self->m_Mode && self->ShowsPorts() && self->m_Mode->text())
+		self->m_Canvas->SetBoxMode(self->m_Canvas->Page(), self->m_Mode->text());
+}
+
+void Fl_BoundaryDrawer::NameEdited(Fl_Widget *widget, void *data)
+{
+	Fl_BoundaryDrawer *self = static_cast<Fl_BoundaryDrawer *>(data);
+
+	for (size_t i = 0; i < self->m_PortNames.size(); ++i)
+		if (self->m_PortNames[i] == widget)
+		{
+			std::string error;
+			const char *name = self->m_PortNames[i]->value();
+
+			if (!self->RenamePort(i, name ? name : "", error, false))
+				self->m_PortNames[i]->value(self->PortName(i).c_str());
+
+			return;
+		}
+}
+
+void Fl_BoundaryDrawer::MatchClicked(Fl_Widget *widget, void *data)
+{
+	Fl_BoundaryDrawer *self = static_cast<Fl_BoundaryDrawer *>(data);
+
+	for (size_t i = 0; i < self->m_PortMatch.size(); ++i)
+		if (self->m_PortMatch[i] == widget)
+		{
+			std::string error;
+
+			self->MatchConnectedName(i, error);
+
+			return;
+		}
+}
+
+void Fl_BoundaryDrawer::AddPortClicked(Fl_Widget *widget, void *data)
+{
+	Fl_BoundaryDrawer *self = static_cast<Fl_BoundaryDrawer *>(data);
+
+	self->m_AddPortInput = widget == self->m_AddInput;
+	Fl::remove_timeout(AddPortCommitted, self);
+	Fl::add_timeout(0, AddPortCommitted, self);
+}
+
+void Fl_BoundaryDrawer::AddPortCommitted(void *data)
+{
+	Fl_BoundaryDrawer *self = static_cast<Fl_BoundaryDrawer *>(data);
+	std::string error;
+
+	self->AddPort(self->m_AddPortInput, error);
+}
+
+void Fl_BoundaryDrawer::RemovePortClicked(Fl_Widget *widget, void *data)
+{
+	Fl_BoundaryDrawer *self = static_cast<Fl_BoundaryDrawer *>(data);
+
+	for (size_t i = 0; i < self->m_PortRemove.size(); ++i)
+		if (self->m_PortRemove[i] == widget)
+		{
+			self->m_RemovePortRow = i;
+			Fl::remove_timeout(RemovePortCommitted, self);
+			Fl::add_timeout(0, RemovePortCommitted, self);
+
+			return;
+		}
+}
+
+void Fl_BoundaryDrawer::RemovePortCommitted(void *data)
+{
+	Fl_BoundaryDrawer *self = static_cast<Fl_BoundaryDrawer *>(data);
+	std::string error;
+
+	self->RemovePort(self->m_RemovePortRow, error);
 }

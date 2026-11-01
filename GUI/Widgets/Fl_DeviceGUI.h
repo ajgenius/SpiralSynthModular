@@ -94,6 +94,8 @@ class Fl_DeviceGUI : public Fl_Group {
       const DeviceGUIInfo* GetInfo() { return &m_Info; }
       SpiralGUIType* GetPluginWindow() { return m_PluginWindow; }
       string GetName() { return m_Name; }
+      void Rename();
+      void Delete() { m_DelMe = true; }
       void SetName (const string &s) { m_Name=s; m_DragBar->label (m_Name.c_str()); }
       bool IsMinimised() { return m_Minimised; }
       void Minimise();

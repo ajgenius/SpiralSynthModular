@@ -61,12 +61,79 @@ namespace Core
 		}
 	};
 
+	class PatchDescription;
+
+	class PortBind
+	{
+	public:
+		bool OuterIsInput;
+		unsigned OuterIndex;
+		std::string InnerPath;
+
+		PortBind(): OuterIsInput(true), OuterIndex(0) {}
+		PortBind(bool input, unsigned index, const std::string &path):
+			OuterIsInput(input), OuterIndex(index), InnerPath(path) {}
+	};
+
+	class PortName
+	{
+	public:
+		std::string Name;
+		std::string Type;
+
+		PortName() {}
+		PortName(const std::string &name, const std::string &type = std::string()): Name(name), Type(type) {}
+	};
+
+	class SubPatchConfig
+	{
+	public:
+		std::string Mode;
+		long Voices;
+		bool PolyOutput;
+		std::string Link;
+		long BufferFrames;
+		std::string LinkName;
+
+		SubPatchConfig(): Mode("Virtual"), Voices(1), PolyOutput(false), Link("Buffer"), BufferFrames(0) {}
+
+		// The spellings the file uses, as the private tree reads and writes
+		// them: Virtual, Inline or Isolated; Buffer or Jack. Anything else
+		// reads as Virtual, and as Buffer.
+		static std::string ModeSpelling(const std::string &text)
+		{
+			if (text == "Inline" || text == "inline")
+				return "Inline";
+			if (text == "Isolated" || text == "isolated")
+				return "Isolated";
+			return "Virtual";
+		}
+		static std::string LinkSpelling(const std::string &text)
+		{
+			return text == "Jack" || text == "jack" ? "Jack" : "Buffer";
+		}
+	};
+
 	class DeviceDescription
 	{
 	public:
 		std::map<std::string, std::string> Values;
 
 		std::vector<PropertyDescription> Properties;
+
+		SubPatchConfig Config;
+		std::vector<PortBind> Binds;
+		std::vector<PortName> Inputs, Outputs;
+
+		DeviceDescription(): m_Inner(0) {}
+		DeviceDescription(const DeviceDescription &other);
+		DeviceDescription &operator=(const DeviceDescription &other);
+		~DeviceDescription();
+
+		bool IsSubPatch() const { return m_Inner != 0; }
+		PatchDescription &MakeSubPatch();
+		PatchDescription *Inner() { return m_Inner; }
+		const PatchDescription *Inner() const { return m_Inner; }
 
 		std::string Value(const std::string &key) const
 		{
@@ -101,6 +168,9 @@ namespace Core
 
 
 		void ClearProperties() { Properties.clear(); }
+
+	private:
+		PatchDescription *m_Inner;
 	};
 
 	class WireDescription
@@ -180,6 +250,41 @@ namespace Core
 			Values.swap(other.Values);
 		}
 	};
+
+	inline DeviceDescription::DeviceDescription(const DeviceDescription &other):
+		Values(other.Values), Properties(other.Properties), Config(other.Config), Binds(other.Binds),
+		Inputs(other.Inputs), Outputs(other.Outputs),
+		m_Inner(other.m_Inner ? new PatchDescription(*other.m_Inner) : 0)
+	{
+	}
+
+	inline DeviceDescription &DeviceDescription::operator=(const DeviceDescription &other)
+	{
+		if (this == &other)
+			return *this;
+		PatchDescription *inner = other.m_Inner ? new PatchDescription(*other.m_Inner) : 0;
+		delete m_Inner;
+		m_Inner = inner;
+		Values = other.Values;
+		Properties = other.Properties;
+		Config = other.Config;
+		Binds = other.Binds;
+		Inputs = other.Inputs;
+		Outputs = other.Outputs;
+		return *this;
+	}
+
+	inline DeviceDescription::~DeviceDescription()
+	{
+		delete m_Inner;
+	}
+
+	inline PatchDescription &DeviceDescription::MakeSubPatch()
+	{
+		if (!m_Inner)
+			m_Inner = new PatchDescription();
+		return *m_Inner;
+	}
 }
 }
 
