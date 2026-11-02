@@ -16,6 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include "SplitSwitchPlugin.h"
+#include "Finite.h"
 #include <stdio.h>
 #include <math.h>
 #include "SpiralIcon.xpm"
@@ -147,7 +148,8 @@ void SplitSwitchPlugin::Execute() {
       if (InputExists (0)) {
         m_GUIArgs.Auto = true;
         // Check the Switch Pos CV Value
-        AsSigned(m_SwitchPos) = lrint (fabs (GetInput (0, n)));
+        const float selection = fabs (GetInput (0, n));
+        AsSigned(m_SwitchPos) = Spiral::Core::IsFinite (selection) && selection < NumChans + 1 ? lrint (selection) : 1;
       }
       else if (InputExists (1)) {
         m_GUIArgs.Auto = true;
