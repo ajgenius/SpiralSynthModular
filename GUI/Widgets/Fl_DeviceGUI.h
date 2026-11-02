@@ -131,7 +131,7 @@ class Fl_DeviceGUI : public Fl_Group {
       inline void cb_Delete_i (Fl_Menu_Button* o, void* v);
       static void cb_Delete (Fl_Menu_Button* o, void* v);
       vector<Fl_PortButton*> m_PortVec;
-      static int Numbers[512];
+      static int Numbers[1024];
       string m_Name;
       int m_ID, m_MiniWidth, m_MiniHeight;
       bool m_DelMe, m_IsTerminal, m_Minimised;

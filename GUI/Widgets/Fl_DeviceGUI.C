@@ -23,7 +23,7 @@
 #include "SpiralInfo.h"
 #include <algorithm>
 
-int Fl_DeviceGUI::Numbers[512];
+int Fl_DeviceGUI::Numbers[1024];
 
 Fl_PortButton::Fl_PortButton(int x, int y, int w, int h, const char *n) :
 Fl_Button(x,y,w,h,n)
@@ -64,7 +64,7 @@ m_DelMe (false),
 m_IsTerminal (Terminal),
 m_Minimised (true)
 {
-	for (int n=0; n<512; n++) Numbers[n]=n;
+	for (int n=0; n<1024; n++) Numbers[n]=n;
 
 	type(1);
 	box((Fl_Boxtype)SpiralInfo::GUIDEVICE_Box);
