@@ -276,6 +276,17 @@ int WavFile::Open(string FileName, Mode mode, Channels channels)
 		fgetpos(m_Stream,(fpos_t*)&m_DataStart);
 		m_CurSeekPos=m_DataStart;
 
+		struct stat info;
+		const long start = ftell(m_Stream);
+		const int frameBytes = m_Header.FmtChannels * (m_Header.FmtBitsPerSample / 8);
+		if (m_DataHeader.DataLengthBytes < 0) m_DataHeader.DataLengthBytes = 0;
+		if (start >= 0 && frameBytes > 0 && fstat(fileno(m_Stream), &info) == 0
+		    && m_DataHeader.DataLengthBytes > info.st_size - start)
+		{
+			const long available = info.st_size > start ? (long)info.st_size - start : 0;
+			m_DataHeader.DataLengthBytes = (int)(available - available % frameBytes);
+		}
+
 		#ifdef TRACE_OUT
 		cerr<<m_DataHeader.DataName[0]<<m_DataHeader.DataName[1]<<
 		      m_DataHeader.DataName[2]<<m_DataHeader.DataName[3]<<endl;
