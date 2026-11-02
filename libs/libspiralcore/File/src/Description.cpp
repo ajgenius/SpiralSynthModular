@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "Description.h"
+#include "Compatibility.h"
+#include <algorithm>
+#include <cerrno>
+#include <cfloat>
 #include <cstdio>
 #include <cstdlib>
 #include <cctype>
@@ -133,19 +137,23 @@ namespace Core
 		return *this;
 	}
 
-	// The whole value must be the number; a range error (a denormal, an
-	// overflow) still is one, as the C library spells it.
+	// The whole value must be the number; a range error still is one. A denormal
+	// reads as the C library spells it, and an overflow as the largest number,
+	// since an infinity could not be written back. A saved inf or nan is skipped.
 	Description::Reader &Description::Reader::Value(double &x)
 	{
 		if (More())
 		{
 			const std::string &text = Next();
 			char *end = NULL;
+			errno = 0;
 			double v = strtod(text.c_str(), &end);
-			if (!text.empty() && end == text.c_str() + text.size())
-				x = v;
-			else
+			if (text.empty() || end != text.c_str() + text.size())
 				m_Failed = true;
+			else if (SSMCompat::IsFinite(v))
+				x = v;
+			else if (errno == ERANGE)
+				x = v < 0 ? -DBL_MAX : DBL_MAX;
 		}
 		else
 		{
@@ -191,7 +199,7 @@ namespace Core
 	{
 		double v = x;
 		Value(v);
-		x = static_cast<float>(v);
+		x = static_cast<float>(std::max(-(double)FLT_MAX, std::min((double)FLT_MAX, v)));
 		return *this;
 	}
 
