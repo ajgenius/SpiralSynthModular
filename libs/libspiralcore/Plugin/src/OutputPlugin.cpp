@@ -18,6 +18,8 @@
 
 #include "OutputPlugin.h"
 #include "OutputIcon.xpm"
+#include "Finite.h"
+#include <algorithm>
 
 using namespace std;
 
@@ -114,6 +116,22 @@ void OutputPlugin::ExecuteCommands()
 		case CLEAR_NOTIFY: m_NotifyOpenOut=false; break;
 		default: break;
 	}
+}
+
+void OutputPlugin::Describe(Spiral::Core::Description &d)
+{
+	d.Value(1).Separator(" ");
+	d.Value(m_Hub->Transport()->GetVolume()).Key("VOLUME", "FloatProperty");
+}
+
+void OutputPlugin::Apply(Spiral::Core::Description::Reader &r)
+{
+	const int at = r.Find("VOLUME");
+	float volume = 0;
+	if (at < 0 || !r.At((size_t)at, volume) || !Spiral::Core::IsFinite(volume))
+		return;
+	m_Volume = std::max(0.0f, std::min(1.0f, volume));
+	m_Hub->Transport()->SetVolume(m_Volume);
 }
 
 void OutputPlugin::ServiceAudio()
