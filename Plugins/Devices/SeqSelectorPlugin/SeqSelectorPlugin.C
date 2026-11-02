@@ -18,6 +18,8 @@
 #include "SeqSelectorPlugin.h"
 #include "SpiralIcon.xpm"
 #include "NoteTable.h"
+#include <vector>
+#include <algorithm>
 
 using namespace std;
 using namespace Spiral::Core;
@@ -238,17 +240,41 @@ void SeqSelectorPlugin::Apply(Spiral::Core::Description::Reader &r)
 	int version;
 	r.Value(version);
 	
+	std::vector<int> kept;
+	for (UnsignedType line=0; line<m_Lines.size(); line++)
+		for (int n=0; n<NUM_VALUES; n++)
+			kept.push_back(LineValue(line, n));
+	while (m_Lines.size()) m_Lines.RemoveLast();
+
 	int Num;
 	r.Count(m_Lines, Num);
 	
-	for (int i=0; i<Num && r.More(); i++)
+	bool valid = Num <= 255;
+	for (int i=0; i<Num && r.More() && (valid || !r.Named()); i++)
 	{
 		m_Lines.Add(NewLine());
 		for (int n=0; n<NUM_VALUES; n++)
 		{
 			r.Value(Cell(i, n));
+			valid = valid && LineValue(i, n) >= -1 && LineValue(i, n) <= 131;
 		}
 	}	
+	if (!valid && r.Named())
+	{
+		while (m_Lines.size()) m_Lines.RemoveLast();
+		for (size_t i=0; i<kept.size(); i++)
+		{
+			if (i % NUM_VALUES == 0) m_Lines.Add(NewLine());
+			SetLineValue(i / NUM_VALUES, i % NUM_VALUES, kept[i]);
+		}
+	}
+	else if (!valid)
+	{
+		while (m_Lines.size() > 255) m_Lines.RemoveLast();
+		for (UnsignedType line=0; line<m_Lines.size(); line++)
+			for (int n=0; n<NUM_VALUES; n++)
+				SetLineValue(line, n, std::max(-1, std::min(131, LineValue(line, n))));
+	}
 	r.Value(m_Begin).Value(m_End).Value(m_UseRange);
 }
 
