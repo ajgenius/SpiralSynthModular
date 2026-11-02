@@ -17,6 +17,7 @@
 */
 
 #include "TranslatePlugin.h"
+#include "Finite.h"
 #include "SpiralIcon.xpm"
 #include "NoteTable.h"
 
@@ -86,7 +87,8 @@ float TranslateNoteToVolt::Translate (float i) {
 }
 
 float TranslateVoltToNote::Translate (float i) {
-      return (NoteTable[int (i)] / MAX_FREQ * 2) - 1.0f;
+      const int note = Spiral::Core::IsFinite (i) ? int (std::max (0.0f, std::min (131.0f, i))) : 0;
+      return (NoteTable[note] / MAX_FREQ * 2) - 1.0f;
 }
 
 ///////////////////////////////////////////////////////
