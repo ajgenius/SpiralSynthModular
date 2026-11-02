@@ -875,23 +875,48 @@ void Fl_Canvas::PruneConnections(Fl_DeviceGUI* Device, int inputs, int outputs)
 			if ((i->OutputID==Device->GetID() && i->OutputPort>=outputs) ||
 			    (i->InputID==Device->GetID() && i->InputPort>=inputs))
 			{
-				// Turn off both ports. A missing end must not crash the delete.
-				Fl_DeviceGUI *source = FindDevice(i->OutputID);
-				Fl_DeviceGUI *dest = FindDevice(i->InputID);
-				if (source)
-					source->RemoveConnection(i->OutputPort+source->GetInfo()->NumInputs);
-				if (dest)
-					dest->RemoveConnection(i->InputPort);
-
-				// send the unconnect callback
-				cb_Unconnect(this,(void*)&(*i));
-				m_Graph.RemoveConnection(i->OutputID,i->InputID);
-
-				m_WireVec.erase(i);
+				RemoveWire(i);
 				removedall=false;
 				break;
 			}
 		}
+	}
+}
+
+void Fl_Canvas::RemoveWire(vector<CanvasWire>::iterator i)
+{
+	// Turn off both ports. A missing end must not crash the delete.
+	Fl_DeviceGUI *source = FindDevice(i->OutputID);
+	Fl_DeviceGUI *dest = FindDevice(i->InputID);
+	if (source)
+		source->RemoveConnection(i->OutputPort+source->GetInfo()->NumInputs);
+	if (dest)
+		dest->RemoveConnection(i->InputPort);
+
+	// send the unconnect callback
+	cb_Unconnect(this,(void*)&(*i));
+	m_Graph.RemoveConnection(i->OutputID,i->InputID);
+
+	m_WireVec.erase(i);
+}
+
+void Fl_Canvas::MoveInputs(Fl_DeviceGUI* Device, const vector<int> &to)
+{
+	// A wire whose input went is removed by its old port, while that still exists.
+	for (vector<CanvasWire>::iterator i=m_WireVec.begin(); i!=m_WireVec.end(); )
+	{
+		if (i->InputID==Device->GetID() && i->InputPort>=0 && i->InputPort<(int)to.size() && to[i->InputPort]<0)
+		{
+			RemoveWire(i);
+			i=m_WireVec.begin();
+		}
+		else ++i;
+	}
+	// The rest follow their inputs.
+	for (vector<CanvasWire>::iterator i=m_WireVec.begin(); i!=m_WireVec.end(); ++i)
+	{
+		if (i->InputID==Device->GetID() && i->InputPort>=0 && i->InputPort<(int)to.size())
+			i->InputPort=to[i->InputPort];
 	}
 }
 

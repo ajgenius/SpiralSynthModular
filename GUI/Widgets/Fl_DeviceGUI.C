@@ -209,13 +209,17 @@ void Fl_DeviceGUI::Setup(const DeviceGUIInfo& Info, bool FirstTime)
 	SetupPorts(Info, FirstTime, false);
 }
 
-void Fl_DeviceGUI::SetupPorts(const DeviceGUIInfo& Info, bool FirstTime, bool preserveConnections)
+void Fl_DeviceGUI::SetupPorts(const DeviceGUIInfo& Info, bool FirstTime, bool preserveConnections, const vector<int> *movedInputs)
 {
 	// Disconnect removed ports while the old buttons and DSP inputs still exist.
 	if (parent() && !FirstTime)
 	{
 		if (preserveConnections)
+		{
+			if (movedInputs)
+				((Fl_Canvas*)parent())->MoveInputs(this, *movedInputs);
 			((Fl_Canvas*)parent())->PruneConnections(this, Info.NumInputs, Info.NumOutputs);
+		}
 		else
 			((Fl_Canvas*)parent())->ClearConnections(this);
 	}

@@ -2364,8 +2364,12 @@ void SynthModular::cb_UpdatePluginInfo(int ID, void *PInfo)
 	{
 		DeviceGUIInfo Info=BuildDeviceGUIInfo(*((PluginInfo*)PInfo));
 
-		bool preserve = dynamic_cast<StablePortLayout*>((*i).second->m_Device) != NULL;
-		(*i).second->m_DeviceGUI->SetupPorts(Info, false, preserve);
+		StablePortLayout *stable = dynamic_cast<StablePortLayout*>((*i).second->m_Device);
+		// Where each input went, so its wires go with it.
+		vector<int> moved;
+		for (int p=0; stable && p<(*i).second->m_DeviceGUI->GetInfo()->NumInputs; p++)
+			moved.push_back(stable->MovedInput(p));
+		(*i).second->m_DeviceGUI->SetupPorts(Info, false, stable != NULL, stable ? &moved : NULL);
 		(*i).second->m_DeviceGUI->redraw();
 	}
 }

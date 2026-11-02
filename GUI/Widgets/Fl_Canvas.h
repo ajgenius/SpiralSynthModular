@@ -103,6 +103,7 @@ public:
         void DeleteSelection (void);
 	void ClearConnections(Fl_DeviceGUI* Device);
 	void PruneConnections(Fl_DeviceGUI* Device, int inputs, int outputs);
+	void MoveInputs(Fl_DeviceGUI* Device, const vector<int> &to);
 	void RestorePortConnections(Fl_DeviceGUI* Device);
 	void RemoveDevice(Fl_DeviceGUI* Device);
 	void Clear();
@@ -162,6 +163,7 @@ private:
 	void CalculateSelection();
 	void DrawWires();
 	void ClearIncompleteWire();
+	void RemoveWire(vector<CanvasWire>::iterator i);
 	void DrawIncompleteWire();
 	bool UserMakingConnection();
 	Fl_DeviceGUI *FindDevice(int ID);

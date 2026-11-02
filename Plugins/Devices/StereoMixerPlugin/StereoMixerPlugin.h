@@ -21,9 +21,10 @@
 #ifndef StereoMixerPLUGIN
 #define StereoMixerPLUGIN
 
-static const int NUM_CHANNELS = 4;
+static const int MAX_CHANNELS = 10;
+static const int NUM_CHANNELS = 4; // the editor's strips
 
-class StereoMixerPlugin : public Spiral::Core::Device
+class StereoMixerPlugin : public Spiral::Core::Device, public StablePortLayout
 {
 public:
  	StereoMixerPlugin();
@@ -34,6 +35,7 @@ public:
 	virtual void ExecuteCommands();
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
+	virtual int MovedInput(int port) const;
 		
 	float GetChannel(int n) { return ((Spiral::Core::FloatProperty *)m_ChannelVal[n])->Value.AsFloat; }
 	float GetPan(int n) { return ((Spiral::Core::FloatProperty *)m_Pan[n])->Value.AsFloat; }
@@ -52,8 +54,12 @@ private:
 
 	void SetChannel(int n, float s) { ((Spiral::Core::FloatProperty *)m_ChannelVal[n])->Value.AsFloat = s; }
 	void SetPan(int n, float s) { ((Spiral::Core::FloatProperty *)m_Pan[n])->Value.AsFloat = s; }
+	void SetChannels(int num);
 	Spiral::Core::VectorProperty m_ChannelVal;
 	Spiral::Core::VectorProperty m_Pan;
+	Spiral::Core::UnsignedProperty m_Channels;
+	int m_NumChannels;
+	int m_MovedFrom;
 };
 
 #endif

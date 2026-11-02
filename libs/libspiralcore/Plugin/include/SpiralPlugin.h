@@ -87,6 +87,8 @@ class StablePortLayout
 {
 public:
 	virtual ~StablePortLayout();
+	// While it updates the host: where the input at port now is, or -1 if it went.
+	virtual int MovedInput(int port) const { return port; }
 };
 
 class SpiralPlugin
