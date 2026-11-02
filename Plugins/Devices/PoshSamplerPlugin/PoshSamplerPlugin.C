@@ -16,6 +16,9 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include "PoshSamplerPlugin.h"
+#include "Finite.h"
+#include <cmath>
+#include <algorithm>
 #include "SpiralIcon.xpm"
 #include "NoteTable.h"
 #include "RiffWav.h"
@@ -184,7 +187,8 @@ void PoshSamplerPlugin::Execute() {
              if (m_SampleVec[s]->GetLength()) {
                 // Convert the CV input into a useable trigger
                 if (SampleBool (s, SLOT_RETRIG) || (SampleFloat (s, SLOT_SAMPLEPOS) == -1)) {
-                   if (GetInput (s*2 + 1, n) > 0 || feq (Freq, NoteTable[SampleSigned (s, SLOT_NOTE)], 0.01f)) {
+                   const int note = SampleSigned (s, SLOT_NOTE);
+                   if (GetInput (s*2 + 1, n) > 0 || (note >= 0 && note < 132 && feq (Freq, NoteTable[note], 0.01f))) {
                       if (S->TriggerUp) {
                          if (s==0 && InputExists (S1_INPUT))
                             SampleSigned (s, SLOT_PLAYSTART) = (long int)((GetInput (S1_INPUT, n) * 0.5 + 0.5f) * (SampleSigned (s, SLOT_LOOPEND)-SampleSigned (s, SLOT_LOOPSTART))) + SampleSigned (s, SLOT_LOOPSTART);
@@ -217,6 +221,12 @@ void PoshSamplerPlugin::Execute() {
                 // if the sample has ended ponging
                 if (S->Pong && SampleFloat (s, SLOT_SAMPLEPOS) <= SampleSigned (s, SLOT_LOOPSTART))
                    S->Pong = false;
+                float &position = SampleFloat (s, SLOT_SAMPLEPOS);
+                if (position != -1) {
+                   if (!Spiral::Core::IsFinite (position)) position = -1;
+                   else if (position < 0) position = 0;
+                   else if (position > m_SampleVec[s]->GetLength() - 1) position = m_SampleVec[s]->GetLength() - 1;
+                }
                 if (SampleFloat (s, SLOT_SAMPLEPOS) != -1) {
                    if (InputExists (s * 2)) {
                       // Get the pitch from the CV
@@ -230,8 +240,7 @@ void PoshSamplerPlugin::Execute() {
                    // copy the sample to it's individual output.
                    SetOutput (s + 1, n, ((*m_SampleVec[s])[SampleFloat (s, SLOT_SAMPLEPOS)] * SampleFloat (s, SLOT_VOLUME)));
                    float Freq = S->Pitch;
-                   if (SampleSigned (s, SLOT_OCTAVE) > 0) Freq *= 1 << (SampleSigned (s, SLOT_OCTAVE));
-                   if (SampleSigned (s, SLOT_OCTAVE) < 0) Freq /= 1 << (-SampleSigned (s, SLOT_OCTAVE));
+                   Freq = ldexpf (Freq, SampleSigned (s, SLOT_OCTAVE));
                    if (S->Pong) SampleFloat (s, SLOT_SAMPLEPOS) -= Freq * SampleFloat (s, SLOT_PITCHMOD);
                    else SampleFloat (s, SLOT_SAMPLEPOS) += Freq * SampleFloat (s, SLOT_PITCHMOD);
                 }
@@ -449,6 +458,7 @@ void PoshSamplerPlugin::Apply(Spiral::Core::Description::Reader &r) {
               .Value(SlotSigned (n, SLOT_LOOPSTART))
               .Value(SlotSigned (n, SLOT_LOOPEND))
               .Value(SlotSigned (n, SLOT_NOTE));
+         SampleSigned (n, SLOT_NOTE) = std::max(0L, std::min(131L, (long)SampleSigned (n, SLOT_NOTE)));
          if (version < 3 && !r.Named()) {
             int size;
             std::string Buf;
