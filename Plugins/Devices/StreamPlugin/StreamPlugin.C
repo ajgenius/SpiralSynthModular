@@ -16,6 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include "StreamPlugin.h"
+#include "Finite.h"
 #include "SpiralIcon.xpm"
 #include "NoteTable.h"
 #include <stdio.h>
@@ -139,10 +140,13 @@ void StreamPlugin::Reset()
 
 
 void StreamPlugin::Execute() {
-     if (m_File.IsOpen()) {
+     if (m_File.IsOpen() && m_SampleSize > 0) {
         for (int n=0; n<m_HostInfo->BUFSIZE; n++) {
             bool FinTrig = false;
             float CVPitch = GetInput(0, n)*10.0f;
+            if (!Spiral::Core::IsFinite(CVPitch)) CVPitch = 0;
+            if (!Spiral::Core::IsFinite(AsFloat(m_Pos))) AsFloat(m_Pos) = 0;
+            if (!Spiral::Core::IsFinite(AsFloat(m_GlobalPos))) AsFloat(m_GlobalPos) = 0;
             if (GetInput (1, n) > 0) m_Mode = PLAYM;
             if (GetInput (2, n) > 0) {
                m_Mode = STOPM;
