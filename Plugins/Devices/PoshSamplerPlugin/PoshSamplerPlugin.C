@@ -68,6 +68,7 @@ PoshSamplerPlugin::PoshSamplerPlugin() :
 m_Recording(false),
 m_LastRecording(false)
 {
+        for (int n=0; n<NUM_SAMPLES; n++) m_InitialPitch[n] = 1.0f;
         m_PluginInfo.Name = "PoshSampler";
         m_PluginInfo.Width = 400;
         m_PluginInfo.Height = 215;
@@ -475,7 +476,7 @@ void PoshSamplerPlugin::LoadSample (int n, const string &Name) {
         // InitializeSampleDescription (m_SampleDescVec[n], n, n);
         m_SampleDescVec[n]->SampleRate = Wav.GetSamplerate();
         m_SampleDescVec[n]->Stereo = Wav.IsStereo();
-        m_InitialPitch[n] = m_SampleDescVec[n]->Pitch;
+        m_InitialPitch[n] = 1.0f;
         m_SampleDescVec[n]->Pitch = m_InitialPitch[n] * m_SampleDescVec[n]->SampleRate / (float)m_HostInfo->SAMPLERATE;
         SampleSigned (n, SLOT_LOOPEND) = m_SampleVec[n]->GetLength()-1;
      }

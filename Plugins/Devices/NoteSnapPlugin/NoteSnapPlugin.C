@@ -72,7 +72,9 @@ string SpiralPlugin_GetGroupName()
 static const std::string notes[12]={"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 
 NoteSnapPlugin::NoteSnapPlugin() :
-m_Out(0)
+m_Out(0),
+m_LastFreq(-1),
+m_LastNote(-1)
 {
 	for (int n=0; n<12; n++)
 	{
@@ -115,6 +117,8 @@ void NoteSnapPlugin::Reset()
 {
 	ResetPorts();
 	m_Out = 0;
+	m_LastFreq = -1;
+	m_LastNote = -1;
 }
 
 void NoteSnapPlugin::Execute()
