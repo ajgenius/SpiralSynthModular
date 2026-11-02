@@ -17,6 +17,8 @@
  */
 
 #include "LFOPlugin.h"
+#include <cmath>
+#include "Finite.h"
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -129,7 +131,8 @@ void LFOPlugin::WriteWaves() {
 }
 
 float LFOPlugin::AdjustPos (float pos) {
-      while (pos>=m_TableLength) pos -= m_TableLength;
+      if (!Spiral::Core::IsFinite (pos)) return 0;
+      if (pos>=m_TableLength) pos = fmodf (pos, m_TableLength);
       if (pos<0 || pos>=m_TableLength) pos = 0;
       return pos;
 }

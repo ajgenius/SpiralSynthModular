@@ -16,6 +16,8 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include "WaveTablePlugin.h"
+#include <cmath>
+#include "Finite.h"
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -237,10 +239,8 @@ void WaveTablePlugin::Execute()
 		Incr = Freq*(m_TableLength/(float)m_HostInfo->SAMPLERATE);
 		m_CyclePos+=Incr;
 		
-		while (m_CyclePos>=m_TableLength) 
-		{
-			m_CyclePos-=m_TableLength;
-		}
+		if (!Spiral::Core::IsFinite(m_CyclePos)) m_CyclePos=0;
+		if (m_CyclePos>=m_TableLength) m_CyclePos=fmodf(m_CyclePos,m_TableLength);
 		
 		if (m_CyclePos<0 || m_CyclePos>=m_TableLength) m_CyclePos=0;
 		
