@@ -18,6 +18,7 @@
 #include <math.h>
 #include <cstdlib>
 #include "MasherPlugin.h"
+#include <algorithm>
 #include "SpiralIcon.xpm"
 
 #define PI 3.141592654
@@ -157,6 +158,8 @@ void MasherPlugin::Execute()
 	}
 	
 	m_OverlapVec.clear();
+	const int store = std::max(1, std::min(MAX_GRAINSTORE_SIZE, (int)AsSigned(m_GrainStoreSize)));
+	const int randomness = std::max(0, (int)AsSigned(m_Randomness));
 	
 	// chop up the buffer and put the grains in the grainstore	
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
@@ -166,8 +169,8 @@ void MasherPlugin::Execute()
 			// chop the bits between zero crossings
 			if (!First) 
 			{
-				GetInput(0)->GetRegion(m_GrainStore[m_WriteGrain%AsSigned(m_GrainStoreSize)],last,n);
-				m_WriteGrain++;
+				GetInput(0)->GetRegion(m_GrainStore[m_WriteGrain%store],last,n);
+				m_WriteGrain=(m_WriteGrain+1)%store;
 			}
 			else First=false;
 			
@@ -184,11 +187,11 @@ void MasherPlugin::Execute()
 		
 		if(n>=NextGrain || rand()%1000<Density)
 		{
-			int GrainNum = m_ReadGrain%AsSigned(m_GrainStoreSize);
+			int GrainNum = m_ReadGrain%store;
 			float Pitch=AsFloat(m_GrainPitch);
 			if (InputExists(1)) Pitch*=fabs(GetInput(1,n));
 			MixPitch(m_GrainStore[GrainNum],*GetOutputBuf(0),n,Pitch);
-			int GrainLength = (int)(m_GrainStore[GrainNum].GetLength()*Pitch);
+			const float GrainLength = floorf(m_GrainStore[GrainNum].GetLength()*Pitch);
 			
 			NextGrain=n+m_GrainStore[GrainNum].GetLength();
 			
@@ -201,8 +204,8 @@ void MasherPlugin::Execute()
 				m_OverlapVec.push_back(new_grain);
 			}
 			
-			if (AsSigned(m_Randomness)) m_ReadGrain+=1+rand()%AsSigned(m_Randomness);
-			else m_ReadGrain++;
+			if (randomness) m_ReadGrain=(m_ReadGrain+1+rand()%randomness)%store;
+			else m_ReadGrain=(m_ReadGrain+1)%store;
 		}
 	}		
 }
