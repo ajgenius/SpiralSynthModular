@@ -28,6 +28,7 @@
 
 #include "LADSPAIcon.xpm"
 #include "LADSPAPlugin.h"
+#include <algorithm>
 #include "LADSPAInfo.h"
 
 using namespace std;
@@ -371,8 +372,8 @@ void LADSPAPlugin::Describe(Spiral::Core::Description &d)
 		case 10:
 		case 9:
 		{
-			AsUnsigned(m_UnconnectedInputs) = m_PluginInfo.NumInputs;
-			if (m_OutData.InputPortValues) {
+			if (m_PlugDesc) AsUnsigned(m_UnconnectedInputs) = m_PluginInfo.NumInputs;
+			if (m_PlugDesc && m_OutData.InputPortValues) {
 				for (int p = 0; p < m_PluginInfo.NumInputs; p++) {
 					if (p < (int)m_MaxInputPortCount &&
 					    m_OutData.InputPortValues[p].Connected)
@@ -867,6 +868,35 @@ bool LADSPAPlugin::SelectPlugin(unsigned long UniqueID)
 		return true;
 	}
 	return false;
+}
+
+void LADSPAPlugin::RestoreUnavailablePorts(int inputs, int outputs)
+{
+	if (m_PlugDesc || !m_HostInfo)
+		return;
+	inputs = std::min(4096, std::max(inputs, m_PluginInfo.NumInputs));
+	outputs = std::min(4096, std::max(outputs, m_PluginInfo.NumOutputs));
+	if (inputs == m_PluginInfo.NumInputs && outputs == m_PluginInfo.NumOutputs)
+		return;
+	while (m_PluginInfo.NumInputs < inputs)
+	{
+		AddInput();
+		m_PluginInfo.NumInputs++;
+	}
+	while (m_PluginInfo.NumOutputs < outputs)
+	{
+		AddOutput();
+		m_PluginInfo.NumOutputs++;
+	}
+	m_PluginInfo.PortTips.clear();
+	m_PluginInfo.PortTypes.clear();
+	for (int n = 0; n < m_PluginInfo.NumInputs; n++)
+		m_PluginInfo.PortTips.push_back("Unavailable effect input");
+	for (int n = 0; n < m_PluginInfo.NumOutputs; n++)
+		m_PluginInfo.PortTips.push_back("Unavailable effect output");
+	for (int n = 0; n < m_PluginInfo.NumInputs + m_PluginInfo.NumOutputs; n++)
+		m_PluginInfo.PortTypes.push_back(0);
+	UpdatePluginInfoWithHost();
 }
 
 void LADSPAPlugin::ClearPlugin(void)

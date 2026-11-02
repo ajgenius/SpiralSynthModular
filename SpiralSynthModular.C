@@ -964,29 +964,13 @@ static int RemapLoadedId(bool remap, map<int,int> &ids, int id)
 static void NoteUnavailablePort(map<int,DeviceWin*> &devs, int id, bool input, int port)
 {
 	map<int,DeviceWin*>::iterator found;
-	UnavailablePlugin *missing;
-	int inputs;
-	int outputs;
 
 	if (port < 0)
 		return;
 	found = devs.find(id);
 	if (found == devs.end() || !found->second->m_Device)
 		return;
-	missing = dynamic_cast<UnavailablePlugin*>(found->second->m_Device);
-	if (!missing)
-		return;
-
-	inputs = missing->InputCount();
-	outputs = missing->OutputCount();
-	if (input)
-	{
-		if (port + 1 > inputs)
-			inputs = port + 1;
-	}
-	else if (port + 1 > outputs)
-		outputs = port + 1;
-	missing->EnsurePorts(inputs, outputs);
+	found->second->m_Device->RestoreUnavailablePorts(input ? port + 1 : 0, input ? 0 : port + 1);
 }
 
 static void GrowUnavailablePorts(iostream &s, bool paste, bool merge, map<int,DeviceWin*> &devs, map<int,int> &remap)
@@ -1815,6 +1799,15 @@ void SynthModular::Apply(const Spiral::Core::PatchDescription &patch, const stri
 		}
 	}
 
+	for (size_t w = 0; w < patch.Wires.size(); ++w)
+	{
+		std::map<std::string, int>::const_iterator from = ids.find(patch.Wires[w].FromDevice);
+		std::map<std::string, int>::const_iterator to = ids.find(patch.Wires[w].ToDevice);
+		if (from != ids.end())
+			NoteUnavailablePort(m_DeviceWinMap, from->second, false, atoi(patch.Wires[w].FromPort.c_str()));
+		if (to != ids.end())
+			NoteUnavailablePort(m_DeviceWinMap, to->second, true, atoi(patch.Wires[w].ToPort.c_str()));
+	}
 	::Apply(patch, *m_Canvas, ids);
 	if (!merge) m_Canvas->CenterPatch();
 
@@ -2320,6 +2313,12 @@ inline void SynthModular::cb_Connection_i(Fl_Canvas* o, void* v)
 		SpiralInfo::Alert("Warning: Connection problem - can't find source output "+string(num));
 		return;
 	}
+
+	// A missing effect's placeholder outputs only keep its wires for saving. The
+	// inputs they reach stay unconnected, as they were before placeholders existed.
+	LADSPAPlugin *effect = dynamic_cast<LADSPAPlugin*>(si->second->m_Device);
+	if (effect && !effect->HasEffect())
+		sample = NULL;
 
 	if (!di->second->m_Device->SetInput(Wire->InputPort,(const Sample*)sample))
 	{

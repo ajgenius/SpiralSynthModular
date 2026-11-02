@@ -86,6 +86,8 @@ public:
 	virtual void Apply(Spiral::Core::Description::Reader &r);
 
 	unsigned long  GetUniqueID() { return m_UniqueID; }
+	bool           HasEffect() { return m_PlugDesc != NULL; }
+	virtual void RestoreUnavailablePorts(int inputs, int outputs);
 	const char    *GetName() { return (const char *)m_Name; }
 	// Virtual, and defined in the module that owns m_LADSPAInfo. An inline body
 	// here makes every caller reference that static directly, and the editor

@@ -20,6 +20,7 @@ public:
 	int InputCount() const { return m_PluginInfo.NumInputs; }
 	int OutputCount() const { return m_PluginInfo.NumOutputs; }
 	void EnsurePorts(int inputs, int outputs);
+	virtual void RestoreUnavailablePorts(int inputs, int outputs) { EnsurePorts(inputs, outputs); }
 
 private:
 	void ApplyKnownLayout();

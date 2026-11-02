@@ -121,6 +121,7 @@ public:
 	// you must return true if this feature is used.
 	virtual bool	    SaveExternalFiles(const std::string &Dir) { return false; }
 	virtual void	    LoadExternalFiles(const std::string &Dir, int withID=-1) {}
+	virtual void        RestoreUnavailablePorts(int inputs, int outputs) {}
 
 	const PluginInfo& GetPluginInfo() const { return m_PluginInfo; }
 	const HostInfo*     GetHostInfo() { return m_HostInfo; }
