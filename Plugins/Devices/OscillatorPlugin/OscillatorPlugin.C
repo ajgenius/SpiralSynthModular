@@ -16,6 +16,9 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include "OscillatorPlugin.h"
+#include <limits>
+#include <cmath>
+#include "Finite.h"
 #include <limits.h>
 #include "SpiralIcon.xpm"
 #include <stdlib.h>
@@ -143,6 +146,15 @@ void OscillatorPlugin::Reset()
 	m_LastFreq=0;
 }
 
+static int BoundedCycleOffset(float value)
+{
+	const int limit = std::numeric_limits<int>::max() / 2;
+	if (!Spiral::Core::IsFinite(value)) return 0;
+	if (value >= limit) return limit;
+	if (value <= -limit) return -limit;
+	return static_cast<int>(value);
+}
+
 void OscillatorPlugin::Execute()
 {
 	short noisev=0;
@@ -161,7 +173,7 @@ void OscillatorPlugin::Execute()
 			if (AsSigned(m_Octave)>0) Freq*=1<<(AsSigned(m_Octave));
 			if (AsSigned(m_Octave)<0) Freq/=1<<(-AsSigned(m_Octave));
 			CycleLen = m_HostInfo->SAMPLERATE/Freq;
-			PW = (int)((AsFloat(m_PulseWidth)+GetInput(IN_PW,n)*AsFloat(m_ModAmount)) * CycleLen);
+			PW = BoundedCycleOffset((AsFloat(m_PulseWidth)+GetInput(IN_PW,n)*AsFloat(m_ModAmount)) * CycleLen);
 
 			// calculate square wave pattern
 			m_CyclePos++;
@@ -181,7 +193,7 @@ void OscillatorPlugin::Execute()
 			if (AsSigned(m_Octave)>0) Freq*=1<<(AsSigned(m_Octave));
 			if (AsSigned(m_Octave)<0) Freq/=1<<(-AsSigned(m_Octave));
 			CycleLen = m_HostInfo->SAMPLERATE/Freq;
-			PW = (int)((AsFloat(m_PulseWidth)+GetInput(IN_PW,n)*AsFloat(m_ModAmount)) * CycleLen);
+			PW = BoundedCycleOffset((AsFloat(m_PulseWidth)+GetInput(IN_PW,n)*AsFloat(m_ModAmount)) * CycleLen);
 
 			// get normailise position between cycle
 			m_CyclePos++;
@@ -195,7 +207,7 @@ void OscillatorPlugin::Execute()
 			else
 			{
 				// after pw 1->-1
-				SetOutput(OUT_MAIN,n,Linear(PW,CycleLen,m_CyclePos,1,-1));
+				SetOutput(OUT_MAIN,n,PW==CycleLen ? 1 : Linear(PW,CycleLen,m_CyclePos,1,-1));
 			}
 		}
 		break;
@@ -206,7 +218,7 @@ void OscillatorPlugin::Execute()
 			m_CyclePos++;
 
 			//modulate the sample & hold length
-			samplelen = (int)((AsFloat(m_SHLen)+GetInput(IN_SHLEN,n)*AsFloat(m_ModAmount))*m_HostInfo->SAMPLERATE);
+			samplelen = BoundedCycleOffset((AsFloat(m_SHLen)+GetInput(IN_SHLEN,n)*AsFloat(m_ModAmount))*m_HostInfo->SAMPLERATE);
 
 			// do sample & hold on the noise
 			if (m_CyclePos>samplelen)
