@@ -79,6 +79,7 @@ SpiralLoopPlugin::SpiralLoopPlugin() :
 m_Id(0),
 m_Pos(0),
 m_IntPos(0),
+m_OldPos(0),
 m_PlayBufPos(0),
 m_Playing(true),
 m_Recording(false),
@@ -397,8 +398,6 @@ void SpiralLoopPlugin::RecordBuf(float Pos, int Length)
 {
 	if (!m_RecordingSource) return;
 
-	static float OldPos=Pos;
-
 	if (m_FirstRecord)
 	{
 		// Find out if we want a fixed length record
@@ -417,7 +416,7 @@ void SpiralLoopPlugin::RecordBuf(float Pos, int Length)
 
 		m_FirstRecord=false;
 		m_RecLength=0;
-		OldPos=Pos;
+		m_OldPos=Pos;
 	}
 	
 	if (m_FixedRecord)
@@ -437,12 +436,12 @@ void SpiralLoopPlugin::RecordBuf(float Pos, int Length)
 			// fill in all the samples between the speed jump with the same value
 			m_DubBuffer.Set((int)Pos,temp);
 			
-			for (int i=static_cast<int>(OldPos); i<=static_cast<int>(Pos); i++)
+			for (int i=static_cast<int>(m_OldPos); i<=static_cast<int>(Pos); i++)
 			{
 				m_DubBuffer.Set(i,temp);
 			}
 						
-			OldPos=Pos;
+			m_OldPos=Pos;
 			Pos+=AsFloat(m_Speed);
 			
 			if (Pos>=m_StoreBuffer.GetLength())
@@ -450,7 +449,7 @@ void SpiralLoopPlugin::RecordBuf(float Pos, int Length)
 				Pos-=m_StoreBuffer.GetLength();				
 				
 				// remember to fill up to the end of the last buffer
-				for (int i=static_cast<int>(OldPos); i<m_StoreBuffer.GetLength(); i++)
+				for (int i=static_cast<int>(m_OldPos); i<m_StoreBuffer.GetLength(); i++)
 				{
 					m_DubBuffer.Set(i,temp);
 				}
@@ -461,7 +460,7 @@ void SpiralLoopPlugin::RecordBuf(float Pos, int Length)
 					m_DubBuffer.Set(i,temp);
 				}
 				
-				OldPos=0;	
+				m_OldPos=0;	
 			}
 			
 		}

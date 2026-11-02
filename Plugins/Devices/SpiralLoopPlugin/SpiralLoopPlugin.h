@@ -138,6 +138,7 @@ private:
 	int    m_Id;
 	float  m_Pos;
 	int    m_IntPos;
+	float  m_OldPos;
 	int    m_PlayBufPos;
 	bool   m_Playing;
 	bool   m_Recording;
