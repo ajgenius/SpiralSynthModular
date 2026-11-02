@@ -63,6 +63,7 @@ cb_PageChanged(NULL),
 m_Page(-1),
 m_Owned(false),
 m_Order(0),
+m_Topology(0),
 m_GraphLock(NULL),
 m_StripInput(false),
 m_StripPort(-1),
@@ -1256,6 +1257,9 @@ bool Fl_Canvas::ResolveWire(CanvasWire &wire) const
 	Fl_DeviceGUI *dest = const_cast<Fl_Canvas *>(this)->FindDevice(wire.InputID);
 	if (!source || !dest)
 		return false;
+	if ((source->GetPortType(wire.OutputPort + source->GetInfo()->NumInputs) == Sample::EVENT)
+	    != (dest->GetPortType(wire.InputPort) == Sample::EVENT))
+		return false;
 	wire.OutputTerminal = source->IsTerminal();
 	wire.InputTerminal = dest->IsTerminal();
 	return true;
@@ -1353,6 +1357,17 @@ string Fl_Canvas::Name(int id)
 	return device ? device->GetName() : string();
 }
 
+bool Fl_Canvas::IsEventPort(int id, bool input, int port)
+{
+	if (const SubPatchDevice *box = Box(id))
+	{
+		const vector<BoundaryPort> &ports = input ? box->Inputs : box->Outputs;
+		return port >= 0 && port < (int)ports.size() && ports[port].IsEvent();
+	}
+	Fl_DeviceGUI *device = FindDevice(id);
+	return device && device->GetPortType(input ? port : port + device->GetInfo()->NumInputs) == Sample::EVENT;
+}
+
 string Fl_Canvas::PortName(int id, bool input, int port)
 {
 	if (const SubPatchDevice *box = Box(id))
@@ -1430,7 +1445,10 @@ bool Fl_Canvas::BindBoxPort(int box, bool input, int port, int id, int idPort)
 	if (bound.InnerID == id && bound.InnerPort == idPort)
 		return true;
 	int device, devicePort;
-	const bool reaches = Resolve(id, input, idPort, device, devicePort);
+	const bool event = IsEventPort(id, input, idPort);
+	if (!input && event)
+		return false;
+	const bool reaches = Resolve(id, input, idPort, device, devicePort) && event == bound.IsEvent();
 	vector<CanvasWire> through;
 	WiresThrough(box, input, port, through);
 	if (input && reaches)
@@ -1441,6 +1459,10 @@ bool Fl_Canvas::BindBoxPort(int box, bool input, int port, int id, int idPort)
 		EraseWire(through[w]);
 	bound.InnerID = id;
 	bound.InnerPort = idPort;
+	if (event)
+		bound.Type = "MusicalEventPort";
+	else if (bound.IsEvent())
+		bound.Type = string();
 	for (size_t w = 0; reaches && w < through.size(); ++w)
 	{
 		CanvasWire moved = through[w];
@@ -1448,7 +1470,7 @@ bool Fl_Canvas::BindBoxPort(int box, bool input, int port, int id, int idPort)
 		(input ? moved.InputPort : moved.OutputPort) = devicePort;
 		AddWire(moved);
 	}
-	redraw();
+	RefreshBox(box);
 	return true;
 }
 
@@ -1465,12 +1487,19 @@ void Fl_Canvas::UnbindBoxPort(int box, bool input, int port)
 	redraw();
 }
 
+// A boundary port is an audio port unless it says otherwise, as the private
+// tree types them.
 void Fl_Canvas::AddBoxPort(int box, bool input, const string &name)
+{
+	AddBoxPort(box, input, name, "AudioPort");
+}
+
+void Fl_Canvas::AddBoxPort(int box, bool input, const string &name, const string &type)
 {
 	SubPatchDevice *edited = Box(box);
 	if (!edited)
 		return;
-	(input ? edited->Inputs : edited->Outputs).push_back(BoundaryPort(-1, -1, name));
+	(input ? edited->Inputs : edited->Outputs).push_back(BoundaryPort(-1, -1, name, type));
 	RefreshBox(box);
 }
 
@@ -1564,6 +1593,17 @@ void Fl_Canvas::SetBoxMode(int box, const string &mode)
 	redraw();
 }
 
+void Fl_Canvas::SetBoxVoices(int box, long voices)
+{
+	SubPatchDevice *edited = Box(box);
+	if (!edited)
+		return;
+	Spiral::Core::SubPatchConfig config = edited->Config();
+	config.Voices = voices;
+	edited->SetConfig(config);
+	Reschedule();
+}
+
 bool Fl_Canvas::Owns(int box) const
 {
 	map<int,SubPatchDevice*>::const_iterator i = m_Boxes.find(box);
@@ -1602,6 +1642,7 @@ void Fl_Canvas::UnlockGraph()
 void Fl_Canvas::Reschedule()
 {
 	LockGraph();
+	++m_Topology;
 	m_Owned = false;
 	for (map<int,SubPatchDevice*>::const_iterator b = m_Boxes.begin(); b != m_Boxes.end(); ++b)
 	{

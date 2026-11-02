@@ -11,6 +11,7 @@
 #include "Device.h"
 #include "GraphSort.h"
 #include "PatchDescription.h"
+#include "VoicePool.h"
 
 // A port on a subpatch's edge: its name and type, as the file keeps them,
 // and the inner device port it binds through to (-1 when unbound).
@@ -20,6 +21,8 @@ public:
 	BoundaryPort(): InnerID(-1), InnerPort(-1) {}
 	BoundaryPort(int id, int port, const std::string &name, const std::string &type = std::string()):
 		InnerID(id), InnerPort(port), Name(name), Type(type) {}
+
+	bool IsEvent() const { return Type == "MusicalEventPort"; }
 
 	int InnerID;
 	int InnerPort;
@@ -66,10 +69,14 @@ public:
 	typedef void (*MemberStep)(int id, void *host);
 	void SetMemberStep(MemberStep step, void *host) { m_Step = step; m_Host = host; }
 
+	// The voices of what it holds, when the count is its own.
+	VoicePool &Voices() { return m_Pool; }
+
 private:
 	void RunMembers();
 
 	GraphSort m_Graph;
+	VoicePool m_Pool;
 	MemberStep m_Step;
 	void *m_Host;
 	Spiral::Core::SubPatchConfig Settings();

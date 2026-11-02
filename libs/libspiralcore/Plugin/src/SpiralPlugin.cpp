@@ -18,6 +18,7 @@
 
 #include "SpiralPlugin.h"
 #include "SampleFeed.h"
+#include "EventBuffer.h"
 
 using namespace std;
 
@@ -140,6 +141,11 @@ void SpiralPlugin::RemoveOutput()
 	si--;
 	delete *si;
 	m_Output.erase(si);
+	if (m_EventOutput.size() > m_Output.size())
+	{
+		delete m_EventOutput.back();
+		m_EventOutput.pop_back();
+	}
 }
 
 void SpiralPlugin::RemoveAllOutputs()
@@ -151,6 +157,9 @@ void SpiralPlugin::RemoveAllOutputs()
 	}
 
 	m_Output.clear();
+	for (size_t n=0; n<m_EventOutput.size(); n++)
+		delete m_EventOutput[n];
+	m_EventOutput.clear();
 }
 
 void SpiralPlugin::AddInput()
@@ -168,6 +177,31 @@ void SpiralPlugin::RemoveInput()
 void SpiralPlugin::RemoveAllInputs()
 {
 	m_Input.clear();
+	m_EventInput.clear();
+}
+
+bool SpiralPlugin::SetEventInput(unsigned int n, const Spiral::Core::EventBuffer *e)
+{
+	if (n>=m_Input.size()) return false;
+	if (m_EventInput.size()<=n) m_EventInput.resize(n+1, NULL);
+	m_EventInput[n]=e;
+	return true;
+}
+
+const Spiral::Core::EventBuffer *SpiralPlugin::GetEventInput(unsigned int n) const
+{
+	return n<m_EventInput.size() ? m_EventInput[n] : NULL;
+}
+
+Spiral::Core::EventBuffer *SpiralPlugin::GetEventOutput(unsigned int n) const
+{
+	return n<m_EventOutput.size() ? m_EventOutput[n] : NULL;
+}
+
+bool SpiralPlugin::IsEventPort(bool input, unsigned int n) const
+{
+	const unsigned int at = input ? n : n + m_PluginInfo.NumInputs;
+	return at<m_PluginInfo.PortTypes.size() && m_PluginInfo.PortTypes[at]==Sample::EVENT;
 }
 
 void SpiralPlugin::UpdatePluginInfoWithHost()
@@ -192,6 +226,11 @@ void SpiralPlugin::SetOutPortType(PluginInfo &pinfo, int port, Sample::SampleTyp
 {
     pinfo.PortTypes[port+m_PluginInfo.NumInputs] = type;
     GetOutputBuf(port)->setSampleType(type);
+    if (type == Sample::EVENT)
+    {
+        if (m_EventOutput.size() <= (size_t)port) m_EventOutput.resize(port+1, NULL);
+        if (!m_EventOutput[port]) m_EventOutput[port] = new Spiral::Core::EventBuffer;
+    }
 }
 
 Spiral::Core::SampleFeed *SpiralPlugin::RequestFeed(bool output, int port)

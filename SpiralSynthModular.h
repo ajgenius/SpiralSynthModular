@@ -137,7 +137,13 @@ public:
 	void GroupSelection(const string &title);
 	void UngroupSelection();
 	void PasteCopied(bool grouped);
+	void AddEventInput();
+	void RebuildVoices();
+	void ClearVoices();
+	void SyncVoices();
 	void SyncSubPatches();
+	VoicePool *PoolFor(int id, long &voices);
+	static SpiralPlugin *cb_FindDevice(int id, void *host);
 	void SavePatch(const char *fn);
 
 	void FreezeAll()
@@ -195,6 +201,7 @@ private:
 	void RenderAudio();
 	void RunDevice(int id);
 	static void cb_RunDevice(int id, void *host);
+	bool m_RunVoices;
 	pthread_mutex_t m_CycleLock;
 	HostInfo m_Info;
 	bool m_ResetingAudioThread, m_HostNeedsUpdate, m_Frozen;
@@ -207,6 +214,18 @@ private:
 	static map<int,DeviceWin*> m_DeviceWinMap;
 
         int m_NextID;
+	// Each device in a voice pool, and the pool it is in.
+	map<int, VoicePool *> m_VoicePools;
+	unsigned m_VoiceTopology;
+	string m_Sidecars;
+	// The patch's own voice count, as the private tree saves it, zero for
+	// one; its devices have it, unless a subpatch around one gives its own.
+	unsigned m_PatchVoices;
+	VoicePool m_PatchPool;
+	// The pools are built again at the next look, the count having changed.
+	bool m_VoicesStale;
+	void SetPatchVoices(unsigned voices);
+	static void cb_PatchVoices(unsigned voices, void *data);
 	static bool m_CallbackUpdateMode;
 	string m_FilePath, m_MergeFilePath, m_BranchID;
 	unsigned m_SavePointCount;
@@ -293,6 +312,7 @@ private:
 	// The drawer's rail was dragged: the canvas has to give or take the
 	// width. Same shape as cb_Relayout, for the same reason.
 	static void cb_DrawerCollapse (void *v);
+	static void cb_AddEvents (void *v);
 	// Canvas popup: open the drawer on the patch's own entry.
 	inline void cb_AboutPatch_i (Fl_Widget *o, void *v);
 	static void cb_AboutPatch (Fl_Widget *o, void *v);

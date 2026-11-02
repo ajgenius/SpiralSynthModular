@@ -17,6 +17,7 @@
 */ 
 
 #include "Device.h"
+#include "Event.h"
 
 #ifndef PLUGIN
 #define PLUGIN
@@ -27,6 +28,7 @@ public:
  	KeyboardPlugin();
 	virtual ~KeyboardPlugin();
 
+	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void 		Execute();
 	virtual void        ExecuteCommands();
 	virtual void	    Describe(Spiral::Core::Description &d);
@@ -51,6 +53,14 @@ private:
 	bool m_Retrigger;
 
 	void Play(int note);
+
+	// Note events for the Events output, one identity per press, as the Midi device makes them.
+	void NoteEvent(bool on);
+	enum { MAX_PENDING = 64, MIDI_NOTES = 128 };
+	Spiral::Core::Event m_Pending[MAX_PENDING];
+	int m_PendingCount;
+	int m_HeldID[MIDI_NOTES];
+	int m_NextID;
 };
 
 #endif

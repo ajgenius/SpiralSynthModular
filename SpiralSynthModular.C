@@ -44,6 +44,7 @@
 #include "EditorClassRegistry.h"
 #include "PanelEditor.h"
 #include "OutputPlugin.h"
+#include "EventInputPlugin.h"
 #include "SubPatchDevice.h"
 #include "OutputPluginGUI.h"
 #ifdef HAVE_LADSPA
@@ -189,6 +190,8 @@ m_ResetingAudioThread(false),
 m_HostNeedsUpdate(false),
 m_Frozen(false),
 m_NextID(0),
+m_RunVoices(false),
+m_VoiceTopology(0),
 m_MainMenu(NULL),
 m_SysMenu(NULL),
 m_WantChrome(false),
@@ -198,6 +201,8 @@ m_CanvasScroll(NULL),
 m_Drawer(NULL),
 m_Breadcrumb(NULL),
 m_TopWindow(NULL),
+m_PatchVoices(0),
+m_VoicesStale(false),
 m_SavePointCount(0),
 m_MenuStateKnown(false),
 m_MenuSelection(false),
@@ -266,6 +271,8 @@ void SynthModular::ClearUp(bool synchronize)
 {
 	if (synchronize) FreezeAll();
 
+	ClearVoices();
+
 	m_Canvas->Clear();
 
 	for(map<int,DeviceWin*>::iterator i=m_DeviceWinMap.begin();
@@ -296,6 +303,8 @@ void SynthModular::ClearUp(bool synchronize)
 	m_Canvas->ResetView();
 	m_DeviceWinMap.clear();
 	m_NextID=0;
+	m_PatchVoices=0;
+	if (synchronize) SetPatchVoices(0);
 
 	if (synchronize) ThawAll();
 }
@@ -377,6 +386,8 @@ void SynthModular::Update()
 
 void SynthModular::RenderAudio()
 {
+	m_RunVoices = m_Canvas->Topology() == m_VoiceTopology;
+
 	if (!m_ResetingAudioThread)
 	{
 		for (map<int,DeviceWin*>::iterator i = m_DeviceWinMap.begin(); i != m_DeviceWinMap.end(); ++i)
@@ -409,7 +420,8 @@ void SynthModular::cb_RunDevice(int id, void *host)
 	((SynthModular *)host)->RunDevice(id);
 }
 
-// One device's step in the run: it runs, or resets.
+// One device's step in the run: it runs, or resets, then its voice copies
+// do, and what its voices send out of their pool is summed.
 void SynthModular::RunDevice(int id)
 {
 	map<int,DeviceWin*>::iterator di=m_DeviceWinMap.find(id);
@@ -441,6 +453,10 @@ void SynthModular::RunDevice(int id)
 			}
 		}
 
+		map<int, VoicePool *>::iterator pool = m_VoicePools.find(id);
+		if (pool != m_VoicePools.end())
+			pool->second->Run(id, di->second->m_Device, m_RunVoices, m_ResetingAudioThread, m_Info.FRAME);
+
 		#ifdef DEBUG_PLUGINS
 		cerr<<"Finished executing"<<endl;
 		#endif
@@ -464,6 +480,9 @@ void SynthModular::UpdatePluginGUIs()
 	}
 
 	SyncSubPatches();
+	if (m_VoicesStale || m_Canvas->Topology() != m_VoiceTopology)
+		RebuildVoices();
+	SyncVoices();
 
 	// see if any need deleting
 	for (map<int,DeviceWin*>::iterator i=m_DeviceWinMap.begin();
@@ -502,6 +521,9 @@ void SynthModular::UpdatePluginGUIs()
 				i->second->m_DeviceGUI->GetPluginWindow()->hide();
 			}
 
+			// Its pool goes with it, and devices outside may read its sums.
+			if (m_Canvas->IsBox(i->first))
+				ClearVoices();
 			if (m_Canvas->IsBox(i->first))
 				for (map<int,DeviceWin*>::iterator m = m_DeviceWinMap.begin(); m != m_DeviceWinMap.end(); ++m)
 					if (m->second->m_DeviceGUI && m_Canvas->PageOf(m->first) == i->first)
@@ -735,6 +757,7 @@ SpiralWindowType *SynthModular::CreateWindow()
 
 	m_Canvas = new Fl_Canvas(-5000, -5000, 10000, 10000, "");
 	m_Canvas->SetGraphLock(&m_CycleLock);
+	m_PatchPool.SetLookup(cb_FindDevice, this);
         m_Canvas->type(1);
 	m_Canvas->box(FL_FLAT_BOX);
         m_Canvas->labeltype(FL_ENGRAVED_LABEL);
@@ -770,6 +793,10 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_Drawer->color(SpiralInfo::GUICOL_Tool);
 	m_Drawer->selection_color(SpiralInfo::GUICOL_Button);
 	m_Drawer->CollapseChanged = cb_DrawerCollapse;
+	m_Drawer->AddEvents = cb_AddEvents;
+	m_Drawer->AddEventsData = this;
+	m_Drawer->PatchVoicesChanged = cb_PatchVoices;
+	m_Drawer->PatchVoicesChangedData = this;
 	m_Drawer->CollapseChangedData = this;
 	m_Drawer->Bind(&m_Document);
 	m_Drawer->BindPorts(m_Canvas);
@@ -848,6 +875,7 @@ void SynthModular::LoadPlugins (string pluginPath) {
      // Built-in devices first: a module of the same ID is not loaded.
      Spiral::Core::DeviceClassRegistry::Get()->Register(OutputPlugin::Class());
      Spiral::Core::EditorClassRegistry::Get()->Register(OutputPluginGUI::Class());
+     Spiral::Core::DeviceClassRegistry::Get()->Register(EventInputPlugin::Class());
      Spiral::Core::DeviceClassRegistry::Get()->Register(SubPatchDevice::Class());
 #ifdef HAVE_LADSPA
      Spiral::Core::DeviceClassRegistry::Get()->Register(LADSPAPlugin::Class());
@@ -1240,6 +1268,7 @@ DeviceWin* SynthModular::NewSubPatch(int x, int y, const string &name, SubPatchD
 	device->SetUpdateCallback(cb_Update);
 	device->SetParent((void*)this);
 	device->SetMemberStep(cb_RunDevice, this);
+	device->Voices().SetLookup(cb_FindDevice, this);
 	device->Initialise(&m_Info);
 	device->SetConfig(config);
 	device->PortsChanged();
@@ -1299,7 +1328,8 @@ static int EdgePort(Fl_Canvas *canvas, vector<BoundaryPort> &ports, bool input, 
 		snprintf(number, sizeof number, " %u", suffix);
 		name = label + number;
 	}
-	ports.push_back(BoundaryPort(holder, port, name));
+	ports.push_back(BoundaryPort(holder, port, name,
+		canvas->IsEventPort(holder, input, port) ? "MusicalEventPort" : "AudioPort"));
 	return (int)ports.size() - 1;
 }
 
@@ -1327,6 +1357,7 @@ void SynthModular::GroupSelection(const string &title)
 		return;
 
 	SubPatchDevice *box = new SubPatchDevice;
+	vector<CanvasWire> cut;
 	const vector<CanvasWire> &wires = m_Canvas->Wires();
 	for (size_t w = 0; w < wires.size(); ++w)
 	{
@@ -1335,6 +1366,11 @@ void SynthModular::GroupSelection(const string &title)
 		const bool fromInside = members.count(source) != 0, toInside = members.count(dest) != 0;
 		if (fromInside == toInside)
 			continue;
+		if (fromInside && m_Canvas->IsEventPort(wires[w].OutputID, false, wires[w].OutputPort))
+		{
+			cut.push_back(wires[w]);
+			continue;
+		}
 		const int holder = fromInside ? source : dest;
 		const int port = fromInside ? m_Canvas->PortThrough(source, false, wires[w].OutputID, wires[w].OutputPort)
 		                            : m_Canvas->PortThrough(dest, true, wires[w].InputID, wires[w].InputPort);
@@ -1355,6 +1391,9 @@ void SynthModular::GroupSelection(const string &title)
 				rebound.push_back(make_pair(&edge[k], EdgePort(m_Canvas, input ? box->Inputs : box->Outputs,
 					input != 0, edge[k].InnerID, edge[k].InnerPort)));
 	}
+
+	for (size_t w = 0; w < cut.size(); ++w)
+		m_Canvas->EraseWire(cut[w]);
 
 	const int ID = m_NextID++;
 	DeviceWin *win = NewSubPatch((left + right) / 2 - 50, (top + bottom) / 2 - 20, title, box,
@@ -1407,10 +1446,39 @@ void SynthModular::UngroupSelection()
 					}
 			}
 		}
+		pthread_mutex_lock(&m_CycleLock);
+		ClearVoices();
+		pthread_mutex_unlock(&m_CycleLock);
 		m_Canvas->RemoveBox(box);
 		Fl_DeviceGUI::Kill(win->second->m_DeviceGUI);
 	}
 	m_Canvas->ShowPage(m_Canvas->Page());
+}
+
+void SynthModular::AddEventInput()
+{
+	const int box = m_Canvas->Page();
+	SubPatchDevice *edited = m_Canvas->Box(box);
+	if (!edited)
+		return;
+	string name = "Events";
+	for (unsigned suffix = 2; ; ++suffix)
+	{
+		bool taken = false;
+		for (size_t k = 0; k < edited->Inputs.size() && !taken; ++k)
+			taken = edited->Inputs[k].Name == name;
+		if (!taken)
+			break;
+		char number[16];
+		snprintf(number, sizeof number, "Events %u", suffix);
+		name = number;
+	}
+	const int before = m_NextID;
+	AddDevice(289);
+	if (m_NextID == before)
+		return;
+	m_Canvas->AddBoxPort(box, true, name, "MusicalEventPort");
+	m_Canvas->BindBoxPort(box, true, (int)m_Canvas->Box(box)->Inputs.size() - 1, m_NextID - 1, 0);
 }
 
 // A subpatch's settings live in its device, which its panel, MIDI and the
@@ -1429,10 +1497,129 @@ void SynthModular::SyncSubPatches()
 			continue;
 		if (device->Config().Mode != was.Mode)
 			m_Canvas->SetBoxMode(i->first, device->Config().Mode);
+		if (device->Config().Voices != was.Voices)
+			m_Canvas->SetBoxVoices(i->first, device->Config().Voices);
 		changed = true;
 	}
 	if (changed && m_Drawer)
 		m_Drawer->Refresh();
+}
+
+// A device has its patch's voices, as in the private tree: those of the
+// nearest subpatch around it that owns its graph and gives a count, or else
+// the patch's own, one when it gives none. Its pool is that patch's; one
+// voice needs none. The host's ports and a subpatch itself are not copied.
+VoicePool *SynthModular::PoolFor(int id, long &voices)
+{
+	voices = 1;
+	map<int,DeviceWin*>::iterator i = m_DeviceWinMap.find(id);
+	if (i == m_DeviceWinMap.end() || !i->second->m_Device || i->second->m_Device->IsAudioDriver()
+	    || HostIO(i->second->m_PluginID) || m_Canvas->IsBox(id))
+		return NULL;
+	for (int page = m_Canvas->PageOf(id), depth = 0; page != -1 && depth < 64; page = m_Canvas->PageOf(page), ++depth)
+	{
+		SubPatchDevice *box = m_Canvas->Box(page);
+		if (box && m_Canvas->Owns(page) && box->Config().Voices > 0)
+		{
+			voices = box->Config().Voices;
+			return voices > 1 ? &box->Voices() : NULL;
+		}
+	}
+	voices = m_PatchVoices ? m_PatchVoices : 1;
+	return voices > 1 ? &m_PatchPool : NULL;
+}
+
+SpiralPlugin *SynthModular::cb_FindDevice(int id, void *)
+{
+	map<int,DeviceWin*>::iterator i = m_DeviceWinMap.find(id);
+	return i == m_DeviceWinMap.end() ? NULL : i->second->m_Device;
+}
+
+// Every pool at once: a device outside one pool may read the sums of
+// another, and a copy in it what that device reads.
+void SynthModular::ClearVoices()
+{
+	std::set<VoicePool *> pools;
+	for (map<int, VoicePool *>::iterator p = m_VoicePools.begin(); p != m_VoicePools.end(); ++p)
+		pools.insert(p->second);
+	for (std::set<VoicePool *>::iterator p = pools.begin(); p != pools.end(); ++p)
+		(*p)->Clear();
+	m_VoicePools.clear();
+}
+
+void SynthModular::SetPatchVoices(unsigned voices)
+{
+	m_PatchVoices = voices;
+	m_VoicesStale = true;
+	if (m_Drawer)
+		m_Drawer->SetPatchVoices(voices, voices ? voices : 1);
+}
+
+void SynthModular::cb_PatchVoices(unsigned voices, void *data)
+{
+	((SynthModular *)data)->SetPatchVoices(voices);
+}
+
+void SynthModular::RebuildVoices()
+{
+	m_VoicesStale = false;
+	bool pooled = !m_VoicePools.empty();
+	long voices = 1;
+	for (map<int,DeviceWin*>::iterator i = m_DeviceWinMap.begin(); i != m_DeviceWinMap.end() && !pooled; ++i)
+		pooled = PoolFor(i->first, voices) != NULL;
+	if (!pooled)
+	{
+		m_VoiceTopology = m_Canvas->Topology();
+		return;
+	}
+
+	FreezeAll();
+	ClearVoices();
+	for (map<int,DeviceWin*>::iterator i = m_DeviceWinMap.begin(); i != m_DeviceWinMap.end(); ++i)
+	{
+		VoicePool *pool = PoolFor(i->first, voices);
+		const Spiral::Core::DeviceClass *Plugin = pool == NULL ? NULL
+			: Spiral::Core::DeviceClassRegistry::Get()->Find(i->second->m_PluginID);
+		if (!Plugin)
+			continue;
+		pool->Add(i->first, i->second->m_Device, *Plugin, (unsigned)voices, &m_Info, m_Sidecars);
+		m_VoicePools[i->first] = pool;
+	}
+
+	// What leaves a pool is summed first, so a copy fed from outside it
+	// reads the sum, as the device it copies does.
+	const vector<CanvasWire> &wires = m_Canvas->Wires();
+	for (int pass = 0; pass < 2; ++pass)
+		for (size_t w = 0; w < wires.size(); ++w)
+		{
+			map<int, VoicePool *>::iterator source = m_VoicePools.find(wires[w].OutputID);
+			map<int, VoicePool *>::iterator dest = m_VoicePools.find(wires[w].InputID);
+			VoicePool *from = source == m_VoicePools.end() ? NULL : source->second;
+			VoicePool *into = dest == m_VoicePools.end() ? NULL : dest->second;
+			const VoicePool::Wire wire = {wires[w].OutputID, wires[w].OutputPort, wires[w].InputID, wires[w].InputPort};
+			if (pass == 0 && from && from != into)
+				from->SumOut(wire, m_Info.BUFSIZE);
+			else if (pass == 1 && into)
+				into->Feed(wire, from == into);
+		}
+	m_VoiceTopology = m_Canvas->Topology();
+	ThawAll();
+}
+
+void SynthModular::SyncVoices()
+{
+	if (m_VoicePools.empty() || m_Canvas->Topology() != m_VoiceTopology)
+		return;
+	std::set<VoicePool *> pools;
+	for (map<int, VoicePool *>::iterator p = m_VoicePools.begin(); p != m_VoicePools.end(); ++p)
+		pools.insert(p->second);
+	bool rebuild = false;
+	pthread_mutex_lock(&m_CycleLock);
+	for (std::set<VoicePool *>::iterator p = pools.begin(); p != pools.end() && !rebuild; ++p)
+		rebuild = !(*p)->Follow();
+	pthread_mutex_unlock(&m_CycleLock);
+	if (rebuild)
+		RebuildVoices();
 }
 
 void SynthModular::cb_Group(Fl_Widget *o, void *v)
@@ -1453,6 +1640,24 @@ void SynthModular::cb_Group(Fl_Widget *o, void *v)
 	}
 	if (blocked && fl_choice("You can't group Jack, Output, MIDI or Keyboard into a SubPatch.\n"
 		"Continue without them?", "Cancel", "Continue", NULL) != 1)
+		return;
+	size_t leaving = 0;
+	const int page = synth->m_Canvas->Page();
+	std::set<int> members;
+	for (size_t s = 0; s < selection.m_DeviceIds.size(); ++s)
+	{
+		map<int,DeviceWin*>::iterator i = synth->m_DeviceWinMap.find(selection.m_DeviceIds[s]);
+		if (i != synth->m_DeviceWinMap.end() && !HostIO(i->second->m_PluginID))
+			members.insert(i->first);
+	}
+	const vector<CanvasWire> &wires = synth->m_Canvas->Wires();
+	for (size_t w = 0; w < wires.size(); ++w)
+		if (members.count(synth->m_Canvas->Holder(wires[w].OutputID, page))
+		    && !members.count(synth->m_Canvas->Holder(wires[w].InputID, page))
+		    && synth->m_Canvas->IsEventPort(wires[w].OutputID, false, wires[w].OutputPort))
+			++leaving;
+	if (leaving && fl_choice("Events can't leave a SubPatch.\n"
+		"Group and cut the event wires leaving it?", "Cancel", "Group", NULL) != 1)
 		return;
 	const char *title = fl_input("Group name:", "Group");
 	if (title)
@@ -2023,7 +2228,7 @@ void DescribePage(Spiral::Core::PatchDescription &patch, SynthModular &o, const 
 					const vector<BoundaryPort> &ports = input ? described->Inputs : described->Outputs;
 					for (size_t k = 0; k < ports.size(); ++k)
 					{
-						(input ? device.Inputs : device.Outputs).push_back(Spiral::Core::PortName(ports[k].Name));
+						(input ? device.Inputs : device.Outputs).push_back(Spiral::Core::PortName(ports[k].Name, ports[k].Type));
 						if (ports[k].InnerID >= 0)
 							device.Binds.push_back(Spiral::Core::PortBind(input != 0, (unsigned)k,
 								BindPath(*o.m_Canvas, ports[k].InnerID, input != 0, ports[k].InnerPort)));
@@ -2062,6 +2267,7 @@ void Describe(Spiral::Core::PatchDescription &patch, SynthModular &o, const stri
 
 	patch.Clear();
 	patch.Values["application"] = "SpiralSynthModular";
+	patch.Voices = o.m_PatchVoices;
 
 	// make external files dir
 	bool ExternalDirUsed=false;
@@ -2088,10 +2294,13 @@ void SynthModular::Apply(const Spiral::Core::PatchDescription &patch, const stri
 	std::map<std::string, int> ids;
 	if (merge) Fl_Canvas::ClearSelection(m_Canvas);
 
+	if (!merge) SetPatchVoices(patch.Voices);
 	if (ApplyPage(patch, sidecars, merge, merge ? m_Canvas->Page() : -1, ids) && !merge)
 		m_Canvas->CenterPatch();
 
 	ThawAll();
+	m_Sidecars = sidecars.empty() ? m_FilePath + "_files/" : sidecars;
+	RebuildVoices();
 }
 
 static bool ParseBindPath(const string &path, string &id, bool &input, int &port)
@@ -2169,7 +2378,7 @@ bool SynthModular::ApplyPage(const Spiral::Core::PatchDescription &patch, const 
 					box->Inputs.push_back(BoundaryPort(-1, -1, device.Inputs[k].Name, device.Inputs[k].Type));
 				for (size_t k = 0; k < device.Outputs.size(); ++k)
 					box->Outputs.push_back(BoundaryPort(-1, -1, device.Outputs[k].Name,
-						device.Outputs[k].Type));
+						device.Outputs[k].Type == "MusicalEventPort" ? string() : device.Outputs[k].Type));
 				for (size_t b = 0; b < device.Binds.size(); ++b)
 				{
 					vector<BoundaryPort> &ports = device.Binds[b].OuterIsInput ? box->Inputs : box->Outputs;
@@ -2200,6 +2409,11 @@ bool SynthModular::ApplyPage(const Spiral::Core::PatchDescription &patch, const 
 					    || (found = inner.find(innerId)) == inner.end() || input != device.Binds[b].OuterIsInput)
 					{
 						cerr << "SSM: SubPatch bind " << device.Binds[b].InnerPath << " leads nowhere.\n";
+						continue;
+					}
+					if (!input && m_Canvas->IsEventPort(found->second, false, port))
+					{
+						cerr << "SSM: A SubPatch sends no events out; " << device.Binds[b].InnerPath << " is not bound.\n";
 						continue;
 					}
 					BoundaryPort &bound = (input ? box->Inputs : box->Outputs)[device.Binds[b].OuterIndex];
@@ -2609,6 +2823,10 @@ void SynthModular::cb_Relayout (void* v) {
      ((SynthModular*)v)->LayoutChrome();
 }
 
+void SynthModular::cb_AddEvents (void* v) {
+     ((SynthModular*)v)->AddEventInput();
+}
+
 void SynthModular::cb_DrawerCollapse (void* v) {
      ((SynthModular*)v)->LayoutChrome();
 }
@@ -2814,6 +3032,14 @@ inline void SynthModular::cb_Connection_i(Fl_Canvas* o, void* v)
 
 	Sample *sample=NULL;
 
+	if (si->second->m_Device->IsEventPort(false, Wire->OutputPort) != di->second->m_Device->IsEventPort(true, Wire->InputPort))
+		return;
+	if (si->second->m_Device->IsEventPort(false, Wire->OutputPort))
+	{
+		di->second->m_Device->SetEventInput(Wire->InputPort, si->second->m_Device->GetEventOutput(Wire->OutputPort));
+		return;
+	}
+
 	if (!si->second->m_Device->GetOutput(Wire->OutputPort,&sample))
 	{
 		char num[32];
@@ -2856,6 +3082,7 @@ inline void SynthModular::cb_Unconnect_i(Fl_Canvas* o, void* v)
 	}
 
 	SpiralPlugin *Plugin=di->second->m_Device;
+	if (Plugin) Plugin->SetEventInput(Wire->InputPort,NULL);
 	if (Plugin && !Plugin->SetInput(Wire->InputPort,NULL))
 	{ cerr<<"Can't find destination device's Input"<<endl; return;	}
 }

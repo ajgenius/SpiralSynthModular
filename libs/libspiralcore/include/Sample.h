@@ -44,7 +44,7 @@ inline bool feq(float a, float b, float tol)
 class Sample
 {
 public:
-	enum SampleType {AUDIO=0, IMAGE, MIDI};
+	enum SampleType {AUDIO=0, IMAGE, MIDI, EVENT};
 
 	Sample(int Len=0);
 	Sample(const Sample &rhs);

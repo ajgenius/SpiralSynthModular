@@ -24,6 +24,7 @@
 #include <FL/Fl_Text_Editor.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Choice.H>
+#include <FL/Fl_Spinner.H>
 #include "PatchProject.h"
 #include <string>
 #include <vector>
@@ -75,8 +76,18 @@ public:
 
 	void (*CollapseChanged)(void *);
 	void *CollapseChangedData;
+	void (*AddEvents)(void *);
+	void *AddEventsData;
 	void (*DocumentChanged)(void *);
 	void *DocumentChangedData;
+
+	/* The patch's own voice count, under what it says about itself, as
+	   the private tree's patch settings give it: zero takes the system's.
+	   The host says what the patch has and how many it plays;
+	   PatchVoicesChanged reports an edit. */
+	void SetPatchVoices(unsigned voices, unsigned plays);
+	void (*PatchVoicesChanged)(unsigned voices, void *);
+	void *PatchVoicesChangedData;
 
 	/* What the panel displays for a field. Empty when unbound. */
 	std::string FieldText(Field field) const;
@@ -139,6 +150,8 @@ private:
 	Fl_Check_Button *m_Bundle;
 	Fl_Button *m_ViewLicense;
 	Fl_Box *m_Dates;
+	Fl_Spinner *m_PatchVoices;
+	Fl_Box *m_PatchPlays;
 	Fl_Box *m_CreditHeader;
 	std::vector<Fl_Input *> m_CreditNames;
 	std::vector<Fl_Input *> m_CreditRoles;
@@ -146,12 +159,14 @@ private:
 	Fl_Button *m_AddCredit;
 	Fl_Group *m_PortSection;
 	Fl_Choice *m_Mode;
+	Fl_Spinner *m_Voices;
 	std::vector<Fl_Box *> m_PortHeaders;
 	std::vector<Fl_Button *> m_PortHandles;
 	std::vector<Fl_Input *> m_PortNames;
 	std::vector<Fl_Button *> m_PortMatch;
 	std::vector<Fl_Button *> m_PortRemove;
 	Fl_Button *m_AddInput;
+	Fl_Button *m_AddEvents;
 	Fl_Button *m_AddOutput;
 
 	static void FieldEdited(Fl_Widget *, void *);
@@ -166,10 +181,14 @@ private:
 	static void RemoveClicked(Fl_Widget *, void *);
 	static void RemoveCommitted(void *);
 	static void ModePicked(Fl_Widget *, void *);
+	static void VoicesPicked(Fl_Widget *, void *);
+	static void PatchVoicesPicked(Fl_Widget *, void *);
 	static void NameEdited(Fl_Widget *, void *);
 	static void MatchClicked(Fl_Widget *, void *);
 	static void AddPortClicked(Fl_Widget *, void *);
 	static void AddPortCommitted(void *);
+	static void AddEventsClicked(Fl_Widget *, void *);
+	static void AddEventsCommitted(void *);
 	static void RemovePortClicked(Fl_Widget *, void *);
 	static void RemovePortCommitted(void *);
 	static void DragCommitted(void *);

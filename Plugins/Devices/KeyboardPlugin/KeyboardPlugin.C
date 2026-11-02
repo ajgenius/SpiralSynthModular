@@ -16,8 +16,10 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
+#include <limits.h>
 #include "KeyboardPlugin.h"
 #include "NoteTable.h"
+#include "EventBuffer.h"
 #include "SpiralIcon.xpm"
 
 using namespace std;
@@ -74,8 +76,12 @@ KeyboardPlugin::KeyboardPlugin() :
 m_NoteLevel(0),
 m_TriggerLevel(0),
 m_HeldCount(0),
-m_Retrigger(false)
+m_Retrigger(false),
+m_PendingCount(0),
+m_NextID(0)
 {
+	for (int n=0; n<MIDI_NOTES; n++) m_HeldID[n]=-1;
+
 	m_Note = SignedProperty(DefaultLinearFlags, 0, 0, 127, 1, 1);
 	RegisterSharedProperty(m_Note, "Note", "Note being played");
 	{
@@ -92,9 +98,10 @@ m_Retrigger(false)
 	m_PluginInfo.Width=300;
 	m_PluginInfo.Height=90;
 	m_PluginInfo.NumInputs=0;
-	m_PluginInfo.NumOutputs=2;
+	m_PluginInfo.NumOutputs=3;
 	m_PluginInfo.PortTips.push_back("Note CV");
 	m_PluginInfo.PortTips.push_back("Trigger CV");
+	m_PluginInfo.PortTips.push_back("Events");
 		
 }
 
@@ -104,8 +111,24 @@ KeyboardPlugin::~KeyboardPlugin()
 
 
 
+PluginInfo &KeyboardPlugin::Initialise(const HostInfo *Host)
+{
+	PluginInfo &Info = SpiralPlugin::Initialise(Host);
+	m_PluginInfo.PortTypes.assign(m_PluginInfo.NumInputs+m_PluginInfo.NumOutputs, Sample::AUDIO);
+	SetOutPortType(m_PluginInfo, 2, Sample::EVENT);
+	return Info;
+}
+
 void KeyboardPlugin::Execute()
 {
+	Spiral::Core::EventBuffer *Events=GetEventOutput(2);
+	if (Events)
+	{
+		Events->Clear(m_HostInfo->BUFSIZE);
+		for (int i=0; i<m_PendingCount; i++) Events->Append(0,m_Pending[i]);
+	}
+	m_PendingCount=0;
+
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 	{
 		SetOutputPitch(0,n,m_NoteLevel);
@@ -138,6 +161,7 @@ void  KeyboardPlugin::ExecuteCommands()
 		{
 			case NOTE_ON  :
 			{
+				NoteEvent(true);
 				const int note=AsSigned(m_Note);
 				int kept=0;
 				for (int i=0; i<m_HeldCount; i++)
@@ -154,6 +178,7 @@ void  KeyboardPlugin::ExecuteCommands()
 			}
 			case NOTE_OFF :
 			{
+				NoteEvent(false);
 				const int note=AsSigned(m_Note);
 				const bool newest=m_HeldCount>0 && m_Held[m_HeldCount-1]==note;
 				int kept=0;
@@ -166,6 +191,41 @@ void  KeyboardPlugin::ExecuteCommands()
 			}
 		};
 	}
+}
+
+void KeyboardPlugin::NoteEvent(bool on)
+{
+	const int note=AsSigned(m_Note);
+	if (note<0 || note>=MIDI_NOTES || m_PendingCount+2>MAX_PENDING) return;
+
+	Spiral::Core::Event Event;
+	Event.NoteNum=note;
+	Event.Frequency=NoteTable[note];
+
+	// A key pressed again ends its earlier press first.
+	if (m_HeldID[note]>=0)
+	{
+		Event.Type=Spiral::Core::Event::NoteOff;
+		Event.ID=m_HeldID[note];
+		m_Pending[m_PendingCount++]=Event;
+		m_HeldID[note]=-1;
+	}
+
+	if (!on) return;
+
+	if (m_NextID==INT_MAX)
+	{
+		for (int n=0; n<MIDI_NOTES; n++) m_HeldID[n]=-1;
+		m_NextID=0;
+		Event.Type=Spiral::Core::Event::Reset;
+		m_Pending[m_PendingCount++]=Event;
+		return;
+	}
+
+	Event.Type=Spiral::Core::Event::NoteOn;
+	Event.ID=++m_NextID;
+	m_HeldID[note]=Event.ID;
+	m_Pending[m_PendingCount++]=Event;
 }
 
 void KeyboardPlugin::Describe(Spiral::Core::Description &d) 

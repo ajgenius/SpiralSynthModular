@@ -39,6 +39,7 @@ namespace Spiral
 namespace Core
 {
 	class SampleFeed;
+	class EventBuffer;
 }
 }
 using Spiral::Core::SPIRAL_PLUGIN_TYPE_DEVICE;
@@ -115,6 +116,8 @@ public:
 	// run the commands from the GUI
 	virtual void        ExecuteCommands() {}
 
+	virtual void        SetVoice(SpiralPlugin *first, unsigned voice, unsigned voices) {}
+
 	// The plugin's state as a description; the host decides how it is
 	// written. StreamOut is the transitional writer, the legacy stream
 	// the description would have produced.
@@ -139,6 +142,10 @@ public:
 	bool                GetOutput(unsigned int n, Sample **s);
 	bool                SetInput(unsigned int n, const Sample *s);
 	const Sample*       GetInput(unsigned int n) { return m_Input[n]; }
+	bool                SetEventInput(unsigned int n, const Spiral::Core::EventBuffer *e);
+	const Spiral::Core::EventBuffer *GetEventInput(unsigned int n) const;
+	Spiral::Core::EventBuffer *GetEventOutput(unsigned int n) const;
+	bool                IsEventPort(bool input, unsigned int n) const;
 	std::string 		GetName() { return m_PluginInfo.Name; }
 
 	void UpdatePluginInfoWithHost();
@@ -215,6 +222,8 @@ private:
 
 	std::vector<const Sample*> m_Input;
 	std::vector<Sample*> m_Output;
+	std::vector<const Spiral::Core::EventBuffer*> m_EventInput;
+	std::vector<Spiral::Core::EventBuffer*> m_EventOutput;
 
 	void (*UpdateInfo)(int n,void *);	
 	int    m_HostID;	

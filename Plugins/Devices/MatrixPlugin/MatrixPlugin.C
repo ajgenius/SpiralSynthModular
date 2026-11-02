@@ -16,6 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include <cstring>
+#include <climits>
 #include "MatrixPlugin.h"
 #include <algorithm>
 #include "SpiralIcon.xpm"
@@ -89,8 +90,15 @@ m_Triggered(false),
 m_ClockHigh(false),
 m_Copied(false),
 m_PatAdvance(false),
-m_PatReset(false)
+m_PatReset(false),
+m_First(NULL),
+m_Voice(0),
+m_VoiceCount(1),
+m_NextID(0),
+m_ResetEvents(false)
 {
+	for (int y=0; y<MATRIX_PITCHES; y++) { m_RowID[y]=-1; m_RowStart[y]=-1; }
+
 	// Named as the private tree names them: each step of the sequence and
 	// each pattern by its number, and a pattern's octave, length and speed.
 	m_PatSeq = ListProperty(Property::WriteOnly);
@@ -264,6 +272,25 @@ PluginInfo &MatrixPlugin::Initialise(const HostInfo *Host)
 	return Info;
 }
 
+// In a patch with voices every device has a copy per voice; the first
+// Matrix gives its notes to the voices, and each copy plays its own.
+void MatrixPlugin::SetVoice(SpiralPlugin *first, unsigned voice, unsigned voices)
+{
+	m_First = voice ? dynamic_cast<MatrixPlugin *>(first) : NULL;
+	m_Voice = m_First ? voice : 0;
+	m_VoiceCount = std::max(1u, voices);
+	// A copy plays from where the first Matrix is: the file does not say.
+	if (m_First)
+	{
+		AsSigned(m_Current) = AsSigned(m_First->m_Current);
+		AsFloat(m_Time) = AsFloat(m_First->m_Time);
+		AsSigned(m_Step) = AsSigned(m_First->m_Step);
+		m_CurPatSeq = m_First->m_CurPatSeq;
+	}
+}
+
+
+
 void MatrixPlugin::Reset()
 {
 	ResetPorts();
@@ -281,10 +308,32 @@ void MatrixPlugin::Reset()
 	m_Copied = false;
 	m_PatAdvance = false;
 	m_PatReset = false;
+	for (int y=0; y<MATRIX_PITCHES; y++) { m_RowID[y]=-1; m_RowStart[y]=-1; }
+	m_Voices.Reset();
+	m_ResetEvents = true;
 }
 
 void MatrixPlugin::Execute()
 {	
+	const unsigned samples = m_HostInfo->BUFSIZE;
+	const bool voices = m_VoiceCount > 1;
+	if (!m_First)
+	{
+		if (m_ResetEvents)
+		{
+			Spiral::Core::Event reset;
+			reset.Type = Spiral::Core::Event::Reset;
+			Send(reset, 0);
+			m_ResetEvents = false;
+		}
+		if (voices)
+		{
+			m_Voices.Configure(m_VoiceCount);
+			m_Pitch.resize(m_Voices.Count() * samples);
+			m_Gate.resize(m_Voices.Count() * samples);
+		}
+	}
+
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 	{
 		if (InputExists(1)) m_StepTime = GetInput(1,n);
@@ -415,8 +464,104 @@ void MatrixPlugin::Execute()
 				SetOutput(t+2,n,start >= 0 && start != step ? m_TriggerLevel[t] : 0);
 			}
 
+			NoteEvents(p, step, n);
+		}
+
+		// With voices, each copy plays its voice's note on the pitch and
+		// trigger outputs, the first Matrix having shared them out.
+		if (voices)
+		{
+			if (!m_First)
+				for (unsigned v=0; v<m_Voices.Count(); v++)
+				{
+					m_Pitch[v*samples+n] = m_Voices.Pitch(v);
+					m_Gate[v*samples+n] = m_Voices.Gate(v);
+				}
+			const MatrixPlugin *from = m_First ? m_First : this;
+			const bool lane = m_Voice < from->m_Voices.Count() && from->m_Pitch.size() >= (m_Voice+1)*samples;
+			SetOutputPitch(0,n,lane ? from->m_Pitch[m_Voice*samples+n] : 0);
+			SetOutput(1,n,lane ? from->m_Gate[m_Voice*samples+n] : 0);
 		}
 	}
+}
+
+// The notes that stop and start on this step, as events for the voices: each
+// note keeps its identity from its start to its end, as the Keyboard's and
+// Midi's do. Ends go first; then starts, highest first, as the Matrix alone
+// plays the highest note: the first voice takes the highest note of a
+// column and the next voices go downward, so the highest are the ones that
+// sound.
+void MatrixPlugin::NoteEvents(const Pattern &p, int step, unsigned frame)
+{
+	if (m_First)
+		return;
+	Spiral::Core::Event event;
+	for (int y=0; y<MATRIX_PITCHES; y++)
+	{
+		const int start = Covering(p, step, y);
+		const bool carried = start >= 0 && start != step && start == m_RowStart[y];
+		if (m_RowID[y] < 0 || carried)
+			continue;
+		event.Type = Spiral::Core::Event::NoteOff;
+		event.ID = m_RowID[y];
+		event.NoteNum = std::min(127, y);
+		Send(event, frame);
+		m_RowID[y] = -1;
+	}
+	for (int y=MATRIX_PITCHES-1; y>=0; y--)
+	{
+		if (step < 0 || step >= MATX || !p.Matrix[step][y])
+			continue;
+		const int lane = VoiceFor(std::min(127, y));
+		if (lane == NoVoice)
+			continue;
+		if (m_NextID == INT_MAX)
+		{
+			for (int r=0; r<MATRIX_PITCHES; r++) m_RowID[r] = -1;
+			m_NextID = 0;
+			event.Type = Spiral::Core::Event::Reset;
+			Send(event, frame);
+		}
+		event.Type = Spiral::Core::Event::NoteOn;
+		event.ID = ++m_NextID;
+		event.NoteNum = std::min(127, y);
+		event.Frequency = NoteTable[y];
+		event.Volume = p.Volume[step][y];
+		Send(event, frame, lane);
+		m_RowID[y] = event.ID;
+		m_RowStart[y] = step;
+	}
+}
+
+// The voice for a note starting: any free voice (AnyVoice), or else that of
+// the lowest note sounding, when this one is higher; it takes that voice
+// over, as a new note does, and the lower note is no longer the row's. A
+// note lower than every one sounding is left out (NoVoice).
+int MatrixPlugin::VoiceFor(int key)
+{
+	if (m_VoiceCount <= 1)
+		return AnyVoice;
+	int lowest = -1;
+	for (unsigned v=0; v<m_Voices.Count(); v++)
+	{
+		const Spiral::Core::EventVoices::Voice &voice = m_Voices.Get(v);
+		if (voice.Level == 0)
+			return AnyVoice;
+		if (lowest < 0 || voice.Key < m_Voices.Get(lowest).Key)
+			lowest = (int)v;
+	}
+	if (lowest < 0 || m_Voices.Get(lowest).Key >= key)
+		return NoVoice;
+	for (int y=0; y<MATRIX_PITCHES; y++)
+		if (m_RowID[y] == m_Voices.Get(lowest).ID)
+			m_RowID[y] = -1;
+	return lowest;
+}
+
+void MatrixPlugin::Send(const Spiral::Core::Event &event, unsigned, int lane)
+{
+	if (m_VoiceCount > 1)
+		m_Voices.Apply(event, lane);
 }
 
 int MatrixPlugin::Shown(int x, int y) const

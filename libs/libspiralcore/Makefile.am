@@ -17,7 +17,10 @@ libspiralcore_la_SOURCES = \
     include/RiffWav.h \
     src/RiffWav.cpp \
     include/GraphSort.h \
-    src/GraphSort.cpp
+    src/GraphSort.cpp \
+    include/Event.h \
+    include/SpiralTime.h \
+    src/Time.cpp
 libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 3:0:0
 # Spumoni is linked in whole as a convenience library. It has to arrive as a
 # library and not as a trailing linker flag: libtool emits LDFLAGS after the
@@ -36,13 +39,12 @@ compatibility_test_LDADD = libspiralcore.la
 EXTRA_DIST = \
     COPYING \
     include/AsyncSampleLoader.h \
-    include/Event.h \
+    include/EventBuffer.h \
     include/EventQueue.h \
-    include/SpiralTime.h \
+    include/EventVoices.h \
     src/AsyncSampleLoader.cpp \
     src/Event.cpp \
-    src/EventQueue.cpp \
-    src/Time.cpp
+    src/EventQueue.cpp
 
 EXTRA_DIST += Audio/AUDIO-TRANSPORT.md
 
@@ -55,7 +57,7 @@ libspiralcore_la_SOURCES += Plugin/include/Property.h Plugin/src/Property.cpp
 libspiralcore_la_SOURCES += Plugin/include/AudioDriver.h
 libspiralcore_la_SOURCES += Plugin/include/BackendPath.h Plugin/src/BackendPath.cpp
 libspiralcore_la_SOURCES += Plugin/include/DeviceClassRegistry.h Plugin/src/DeviceClassRegistry.cpp Plugin/include/EditorClassRegistry.h Plugin/src/EditorClassRegistry.cpp
-libspiralcore_la_SOURCES += Plugin/include/SpiralPlugin.h Plugin/src/SpiralPlugin.cpp Audio/include/OutputAudioClient.h Audio/src/OutputAudioClient.cpp Audio/include/AudioTransportHub.h Audio/src/AudioTransportHub.cpp Plugin/include/OutputPlugin.h Plugin/src/OutputPlugin.cpp Plugin/include/OutputIcon.xpm Plugin/include/SubPatchDevice.h Plugin/src/SubPatchDevice.cpp
+libspiralcore_la_SOURCES += Plugin/include/SpiralPlugin.h Plugin/src/SpiralPlugin.cpp Audio/include/OutputAudioClient.h Audio/src/OutputAudioClient.cpp Audio/include/AudioTransportHub.h Audio/src/AudioTransportHub.cpp Plugin/include/OutputPlugin.h Plugin/src/OutputPlugin.cpp Plugin/include/OutputIcon.xpm Plugin/include/EventInputPlugin.h Plugin/src/EventInputPlugin.cpp Plugin/include/EventInputIcon.xpm Plugin/include/SubPatchDevice.h Plugin/src/SubPatchDevice.cpp Plugin/include/VoicePool.h Plugin/src/VoicePool.cpp
 if BUILD_LADSPA
 # The LADSPA device (id 22) and its catalog, built in like Output.
 libspiralcore_la_SOURCES += Plugin/include/LADSPAInfo.h Plugin/src/LADSPAInfo.cpp \

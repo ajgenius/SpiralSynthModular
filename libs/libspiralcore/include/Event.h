@@ -16,6 +16,7 @@
 
 #include "Types.h"
 #include "SpiralTime.h"
+#include "Compatibility.h"
 
 #ifndef NE_EVENT
 #define NE_EVENT
@@ -28,7 +29,11 @@ namespace Core
 class Event
 {
 public:
+	enum Kind { NoteOn, NoteOff, Controller, PitchBend, ChannelPressure, NotePressure, Program, Reset };
 	Event() :
+	Type(NoteOn),
+	Parameter(0),
+	Value(0),
 	ID(0),
 	Frequency(440.0f),
 	SlideFrequency(0.0f),
@@ -39,6 +44,19 @@ public:
 	NoteNum(0),
 	Message(0)
 	{}
+
+	Kind Type;
+	unsigned Parameter;
+	float Value;
+	bool Valid() const
+	{
+		return Type >= NoteOn && Type <= Reset && ID >= 0 && Channel >= 0 && Channel < 16 &&
+			NoteNum >= 0 && NoteNum < 128 && Parameter < 128 &&
+			SSMCompat::IsFinite(Frequency) && Frequency > 0 &&
+			SSMCompat::IsFinite(Volume) && Volume >= 0 && Volume <= 1 &&
+			SSMCompat::IsFinite(Value) && Value >= -1 && Value <= 1 &&
+			SSMCompat::IsFinite(SlideFrequency) && SSMCompat::IsFinite(Pan) && SSMCompat::IsFinite(Position);
+	}
 	
 	int ID;            // the currently playing sample, or voice
 	float32 Frequency; // freq

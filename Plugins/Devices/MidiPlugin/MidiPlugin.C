@@ -16,9 +16,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */ 
 
+#include <math.h>
+#include <limits.h>
 #include "MidiPlugin.h"
 #include "NoteTable.h"
 #include "Midi.h"
+#include "EventBuffer.h"
 using Spiral::Core::MidiDevice;
 using Spiral::Core::MidiEvent;
 #include "SpiralIcon.xpm"
@@ -81,8 +84,11 @@ m_TriggerLevel(0),
 m_PitchBendLevel(0),
 m_ChannelPressureLevel(0),
 m_AfterTouchLevel(0),
-m_CurrentNote(0)
+m_CurrentNote(0),
+m_NextID(0)
 {
+	for (int n=0; n<1024; n++) m_Held[n].ID=-1;
+
 	m_Version=2;
 	
 	if (m_RefCount==0)
@@ -95,16 +101,18 @@ m_CurrentNote(0)
 	m_PluginInfo.Name="Midi";
 	m_PluginInfo.Width=80;
 	m_PluginInfo.Height=140;
-	m_PluginInfo.NumInputs=2;
-	m_PluginInfo.NumOutputs=6;
+	m_PluginInfo.NumInputs=3;
+	m_PluginInfo.NumOutputs=7;
 	m_PluginInfo.PortTips.push_back("Note CV");
 	m_PluginInfo.PortTips.push_back("Trigger CV");
+	m_PluginInfo.PortTips.push_back("Events");
 	m_PluginInfo.PortTips.push_back("Note CV");
 	m_PluginInfo.PortTips.push_back("Trigger CV");
 	m_PluginInfo.PortTips.push_back("PitchBend CV");
 	m_PluginInfo.PortTips.push_back("ChannelPressure CV");
 	m_PluginInfo.PortTips.push_back("Aftertouch CV");
 	m_PluginInfo.PortTips.push_back("Clock CV");
+	m_PluginInfo.PortTips.push_back("Events");
 	
 	for (int n=0; n<128; n++) m_ControlLevel[n]=0;
 	
@@ -141,6 +149,7 @@ PluginInfo &MidiPlugin::Initialise(const HostInfo *Host)
 {	
 	PluginInfo& Info= SpiralPlugin::Initialise(Host);		
 	MidiDevice::SetDeviceName(Host->MIDIFILE);		
+	PlaceEvents();
 		
 	return Info;
 }
@@ -164,6 +173,10 @@ void MidiPlugin::Execute()
 	}
 
 	bool Triggered=false;
+
+	SendEvents();
+	Spiral::Core::EventBuffer *Events=GetEventOutput(m_PluginInfo.NumOutputs-1);
+	if (Events) Events->Clear(m_HostInfo->BUFSIZE);
 
 	// midi output	
 	if (InputExists(0) && InputExists(1))
@@ -217,6 +230,8 @@ void MidiPlugin::Execute()
 	// get all the midi events since the last check
 	while(Event.GetType()!=MidiEvent::NONE)
 	{
+		ReceiveEvent(Event);
+
 		if (Event.GetType()==MidiEvent::ON)
 		{	
 			Triggered=true;
@@ -300,9 +315,14 @@ void MidiPlugin::AddControl(int s, const string &Name)
 	control->Add(new SignedProperty(DefaultLinearFlags, s, 0, 127, 1, 1));
 	control->Add(new StringProperty(Property::WriteOnly, Name));
 	m_Controls.Add(control);
+	RemoveOutput();
+	AddOutput();
 	AddOutput();
 	m_PluginInfo.NumOutputs++;
+	m_PluginInfo.PortTips.pop_back();
 	m_PluginInfo.PortTips.push_back(Name);
+	m_PluginInfo.PortTips.push_back("Events");
+	PlaceEvents();
 	UpdatePluginInfoWithHost();
 }
 
@@ -312,9 +332,101 @@ void MidiPlugin::DeleteControl()
 	
 	m_Controls.RemoveLast();
 	RemoveOutput();
+	RemoveOutput();
+	AddOutput();
 	m_PluginInfo.NumOutputs--;
 	m_PluginInfo.PortTips.pop_back();
+	m_PluginInfo.PortTips.pop_back();
+	m_PluginInfo.PortTips.push_back("Events");
+	PlaceEvents();
 	UpdatePluginInfoWithHost();
+}
+
+void MidiPlugin::PlaceEvents()
+{
+	m_PluginInfo.PortTypes.assign(m_PluginInfo.NumInputs+m_PluginInfo.NumOutputs, Sample::AUDIO);
+	SetInPortType(m_PluginInfo, 2, Sample::EVENT);
+	SetOutPortType(m_PluginInfo, m_PluginInfo.NumOutputs-1, Sample::EVENT);
+}
+
+void MidiPlugin::SendEvents()
+{
+	const Spiral::Core::EventBuffer *In=GetEventInput(2);
+	for (unsigned i=0; In && i<In->Count(); i++)
+	{
+		const Spiral::Core::Event &Event=In->At(i);
+		if (Event.Type==Spiral::Core::Event::NoteOn)
+			MidiDevice::Get()->SendEvent(AsSigned(m_DeviceNum),MidiEvent(MidiEvent::ON,Event.NoteNum,Event.Volume*127.0f));
+		else if (Event.Type==Spiral::Core::Event::NoteOff)
+			MidiDevice::Get()->SendEvent(AsSigned(m_DeviceNum),MidiEvent(MidiEvent::OFF,Event.NoteNum,0.0f));
+	}
+}
+
+void MidiPlugin::ReceiveEvent(const MidiEvent &In)
+{
+	Spiral::Core::EventBuffer *Events=GetEventOutput(m_PluginInfo.NumOutputs-1);
+	Spiral::Core::Event Event;
+	Event.Channel=AsSigned(m_DeviceNum);
+	Event.NoteNum=In.GetNote();
+	Event.Volume=In.GetVolume()/127.0f;
+	if (!Events || Event.NoteNum<0 || Event.NoteNum>127 || Event.Volume<0 || Event.Volume>1) return;
+	Event.Frequency=440.0*pow(2.0,(Event.NoteNum-69)/12.0);
+
+	if (In.GetType()==MidiEvent::ON)
+	{
+		int slot=0;
+		while (slot<1024 && m_Held[slot].ID>=0) slot++;
+		if (slot==1024 || m_NextID==INT_MAX)
+		{
+			for (int n=0; n<1024; n++) m_Held[n].ID=-1;
+			m_NextID=0;
+			Event.Type=Spiral::Core::Event::Reset;
+		}
+		else
+		{
+			Event.Type=Spiral::Core::Event::NoteOn;
+			Event.ID=++m_NextID;
+			m_Held[slot].ID=Event.ID;
+			m_Held[slot].Key=Event.NoteNum;
+		}
+	}
+	else if (In.GetType()==MidiEvent::OFF)
+	{
+		int slot=-1;
+		for (int n=0; n<1024; n++)
+			if (m_Held[n].ID>=0 && m_Held[n].Key==Event.NoteNum && (slot<0 || m_Held[n].ID<m_Held[slot].ID))
+				slot=n;
+		if (slot<0) return;
+		Event.Type=Spiral::Core::Event::NoteOff;
+		Event.ID=m_Held[slot].ID;
+		m_Held[slot].ID=-1;
+	}
+	else if (In.GetType()==MidiEvent::PARAMETER)
+	{
+		Event.Type=Spiral::Core::Event::Controller;
+		Event.Parameter=Event.NoteNum;
+		Event.NoteNum=0;
+		Event.Value=Event.Volume;
+		if (Event.Parameter==120 || Event.Parameter==123)
+			for (int n=0; n<1024; n++) m_Held[n].ID=-1;
+	}
+	else if (In.GetType()==MidiEvent::PITCHBEND)
+	{
+		Event.Type=Spiral::Core::Event::PitchBend;
+		Event.Value=Event.Volume*2-1;
+	}
+	else if (In.GetType()==MidiEvent::CHANNELPRESSURE)
+	{
+		Event.Type=Spiral::Core::Event::ChannelPressure;
+		Event.Value=Event.Volume;
+	}
+	else if (In.GetType()==MidiEvent::AFTERTOUCH)
+	{
+		Event.Type=Spiral::Core::Event::NotePressure;
+		Event.Value=Event.Volume;
+	}
+	else return;
+	Events->Append(0,Event);
 }
 
 void MidiPlugin::Describe(Spiral::Core::Description &d) 
@@ -352,7 +464,7 @@ void MidiPlugin::Apply(Spiral::Core::Description::Reader &r)
 				if (!r.Named()) r.Value(size);
 
 				r.Value(ControlName(n));   // the counted bytes, one value
-				m_PluginInfo.PortTips[5+n] = ControlName(n).Value;
+				m_PluginInfo.PortTips[m_PluginInfo.NumInputs+6+n] = ControlName(n).Value;
 			}			
 		}
 	}

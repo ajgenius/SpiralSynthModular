@@ -124,6 +124,9 @@ public:
 	const vector<CanvasWire> &Wires() const { return m_WireVec; }
 	string Name(int id);
 	string PortName(int id, bool input, int port);
+	bool IsEventPort(int id, bool input, int port);
+	void EraseWire(const CanvasWire &wire);
+	void AddBoxPort(int box, bool input, const string &name, const string &type);
 	bool BindBoxPort(int box, bool input, int port, int id, int idPort);
 	void UnbindBoxPort(int box, bool input, int port);
 	void AddBoxPort(int box, bool input, const string &name);
@@ -131,7 +134,9 @@ public:
 	bool MoveBoxPort(int box, bool input, int from, int to);
 	void RenameBoxPort(int box, bool input, int port, const string &name);
 	void SetBoxMode(int box, const string &mode);
+	void SetBoxVoices(int box, long voices);
 	bool Owns(int box) const;
+	unsigned Topology() const { return m_Topology; }
 	// The last item on the popup, after a divider: the patch's own entry
 	// below the device groups. Added once the plugins are in, so it
 	// lands at the end rather than ahead of them.
@@ -227,7 +232,6 @@ private:
 	void StripClicked(bool input, int port, bool unbind);
 	bool ResolveWire(CanvasWire &wire) const;
 	void WiresThrough(int box, bool input, int port, vector<CanvasWire> &out) const;
-	void EraseWire(const CanvasWire &wire);
 	void AddWire(CanvasWire wire);
 	void RefreshBox(int box);
 	void RenumberBinds(int box, bool input, const vector<int> &moved);
@@ -237,6 +241,7 @@ private:
 	bool m_Owned;
 	list<int> m_Orders[2];
 	int m_Order;
+	volatile unsigned m_Topology;
 	pthread_mutex_t *m_GraphLock;
 	void LockGraph();
 	void UnlockGraph();

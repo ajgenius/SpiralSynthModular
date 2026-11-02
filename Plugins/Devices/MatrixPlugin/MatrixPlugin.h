@@ -17,7 +17,9 @@
 */ 
 
 #include "Device.h"
+#include "EventVoices.h"
 #include "NoteTable.h"
+#include <vector>
 
 #ifndef MatrixPLUGIN
 #define MatrixPLUGIN
@@ -68,6 +70,7 @@ public:
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void Execute();
 	virtual void Reset();
+	virtual void SetVoice(SpiralPlugin *first, unsigned voice, unsigned voices);
 	virtual void ExecuteCommands();
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
@@ -175,6 +178,21 @@ private:
 	bool m_Copied;
 	bool  m_PatAdvance;
 	bool  m_PatReset;
+
+	// In a patch with voices, its notes shared out over them: kept as note
+	// events, each a voice's from its start to its end.
+	void NoteEvents(const Pattern &p, int step, unsigned frame);
+	enum { AnyVoice = -1, NoVoice = -2 };
+	int VoiceFor(int key);
+	void Send(const Spiral::Core::Event &event, unsigned frame, int lane = -1);
+	MatrixPlugin *m_First;      // in a voice copy, the first voice's Matrix
+	unsigned m_Voice, m_VoiceCount;
+	int m_RowID[MATRIX_PITCHES]; // the note sounding at each pitch, or -1
+	int m_RowStart[MATRIX_PITCHES];
+	int m_NextID;
+	bool m_ResetEvents;
+	Spiral::Core::EventVoices m_Voices;
+	std::vector<float> m_Pitch, m_Gate; // each voice's, a block each
 };
 
 #endif

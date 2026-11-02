@@ -145,20 +145,21 @@ void SubPatchDevice::PortsChanged()
 		for (size_t k = 0; k < ports.size(); ++k)
 		{
 			m_PluginInfo.PortTips.push_back(ports[k].Name);
-			m_PluginInfo.PortTypes.push_back(0);
+			m_PluginInfo.PortTypes.push_back(ports[k].IsEvent() ? Sample::EVENT : Sample::AUDIO);
 		}
 	}
 }
 
 // Private's subpatch panel, the rows public can run: an isolated subpatch,
-// its transport and buffer are not here yet, so those are shown but cannot
-// be changed. Its Link Name has no channel here.
+// its transport and buffer are not here yet, and public sums voices, so
+// those are shown but cannot be changed. Its Link Name has no channel here.
 bool SubPatchDevice::GeneratePanel(const std::string &, std::string &Document)
 {
 	Document =
-		"{\"panel\":{\"schema_version\":1,\"width\":400,\"height\":82,"
+		"{\"panel\":{\"schema_version\":1,\"width\":400,\"height\":134,"
 		"\"help\":\"Virtual shares the parent graph. Inline owns a graph on the parent audio thread. "
-		"Isolated owns an audio thread and communicates through internal buffers or JACK; it is not here yet.\","
+		"Isolated owns an audio thread and communicates through internal buffers or JACK; it is not here yet. "
+		"Voices are copies of the subpatch's devices, one per note; zero inherits the parent's voices.\","
 		"\"children\":["
 		"{\"type\":\"Label\",\"bounds\":[4,4,134,22],\"text\":\"Mode\"},"
 		"{\"type\":\"Choice\",\"name\":\"MODE\",\"bounds\":[140,4,256,22],\"property\":\"MODE\",\"items\":["
@@ -167,6 +168,11 @@ bool SubPatchDevice::GeneratePanel(const std::string &, std::string &Document)
 		"{\"type\":\"Choice\",\"name\":\"LINK\",\"bounds\":[140,30,256,22],\"property\":\"LINK\",\"enabled\":false,\"items\":["
 		"{\"value\":0,\"text\":\"Internal buffers\"},{\"value\":1,\"text\":\"JACK\"}]},"
 		"{\"type\":\"Label\",\"bounds\":[4,56,134,22],\"text\":\"Buffer frames\"},"
-		"{\"type\":\"Spinner\",\"name\":\"BUFFER FRAMES\",\"bounds\":[140,56,256,22],\"property\":\"BUFFER FRAMES\",\"enabled\":false}]}}";
+		"{\"type\":\"Spinner\",\"name\":\"BUFFER FRAMES\",\"bounds\":[140,56,256,22],\"property\":\"BUFFER FRAMES\",\"enabled\":false},"
+		"{\"type\":\"Label\",\"bounds\":[4,82,134,22],\"text\":\"Voices (0: parent)\"},"
+		"{\"type\":\"Spinner\",\"name\":\"VOICES\",\"bounds\":[140,82,256,22],\"property\":\"VOICES\","
+		"\"enabled\":{\"property\":\"MODE\",\"not_equals\":0}},"
+		"{\"type\":\"CheckBox\",\"name\":\"POLY OUTPUT\",\"bounds\":[140,108,256,22],\"property\":\"POLY OUTPUT\","
+		"\"text\":\"Poly output\",\"enabled\":false}]}}";
 	return true;
 }

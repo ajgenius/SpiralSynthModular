@@ -226,6 +226,12 @@ namespace Core
 
 		std::map<std::string, std::string> Values;
 
+		// The patch's own voice pool, as the private tree saves it; zero
+		// inherits the system default.
+		unsigned Voices;
+
+		PatchDescription(): Voices(0) {}
+
 		const DeviceDescription *FindDevice(const std::string &patchId) const
 		{
 			for (size_t o = 0; o < Objects.size(); o++)
@@ -253,6 +259,7 @@ namespace Core
 			Objects.clear();
 			Wires.clear();
 			Values.clear();
+			Voices = 0;
 		}
 
 		void Swap(PatchDescription &other)
@@ -260,6 +267,9 @@ namespace Core
 			Objects.swap(other.Objects);
 			Wires.swap(other.Wires);
 			Values.swap(other.Values);
+			const unsigned voices = Voices;
+			Voices = other.Voices;
+			other.Voices = voices;
 		}
 	};
 

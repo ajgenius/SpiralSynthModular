@@ -18,6 +18,14 @@
 
 #include "Device.h"
 
+namespace Spiral
+{
+namespace Core
+{
+	class MidiEvent;
+}
+}
+
 #ifndef OscillatorPLUGIN
 #define OscillatorPLUGIN
 
@@ -51,6 +59,9 @@ private:
 	
 	void AddControl(int s,const std::string &Name);
 	void DeleteControl();
+	void PlaceEvents();
+	void SendEvents();
+	void ReceiveEvent(const Spiral::Core::MidiEvent &In);
 	
 	Spiral::Core::SignedProperty m_DeviceNum;
 
@@ -63,6 +74,12 @@ private:
 	Spiral::Core::ToggleProperty  m_NoteCut;
 	Spiral::Core::ToggleProperty  m_ContinuousNotes;
 	int	  m_CurrentNote;
+	struct Held
+	{
+		int ID;
+		int Key;
+	} m_Held[1024];
+	int m_NextID;
 	
 	static int m_RefCount;
 	

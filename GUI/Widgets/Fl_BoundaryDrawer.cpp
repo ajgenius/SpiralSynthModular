@@ -74,11 +74,15 @@ namespace
 		return top;
 	}
 
-	/* The fields, the bundle checkbox, then the dates the file recorded. */
+	/* The fields, the bundle checkbox, the dates the file recorded, then
+	   the patch's voices. */
 	int DocumentHeight()
 	{
-		return RowTop(FieldCount) + 2 * RowHeight;
+		return RowTop(FieldCount) + 3 * RowHeight;
 	}
+
+	/* Beside the voices, how many the patch plays. */
+	const int PlaysW = 60;
 
 	const char *FieldLabel(Fl_BoundaryDrawer::Field field)
 	{
@@ -298,13 +302,15 @@ namespace
 Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 	Fl_Group(x, y, w, h),
 	CollapseChanged(NULL), CollapseChangedData(NULL),
+	AddEvents(NULL), AddEventsData(NULL),
 	DocumentChanged(NULL), DocumentChangedData(NULL),
+	PatchVoicesChanged(NULL), PatchVoicesChangedData(NULL),
 	m_Document(NULL), m_Canvas(NULL),
 	m_Collapsed(SessionCollapsed()), m_SplitDrag(false), m_SplitX(0), m_SplitW(Rail),
 	m_DocumentSection(NULL), m_CreditSection(NULL),
 	m_About(NULL), m_AboutBuffer(NULL),
-	m_License(NULL), m_LicenseMenu(NULL), m_Bundle(NULL), m_ViewLicense(NULL), m_Dates(NULL), m_CreditHeader(NULL),
-	m_AddCredit(NULL), m_PortSection(NULL), m_Mode(NULL), m_AddInput(NULL), m_AddOutput(NULL),
+	m_License(NULL), m_LicenseMenu(NULL), m_Bundle(NULL), m_ViewLicense(NULL), m_Dates(NULL), m_PatchVoices(NULL), m_PatchPlays(NULL), m_CreditHeader(NULL),
+	m_AddCredit(NULL), m_PortSection(NULL), m_Mode(NULL), m_Voices(NULL), m_AddInput(NULL), m_AddEvents(NULL), m_AddOutput(NULL),
 	m_RemoveRow(0), m_RemovePortRow(0), m_AddPortInput(false), m_DragFrom(0), m_DragY(0)
 {
 	box(FL_NO_BOX);
@@ -399,6 +405,24 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 		m_DocumentSection->w(), RowHeight - 2);
 	m_Dates->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 	m_Dates->labelsize(10);
+
+	m_PatchVoices = new Fl_Spinner(m_DocumentSection->x() + LabelWidth,
+		m_DocumentSection->y() + RowTop(FieldCount) + 2 * RowHeight,
+		std::max(0, m_DocumentSection->w() - LabelWidth - PlaysW), RowHeight - 2, "Voices");
+	m_PatchVoices->align(FL_ALIGN_LEFT);
+	m_PatchVoices->labelsize(10);
+	m_PatchVoices->textsize(10);
+	m_PatchVoices->type(FL_INT_INPUT);
+	m_PatchVoices->range(0, 256);
+	m_PatchVoices->step(1);
+	m_PatchVoices->value(0);
+	m_PatchVoices->tooltip("Voices belongs to this patch and is saved with it; zero takes the system's. "
+		"Its devices play this many, unless a subpatch around them gives its own.");
+	m_PatchVoices->callback(PatchVoicesPicked, this);
+	m_PatchPlays = new Fl_Box(m_DocumentSection->x() + m_DocumentSection->w() - PlaysW,
+		m_DocumentSection->y() + RowTop(FieldCount) + 2 * RowHeight, PlaysW, RowHeight - 2, "plays 1");
+	m_PatchPlays->align(FL_ALIGN_RIGHT | FL_ALIGN_INSIDE);
+	m_PatchPlays->labelsize(10);
 	m_DocumentSection->end();
 	m_DocumentSection->init_sizes();
 
@@ -426,6 +450,7 @@ Fl_BoundaryDrawer::~Fl_BoundaryDrawer()
 {
 	Fl::remove_timeout(RemoveCommitted, this);
 	Fl::remove_timeout(AddPortCommitted, this);
+	Fl::remove_timeout(AddEventsCommitted, this);
 	Fl::remove_timeout(RemovePortCommitted, this);
 	Fl::remove_timeout(DragCommitted, this);
 
@@ -643,6 +668,15 @@ void Fl_BoundaryDrawer::Relayout()
 			m_DocumentSection->y() + RowTop(FieldCount) + RowHeight,
 			m_DocumentSection->w(), RowHeight - 2);
 
+	if (m_PatchVoices)
+		m_PatchVoices->resize(m_DocumentSection->x() + LabelWidth,
+			m_DocumentSection->y() + RowTop(FieldCount) + 2 * RowHeight,
+			std::max(0, m_DocumentSection->w() - LabelWidth - PlaysW), RowHeight - 2);
+
+	if (m_PatchPlays)
+		m_PatchPlays->resize(m_DocumentSection->x() + m_DocumentSection->w() - PlaysW,
+			m_DocumentSection->y() + RowTop(FieldCount) + 2 * RowHeight, PlaysW, RowHeight - 2);
+
 	m_CreditSection->resize(contentX + Pad, m_DocumentSection->y() + m_DocumentSection->h() + Pad,
 		contentW, std::max(0, h() - m_DocumentSection->h() - 3 * Pad));
 
@@ -812,12 +846,14 @@ void Fl_BoundaryDrawer::Repopulate()
 	m_PortSection->clear();
 	m_PortSection->resizable(NULL);
 	m_Mode = NULL;
+	m_Voices = NULL;
 	m_PortHeaders.clear();
 	m_PortHandles.clear();
 	m_PortNames.clear();
 	m_PortMatch.clear();
 	m_PortRemove.clear();
 	m_AddInput = NULL;
+	m_AddEvents = NULL;
 	m_AddOutput = NULL;
 
 	if (const SubPatchDevice *box = SubPatch())
@@ -838,6 +874,20 @@ void Fl_BoundaryDrawer::Repopulate()
 		m_Mode->add("Isolated", 0, NULL, NULL, box->Config().Mode == "Isolated" ? 0 : FL_MENU_INACTIVE);
 		m_Mode->value(box->Config().Mode == "Inline" ? 1 : box->Config().Mode == "Isolated" ? 2 : 0);
 		m_Mode->callback(ModePicked, this);
+
+		m_Voices = new Fl_Spinner(m_PortSection->x() + LabelWidth, m_PortSection->y(),
+			std::max(0, m_PortSection->w() - LabelWidth), RowHeight - 2, "Voices");
+		m_Voices->align(FL_ALIGN_LEFT);
+		m_Voices->labelsize(10);
+		m_Voices->textsize(10);
+		m_Voices->type(FL_INT_INPUT);
+		m_Voices->range(0, 256);
+		m_Voices->step(1);
+		m_Voices->value(box->Config().Voices);
+		m_Voices->tooltip("Copies of the inner devices, one per voice");
+		m_Voices->callback(VoicesPicked, this);
+		if (box->Config().Mode == "Virtual")
+			m_Voices->deactivate();
 
 		for (int section = 0; section < 2; ++section)
 		{
@@ -894,6 +944,15 @@ void Fl_BoundaryDrawer::Repopulate()
 				m_AddInput = add;
 			else
 				m_AddOutput = add;
+
+			if (input && AddEvents)
+			{
+				m_AddEvents = new Fl_Button(m_PortSection->x(), m_PortSection->y(),
+					88, RowHeight - 2, "+ Events");
+				PlasticButton(m_AddEvents);
+				m_AddEvents->callback(AddEventsClicked, this);
+				m_AddEvents->tooltip("Add an event input and an Event Input inside");
+			}
 		}
 
 		m_PortSection->end();
@@ -1271,6 +1330,12 @@ void Fl_BoundaryDrawer::PlacePorts()
 		m_Mode->resize(x + LabelWidth, y, std::max(0, w - LabelWidth), rowH);
 		y += RowHeight;
 	}
+
+	if (m_Voices)
+	{
+		m_Voices->resize(x + LabelWidth, y, std::max(0, w - LabelWidth), rowH);
+		y += RowHeight;
+	}
 	const size_t nIn = box ? box->Inputs.size() : 0;
 	const size_t nOut = box ? box->Outputs.size() : 0;
 
@@ -1298,6 +1363,8 @@ void Fl_BoundaryDrawer::PlacePorts()
 		if (Fl_Button *add = section == 0 ? m_AddInput : m_AddOutput)
 		{
 			add->resize(x, y, std::max(1, std::min(w, 96)), rowH);
+			if (section == 0 && m_AddEvents)
+				m_AddEvents->resize(x + 100, y, std::max(1, std::min(w - 100, 96)), rowH);
 			y += RowHeight;
 		}
 	}
@@ -1489,8 +1556,39 @@ void Fl_BoundaryDrawer::ModePicked(Fl_Widget *, void *data)
 {
 	Fl_BoundaryDrawer *self = static_cast<Fl_BoundaryDrawer *>(data);
 
-	if (self->m_Mode && self->ShowsPorts() && self->m_Mode->text())
-		self->m_Canvas->SetBoxMode(self->m_Canvas->Page(), self->m_Mode->text());
+	if (!self->m_Mode || !self->ShowsPorts() || !self->m_Mode->text())
+		return;
+	self->m_Canvas->SetBoxMode(self->m_Canvas->Page(), self->m_Mode->text());
+	if (self->m_Voices && self->m_Mode->value() == 0)
+		self->m_Voices->deactivate();
+	else if (self->m_Voices)
+		self->m_Voices->activate();
+}
+
+void Fl_BoundaryDrawer::SetPatchVoices(unsigned voices, unsigned plays)
+{
+	if (!m_PatchVoices)
+		return;
+	m_PatchVoices->value(voices);
+	char text[32];
+	snprintf(text, sizeof text, "plays %u", plays);
+	m_PatchPlays->copy_label(text);
+}
+
+void Fl_BoundaryDrawer::PatchVoicesPicked(Fl_Widget *, void *data)
+{
+	Fl_BoundaryDrawer *self = static_cast<Fl_BoundaryDrawer *>(data);
+	const double value = self->m_PatchVoices->value();
+	if (self->PatchVoicesChanged && value >= 0 && value <= 256)
+		self->PatchVoicesChanged((unsigned)value, self->PatchVoicesChangedData);
+}
+
+void Fl_BoundaryDrawer::VoicesPicked(Fl_Widget *, void *data)
+{
+	Fl_BoundaryDrawer *self = static_cast<Fl_BoundaryDrawer *>(data);
+
+	if (self->m_Voices && self->ShowsPorts())
+		self->m_Canvas->SetBoxVoices(self->m_Canvas->Page(), (long)self->m_Voices->value());
 }
 
 void Fl_BoundaryDrawer::NameEdited(Fl_Widget *widget, void *data)
@@ -1540,6 +1638,21 @@ void Fl_BoundaryDrawer::AddPortCommitted(void *data)
 	std::string error;
 
 	self->AddPort(self->m_AddPortInput, error);
+}
+
+void Fl_BoundaryDrawer::AddEventsClicked(Fl_Widget *, void *data)
+{
+	Fl::remove_timeout(AddEventsCommitted, data);
+	Fl::add_timeout(0, AddEventsCommitted, data);
+}
+
+void Fl_BoundaryDrawer::AddEventsCommitted(void *data)
+{
+	Fl_BoundaryDrawer *self = static_cast<Fl_BoundaryDrawer *>(data);
+
+	if (self->AddEvents && self->ShowsPorts())
+		self->AddEvents(self->AddEventsData);
+	self->Repopulate();
 }
 
 void Fl_BoundaryDrawer::RemovePortClicked(Fl_Widget *widget, void *data)
