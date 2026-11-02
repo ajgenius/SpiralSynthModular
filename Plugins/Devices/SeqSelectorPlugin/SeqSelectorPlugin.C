@@ -74,7 +74,7 @@ VectorProperty *SeqSelectorPlugin::NewLine()
 	VectorProperty *Line = new VectorProperty(Property::WriteOnly);
 
 	for (int n=0; n<NUM_VALUES; n++)
-		Line->Add(new SignedProperty(DefaultLinearFlags, 0, 0, 127, 1, 1));
+		Line->Add(new SignedProperty(DefaultLinearFlags, 0, -1, 131, 1, 1));
 
 	return Line;
 }
@@ -170,8 +170,9 @@ void SeqSelectorPlugin::Execute()
 				}
 								
 				for(int i=0; i<8; i++)
-				{			
-					SetOutputPitch(i,n,NoteTable[LineValue(m_Pos, i)]);
+				{
+					const int value = LineValue(m_Pos, i);
+					SetOutputPitch(i,n,value < 0 || value > 131 ? -1 : NoteTable[value]);
 				}														
 			}					
 			else
