@@ -52,6 +52,7 @@ class MixerPlugin : public Spiral::Core::Device, public StablePortLayout {
       int m_NumChannels;
       void SetChannels (int num);
 	Spiral::Core::VectorProperty m_ChannelVal;
+	Spiral::Core::UnsignedProperty m_Channels;
 };
 
 #endif

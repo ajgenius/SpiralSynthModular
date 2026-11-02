@@ -68,6 +68,8 @@ m_NumChannels(4)
 	    snprintf (hint, sizeof hint, "Channel %d volume", n + 1);
 	    RegisterSharedProperty(Channel(n), key, hint);
 	}
+	m_Channels = UnsignedProperty(DefaultLinearFlags, m_NumChannels, 2, MAX_CHANNELS, 1, 1);
+	RegisterSharedProperty(m_Channels, "Channels", "Number of channels");
 
         int c;
 
@@ -190,13 +192,21 @@ void MixerPlugin::RemoveChannel (void) {
 
 void MixerPlugin::Describe(Spiral::Core::Description &d) {
      d.Value(DeviceVersion).Separator(" ");
-     d.Value(m_NumChannels).Separator(" ");
-     for (int n=0; n<m_NumChannels; n++) d.Value(Channel(n)).Separator(" ");
+     AsUnsigned(m_Channels) = m_NumChannels;
+     d.Value(m_Channels).Separator(" ");
+     for (int n=0; n<MAX_CHANNELS; n++) d.Value(Channel(n)).Separator(" ");
 }
 
 void MixerPlugin::Apply(Spiral::Core::Description::Reader &r) {
      int version = 0, chans = m_NumChannels;
      r.Value(version);
+     if (r.Find("CHANNELS") >= 0) {
+          r.Value(m_Channels);
+          SetChannels (AsUnsigned(m_Channels));
+          for (int n=0; n<MAX_CHANNELS; n++) r.Value(Channel(n));
+          AsUnsigned(m_Channels) = m_NumChannels;
+          return;
+     }
      switch (version) {
        case 1: // needs default number of channels
                break;
