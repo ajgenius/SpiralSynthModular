@@ -22,6 +22,7 @@
 #include <math.h>
 
 #include "TransposePlugin.h"
+#include "Finite.h"
 #include "SpiralIcon.xpm"
 #include "NoteTable.h"
 
@@ -79,6 +80,8 @@ m_BufferInitialized(false)
 {
 	m_Amount = SignedProperty(DefaultLinearFlags, 0, -12, 12, 1, 1);
 	RegisterSharedProperty(m_Amount, "Amount", "Amount");
+	m_Aliasing = ToggleProperty(Property::WriteOnly, true);
+	RegisterSharedProperty(m_Aliasing, "Aliasing", "Round to whole semitones");
 
 	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
@@ -117,13 +120,20 @@ void TransposePlugin::Execute () {
 			// input's half steps from base of 110 = round(alpha*logf(GetInputPitch(0, n)/110));
 			// cv's half steps from base of 110 = round(alpha*logf(GetInputPitch(1, n)/110));
 
-			base = floor((alpha*logf(input0/110.0)) + 0.5);
+			base = alpha*logf(input0/110.0);
+			if (AsBoolean(m_Aliasing)) base = floor(base + 0.5);
 			if (InputExists(1))
 			{
-				transpose = (input1 > 0)?floor((alpha*logf(input1/110)) + 0.5):8.176;
+				transpose = 8.176;
+				if (input1 > 0)
+				{
+					transpose = alpha*logf(input1/110);
+					if (AsBoolean(m_Aliasing)) transpose = floor(transpose + 0.5);
+				}
 			}
 
 			m_Out = 110 * powf(2, (base+transpose) / 12);
+			if (!Spiral::Core::IsFinite(m_Out)) m_Out = 0;
 		}
 		else
 		{
