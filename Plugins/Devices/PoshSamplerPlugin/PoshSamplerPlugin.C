@@ -166,7 +166,9 @@ void PoshSamplerPlugin::Reset() {
      m_Current = 0;
      for (int s=0; s<NUM_SAMPLES; s++) {
          m_SampleDescVec[s]->Pitch = m_InitialPitch[s] * m_SampleDescVec[s]->SampleRate / (float)m_HostInfo->SAMPLERATE;
-         SampleSigned (s, SLOT_LOOPEND) = m_SampleVec[s]->GetLength() - 1;
+         const long length = m_SampleVec[s]->GetLength();
+         if (length > 0 && (SampleSigned (s, SLOT_LOOPEND) <= 0 || SampleSigned (s, SLOT_LOOPEND) >= length))
+            SampleSigned (s, SLOT_LOOPEND) = length - 1;
      }
 }
 
@@ -552,6 +554,9 @@ void PoshSamplerPlugin::LoadExternalFiles(const string &Dir, int withID) {
      for (int n=0; n<NUM_SAMPLES;  n++) {
          ostringstream temp;
          temp << Dir << "PoshSampler" << UseID << "_" << n << ".wav";
+         const long loopEnd = SampleSigned (n, SLOT_LOOPEND);
          LoadSample (n, temp.str());
+         if (loopEnd > 0 && loopEnd < m_SampleVec[n]->GetLength())
+            SampleSigned (n, SLOT_LOOPEND) = loopEnd;
      }
 }
