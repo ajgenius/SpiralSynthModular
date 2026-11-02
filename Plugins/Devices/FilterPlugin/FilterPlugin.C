@@ -91,7 +91,7 @@ k(1.0)               // Set overall filter gain
 	m_PluginInfo.PortTips.push_back("Output");
 	
 	SetString(DeviceName, SpiralPlugin_GetName());
-	SetUnsigned(DeviceVersion, 1);
+	SetUnsigned(DeviceVersion, 2);
 
 	fc = FloatProperty(DefaultLinearFlags, 100, 0, 100, 0.01,  1);
 	Q = FloatProperty(DefaultLinearFlags, 1, 0, 10, 0.01, 0.1);
@@ -171,8 +171,8 @@ void FilterPlugin::Execute()
 			coef = iir.coef + 1;     /* Skip k, or gain */ 
 			k=0.25;
 	
-			Cutoff = AsFloat(fc) + (GetInput(1,n) * 1000);
-			Resonance = AsFloat(Q) + GetInput(2,n);  
+			Cutoff = AsFloat(fc) + (AsBoolean(m_RevCutoffMod) ? -GetInput(1,n) : GetInput(1,n)) * 1000;
+			Resonance = AsFloat(Q) + (AsBoolean(m_RevResonanceMod) ? -GetInput(2,n) : GetInput(2,n));
 	 	
 			Cutoff/=2;
 	 
@@ -210,6 +210,17 @@ void FilterPlugin::Execute()
 	}		
 }
 	
+void FilterPlugin::Migrate(Spiral::Core::Description &d)
+{
+	if (d.Version() != 1)
+		return;
+
+	const int revc = d.Field(3, "RevC"), revr = d.Field(4, "RevR");
+	if (revc >= 0) d.SetValue(revc, false);
+	if (revr >= 0) d.SetValue(revr, false);
+	d.SetValue(0, 2);
+}
+
 void FilterPlugin::SetupCoeffs()
 {
 	ProtoCoef[0].a0 = 1.0; 

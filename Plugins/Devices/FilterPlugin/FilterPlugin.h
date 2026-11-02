@@ -34,6 +34,7 @@ public:
 	virtual void Execute();
 		
 	virtual void Reset();
+	virtual void Migrate(Spiral::Core::Description &d);
 	void SetupCoeffs();
 
 	double GetCutoff() {return AsFloat(fc);}

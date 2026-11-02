@@ -7,7 +7,7 @@
   "authors": [
     "David Griffiths"
   ],
-  "version": "1",
+  "version": "2",
   "host": {
     "name": "SpiralSynthModular",
     "version": "0.3.1",
