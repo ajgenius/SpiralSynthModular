@@ -26,7 +26,7 @@ static const int TRANSBUF_SIZE = 0x10000;
 
 struct SampleDesc {
        float Velocity, Pitch;
-       bool TriggerUp;
+       bool TriggerUp, Pong;
        int SampleRate;
        bool Stereo;
 };
@@ -123,7 +123,7 @@ class PoshSamplerPlugin : public Spiral::Core::Device {
       int m_Current;
       GUIArgs m_GUIArgs;
       Sample m_CopyBuffer;
-      bool m_Recording;
+      bool m_Recording, m_LastRecording;
       char m_SampleBuffer[TRANSBUF_SIZE];
       long m_SampleSize, m_CurrentPlayPos;
       float m_InitialPitch[NUM_SAMPLES];

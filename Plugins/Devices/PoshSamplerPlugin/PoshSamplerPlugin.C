@@ -64,7 +64,8 @@ int SpiralPlugin_GetType()
 ///////////////////////////////////////////////////////
 
 PoshSamplerPlugin::PoshSamplerPlugin() :
-m_Recording(false)
+m_Recording(false),
+m_LastRecording(false)
 {
         m_PluginInfo.Name = "PoshSampler";
         m_PluginInfo.Width = 400;
@@ -157,7 +158,6 @@ void PoshSamplerPlugin::Reset() {
 }
 
 void PoshSamplerPlugin::Execute() {
-     static bool Pong = false;
      for (int s=0; s<NUM_SAMPLES+1; s++) GetOutputBuf (s)->Zero();
      float Freq = 0;
      for (int n=0; n<m_HostInfo->BUFSIZE; n++) {
@@ -191,7 +191,7 @@ void PoshSamplerPlugin::Execute() {
                 // if the sample has ended
                 if (SampleFloat (s, SLOT_SAMPLEPOS) >= SampleSigned (s, SLOT_LOOPEND) || SampleFloat (s, SLOT_SAMPLEPOS) >= m_SampleVec[s]->GetLength()) {
                    if (SampleBool (s, SLOT_LOOP)) {
-                      if (SampleBool (s, SLOT_PINGPONG)) Pong = true;
+                      if (SampleBool (s, SLOT_PINGPONG)) S->Pong = true;
                       else SampleFloat (s, SLOT_SAMPLEPOS) = SampleSigned (s, SLOT_LOOPSTART);
                    }
                    else {
@@ -199,8 +199,8 @@ void PoshSamplerPlugin::Execute() {
                    }
                 }
                 // if the sample has ended ponging
-                if (Pong && SampleFloat (s, SLOT_SAMPLEPOS) <= SampleSigned (s, SLOT_LOOPSTART))
-                   Pong = false;
+                if (S->Pong && SampleFloat (s, SLOT_SAMPLEPOS) <= SampleSigned (s, SLOT_LOOPSTART))
+                   S->Pong = false;
                 if (SampleFloat (s, SLOT_SAMPLEPOS) != -1) {
                    if (InputExists (s * 2)) {
                       // Get the pitch from the CV
@@ -216,17 +216,16 @@ void PoshSamplerPlugin::Execute() {
                    float Freq = S->Pitch;
                    if (SampleSigned (s, SLOT_OCTAVE) > 0) Freq *= 1 << (SampleSigned (s, SLOT_OCTAVE));
                    if (SampleSigned (s, SLOT_OCTAVE) < 0) Freq /= 1 << (-SampleSigned (s, SLOT_OCTAVE));
-                   if (Pong) SampleFloat (s, SLOT_SAMPLEPOS) -= Freq * SampleFloat (s, SLOT_PITCHMOD);
+                   if (S->Pong) SampleFloat (s, SLOT_SAMPLEPOS) -= Freq * SampleFloat (s, SLOT_PITCHMOD);
                    else SampleFloat (s, SLOT_SAMPLEPOS) += Freq * SampleFloat (s, SLOT_PITCHMOD);
                 }
              }
          }
      }
      // record
-     static int LastRecording = false;
      if (m_Recording && InputExists (REC_INPUT)) {
         int s = 0; //GUI->GetCurrentSample();
-        if (!LastRecording) m_SampleVec[s]->Clear();
+        if (!m_LastRecording) m_SampleVec[s]->Clear();
         // new sample
         if (m_SampleVec[s]->GetLength() == 0) {
            *m_SampleVec[s] =* GetInput (REC_INPUT);
@@ -241,7 +240,7 @@ void PoshSamplerPlugin::Execute() {
            SampleSigned (s, SLOT_LOOPEND) = m_SampleVec[s]->GetLength();
         }
      }
-     LastRecording = m_Recording;
+     m_LastRecording = m_Recording;
      if (SampleFloat (m_Current, SLOT_SAMPLEPOS) > 0) {
         m_CurrentPlayPos = (long)SampleFloat (m_Current, SLOT_SAMPLEPOS);
      }
@@ -363,6 +362,7 @@ void PoshSamplerPlugin::InitializeSampleDescription (SampleDesc* NewDesc, int nu
           NewDesc->Velocity = 1.0f;
           NewDesc->Pitch = 1.0f;
           NewDesc->TriggerUp = true;
+          NewDesc->Pong = false;
           NewDesc->SampleRate = 44100;
           NewDesc->Stereo = false;
        }
