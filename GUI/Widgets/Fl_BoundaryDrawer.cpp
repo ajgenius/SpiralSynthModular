@@ -673,6 +673,7 @@ void Fl_BoundaryDrawer::Repopulate()
 
 	if (Bound())
 	{
+		Fl_Group *prev = Fl_Group::current();
 		m_CreditSection->begin();
 
 		const std::vector<Credit> &credits = m_Document->Credits;
@@ -718,6 +719,7 @@ void Fl_BoundaryDrawer::Repopulate()
 		m_AddCredit->tooltip("Add a credit");
 
 		m_CreditSection->end();
+		Fl_Group::current(prev);
 		PlaceCredits();
 	}
 

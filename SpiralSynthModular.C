@@ -1142,7 +1142,10 @@ DeviceWin* SynthModular::NewComment(int n, int x=-1, int y=-1)
 	Info.NumOutputs = 0;
 	Info.Name = "";
 
+	Fl_Group *prev = Fl_Group::current();
 	nlw->m_DeviceGUI = new Fl_CommentGUI(Info, NULL, NULL);
+	nlw->m_DeviceGUI->end();
+	Fl_Group::current(prev);
 
 	Fl_Canvas::SetDeviceCallbacks(nlw->m_DeviceGUI, m_Canvas);
 	m_Canvas->add(nlw->m_DeviceGUI);
