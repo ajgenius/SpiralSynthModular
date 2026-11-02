@@ -36,6 +36,7 @@
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <set>
 #include "Fl_DeviceGUI.h"
 #include "Fl_CommentGUI.h"
 #include "Fl_Canvas.h"
@@ -98,13 +99,10 @@ public:
 	virtual void draw() { draw_label(); }
 };
 
+// The devices a merge brings in: each one's ID in the file, and its new one.
 class DeviceGroup
 {
 public:
-	DeviceGroup() { devicecount = 0; }
-
-	int devicecount;
-	fstream devices;
 	map<int,int> m_DeviceIds;//old ID, new ID
 };
 
@@ -138,6 +136,7 @@ public:
 		const Spiral::Core::SubPatchConfig &config);
 	void GroupSelection(const string &title);
 	void UngroupSelection();
+	void PasteCopied(bool grouped);
 	void SyncSubPatches();
 	void SavePatch(const char *fn);
 
@@ -181,7 +180,7 @@ public:
 	// only for audio thread
 	bool IsFrozen() { return m_Frozen; }
 
-	iostream &StreamPatchIn(iostream &s, bool paste, bool merge, const string &sidecars = string());
+	iostream &StreamPatchIn(iostream &s, bool merge, const string &sidecars = string());
 	// Menu items that are only worth offering when there is something for
 	// them to act on. Called from the GUI loop on the main thread, and it
 	// compares against what it last set rather than rewriting the menus
@@ -251,6 +250,8 @@ private:
 	vector<Fl_Button*> m_DeviceVec;
 	ChannelHandler m_CH; // used for threadsafe communication
 	DeviceGroup	m_Copied;
+	Spiral::Core::PatchDescription m_CopiedPatch;
+	string m_CopiedFrom; // the file the copy was made in, for its samplers' files
 
 	inline void cb_NewComment_i(Fl_Button* o, void* v);
 	static void cb_NewComment(Fl_Button* o, void* v);
@@ -281,6 +282,7 @@ private:
 	static void cb_Copy (Fl_Widget *o, void *v);
 	inline void cb_Paste_i (Fl_Widget *o, void *v);
 	static void cb_Paste (Fl_Widget *o, void *v);
+	static void cb_PasteAsSubPatch (Fl_Widget *o, void *v);
 	inline void cb_Delete_i (Fl_Widget *o, void *v);
 	static void cb_Delete (Fl_Widget *o, void *v);
         inline void cb_Options_i (Fl_Widget *o, void *v);
@@ -333,7 +335,7 @@ private:
 	friend istream &operator>>(istream &s, SynthModular &o);
 	friend void Describe(Spiral::Core::PatchDescription &patch, SynthModular &o, const string &sidecars);
 	friend void DescribePage(Spiral::Core::PatchDescription &patch, SynthModular &o, const string &sidecars, int page,
-		bool &external);
+		bool &external, const std::set<int> *only);
 };
 
 iostream &operator>>(iostream &s, SynthModular &o);

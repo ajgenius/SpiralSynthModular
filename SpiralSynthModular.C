@@ -256,7 +256,6 @@ SynthModular::~SynthModular()
 	// The MidiPlugin instances are gone with the devices, so the
 	// backend they shared is too; its module can leave now.
 	Spiral::Core::MidiBackendRegistry::PackUpAndGoHome();
-	system("rm -f ___temp.ssmcopytmp");
 	pthread_mutex_destroy(&m_CycleLock);
 }
 
@@ -573,6 +572,7 @@ SpiralWindowType *SynthModular::CreateWindow()
         MenuAdd ("Edit/Cut", cb_Cut, (void*)(this), 0);
         MenuAdd ("Edit/Copy", cb_Copy, (void*)(this), 0);
         MenuAdd ("Edit/Paste", cb_Paste, (void*)(this), 0);
+        MenuAdd ("Edit/Paste as Subpatch", cb_PasteAsSubPatch, (void*)(this), 0);
         MenuAdd ("Edit/Delete", cb_Delete, (void*)(this), FL_MENU_DIVIDER);
         //MenuAdd ("Edit/Toolbars/Plugins", cb_Undefined, (void*)(this), 0);
         //MenuAdd ("Edit/Toolbars/Function", cb_Undefined, (void*)(this), 0);
@@ -745,6 +745,7 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_Canvas->SetCutDeviceGroupCallback((Fl_Callback*)cb_Cut);
 	m_Canvas->SetCopyDeviceGroupCallback((Fl_Callback*)cb_Copy);
 	m_Canvas->SetPasteDeviceGroupCallback((Fl_Callback*)cb_Paste);
+	m_Canvas->SetPasteAsSubPatchCallback((Fl_Callback*)cb_PasteAsSubPatch);
         m_Canvas->SetMergePatchCallback((Fl_Callback*)cb_Merge);
         m_Canvas->SetAboutPatchCallback((Fl_Callback*)cb_AboutPatch);
 	m_Canvas->SetGroupCallback((Fl_Callback*)cb_Group);
@@ -1023,7 +1024,7 @@ static void NoteUnavailablePort(map<int,DeviceWin*> &devs, int id, bool input, i
 	found->second->m_Device->RestoreUnavailablePorts(input ? port + 1 : 0, input ? 0 : port + 1);
 }
 
-static void GrowUnavailablePorts(iostream &s, bool paste, bool merge, map<int,DeviceWin*> &devs, map<int,int> &remap)
+static void GrowUnavailablePorts(iostream &s, bool merge, map<int,DeviceWin*> &devs, map<int,int> &remap)
 {
 	streampos mark = s.tellg();
 	int num = 0;
@@ -1041,8 +1042,8 @@ static void GrowUnavailablePorts(iostream &s, bool paste, bool merge, map<int,De
 		return;
 	}
 
-	eight = paste || num == -1;
-	if (eight && !paste)
+	eight = num == -1;
+	if (eight)
 	{
 		int version = 0;
 		s >> version >> num;
@@ -1064,8 +1065,8 @@ static void GrowUnavailablePorts(iostream &s, bool paste, bool merge, map<int,De
 		if (!s)
 			break;
 
-		outId = RemapLoadedId(paste || merge, remap, outId);
-		inId = RemapLoadedId(paste || merge, remap, inId);
+		outId = RemapLoadedId(merge, remap, outId);
+		inId = RemapLoadedId(merge, remap, inId);
 		NoteUnavailablePort(devs, outId, false, outPort);
 		NoteUnavailablePort(devs, inId, true, inPort);
 	}
@@ -1273,18 +1274,6 @@ static bool HostIO(int plugin)
 	return plugin == 0 || plugin == 2 || plugin == 31 || plugin == 40;
 }
 
-static bool HoldsBox(Fl_Canvas *canvas)
-{
-	const CanvasGroup selection = canvas->Selection();
-	for (size_t s = 0; s < selection.m_DeviceIds.size(); ++s)
-		if (canvas->IsBox(selection.m_DeviceIds[s]))
-		{
-			fl_alert("A SubPatch can't be cut or copied yet.");
-			return true;
-		}
-	return false;
-}
-
 // The new subpatch's edge port standing for a member's port, added the
 // first time, named after the port it stands for.
 static int EdgePort(Fl_Canvas *canvas, vector<BoundaryPort> &ports, bool input, int holder, int port)
@@ -1379,16 +1368,19 @@ void SynthModular::GroupSelection(const string &title)
 	m_Canvas->ShowPage(page);
 }
 
+// One subpatch selected, as the private tree's Ungroup takes: with more,
+// which is meant is not clear.
 void SynthModular::UngroupSelection()
 {
 	const CanvasGroup selection = m_Canvas->Selection();
-	for (size_t s = 0; s < selection.m_DeviceIds.size(); ++s)
+	if (selection.m_DeviceIds.size() != 1)
+		return;
 	{
-		const int box = selection.m_DeviceIds[s];
+		const int box = selection.m_DeviceIds[0];
 		map<int,DeviceWin*>::iterator win = m_DeviceWinMap.find(box);
 		const SubPatchDevice *ungrouped = m_Canvas->Box(box);
 		if (win == m_DeviceWinMap.end() || !ungrouped)
-			continue;
+			return;
 		const int page = m_Canvas->PageOf(box);
 		for (map<int,DeviceWin*>::iterator m = m_DeviceWinMap.begin(); m != m_DeviceWinMap.end(); ++m)
 			if (m_Canvas->PageOf(m->first) == box)
@@ -1645,6 +1637,7 @@ void SynthModular::RefreshMenuState()
 	MenuEnable("Copy", selection);
 	MenuEnable("Delete", selection);
 	MenuEnable("Paste", paste);
+	MenuEnable("Paste as Subpatch", paste);
 	MenuEnable("Save Points", points);
 	MenuEnable("Import as Branch", package);
 }
@@ -1723,25 +1716,18 @@ void SynthModular::cb_Update(void* o, bool mode)
 
 //////////////////////////////////////////////////////////
 
-iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const string &sidecars)
+iostream &SynthModular::StreamPatchIn(iostream &s, bool merge, const string &sidecars)
 {
-	// Paste and merge also publish devices into the live map before Apply
+	// A merge also publishes devices into the live map before Apply
 	// finishes. Keep channel updates out until loaded INPUT buffers agree.
 	FreezeAll();
 
-	//if we are pasting we don't have any of the file version
-	//or saving information. since its internal we didn't
-	//need it, but we do have other things we might need to load
-
-	bool has_file_path;
-	char file_path[1024];
 	string m_FromFilePath;
 
 	string dummy,dummy2;		
 	int ver;
 
 	// The file as text, for the contract to find each device's state in.
-	// Pasting reads the same text from the clipboard file.
 	string text;
 	{
 		streampos here = s.tellg();
@@ -1750,61 +1736,38 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 		s.seekg(here);
 	}
 
-	if (paste)
+	s>>dummy>>dummy>>dummy>>ver;
+
+	if (ver>FILE_VERSION)
 	{
-		m_Copied.devices>>has_file_path;
-
-		if (has_file_path)
-		{
-   		  m_Copied.devices.getline(file_path, 1024);
-   		  m_FromFilePath = file_path;
-   		  cerr << file_path << endl;
-   		}  
-   		  
-	}
-	else
-	{
-		s>>dummy>>dummy>>dummy>>ver;
-
-		if (ver>FILE_VERSION)
-		{
-			SpiralInfo::Alert("Bad file, or more recent version.");
-			ThawAll();
-			return s;
-		}
-
-		if (ver>2)
-		{
-			int MainWinX,MainWinY,MainWinW,MainWinH;
-			int EditWinX,EditWinY,EditWinW,EditWinH;
-
-			s>>MainWinX>>MainWinY>>MainWinW>>MainWinH;
-			s>>EditWinX>>EditWinY>>EditWinW>>EditWinH;
-
-			//o.m_MainWindow->resize(MainWinX,MainWinY,MainWinW,MainWinH);
-			//o.m_EditorWindow->resize(EditWinX,EditWinY,EditWinW,EditWinH);
-		}
-		
-		if (merge)
-			m_FromFilePath = m_MergeFilePath;
+		SpiralInfo::Alert("Bad file, or more recent version.");
+		ThawAll();
+		return s;
 	}
 
-	//wether pasting or merging we need to clear the current 
-	//selection so we can replace it with the new devices
-	if (paste || merge)
+	if (ver>2)
+	{
+		int MainWinX,MainWinY,MainWinW,MainWinH;
+		int EditWinX,EditWinY,EditWinW,EditWinH;
+
+		s>>MainWinX>>MainWinY>>MainWinW>>MainWinH;
+		s>>EditWinX>>EditWinY>>EditWinW>>EditWinH;
+
+		//o.m_MainWindow->resize(MainWinX,MainWinY,MainWinW,MainWinH);
+		//o.m_EditorWindow->resize(EditWinX,EditWinY,EditWinW,EditWinH);
+	}
+
+	if (merge)
+		m_FromFilePath = m_MergeFilePath;
+
+	// A merge replaces the current selection with the new devices.
+	if (merge)
 		Fl_Canvas::ClearSelection(m_Canvas);
 	
 	int Num, ID, PluginID, x,y,ps,px,py;
 	vector<pair<int, int> > samplers; // device ID, and the ID its files were saved under
 	
-	if (paste)
-	{
-		Num = m_Copied.devicecount;
-	}
-	else
-	{
-		s>>dummy>>Num;
-	}
+	s>>dummy>>Num;
 
 	for(int n=0; n<Num; n++)
 	{
@@ -1820,7 +1783,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 
 		string Name;
 
-		if (paste || ver>3)
+		if (ver>3)
 		{
 			// load the device name
 			int size;
@@ -1839,10 +1802,10 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 		cerr<<dummy<<" "<<ID<<" "<<dummy2<<" "<<PluginID<<" "<<x<<" "<<y<<endl;
 		#endif
 
-		if (paste || ver>1) s>>ps>>px>>py;
+		if (ver>1) s>>ps>>px>>py;
 		
 		//if we are merging a patch or pasting we will change duplicate ID's
-		if (!paste && !merge)
+		if (!merge)
 		{
 			// Check we're not duplicating an ID
 			if (m_DeviceWinMap.find(ID)!=m_DeviceWinMap.end())
@@ -1858,7 +1821,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 			DeviceWin* temp = NewComment(PluginID, x, y);
 			if (temp)
 			{
-				if (paste || merge)
+				if (merge)
 				{
 					m_Copied.m_DeviceIds[ID] = m_NextID++;
 					ID = m_Copied.m_DeviceIds[ID];
@@ -1868,7 +1831,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 				m_DeviceWinMap[ID]=temp;
 				((Fl_CommentGUI*)(m_DeviceWinMap[ID]->m_DeviceGUI))->StreamIn(s); // load the plugin
 
-				if (paste || merge)
+				if (merge)
 					Fl_Canvas::AppendSelection(ID, m_Canvas);
 				else
 					if (m_NextID<=ID) m_NextID=ID+1;
@@ -1881,7 +1844,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 			if (temp)
 			{
 				int oldID=ID;
-				if (paste || merge)
+				if (merge)
 				{
 					m_Copied.m_DeviceIds[ID] = m_NextID++;
 
@@ -1890,7 +1853,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 
 				temp->m_DeviceGUI->SetID(ID);
 
-				if (paste || ver>3)
+				if (ver>3)
 				{
 					// set the titlebars
 					temp->m_DeviceGUI->SetName(Name);
@@ -1915,19 +1878,19 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 
 				// load external files
 				if (!sidecars.empty())
-					m_DeviceWinMap[ID]->m_Device->LoadExternalFiles(sidecars, (paste || merge) ? oldID : -1);
-				else if (paste || merge)
+					m_DeviceWinMap[ID]->m_Device->LoadExternalFiles(sidecars, merge ? oldID : -1);
+				else if (merge)
 					m_DeviceWinMap[ID]->m_Device->LoadExternalFiles(m_FromFilePath+"_files/", oldID);
 				else
 					m_DeviceWinMap[ID]->m_Device->LoadExternalFiles(m_FilePath+"_files/");
 
 				if (LoadAs(PluginID) == POSHSAMPLER_ID)
-					samplers.push_back(make_pair(ID, (paste || merge) ? oldID : ID));
+					samplers.push_back(make_pair(ID, merge ? oldID : ID));
 
 				// Loaded INPUT values must survive the first tick even without an editor.
 				m_DeviceWinMap[ID]->m_Device->GetChannelHandler()->FlushChannels();
 
-				if ((paste || ver>1) && m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow())
+				if (ver>1 && m_DeviceWinMap[ID]->m_DeviceGUI->GetPluginWindow())
 				{
 
 					// set the GUI up with the loaded values
@@ -1947,13 +1910,13 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 					}
 					else m_DeviceWinMap[ID]->m_DeviceGUI->Minimise();
 					
-					if (paste || merge)
+					if (merge)
 						Fl_Canvas::AppendSelection(ID, m_Canvas);
 				}
-				else if (paste || merge)
+				else if (merge)
 					Fl_Canvas::AppendSelection(ID, m_Canvas);
 
-				if (!paste && !merge)
+				if (!merge)
 					if (m_NextID<=ID) m_NextID=ID+1;
 			}
 			else
@@ -1966,7 +1929,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 	}
 
 	const string files = !sidecars.empty() ? sidecars
-		: (paste || merge) ? m_FromFilePath+"_files/" : m_FilePath+"_files/";
+		: merge ? m_FromFilePath+"_files/" : m_FilePath+"_files/";
 	for (size_t n = 0; n < samplers.size(); ++n)
 	{
 		const int group = OnlySamplerFiles(files, samplers[n].second);
@@ -1983,9 +1946,9 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 		}
 	}
 
-	GrowUnavailablePorts(s, paste, merge, m_DeviceWinMap, m_Copied.m_DeviceIds);
+	GrowUnavailablePorts(s, merge, m_DeviceWinMap, m_Copied.m_DeviceIds);
 
-	if (!paste && !merge)
+	if (!merge)
 	{
 		s>>*m_Canvas;
 		// The devices are wherever the file says, which is where the view
@@ -1999,7 +1962,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 
 iostream &operator>>(iostream &s, SynthModular &o)
 {
-	return o.StreamPatchIn(s, false, false);
+	return o.StreamPatchIn(s, false);
 
 }
 
@@ -2012,14 +1975,17 @@ static string BindPath(Fl_Canvas &canvas, int id, bool input, int port)
 	return text;
 }
 
-void DescribePage(Spiral::Core::PatchDescription &patch, SynthModular &o, const string &sidecars, int page, bool &external)
+void DescribePage(Spiral::Core::PatchDescription &patch, SynthModular &o, const string &sidecars, int page, bool &external,
+	const std::set<int> *only)
 {
 	char text[32];
+	std::set<string> described;
 
 	for (map<int,DeviceWin*>::iterator i = o.m_DeviceWinMap.begin(); i != o.m_DeviceWinMap.end(); i++)
 	{
 		if (!i->second->m_DeviceGUI) continue;
 		if (o.m_Canvas->PageOf(i->first) != page) continue;
+		if (only && !only->count(i->first)) continue;
 		const bool box = o.m_Canvas->IsBox(i->first);
 		if (!i->second->m_Device && i->second->m_PluginID != COMMENT_ID) continue;
 
@@ -2037,12 +2003,13 @@ void DescribePage(Spiral::Core::PatchDescription &patch, SynthModular &o, const 
 
 		Spiral::Core::DeviceDescription &device = object.AddDevice();
 		snprintf(text, sizeof text, "%d", i->first); device.SetValue("patch_id", text);
+		described.insert(text);
 
 		if (box)
 		{
 			object.SetValue("text", i->second->m_DeviceGUI->GetName());
 			device.SetValue("name", "SubPatch");
-			DescribePage(device.MakeSubPatch(), o, sidecars, i->first, external);
+			DescribePage(device.MakeSubPatch(), o, sidecars, i->first, external, NULL);
 			if (const SubPatchDevice *described = o.m_Canvas->Box(i->first))
 			{
 				device.Config = described->Config();
@@ -2070,13 +2037,16 @@ void DescribePage(Spiral::Core::PatchDescription &patch, SynthModular &o, const 
 		Spiral::File::PatchFile::Properties(described, device);
 
 		// save external files
-		if (i->second->m_Device->SaveExternalFiles(sidecars))
+		if (!sidecars.empty() && i->second->m_Device->SaveExternalFiles(sidecars))
 		{
 			external=true;
 		}
 	}
 
 	::Describe(patch, *o.m_Canvas, page);
+	for (size_t w = patch.Wires.size(); only && w-- > 0; )
+		if (!described.count(patch.Wires[w].FromDevice) || !described.count(patch.Wires[w].ToDevice))
+			patch.Wires.erase(patch.Wires.begin() + w);
 }
 
 void Describe(Spiral::Core::PatchDescription &patch, SynthModular &o, const string &sidecars)
@@ -2091,7 +2061,7 @@ void Describe(Spiral::Core::PatchDescription &patch, SynthModular &o, const stri
 	string directoryError;
 	Spumoni::Path::MakeDirectories(sidecars, directoryError);
 
-	DescribePage(patch, o, sidecars, -1, ExternalDirUsed);
+	DescribePage(patch, o, sidecars, -1, ExternalDirUsed, NULL);
 
 	// remove it if it wasn't used
 	if (!ExternalDirUsed)
@@ -2264,7 +2234,9 @@ bool SynthModular::ApplyPage(const Spiral::Core::PatchDescription &patch, const 
 			Spiral::Core::Description::Reader values(state);
 			temp->m_Device->Apply(values);
 
-			temp->m_Device->LoadExternalFiles(sidecars.empty() ? m_FilePath + "_files/" : sidecars);
+			// A merged or pasted device's files are under the id it was saved with.
+			const int savedID = merge && !PatchID.empty() && !*end ? (int)strtol(PatchID.c_str(), NULL, 10) : -1;
+			temp->m_Device->LoadExternalFiles(sidecars.empty() ? m_FilePath + "_files/" : sidecars, savedID);
 
 			temp->m_Device->GetChannelHandler()->FlushChannels();
 
@@ -2439,8 +2411,8 @@ inline void SynthModular::cb_Merge_i (Fl_Widget *o, void *v) {
              stream = &inf;
           }
           m_MergeFilePath = fn;
-          StreamPatchIn(*stream, false, true, sidecars);
-          m_Canvas->StreamSelectionWiresIn(*stream, m_Copied.m_DeviceIds, true, false);
+          StreamPatchIn(*stream, true, sidecars);
+          m_Canvas->StreamSelectionWiresIn(*stream, m_Copied.m_DeviceIds, true);
           if (stream == &inf)
              inf.close();
        }
@@ -2468,7 +2440,7 @@ void SynthModular::cb_Close (Fl_Widget *o, void *v) {
 // Cut
 
 inline void SynthModular::cb_Cut_i(Fl_Widget *o, void *v) {
-       if (! m_Canvas->HaveSelection() || HoldsBox(m_Canvas)) return;
+       if (! m_Canvas->HaveSelection()) return;
        // show some warning here
        cb_Copy_i (o, v);  // should we be calling an inline function here??????
        for (unsigned int i=0; i<m_Canvas->Selection().m_DeviceIds.size(); i++) {
@@ -2488,50 +2460,18 @@ void SynthModular::cb_Cut (Fl_Widget *o, void *v) {
 
 // Copy
 
+// A selection is a patch, as the private tree copies one: what it holds,
+// subpatches with their bodies and binds, and the wires among them.
 inline void SynthModular::cb_Copy_i (Fl_Widget *o, void *v) {
-       if (! m_Canvas->HaveSelection() || HoldsBox(m_Canvas)) return;
-       m_Copied.devices.open ("___temp.ssmcopytmp", ios::out);
-       m_Copied.devicecount = 0;
-       m_Copied.m_DeviceIds.clear();
-       if (m_FilePath != "") {
-           m_Copied.devices << true << " "  << m_FilePath << endl;
-       }    
-       else m_Copied.devices << false << endl;
-       for (unsigned int i=0; i<m_Canvas->Selection().m_DeviceIds.size(); i++) {
-           int ID = m_Canvas->Selection().m_DeviceIds[i];
-           std::map<int,DeviceWin*>::iterator j = m_DeviceWinMap.find(ID);
-           if (j == m_DeviceWinMap.end() || !j->second || !j->second->m_DeviceGUI)
-              continue;
-           if (j->second->m_PluginID != COMMENT_ID && !j->second->m_Device)
-              continue;
-           m_Copied.m_DeviceIds[ID] = ID;
-           m_Copied.devicecount += 1;
-           m_Copied.devices << "Device " << j->first << " " ; // save the id
-           m_Copied.devices << "Plugin " <<j->second->m_PluginID << endl;
-           m_Copied.devices << j->second->m_DeviceGUI->x() << " ";
-           m_Copied.devices << j->second->m_DeviceGUI->y() << " ";
-           string savedName = SavedDeviceName(j->second);
-           m_Copied.devices << savedName.size() << " ";
-           m_Copied.devices << savedName << " ";
-           if (j->second->m_DeviceGUI->GetPluginWindow()) {
-              m_Copied.devices << j->second->m_DeviceGUI->GetPluginWindow()->visible() << " ";
-              m_Copied.devices << j->second->m_DeviceGUI->GetPluginWindow()->x() << " ";
-              m_Copied.devices << j->second->m_DeviceGUI->GetPluginWindow()->y() << " ";
-           }
-           else m_Copied.devices << 0 << " " << 0 << " " << 0;
-           m_Copied.devices << endl;
-           if (j->second->m_PluginID == COMMENT_ID) {
-              // save the comment gui
-              ((Fl_CommentGUI*)(j->second->m_DeviceGUI))->StreamOut (m_Copied.devices);
-           }
-           else {
-              // save the plugin
-              j->second->m_Device->StreamOut (m_Copied.devices);
-           }
-           m_Copied.devices<<endl;
-       }
-       m_Canvas->StreamSelectionWiresOut(m_Copied.devices);
-       m_Copied.devices.close();
+       if (! m_Canvas->HaveSelection()) return;
+       const CanvasGroup selection = m_Canvas->Selection();
+       const std::set<int> only(selection.m_DeviceIds.begin(), selection.m_DeviceIds.end());
+       bool external = false;
+       FreezeAll();
+       m_CopiedPatch.Clear();
+       DescribePage(m_CopiedPatch, *this, string(), m_Canvas->Page(), external, &only);
+       ThawAll();
+       m_CopiedFrom = m_FilePath;
        Fl_Canvas::EnablePaste (m_Canvas);
 }
 
@@ -2543,16 +2483,88 @@ void SynthModular::cb_Copy (Fl_Widget *o, void *v) {
 // Paste
 
 inline void SynthModular::cb_Paste_i (Fl_Widget *o, void *v) {
-       if (m_Copied.devicecount <= 0) return;
-       m_Copied.devices.open ("___temp.ssmcopytmp", ios::in);
-       StreamPatchIn(m_Copied.devices, true, false);
-       m_Canvas->StreamSelectionWiresIn (m_Copied.devices, m_Copied.m_DeviceIds, false, true);
-       m_Copied.devices.close();
+       PasteCopied(false);
 }
 
 void SynthModular::cb_Paste (Fl_Widget *o, void *v) {
      if (!v) return;
      ((SynthModular*)v)->cb_Paste_i (o, v);
+}
+
+void SynthModular::cb_PasteAsSubPatch (Fl_Widget *o, void *v) {
+     if (!v) return;
+     ((SynthModular*)v)->PasteCopied(true);
+}
+
+// Pasted devices land this far right of and below where they were copied
+// from, as the private tree pastes them, so they do not hide the originals.
+static const int PASTE_OFFSET = 20;
+
+// Jack, Output, MIDI and Keyboard belong to the patch itself; these are left
+// out of a paste into a subpatch, with their wires. How many went.
+static unsigned OmitHostIO(Spiral::Core::PatchDescription &patch)
+{
+	std::set<string> gone;
+	for (size_t n = patch.Objects.size(); n-- > 0; )
+	{
+		vector<Spiral::Core::DeviceDescription> &devices = patch.Objects[n].Devices;
+		for (size_t d = devices.size(); d-- > 0; )
+			if (HostIO(atoi(devices[d].Value("id").c_str())))
+			{
+				gone.insert(devices[d].Value("patch_id"));
+				devices.erase(devices.begin() + d);
+				// An object with no device left would read as a comment.
+				if (devices.empty())
+					patch.Objects.erase(patch.Objects.begin() + n);
+			}
+	}
+	for (size_t w = patch.Wires.size(); w-- > 0; )
+		if (gone.count(patch.Wires[w].FromDevice) || gone.count(patch.Wires[w].ToDevice))
+			patch.Wires.erase(patch.Wires.begin() + w);
+	return (unsigned)gone.size();
+}
+
+// What was copied, merged onto the page shown at an offset from where it
+// was. With grouped, what arrives becomes a subpatch of its own, under the
+// name asked for first.
+void SynthModular::PasteCopied(bool grouped)
+{
+	if (m_CopiedPatch.Objects.empty())
+		return;
+	string title;
+	if (grouped)
+	{
+		const char *name = fl_input("Group name:", "Group");
+		if (!name)
+			return;
+		title = name;
+	}
+	Spiral::Core::PatchDescription pasted(m_CopiedPatch);
+	for (size_t n = 0; n < pasted.Objects.size(); ++n)
+	{
+		Spiral::Core::ObjectDescription &object = pasted.Objects[n];
+		char at[32];
+		snprintf(at, sizeof at, "%d", atoi(object.Value("x").c_str()) + PASTE_OFFSET);
+		object.SetValue("x", at);
+		snprintf(at, sizeof at, "%d", atoi(object.Value("y").c_str()) + PASTE_OFFSET);
+		object.SetValue("y", at);
+	}
+	// The clipboard keeps them, so a paste on the root page can still place
+	// them.
+	if (m_Canvas->Page() != -1 && OmitHostIO(pasted))
+	{
+		if (pasted.Objects.empty())
+		{
+			fl_message("Jack, Output, MIDI and Keyboard can't be pasted into a SubPatch.");
+			return;
+		}
+		fl_message("Jack, Output, MIDI and Keyboard were not pasted into the SubPatch.");
+	}
+	// A sampler's files are read from where the copied patch keeps them,
+	// under the ids it had there.
+	Apply(pasted, m_CopiedFrom.empty() ? string() : m_CopiedFrom + "_files/", true);
+	if (grouped)
+		GroupSelection(title);
 }
 
 // Delete
@@ -2912,7 +2924,7 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 	ClearUp();
 	m_Document = document;
 	if (m_Drawer) m_Drawer->Refresh();
-	StreamPatchIn(*stream, false, false, sidecars);
+	StreamPatchIn(*stream, false, sidecars);
 	if (stream == &inf)
 		inf.close();
 

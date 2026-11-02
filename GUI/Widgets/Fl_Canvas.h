@@ -95,6 +95,7 @@ public:
 	void SetCutDeviceGroupCallback(Fl_Callback* s) { cb_CutDeviceGroup=s; }
 	void SetCopyDeviceGroupCallback(Fl_Callback* s) { cb_CopyDeviceGroup=s; }
 	void SetPasteDeviceGroupCallback(Fl_Callback* s) { cb_PasteDeviceGroup=s; }
+	void SetPasteAsSubPatchCallback(Fl_Callback* s) { cb_PasteAsSubPatch=s; }
 	void SetMergePatchCallback (Fl_Callback* s) { cb_MergePatch=s; }
 	void SetAboutPatchCallback (Fl_Callback* s) { cb_AboutPatch=s; }
 	void SetGroupCallback (Fl_Callback* s) { cb_GroupDevices=s; }
@@ -157,10 +158,9 @@ public:
 	void ToTop(Fl_DeviceGUI *o);
 	void ToBot(Fl_DeviceGUI *o);
 
-	void StreamSelectionWiresIn(istream &s, map<int,int> NewDeviceIds, bool merge, bool paste);
-	void StreamSelectionWiresOut(ostream &s);
+	void StreamSelectionWiresIn(istream &s, map<int,int> NewDeviceIds, bool merge);
 
-	void StreamWiresIn(istream &s, bool merge, bool paste);
+	void StreamWiresIn(istream &s, bool merge);
 
 	static void AppendSelection(int DeviceId, Fl_Canvas *data)
 	{
@@ -215,6 +215,7 @@ private:
 	void (*cb_CutDeviceGroup)(Fl_Widget*, void*);
 	void (*cb_CopyDeviceGroup)(Fl_Widget*, void*);
 	void (*cb_PasteDeviceGroup)(Fl_Widget*, void*);
+	void (*cb_PasteAsSubPatch)(Fl_Widget*, void*);
 	void (*cb_MergePatch)(Fl_Widget*, void*);
 	void (*cb_AboutPatch)(Fl_Widget*, void*);
 	void (*cb_GroupDevices)(Fl_Widget*, void*);

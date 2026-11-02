@@ -54,6 +54,7 @@ cb_Rename(NULL),
 cb_CutDeviceGroup(NULL),
 cb_CopyDeviceGroup(NULL),
 cb_PasteDeviceGroup(NULL),
+cb_PasteAsSubPatch(NULL),
 cb_MergePatch(NULL),
 cb_AboutPatch(NULL),
 cb_GroupDevices(NULL),
@@ -359,17 +360,19 @@ void Fl_Canvas::PopupEditMenu (Fl_Group *group) {
      Fl_Menu_Item *cut=(Fl_Menu_Item*)&(m_Menu->menu()[1]);
      Fl_Menu_Item *copy=(Fl_Menu_Item*)&(m_Menu->menu()[2]);
      Fl_Menu_Item *paste=(Fl_Menu_Item*)&(m_Menu->menu()[3]);
-     Fl_Menu_Item *merge=(Fl_Menu_Item*)&(m_Menu->menu()[4]);
-     Fl_Menu_Item *deleteitems=(Fl_Menu_Item*)&(m_Menu->menu()[5]);
+     Fl_Menu_Item *pasteGrouped=(Fl_Menu_Item*)&(m_Menu->menu()[4]);
+     Fl_Menu_Item *merge=(Fl_Menu_Item*)&(m_Menu->menu()[5]);
+     Fl_Menu_Item *deleteitems=(Fl_Menu_Item*)&(m_Menu->menu()[6]);
      if ((cb_CopyDeviceGroup) && (m_HaveSelection)) copy->activate(); else copy->deactivate();
      if ((cb_CutDeviceGroup) && (m_HaveSelection)) cut->activate(); else cut->deactivate();
      if ((cb_PasteDeviceGroup) && (m_CanPaste)) paste->activate(); else paste->deactivate();
+     if ((cb_PasteAsSubPatch) && (m_CanPaste)) pasteGrouped->activate(); else pasteGrouped->deactivate();
      if (m_HaveSelection) deleteitems->activate(); else deleteitems->deactivate();
-     Fl_Menu_Item *groupItem=(Fl_Menu_Item*)&(m_Menu->menu()[6]);
-     Fl_Menu_Item *ungroupItem=(Fl_Menu_Item*)&(m_Menu->menu()[7]);
-     Fl_Menu_Item *backItem=(Fl_Menu_Item*)&(m_Menu->menu()[8]);
-     bool box = false;
-     for (unsigned int i=0; i<m_Selection.m_DeviceIds.size(); i++) box = box || IsBox(m_Selection.m_DeviceIds[i]);
+     Fl_Menu_Item *groupItem=(Fl_Menu_Item*)&(m_Menu->menu()[7]);
+     Fl_Menu_Item *ungroupItem=(Fl_Menu_Item*)&(m_Menu->menu()[8]);
+     Fl_Menu_Item *backItem=(Fl_Menu_Item*)&(m_Menu->menu()[9]);
+     // Ungroup takes one subpatch: with more selected, which is meant is not clear.
+     const bool box = m_Selection.m_DeviceIds.size() == 1 && IsBox(m_Selection.m_DeviceIds[0]);
      if (cb_GroupDevices && m_HaveSelection) groupItem->activate(); else groupItem->deactivate();
      if (cb_UngroupDevices && box) ungroupItem->activate(); else ungroupItem->deactivate();
      if (m_Page != -1) backItem->activate(); else backItem->deactivate();
@@ -389,7 +392,8 @@ void Fl_Canvas::AddPluginName (const string &s, int ID) {
         m_Menu->textsize (10);
         m_Menu->add ("Edit/Cut Currently Selected Devices", 0, (Fl_Callback*)cb_CutDeviceGroup, user_data());
         m_Menu->add ("Edit/Copy Currently Selected Devices", 0, (Fl_Callback*)cb_CopyDeviceGroup, user_data());
-        m_Menu->add ("Edit/Paste Previously Copied Devices", 0, (Fl_Callback*)cb_PasteDeviceGroup, user_data(), FL_MENU_DIVIDER);
+        m_Menu->add ("Edit/Paste Previously Copied Devices", 0, (Fl_Callback*)cb_PasteDeviceGroup, user_data());
+        m_Menu->add ("Edit/Paste Them as a SubPatch", 0, (Fl_Callback*)cb_PasteAsSubPatch, user_data(), FL_MENU_DIVIDER);
         m_Menu->add ("Edit/Merge Existing Patch", 0, (Fl_Callback*)cb_MergePatch, user_data(), FL_MENU_DIVIDER);
         m_Menu->add ("Edit/Delete Currently Selected Devices", 0, (Fl_Callback*)cb_DeleteDeviceGroup, this, FL_MENU_DIVIDER);
         m_Menu->add ("Edit/Group Selected Devices into a SubPatch", 0, (Fl_Callback*)cb_GroupDevices, user_data());
@@ -417,48 +421,10 @@ void Fl_Canvas::AddAboutPatch () {
      m_Menu->add ("About Patch", 0, (Fl_Callback*)cb_AboutPatch, user_data());
 }
 
-void Fl_Canvas::StreamSelectionWiresIn(istream &s, std::map<int,int> NewDeviceIds, bool merge, bool paste)
+void Fl_Canvas::StreamSelectionWiresIn(istream &s, std::map<int,int> NewDeviceIds, bool merge)
 {
 	MapNewDeviceIds = NewDeviceIds;
-	StreamWiresIn(s, merge, paste);
-}
-
-void Fl_Canvas::StreamSelectionWiresOut(ostream &s)
-{
-	int total_wires = 0, curpos=0;
-
-	curpos = s.tellp();
-
-	s<<-1<<endl;
-
-	if (m_WireVec.size()>0)
-		for(vector<CanvasWire>::iterator i=m_WireVec.begin();
-			i!=m_WireVec.end(); i++)
-		{
-			std::vector<int>::iterator output = std::find( m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), i->OutputID );
-			std::vector<int>::iterator input = std::find( m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), i->InputID );
-
-			if ((input != m_Selection.m_DeviceIds.end()) && (output != m_Selection.m_DeviceIds.end()))
-			{
-				s<<i->OutputID<<" ";
-				s<<0<<" ";
-				s<<i->OutputPort<<" ";
-				s<<i->OutputTerminal<<" ";
-				s<<i->InputID<<" ";
-				s<<0<<" ";
-				s<<i->InputPort<<" ";
-					s<<i->InputTerminal<<endl;
-
-				total_wires += 1;
-			}
-		}
-
-	if (total_wires >= 1)
-	{
-		s.seekp(curpos, ios::beg);
-		s<<total_wires<<endl;
-		s.seekp(0, ios::end);
-	}
+	StreamWiresIn(s, merge);
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1867,22 +1833,19 @@ void Fl_Canvas::ToBot(Fl_DeviceGUI *o)
 
 /////////////////////////////////////////////////////////////////////////
 
-void Fl_Canvas::StreamWiresIn(istream &s, bool merge, bool paste)
+void Fl_Canvas::StreamWiresIn(istream &s, bool merge)
 {
 	int NumWires;
 
 	s>>NumWires;
 
 	// my bad, didn't version this stream - remove one day...
-	if (paste || NumWires==-1)
+	if (NumWires==-1)
 	{
 		int version;
 
-		if (!paste)
-		{
-			s>>version;
-			s>>NumWires;
-		}
+		s>>version;
+		s>>NumWires;
 
 		for(int n=0; n<NumWires; n++)
 		{
@@ -1898,7 +1861,7 @@ void Fl_Canvas::StreamWiresIn(istream &s, bool merge, bool paste)
 			s>>NewWire.InputPort;
 			s>>NewWire.InputTerminal;
 
-			if (paste || merge)
+			if (merge)
 			{
 				std::map<int, int>::iterator inputID = MapNewDeviceIds.find( NewWire.InputID);
 				std::map<int, int>::iterator outputID = MapNewDeviceIds.find(NewWire.OutputID);
@@ -1948,7 +1911,7 @@ void Fl_Canvas::StreamWiresIn(istream &s, bool merge, bool paste)
 			s>>dummy;
 			s>>NewWire.InputPort;
 
-			if (paste || merge)
+			if (merge)
 			{
 				std::map<int, int>::iterator inputID = MapNewDeviceIds.find( NewWire.InputID);
 				std::map<int, int>::iterator outputID = MapNewDeviceIds.find(NewWire.OutputID);
@@ -2013,7 +1976,7 @@ inline void Fl_Canvas::cb_AddDeviceFromMenu_i (Fl_Widget* widget, void* data) {
 
 istream &operator>>(istream &s, Fl_Canvas &o)
 {
-	o.StreamWiresIn(s, false, false);
+	o.StreamWiresIn(s, false);
 	return s;
 }
 
