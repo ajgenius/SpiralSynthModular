@@ -387,7 +387,7 @@ AM_CONDITIONAL([BUILD_LADSPA], [test "$build_ladspa" = "y"])
 
 AC_ARG_ENABLE(
     bundled-ladspa,
-    [  --disable-bundled-ladspa Do not build the vendored swh-plugins],
+    [  --disable-bundled-ladspa Do not build the vendored LADSPA plugins],
     [bundle_ladspa="$enableval"],
     [bundle_ladspa="yes"]
 )
@@ -593,6 +593,7 @@ Plugins/Devices/Makefile
 third-party/swh-plugins/Makefile
 Plugins/Panels/Makefile
 tools/embed-manifest/Makefile
+third-party/cmt/Makefile
 Plugins/Devices/AmpPlugin/Makefile
 Plugins/Devices/AnotherFilterPlugin/Makefile
 Plugins/Devices/BeatMatchPlugin/Makefile
@@ -670,6 +671,12 @@ if test "$bundle_ladspa" = "yes"; then
    else
       printf 'Enabled - 95 of 99, no FFTW for the FFT based ones\n'
    fi
+else
+   printf 'Disabled - %s\n' "${bundled_ladspa_message:-manually disabled}"
+fi
+printf '%35s - ' "Bundled CMT (LADSPA set)"
+if test "$bundle_ladspa" = "yes"; then
+   printf 'Enabled - Freeverb and the rest of CMT 1.18\n'
 else
    printf 'Disabled - %s\n' "${bundled_ladspa_message:-manually disabled}"
 fi
