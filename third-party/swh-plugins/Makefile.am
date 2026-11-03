@@ -26,7 +26,7 @@ ALL_PLUGIN_XML = \
 	harmonic_gen_1220.xml hermes_filter_1200.xml highpass_iir_1890.xml \
 	hilbert_1440.xml imp_1199.xml impulse_1885.xml inv_1429.xml \
 	karaoke_1409.xml latency_1914.xml lcr_delay_1436.xml \
-	lowpass_iir_1891.xml ls_filter_1908.xml matrix_ms_st_1421.xml \
+	lookahead_limiter_1435.xml lowpass_iir_1891.xml ls_filter_1908.xml matrix_ms_st_1421.xml \
 	matrix_spatialiser_1422.xml matrix_st_ms_1420.xml mbeq_1197.xml \
 	mod_delay_1419.xml multivoice_chorus_1201.xml notch_iir_1894.xml \
 	phasers_1217.xml pitch_scale_1193.xml pitch_scale_1194.xml \
@@ -71,7 +71,7 @@ PLUGIN_IDS = \
 	giant_flange_1437 gong_1424 gong_beater_1439 gsm_1215 gverb_1216 \
 	hard_limiter_1413 harmonic_gen_1220 hermes_filter_1200 \
 	highpass_iir_1890 hilbert_1440 impulse_1885 inv_1429 karaoke_1409 \
-	latency_1914 lcr_delay_1436 lowpass_iir_1891 ls_filter_1908 \
+	latency_1914 lcr_delay_1436 lookahead_limiter_1435 lowpass_iir_1891 ls_filter_1908 \
 	matrix_ms_st_1421 matrix_spatialiser_1422 matrix_st_ms_1420 \
 	mod_delay_1419 multivoice_chorus_1201 notch_iir_1894 phasers_1217 \
 	plate_1423 pointer_cast_1910 rate_shifter_1417 retro_flange_1208 \
@@ -98,7 +98,7 @@ ladspa_LTLIBRARIES = \
 	gsm_1215.la gverb_1216.la hard_limiter_1413.la harmonic_gen_1220.la \
 	hermes_filter_1200.la highpass_iir_1890.la hilbert_1440.la \
 	impulse_1885.la inv_1429.la karaoke_1409.la latency_1914.la \
-	lcr_delay_1436.la lowpass_iir_1891.la ls_filter_1908.la \
+	lcr_delay_1436.la lookahead_limiter_1435.la lowpass_iir_1891.la ls_filter_1908.la \
 	matrix_ms_st_1421.la matrix_spatialiser_1422.la matrix_st_ms_1420.la \
 	mod_delay_1419.la multivoice_chorus_1201.la notch_iir_1894.la \
 	phasers_1217.la plate_1423.la pointer_cast_1910.la \
@@ -222,6 +222,8 @@ latency_1914_la_LDFLAGS = -module $(MODULE_LDFLAGS)
 latency_1914_la_LIBADD = libswhsupport.la -lm
 lcr_delay_1436_la_LDFLAGS = -module $(MODULE_LDFLAGS)
 lcr_delay_1436_la_LIBADD = libswhsupport.la -lm
+lookahead_limiter_1435_la_LDFLAGS = -module $(MODULE_LDFLAGS)
+lookahead_limiter_1435_la_LIBADD = libswhsupport.la -lm
 lowpass_iir_1891_la_LDFLAGS = -module $(MODULE_LDFLAGS)
 lowpass_iir_1891_la_LIBADD = libswhsupport.la -lm
 ls_filter_1908_la_LDFLAGS = -module $(MODULE_LDFLAGS)
@@ -314,7 +316,7 @@ if BUNDLE_LADSPA_FFTW
 AM_CPPFLAGS += -DFFTW3 $(FFTW3F_CFLAGS)
 # Kept out of libswhsupport: a libtool convenience library hands every one of
 # its objects to every module that links it, so pitchscale's FFTW references
-# would land in all 98 while only four of them link FFTW. On macOS libtool
+# would land in all 99 while only four of them link FFTW. On macOS libtool
 # links modules with -undefined dynamic_lookup, so that resolves at build time
 # and fails at load time instead.
 noinst_LTLIBRARIES += libswhfftw.la

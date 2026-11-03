@@ -33,9 +33,19 @@ The C is not stored in the tree. Upstream generates it from the `*.xml` plugin
 descriptions with `makestub.pl`, and so do we, at build time — Perl is the only
 build-time tool this needs.
 
+## One restored from upstream's history
+
+`lookahead_limiter_1435.xml` is upstream's last version of the Lookahead
+limiter, from swh/ladspa 485075eaf431. It was added on 2003-01-09, dropped from
+upstream's build on 2004-07-17 as "broken beyond repair" when
+`fast_lookahead_limiter_1913` replaced it, and its source removed on 2017-11-03
+(swh/ladspa #56). Patches saved while it shipped still ask for ID 1435, and
+lose their sound without it, so it is built here unchanged. New patches should
+use the fast lookahead limiter.
+
 ## What is not built
 
-93 of the 98 build with no dependency beyond libm. The rest are skipped rather
+94 of the 99 build with no dependency beyond libm. The rest are skipped rather
 than pulling libraries into a bundle for four plugins:
 
 | plugin | needs |
@@ -47,6 +57,6 @@ than pulling libraries into a bundle for four plugins:
 
 Configure says so rather than leaving it to be discovered: a build without FFTW
 warns, names the four and the package that would supply it, and the summary line
-reads `94 of 98` instead of `all 98`. They can also arrive later from a
+reads `95 of 99` instead of `all 99`. They can also arrive later from a
 distribution's own swh-plugins package, because the host puts its own plugin
 directory in front of the system ones rather than in place of them.

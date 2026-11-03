@@ -457,10 +457,10 @@ if test "$bundle_ladspa" = "yes"; then
       AC_MSG_WARN([Single-precision FFTW was not found, so four of the bundled
 swh-plugins will not be built: imp_1199 (Impulse convolver), mbeq_1197
 (Multiband EQ), pitch_scale_1193 (Pitch Scaler) and pitch_scale_1194 (Higher
-Quality Pitch Scaler). The other 94 are unaffected, and no example patch asks
+Quality Pitch Scaler). The other 95 are unaffected, and no example patch asks
 for any of the four.
 
-Install FFTW's development package and configure again to get all 98:
+Install FFTW's development package and configure again to get all 99:
 libfftw3-dev on Debian and Ubuntu, fftw-devel on Fedora, fftw-dev on Alpine,
 fftw on Homebrew and MacPorts.
 
@@ -786,9 +786,9 @@ fi
 printf '%35s - ' "Bundled swh-plugins (LADSPA set)"
 if test "$bundle_ladspa" = "yes"; then
    if test "$have_fftw3f" = "yes"; then
-      printf 'Enabled - all 98, FFTW found\n'
+      printf 'Enabled - all 99, FFTW found\n'
    else
-      printf 'Enabled - 94 of 98, no FFTW for the FFT based ones\n'
+      printf 'Enabled - 95 of 99, no FFTW for the FFT based ones\n'
    fi
 else
    printf 'Disabled - %s\n' "${bundled_ladspa_message:-manually disabled}"
