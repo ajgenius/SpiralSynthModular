@@ -135,7 +135,8 @@ void MixerPlugin::Execute () {
 void MixerPlugin::ExecuteCommands() {
      if ((int)AsUnsigned(m_Channels) != m_NumChannels) {
          while (m_NumChannels < (int)AsUnsigned(m_Channels) && m_NumChannels < MAX_CHANNELS) AddChannel ();
-         while (m_NumChannels > (int)AsUnsigned(m_Channels) && m_NumChannels > 2) RemoveChannel ();
+         // Fewer channels stop at the last one wired, so no wire is dropped.
+         while (m_NumChannels > (int)AsUnsigned(m_Channels) && m_NumChannels > 2 && !InputExists (m_NumChannels-1)) RemoveChannel ();
          AsUnsigned(m_Channels) = m_NumChannels;
      }
 }
