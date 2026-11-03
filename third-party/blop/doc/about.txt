@@ -1,0 +1,93 @@
+                         ----ooooOOOOoooo----
+
+The purpose of these plugins is to provide band-limited (alias-free) sawtooth,
+square, variable pulse and variable-slope triangle oscillators for use in
+LADSPA-aware audio applications. The harmonic content is to match that of the
+ideal waveform as closely as possible over the required range of pitches
+(between 0 and half of the sampling rate).
+
+
+Aliasing
+
+Aliasing happens when you sample a signal containing frequencies that are above
+half of the sample rate, aka the Nyquist rate. The result is that the frequency
+appears as a different frequency (an alias frequency) in the result.
+
+
+Bandlimiting
+
+The obvious way to generate a waveform is to literally 'draw' its shape as a
+function of time.
+
+A simple example is generating a sine wave: for each interval of time, t, the
+amplitude, a = sin(t). This will present no problems, as a sine wave only
+contains one harmonic, its fundamental. Any pitch up to Nyquist will still
+sound like a sinewave, as no higher harmonics are present.
+
+However, consider generating a new waveform with an additional harmonic at
+double the fundamental (a = sin(t) + 0.5*sin(2t)) The presence of this
+additional harmonic will limit the pitch the wave can be played at to 1/4 of
+the sampling rate - any pitch above this, and the higher harmonic will alias.
+
+A perfect sawtooth wave, drawn using a simple slope function, will contain all
+harmonics and therefore the wave cannot be played at any pitch without some
+harmonics aliasing. At low frequencies, the noise will be fairly quiet, but
+pitch it up and it will become more easily perceptible, as more of the
+prominent harmonics pass Nyquist and alias.
+
+
+Ideal Solutions
+
+Instead of using drawing the waveshape directly, a wave can be approximated
+using a finite number of terms from a Fourier Series:
+
+a = Sum[h = 1, max_h] (1/h) sin(ht)
+
+will give a sawtooth wave, with max_h harmonics.
+
+To generate the waveforms in realtime using this method would require a fairly
+powerful computer, as the number of terms (sine calculations) required gets
+large as pitch decreases. At 55Hz (a low A), this would require over 2 billion
+such calculations per second for a sample rate of 48kHz.
+
+An alternative is to pre-calculate the waveforms for each maximum harmonic and
+store the results in a series of wavetables. For a given pitch, determine which
+table should be used based on the maximum harmonic, and retrieve samples from
+this table. In this case, storage space becomes an issue - a full waveform
+period will require sample rate * sizeof(float) bytes, and we'll need sample
+rate / 2 tables for each maximum harmonic.
+
+
+Compromise
+
+The first ideal solution cannot realistically be implemented without big
+compromises on the harmonic content at lower pitches - even if this were done,
+the cpu requirements would still be quite prohibitive.
+
+The second approach can be implemented by reducing the number of tables - a
+good compromise is to generate a table for each MIDI note, 0 to 127.
+
+
+Refinement
+
+
+
+
+----
+
+Gibbs Phenomenon
+
+
+
+
+Playback of single wavetable at frequency, independent of sample count.
+
+Fudge factors, interpolation.
+
+----
+Indexing of multiple tables
+
+Lookup, cross fading.
+
+----
+Wrap up

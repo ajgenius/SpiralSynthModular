@@ -1,0 +1,367 @@
+Plugins
+--------------------------------------------------------------------------------
+Bandlimited Sawtooth Oscillator
+
+    1641  sawtooth_fa_oa          Frequency (Audio)
+                                  Output (Audio)
+
+    1642  sawtooth_fc_oa          Frequency (Control)
+                                  Output (Audio)
+
+--------------------------------------------------------------------------------
+Bandlimited Square Oscillator
+
+    1643  square_fa_oa            Frequency (Audio)
+                                  Output (Audio)
+
+    1644  square_fc_oa            Frequency (Control)
+                                  Output (Audio)
+
+--------------------------------------------------------------------------------
+Bandlimited Variable Width Pulse Oscillator
+
+    1645  pulse_fapa_oa           Frequency (Audio)
+                                  Pulsewidth (Audio)
+                                  Output (Audio)
+
+    1646  pulse_fapc_oa           Frequency (Audio)
+                                  Pulsewidth (Control)
+                                  Output (Audio)
+
+    1647  pulse_fcpa_oa           Frequency (Control)
+                                  Pulsewidth (Audio)
+                                  Output (Audio)
+
+    1648  pulse_fcpc_oa           Frequency (Control)
+                                  Pulsewidth (Control)
+                                  Output (Audio)
+
+--------------------------------------------------------------------------------
+Bandlimited Variable Slope Triangle Oscillator
+
+    1649  triangle_fasa_oa        Frequency (Audio)
+                                  Slope (Audio)
+                                  Output (Audio)
+
+    1650  triangle_fasc_oa        Frequency (Audio)
+                                  Slope (Control)
+                                  Output (Audio)
+
+    1651  triangle_fcsa_oa        Frequency (Control)
+                                  Slope (Audio)
+                                  Output (Audio)
+
+    1652  triangle_fcsc_oa        Frequency (Control)
+                                  Slope (Control)
+                                  Output (Audio)
+
+--------------------------------------------------------------------------------
+ADSR Envelope Generator
+
+    1653  adsr                    Signal (Audio)
+                                  Trigger (Control)
+                                  Attack (Control)
+                                  Decay (Control)
+                                  Sustain (Control)
+                                  Release (Control)
+                                  Output (Audio)
+
+--------------------------------------------------------------------------------
+Mono Amplifier
+
+    1654  amp_gaia_oa             Gain (Audio)
+                                  Input (Audio)
+                                  Output (Audio)
+
+    1655  amp_gcia_oa             Gain (Control)
+                                  Input (Audio)
+                                  Output (Audio)
+
+--------------------------------------------------------------------------------
+Frequency Modulator
+
+    1656  fmod_fama_oa            Frequency (Audio)
+                                  Modulation (Audio)
+                                  Output (Audio)
+
+    1657  fmod_famc_oa            Frequency (Audio)
+                                  Modulation (Control)
+                                  Output (Audio)
+
+    1658  fmod_fcma_oa            Frequency (Control)
+                                  Modulation (Audio)
+                                  Output (Audio)
+
+    1659  fmod_fcmc_oc            Frequency (Control)
+                                  Modulation (Control)
+                                  Output (Control)
+
+--------------------------------------------------------------------------------
+Control to Audio Interpolator
+
+    1660  interpolator            Input (Control)
+                                  Output (Audio)
+
+--------------------------------------------------------------------------------
+Random Wave Generator
+
+    1661  random_fasa_oa          Frequency (Audio)
+                                  Smoothness (Audio)
+                                  Output (Audio)
+
+    1662  random_fasc_oa          Frequency (Audio)
+                                  Smoothness (Control)
+                                  Output (Audio)
+
+    1663  random_fcsa_oa          Frequency (Control)
+                                  Smoothness (Audio)
+                                  Output (Audio)
+
+    1664  random_fcsc_oa          Frequency (Control)
+                                  Smoothness (Control)
+                                  Output (Audio)
+
+--------------------------------------------------------------------------------
+Signal Sum
+
+    1665  sum_iaia_oa             Input1 (Audio)
+                                  Input2 (Audio)
+                                  Output (Audio)
+
+    1666  sum_iaic_oa             Input1 (Audio)
+                                  Input2 (Control)
+                                  Output (Audio)
+
+    1667  sum_icic_oc             Input1 (Control)
+                                  Input2 (Control)
+                                  Output (Control)
+
+--------------------------------------------------------------------------------
+Signal Product
+
+    1668  product_iaia_oa         Input1 (Audio)
+                                  Input2 (Audio)
+                                  Output (Audio)
+
+    1669  product_iaic_oa         Input1 (Audio)
+                                  Input2 (Control)
+                                  Output (Audio)
+
+    1670  product_icic_oc         Input1 (Control)
+                                  Input2 (Control)
+                                  Output (Control)
+
+--------------------------------------------------------------------------------
+4 Pole Low Pass Filter with Resonance
+
+    1671  lp4pole_faraia_oa       Cutoff Frequency (Audio)
+                                  Resonance (Audio)
+                                  Input (Audio)
+                                  Output (Audio)
+
+    1672  lp4pole_fcrcia_oa       Cutoff Frequency (Control)
+                                  Resonance (Control)
+                                  Input (Audio)
+                                  Output (Audio)
+
+--------------------------------------------------------------------------------
+Signal Branch
+
+    1673  branch_ia_oaoa          Input (Audio)
+                                  Output1 (Audio)
+                                  Output2 (Audio)
+
+    1674  branch_ic_ococ          Input (Control)
+                                  Output1 (Control)
+                                  Output2 (Control)
+
+--------------------------------------------------------------------------------
+Analogue Style 64 Step Sequencer
+
+    1675  sequencer64             Gate (Audio)
+                                  Step Trigger (Audio)
+                                  Loop Steps (Control, Integer)
+                                  Reset to Value on Gate Close? (Control, Integer)
+                                  Gate Closed Value (Audio)
+                                  Value Step [0,63] (Control)
+                                  Output (Audio)
+
+--------------------------------------------------------------------------------
+Analogue Style 32 Step Sequencer
+
+    1676  sequencer32             Gate (Audio)
+                                  Step Trigger (Audio)
+                                  Loop Steps (Control, Integer)
+                                  Reset to Value on Gate Close? (Control, Integer)
+                                  Gate Closed Value (Audio)
+                                  Value Step [0,31] (Control)
+                                  Output (Audio)
+
+--------------------------------------------------------------------------------
+Analogue Style 16 Step Sequencer
+
+    1677  sequencer16             Gate (Audio)
+                                  Step Trigger (Audio)
+                                  Loop Steps (Control, Integer)
+                                  Reset to Value on Gate Close? (Control, Integer)
+                                  Gate Closed Value (Audio)
+                                  Value Step [0,15] (Control)
+                                  Output (Audio)
+
+--------------------------------------------------------------------------------
+Clock Oscillator with Gate
+
+    1678  sync_square_farc_oa     Frequency (Audio)
+                                  Gate (Audio)
+                                  Output (Audio)
+
+    1679  sync_square_fcrc_oa     Frequency (Control)
+                                  Gate (Audio)
+                                  Output (Audio)
+
+--------------------------------------------------------------------------------
+ADSR Envelope with Gate and Trigger
+
+    1680  adsr_g+t                Gate (Audio)
+                                  Trigger (Audio)
+                                  Attack (Control)
+                                  Decay (Control)
+                                  Sustain (Control)
+                                  Release (Control)
+                                  Output (Audio)
+
+--------------------------------------------------------------------------------
+DAHDSR Envelope with Gate and Retrigger
+
+    2021  dahdsr_g+t_audio        Gate (Audio)
+                                  Trigger (Audio)
+                                  Delay (Audio)
+                                  Attack (Audio)
+                                  Hold (Audio)
+                                  Decay (Audio)
+                                  Sustain (Audio)
+                                  Release (Audio)
+
+    2022  dahdsr_g+t_control      Gate (Audio)
+                                  Trigger (Audio)
+                                  Delay (Control)
+                                  Attack (Control)
+                                  Hold (Control)
+                                  Decay (Control)
+                                  Sustain (Control)
+                                  Release (Control)
+
+    2038  dahdsr_cg+t_control     Gate (Control)
+                                  Trigger (Control)
+                                  Delay (Control)
+                                  Attack (Control)
+                                  Hold (Control)
+                                  Decay (Control)
+                                  Sustain (Control)
+                                  Release (Control)
+
+--------------------------------------------------------------------------------
+Clock Pulse Oscillator with Gate
+
+    2023  sync_pulse_farc_oa      Frequency (Audio)
+                                  Pulsewidth (Audio)
+                                  Gate (Audio)
+                                  Output (Audio)
+
+    2024  sync_pulse_fcrc_oa      Frequency (Control)
+                                  Pulsewidth (Control)
+                                  Gate (Audio)
+                                  Output (Audio)
+
+--------------------------------------------------------------------------------
+Signal Tracker
+
+    2025  tracker_gaaadaia_oa     Gate (Audio)
+                                  Attack Rate when Gate High (Audio)
+                                  Decay Rate when Gate High (Audio)
+                                  Attack Rate when Gate Low (Audio)
+                                  Decay Rate when Gate Low (Audio)
+                                  Input (Audio)
+                                  Output (Audio)
+
+    2025  tracker_gaacdcia_oa     Gate (Audio)
+                                  Attack Rate when Gate High (Control)
+                                  Decay Rate when Gate High (Control)
+                                  Attack Rate when Gate Low (Control)
+                                  Decay Rate when Gate Low (Control)
+                                  Input (Audio)
+                                  Output (Audio)
+
+--------------------------------------------------------------------------------
+Quantiser
+
+    2027  quantiser20             Range Min (Control)
+                                  Range Max (Control)
+                                  Match Range (Control)
+                                  Mode (Integer, Control)
+                                  Count (Integer, Control)
+                                  Steps [0-19] (Control)
+                                  Input (Audio)
+                                  Output (Audio)
+                                  Output Changed (Audio)
+
+    2028  quantiser50             Range Min (Control)
+                                  Range Max (Control)
+                                  Match Range (Control)
+                                  Mode (Integer, Control)
+                                  Count (Integer, Control)
+                                  Steps [0-49] (Control)
+                                  Input (Audio)
+                                  Output (Audio)
+                                  Output Changed (Audio)
+
+    2029  quantiser100            Range Min (Control)
+                                  Range Max (Control)
+                                  Match Range (Control)
+                                  Mode (Integer, Control)
+                                  Count (Integer, Control)
+                                  Steps [0-99] (Control)
+                                  Input (Audio)
+                                  Output (Audio)
+                                  Output Changed (Audio)
+
+--------------------------------------------------------------------------------
+Signal Difference
+
+    2030  difference_iama_oa      Input (Audio)
+                                  Minus (Audio)
+                                  Output (Audio)
+
+    2031  difference_iamc_oa      Input (Audio)
+                                  Minus (Control)
+                                  Output (Audio)
+
+    2032  difference_icma_oa      Input (Control)
+                                  Minus (Audio)
+                                  Output (Audio)
+
+    2033  difference_icmc_oc      Input (Control)
+                                  Minus (Control)
+                                  Output (Control)
+
+--------------------------------------------------------------------------------
+Signal Ratio
+
+    2034  ratio_nada_oa           Numerator (Audio)
+                                  Denominator (Audio)
+                                  Output (Audio)
+
+    2035  ratio_nadc_oa           Numerator (Audio)
+                                  Denominator (Control)
+                                  Output (Audio)
+
+    2036  ratio_ncda_oa           Numerator (Control)
+                                  Denominator (Audio)
+                                  Output (Audio)
+
+    2037  ratio_ncdc_oc           Numerator (Control)
+                                  Denominator (Control)
+                                  Output (Control)
+
+--------------------------------------------------------------------------------
+MAX=2060

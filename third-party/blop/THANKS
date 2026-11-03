@@ -1,0 +1,11 @@
+Erik de Castro Lopo for his nice paper on float to int casting and
+optimisation thereof: <http://www.mega-nerd.com/FPcast>
+
+Steve Harris <steve[at]plugin.org.uk>, whose plugin distribution contains
+a useful perl script that generates C code from an xml file. This was
+used to generate the plugin code, which was then modified by me to
+allow for the multiple port variants. I also nicked (and modified a bit)
+his cube_interp code...
+
+Joe Wright <joe[at]nyrsound.com>, who wrote a nice intro to bandlimiting
+waveforms using wavetables: <http://www.musicdsp.org/files/bandlimited.pdf>

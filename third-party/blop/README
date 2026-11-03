@@ -1,0 +1,59 @@
+This software is released under the GNU General Public License. See the file
+named COPYING for details.
+
+Further information can be found in the doc directory
+
+                         ----ooooOOOOoooo----
+
+Generic installation instructions can be found in the file named INSTALL.
+
+Briefly, it's just:
+
+$ ./configure
+$ make
+
+and
+
+$ make install
+
+to install the plugins.
+
+It is assumed that the LADSPA SDK is installed under /usr - you can change
+this by supplying the path to configure using --with-ladspa-prefix.
+
+If you want the plugins to be installed somewhere in particular, use the
+--with-ladspa-plugin-dir option (make sure that the path supplied is in your
+$LADSPA_PATH!)
+
+If you want smaller wavedata, use the --enable-small-wavedata option. This
+trades off accuracy against size. It still sounds good though...
+
+Finally, if you already have plugins with the same name as any of the blop
+plugins, you can use --program-prefix=blop_ (or something else) to ensure
+the existing ones are not overwritten. Alternatively, just put them in a new
+directory....
+
+If you have installed liblrdf, there is an rdf metadata file: doc/blop.rdf - copy
+this to wherever you keep your rdf's
+
+
+                         ----ooooOOOOoooo----
+Building from CVS:
+
+Versions:
+autoconf 2.58
+automake 1.5
+gettext 0.12.1
+
+After initial checkout, you need to run gettextize to set up symlinks to installed
+gettext bits and pieces:
+
+$ gettextize -f --no-changelog
+
+You'll then need to prepare the build cruft:
+
+$ aclocal -I m4
+$ autoheader
+$ autoconf
+$ automake -a
+

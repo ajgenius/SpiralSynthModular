@@ -1,0 +1,31 @@
+Jan-29-2003: Now with RDF metadata
+Jan-25-2003: Improved performance of bandlimited oscillators
+              (between 16% and 89% faster)
+             Low pass filter now comes in two variants - a fast
+              roughly tuned one, and a new slower accurately 
+              tuned variant.
+Jan-09-2003: New sequencer, sync square and gate+trigger ADSR
+             Major fixes to oscillator code (removed branches)
+              and properly tuned low pass filter.
+Jul-14-2002: New low-pass resonant filter plugin
+Jul-10-2002: Now with configure and autostuff
+Jul-08-2002: A couple of new plugins (sum, which was lmod, and
+              product).
+Jul-06-2002: Finalised GNU build system - confirmed as functional
+Jun-19-2002: A few more new plugins: random wave, adsr and
+              control-to-audio interpolator
+Jun-17-2002: New plugins added: amp, fmod and lmod
+             Oh, and the first page on the website is up...
+              http://blop.sourceforge.net
+Jun-14-2002: Fixed extreme frequency bug that was causing
+              phase drift. Now ignores frequencies exceeding
+              [-Nyquist,+Nyquist] - no phase advance.
+Jun-09-2002: Fixed Gibbs compensation - now works properly.
+Jun-01-2002: Bugfix: Parabola generation code was using
+              the wrong scale factor, causing triangle
+              plugin to have excessive amplitude. Now matches
+              other plugins.
+May-31-2002: Some optimisations mean they now run faster
+             Now really do use cubic spline interpolation
+              (previously 5th order)
+May-15-2002: Now does cubic spline interpolation.

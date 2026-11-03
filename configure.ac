@@ -594,6 +594,7 @@ third-party/swh-plugins/Makefile
 Plugins/Panels/Makefile
 tools/embed-manifest/Makefile
 third-party/cmt/Makefile
+third-party/blop/Makefile
 Plugins/Devices/AmpPlugin/Makefile
 Plugins/Devices/AnotherFilterPlugin/Makefile
 Plugins/Devices/BeatMatchPlugin/Makefile
@@ -677,6 +678,12 @@ fi
 printf '%35s - ' "Bundled CMT (LADSPA set)"
 if test "$bundle_ladspa" = "yes"; then
    printf 'Enabled - Freeverb and the rest of CMT 1.18\n'
+else
+   printf 'Disabled - %s\n' "${bundled_ladspa_message:-manually disabled}"
+fi
+printf '%35s - ' "Bundled BLOP (LADSPA set)"
+if test "$bundle_ladspa" = "yes"; then
+   printf 'Enabled - 23 of BLOP 0.2.8, not the quantisers\n'
 else
    printf 'Disabled - %s\n' "${bundled_ladspa_message:-manually disabled}"
 fi

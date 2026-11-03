@@ -1,0 +1,889 @@
+2004-06-15 :    Release 0.2.8
+
+2004-06-15 :    src/Makefile.am:
+                    Removed loopotron for now.
+                src/quantiser.so.c,
+                src/sequencer.so.c:
+                    Use macros for 'f' math functions (sinf and friends).
+2004-06-13 :    Makefile.am,
+                configure.in:
+                    Now using installed gettext.
+                ABOUT-NLS
+                config.rpath,
+                config.sub,
+                m4/codeset.m4,
+                m4/gettext.m4,
+                m4/glibc21.m4,
+                m4/iconv.m4,
+                m4/intdiv0.m4,
+                m4/inttypes-pri.m4,
+                m4/inttypes.m4,
+                m4/inttypes_h.m4,
+                m4/isc-posix.m4,
+                m4/lcmessage.m4,
+                m4/lib-ld.m4,
+                m4/lib-link.m4,
+                m4/lib-prefix.m4,
+                m4/nls.m4,
+                m4/po.m4,
+                m4/progtest.m4,
+                m4/stdint_h.m4,
+                m4/uintmax_t.m4,
+                m4/ulonglong.m4,
+                po/Makefile.in.in
+                po/Makevars.template
+                po/Rules-quot
+                po/boldquot.sed
+                po/en@boldquot.header
+                po/en@quot.header
+                po/insert-header.sin
+                po/quot.sed
+                po/remove-potcdate.sin:
+                    All of these are now symlinks to installed gettext,
+                    and have been removed from the repository.
+2004-05-02 :    src/include/math_func.h:
+                    Moved #include <math.h> below float_cast.h
+                    float_cast.h may define ISO C99, which needs
+                    to be defined prior to math.h so that the C99
+                    lrint and lrintf functions are used
+                src/include/float_cast.h:
+                    #define's to avoid including multiple times
+                src/include/common.h:
+                    Removed redundant f_trunc_i
+2004-04-30 :    configure.in:
+                    Oops. Check for sinf, not sinff
+                src/quantiser.so.c,
+                src/sequencer.so.c:
+                    No need to free port names - static data
+2004-04-15 :    doc/blop.rdf:
+                    Fixed Quantiser tags
+2004-04-11 :    doc/plugins_list.txt,
+                src/dahdsr_2021.so.c:
+                    Added control-rate gate and trigger variant
+                src/tracker_2025.so.c,
+                    Changed copyright year to year written
+                src/difference_2030.so.c,
+                src/ratio_2034.so.c:
+                    Renamed labels to reflect port names
+                    Changed copyright year to year written
+                po/blop.pot,
+                po/de.po,
+                po/en_GB.po:
+                    Regenerated translations
+                doc/blop.rdf:
+                    Added DAHDSR, Ratio and Difference plugins
+2004-03-17 :    src/include/math_func.h:
+                    New file
+                    Hide math functions behind defines to allow
+                    substitution of sin for sinf etc where needed
+                configure.in:
+                    Changes for sinf detection - now sets HAVE_SINF
+                src/include/common.h,
+                src/include/interpolate.h,
+                src/include/wavedata.h,
+                src/amp_1654.so.c,
+                src/fmod_1656.so.c,
+                src/random_1661.so.c,
+                src/tracker_2025.so.c:
+                    Replaced sinf, expf etc with defined equivalent
+                doc/plugins_list.txt,
+                src/Makefile.am
+                src/difference_2030.so.c,
+                src/ratio_2034.so.c:
+                    New plugins
+                src/product_1668.so.c,
+                src/sum_1665.so.c,
+                src/triangle_1649.so.c:
+                    Minor comment corrections
+                src/sync_square_1678.so.c:
+                    No need for math.h
+                intl/plural.c,
+                po/blop.pot,
+                po/de.po,
+                po/en_GB.po:
+                    Updated message positions and for new plugins
+2004-01-20 :    src/include/wavedata.h,
+                src/wdatutil.c:
+                    Fixed phase offset bug 
+2004-01-11 :    src/triangle_1649.so.c:
+                    Fixed silly mistake in applying scale factor
+2003-12-25 :    src/include/wavedata.h,
+                src/include/wdatutil.h,
+                src/wavedata.c,
+                src/wavegen.c,
+                src/wdatutil.c:
+                    Changes to wavedata generation - now all static
+                    data in separate dll. No SHM anymore...
+                src/pulse_1645.so.c,
+                src/sawtooth_1641.so.c,
+                src/square_1643.so.c,
+                src/triangle_1649.so.c:
+                    Changes to use new wavedata.
+                configure.in:
+                    Removed check for POSIX SHM
+                src/include/common.h,
+                src/include/float_cast.h,
+                src/include/interpolate.h,
+                src/include/lp4pole_filter.h,
+                src/Makefile.am,
+                src/adsr_1653.so.c,
+                src/adsr_1680.so.c,
+                src/amp_1654.so.c,
+                src/branch_1673.so.c,
+                src/dahdsr_2021.so.c,
+                src/fmod_1656.so.c,
+                src/interpolator_1660.so.c,
+                src/lp4pole_1671.so.c,
+                src/lp4pole_filter.c,
+                src/product_1668.so.c,
+                src/quantiser.so.c,
+                src/random_1661.so.c,
+                src/sequencer.so.c,
+                src/sum_1665.so.c,
+                src/sync_pulse_2023.so.c,
+                src/sync_square_1678.so.c,
+                src/tracker_2025.so.c:
+                    Silly code cleaning. I started, so I finished...
+                po/blop.pot,
+                po/de.po,
+                po/en_GB.po:
+                    Updated for changes in code.
+2003-12-01 :    src/fmod_1656.so.c,
+                src/lp4pole_1671.so.c,
+                src/pulse_1645.so.c,
+                src/random_1661.so.c,
+                src/sawtooth_1641.so.c,
+                src/square_1643.so.c,
+                src/tracker_2025.so.c,
+                src/triangle_1649.so.c:
+                    Logarithmic minima changed to +ve value
+                    for lazy hosts that do a simple log(val).
+                    Assumes 48000 Hz sample rate.
+2003-11-15 :    src/include/wavedata.h,
+                src/wavedata.c:
+                    Added SHM for wavedata.
+                src/Makefile.am,
+                configure.in:
+                    Added shm as option.
+2003-11-09 :    src/amp_1654.so.c,
+                src/fmod_1656.so.c:
+                    Replaced powf with expf (more efficient)
+                src/quantiser.so.c:
+                    Fixed bug in wrapped mode quantiser - subtract, not
+                    assign excess range from input
+                src/sync_pulse_2023.so.c:
+                    Fixed audio rate variant - pulsewidth should be multiple of
+                    sample rate for comparison with phase
+                src/include/wavedata.h,
+                src/wavedata.c,
+                src/wdatutil.c:
+                    Changed to generate a separate data .so which is dlopen()ed
+                    so that the data can be shared between multiple instances.
+                src/pulse_1645.so.c,
+                src/sawtooth_1641.so.c,
+                src/square_1643.so.c,
+                src/triangle_1649.so.c:
+                    Modified to use new .so data instead of #included headers.
+                src/Makefile.am:
+                    Build rules changed to build data as .so, and install
+                    in subdir
+                configure.in:
+                    Added wavedata subdir variable
+                po/blop.pot,
+                po/de.po,
+                po/en_GB.po:
+                    Updated to reflect changed positions of strings in
+                    oscillator plugins
+2003-09-28 :    src/adsr_1653.so.c,
+                src/adsr_1680.so.c,
+                src/amp_1654.so.c,
+                src/branch_1673.so.c,
+                src/dahdsr_2021.so.c,
+                src/fmod_1656.so.c,
+                src/interpolator_1660.so.c,
+                src/lp4pole_1671.so.c,
+                src/product_1668.so.c,
+                src/pulse_1645.so.c,
+                src/quantiser.so.c,
+                src/random_1661.so.c,
+                src/sawtooth_1641.so.c,
+                src/sequencer.so.c,
+                src/square_1643.so.c,
+                src/sum_1665.so.c,
+                src/sync_pulse_2023.so.c,
+                src/sync_square_1678.so.c,
+                src/tracker_2025.so.c,
+                src/triangle_1649.so.c:
+                    Added #include <locale.h> as compiler was complaining about
+                    setlocale(). Strange. It Worked Yesterday (tm).
+                src/quantiser.so.c:
+                    Some fine-tuning and fixed change-trigger.
+                src/Makefile.am:
+                    Removed (added -O0) optimisations for building quantiser, as
+                    -O1 and up break it.
+                configure.in:
+                    Removed redundant -f options from CFLAGS (covered by -O3)
+                po/blop.pot,
+                po/de.po,
+                po/en_GB.po:
+                    Updated since changes to sources
+2003-09-23 :    po/de.po:
+                    German translations from Mario Lang
+                po/blop.pot,
+                po/en_GB.po:
+                    Recreated, omitting plugin labels
+                src/adsr_1653.so.c,
+                src/adsr_1680.so.c,
+                src/amp_1654.so.c,
+                src/branch_1673.so.c,
+                src/dahdsr_2021.so.c,
+                src/fmod_1656.so.c,
+                src/interpolator_1660.so.c,
+                src/lp4pole_1671.so.c,
+                src/product_1668.so.c,
+                src/pulse_1645.so.c,
+                src/quantiser.so.c,
+                src/random_1661.so.c,
+                src/sawtooth_1641.so.c,
+                src/sequencer.so.c,
+                src/square_1643.so.c,
+                src/sum_1665.so.c,
+                src/sync_pulse_2023.so.c,
+                src/sync_square_1678.so.c,
+                src/tracker_2025.so.c,
+                src/triangle_1649.so.c:
+                    Removed gettext marks from plugin labels, as they
+                    mostly won't translate well.
+                Makefile.am:
+                    Cleaned up EXTRA_DIST madness
+2003-09-12 :    src/include/wdatutil.h:
+                    Fixed macro that accidentally worked anyway
+                src/wavedata.c:
+                    No need for stdio.h
+2003-09-09 :    ABOUT-NLS,
+                config.rpath,
+                intl/*
+                m4/*
+                po/ChangeLog,
+                po/Makefile.in.in,
+                po/Makevars.template,
+                po/Rules-quot,
+                po/boldquot.sed,
+                po/en@boldquot.header,
+                po/en@quot.header,
+                po/insert-header.sin,
+                po/quot.sed,
+                po/remove-potdate.sin:
+                    Gettext boilerplate added
+                po/LINGUAS,
+                po/Makevars,
+                po/POTFILES.in,
+                po/blop.pot,
+                po/en_GB.po:
+                    BLOP-specific gettext files added.
+                src/Makefile.am:
+                    For automake 1.5 (needed for gettext)
+                src/include/Makefile.am:
+                    Add gettext.h to dist target
+2003-09-05 :    Makefile.am,
+                configure.in:
+                    gettextize
+                src/include/gettext.h:
+                    Added for gettext use in sources
+                src/adsr_1653.so.c,
+                src/adsr_1680.so.c,
+                src/amp_1654.so.c,
+                src/branch_1673.so.c,
+                src/dahdsr_2021.so.c,
+                src/fmod_1656.so.c,
+                src/interpolator_1660.so.c,
+                src/lp4pole_1671.so.c,
+                src/product_1668.so.c,
+                src/pulse_1645.so.c,
+                src/quantiser.so.c,
+                src/random_1661.so.c,
+                src/sawtooth_1641.so.c,
+                src/sequencer.so.c,
+                src/square_1643.so.c,
+                src/sum_1665.so.c,
+                src/sync_pulse_2023.so.c,
+                src/sync_square_1678.so.c,
+                src/tracker_2025.so.c,
+                src/triangle_1649.so.c:
+                    Added missing semicolon
+                TODO,
+                ChangeLog:
+                    'Proper' dates.
+2003-08-30 :    src/adsr_1653.so.c,
+                src/adsr_1680.so.c,
+                src/amp_1654.so.c,
+                src/branch_1673.so.c,
+                src/dahdsr_2021.so.c,
+                src/fmod_1656.so.c,
+                src/interpolator_1660.so.c,
+                src/lp4pole_1671.so.c,
+                src/product_1668.so.c,
+                src/pulse_1645.so.c,
+                src/quantiser.so.c,
+                src/random_1661.so.c,
+                src/sawtooth_1641.so.c,
+                src/sequencer.so.c,
+                src/square_1643.so.c,
+                src/sum_1665.so.c,
+                src/sync_pulse_2023.so.c,
+                src/sync_square_1678.so.c,
+                src/tracker_2025.so.c,
+                src/triangle_1649.so.c:
+                    Prepared for gettext (marked translatable strings)
+2003-08-27 :    src/include/lp4pole_filter.h,
+                src/adsr_1653.so.c,
+                src/adsr_1680.so.c,
+                src/dahdsr_2021.so.c,
+                src/interpolator_1660.so.c,
+                src/lp4pole_1671.so.c,
+                src/lp4pole_filter.c,
+                src/pulse_1645.so.c,
+                src/quantiser.so.c,
+                src/random_1661.so.c,
+                src/sawtooth_1641.so.c,
+                src/sequencer.so.c,
+                src/square_1643.so.c,
+                src/tracker_2025.so.c,
+                src/triangle_1649.so.c:
+                    Moved initialisation of instance data to activate()
+                    function in each plugin.
+                src/sync_pulse_2023.so.c,
+                src/sync_square_1678.so.c:
+                    As above, plus added TOGGLED hint for gate port.
+                TODO:
+                    Added stuff that needs to be done :)
+2003-08-23 :    src/adsr_1653.so.c,
+                src/adsr_1680.so.c,
+                src/dahdsr_2021.so.c,
+                src/sequencer.so.c:
+                    Set TOGGLED hint for gates and triggers.
+2003-07-02 :    doc/blop.rdf,
+                doc/plugins_list.txt,
+                src/quantiser.so.c,
+                src/Makefile.am:
+                    Added quantiser plugin
+2003-06-30 :    doc/blop.rdf:
+                    Added new plugin info
+                src/adsr_1653.so.c,
+                src/adsr_1680.so.c,
+                src/dahdsr_2021.so.c:
+                    Fixed some (minor) bugs in envelope generation
+2003-06-26 :    src/sync_pulse_2023.so.c,
+                src/tracker_2025.so.c:
+                src/Makefile.am:
+                    Added new signal tracker and pulse clock plugins
+2003-06-15 :    doc/plugin_list.txt,
+                src/dahdsr_2021.so.c,
+                src/Makefile.am:
+                    Added new dahdsr plugin
+2003-06-11 :    configure.in:
+                    Changed displayed default LADSPA path in help
+                    Removed extraneous cpu-type hack
+                src/adsr_1653.so.c,
+                src/adsr_1680.so.c:
+                    Sustain level clipping (result of excessive values too
+                    nasty to let go.
+2003-02-18 :    src/Makefile.am:
+                    Removed $BUILT_SOURCES things and replaced with some
+                    new rules for building oscillators with the generated
+                    headers. This was to get rid of annoying side-effects
+                    of the BUILT_SOURCES and dependencies.
+                Makefile.am:
+                    Removed dist-hook rule - above changes sorted this
+                    problem out.
+                    Added extraneous files to maintainer-clean
+2003-02-18 :    src/include/float_cast.h,
+                acinclude.m4:
+                    Files added - Erik de Castro Lopo's float cast
+                    code for C99 lrintf detection and use
+                src/include/common.h,
+                src/include/interpolate.h,
+                src/include/lp4pole_filter.h,
+                src/include/wavedata.h,
+                src/include/wdatutil.h,
+                src/pulse_1645.so.c,
+                src/sawtooth_1641.so.c,
+                src/square_1643.so.c,
+                src/triangle_1649.so.c,
+                src/wavedata.c:
+                    Some header shuffling to get float cast stuff
+                    to work right.
+2003-02-05 :    src/sequencer16_1677.so.c,
+                src/sequencer32_1676.so.c,
+                src/sequencer64_1675.so.c:
+                    Files replaced by single common source file compiled
+                    with different defines to make maintenance easier
+                src/sequencer.so.c:
+                    New common source file for sequencers
+                src/Makefile.am:
+                    Fiddling to get three sequencers built from single source
+2003-02-04 :    src/sequencer16_1677.so.c,
+                src/sequencer32_1676.so.c,
+                src/sequencer64_1675.so.c:
+                    Fixed declarations-after-statements bug that
+                    broke build on older compilers.
+2003-02-02 :   doc/blop.rdf:
+                    Output port info added
+2003-02-01 :    src/fmod_1656.so.c,
+                src/pulse_1645.so.c,
+                src/random_1661.so.c,
+                src/sequencer16_1677.so.c,
+                src/sequencer32_1676.so.c,
+                src/sequencer64_1675.so.c,
+                src/sync_square_1678.so.c,
+                src/triangle_1649.so.c:
+                    Names changed in source
+                doc/plugins_list.txt:
+                    Updated to reflect name changes
+                doc/blop.rdf:
+                    Added title, creator and rights information
+2003-01-29 :    Fixed sequencer plugins - now have option of resetting
+                 to fixed value or keeping the last value output when
+                 the gate is closed.
+                Added blop.rdf
+                Made --enable-small-wavedata create smaller tables. Still
+                 good quality output...
+2003-01-26 :    Added defaults for some of the plugins
+2003-01-25 :    configure.in
+                    Added option to generate smaller wavetable data
+                    [--enable-small-wavedata]
+                src/include/lp4pole_filter.h
+                    Made lp4pole tuning independent of sample rate
+                src/include/lut_144log2.h,
+                src/include/lut_tanh.h,
+                src/tuned_lp4pole_1679.so.c
+                    Removed this filter - it's actually worse tuning
+                    wise than the regular one!
+2003-01-24 :    Slight performance increase for lp4pole filter by
+                 storing state in a struct.
+                src/include/lp4pole_filter.h,
+                src/lp4pole_filter.c
+                    Contains code to setup and run filter instance
+                src/lp4pole_1671.so.c
+                    Plugin instance data removed - now in above filter
+                    code. Calls added to run filter using new code.
+2003-01-23 :    Improved performance of oscillators (16-89% faster!)
+                src/include/interpolate.h
+                    Moved wavetable stuff to src/include/wavedata.h
+                src/include/wavedata.h,
+                src/wavedata.c
+                    Extra member data to hold playback state of
+                    oscillator.
+                src/pulse_1645.so.c,
+                src/sawtooth_1641.so.c,
+                src/square_1643.so.c,
+                src/triangle_1649.so.c
+                    Removed instance data, now held in wavedata
+                    instance. Simplified running of oscillator.
+                src/Makefile.am
+                    Some minor dependency changes.
+2003-01-15 :    Argh! Just about to release 0.2.6, and I find nasty bugs,
+                 and slowness...
+                Restored original (0.2.5) low pass filter, and created new
+                 pair of plugins for the tuned one, as it is much more
+                 cpu-intensive (about 4x!)
+2002-12-23 :    Some further modifications to wavetable business for the
+                 oscillators. With the exception of the (very short)
+                 one for phase wrapping, all code runs without any
+                 branches.
+                src/include/wavedata.h,
+                src/include/interpolate.h,
+                src/pulse_1645.so.c,
+                src/sawtooth_1641.so.c,
+                src/square_1643.so.c,
+                src/triangle_1649.so.c,
+                src/wavedata.c:
+                    Reworked code to remove branches.
+                src/include/wdatutil.h,
+                src/wavedata.c,
+                src/wavegen.c,
+                src/wdatutil.c
+                    Removed lowest_harmonic things - not needed.
+2002-12-19 :    Major changes to the oscillators' wavetable playback
+                 as I clearly hadn't thought it through - the cross-fade
+                 of extra harmonics was causing discontinuities due
+                 to the gibbs compensation not matching. This has
+                 now been fixed, and the output is much improved.
+                src/include/wavedata.h,
+                src/include/wdatutil.h,
+                src/wavedata.h,
+                src/wavegen.c,
+                src/wdatutil.c:
+                    Changes to wavetable pair data to allow for
+                    differing gibbs compensation. Some other minor
+                    bug fixes.
+                src/include/interpolate.h:
+                    Changes to getSamples to cross fade pairs of
+                     tables instead of simply fading in extra harmonics.
+                    Also removed some branching from the table lookup.
+                src/pulse_1645.so.c,
+                src/sawtooth_1641.so.c,
+                src/square_1643.so.c,
+                src/triangle_1649.so.c:
+                    Removed some branching from code.
+2002-12-17 :    Further work on lowpass filter to eliminate some
+                 instabilities (runaway values resulting in
+                 noise/NaN).
+                src/include/l2table.h:
+                    renamed to lut_144log2.h
+                src/include/lut_tanh.h:
+                    added
+                src/Makefile.am:
+                    modified dependencies
+                src/lp4pole.so.c:
+                    tuned and smooth clipped
+
+                Dist rule: make dist was keeping the CVS directory
+                 under src/include in the dist. Now fixed:
+                src/include/Makefile.am:
+                    Added and specified headers etc.
+                src/Makefile.am:
+                    Adjusted to make include a subdir
+                configure.in:
+                    Added src/include/Makefile create
+2002-12-10 :    Tuned lowpass filter
+                Added log 2 based table lookup
+                src/include/l2table.h
+                src/Makefile.am
+                src/lp4pole_1671.so.c
+2002-11-24 :    Added analogue sequencer and sync oscillator
+                Modified wavegen to allow note skip (allows smaller
+                  wavedata - e.g. to fit in cpu cache)
+                Some minor bugfixes and updates
+2002-11-09 :    configure.in:
+                    Removed -march flags from CFLAGS, as was causing
+                    problems on some architectures
+2002-11-02 :    (After a looooooonnnnnnggg period of inactivity)
+                  I added a branch plugin. Woohoo...
+2002-09-24 :    configure.in:
+                    Added check for getopts
+2002-08-12 :    Changed plugin names to show port types.
+                 <grr>
+                   Much that I am loathe to duplicate information,
+                   most modular synths don't show other info, and
+                   rely on names being unique
+                 </grr>
+2002-07-15 :    Fixed NaN output bug in lowpass filter - clamped
+                 resonance to [0.0, 4.0]. I know it's in the range
+                 hints, but plugging an LFO into it (for example)
+                 *can* cause the bounds to be exceeded.
+2002-07-14 :    Added low pass resonant filter plugin
+2002-07-10 :    blop_ prefix removed from plugins - this can be done
+                 at configure time using --program-prefix=FOO
+2002-07-10 :    Okay. Some compromises made so automake will be nice
+                 to me...
+                src/wavegen.c,
+                src/wdatutil.c:
+                    Moved to parent
+                src/wavegen:
+                    Removed
+                Makefile.am,
+                configure.in,
+                src/Makefile.am:
+                    Some finagling to differentiate a plugin build
+                    from a regular program build.
+                    More fudgin to get 'make dist' to work.
+2002-07-09 :    Argh - except the result of make dist just plain
+                 does not work (seems to ignore building of
+                 data headers first.)
+2002-07-08 :    Tested all new plugins and new build system
+                 - all A-OK!
+2002-07-06 :    Complete revision of directory structure:
+
+                doc/Makefile.am
+                doc/about.txt
+                doc/plugins_list.txt
+                src/include/common.h
+                src/include/interpolate.h
+                src/include/wavedata.h
+                src/include/wdatutil.h
+                src/wavegen/Makefile.am
+                src/wavegen/wavegen.c
+                src/wavegen/wdatutil.c
+                src/Makefile.am
+                src/blop_adsr.so.c
+                src/blop_amp.so.c
+                src/blop_fmod.so.c
+                src/blop_interpolator.so.c
+                src/blop_product.so.c
+                src/blop_pulse.so.c
+                src/blop_random.so.c
+                src/blop_sawtooth.so.c
+                src/blop_square.so.c
+                src/blop_sum.so.c
+                src/blop_triangle.so.c
+                src/wavedata.c
+                AUTHORS
+                COPYING
+                ChangeLog
+                INSTALL
+                Makefile.am
+                NEWS
+                README
+                THANKS
+                TODO
+                config.h.in
+                configure.in
+                stamp-h.in
+-------------------------------------------------------------------------------
+2002-06-19 :    adsr.so.c:
+                    New files - an adsr envelope generator and a
+                    control-to-audio interpolator.
+2002-06-18 :    random.so.c:
+                    New file - generates a random wave of varying
+                    smoothness - sorta like random noise thru a
+                    filter.
+2002-06-17 :    amp.so.c,
+                fmod.so.c,
+                lmod.so.c:
+                    New files added - these are additional plugins to
+                    complement the oscillators. They are not released
+                    yet. Also planning to add an ADSR, a Control-to-Audio
+                    interpolator and a Randomizer (sort of sample-and-hold,
+                    but not). All these scheduled for release 0.3.
+2002-06-16 :    pulse.so.c,
+                sawtooth.so.c,
+                square.so.c,
+                triangle.so.c:
+                    Modified my email address, replaced '@' with '[at]',
+                    cos I've been getting spam! (ARGH!)
+2002-06-14 :    pulse.so.c,
+                sawtooth.so.c,
+                square.so.c,
+                triangle.so.c:
+                    Modified to only advance the phase (position) for
+                    frequencies below Nyquist (this is to prevent the phase
+                    from drifting too high - this can happen for very large
+                    frequencies, and causes instability)
+2002-06-09 :    Makefile:
+                    Added GIBBS variable to allow setting of Gibbs
+                    compnesation argument to wavegen.
+                include/wdatutil.h,
+                wavegen.c,
+                wdatutil.h:
+                    Improved Gibbs compensation - can now set degree of
+                    compensation, from none to maximum. Maximum will now
+                    almost completely eliminate overshoot, and the resulting
+                    waveform is pretty much normalised to [-1,1] as a result!
+2002-06-08 :    wdatutil.h:
+                    Gibbs compensated parabola generation was skipping the
+                    even harmonics - fixed.
+                Makefile:
+                    Modified wavedata header rules to use prefix, following
+                    addition of prefix option to wavegen.
+                wavedata.h:
+                    Moved the extraction of wavedata header data to top of
+                    function for clarity.
+                wavegen.c,
+                wdatutil.c:
+                    Some other changes to the format of the wavedata header
+                    file output by wavegen - now allows specification of
+                    unique prefix for declarations - this is so more than
+                    one such header may be included in code.
+                include/wdatutil.h,
+                wavegen.c,
+                wdatutil.c:
+                    Alterations to fix wave generation for square and
+                    parabola waves - base and extra harmonics now
+                    generated with respect to actual harmonic content
+                    (both square and parabola only contain odd harmonics).
+                    Previously, some of the extra samples were ending up
+                    zeroed because they were just a single even harmonic.
+2002-06-07 :    README:
+                    A bit more text about bandlimiting methods.
+                include/interpolate.h,
+                include/wavedata.h,
+                wavedata.c:
+                    Revised to work with the new wavedata file contents.
+                include/wdatutil.h,
+                wavegen.c,
+                wdatutil.c:
+                    Finalised changes to wavedata file format and content.
+                    Now each wavetable has two sets of data as before, but
+                    one set contains harmonics that would be played at
+                    all pitches in range, and the other contains the 'extra'
+                    higher harmonics that are faded in as pitch decreases.
+2002-06-06 :    include/wdatutil.h,
+                wavegen.c,
+                wdatutil.c:
+                    Change to the format of the intermediate data before
+                    it is written to the header file. More structured
+                    representation, instead of lots of huge allocated
+                    memory (which would not necessarily be contiguous,
+                    and if not, the code would fail).
+                    Work on new method for cross fading wavetables of
+                    differing harmonics.
+2002-06-05 :    include/interpolate.h:
+                    Further investigation into the abberation in the
+                    triangle wave. The likely cause was the two parabola
+                    waves were not being queried in sync - resulting in
+                    the wrong sample being retrieved in some cases.
+2002-06-04 :    include/interpolate.h:
+                    The triangle plugin was putting out NaNs for very
+                    small slopes (where the output approaches a sawtooth
+                    wave) - further investigation revealed that there
+                    was an aberration at the cross-over point (where
+                    the amplitude crosses zero).
+                    Some work on the getSamples function seemed to
+                    remove the problem.
+2002-06-02 :    TODO:
+                    Removed notes about optimisation: avltree lookup
+                    is only faster because special cases were not
+                    being handled - these must stay.
+                    Restraints on pulsewidth/slope settings caused
+                    quite nasty artifacts, so the double interpolation
+                    in pulse and traingle plugins has to stay.
+                include/interpolate.h,
+                wavedata.c,
+                wavegen.c,
+                wdatutil.c:
+                    Minor changes and some more comments
+                pulse.so.c:
+                    Pulsewidth now clamped to [0.0,1.0]
+                triangle.so.c:
+                    Slope clamped to [min, max] (dependent on
+                    sample rate)
+2002-06-01 :    include/interpolate.h,
+                wdatutil.c,
+                wavegen.c,
+                wavedata.c:
+                    Modified wavetables to have an extra 3 samples
+                    per table - this allows interpolation to be done
+                    without too much bounds checking on sample index.
+                    A small speed increase results!
+                wdatutil.c:
+                    Parabola wave generation was using the wrong
+                    scale factor, resulting in the triangle plugin
+                    having huge amplitudes compared to the rest.
+                    This has been fixed.
+2002-05-31 :    include/wdatutil.h,
+                wavegen.c,
+                wdatutil.c:
+                    More farting about with the format. Now only
+                    generates wavetables that will be cross faded
+                    upon playback (rather than filling the last
+                    one with zeroes)
+                include/wavedata.h,
+                wavedata.c:
+                    Some slight changes to add the three 'special
+                    case' wavetables that are played at the extreme
+                    frequencies
+                include/interpolate.h:
+                    Finalised getTable - now it *does* return, and
+                    it returns that wavetable to play. Some changes
+                    to accommodate the special case wavetables.
+                    getSamples now incorporates the new special cases,
+                    and the cross fade. But it could do with improvement.
+                    getXFadeScale is no more.
+                pulse.so.c,
+                sawtooth.so.c,
+                square.so.c,
+                triangle.so.c:
+                    Updated to use new interpolate.h functions. Some
+                    declarations added for getSamples (rather than
+                    having these variables declared every sample, which
+                    consumes a measurable amount of CPU)
+2002-05-30 :    include/interpolate.h
+                    Changed getTable from returning true/false to
+                    void - no need for this anymore, as cross fade
+                    testing will be done in getSamples.
+                pulse.so.c,
+                sawtooth.so.c,
+                square.so.c,
+                triangle.so.c:
+                    Removed table_found check - getTable no longer
+                    returns.
+2002-05-29 :    include/interpolate.h,
+                include/wavedata.h,
+                pulse.so.c,
+                sawtooth.so.c,
+                square.so.c,
+                triangle.so.c,
+                wavedata.c:
+                    Modified to use new wavetable pairs for cross fading.
+                    Most of the crap is now in interpolate.h::getSamples.
+2002-05-28 :    include/wdatutil.h,
+                wavegen.c,
+                wdatutil.c:
+                    Modified to generate wavetable 'pairs' for cross
+                    fading between successive wavetables. This will
+                    allow sample retrieval for cross-faded wavetables
+                    to use only one interpolation op (as opposed to two)
+2002-05-26 :    TODO
+                    Notes about optimisation - namely, too many interpolates!
+                include/interpolate.h,
+                pulse.so.c,
+                sawtooth.so.c,
+                square.so.c,
+                triangle.so.c
+                    Separated out sample extraction from interpolation
+                    code. getSamples get's four samples and returns
+                    the interval. INTERPOLATE function (now a #define)
+                    actually does the interpolation.
+2002-05-24 :    include/interpolate.h
+                    Experiments with cubic vs. 5th order spline resulted in
+                    the cubic spline being the winner (as it's faster, and
+                    is a fly's hair's whisker away from the 5th order...)
+2002-05-23 :    include/avltree.h,
+                avltree.c:
+                    Removed these two files following confirmation
+                    that new lookup vector works properly.
+                Makefile:
+                    Removed avltree dependencies.
+2002-05-22 :    pulse.so.c,
+                sawtooth.so.c,
+                square.so.c,
+                triangle.so.c:
+                    Implemented new table lookup based on simple vector
+                    instead of binary tree.
+                include/wavedata.h,
+                include/wdatutil.h,
+                wavedata.c,
+                wdatutil.c,
+                wavegen.c:
+                    Modifications to replace tree lookup with new vector
+                    lookup (indexed on max harmonic number)
+2002-05-20 :    pulse.so.c,
+                sawtooth.so.c,
+                square.so.c,
+                triangle.so.c:
+                    Moved table lookup to separate (inlined) function
+2002-05-15 :    pulse.so.c,
+                sawtooth.so.c,
+                square.so.c,
+                triangle.so.c:
+                    Cubic spline interpolation (no, it's a 5th order. Silly
+                    old me didn't have a clue...)
+
+2002-05-14 :    INSTALL:
+                    Minor clarifications.
+                AUTHORS:
+                    Added some acknowledgements :)
+                include/wavedata.h,
+                include/wdatutil.h,
+                wavedata.c,
+                wavegen.c,
+                wdatutil.c:
+                    Changed wavedata file to pass maximum harmonics instead
+                    of min and max frequencies. Wavedata sample rate is now
+                    independent of sample rate used in plugins (as it should
+                    be).
+                include/avltree.h,
+                include/wavedata.h,
+                include/wdatutil.h,
+                pulse.so.c,
+                sawtooth.so.c,
+                square.so.c,
+                triangle.so.c,
+                wavedata.c,
+                wavegen.c,
+                wdatutil.c:
+                    Changed data types from float to LADSPA_Data for consistency
+                    Some tidying up.
+
+2002-05-12 :    Initial code put together
