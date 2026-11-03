@@ -18,8 +18,9 @@ Fl_SevenSeg::~Fl_SevenSeg(void) {
 }
 
 void Fl_SevenSeg::value (int v) {
-     if (v>9) digit = 9;
-     else digit = v;
+     if (v>9) v = 9;
+     if (v == digit) return;
+     digit = v;
      if (active()) redraw();
 }
 
@@ -33,7 +34,9 @@ const int Fl_SevenSeg::value(void) {
 }
 
 void Fl_SevenSeg::dp (dp_type state) {
+  if (decpt == state) return;
   decpt = state;
+  if (active()) redraw();
 }
 
 const dp_type Fl_SevenSeg::dp(void) {

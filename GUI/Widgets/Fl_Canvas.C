@@ -156,7 +156,39 @@ void Fl_Canvas::draw()
 	}
 	else // only redraw the children that need it:
 	{
-		for (int i=children(); i--;) update_child(**a++);
+		// A device drawn again alone, for a meter, waveform or light in it,
+		// would be drawn over the devices in front of it: draw those again
+		// after it, clipped to the same area. A minimised device stays under
+		// the maximised ones, as the full redraw draws it.
+		for (int i = 0; i < children(); ++i)
+		{
+			Fl_DeviceGUI *below = AsDevice(child(i));
+			if (!below || !below->damage() || !below->visible())
+				continue;
+			for (int j = i + 1; j < children(); ++j)
+			{
+				Fl_DeviceGUI *above = AsDevice(child(j));
+				if (above && above->visible() && (below->IsMinimised() || !above->IsMinimised()) &&
+				    above->x() < below->x() + below->w() && below->x() < above->x() + above->w() &&
+				    above->y() < below->y() + below->h() && below->y() < above->y() + above->h() &&
+				    fl_not_clipped(above->x(), above->y(), above->w(), above->h()))
+					above->clear_damage(above->damage() | FL_DAMAGE_ALL);
+			}
+		}
+
+		for (int i=children(); i--;)
+		{
+			Fl_Widget &o = **a++;
+			Fl_DeviceGUI *device = AsDevice(&o);
+			const bool drawn = o.damage() && o.visible();
+			update_child(o);
+			// Its selection outline, which the full redraw draws after it.
+			if (drawn && device && std::find(m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), device->GetID()) != m_Selection.m_DeviceIds.end())
+			{
+				fl_color(FL_YELLOW);
+				fl_rect(o.x(), o.y(), o.w(), o.h());
+			}
+		}
   	}
 	DrawSelection();
 }

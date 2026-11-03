@@ -20,6 +20,7 @@ libSpiralControls_la_SOURCES = \
 	Fl_Loop.C \
 	Fl_Trigger.h \
 	Fl_Trigger.C \
+	Fl_DamageArea.H \
 	Fl_EventMap.h \
 	Fl_EventMap.C \
 	Fl_SEvent.h \
