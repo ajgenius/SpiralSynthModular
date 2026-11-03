@@ -265,9 +265,11 @@ void LADSPAPlugin::Execute()
 	{
 		if (!m_LADSPABufVec[n+nInputs])
 			continue;
+		const bool Control = n+nInputs < (int)m_PortID.size() &&
+			LADSPA_IS_PORT_CONTROL(m_PlugDesc->PortDescriptors[m_PortID[n+nInputs]]);
 		for (int i=0; i<m_HostInfo->BUFSIZE; i++)
 		{
-			SetOutput(n,i,m_LADSPABufVec[n+nInputs][i]);
+			SetOutput(n,i,m_LADSPABufVec[n+nInputs][Control ? 0 : i]);
 		}
 	}
 }
