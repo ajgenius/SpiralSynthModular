@@ -43,6 +43,10 @@
 #include "DeviceClassRegistry.h"
 #include "EditorClassRegistry.h"
 #include "PanelEditor.h"
+// By its path: the include path has ncurses' panel.h ahead of this, and on
+// a filesystem that ignores case it is found first.
+#include "GUI/Panels/Panel.h"
+#include "PanelControl.h"
 #include "OutputPlugin.h"
 #include "EventInputPlugin.h"
 #include "SubPatchDevice.h"
@@ -208,7 +212,12 @@ m_MenuStateKnown(false),
 m_MenuSelection(false),
 m_MenuPaste(false),
 m_MenuSavePoints(false),
-m_MenuPackage(false)
+m_MenuPackage(false),
+m_MidiLearn(NULL),
+m_MidiLearnData(NULL),
+m_MidiPage(NULL),
+m_PickDevice(-1),
+m_PickOpened(false)
 {
 	pthread_mutexattr_t recursive;
 	pthread_mutexattr_init(&recursive);
@@ -259,8 +268,9 @@ SynthModular::~SynthModular()
 	// Editors before devices, the reverse of loading.
 	Spiral::Core::EditorClassRegistry::PackUpAndGoHome();
 	Spiral::Core::DeviceClassRegistry::PackUpAndGoHome();
-	// The MidiPlugin instances are gone with the devices, so the
-	// backend they shared is too; its module can leave now.
+	// The devices are gone, so nothing reads the MIDI device now; it
+	// closes its backend, and the backend's module can leave.
+	Spiral::Core::MidiDevice::PackUpAndGoHome();
 	Spiral::Core::MidiBackendRegistry::PackUpAndGoHome();
 	pthread_mutex_destroy(&m_CycleLock);
 }
@@ -305,6 +315,10 @@ void SynthModular::ClearUp(bool synchronize)
 	m_NextID=0;
 	m_PatchVoices=0;
 	if (synchronize) SetPatchVoices(0);
+	StopMidiPick();
+	m_MidiMap.Devices.clear();
+	m_MidiLearn=NULL;
+	if (m_MidiPage) m_MidiPage->Refresh();
 
 	if (synchronize) ThawAll();
 }
@@ -334,6 +348,11 @@ void SynthModular::Update()
 		pthread_mutex_unlock(&m_CycleLock);
 		return;
 	}
+
+	// The patch is a MIDI input of its own: poll once a period, so its
+	// bindings hear the controller with no Midi device in the patch.
+	if (Spiral::Core::MidiDevice *midi = Spiral::Core::MidiDevice::Get())
+		midi->Collect();
 
 	for (map<int,DeviceWin*>::iterator i = m_DeviceWinMap.begin(); i != m_DeviceWinMap.end(); )
 	{
@@ -467,6 +486,8 @@ void SynthModular::RunDevice(int id)
 
 void SynthModular::UpdatePluginGUIs()
 {
+	ServiceMidiInput();
+
 	if (m_Breadcrumb)
 	{
 		// The first crumb is the patch's file name, without its extension.
@@ -532,6 +553,12 @@ void SynthModular::UpdatePluginGUIs()
 			//Remove Device GUI from canvas
 			m_Canvas->RemoveDevice(i->second->m_DeviceGUI);
 
+			// A device that goes leaves the MIDI map with it.
+			char listed[32];
+			snprintf(listed, sizeof listed, "%d", i->first);
+			if (m_PickDevice == i->first) StopMidiPick();
+			if (m_MidiMap.Remove(listed) && m_MidiPage) m_MidiPage->Refresh();
+
 			Fl_DeviceGUI *gui = i->second->m_DeviceGUI;
 			i->second->m_DeviceGUI = NULL;
 			if (erase)
@@ -556,6 +583,60 @@ void SynthModular::UpdatePluginGUIs()
 		cout << "Updating SampleRate to: " << SpiralInfo::SAMPLERATE << " and Buffer Size to: " << SpiralInfo::BUFSIZE << " to match current Audio Driver." << endl;
 		UpdateHostInfo();
 		m_HostNeedsUpdate = false;
+	}
+}
+
+//////////////////////////////////////////////////////////
+
+SpiralPanels::PanelControl *SynthModular::MidiControl(const string &device, const string &control)
+{
+	char *end = NULL;
+	const int id = (int)strtol(device.c_str(), &end, 10);
+	map<int,DeviceWin*>::iterator i = m_DeviceWinMap.find(id);
+	if (device.empty() || *end || i == m_DeviceWinMap.end() || !i->second->m_DeviceGUI || control.empty())
+		return NULL;
+	SpiralPanels::PanelEditor *editor = dynamic_cast<SpiralPanels::PanelEditor *>(i->second->m_DeviceGUI->GetPluginWindow());
+	SpiralPanels::Panel *panel = editor ? editor->GetPanel() : NULL;
+	return panel ? panel->FindControl(control) : NULL;
+}
+
+void SynthModular::LearnMidi(void (*learned)(int, int, void *), void *data)
+{
+	m_MidiLearn = learned;
+	m_MidiLearnData = data;
+}
+
+void SynthModular::ServiceMidiInput()
+{
+	Spiral::Core::MidiDevice *midi = Spiral::Core::MidiDevice::Get();
+	if (!midi) return;
+
+	// Where each controller ended up this pass: a knob turned fast sends
+	// more than a panel can show, and only the last value is wanted.
+	map<pair<int,int>, int> latest;
+	Spiral::Core::MidiPacket packet;
+	int channel, controller, value;
+	while (midi->ReadPatchInput(packet))
+	{
+		if (!Spiral::Core::ControlChange(packet, channel, controller, value)) continue;
+		if (m_MidiLearn)
+		{
+			void (*learned)(int, int, void *) = m_MidiLearn;
+			m_MidiLearn = NULL;
+			learned(channel, controller, m_MidiLearnData);
+			continue;
+		}
+		latest[make_pair(channel, controller)] = value;
+	}
+
+	vector<Spiral::Core::MidiMap::Target> moved;
+	for (map<pair<int,int>, int>::iterator i = latest.begin(); i != latest.end(); ++i)
+	{
+		moved.clear();
+		m_MidiMap.Match(i->first.first, i->first.second, moved);
+		for (size_t t = 0; t < moved.size(); ++t)
+			if (SpiralPanels::PanelControl *control = MidiControl(moved[t].Device, moved[t].Control))
+				control->Drive(i->second / 127.0);
 	}
 }
 
@@ -602,6 +683,7 @@ SpiralWindowType *SynthModular::CreateWindow()
         //MenuAdd ("Edit/Toolbars/Function", cb_Undefined, (void*)(this), 0);
         MenuAdd ("Edit/Options", cb_Options, (void*)(this), 0);
         MenuAdd ("View/Center Patch", cb_CenterPatch, (void*)(this), 0);
+        MenuAdd ("View/MIDI Bindings", cb_MidiBindings, (void*)(this), 0);
         // Holds the Plugins menu's place in the order until the plugins load.
         MenuAdd ("Plugins/dummy", NULL, NULL, 0);
         MenuAdd ("Audio/Pause", cb_PlayPause, NULL, 0);
@@ -802,6 +884,19 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_Drawer->BindPorts(m_Canvas);
 	m_TopWindow->add(m_Drawer);
 
+	// The patch's MIDI page, a tab of the drawer. The canvas and the
+	// panels are the host's, so the page asks here to pick on them.
+	m_MidiPage = new Fl_MidiBindings (0, 0, 1, 1);
+	m_MidiPage->color(SpiralInfo::GUICOL_Tool);
+	m_MidiPage->DeviceName = cb_MidiDeviceName;
+	m_MidiPage->PickDevice = cb_PickMidiDevice;
+	m_MidiPage->PickControl = cb_PickMidiControl;
+	m_MidiPage->Learn = cb_LearnMidi;
+	m_MidiPage->SourcePicked = cb_MidiSource;
+	m_MidiPage->Data = this;
+	m_MidiPage->Bind(&m_MidiMap);
+	m_Drawer->BindMidi(m_MidiPage);
+
 	m_SettingsWindow = new SettingsWindow;
 	m_SettingsWindow->RegisterApp(this);
 
@@ -869,9 +964,13 @@ void SynthModular::LoadPlugins (string pluginPath) {
      // same name yields. SSM_BACKEND_PATH, a colon list, overrides the root.
      Spiral::Core::LoadAudioBackends(PluginRoot);
      // MIDI backends under midi/; the preference names one, else the
-     // first that is not the dummy. MidiPlugin opens the device itself.
+     // first that is not the dummy. The device stays open from here, with
+     // or without a Midi device in the patch: with no hardware it is the
+     // dummy, which hears nothing and drops what is sent.
      Spiral::Core::LoadMidiBackends(PluginRoot);
      Spiral::Core::MidiDevice::SetBackendName(SpiralInfo::MIDIBACKEND);
+     Spiral::Core::MidiDevice::SetDeviceName(SpiralInfo::MIDIFILE);
+     Spiral::Core::MidiDevice::Init("SpiralModular", Spiral::Core::MidiDevice::READ);
      // Built-in devices first: a module of the same ID is not loaded.
      Spiral::Core::DeviceClassRegistry::Get()->Register(OutputPlugin::Class());
      Spiral::Core::EditorClassRegistry::Get()->Register(OutputPluginGUI::Class());
@@ -1727,6 +1826,7 @@ void SynthModular::UpdateHostInfo()
 	m_Info.AUDIOCLIENT = SpiralInfo::AUDIOCLIENT;
 	m_Info.MIDIFILE   = SpiralInfo::MIDIFILE;
 	m_Info.POLY       = SpiralInfo::POLY;
+	Spiral::Core::MidiDevice::SetDeviceName(SpiralInfo::MIDIFILE);
 	Spiral::Core::MidiDevice::SetBackendName(SpiralInfo::MIDIBACKEND);
 
 	/* Reset all plugin ports/buffers befure Resuming */
@@ -2275,6 +2375,8 @@ void Describe(Spiral::Core::PatchDescription &patch, SynthModular &o, const stri
 	Spumoni::Path::MakeDirectories(sidecars, directoryError);
 
 	DescribePage(patch, o, sidecars, -1, ExternalDirUsed, NULL);
+	// Devices leave the map as they go, so what it lists is in the patch.
+	patch.Midi = o.m_MidiMap.Devices;
 
 	// remove it if it wasn't used
 	if (!ExternalDirUsed)
@@ -2294,9 +2396,26 @@ void SynthModular::Apply(const Spiral::Core::PatchDescription &patch, const stri
 	std::map<std::string, int> ids;
 	if (merge) Fl_Canvas::ClearSelection(m_Canvas);
 
+	m_AppliedIds.clear();
 	if (!merge) SetPatchVoices(patch.Voices);
 	if (ApplyPage(patch, sidecars, merge, merge ? m_Canvas->Page() : -1, ids) && !merge)
 		m_Canvas->CenterPatch();
+
+	// The MIDI map names its devices by patch id, as the wires do; a merge
+	// brings the merged patch's bindings along, under the ids they now have.
+	if (!merge) m_MidiMap.Devices.clear();
+	for (size_t d = 0; d < patch.Midi.size(); ++d)
+	{
+		std::map<std::string, int>::const_iterator placed = m_AppliedIds.find(patch.Midi[d].Device);
+		if (placed == m_AppliedIds.end()) continue;
+		char listed[32];
+		snprintf(listed, sizeof listed, "%d", placed->second);
+		m_MidiMap.Add(listed);
+		for (size_t b = 0; b < patch.Midi[d].Bindings.size(); ++b)
+			m_MidiMap.Bind(listed, patch.Midi[d].Bindings[b]);
+	}
+	m_AppliedIds.clear();
+	if (m_MidiPage) m_MidiPage->Refresh();
 
 	ThawAll();
 	m_Sidecars = sidecars.empty() ? m_FilePath + "_files/" : sidecars;
@@ -2369,6 +2488,7 @@ bool SynthModular::ApplyPage(const Spiral::Core::PatchDescription &patch, const 
 			if (merge || PatchID.empty() || *end || ID < 0 || m_DeviceWinMap.find(ID) != m_DeviceWinMap.end())
 				ID = m_NextID++;
 			ids[PatchID] = ID;
+			m_AppliedIds[PatchID] = ID;
 			if (!merge && m_NextID <= ID) m_NextID = ID + 1;
 
 			if (device.IsSubPatch())
@@ -2836,6 +2956,7 @@ void SynthModular::cb_DrawerCollapse (void* v) {
 // but make sure it shows what the patch says now.
 inline void SynthModular::cb_AboutPatch_i (Fl_Widget *o, void *v) {
      if (!m_Drawer) return;
+     m_Drawer->ShowMidi(false);
      if (m_Drawer->Collapsed()) m_Drawer->SetCollapsed(false);
      else m_Drawer->Refresh();
      LayoutChrome();
@@ -2843,6 +2964,163 @@ inline void SynthModular::cb_AboutPatch_i (Fl_Widget *o, void *v) {
 
 void SynthModular::cb_AboutPatch (Fl_Widget* o, void* v) {
      ((SynthModular*)v)->cb_AboutPatch_i (o, v);
+}
+
+inline void SynthModular::cb_MidiBindings_i (Fl_Widget *o, void *v) {
+     if (!m_Drawer) return;
+     m_Drawer->ShowMidi(true);
+     if (m_Drawer->Collapsed()) m_Drawer->SetCollapsed(false);
+     else m_Drawer->Refresh();
+     if (m_MidiPage) m_MidiPage->Refresh();
+     LayoutChrome();
+}
+
+void SynthModular::cb_MidiBindings (Fl_Widget* o, void* v) {
+     ((SynthModular*)v)->cb_MidiBindings_i (o, v);
+}
+
+//////////////////////////////////////////////////////////
+// Binding a control to MIDI: the drawer's MIDI page asks, and the canvas
+// picks a device and then the controls on it, the way a page inspector
+// picks an element: whatever the pointer is over is outlined, and a click
+// names it rather than acting on it.
+
+std::string SynthModular::cb_MidiDeviceName (const std::string &device, void *v) {
+     SynthModular *synth = (SynthModular*)v;
+     map<int,DeviceWin*>::iterator i = synth->m_DeviceWinMap.find(atoi(device.c_str()));
+     if (i == synth->m_DeviceWinMap.end() || !i->second->m_DeviceGUI) return string();
+     return i->second->m_DeviceGUI->GetName() + " " + device;
+}
+
+void SynthModular::cb_PickMidiDevice (void *v) {
+     SynthModular *synth = (SynthModular*)v;
+     if (synth->m_Canvas->Picking() || synth->m_PickDevice >= 0) synth->StopMidiPick();
+     else synth->PickMidiDevice();
+}
+
+void SynthModular::cb_PickMidiControl (const std::string &device, void *v) {
+     ((SynthModular*)v)->PickMidiControl(atoi(device.c_str()));
+}
+
+void SynthModular::cb_LearnMidi (void (*learned)(int, int, void *), void *learnData, void *v) {
+     ((SynthModular*)v)->LearnMidi(learned, learnData);
+}
+
+void SynthModular::cb_MidiSource (const std::string &source, void *v) {
+     // The same setting as the options window's MIDI device, for this run.
+     SpiralInfo::MIDIFILE = source;
+     ((SynthModular*)v)->m_Info.MIDIFILE = source;
+     Spiral::Core::MidiDevice::SetDeviceName(source);
+}
+
+void SynthModular::PickMidiDevice()
+{
+	StopMidiPick();
+	m_Canvas->StartPick(cb_DeviceAt, cb_DevicePicked, this, "Click a device to bind its controls to MIDI \xc2\xb7 Esc to stop");
+	if (m_MidiPage) m_MidiPage->SetPicking(true);
+}
+
+// The device alone in the middle of the view, open, and its controls the
+// thing the pointer picks.
+void SynthModular::PickMidiControl(int id)
+{
+	map<int,DeviceWin*>::iterator i = m_DeviceWinMap.find(id);
+	if (i == m_DeviceWinMap.end() || !i->second->m_DeviceGUI) return;
+	if (m_PickDevice != id)
+	{
+		StopMidiPick();
+		Fl_DeviceGUI *gui = i->second->m_DeviceGUI;
+		m_PickOpened = gui->IsMinimised();
+		if (m_PickOpened) gui->Maximise();
+		m_PickDevice = id;
+		m_Canvas->Isolate(id);
+		m_Canvas->CenterOn(id);
+	}
+	m_Canvas->StartPick(cb_ControlAt, cb_ControlPicked, this,
+		"Click a control to bind it to MIDI \xc2\xb7 Esc when done");
+	if (m_MidiPage) m_MidiPage->SetPicking(true);
+}
+
+void SynthModular::StopMidiPick()
+{
+	if (m_Canvas && m_Canvas->Picking()) m_Canvas->StopPick();
+	if (m_Canvas) m_Canvas->Isolate(-1);
+	if (m_PickDevice >= 0 && m_PickOpened)
+	{
+		map<int,DeviceWin*>::iterator i = m_DeviceWinMap.find(m_PickDevice);
+		if (i != m_DeviceWinMap.end() && i->second->m_DeviceGUI) i->second->m_DeviceGUI->Minimise();
+	}
+	m_PickDevice = -1;
+	m_PickOpened = false;
+	if (m_MidiPage) m_MidiPage->SetPicking(false);
+}
+
+static SpiralPanels::Panel *PanelOf(DeviceWin *win)
+{
+	if (!win || !win->m_DeviceGUI || !win->m_Device) return NULL;
+	SpiralPanels::PanelEditor *editor = dynamic_cast<SpiralPanels::PanelEditor *>(win->m_DeviceGUI->GetPluginWindow());
+	return editor ? editor->GetPanel() : NULL;
+}
+
+// The device on top under the pointer, on the page shown, if it has a
+// panel to bind.
+bool SynthModular::cb_DeviceAt (Fl_Canvas *canvas, int x, int y, Fl_Canvas::Pick &out, void *v) {
+     SynthModular *synth = (SynthModular*)v;
+     for (int n = canvas->children(); n-- > 0; )
+     {
+          Fl_DeviceGUI *gui = dynamic_cast<Fl_DeviceGUI*>(canvas->child(n));
+          if (!gui || !gui->visible() || x < gui->x() || y < gui->y() || x >= gui->x() + gui->w() || y >= gui->y() + gui->h())
+               continue;
+          map<int,DeviceWin*>::iterator i = synth->m_DeviceWinMap.find(gui->GetID());
+          if (i == synth->m_DeviceWinMap.end() || !PanelOf(i->second)) return false;
+          out.Device = gui->GetID();
+          out.X = gui->x(); out.Y = gui->y(); out.W = gui->w(); out.H = gui->h();
+          return true;
+     }
+     return false;
+}
+
+void SynthModular::cb_DevicePicked (Fl_Canvas *canvas, const Fl_Canvas::Pick &pick, void *v) {
+     SynthModular *synth = (SynthModular*)v;
+     if (pick.Device < 0) { synth->StopMidiPick(); return; }
+     char listed[32];
+     snprintf(listed, sizeof listed, "%d", pick.Device);
+     synth->m_MidiMap.Add(listed);
+     if (synth->m_MidiPage) synth->m_MidiPage->Refresh();
+     synth->PickMidiControl(pick.Device);
+}
+
+// The smallest named control under the pointer that MIDI can move.
+bool SynthModular::cb_ControlAt (Fl_Canvas *canvas, int x, int y, Fl_Canvas::Pick &out, void *v) {
+     SynthModular *synth = (SynthModular*)v;
+     map<int,DeviceWin*>::iterator i = synth->m_DeviceWinMap.find(synth->m_PickDevice);
+     SpiralPanels::Panel *panel = i == synth->m_DeviceWinMap.end() ? NULL : PanelOf(i->second);
+     if (!panel) return false;
+     int area = -1;
+     for (size_t n = 0; n < panel->ControlCount(); ++n)
+     {
+          SpiralPanels::PanelControl *control = panel->Control(n);
+          Fl_Widget *w = control->Widget();
+          if (!w || !w->visible_r() || control->Name().empty() || !control->Drivable()) continue;
+          if (x < w->x() || y < w->y() || x >= w->x() + w->w() || y >= w->y() + w->h()) continue;
+          if (area >= 0 && w->w() * w->h() >= area) continue;
+          area = w->w() * w->h();
+          out.Device = synth->m_PickDevice;
+          out.Control = control->Name();
+          out.X = w->x(); out.Y = w->y(); out.W = w->w(); out.H = w->h();
+     }
+     return area >= 0;
+}
+
+// A control picked opens its binding, and the pick goes on, so the next
+// control on the device is a click away; Escape or a click on nothing ends it.
+void SynthModular::cb_ControlPicked (Fl_Canvas *canvas, const Fl_Canvas::Pick &pick, void *v) {
+     SynthModular *synth = (SynthModular*)v;
+     if (pick.Device < 0) { synth->StopMidiPick(); return; }
+     char listed[32];
+     snprintf(listed, sizeof listed, "%d", pick.Device);
+     if (synth->m_MidiPage) synth->m_MidiPage->EditBinding(listed, pick.Control);
+     synth->PickMidiControl(pick.Device);
 }
 
 /////////////////////////////////

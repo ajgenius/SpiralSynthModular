@@ -23,6 +23,10 @@
 #include "JSON.h"
 #include "SpiralPlugin.h"
 #include <FL/Fl_Widget.H>
+#include <FL/Fl_Valuator.H>
+#include <FL/Fl_Choice.H>
+#include <FL/Fl_Button.H>
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 
@@ -107,7 +111,8 @@ namespace SpiralPanels
 		m_ValueBound(false),
 		m_Toggle(false),
 		m_Node(&node),
-		m_Binding(NULL)
+		m_Binding(NULL),
+		m_DrivenOn(false)
 	{
 		m_Name = TextOf(node.Get("name"));
 		m_Tooltip = TextOf(node.Get("tooltip"));
@@ -305,6 +310,70 @@ namespace SpiralPanels
 			m_Binding->Refresh();
 		else
 			Load();
+	}
+
+	bool PanelControl::Drivable() const
+	{
+		return dynamic_cast<Fl_Valuator *>(m_Widget) || dynamic_cast<Fl_Choice *>(m_Widget)
+			|| dynamic_cast<Fl_Button *>(m_Widget);
+	}
+
+	bool PanelControl::Drive(double amount)
+	{
+		if (!Drivable() || !m_Widget->active_r())
+			return false;
+		amount = amount < 0 ? 0 : amount > 1 ? 1 : amount;
+
+		// The widget is set and its callback run, so the panel writes what it
+		// would for the pointer: the mapping, the writes, the linked controls.
+		if (Fl_Valuator *valuator = dynamic_cast<Fl_Valuator *>(m_Widget))
+		{
+			const double low = valuator->minimum(), high = valuator->maximum();
+			const double value = valuator->clamp(valuator->round(low + amount * (high - low)));
+			if (valuator->value(value))
+				valuator->do_callback();
+			return true;
+		}
+		if (Fl_Choice *choice = dynamic_cast<Fl_Choice *>(m_Widget))
+		{
+			// size() counts the menu's terminator.
+			const int items = choice->size() - 1;
+			if (items <= 0)
+				return false;
+			const int item = std::min(items - 1, (int)(amount * items));
+			if (choice->value() != item)
+			{
+				choice->value(item);
+				choice->do_callback();
+			}
+			return true;
+		}
+		Fl_Button *button = static_cast<Fl_Button *>(m_Widget);
+		const bool on = amount >= 0.5;
+		const bool pressed = on && !m_DrivenOn;
+		m_DrivenOn = on;
+		switch (button->type())
+		{
+			case FL_TOGGLE_BUTTON:
+				if (button->value() != on)
+				{
+					button->value(on);
+					button->do_callback();
+				}
+				break;
+			case FL_RADIO_BUTTON:
+				if (on && !button->value())
+				{
+					button->setonly();
+					button->do_callback();
+				}
+				break;
+			default:
+				if (pressed)
+					button->do_callback();
+				break;
+		}
+		return true;
 	}
 
 	double PanelControl::Value() const

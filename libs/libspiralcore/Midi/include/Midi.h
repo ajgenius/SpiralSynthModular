@@ -27,6 +27,7 @@
 #include <limits.h>
 #include <queue>
 #include <string>
+#include <vector>
 #include <pthread.h>
 #include "config.h"
 #include "MidiBackend.h"
@@ -37,6 +38,8 @@ namespace Spiral
 {
 namespace Core
 {
+
+class MidiQueue;
 
 class MidiEvent
 {
@@ -81,6 +84,17 @@ public:
 	float GetClock() { return m_Clock; }
 	string GetBackendName() { return m_BackendName; }
 	string GetStatus();
+	// The backend's input ports, and the one asked for by SetDeviceName.
+	vector<string> Sources();
+	static string GetDeviceName() { return m_DeviceName; }
+
+	/* The patch's own MIDI input, apart from the Midi devices in it: every
+	   channel message heard, whether or not a device reads its channel.
+	   Collect drains the backend, and the host calls it once a period so
+	   the input runs with no Midi device in the patch. One reader takes
+	   them off, without locking; what it does not take in time is lost. */
+	void Collect();
+	bool ReadPatchInput(MidiPacket &packet);
 
 private:
 	MidiDevice(Type t);
@@ -93,6 +107,7 @@ private:
 	float m_Clock;
 	int   m_ClockCount;
 	queue<MidiEvent> m_EventVec[16];
+	MidiQueue *m_PatchInput;
 	static MidiDevice *m_Singleton;
 	pthread_mutex_t* m_Mutex;
 	static string m_AppName;

@@ -311,6 +311,7 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 	m_About(NULL), m_AboutBuffer(NULL),
 	m_License(NULL), m_LicenseMenu(NULL), m_Bundle(NULL), m_ViewLicense(NULL), m_Dates(NULL), m_PatchVoices(NULL), m_PatchPlays(NULL), m_CreditHeader(NULL),
 	m_AddCredit(NULL), m_PortSection(NULL), m_Mode(NULL), m_Voices(NULL), m_AddInput(NULL), m_AddEvents(NULL), m_AddOutput(NULL),
+	m_MidiPage(NULL), m_PatchTab(NULL), m_MidiTab(NULL), m_MidiShown(false),
 	m_RemoveRow(0), m_RemovePortRow(0), m_AddPortInput(false), m_DragFrom(0), m_DragY(0)
 {
 	box(FL_NO_BOX);
@@ -437,6 +438,20 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 	m_PortSection->resizable(NULL);
 	m_PortSection->end();
 
+	// The tabs, shown once there is a MIDI page to switch to.
+	m_PatchTab = new Fl_Button(x + Rail + Pad, y + Pad, 72, RowHeight - 2, "Patch");
+	m_MidiTab = new Fl_Button(x + Rail + Pad + 72, y + Pad, 72, RowHeight - 2, "MIDI");
+	PlasticButton(m_PatchTab);
+	PlasticButton(m_MidiTab);
+	m_PatchTab->type(FL_RADIO_BUTTON);
+	m_MidiTab->type(FL_RADIO_BUTTON);
+	m_PatchTab->tooltip("What the patch says about itself");
+	m_MidiTab->tooltip("The patch's MIDI input, and the controls it moves");
+	m_PatchTab->callback(TabClicked, this);
+	m_MidiTab->callback(TabClicked, this);
+	m_PatchTab->hide();
+	m_MidiTab->hide();
+
 	end();
 	resizable(NULL);
 
@@ -476,6 +491,8 @@ void Fl_BoundaryDrawer::draw()
 	m_DocumentSection->color(color());
 	m_CreditSection->color(color());
 	m_PortSection->color(color());
+	if (m_MidiPage)
+		m_MidiPage->color(color());
 
 	fl_color(color());
 	fl_rectf(x(), y(), w(), h());
@@ -554,7 +571,9 @@ void Fl_BoundaryDrawer::ShowSections()
 {
 	// Collapsed is the rail alone. The sections stay built so opening
 	// does not have to recreate the fields.
-	if (ShowsDocument() && !m_Collapsed)
+	const bool midi = ShowsMidi() && !m_Collapsed;
+
+	if (ShowsDocument() && !m_Collapsed && !midi)
 	{
 		m_DocumentSection->show();
 		m_CreditSection->show();
@@ -565,10 +584,72 @@ void Fl_BoundaryDrawer::ShowSections()
 		m_CreditSection->hide();
 	}
 
-	if (ShowsPorts() && !m_Collapsed)
+	if (ShowsPorts() && !m_Collapsed && !midi)
 		m_PortSection->show();
 	else
 		m_PortSection->hide();
+
+	if (!m_MidiPage)
+		return;
+
+	if (midi)
+		m_MidiPage->show();
+	else
+		m_MidiPage->hide();
+
+	if (m_Collapsed)
+	{
+		m_PatchTab->hide();
+		m_MidiTab->hide();
+		return;
+	}
+
+	m_PatchTab->label(ShowsPorts() ? "Subpatch" : "Patch");
+	m_PatchTab->value(!midi);
+	m_MidiTab->value(midi);
+	m_PatchTab->show();
+	m_MidiTab->show();
+}
+
+void Fl_BoundaryDrawer::BindMidi(Fl_Group *page)
+{
+	if (m_MidiPage)
+		remove(m_MidiPage);
+	m_MidiPage = page;
+	if (page)
+	{
+		add(page);
+		page->color(color());
+	}
+	Relayout();
+	ShowSections();
+	redraw();
+}
+
+bool Fl_BoundaryDrawer::ShowsMidi() const
+{
+	return m_MidiPage && m_MidiShown;
+}
+
+void Fl_BoundaryDrawer::ShowMidi(bool on)
+{
+	m_MidiShown = on;
+	ShowSections();
+	redraw();
+	if (window())
+		window()->redraw();
+}
+
+void Fl_BoundaryDrawer::TabClicked(Fl_Widget *widget, void *data)
+{
+	Fl_BoundaryDrawer *self = (Fl_BoundaryDrawer *)data;
+	self->ShowMidi(widget == self->m_MidiTab);
+}
+
+// The sections sit below the tabs when there are any.
+int Fl_BoundaryDrawer::ContentTop() const
+{
+	return y() + Pad + (m_MidiPage ? RowHeight : 0);
 }
 
 int Fl_BoundaryDrawer::RailWidth() const
@@ -593,7 +674,7 @@ bool Fl_BoundaryDrawer::Collapsed() const
 
 bool Fl_BoundaryDrawer::PanelShown() const
 {
-	return !m_Collapsed && (ShowsDocument() || ShowsPorts());
+	return !m_Collapsed && (ShowsDocument() || ShowsPorts() || ShowsMidi());
 }
 
 void Fl_BoundaryDrawer::SetCollapsed(bool collapsed)
@@ -617,7 +698,7 @@ void Fl_BoundaryDrawer::Relayout()
 	const int contentX = x() + Rail;
 	const int contentW = std::max(0, w() - Rail - 2 * Pad);
 
-	m_DocumentSection->resize(contentX + Pad, y() + Pad, contentW,
+	m_DocumentSection->resize(contentX + Pad, ContentTop(), contentW,
 		DocumentHeight());
 
 	size_t input = 0;
@@ -677,10 +758,19 @@ void Fl_BoundaryDrawer::Relayout()
 		m_PatchPlays->resize(m_DocumentSection->x() + m_DocumentSection->w() - PlaysW,
 			m_DocumentSection->y() + RowTop(FieldCount) + 2 * RowHeight, PlaysW, RowHeight - 2);
 
-	m_CreditSection->resize(contentX + Pad, m_DocumentSection->y() + m_DocumentSection->h() + Pad,
-		contentW, std::max(0, h() - m_DocumentSection->h() - 3 * Pad));
+	const int creditTop = m_DocumentSection->y() + m_DocumentSection->h() + Pad;
+	m_CreditSection->resize(contentX + Pad, creditTop,
+		contentW, std::max(0, y() + h() - Pad - creditTop));
 
-	m_PortSection->resize(contentX + Pad, y() + Pad, contentW, std::max(0, h() - 2 * Pad));
+	m_PortSection->resize(contentX + Pad, ContentTop(), contentW, std::max(0, y() + h() - Pad - ContentTop()));
+
+	if (m_PatchTab)
+	{
+		m_PatchTab->resize(contentX + Pad, y() + Pad, 72, RowHeight - 2);
+		m_MidiTab->resize(contentX + Pad + 72, y() + Pad, 72, RowHeight - 2);
+	}
+	if (m_MidiPage)
+		m_MidiPage->resize(contentX + Pad, ContentTop(), contentW, std::max(0, y() + h() - Pad - ContentTop()));
 
 	PlaceCredits();
 	PlacePorts();

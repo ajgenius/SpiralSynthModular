@@ -42,8 +42,10 @@
 #include "Fl_Canvas.h"
 #include "Fl_BoundaryDrawer.h"
 #include "Fl_Breadcrumb.h"
+#include "Fl_MidiBindings.h"
 #include "SpiralPlugin.h"
 #include "PatchDescription.h"
+#include "MidiMap.h"
 #include "ChannelHandler.h"
 using Spiral::Core::ChannelHandler;
 #include "SettingsWindow.h"
@@ -79,6 +81,11 @@ typedef SpiralWindow SpiralWindowType;
 // typedef Fl_Window SpiralWindowType;
 
 class SettingsWindow;
+
+namespace SpiralPanels
+{
+	class PanelControl;
+}
 
 class DeviceWin
 {
@@ -192,6 +199,20 @@ public:
 	// compares against what it last set rather than rewriting the menus
 	// every pass.
 	void RefreshMenuState();
+
+	// The patch's MIDI map: the devices it lists by patch id and the controls
+	// bound on each, saved with the patch.
+	Spiral::Core::MidiMap &MidiMap() { return m_MidiMap; }
+	// The panel control a binding names; NULL while there is no such device,
+	// panel or control.
+	SpiralPanels::PanelControl *MidiControl(const string &device, const string &control);
+	// The next control change the patch hears goes to learned, with its
+	// channel from 1 to 16 and its number, and moves nothing. Once only;
+	// NULL stops listening.
+	void LearnMidi(void (*learned)(int channel, int controller, void *data), void *data);
+	// Drains the patch's MIDI input and moves the controls bound to it. On
+	// the GUI loop, because a control is moved as the pointer moves it.
+	void ServiceMidiInput();
 private:
 
 
@@ -234,6 +255,21 @@ private:
 	// legacy patch or a new one carries an empty document until it is
 	// saved as a project.
 	Spiral::File::DocumentSection m_Document;
+	Spiral::Core::MidiMap m_MidiMap;
+	void (*m_MidiLearn)(int, int, void *);
+	void *m_MidiLearnData;
+	// The drawer's MIDI page, and the device whose controls are being
+	// picked on the canvas, -1 while none is. A device the pick opened is
+	// closed again after.
+	Fl_MidiBindings *m_MidiPage;
+	int m_PickDevice;
+	bool m_PickOpened;
+	void PickMidiDevice();
+	void PickMidiControl(int id);
+	void StopMidiPick();
+	// Every device the patch being applied placed, on any page, by its
+	// patch id: the names its MIDI map uses.
+	std::map<std::string, int> m_AppliedIds;
 	bool m_MenuStateKnown, m_MenuSelection, m_MenuPaste, m_MenuSavePoints;
 	bool m_MenuPackage;
 
@@ -316,6 +352,19 @@ private:
 	// Canvas popup: open the drawer on the patch's own entry.
 	inline void cb_AboutPatch_i (Fl_Widget *o, void *v);
 	static void cb_AboutPatch (Fl_Widget *o, void *v);
+	// View menu: open the drawer on the MIDI page.
+	inline void cb_MidiBindings_i (Fl_Widget *o, void *v);
+	static void cb_MidiBindings (Fl_Widget *o, void *v);
+	// The MIDI page's hooks, and the canvas picks it starts.
+	static std::string cb_MidiDeviceName (const std::string &device, void *v);
+	static void cb_PickMidiDevice (void *v);
+	static void cb_PickMidiControl (const std::string &device, void *v);
+	static void cb_LearnMidi (void (*learned)(int, int, void *), void *learnData, void *v);
+	static void cb_MidiSource (const std::string &source, void *v);
+	static bool cb_DeviceAt (Fl_Canvas *canvas, int x, int y, Fl_Canvas::Pick &out, void *v);
+	static void cb_DevicePicked (Fl_Canvas *canvas, const Fl_Canvas::Pick &pick, void *v);
+	static bool cb_ControlAt (Fl_Canvas *canvas, int x, int y, Fl_Canvas::Pick &out, void *v);
+	static void cb_ControlPicked (Fl_Canvas *canvas, const Fl_Canvas::Pick &pick, void *v);
 	static void cb_Group (Fl_Widget *o, void *v);
 	static void cb_Ungroup (Fl_Widget *o, void *v);
 	static void cb_PageShown (Fl_Widget *o, void *v);

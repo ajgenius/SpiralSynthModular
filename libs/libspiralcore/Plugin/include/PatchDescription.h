@@ -218,6 +218,32 @@ namespace Core
 		bool IsComment() const { return Devices.empty(); }
 	};
 
+	// A control the patch's MIDI input moves: a controller number on a
+	// channel from 1 to 16, or on any channel when Channel is 0.
+	class MidiBindingDescription
+	{
+	public:
+		std::string Control;
+		long Channel;
+		long Controller;
+
+		MidiBindingDescription(): Channel(0), Controller(0) {}
+		MidiBindingDescription(const std::string &control, long channel, long controller):
+			Control(control), Channel(channel), Controller(controller) {}
+	};
+
+	// A device the patch's MIDI map lists, by patch id, and its bound
+	// controls. A device is listed from when it is added, bound or not.
+	class MidiDeviceDescription
+	{
+	public:
+		std::string Device;
+		std::vector<MidiBindingDescription> Bindings;
+
+		MidiDeviceDescription() {}
+		explicit MidiDeviceDescription(const std::string &device): Device(device) {}
+	};
+
 	class PatchDescription
 	{
 	public:
@@ -225,6 +251,8 @@ namespace Core
 		std::vector<WireDescription> Wires;
 
 		std::map<std::string, std::string> Values;
+
+		std::vector<MidiDeviceDescription> Midi;
 
 		// The patch's own voice pool, as the private tree saves it; zero
 		// inherits the system default.
@@ -259,6 +287,7 @@ namespace Core
 			Objects.clear();
 			Wires.clear();
 			Values.clear();
+			Midi.clear();
 			Voices = 0;
 		}
 
@@ -267,6 +296,7 @@ namespace Core
 			Objects.swap(other.Objects);
 			Wires.swap(other.Wires);
 			Values.swap(other.Values);
+			Midi.swap(other.Midi);
 			const unsigned voices = Voices;
 			Voices = other.Voices;
 			other.Voices = voices;

@@ -72,6 +72,7 @@ EXTRA_DIST += Plugin/include/LADSPAIcon.xpm
 libspiralcore_la_SOURCES += Plugin/include/PassthroughPlugin.h Plugin/src/PassthroughPlugin.cpp Plugin/include/PluginManifest.h Plugin/src/PluginManifest.cpp
 libspiralcore_la_SOURCES += Plugin/include/BackendModule.h Audio/include/AudioBackend.h Audio/src/AudioBackend.cpp Audio/src/AudioBackends.cpp Audio/include/DummyClient.h Audio/src/DummyClient.cpp
 libspiralcore_la_SOURCES += Midi/include/MidiBackend.h Midi/src/MidiBackend.cpp Midi/include/NativeMidi.h Midi/src/NativeMidi.cpp include/ThreadCompatibility.h include/Compatibility.h
+libspiralcore_la_SOURCES += Midi/include/MidiMap.h Midi/src/MidiMap.cpp
 check_PROGRAMS += midi-backend-test native-midi-test midi-device-test
 midi_device_test_SOURCES = Midi/tests/midi-device.cpp
 midi_device_test_LDADD = libspiralcore.la

@@ -30,6 +30,7 @@ using namespace std;
 using namespace Spiral::Core;
 
 int MidiPlugin::m_RefCount = 0;
+bool MidiPlugin::m_OpenedDevice = false;
 
 #include <config.h>
 
@@ -91,9 +92,12 @@ m_NextID(0)
 
 	m_Version=2;
 	
-	if (m_RefCount==0)
+	// The host keeps the device open from startup. A Midi device opens it
+	// only where nothing has, and then the last one closes it again.
+	if (m_RefCount==0 && !MidiDevice::Get())
 	{
 		MidiDevice::Init("SpiralModular",MidiDevice::READ);
+		m_OpenedDevice=true;
 	}
 	
 	m_RefCount++;
@@ -142,7 +146,11 @@ m_NextID(0)
 MidiPlugin::~MidiPlugin()
 {
         m_RefCount--;
-	if (m_RefCount==0) MidiDevice::PackUpAndGoHome();
+	if (m_RefCount==0 && m_OpenedDevice)
+	{
+		MidiDevice::PackUpAndGoHome();
+		m_OpenedDevice=false;
+	}
 }
 
 PluginInfo &MidiPlugin::Initialise(const HostInfo *Host)

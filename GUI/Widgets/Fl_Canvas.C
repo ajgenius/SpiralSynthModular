@@ -60,6 +60,11 @@ cb_AboutPatch(NULL),
 cb_GroupDevices(NULL),
 cb_UngroupDevices(NULL),
 cb_PageChanged(NULL),
+m_PickAt(NULL),
+m_Picked(NULL),
+m_PickData(NULL),
+m_PickHot(false),
+m_Isolated(-1),
 m_Page(-1),
 m_Owned(false),
 m_Order(0),
@@ -129,6 +134,12 @@ void Fl_Canvas::draw()
 			Fl_DeviceGUI *device = AsDevice(&o);
 			if (!device)
 				continue;
+			if (m_Isolated >= 0)
+			{
+				if (device->GetID() == m_Isolated)
+					draw_child(o);
+				continue;
+			}
 			if (device->IsMinimised())
 			{
    	 			draw_child(o);
@@ -144,11 +155,13 @@ void Fl_Canvas::draw()
 			}
 		}
 
-		DrawWires();
+		if (m_Isolated < 0)
+			DrawWires();
 
-		// draw maximised modules on top of everything else
+		// draw maximised modules on top of everything else; an isolated
+		// device was drawn above, alone
    	 	Fl_Widget*const* a = array();
-		for (int i=children(); i--;)
+		for (int i=m_Isolated < 0 ? children() : 0; i--;)
 		{
    			Fl_Widget& o = **a++;
 			Fl_DeviceGUI *device = AsDevice(&o);
@@ -195,18 +208,134 @@ void Fl_Canvas::draw()
 		{
 			Fl_Widget &o = **a++;
 			Fl_DeviceGUI *device = AsDevice(&o);
-			const bool drawn = o.damage() && o.visible();
-			update_child(o);
-			// Its selection outline, which the full redraw draws after it.
-			if (drawn && device && std::find(m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), device->GetID()) != m_Selection.m_DeviceIds.end())
+			if (m_Isolated < 0 || (device && device->GetID() == m_Isolated))
 			{
-				fl_color(FL_YELLOW);
-				fl_rect(o.x(), o.y(), o.w(), o.h());
+				const bool drawn = o.damage() && o.visible();
+				update_child(o);
+				// Its selection outline, which the full redraw draws after it.
+				if (drawn && device && std::find(m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), device->GetID()) != m_Selection.m_DeviceIds.end())
+				{
+					fl_color(FL_YELLOW);
+					fl_rect(o.x(), o.y(), o.w(), o.h());
+				}
 			}
 		}
   	}
-	DrawStrips();
-	DrawSelection();
+	if (m_Isolated < 0)
+	{
+		DrawStrips();
+		DrawSelection();
+	}
+	DrawPick();
+}
+
+////////////////////////////////////////////////////////////////////////
+
+void Fl_Canvas::DrawPick()
+{
+	if (!m_PickAt)
+		return;
+
+	if (m_PickHot)
+	{
+		fl_color(FL_CYAN);
+		fl_line_style(FL_SOLID, 2);
+		fl_rect(m_Hot.X - 2, m_Hot.Y - 2, m_Hot.W + 4, m_Hot.H + 4);
+		fl_line_style(0);
+	}
+
+	// What a click does now, at the top of the view rather than the canvas.
+	Fl_Widget *view = parent() ? parent() : this;
+	fl_font(FL_HELVETICA, 11);
+	const int W = (int)fl_width(m_PickHint.c_str()) + 16, H = 20;
+	fl_draw_box(FL_ROUNDED_BOX, view->x() + 8, view->y() + 8, W, H, FL_CYAN);
+	fl_color(FL_BLACK);
+	fl_draw(m_PickHint.c_str(), view->x() + 8, view->y() + 8, W, H, FL_ALIGN_CENTER);
+}
+
+void Fl_Canvas::StartPick(PickAt at, Picked picked, void *data, const string &hint)
+{
+	m_PickAt = at;
+	m_Picked = picked;
+	m_PickData = data;
+	m_PickHint = hint;
+	m_PickHot = false;
+	ClearIncompleteWire();
+	redraw();
+}
+
+void Fl_Canvas::StopPick()
+{
+	m_PickAt = NULL;
+	m_Picked = NULL;
+	m_PickData = NULL;
+	m_PickHot = false;
+	redraw();
+}
+
+void Fl_Canvas::Isolate(int id)
+{
+	m_Isolated = id;
+	redraw();
+}
+
+// While picking, the pointer is the canvas's own: nothing under it sees a
+// move or a click, so a device can be named without being dragged and a
+// control without being turned.
+int Fl_Canvas::PickEvent(int event)
+{
+	switch (event)
+	{
+		case FL_ENTER:
+		case FL_MOVE:
+		case FL_DRAG:
+		{
+			Pick pick;
+			const bool hot = m_PickAt(this, Fl::event_x(), Fl::event_y(), pick, m_PickData);
+			if (hot != m_PickHot || (hot && (pick.X != m_Hot.X || pick.Y != m_Hot.Y
+			    || pick.W != m_Hot.W || pick.H != m_Hot.H)))
+			{
+				m_PickHot = hot;
+				m_Hot = pick;
+				redraw();
+			}
+			return 1;
+		}
+		case FL_LEAVE:
+			if (m_PickHot)
+			{
+				m_PickHot = false;
+				redraw();
+			}
+			return 1;
+		case FL_PUSH:
+		{
+			Pick pick;
+			if (!m_PickAt(this, Fl::event_x(), Fl::event_y(), pick, m_PickData))
+				pick = Pick();
+			Picked picked = m_Picked;
+			void *data = m_PickData;
+			StopPick();
+			if (picked)
+				picked(this, pick, data);
+			return 1;
+		}
+		case FL_RELEASE:
+			return 1;
+		case FL_KEYBOARD:
+		case FL_SHORTCUT:
+			if (Fl::event_key() != FL_Escape)
+				return 0;
+			{
+				Picked picked = m_Picked;
+				void *data = m_PickData;
+				StopPick();
+				if (picked)
+					picked(this, Pick(), data);
+			}
+			return 1;
+	}
+	return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -620,6 +749,7 @@ void Fl_Canvas::ClearIncompleteWire()
 //  Event handlers for the canvas and the deviceGUIs
 
 int Fl_Canvas::handle (int event) {
+    if (m_PickAt) return PickEvent(event);
     bool stripInput;
     int stripPort;
     if (event==FL_PUSH && StripAt(Fl::event_x(), Fl::event_y(), stripInput, stripPort)) {
@@ -1753,6 +1883,25 @@ void Fl_Canvas::CenterPatch()
 	}
 
 	if (!any) return;
+
+	CenterView(left, top, right, bottom);
+}
+
+void Fl_Canvas::CenterOn(int id)
+{
+	Fl_DeviceGUI *o = FindDevice(id);
+
+	if (!o) return;
+
+	CenterView(o->x() - x(), o->y() - y(), o->x() - x() + o->w(), o->y() - y() + o->h());
+}
+
+// Offsets inside the canvas, as CenterPatch finds them.
+void Fl_Canvas::CenterView(int left, int top, int right, int bottom)
+{
+	Fl_Scroll *scroll = dynamic_cast<Fl_Scroll*>(parent());
+
+	if (!scroll) return;
 
 	// The page is what the scroll shows once its scrollbars are taken off.
 	const int PageW = scroll->w() - scroll->scrollbar.w();

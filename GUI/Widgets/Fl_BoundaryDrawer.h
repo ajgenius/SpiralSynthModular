@@ -62,6 +62,14 @@ public:
 	void BindPorts(Fl_Canvas *canvas);
 	bool ShowsPorts() const;
 
+	/* The patch's MIDI page, beside what the patch says about itself: a
+	   tab at the top of the panel switches between them. The page is the
+	   host's, made with its hooks; the drawer shows it. With no page there
+	   are no tabs. */
+	void BindMidi(Fl_Group *page);
+	bool ShowsMidi() const;
+	void ShowMidi(bool on);
+
 	/* A vertical drag bar, like a GTK paned: drag the rail to set the
 	   panel width. The width is remembered for this process only, not
 	   written anywhere, so a new launch starts collapsed again.
@@ -168,6 +176,10 @@ private:
 	Fl_Button *m_AddInput;
 	Fl_Button *m_AddEvents;
 	Fl_Button *m_AddOutput;
+	Fl_Group *m_MidiPage;
+	Fl_Button *m_PatchTab;
+	Fl_Button *m_MidiTab;
+	bool m_MidiShown;
 
 	static void FieldEdited(Fl_Widget *, void *);
 	static void AboutEdited(Fl_Widget *, void *);
@@ -192,6 +204,8 @@ private:
 	static void RemovePortClicked(Fl_Widget *, void *);
 	static void RemovePortCommitted(void *);
 	static void DragCommitted(void *);
+	static void TabClicked(Fl_Widget *, void *);
+	int ContentTop() const;
 
 	SubPatchDevice *SubPatch() const;
 	void ShowSections();

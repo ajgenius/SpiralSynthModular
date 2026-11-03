@@ -17,6 +17,7 @@
 */
 
 #include "Midi.h"
+#include "NativeMidi.h"
 #include "unistd.h"
 #include "sys/types.h"
 #include "signal.h"
@@ -25,6 +26,9 @@
 using namespace Spiral::Core;
 
 static const int MIDI_SCANBUFSIZE=256;
+// Events kept for a channel nothing reads: the patch input polls with or
+// without a Midi device in the patch, so a channel may never be read.
+static const size_t MIDI_CHANNEL_QUEUE=1024;
 static const int MIDI_KEYOFFSET=0;
 
 static const unsigned char STATUS_START            = 0x80;
@@ -80,6 +84,7 @@ MidiDevice::MidiDevice(Type t) :
 m_Poly (1),
 m_Clock (1.0f),
 m_ClockCount (0),
+m_PatchInput (new MidiQueue),
 m_Backend (NULL)
 {
      m_Mutex = new pthread_mutex_t;
@@ -93,6 +98,7 @@ MidiDevice::~MidiDevice() {
      pthread_mutex_unlock (m_Mutex);
      pthread_mutex_destroy (m_Mutex);
      delete m_Mutex;
+     delete m_PatchInput;
 }
 
 // The named backend, else the first registered that is not the dummy,
@@ -130,6 +136,27 @@ string MidiDevice::GetStatus()
 	string status=m_Backend ? m_Backend->Status() : "no midi backend";
 	pthread_mutex_unlock(m_Mutex);
 	return status;
+}
+
+vector<string> MidiDevice::Sources()
+{
+	pthread_mutex_lock(m_Mutex);
+	vector<string> ports;
+	if (m_Backend) ports=m_Backend->Ports(false);
+	pthread_mutex_unlock(m_Mutex);
+	return ports;
+}
+
+void MidiDevice::Collect()
+{
+	pthread_mutex_lock(m_Mutex);
+	CollectEvents();
+	pthread_mutex_unlock(m_Mutex);
+}
+
+bool MidiDevice::ReadPatchInput(MidiPacket &packet)
+{
+	return m_PatchInput->Pop(packet);
 }
 
 // returns the next event off the list, or an
@@ -199,7 +226,10 @@ void MidiDevice::CollectEvents()
 			}
 		}
 		else if (packet.Status>=STATUS_START && packet.Status<STATUS_END)
+		{
+			m_PatchInput->Push(packet);
 			AddEvent(packet);
+		}
 		// 0xff from the backend is a reset: the notes it knew are gone.
 	}
 }
@@ -270,5 +300,6 @@ void MidiDevice::AddEvent(const MidiPacket &packet)
 		return;
 	}
 
+	if (m_EventVec[EventDevice].size()>=MIDI_CHANNEL_QUEUE) m_EventVec[EventDevice].pop();
 	m_EventVec[EventDevice].push(MidiEvent(MessageType,Note,Volume));
 }

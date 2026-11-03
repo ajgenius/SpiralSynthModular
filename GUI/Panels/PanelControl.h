@@ -65,6 +65,12 @@ namespace SpiralPanels
 		bool Bound() const { return m_Binding != NULL; }
 		bool DependsOn(const PanelProperty &property) const;
 		void Reload();
+		// Moved from outside the panel, by an amount from 0 to 1 across the
+		// control's range, as the pointer would move it: a knob, slider or
+		// spinner to that point, a choice to that item, a button on past the
+		// middle. A momentary button presses once each time it crosses.
+		virtual bool Drivable() const;
+		bool Drive(double amount);
 
 		static std::string TextOf(const Spumoni::JSON *node);
 		static double NumberOf(const Spumoni::JSON *node, double fallback);
@@ -150,6 +156,7 @@ namespace SpiralPanels
 		friend class HandlerSink;
 		Spiral::Data::Binding *m_Binding;
 		Spiral::Data::ControlValue m_Value;
+		bool m_DrivenOn;
 		friend class PanelConverter;
 		friend class Panel;
 	};

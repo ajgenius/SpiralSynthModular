@@ -45,6 +45,8 @@ namespace SpiralPanels
 		bool Save() const { return m_Save; }
 		bool Pending() const { return m_Pending; }
 		void Choose();
+		// A press opens a file dialog: not something a controller should do.
+		virtual bool Drivable() const { return false; }
 
 	protected:
 		PanelFileChoosingButton(Panel &panel, const Spumoni::JSON &node);

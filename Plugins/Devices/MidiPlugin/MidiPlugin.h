@@ -82,6 +82,7 @@ private:
 	int m_NextID;
 	
 	static int m_RefCount;
+	static bool m_OpenedDevice;
 	
 	Spiral::Core::VectorProperty m_Controls;
 	Spiral::Core::SignedProperty &Control(int n)

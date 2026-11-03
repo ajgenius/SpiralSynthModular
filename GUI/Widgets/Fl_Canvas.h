@@ -153,6 +153,30 @@ public:
 	void ResetView();
 	// Scroll the view so the patch sits in the middle of it.
 	void CenterPatch();
+	// Scroll the view so one device sits in the middle of it.
+	void CenterOn(int id);
+
+	/* Picking, as a page inspector picks: until it stops, the canvas takes
+	   the pointer itself and a click names what is under it instead of
+	   acting on it. The host says what that is -- a device, a control on
+	   one -- and its bounds, which are outlined as the pointer passes.
+	   Escape, or a click on nothing, picks Device -1, and either way the
+	   pick has stopped before Picked runs, so Picked may start another. */
+	struct Pick
+	{
+		Pick(): Device(-1), X(0), Y(0), W(0), H(0) {}
+		int Device;
+		string Control;
+		int X, Y, W, H;
+	};
+	typedef bool (*PickAt)(Fl_Canvas *canvas, int x, int y, Pick &out, void *data);
+	typedef void (*Picked)(Fl_Canvas *canvas, const Pick &pick, void *data);
+	void StartPick(PickAt at, Picked picked, void *data, const string &hint);
+	void StopPick();
+	bool Picking() const { return m_PickAt != NULL; }
+	// Only this device is drawn, the patch around it set aside; -1 draws all.
+	void Isolate(int id);
+	int Isolated() const { return m_Isolated; }
         void AddPluginName(const string &s, int ID);
 
         GraphSort* GetGraph() { return &m_Graph; }
@@ -204,6 +228,9 @@ public:
 private:
 	void PopupEditMenu (Fl_Group *group);
 	void DrawSelection();
+	void DrawPick();
+	int PickEvent(int event);
+	void CenterView(int left, int top, int right, int bottom);
 	void CalculateSelection();
 	void DrawWires();
 	void ClearIncompleteWire();
@@ -237,6 +264,13 @@ private:
 	void RenumberBinds(int box, bool input, const vector<int> &moved);
 	int Scheduled(int id, int scope) const;
 	void Reschedule();
+	PickAt m_PickAt;
+	Picked m_Picked;
+	void *m_PickData;
+	string m_PickHint;
+	bool m_PickHot;
+	Pick m_Hot;
+	int m_Isolated;
 	int m_Page;
 	bool m_Owned;
 	list<int> m_Orders[2];
