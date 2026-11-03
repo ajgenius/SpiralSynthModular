@@ -86,8 +86,8 @@ m_WriteHeadPos(0)
 	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 
-	m_Delay = FloatProperty(DefaultLinearFlags, 0.75, 0.0, 1.0, 0.0001, 0.01);
-	m_Mix = FloatProperty(DefaultLinearFlags, 0.4, 0.0, 1.0, 0.0001, 0.01);
+	m_Delay = FloatProperty(DefaultLinearFlags, 0.75, 0.0, 1.0, 0.001, 0.1);
+	m_Mix = FloatProperty(DefaultLinearFlags, 0.4, 0.0, 1.0, 0.01, 0.1);
 
 	RegisterSharedProperty(m_Delay, "Delay", "Delay");
 	RegisterSharedProperty(m_Mix, "Mix", "Mix");
