@@ -471,7 +471,9 @@ runBFormatToQuad(LADSPA_Handle Instance,
        lSampleIndex++) {
     LADSPA_Data fW = 0.353553 * *(pfInW++);
     LADSPA_Data fX = 0.243361 * *(pfInX++);
-    LADSPA_Data fY = 0.243361 * *(pfInY++);
+    /* SSM: fY and fV read the same sample; upstream advanced pfInY for
+       each and read past the end of the input. */
+    LADSPA_Data fY = 0.243361 * *pfInY;
     LADSPA_Data fV = 0.096383 * *(pfInY++);
     *(pfOutFL++) = fW + fX + fY + fV;
     *(pfOutFR++) = fW + fX - fY - fV;
@@ -498,18 +500,22 @@ runBFormatToCube(LADSPA_Handle Instance,
   LADSPA_Data * pfOutBFR = poProcessor->m_ppfPorts[DECC_OUT_BFR];
   LADSPA_Data * pfOutBBL = poProcessor->m_ppfPorts[DECC_OUT_BBL];
   LADSPA_Data * pfOutBBR = poProcessor->m_ppfPorts[DECC_OUT_BBR];
-  LADSPA_Data * pfOutTFL = poProcessor->m_ppfPorts[DECC_OUT_BFL];
-  LADSPA_Data * pfOutTFR = poProcessor->m_ppfPorts[DECC_OUT_BFR];
-  LADSPA_Data * pfOutTBL = poProcessor->m_ppfPorts[DECC_OUT_BBL];
-  LADSPA_Data * pfOutTBR = poProcessor->m_ppfPorts[DECC_OUT_BBR];
+  /* SSM: the top layer has its own ports; upstream wrote it over the
+     bottom layer's, twice per sample, past the end of their buffers. */
+  LADSPA_Data * pfOutTFL = poProcessor->m_ppfPorts[DECC_OUT_TFL];
+  LADSPA_Data * pfOutTFR = poProcessor->m_ppfPorts[DECC_OUT_TFR];
+  LADSPA_Data * pfOutTBL = poProcessor->m_ppfPorts[DECC_OUT_TBL];
+  LADSPA_Data * pfOutTBR = poProcessor->m_ppfPorts[DECC_OUT_TBR];
 
   for (unsigned long lSampleIndex = 0; 
        lSampleIndex < SampleCount; 
        lSampleIndex++) {
     LADSPA_Data fW = 0.176777 * *(pfInW++);
-    LADSPA_Data fX = 0.113996 * *(pfInX++);
-    LADSPA_Data fY = 0.113996 * *(pfInY++);
-    LADSPA_Data fZ = 0.113996 * *(pfInZ++);
+    /* SSM: as in the quad decoder, one sample of each input per output
+       sample: fS, fT and fV read the same ones as fX, fY and fZ. */
+    LADSPA_Data fX = 0.113996 * *pfInX;
+    LADSPA_Data fY = 0.113996 * *pfInY;
+    LADSPA_Data fZ = 0.113996 * *pfInZ;
     LADSPA_Data fS = 0.036859 * *(pfInX++);
     LADSPA_Data fT = 0.036859 * *(pfInY++);
     LADSPA_Data fV = 0.036859 * *(pfInZ++);

@@ -22,7 +22,24 @@ LADSPAInfo keeps the first copy of a duplicated plugin ID.
 
 ## What was changed
 
-Nothing in the sources. Upstream's `src/Makefile` and `gcc_exports.map` are not
+Three memory errors, each fixed where an `SSM:` comment marks it. A host that
+connects every port, as SSM does, wrote or read past a buffer with each of
+them, and the first corrupted SSM's heap whenever a patch with a feedback
+delay was loaded:
+
+- `src/delay.cpp`: the delay lines allocate four port slots, but the feedback
+  delays (IDs 1058 to 1062) have a fifth, Feedback.
+- `src/ambisonic.cpp`, B-format to quad (1091): the second-order term moved
+  the Y input on a second time each sample, reading twice the block.
+- `src/ambisonic.cpp`, B-format to cube (1092): the same for all three
+  inputs, and the top layer's outputs were written over the bottom layer's.
+
+The decoders' second-order terms now read the same sample as their
+first-order ones, which is a guess at what upstream meant; no patch we have
+uses either decoder. Every plugin here was instantiated, connected and run
+under macOS's Guard Malloc, and these were the only faults.
+
+Upstream's `src/Makefile` and `gcc_exports.map` are not
 vendored: `Makefile.am` builds the same objects into one module, `cmt.so`, and
 exports only `ladspa_descriptor` as upstream's version script does. It is
 compiled without upstream's `-Werror`, so a newer compiler's warnings cannot
