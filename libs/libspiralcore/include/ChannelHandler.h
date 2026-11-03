@@ -134,6 +134,8 @@ private:
     };
 
     std::map<std::string,Channel*> m_ChannelMap;
+    // The same channels in a row, for the update each period to walk.
+    std::vector<std::map<std::string,Channel*>::iterator> m_Order;
 	char m_Command[2];
 	unsigned long m_Frame;
 	

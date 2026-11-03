@@ -69,9 +69,9 @@ void ChannelHandler::UpdateDataNow(unsigned long frame)
 		
 		m_UpdateIndicator=!m_UpdateIndicator;
 
-        for(map<string, Channel*>::iterator i=m_ChannelMap.begin();
-            i!=m_ChannelMap.end(); i++)
+        for(size_t c=0; c<m_Order.size(); c++)
         {
+			map<string, Channel*>::iterator i=m_Order[c];
 			Channel *ch = i->second;
 
             switch (ch->type)
@@ -186,7 +186,9 @@ void ChannelHandler::RegisterData(const string &ID, Type t,void* pData, int size
 	NewCh->requested = false;
 	NewCh->updated   = false;
     memcpy(NewCh->data_buf,NewCh->data,size);
-    m_ChannelMap[ID]=NewCh;
+    pair<map<string,Channel*>::iterator,bool> placed=m_ChannelMap.insert(make_pair(ID,NewCh));
+    if (placed.second) m_Order.push_back(placed.first);
+    else placed.first->second=NewCh;
 
     //pthread_mutex_unlock(m_Mutex);
 }
