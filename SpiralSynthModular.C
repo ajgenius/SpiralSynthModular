@@ -28,6 +28,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <dlfcn.h>
+#include <stdio.h>
 #include <string.h>
 #include <FL/Fl.H>
 #include <FL/Enumerations.H>
@@ -1024,6 +1025,37 @@ static void GrowUnavailablePorts(iostream &s, bool paste, bool merge, map<int,De
 	s.seekg(mark);
 }
 
+static const int POSHSAMPLER_ID = 32;
+
+// A PoshSampler's files are PoshSampler<device>_<slot>.wav, but before 2003-08-16
+// they were named after the plugin's ID, so an older patch's files carry a number
+// that is not the sampler's own, and every sampler in the patch shared them. A sampler
+// without files of its own can take the folder's only group; returns -1 when there is none.
+static int OnlySamplerFiles(const string &dir, int id)
+{
+	set<unsigned> groups;
+
+	if (DIR *directory = opendir(dir.c_str()))
+	{
+		while (struct dirent *entry = readdir(directory))
+		{
+			unsigned group, slot;
+			int length = 0;
+
+			if (sscanf(entry->d_name, "PoshSampler%u_%u.wav%n", &group, &slot, &length) == 2
+			    && length == (int)strlen(entry->d_name) && slot < 8)
+				groups.insert(group);
+		}
+
+		closedir(directory);
+	}
+
+	if (groups.size() != 1 || groups.count(id))
+		return -1;
+
+	return *groups.begin();
+}
+
 DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 {
 	DeviceWin *nlw = new DeviceWin;
@@ -1454,6 +1486,7 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 		Fl_Canvas::ClearSelection(m_Canvas);
 	
 	int Num, ID, PluginID, x,y,ps,px,py;
+	vector<pair<int, int> > samplers; // device ID, and the ID its files were saved under
 	
 	if (paste)
 	{
@@ -1579,6 +1612,9 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 				else
 					m_DeviceWinMap[ID]->m_Device->LoadExternalFiles(m_FilePath+"_files/");
 
+				if (LoadAs(PluginID) == POSHSAMPLER_ID)
+					samplers.push_back(make_pair(ID, (paste || merge) ? oldID : ID));
+
 				// Loaded INPUT values must survive the first tick even without an editor.
 				m_DeviceWinMap[ID]->m_Device->GetChannelHandler()->FlushChannels();
 
@@ -1617,6 +1653,24 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool paste, bool merge, const
 				ThawAll();
 				return s;
 			}
+		}
+	}
+
+	const string files = !sidecars.empty() ? sidecars
+		: (paste || merge) ? m_FromFilePath+"_files/" : m_FilePath+"_files/";
+	for (size_t n = 0; n < samplers.size(); ++n)
+	{
+		const int group = OnlySamplerFiles(files, samplers[n].second);
+		bool owned = false;
+		for (size_t m = 0; m < samplers.size(); ++m)
+			owned = owned || samplers[m].second == group;
+
+		// Another sampler's own files are never handed to one that has none.
+		if (group >= 0 && !owned)
+		{
+			SpiralPlugin *sampler = m_DeviceWinMap[samplers[n].first]->m_Device;
+			sampler->LoadExternalFiles(files, group);
+			sampler->GetChannelHandler()->FlushChannels();
 		}
 	}
 
