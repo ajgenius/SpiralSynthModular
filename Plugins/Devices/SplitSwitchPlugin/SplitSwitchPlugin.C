@@ -115,13 +115,12 @@ void SplitSwitchPlugin::SetChans (int n) {
   while (n > m_PluginInfo.NumOutputs - 1) {
     m_PluginInfo.NumOutputs++;
     char t[256];
-    sprintf (t, "Out %d", n);
+    sprintf (t, "Out %d", m_PluginInfo.NumOutputs - 1);
     m_PluginInfo.PortTips.push_back (t);
     AddOutput ();
   }
   while (n < m_PluginInfo.NumOutputs - 1) {
-    vector<string>::iterator i = m_PluginInfo.PortTips.end ();
-    m_PluginInfo.PortTips.erase (i--);
+    m_PluginInfo.PortTips.pop_back ();
     RemoveOutput();
     m_PluginInfo.NumOutputs--;
   }
