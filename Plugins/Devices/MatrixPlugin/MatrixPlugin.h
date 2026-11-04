@@ -171,7 +171,8 @@ private:
 	
 	bool  m_Triggered;
 	bool  m_ClockHigh;
-	int m_CopyPattern;
+	Pattern m_Clipboard; // the pattern as it was copied
+	bool m_Copied;
 	bool  m_PatAdvance;
 	bool  m_PatReset;
 };

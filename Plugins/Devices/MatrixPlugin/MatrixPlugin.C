@@ -87,7 +87,7 @@ m_CurrentNoteCV(0),
 m_CurrentTriggerCV(0),
 m_Triggered(false),
 m_ClockHigh(false),
-m_CopyPattern(0),
+m_Copied(false),
 m_PatAdvance(false),
 m_PatReset(false)
 {
@@ -278,7 +278,7 @@ void MatrixPlugin::Reset()
 	m_CurrentTriggerCV = 0;
 	m_Triggered = false;
 	m_ClockHigh = false;
-	m_CopyPattern = 0;
+	m_Copied = false;
 	m_PatAdvance = false;
 	m_PatReset = false;
 }
@@ -528,7 +528,8 @@ void MatrixPlugin::ExecuteCommands()
 					m_GUIArgs.Y + m_Matrix[Edited()].Octave*12));
 			break;
 			case COPY :
-				m_CopyPattern = Edited();
+				m_Clipboard = m_Matrix[Edited()];
+				m_Copied = true;
 			break;
 			case PASTE :
 				PastePattern();
@@ -625,8 +626,12 @@ void MatrixPlugin::ClearNotes(int pattern)
 	while (NoteCount(pattern) > 0) PatternProperties(pattern).RemoveLast();
 }
 
+// The notes copied are added to the pattern's own, at their pitches, and the
+// grid shows them from the copy's octave: a cell empty in the copy leaves
+// the cell it lands on as it was. With nothing copied, pattern 0 is pasted,
+// as before.
 void MatrixPlugin::PastePattern() {
-     const Pattern &from = m_Matrix[m_CopyPattern];
+     const Pattern &from = m_Copied ? m_Clipboard : m_Matrix[0];
      Pattern &to = m_Matrix[Edited()];
      to.Length = from.Length;
      to.Speed = from.Speed;
@@ -634,8 +639,11 @@ void MatrixPlugin::PastePattern() {
      to.Triggers = from.Triggers;
      for (int y=0; y<MATRIX_PITCHES; y++) {
          for (int x=0; x<MATX; x++) {
-             to.Matrix[x][y] = from.Matrix[x][y];
-             to.End[x][y] = from.End[x][y];
+             if (from.Matrix[x][y]) {
+                 to.Matrix[x][y] = true;
+                 to.Volume[x][y] = from.Volume[x][y];
+                 to.End[x][y] = (unsigned char)NoteEnd(from, x, y);
+             }
          }
      }
 }
