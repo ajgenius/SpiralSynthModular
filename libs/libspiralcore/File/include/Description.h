@@ -52,6 +52,17 @@ namespace Core
 		Description &Value(const NoteProperty &p);
 
 		Description &Key(const std::string &key, const std::string &propertyClass);
+		// What a key does not say about a node on its path: the class and
+		// name of a property that holds others, a list or a pattern, or the
+		// name of one held. The file writer gives them to the nodes it
+		// builds from the keys, and a file read back keeps them here, so
+		// the private tree's named lists come through as they went in.
+		struct Shape
+		{
+			std::string Key, Class, Name;
+		};
+		Description &Shaped(const std::string &key, const std::string &propertyClass, const std::string &name);
+		const std::vector<Shape> &Shapes() const { return m_Shapes; }
 
 		// A literal between values: s << " ".
 		Description &Separator(const char *text);
@@ -163,6 +174,7 @@ namespace Core
 		void AddValue(const std::string &text);
 
 		std::vector<std::string> m_Values;
+		std::vector<Shape> m_Shapes;
 		std::vector<std::string> m_Between;   // ! always m_Values.size() + 1 entries
 		std::vector<std::string> m_Keys;
 		std::vector<std::string> m_Classes;

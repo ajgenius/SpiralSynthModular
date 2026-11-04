@@ -34,6 +34,19 @@ namespace Core
 		return *this;
 	}
 
+	Description &Description::Shaped(const std::string &key, const std::string &propertyClass,
+		const std::string &name)
+	{
+		if (key.empty() || (propertyClass.empty() && name.empty()))
+			return *this;
+		Shape shape;
+		shape.Key = key;
+		shape.Class = propertyClass;
+		shape.Name = name;
+		m_Shapes.push_back(shape);
+		return *this;
+	}
+
 	static std::string Folded(const std::string &text)
 	{
 		std::string out(text);
@@ -163,6 +176,7 @@ namespace Core
 	{
 		out = Description();
 		out.m_Named = m_Description.m_Named;
+		out.m_Shapes = m_Description.m_Shapes;
 		out.m_Between[0] = m_Description.m_Between[m_At];
 		for (; m_At < m_End; ++m_At)
 		{

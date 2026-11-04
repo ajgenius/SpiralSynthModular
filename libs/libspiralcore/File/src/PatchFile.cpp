@@ -79,7 +79,8 @@ namespace Spiral
 			{
 				if (propertyClass == "StringProperty") return "string";
 				if (propertyClass == "NoteProperty") return "note";
-				if (propertyClass == "VectorProperty" || propertyClass == "ComplexProperty") return "complex";
+				if (propertyClass == "VectorProperty" || propertyClass == "ComplexProperty"
+				    || propertyClass == "ListProperty" || propertyClass == "MatrixPattern") return "complex";
 				return "numeric";
 			}
 
@@ -91,8 +92,14 @@ namespace Spiral
 					{
 						char index[32];
 						std::snprintf(index, sizeof index, "[%u]", (unsigned)i);
-						Flatten(property.Children[i], path + index, out);
+						const PropertyDescription &child = property.Children[i];
+						const bool holds = child.Type == "complex" || !child.Children.empty();
+						if (!path.empty())
+							out.Shaped(path + index, holds ? child.PropertyClassName : std::string(), child.Name);
+						Flatten(child, path + index, out);
 					}
+					if (!path.empty() && path.find('[') == std::string::npos)
+						out.Shaped(path, property.PropertyClassName, std::string());
 					return;
 				}
 				if (path.empty())
@@ -140,6 +147,28 @@ namespace Spiral
 				node->Type = TypeOf(classes[i]);
 				if (field.empty()) node->SetValue(classes[i] == "ToggleProperty" ? OnOff(values[i]) : values[i]);
 				else node->SetValue(field, values[i]);
+			}
+
+			// The classes and names the keys cannot carry, on nodes the
+			// values built: a shape for a node no value reached is dropped.
+			const std::vector<Description::Shape> &shapes = described.Shapes();
+			for (size_t s = 0; s < shapes.size(); ++s)
+			{
+				std::string name, field; std::vector<size_t> indices;
+				SplitPath(shapes[s].Key, name, indices, field);
+				PropertyDescription *node = out.FindProperty(name);
+				for (size_t d = 0; node && d < indices.size(); ++d)
+					node = indices[d] < node->Children.size() ? &node->Children[indices[d]] : NULL;
+				if (!node || !field.empty())
+					continue;
+				if (!shapes[s].Class.empty())
+				{
+					node->PropertyClassName = shapes[s].Class;
+					if (TypeOf(shapes[s].Class) == "complex")
+						node->Type = "complex";
+				}
+				if (!indices.empty())
+					node->Name = shapes[s].Name;
 			}
 		}
 

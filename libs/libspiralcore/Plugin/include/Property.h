@@ -218,7 +218,7 @@ namespace Core
 		inline void UnReference() { m_References--; }
 
 		inline std::string GetKey() const { return m_Name; }
-		inline std::string GetLabel() { return m_Label; }
+		inline std::string GetLabel() const { return m_Label; }
 		inline std::string GetHint() { return m_Hint; }
 
 		virtual void SetKey(std::string Key) { m_Name = Key; }
@@ -761,6 +761,26 @@ namespace Core
 		}
 		void CopyContents(ComplexProperty &Source);
 		void Release();
+	};
+
+	// A list of properties, under the class name the private tree's files
+	// give one: the same vector, written as a ListProperty.
+	class ListProperty : public VectorProperty
+	{
+	public:
+		ListProperty() {}
+		ListProperty(SignedType Flags): VectorProperty(Flags) {}
+		ListProperty(const ListProperty &Copy): VectorProperty(Copy) {}
+
+		virtual Property *Duplicate()
+		{
+			return new ListProperty(*this);
+		}
+
+		virtual std::string ClassName()
+		{
+			return "ListProperty";
+		}
 	};
 }
 }
