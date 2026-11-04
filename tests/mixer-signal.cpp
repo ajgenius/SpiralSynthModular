@@ -1,24 +1,24 @@
 #ifdef TEST_STEREO
 #include "StereoMixerPlugin.h"
 typedef StereoMixerPlugin Mixer;
-static const char GainCommand = Mixer::SETCH;
 static const float Scale = 0.5f;
 #else
 #include "MixerPlugin.h"
 typedef MixerPlugin Mixer;
-static const char GainCommand = Mixer::SETMIX;
 static const float Scale = 1.0f;
 #endif
 #include <cassert>
 #include <limits>
 #include <sstream>
 
-static void Control(Mixer &mixer, int channel, float value, char command = GainCommand)
+// A level or a pan is the channel's own property (Volume2, Pan2), written
+// through its channel as a panel writes it.
+static void Control(Mixer &mixer, int channel, float value, const char *what = "Volume")
 {
 	ChannelHandler *ch = mixer.GetChannelHandler();
-	ch->Set("Num", channel);
-	ch->Set("Value", value);
-	ch->SetCommand(command);
+	char name[32];
+	snprintf(name, sizeof name, "%s%d", what, channel);
+	ch->Set(name, value);
 	mixer.UpdateChannelHandler();
 	mixer.ExecuteCommands();
 }
@@ -85,15 +85,15 @@ int main()
 	Control(mixer, 1, 1.0f);
 	good.Set(std::numeric_limits<float>::max());
 #ifdef TEST_STEREO
-	Control(mixer, 0, 1.0f, Mixer::SETPAN);
-	Control(mixer, 1, 1.0f, Mixer::SETPAN);
+	Control(mixer, 0, 1.0f, "Pan");
+	Control(mixer, 1, 1.0f, "Pan");
 	mixer.Execute();
 	assert(mixer.GetOutput(0, &out));
 	assert((*out)[0] == std::numeric_limits<float>::max());
 	assert(mixer.GetOutput(1, &out));
 	assert((*out)[0] == 0.0f);
-	Control(mixer, 0, 0.5f, Mixer::SETPAN);
-	Control(mixer, 1, 0.5f, Mixer::SETPAN);
+	Control(mixer, 0, 0.5f, "Pan");
+	Control(mixer, 1, 0.5f, "Pan");
 #else
 	Expect(mixer, std::numeric_limits<float>::max());
 #endif
@@ -107,9 +107,9 @@ int main()
 	{
 		cv.Set(invalid[i]);
 		Expect(mixer, 0.75f);
-		Control(mixer, 1, invalid[i], Mixer::SETPAN);
+		Control(mixer, 1, invalid[i], "Pan");
 		Expect(mixer, 0.25f);
-		Control(mixer, 1, 0.5f, Mixer::SETPAN);
+		Control(mixer, 1, 0.5f, "Pan");
 	}
 	cv.Set(2.0f); // Existing extrapolated pan remains valid.
 	mixer.Execute();
@@ -126,7 +126,7 @@ int main()
 	restored.Initialise(&host);
 	Spiral::Core::Description::Reader reader(saved);
 	restored.Apply(reader);
-	assert(!reader.Failed() && !reader.More());
+	assert(!reader.Failed() && (reader.Named() || !reader.More()));
 	Spiral::Core::Description roundtrip;
 	restored.Describe(roundtrip);
 	assert(roundtrip.Values() == saved.Values());

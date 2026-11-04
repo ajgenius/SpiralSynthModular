@@ -56,17 +56,22 @@ struct Host
 
 static void Check(SynthModular &synth, const std::string &path, unsigned expected)
 {
-	Spiral::Core::Description description;
-	Describe(description, synth);
+	Spiral::Core::PatchDescription patch;
+	Describe(patch, synth, "");
 	unsigned count = 0;
-	for (size_t i = 3; i < description.Values().size(); ++i)
+	for (size_t o = 0; o < patch.Objects.size(); ++o)
 	{
-		if (description.Values()[i] != path)
-			continue;
+		for (size_t d = 0; d < patch.Objects[o].Devices.size(); ++d)
+		{
+			const Spiral::Core::DeviceDescription &device = patch.Objects[o].Devices[d];
+			const Spiral::Core::PropertyDescription *file = device.FindProperty("FILENAME");
+			if (!file || file->Value() != path)
+				continue;
 
-		assert(description.Values()[i-3] == "1.021");
-		assert(description.Values()[i-2] == "2");
-		++count;
+			assert(device.FindProperty("VOLUME")->Value() == "1.021");
+			assert(device.FindProperty("PITCH")->Value() == "2");
+			++count;
+		}
 	}
 
 	assert(count == expected);
@@ -98,7 +103,7 @@ int main(int argc, char **argv)
 		"Device 1 Plugin 281\n20 20 6 Stream 0 0 0\n1 1.021 2 "
 		<< path.size() << " " << path << " 0 0 0 1\n-1 0 0\n";
 	std::stringstream input(source.str());
-	host.Synth.StreamPatchIn(input, false, false);
+	host.Synth.StreamPatchIn(input, false);
 	Check(host.Synth, path, 1);
 	Fl_Canvas *canvas = Find<Fl_Canvas>(window);
 	Fl_Menu_Bar *menu = Find<Fl_Menu_Bar>(window);
@@ -114,7 +119,7 @@ int main(int argc, char **argv)
 	}
 
 	std::stringstream merge(source.str());
-	host.Synth.StreamPatchIn(merge, false, true);
+	host.Synth.StreamPatchIn(merge, true);
 	usleep(5000);
 	Check(host.Synth, path, 22);
 	host.Synth.ClearUp();

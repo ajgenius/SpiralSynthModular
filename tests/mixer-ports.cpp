@@ -67,9 +67,10 @@ static unsigned WireCount(Fl_Canvas &canvas)
 	return count;
 }
 
-static void Command(MixerPlugin &mixer, char command)
+// The count is the Channels property, written as a panel's +/- writes it.
+static void Channels(MixerPlugin &mixer, int count)
 {
-	mixer.GetChannelHandler()->SetCommand(command);
+	mixer.GetChannelHandler()->Set("Channels", count);
 	mixer.UpdateChannelHandler();
 	mixer.ExecuteCommands();
 }
@@ -95,26 +96,37 @@ int main()
 		canvas.add(views[id]);
 		devices[id]->SetUpdateInfoCallback(id, Updated);
 	}
-	std::stringstream wires("-1 0 4\n0 0 0 0 1 0 0 0\n0 0 0 0 1 0 3 0\n1 0 0 0 2 0 0 1\n3 0 0 0 4 0 0 1\n");
-	canvas.StreamWiresIn(wires, false, false);
+	// The mixer is wired on inputs 0 and 1; channels 2 and 3 are free.
+	std::stringstream wires("-1 0 4\n0 0 0 0 1 0 0 0\n0 0 0 0 1 0 1 0\n1 0 0 0 2 0 0 1\n3 0 0 0 4 0 0 1\n");
+	canvas.StreamWiresIn(wires, false);
 	assert(WireCount(canvas) == 4);
 	const Sample *input = mixer.GetInput(0);
 	const Sample *output = sink.GetInput(0);
 	const Sample *unrelated = unrelatedSink.GetInput(0);
-	Command(mixer, MixerPlugin::REMOVECHAN);
-	assert(mixer.GetChannels() == 3 && WireCount(canvas) == 3 && disconnected == 1);
+	Channels(mixer, 3);   // an unwired channel goes, and no wire with it
+	assert(mixer.GetChannels() == 3 && WireCount(canvas) == 4 && disconnected == 0);
 	assert(mixer.GetInput(0) == input && sink.GetInput(0) == output);
 	assert(unrelatedSink.GetInput(0) == unrelated);
-	Command(mixer, MixerPlugin::REMOVECHAN);
-	assert(mixer.GetChannels() == 2 && WireCount(canvas) == 3 && disconnected == 1);
-	Command(mixer, MixerPlugin::REMOVECHAN);
+	Channels(mixer, 2);
+	assert(mixer.GetChannels() == 2 && WireCount(canvas) == 4 && disconnected == 0);
+	Channels(mixer, 1);   // below the floor: stays at two
 	assert(mixer.GetChannels() == 2);
-	for (int n = 0; n < 20; ++n) Command(mixer, MixerPlugin::ADDCHAN);
-	assert(mixer.GetChannels() == MAX_CHANNELS && WireCount(canvas) == 3);
+	// Fewer channels stop at the last one wired (05345bcf): wired on input 3
+	// again, the count cannot fall below four. The private tree's Mixer
+	// follows CHANNELS and drops the port, wire and all; which rule the
+	// two trees share is open (see the drift ledger on Panel Convergence).
+	Channels(mixer, 4);
+	std::stringstream more("-1 0 1\n0 0 0 0 1 0 3 0\n");
+	canvas.StreamWiresIn(more, true);
+	assert(mixer.GetChannels() == 4 && WireCount(canvas) == 5);
+	Channels(mixer, 2);
+	assert(mixer.GetChannels() == 4 && WireCount(canvas) == 5 && disconnected == 0);
+	Channels(mixer, MAX_CHANNELS + 4);   // above the ceiling: stops at the most
+	assert(mixer.GetChannels() == MAX_CHANNELS && WireCount(canvas) == 5);
 	assert(mixer.GetInput(0) == input && sink.GetInput(0) == output);
 	// Rebuilt port buttons must retain connection counts as well as wires.
 	canvas.PortClicked(views[1], Fl_DeviceGUI::OUTPUT, 0, false);
-	assert(WireCount(canvas) == 2 && disconnected == 2);
+	assert(WireCount(canvas) == 4 && disconnected == 1);
 	assert(sink.GetInput(0) == NULL && unrelatedSink.GetInput(0) == unrelated);
 	canvas.PortClicked(views[0], Fl_DeviceGUI::OUTPUT, 0, false);
 	assert(WireCount(canvas) == 1 && mixer.GetInput(0) == NULL);

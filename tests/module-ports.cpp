@@ -77,6 +77,21 @@ static void Command(SpiralPlugin &mixer, char command)
 	mixer.ExecuteCommands();
 }
 
+// Jack's port counts are properties the ports follow on the next block.
+static void Follow(SpiralPlugin &plugin)
+{
+	plugin.UpdateChannelHandler();
+	plugin.ExecuteCommands();
+}
+
+// The mixer's count is its Channels property, written as a panel writes it.
+static void Channels(SpiralPlugin &mixer, int count)
+{
+	mixer.GetChannelHandler()->Set("Channels", count);
+	mixer.UpdateChannelHandler();
+	mixer.ExecuteCommands();
+}
+
 static void Check(SpiralPlugin &plugin, bool jack)
 {
 	HostInfo host = HostInfo();
@@ -105,14 +120,14 @@ static void Check(SpiralPlugin &plugin, bool jack)
 	{
 		plugin.GetChannelHandler()->Set("NumInputs", 4);
 		plugin.GetChannelHandler()->Set("NumOutputs", 4);
-		Command(plugin, JackPlugin::SET_PORT_COUNT);
+		Follow(plugin);
 	}
 
 	std::stringstream wires;
 	wires << "-1 0 " << (jack ? 5 : 4) << "\n0 0 0 0 1 0 0 0\n0 0 0 0 1 0 3 0\n1 0 0 0 2 0 0 1\n3 0 0 0 4 0 0 1\n";
 	if (jack) wires << "1 0 3 0 5 0 0 1\n";
 
-	canvas.StreamWiresIn(wires, false, false);
+	canvas.StreamWiresIn(wires, false);
 	assert(WireCount(canvas) == unsigned(jack ? 5 : 4));
 	if (jack) assert(removedSink.GetInput(0));
 
@@ -124,18 +139,18 @@ static void Check(SpiralPlugin &plugin, bool jack)
 		{
 			plugin.GetChannelHandler()->Set("NumInputs", 3);
 			plugin.GetChannelHandler()->Set("NumOutputs", 3);
-			Command(plugin, JackPlugin::SET_PORT_COUNT);
+			Follow(plugin);
 		}
-		else Command(plugin, MixerPlugin::REMOVECHAN);
+		else Channels(plugin, 3);
 		assert(WireCount(canvas) == 3 && removedSink.GetInput(0) == NULL);
 		assert(plugin.GetInput(0) == input && sink.GetInput(0) == output);
 		if (jack)
 		{
 			plugin.GetChannelHandler()->Set("NumInputs", 4);
 			plugin.GetChannelHandler()->Set("NumOutputs", 4);
-			Command(plugin, JackPlugin::SET_PORT_COUNT);
+			Follow(plugin);
 		}
-		else Command(plugin, MixerPlugin::ADDCHAN);
+		else Channels(plugin, 4);
 		assert(WireCount(canvas) == 3 && removedSink.GetInput(0) == NULL);
 		assert(plugin.GetInput(0) == input && sink.GetInput(0) == output);
 	}

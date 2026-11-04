@@ -120,8 +120,7 @@ int main(int argc, char **argv)
 		pthread_mutex_lock(&engine.Gate);
 		if (!output)
 		{
-		channel->Set("NumInputs",6); channel->Set("NumOutputs",10);
-		channel->SetCommand(JackPlugin::SET_PORT_COUNT);
+		channel->Set("NumInputs",6); channel->Set("NumOutputs",10);   // the ports follow the counts
 		plugin->UpdateChannelHandler(); plugin->ExecuteCommands();
 		}
 

@@ -36,17 +36,23 @@ int main(int argc, char **argv)
 	pthread_t thread;
 	assert(!pthread_create(&thread, NULL, Host::Run, &host));
 	host.Synth.LoadPatch(argv[2]);
-	Spiral::Core::Description result;
-	Describe(result, host.Synth);
+	Spiral::Core::PatchDescription patch;
+	Describe(patch, host.Synth, "");
 	bool found = false;
-	for (size_t i = 0; i + 3 < result.Values().size(); ++i)
+	for (size_t o = 0; o < patch.Objects.size(); ++o)
 	{
-		if (result.Values()[i] != "HistoryControl")
-			continue;
+		for (size_t d = 0; d < patch.Objects[o].Devices.size(); ++d)
+		{
+			const Spiral::Core::DeviceDescription &device = patch.Objects[o].Devices[d];
+			const Spiral::Core::PropertyDescription *names = device.FindProperty("NAMES");
+			if (!names || names->Children.empty() || names->Children[0].Value() != "HistoryControl")
+				continue;
 
-		assert(result.Values()[i+1] == "-2" && result.Values()[i+2] == "2");
-		assert(result.Values()[i+3] == "0.375");
-		found = true;
+			assert(device.FindProperty("MINVAL")->Children[0].Value() == "-2");
+			assert(device.FindProperty("MAXVAL")->Children[0].Value() == "2");
+			assert(device.FindProperty("CHANNELVAL")->Children[0].Value() == "0.375");
+			found = true;
+		}
 	}
 
 	assert(found);
