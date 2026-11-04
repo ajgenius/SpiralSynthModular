@@ -132,6 +132,34 @@ cat > "$contents/Info.plist" <<PLIST
 <key>CFBundleShortVersionString</key><string>$xml_version</string>
 <key>CFBundleIconFile</key><string>SpiralSynthModular.icns</string>
 <key>NSHighResolutionCapable</key><true/>
+<key>CFBundleDocumentTypes</key><array>
+<dict>
+<key>CFBundleTypeName</key><string>SpiralSynthModular Project</string>
+<key>CFBundleTypeRole</key><string>Editor</string>
+<key>LSHandlerRank</key><string>Owner</string>
+<key>LSItemContentTypes</key><array><string>org.pawfal.spiralsynthmodular.project</string></array>
+</dict>
+<dict>
+<key>CFBundleTypeName</key><string>SpiralSynthModular Patch</string>
+<key>CFBundleTypeRole</key><string>Editor</string>
+<key>LSHandlerRank</key><string>Owner</string>
+<key>LSItemContentTypes</key><array><string>org.pawfal.spiralsynthmodular.patch</string></array>
+</dict>
+</array>
+<key>UTExportedTypeDeclarations</key><array>
+<dict>
+<key>UTTypeIdentifier</key><string>org.pawfal.spiralsynthmodular.project</string>
+<key>UTTypeDescription</key><string>SpiralSynthModular Project</string>
+<key>UTTypeConformsTo</key><array><string>public.data</string></array>
+<key>UTTypeTagSpecification</key><dict><key>public.filename-extension</key><array><string>ssmp</string></array></dict>
+</dict>
+<dict>
+<key>UTTypeIdentifier</key><string>org.pawfal.spiralsynthmodular.patch</string>
+<key>UTTypeDescription</key><string>SpiralSynthModular Patch</string>
+<key>UTTypeConformsTo</key><array><string>public.data</string></array>
+<key>UTTypeTagSpecification</key><dict><key>public.filename-extension</key><array><string>ssm</string></array></dict>
+</dict>
+</array>
 </dict></plist>
 PLIST
 codesign --force --sign - "$app"

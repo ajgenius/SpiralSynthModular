@@ -101,6 +101,10 @@ public:
 	void SetGroupCallback (Fl_Callback* s) { cb_GroupDevices=s; }
 	void SetUngroupCallback (Fl_Callback* s) { cb_UngroupDevices=s; }
 	void SetPageCallback (Fl_Callback* s) { cb_PageChanged=s; }
+	// A file dropped on the patch: the callback runs once the drop is
+	// over, and DroppedFile() is the first file dropped.
+	void SetDropFileCallback (Fl_Callback* s) { cb_DropFile=s; }
+	const string &DroppedFile() const { return m_DroppedFile; }
 
 	int Page() const { return m_Page; }
 	void ShowPage(int box);
@@ -253,6 +257,10 @@ private:
 	void (*cb_GroupDevices)(Fl_Widget*, void*);
 	void (*cb_UngroupDevices)(Fl_Widget*, void*);
 	void (*cb_PageChanged)(Fl_Widget*, void*);
+	void (*cb_DropFile)(Fl_Widget*, void*);
+	static void cb_Dropped(void *data);
+	bool m_Dropping;
+	string m_DroppedFile;
 	void DrawStrips();
 	void StripPoint(bool input, int index, int &x, int &y) const;
 	bool StripAt(int x, int y, bool &input, int &port);

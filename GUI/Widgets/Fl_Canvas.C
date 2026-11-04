@@ -21,6 +21,7 @@
 #include "Fl_Canvas.h"
 #include <map>
 #include <cstdlib>
+#include <cctype>
 #include <cstdio>
 #include "Fl_DeviceGUI.h"
 #include "SpiralPluginGUI.h"
@@ -60,6 +61,8 @@ cb_AboutPatch(NULL),
 cb_GroupDevices(NULL),
 cb_UngroupDevices(NULL),
 cb_PageChanged(NULL),
+cb_DropFile(NULL),
+m_Dropping(false),
 m_PickAt(NULL),
 m_Picked(NULL),
 m_PickData(NULL),
@@ -748,8 +751,69 @@ void Fl_Canvas::ClearIncompleteWire()
 ////////////////////////////////////////////////////////////////////////
 //  Event handlers for the canvas and the deviceGUIs
 
+// The first file a drop brought: a path, or a file: URI as X11 sends them,
+// its escapes undone. Empty when the drop held no file.
+static string DroppedPath(const char *text)
+{
+	string line;
+	for (const char *c = text; c && *c; ++c)
+	{
+		if (*c == '\n' || *c == '\r')
+		{
+			if (!line.empty())
+				break;
+			continue;
+		}
+		line += *c;
+	}
+	if (line.compare(0, 7, "file://") != 0)
+		return line;
+	const size_t slash = line.find('/', 7);	// after the host, if one is named
+	if (slash == string::npos)
+		return string();
+	string path;
+	for (size_t i = slash; i < line.size(); ++i)
+	{
+		if (line[i] == '%' && i + 2 < line.size() && isxdigit((unsigned char)line[i + 1])
+		    && isxdigit((unsigned char)line[i + 2]))
+		{
+			path += (char)strtol(line.substr(i + 1, 2).c_str(), NULL, 16);
+			i += 2;
+		}
+		else
+			path += line[i];
+	}
+	return path;
+}
+
+void Fl_Canvas::cb_Dropped(void *data)
+{
+	Fl_Canvas *canvas = (Fl_Canvas *)data;
+	if (canvas->cb_DropFile && !canvas->m_DroppedFile.empty())
+		canvas->cb_DropFile(canvas, canvas->user_data());
+}
+
 int Fl_Canvas::handle (int event) {
     if (m_PickAt) return PickEvent(event);
+    // A file dropped anywhere on the patch, over a device too, is the
+    // host's to open. It is opened after the drop has finished, so a
+    // question it asks does not hold the window that dragged it.
+    switch (event) {
+       case FL_DND_ENTER:
+       case FL_DND_DRAG:
+       case FL_DND_LEAVE:
+          return cb_DropFile ? 1 : 0;
+       case FL_DND_RELEASE:
+          m_Dropping = cb_DropFile != NULL;
+          return m_Dropping ? 1 : 0;
+       case FL_PASTE:
+          if (!m_Dropping)
+             break;
+          m_Dropping = false;
+          m_DroppedFile = DroppedPath(Fl::event_text());
+          Fl::add_timeout(0.0, cb_Dropped, this);
+          return 1;
+    }
     bool stripInput;
     int stripPort;
     if (event==FL_PUSH && StripAt(Fl::event_x(), Fl::event_y(), stripInput, stripPort)) {

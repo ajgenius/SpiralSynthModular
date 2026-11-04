@@ -36,6 +36,8 @@
 #ifdef __APPLE__
 #include <objc/message.h>
 #include <objc/runtime.h>
+#include <FL/x.H>
+#include <vector>
 #endif
 
 pthread_t loopthread,watchdogthread;
@@ -103,6 +105,37 @@ void *audioloop(void* o)
 
 //////////////////////////////////////////////////////
 #include "GraphSort.h"
+
+#ifdef __APPLE__
+// Patches Finder hands over, opened from it or dropped on the Dock icon,
+// at launch too: each is opened as a patch dropped on the canvas is, from
+// the event loop, once the patch on screen can take it, and one at a
+// time, as opening one may ask a question.
+static vector<string> s_Handed;
+
+static void OpenHanded(void *)
+{
+	static bool opening = false;
+	if (opening || !synth)
+		return;
+	opening = true;
+	while (!s_Handed.empty())
+	{
+		const string path = s_Handed.front();
+		s_Handed.erase(s_Handed.begin());
+		synth->OpenDropped(path);
+	}
+	opening = false;
+}
+
+static void Handed(const char *path)
+{
+	if (!path || !*path)
+		return;
+	s_Handed.push_back(path);
+	Fl::add_timeout(0.0, OpenHanded);
+}
+#endif
 
 int main(int argc, char **argv)
 {
@@ -216,6 +249,10 @@ int main(int argc, char **argv)
 	}
 
 	synth->LoadPlugins(cmd_pluginPath);
+#ifdef __APPLE__
+	// Before the window opens the display, as FLTK asks.
+	if (GUI) fl_open_callback(Handed);
+#endif
 	win->xclass("");
 	if (GUI) win->show(1, argv); // prevents stuff happening before the plugins have loaded
 	

@@ -23,6 +23,7 @@
 #include <sstream>
 #include <memory>
 #include <set>
+#include <cctype>
 #include <algorithm>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -680,6 +681,7 @@ SpiralWindowType *SynthModular::CreateWindow()
         MenuAdd ("File/Save", cb_Save, (void*)(this), 0);
         MenuAdd ("File/Save As", cb_SaveAs, (void*)(this), FL_MENU_DIVIDER);
         MenuAdd ("File/Merge", cb_Merge, (void*)(this), 0);
+        MenuAdd ("File/Merge as Subpatch", cb_MergeAsSubPatch, (void*)(this), 0);
         MenuAdd ("File/Import as Branch", cb_ImportBranch, (void*)(this), FL_MENU_DIVIDER);
         MenuAdd ("File/Save Points", cb_SavePoints, (void*)(this), 0);
         MenuAdd ("File/Examples", cb_Examples, (void*)(this), FL_MENU_DIVIDER);
@@ -868,6 +870,7 @@ SpiralWindowType *SynthModular::CreateWindow()
 	m_Canvas->SetGroupCallback((Fl_Callback*)cb_Group);
 	m_Canvas->SetUngroupCallback((Fl_Callback*)cb_Ungroup);
 	m_Canvas->SetPageCallback((Fl_Callback*)cb_PageShown);
+	m_Canvas->SetDropFileCallback((Fl_Callback*)cb_DropFile);
 
 	m_CanvasScroll->add(m_Canvas);
 
@@ -2735,6 +2738,70 @@ inline void SynthModular::cb_Merge_i (Fl_Widget *o, void *v) {
           "SSM Patches (*.{ssm,ssmp})\tSSM Project (*.ssmp)\tLegacy SSM (*.ssm)", NULL);
        if (fn && *fn!='\0')
           MergePatch(fn);
+}
+
+// A patch file merged in as a subpatch of its own, named for the file
+// unless another name is given: what arrives is grouped, as Paste as
+// Subpatch groups what it pastes.
+void SynthModular::cb_MergeAsSubPatch (Fl_Widget *o, void *v) {
+       SynthModular *synth = (SynthModular *)v;
+       const char *fn = fl_file_chooser ("Merge a patch as a subpatch",
+          "SSM Patches (*.{ssm,ssmp})\tSSM Project (*.ssmp)\tLegacy SSM (*.ssm)", NULL);
+       if (!fn || !*fn)
+          return;
+       const string path = fn;
+       const size_t slash = path.find_last_of("/\\");
+       string name = slash == string::npos ? path : path.substr(slash + 1);
+       const size_t dot = name.find_last_of('.');
+       if (dot != string::npos && dot > 0)
+          name = name.substr(0, dot);
+       const char *title = fl_input("Group name:", name.c_str());
+       if (!title)
+          return;
+       const string group = title;
+       const int before = synth->m_NextID;
+       synth->MergePatch(path.c_str());
+       if (synth->m_NextID != before)
+          synth->GroupSelection(group);
+}
+
+// A patch file dropped on the patch. With nothing in the patch it opens;
+// otherwise it can join this patch, as File > Merge does, or open in its
+// place, losing what this patch has not saved.
+void SynthModular::OpenDropped(const string &path)
+{
+	const size_t dot = path.find_last_of('.');
+	string extension = dot == string::npos ? string() : path.substr(dot);
+	for (size_t i = 0; i < extension.size(); ++i)
+		extension[i] = tolower((unsigned char)extension[i]);
+	if (!Spiral::File::Project::PathLooksLikePackage(path) && extension != ".ssm")
+	{
+		fl_message("%s is not an SSM patch.\nPatches are .ssmp projects or legacy .ssm files.", path.c_str());
+		return;
+	}
+	if (m_DeviceWinMap.empty())
+	{
+		LoadPatch(path.c_str());
+		return;
+	}
+	const size_t slash = path.find_last_of("/\\");
+	const string name = slash == string::npos ? path : path.substr(slash + 1);
+	switch (fl_choice("Merge %s into this patch, or open it in place of this patch?\n"
+	                  "Opening it loses changes to this patch that are not saved.",
+	                  "Cancel", "Merge", "Open", name.c_str()))
+	{
+		case 1:
+			MergePatch(path.c_str());
+			break;
+		case 2:
+			LoadPatch(path.c_str());
+			break;
+	}
+}
+
+void SynthModular::cb_DropFile(Fl_Canvas *o, void *v)
+{
+	((SynthModular *)v)->OpenDropped(o->DroppedFile());
 }
 
 // A patch file's devices join this patch, on the page shown, selected.

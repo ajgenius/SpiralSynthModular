@@ -137,6 +137,9 @@ public:
 	void LayoutChrome();
 	void LoadPatch(const char *fn, const char *branchId = NULL);
 	void MergePatch(const char *fn);
+	// A patch file dropped on the patch, or handed over by the desktop:
+	// opened into an empty patch, else merged in or opened in its place.
+	void OpenDropped(const string &path);
 	void Apply(const Spiral::Core::PatchDescription &patch, const string &sidecars, bool merge = false);
 	bool ApplyPage(const Spiral::Core::PatchDescription &patch, const string &sidecars, bool merge, int page,
 		std::map<std::string, int> &ids);
@@ -327,6 +330,7 @@ private:
 	static void cb_SavePoints (Fl_Widget *o, void *v);
 	inline void cb_Merge_i (Fl_Widget *o, void *v);
 	static void cb_Merge (Fl_Widget *o, void *v);
+	static void cb_MergeAsSubPatch (Fl_Widget *o, void *v);
 	inline void cb_ImportBranch_i (Fl_Widget *o, void *v);
 	static void cb_ImportBranch (Fl_Widget *o, void *v);
 	inline void cb_Close_i (Fl_Widget *o, void *v);
@@ -393,6 +397,7 @@ private:
 	static void cb_Connection(Fl_Canvas* o, void* v);
 	inline void cb_Unconnect_i(Fl_Canvas* o, void* v);
 	static void cb_Unconnect(Fl_Canvas* o, void* v);
+	static void cb_DropFile(Fl_Canvas* o, void* v);
 	inline void cb_GroupTab_i(Fl_Tabs* o, void* v);
 	static void cb_GroupTab(Fl_Tabs* o, void* v);
 	static void cb_Update(void* o, bool Mode);
