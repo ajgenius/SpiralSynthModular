@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = subdir-objects
 AM_CPPFLAGS = $(SPIRALCORE_CFLAGS) -I$(top_builddir)
-CXXFLAGS = @CXXFLAGS@ -std=c++11
+AM_CXXFLAGS = -std=c++11
 AM_CPPFLAGS += $(PIPEWIRE_CFLAGS)
 plugindir = @PLUGINDIR@/audio/PipeWire
 plugin_LTLIBRARIES =

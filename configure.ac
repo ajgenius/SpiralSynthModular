@@ -23,7 +23,7 @@ AC_PROG_CXX
 AC_C_BIGENDIAN
 AC_PROG_INSTALL
 
-AM_PROG_LIBTOOL
+LT_INIT
 
 AC_PATH_TOOL([PKG_CONFIG], [pkg-config], [no])
 
@@ -277,7 +277,6 @@ fi
 
 
 dnl Checks for header files.
-AC_HEADER_STDC
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -564,7 +563,7 @@ AC_SUBST(PLUGINLIST)
 AC_SUBST(ALL_PLUGINLIST)
 
 dnl Modify the output files.
-AC_OUTPUT(
+AC_CONFIG_FILES([
 libs/libSpumoni/Makefile
 src/SpiralSynthPluginLocation.h
 Makefile
@@ -642,7 +641,8 @@ Plugins/Devices/TrigPlugin/Makefile
 Plugins/Devices/WaveShaperPlugin/Makefile
 Plugins/Devices/WaveTablePlugin/Makefile
 Plugins/Devices/XFadePlugin/Makefile
-)
+])
+AC_OUTPUT
 
 printf '\nConfig options:\n'
 printf '%35s - ' "libsndfile support for wave loading"

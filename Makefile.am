@@ -1,4 +1,4 @@
-AUTOMAKE_OPTIONS = foreign
+AUTOMAKE_OPTIONS = foreign subdir-objects
 SUBDIRS = libs/libSpumoni libs/libSpiralPanels tools/embed-manifest libs/libspiralcore GUI/Controls libs/libSpiralPanels/toolkits/fltk GUI src Plugins third-party/swh-plugins
 
 AM_CPPFLAGS =                                              \
