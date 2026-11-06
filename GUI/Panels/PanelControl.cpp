@@ -79,7 +79,6 @@ namespace SpiralPanels
 		return fallback;
 	}
 
-	// The GUIColour setting, which the old editors gave their controls; 179 is its default.
 	unsigned PanelControl::GUIColour() const
 	{
 		SpiralPlugin *plugin = m_Panel.Plugin();
@@ -177,12 +176,9 @@ namespace SpiralPanels
 				m_LogBase = 10;
 		}
 
-		// A toggle is stated; the older write_off implied one.
 		m_Toggle = (node.Get("toggle") && node.Get("toggle")->GetType() == Spumoni::JSON::Boolean &&
 			    node.Get("toggle")->AsBool()) ||
 			(node.Get("write_off") != NULL);
-		// A binding, under its own name or the older `_when`/`follows` spelling;
-		// both read into the same rule, so both mean the same.
 		const std::string owner = m_Name.empty() ? TextOf(node.Get("type")) : m_Name;
 		m_EnabledBound = RuleOf(panel, node.Get("enabled") ? node.Get("enabled") : node.Get("enabled_when"),
 					"enabled", owner, m_Enabled);
@@ -216,8 +212,6 @@ namespace SpiralPanels
 
 	void PanelControl::VerifyBindings()
 	{
-		// Control bindings were taken on trust while the panel was still being
-		// built; now every control exists, or the binding names nobody.
 		const Panel::Scope scope(m_Panel);
 		std::string problem;
 		const Spiral::Data::ValueRule *rules[] = {&m_Enabled, &m_Visible, &m_ValueRule};
@@ -324,8 +318,6 @@ namespace SpiralPanels
 			return false;
 		amount = amount < 0 ? 0 : amount > 1 ? 1 : amount;
 
-		// The widget is set and its callback run, so the panel writes what it
-		// would for the pointer: the mapping, the writes, the linked controls.
 		if (Fl_Valuator *valuator = dynamic_cast<Fl_Valuator *>(m_Widget))
 		{
 			const double low = valuator->minimum(), high = valuator->maximum();
@@ -336,7 +328,6 @@ namespace SpiralPanels
 		}
 		if (Fl_Choice *choice = dynamic_cast<Fl_Choice *>(m_Widget))
 		{
-			// size() counts the menu's terminator.
 			const int items = choice->size() - 1;
 			if (items <= 0)
 				return false;
@@ -408,9 +399,6 @@ namespace SpiralPanels
 
 	void PanelControl::Link(double value)
 	{
-		// What the control shows reaches the controls that follow it (the set
-		// handlers of value_changed) without the rest of a change firing: a
-		// knob loading from its property keeps a scope's attenuation in step.
 		const Spiral::Data::Handlers::Actions &actions = m_Handlers.For("value_changed");
 		for (size_t i = 0; i < actions.size(); ++i)
 			if (actions[i].verb == Spiral::Data::Handlers::Action::Set)
@@ -540,11 +528,6 @@ namespace SpiralPanels
 		return text;
 	}
 
-	// How a fired handler reaches the panel: a command property sends the
-	// named command with the arguments as text, any other property takes the
-	// value; a delta reads, bumps, clamps to the control's or the property's
-	// range and writes unless the property is read-only; set and clear reach
-	// the named control's attributes.
 	class PanelControl::HandlerSink: public Spiral::Data::Handlers::Sink
 	{
 	public:
@@ -653,8 +636,6 @@ namespace SpiralPanels
 		const std::string owner = m_Name.empty() ? TextOf(node.Get("type")) : m_Name;
 		const Panel::HandlerScope scope(m_Panel, *this);
 		std::string problem;
-		// `on` as the file writes it: an object by event. (A string `on` is a
-		// grid's older command name, read below.)
 		const Spumoni::JSON *on = node.Get("on");
 		if (on && on->GetType() == Spumoni::JSON::Object &&
 		    !Spiral::Data::Handlers::Parse(on, scope, m_Handlers, problem))
@@ -662,7 +643,6 @@ namespace SpiralPanels
 			m_Panel.Report(owner + ".on: " + problem);
 			m_Handlers = Spiral::Data::Handlers();
 		}
-		// The older spellings, each under the event it fired on.
 		const bool button = DeclaresEvent("pressed");
 		const bool file = DeclaresEvent("filename_changed");
 		const char *main = file ? "filename_changed" : button ? (m_Toggle ? "on" : "pressed") : "value_changed";
@@ -685,7 +665,6 @@ namespace SpiralPanels
 		}
 		if (const Spumoni::JSON *delta = node.Get("delta"))
 		{
-			// {property, amount|factor} is {delta: property, amount|factor}.
 			Spiral::Data::Handlers::Action action;
 			action.verb = Spiral::Data::Handlers::Action::Delta;
 			const Spumoni::JSON *property = delta->Get("property");
@@ -715,8 +694,6 @@ namespace SpiralPanels
 		}
 		if (DeclaresEvent("activate"))
 		{
-			// The grid's older spelling: a command name per gesture, sent with
-			// the cell (and the level).
 			static const struct
 			{
 				const char *key, *event, *arguments[4];

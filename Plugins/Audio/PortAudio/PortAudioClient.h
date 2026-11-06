@@ -1,7 +1,5 @@
 // Copyright (C) 2003 David Griffiths <dave@pawfal.org>
 //
-// PortAudio v19 callback transport. The callback exchanges already rendered
-// buffers and native presentation timestamps; it never runs the graph.
 
 #ifndef PA_CLIENT
 #define PA_CLIENT

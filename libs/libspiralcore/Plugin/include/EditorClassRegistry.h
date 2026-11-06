@@ -30,11 +30,6 @@ namespace Spiral
 namespace Core
 {
 
-/* The GUI half of the paired slot (0.3.1 split): an editor of the device
-   class it names by ID. It sees the device only as a SpiralPlugin and its
-   ChannelHandler, so the device need not be the native DSP module of the
-   same name, and several editors (toolkits, variants) may name one
-   device. The modules under panels/ are FLTK editors. */
 struct EditorClass
 {
 	int   ForDevice;
@@ -57,11 +52,6 @@ struct EditorClass
 	}
 };
 
-//////////////////////////////////////////////////////////
-
-/* The editor kind: modules are <plugins>/panels/<X>/<X>_GUI<ext>, the entry
-   is the editor factory, and the device ID beside it is the old export
-   set, read back through the module until modules carry a descriptor. */
 class EditorClassRegistry : public PluginKind
 {
 public:
@@ -76,7 +66,6 @@ public:
 	virtual void        Release(void *entry, const std::string &path);
 
 	unsigned            LoadModules(const std::string &root);
-	// The first editor registered for a device and toolkit is the one found.
 	bool                Register(const EditorClass &editor);
 	const EditorClass*  Find(int ForDevice, const std::string &Toolkit = "fltk") const;
 	const std::vector<EditorClass*> &Classes() const { return m_PluginVec; }

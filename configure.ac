@@ -6,13 +6,12 @@ m4_define([lt_age], [0])
           
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT([SpiralSynthModular], [0.3.2])
-AC_CONFIG_SRCDIR([SpiralSynthModular.C])
+AC_CONFIG_SRCDIR([src/SpiralSynthModular.C])
 
 AC_DEFINE([SSM_HOST_ABI], ["ssm-fltk-audio-9"], [SSM plugin host ABI])
 
 AM_INIT_AUTOMAKE
 
-dnl Generate the configuration header.
 AC_CONFIG_HEADERS([config.h])
 
 dnl Initialize maintainer mode
@@ -28,8 +27,6 @@ AM_PROG_LIBTOOL
 
 AC_PATH_TOOL([PKG_CONFIG], [pkg-config], [no])
 
-
-dnl ---- Optional loadable audio backends ----
 
 AC_ARG_ENABLE([portaudio],
     [AS_HELP_STRING([--disable-portaudio], [Do not build PortAudio output support])],
@@ -116,7 +113,6 @@ if test "x$have_output_oss" = "xyes"; then
 fi
 AM_CONDITIONAL([HAVE_OUTPUT_OSS], [test "x$have_output_oss" = "xyes"])
 
-dnl Native CoreAudio is optional; other platforms keep their existing clients.
 AC_ARG_ENABLE([coreaudio],
     [AS_HELP_STRING([--disable-coreaudio], [Do not build the native CoreAudio client])],
     [enable_coreaudio="$enableval"], [enable_coreaudio="auto"])
@@ -151,13 +147,9 @@ AC_SUBST([CORE_AUDIO_LIBS])
 AM_CONDITIONAL([HAVE_CORE_AUDIO_CLIENT], [test "$have_coreaudio" = yes])
 AC_MSG_NOTICE([Native CoreAudio client: $have_coreaudio])
 
-dnl Where consumers find libspiralcore's headers. Groups inside the library
-dnl add their include directory here, nowhere else.
 SPIRALCORE_CFLAGS='-I$(top_srcdir)/libs/libspiralcore/include -I$(top_srcdir)/libs/libspiralcore/File/include -I$(top_srcdir)/libs/libspiralcore/Data/include -I$(top_srcdir)/libs/libspiralcore/Plugin/include -I$(top_srcdir)/libs/libspiralcore/Audio/include -I$(top_srcdir)/libs/libspiralcore/Midi/include'
 AC_SUBST([SPIRALCORE_CFLAGS])
 
-dnl Where editors and the host find the toolkit-side headers; groups under
-dnl GUI/ add their directory here, nowhere else.
 SPIRALGUI_CFLAGS='-I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/GUI/Controls'
 SPIRALPANELS_CFLAGS='-I$(top_srcdir)/GUI/Panels -I$(top_srcdir)/GUI/Panels/Controls -I$(top_srcdir)/GUI/Panels/Scopes -I$(top_srcdir)/GUI/Panels/Spiral'
 AC_SUBST([SPIRALPANELS_CFLAGS])
@@ -210,9 +202,6 @@ fi
 AM_CONDITIONAL([HAVE_OUTPUT_ESD], [test "x$have_output_esd" = "xyes"])
 AC_MSG_NOTICE([ESD compatibility module: $have_output_esd])
 
-dnl MIDI APIs are linked only by their loadable backend. Each check is
-dnl pkg-config first, then the header and library the way the audio
-dnl modules find them.
 AC_ARG_ENABLE([rtmidi], AS_HELP_STRING([--disable-rtmidi], [Do not build the RtMidi MIDI backend]), [], [enable_rtmidi=yes])
 have_rtmidi=no
 RTMIDI_CFLAGS=""
@@ -256,8 +245,6 @@ AC_SUBST([JACK_MIDI_LIBS])
 AM_CONDITIONAL([HAVE_JACK_MIDI], [test "x$have_jack_midi" = xyes])
 AC_MSG_NOTICE([JACK MIDI module: $have_jack_midi])
 
-dnl The two native transports the tree has always carried: CoreMIDI on
-dnl Darwin, the raw OSS device where OSS audio is.
 have_coremidi=no
 case "$host_os" in
     darwin*) have_coremidi=yes ;;
@@ -321,7 +308,6 @@ dnl Check whether to enable debugging
 AC_ARG_ENABLE(debug,  [  --enable-debug          enable debugging ],
         [ac_arg_debug="$enableval"], [ac_arg_debug="no"])
 
-dnl Keep caller-supplied compiler flags (including the selected C++ standard).
 if test "$ac_arg_debug" = "yes"; then
     CFLAGS="$CFLAGS -O0 -g"
     CXXFLAGS="$CXXFLAGS -O0 -g"
@@ -343,10 +329,6 @@ SmoothPlugin SpiralLoopPlugin SplitSwitchPlugin SplitterPlugin StereoMixerPlugin
 StreamPlugin SwitchPlugin TranslatePlugin TransposePlugin TrigPlugin WaveShaperPlugin \
 WaveTablePlugin XFadePlugin"
 
-dnl Every plugin directory, whether or not this host can build it. SUBDIRS
-dnl drives the build and has to follow the optional components, but a source
-dnl distribution must carry them all: a tarball rolled where LADSPA is absent
-dnl would otherwise omit a directory that configure still expects to find.
 ALL_PLUGINLIST="JackPlugin $PLUGINLIST"
 
 dnl Check whether jack is present or has been disabled
@@ -384,11 +366,6 @@ fi
 AC_SUBST([JACK_LIBS])
 
 dnl Check whether LADSPA is present or has been disabled
-dnl LADSPA is a header and a dlopen convention, with no library to link, so a
-dnl host missing ladspa.h is no reason to drop the plugin: the bundled copy of
-dnl the frozen 1.1 header is used instead. That keeps the plugin list the same
-dnl everywhere, and lets a patch that names LADSPA devices keep their state on
-dnl a machine that has no LADSPA plugins installed.
 ladspa_message=""
 LADSPA_CFLAGS=""
 AC_ARG_ENABLE(
@@ -410,18 +387,6 @@ AC_SUBST(LADSPA_CFLAGS)
 
 AM_CONDITIONAL([BUILD_LADSPA], [test "$build_ladspa" = "y"])
 
-dnl Whether to build and ship the vendored swh-plugins
-dnl
-dnl A LADSPA host with no plugins to host is not much of a demonstration, and
-dnl Examples/Tutorial7-LADSPA.ssm asks for GVerb by name. These install under
-dnl the application's own plugin directory rather than the system LADSPA one,
-dnl so they overwrite nothing a distribution ships, and the host puts that
-dnl directory first on the search path: LADSPAInfo keeps the first instance of
-dnl a duplicated plugin ID, so the copy this build was tested against wins and
-dnl anything the user installed stays available behind it.
-dnl
-dnl Packagers who would rather depend on their own swh-plugins can say
-dnl --disable-bundled-ladspa.
 AC_ARG_ENABLE(
     bundled-ladspa,
     [  --disable-bundled-ladspa Do not build the vendored swh-plugins],
@@ -441,13 +406,6 @@ if test "$bundle_ladspa" = "yes"; then
 fi
 AM_CONDITIONAL([BUNDLE_LADSPA_PLUGINS], [test "$bundle_ladspa" = "yes"])
 
-dnl Four of the bundled plugins are FFT based
-dnl
-dnl Single-precision FFTW, and only where the plugins are being bundled: the
-dnl macOS application carries its own copy, so this adds a library to that
-dnl bundle rather than a dependency to anyone's distribution build. Missing
-dnl FFTW costs four plugins out of ninety-eight, so it is not worth failing
-dnl over.
 have_fftw3f="no"
 if test "$bundle_ladspa" = "yes"; then
    PKG_CHECK_MODULES([FFTW3F], [fftw3f >= 3.0],
@@ -498,16 +456,6 @@ if test "$use_liblrdf" = "y"; then
    LRDFLIBS="-llrdf"
    AC_SUBST(LRDFLIBS)
 fi
-
-dnl ALSA MIDI is decided once, above, for the Plugins/Midi module. There used
-dnl to be a second AC_ARG_ENABLE here for the MidiPlugin's own ALSA path; it
-dnl named the option alsa_midi, which derives the same enable_alsa_midi shell
-dnl variable as the alsa-midi option above, so it read that option's default as
-dnl a user-supplied value and took its disable branch on every single build.
-dnl USE_ALSA_MIDI was therefore never defined, USE_OSS_MIDI always was, and
-dnl AMIDILIBS was always empty -- on hosts where ALSA was plainly present. None
-dnl of those three are read anywhere in the tree any more, so the block is gone
-dnl rather than repaired; $have_alsa_midi is the live answer.
 
 dnl Check whether libsndfile is present or has been disabled
 sndfile_message=""
@@ -574,7 +522,6 @@ AC_SUBST(FLTK_LIBS)
 AC_CHECK_HEADERS(dlfcn.h)
 AC_SEARCH_LIBS([dlopen], [dl])
 
-dnl Loadable module extension as libtool builds it for this host (-module).
 case "$host_os" in
     cygwin*|mingw*) plugin_module_ext=".dll" ;;
     *) plugin_module_ext=".so" ;;
@@ -585,13 +532,10 @@ AC_SEARCH_LIBS([clock_gettime], [rt])
 AC_SEARCH_LIBS([pthread_create], [pthread], [],
     [AC_MSG_ERROR([POSIX threads are required])])
 
-dnl libSpumoni (ZIP/tar) needs zlib. It is a convenience library inside
-dnl libspiralcore, so zlib follows it in libspiralcore's LIBADD.
 AC_CHECK_HEADER([zlib.h], [], [AC_MSG_ERROR([zlib.h is required to build libSpumoni])])
 AC_CHECK_LIB([z], [deflate], [ZLIB_LIBS="-lz"], [AC_MSG_ERROR([libz is required to build libSpumoni])])
 AC_SUBST([ZLIB_LIBS])
 
-dnl The existing Apple MIDI implementation uses these system frameworks.
 MIDI_LIBS=""
 case "$host_os" in
     darwin*) MIDI_LIBS="-framework CoreMIDI -framework CoreFoundation" ;;
@@ -599,7 +543,6 @@ esac
 AC_SUBST([MIDI_LIBS])
 AM_CONDITIONAL([MACOS_BUNDLE], [test "x$MIDI_LIBS" != x])
 
-dnl The legacy ALSA timer is supplied by its module, Mach remains in core.
 atomic_clock="none"
 case "$host_os" in
     darwin*) atomic_clock="mach" ;;
@@ -637,7 +580,6 @@ for plugin in $PLUGINLIST; do
         *) GUI_PLUGINLIST="$GUI_PLUGINLIST $plugin" ;;
     esac
 done
-dnl The same exclusion over every plugin, for the distribution list.
 ALL_GUI_PLUGINLIST="LADSPAPlugin"
 for plugin in $ALL_PLUGINLIST; do
     case " $PANEL_ONLY " in
@@ -653,8 +595,9 @@ AC_SUBST(ALL_PLUGINLIST)
 dnl Modify the output files.
 AC_OUTPUT(
 libs/libSpumoni/Makefile
-SpiralSynthPluginLocation.h
+src/SpiralSynthPluginLocation.h
 Makefile
+src/Makefile
 GUI/Makefile
 GUI/Controls/Makefile
 GUI/Widgets/Makefile
@@ -765,8 +708,6 @@ else
    printf 'Disabled - %s\n' "$lrdf_message"
 fi
 
-dnl The modules decided above only reached the log as AC_MSG_NOTICE lines, which
-dnl scroll past. A release build is judged on which backends it actually got.
 printf '\nAudio output modules:\n'
 printf '%35s - %s\n' "ALSA"      "$alsa_output_message"
 printf '%35s - %s\n' "OSS"       "$oss_output_message"
@@ -784,6 +725,4 @@ printf '%35s - %s\n' "CoreMIDI"       "$have_coremidi"
 
 printf '\n%35s - %s\n' "AtomicClock" "$atomic_clock"
 printf '%35s - %s\n' "Install prefix" "$prefix"
-dnl Not the plugin directory: $plugindir still holds the unexpanded make
-dnl variables at this point, and printing those is worse than printing nothing.
 printf '\n'

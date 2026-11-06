@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Spumoni::Project — the save surface of a layered package.
-// Grown out of Spiral::File::Project (ChatGPT GPT-5.6 / GROK originals):
-// identity resolution, save points, workspace ownership, path judgements.
 
 #include "Project.h"
 #include "Folder.h"
@@ -19,7 +16,6 @@ using namespace std;
 namespace Spumoni
 {
 
-	// The parts as one Package::Payload: each stores itself into the branch.
 	class Project::Parts : public Package::Payload
 	{
 	public:
@@ -57,7 +53,6 @@ namespace Spumoni
 		m_Parts.push_back(&part);
 	}
 
-	// How the format's package is called in messages: ".ssmp" or "package".
 	std::string Project::PackageWord() const
 	{
 		return m_Format.Extensions.empty() ? std::string("package") : m_Format.Extensions[0];
@@ -76,9 +71,6 @@ namespace Spumoni
 			if (!m_Parts[i]->LegacyName().empty())
 				layout.Payload.push_back(m_Parts[i]->LegacyName());
 		}
-		// Ver 2: "assets" is package-root content-addressed storage (shared across
-		// branches), not a per-branch payload member. Handled via Folder::GetStore()
-		// and exported by Package::Write at the package root level.
 		layout.WorkPrefix = m_Format.WorkPrefix;
 		return layout;
 	}
@@ -91,8 +83,6 @@ namespace Spumoni
 		NewWorkspace();
 	}
 
-	/* A new project's working folder: in memory, laid out as a package with
-	   one branch, the identity begun so the first save keeps it. */
 	void Project::NewWorkspace()
 	{
 		m_Identity.Begin();
@@ -104,11 +94,6 @@ namespace Spumoni
 		m_Workspace = folder.release();
 	}
 
-	/* After a write the file is the truth; unpack it again so the workspace
-	   mirrors it (the branch just written included) and the next save point
-	   preserves from something complete. The parts are not reloaded. Paths
-	   materialised from the old workspace may still be in use, so it is
-	   retired rather than destroyed. */
 	void Project::RefreshWorkspace()
 	{
 		if (m_Workspace)
@@ -144,7 +129,6 @@ namespace Spumoni
 		m_Identity.Clear();
 	}
 
-	// Memory, unless the package is larger than the format allows there.
 	Folder *Project::NewWorkspaceFor(const std::string &path) const
 	{
 		unsigned long long bytes = Path::IsDirectory(path)
@@ -153,9 +137,6 @@ namespace Spumoni
 		return new MemoryFolder;
 	}
 
-	/* Unpack into a fresh workspace, load every part into its staging, and
-	   only then commit: the prior content, workspace and identity are
-	   replaced together or not at all. */
 	bool Project::OpenPackage(const std::string &branchId, std::string &error)
 	{
 		error.clear();
@@ -227,9 +208,6 @@ namespace Spumoni
 		return OpenSavePoint(branchId, error);
 	}
 
-	/* The package mechanics live here: which branch the write goes to,
-	   what it is called, what the manifest lists. Package is then told the
-	   identity to write and the sources to preserve from, nothing more. */
 	bool Project::WritePackage(const std::string &path, SaveRequest request, std::string &error)
 	{
 		error.clear();
@@ -254,8 +232,6 @@ namespace Spumoni
 			next.ActiveBranchName = BranchNameFromPath(path);
 		next.EnsureActiveListed();
 
-		// Branch folders the source holds that the manifest never listed
-		// are kept and listed.
 		std::vector<std::string> present = package.BranchesIn(request, error);
 		if (!error.empty())
 			return false;
@@ -285,7 +261,6 @@ namespace Spumoni
 		}
 		else if (!request.NewBranchName.empty())
 		{
-			// Replace: target the named branch and make it active.
 			if (!next.ActivateNamed(request.NewBranchName, error))
 				return false;
 			next.EnsureActiveListed();
@@ -301,8 +276,6 @@ namespace Spumoni
 			request.SourceBranchID.clear();
 		}
 
-		// Ver 2: the parts may put bundled files into the workspace's store;
-		// Package::Write then exports the store at the package root.
 		Store *store = m_Workspace ? m_Workspace->GetStore() : NULL;
 		request.SharedStore = store;
 		Parts payload(m_Parts, store);
@@ -329,18 +302,12 @@ namespace Spumoni
 			return false;
 		}
 
-		// Same resolved package path → replace the first-save (basename) branch.
 		if (LooksLikePackage(m_SourcePath) && LooksLikePackage(path)
 			&& SameFile(m_SourcePath, path))
 		{
 			return CreateSavePoint(BranchNameFromPath(path), true, error);
 		}
 
-		// Different filename → a package of its own. A project saved before
-		// gets a fresh identity (a copy is not the original); one never saved
-		// keeps the identity it was born with, and whatever its working
-		// folder holds beside the parts comes along. Either way no other
-		// branches are carried into the new package.
 		Identity previous = m_Identity;
 		SaveRequest request;
 		request.Mode = SaveReplace;
@@ -384,7 +351,6 @@ namespace Spumoni
 		}
 
 		SaveRequest request;
-		// Prefer the live workspace (may hold extras not yet in the package).
 		if (m_Workspace)
 			request.Workspace = m_Workspace;
 		else
@@ -396,8 +362,6 @@ namespace Spumoni
 		else
 			request.Mode = independent ? SaveImportedBranch : SaveNewBranch;
 
-		// Replace activates the named branch inside WritePackage; new forks.
-		// Identity updates only on WritePackage success.
 		if (!WritePackage(m_SourcePath, request, error))
 			return false;
 		RefreshWorkspace();
@@ -421,8 +385,6 @@ namespace Spumoni
 		return package.WriteManifest(m_SourcePath, m_Identity, error);
 	}
 
-	// ---- Path judgements -------------------------------------------------
-
 	std::string Project::SystemUsername()
 	{
 		struct passwd *user = getpwuid(getuid());
@@ -432,7 +394,6 @@ namespace Spumoni
 		return environment && *environment ? environment : "unknown";
 	}
 
-	// One of the format's extensions, case-insensitively.
 	bool Project::LooksLikePackage(const std::string &path) const
 	{
 		std::string lower = path;
@@ -447,8 +408,6 @@ namespace Spumoni
 		return false;
 	}
 
-	// Whatever Spumoni recognises as a container; a bare folder only when it
-	// holds our manifest, since any folder is a directory.
 	bool Project::IsPackage(const std::string &path) const
 	{
 		const Container *container = Container::Sniff(path);
@@ -458,7 +417,6 @@ namespace Spumoni
 			|| (!m_Format.LegacyManifestName.empty() && Path::IsFile(path + "/" + m_Format.LegacyManifestName));
 	}
 
-	// Basename without the format's extension (or "Untitled").
 	std::string Project::BranchNameFromPath(const std::string &path) const
 	{
 		std::string trimmed = path;
@@ -491,7 +449,6 @@ namespace Spumoni
 		return path.substr(0, slash);
 	}
 
-	// realpath when possible; otherwise realpath(parent)+basename (unsaved target).
 	std::string Project::ResolvePath(const std::string &path)
 	{
 		if (path.empty()) return std::string();
@@ -521,7 +478,6 @@ namespace Spumoni
 				value[i] = static_cast<char>(value[i] - 'A' + 'a');
 	}
 
-	// Same package file: resolved paths. Case-insensitive on macOS.
 	bool Project::SameFile(const std::string &a, const std::string &b)
 	{
 		if (a.empty() || b.empty()) return false;

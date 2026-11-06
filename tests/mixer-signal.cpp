@@ -11,8 +11,6 @@ static const float Scale = 1.0f;
 #include <limits>
 #include <sstream>
 
-// A level or a pan is the channel's own property (Volume2, Pan2), written
-// through its channel as a panel writes it.
 static void Control(Mixer &mixer, int channel, float value, const char *what = "Volume")
 {
 	ChannelHandler *ch = mixer.GetChannelHandler();
@@ -60,7 +58,6 @@ int main()
 		Control(mixer, 1, 1.0f);
 		Expect(mixer, 0.75f);
 	}
-	// A bad sample does not suppress the rest of its block.
 	bad.Set(3, invalid[0]);
 	mixer.Execute();
 	Sample *out = NULL;
@@ -70,14 +67,12 @@ int main()
 	bad.Set(0.5f);
 	Control(mixer, 1, -1.0f);
 	Expect(mixer, -0.25f);
-	// Preserve large and tiny finite values; this is not a limiter.
 	good.Set(0.0f);
 	bad.Set(1.0e20f);
 	Control(mixer, 1, 1.0f);
 	Expect(mixer, 1.0e20f);
 	bad.Set(1.0e-20f);
 	Expect(mixer, 1.0e-20f);
-	// Finite operands can overflow when multiplied or accumulated.
 	good.Set(0.25f);
 	bad.Set(std::numeric_limits<float>::max());
 	Control(mixer, 1, 2.0f);
@@ -111,7 +106,7 @@ int main()
 		Expect(mixer, 0.25f);
 		Control(mixer, 1, 0.5f, "Pan");
 	}
-	cv.Set(2.0f); // Existing extrapolated pan remains valid.
+	cv.Set(2.0f);
 	mixer.Execute();
 	assert(mixer.GetOutput(0, &out));
 	assert((*out)[0] == 0.875f);
@@ -119,7 +114,6 @@ int main()
 	assert((*out)[0] == -0.125f);
 	cv.Set(0.0f);
 #endif
-	// Patch representation and finite settings still round-trip.
 	Spiral::Core::Description saved;
 	mixer.Describe(saved);
 	Mixer restored;

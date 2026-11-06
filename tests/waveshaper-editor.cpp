@@ -1,6 +1,3 @@
-// The WaveShaper GUI is an editor of the device's channel, not of its
-// class: the module loads with no DSP module in the process, and after
-// a load the knobs show what the device streamed in.
 #include "SpiralSynthModular.h"
 #include "SpiralPluginGUI.h"
 #include "Fl_Knob.H"
@@ -27,7 +24,6 @@ int main(int argc, char **argv)
 	if (argc != 2) return 77;
 
 	std::string root=argv[1];
-	// No DSP module loaded yet: an editor must not need one to link.
 	void *ui=dlopen((root + "/panels/WaveShaperPlugin/WaveShaperPlugin_GUI.so").c_str(), RTLD_NOW | RTLD_GLOBAL);
 	if (!ui) { puts(dlerror()); return 1; }
 	puts("GUI module loads with no DSP module present");
@@ -50,14 +46,12 @@ int main(int argc, char **argv)
 	window.end();
 	assert(gui);
 
-	// What a patch file carries: version, wave, six coefficients.
 	const float coefs[6]={0.5f, 0.25f, 0.125f, 0.0625f, 0.03125f, 0.015625f};
 	Spiral::Core::Description state;
 	state.Value(1).Value(0);
 	for (int n=0; n<6; ++n) state.Value(coefs[n]);
 	Spiral::Core::Description::Reader reader(state);
 	plugin->Apply(reader);
-	// The host's sequence after Apply.
 	plugin->GetChannelHandler()->FlushChannels();
 	static_cast<SpiralPluginGUI *>(gui)->UpdateValues(plugin);
 
@@ -70,7 +64,6 @@ int main(int argc, char **argv)
 		printf("knob %d: %g (streamed %g)\n", n, knobs[n]->value(), coefs[n]);
 		assert(fabs(knobs[n]->value()-coefs[n]) < 1e-6);
 	}
-	// Wave 0 is sines: the second LED.
 	assert(leds[0]->value()==0 && leds[1]->value()==1);
 
 	delete gui;

@@ -1,10 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Spumoni::Zip — a ZIP32 container: written entry by entry through a Writer,
-// read by central directory, extracted into a folder. No knowledge of what
-// the entries are; that belongs to the package on top.
-// Code generated/modified by ChatGPT (GPT-5.6).
-// Save-time named branches generated/modified by GROK (Grok Build).
-// Lifted out of Spiral::File::Archive by Claude (moved from PatchArchiveContainer.h).
 
 #include "Zip.h"
 #include "Folder.h"

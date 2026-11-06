@@ -25,15 +25,12 @@
 #include "SpiralInfo.h"
 #include "SpiralSynthPluginLocation.h"
 
-
 //#define DEBUG_CONFIG
 
-float RandFloat (float s, float e) {
-      return s+((rand()%10000/10000.0)*(e-s));
+float RandFloat (float s, float e)
+{
+	return s+((rand()%10000/10000.0)*(e-s));
 }
-
-
-
 
 string SpiralInfo::LOCALE      = "EN";
 int    SpiralInfo::BUFSIZE     = 512;
@@ -47,7 +44,6 @@ int    SpiralInfo::FILTERGRAN  = 50;
 string SpiralInfo::AUDIOCLIENT = DEFAULT_OUTPUT_AUDIO_CLIENT;
 string SpiralInfo::OUTPUTFILE  = "default";
 string SpiralInfo::MIDIFILE    = "/dev/midi";
-// Empty: the first backend registered that is not the dummy.
 string SpiralInfo::MIDIBACKEND = "";
 int    SpiralInfo::POLY        = 1;
 bool   SpiralInfo::USEPLUGINLIST = false;
@@ -58,13 +54,8 @@ unsigned SpiralInfo::SCOPE_SEL_COLOUR = FL_WHITE;
 unsigned SpiralInfo::SCOPE_IND_COLOUR = fl_rgb_color (203, 255, 0);
 unsigned SpiralInfo::SCOPE_MRK_COLOUR = fl_rgb_color (155, 155, 50);
 
-// Wires have been curves since the canvas learnt fl_curve; the straight line
-// is the option. Session only, as the comment in the header says.
 bool   SpiralInfo::CURVEDWIRES = true;
 
-// macOS puts the menu in the system menu bar at the top of the screen, so the
-// strip inside the window is a second copy of it and starts hidden. Every
-// other platform has nowhere else to put the menu.
 #ifdef __APPLE__
 bool   SpiralInfo::SHOWMENUBAR = false;
 #else
@@ -89,50 +80,63 @@ string SpiralInfo::PLUGIN_PATH;
 
 SpiralInfo* SpiralInfo::m_SpiralInfo=NULL;
 
-SpiralInfo* SpiralInfo::Get() {
-   if (!m_SpiralInfo) {
-      m_SpiralInfo = new SpiralInfo;
-   }
-   return m_SpiralInfo;
+SpiralInfo* SpiralInfo::Get()
+{
+	if (!m_SpiralInfo)
+	{
+		m_SpiralInfo = new SpiralInfo;
+	}
+
+	return m_SpiralInfo;
 }
 
 SpiralInfo::SpiralInfo():
 m_Version(2)
 {
-   m_ResFileName = getenv("HOME");
-   m_ResFileName += "/.spiralmodular";
-   PLUGIN_PATH = PLUGIN_PATH_LOCATION;
+	m_ResFileName = getenv("HOME");
+	m_ResFileName += "/.spiralmodular";
+	PLUGIN_PATH = PLUGIN_PATH_LOCATION;
 }
 
-void SpiralInfo::LoadPrefs() {
-     /* Missing AudioClient is how old version-2 files are distinguished
-        from the multi-backend preference set. */
-     AUDIOCLIENT.clear();
+void SpiralInfo::LoadPrefs()
+{
+	/* Missing AudioClient is how old version-2 files are distinguished
+	   from the multi-backend preference set. */
+	AUDIOCLIENT.clear();
 
-     ifstream i (m_ResFileName.c_str());
-     if (!i) {
-        cerr << "Creating " << m_ResFileName << endl;
-        AUDIOCLIENT = DEFAULT_OUTPUT_AUDIO_CLIENT;
-        if (AUDIOCLIENT != "oss" && OUTPUTFILE == "/dev/dsp")
-           OUTPUTFILE = "default";
-        SavePrefs ();
-        return;
-     }
-     StreamInPrefs (i);
+	ifstream i (m_ResFileName.c_str());
 
-     if (AUDIOCLIENT.empty()) {
-        AUDIOCLIENT = DEFAULT_OUTPUT_AUDIO_CLIENT;
-        /* /dev/dsp was the historical default, not necessarily an
-           explicit user choice.  Do not feed that path to ALSA or
-           PortAudio. */
-        if (OUTPUTFILE == "/dev/dsp" && AUDIOCLIENT != "oss")
-           OUTPUTFILE = "default";
-     }
+	if (!i)
+	{
+		cerr << "Creating " << m_ResFileName << endl;
+		AUDIOCLIENT = DEFAULT_OUTPUT_AUDIO_CLIENT;
+
+		if (AUDIOCLIENT != "oss" && OUTPUTFILE == "/dev/dsp")
+			OUTPUTFILE = "default";
+
+		SavePrefs ();
+
+		return;
+	}
+
+	StreamInPrefs (i);
+
+	if (AUDIOCLIENT.empty())
+	{
+		AUDIOCLIENT = DEFAULT_OUTPUT_AUDIO_CLIENT;
+
+		/* /dev/dsp was the historical default, not necessarily an
+		   explicit user choice.  Do not feed that path to ALSA or
+		   PortAudio. */
+		if (OUTPUTFILE == "/dev/dsp" && AUDIOCLIENT != "oss")
+			OUTPUTFILE = "default";
+	}
 }
 
-void SpiralInfo::SavePrefs() {
-     ofstream o (m_ResFileName.c_str());
-     StreamOutPrefs (o);
+void SpiralInfo::SavePrefs()
+{
+	ofstream o (m_ResFileName.c_str());
+	StreamOutPrefs (o);
 }
 
 void SpiralInfo::StreamOutMainColourPrefs (ostream &s)
@@ -151,32 +155,27 @@ bool SpiralInfo::StreamInMainColourPrefs (istream &s, string &section, string &i
 {
 	char temp[256];
 	bool result = false;
-	
-	/* just ignore if this isn't calling us */						
+
+	/* just ignore if this isn't calling us */
 	if (section == "MAIN COLOURS")
 	{
 		if (ident == "ToolBoxColour")
 			s >> GUICOL_Tool;
-								
 		else if (ident == "ButtonColour")
 			s >> GUICOL_Button;
-
 		else if (ident == "CanvasColour")
 			s >> GUICOL_Canvas;
-
 		else if (ident == "DeviceColour")
 			s >> GUICOL_Device;
-
 		else if (ident == "DeviceBoxType")
 			s >> GUIDEVICE_Box;
-		
 		else
 			/* ignore idents that don't belong here/we don't know about */
-			s >> temp;	
-			
-		result = true;	
+			s >> temp;
+
+		result = true;
 	}
-	
+
 	return result;
 }
 
@@ -197,35 +196,29 @@ bool SpiralInfo::StreamInDeviceColourPrefs (istream &s, string &section, string 
 {
 	char temp[256];
 	bool result = false;
-	
-	/* just ignore if this isn't calling us */						
+
+	/* just ignore if this isn't calling us */
 	if (section == "DEVICE COLOURS")
 	{
 		if (ident == "GUIColour")
 			s >> GUI_COLOUR;
-						
 		else if (ident == "ScopeBGColour")
 			s >> SCOPE_BG_COLOUR;
-
 		else if (ident == "ScopeFGColour")
 			s >> SCOPE_FG_COLOUR;
-
 		else if (ident == "ScopeSelColour")
 			s >> SCOPE_SEL_COLOUR;
-
 		else if (ident == "ScopeIndColour")
 			s >> SCOPE_IND_COLOUR;
-
 		else if (ident == "ScopeMrkColour")
 			s >> SCOPE_MRK_COLOUR;
-							
 		else
 			/* ignore idents that don't belong here/we don't know about */
-			s >> temp; 
-			
-		result = true;	
+			s >> temp;
+
+		result = true;
 	}
-	
+
 	return result;
 }
 
@@ -253,81 +246,78 @@ bool SpiralInfo::StreamInAudioSettingsPrefs (istream &s, string &section, string
 {
 	char temp[256];
 	bool result = false;
-	
-	/* just ignore if this isn't calling us */						
+
+	/* just ignore if this isn't calling us */
 	if (section == "AUDIO SETTINGS")
 	{
 		if (ident == "BufferSize")
 			s >> BUFSIZE;
-								
 		else if (ident == "FragmentSize")
 			s >> FRAGSIZE;
-
 		else if (ident == "FragmentCount")
 			s >> FRAGCOUNT;
-
 		else if (ident == "Samplerate")
 			s >> SAMPLERATE;
-		
 		else if (ident == "WantMidi")
 			s >> WANTMIDI;
-
 		else if (ident == "FilterGranularity")
 			s >> FILTERGRAN;
-
 		else if (ident == "AudioClient")
 			s >> AUDIOCLIENT;
-
-		else if (ident == "Output") {
+		else if (ident == "Output")
+		{
 			std::getline(s, OUTPUTFILE);
-			if (s && !s.eof()) s.unget(); // the outer parser consumes the newline
+
+			if (s && !s.eof())
+				s.unget(); // the outer parser consumes the newline
+
 			const string::size_type first=OUTPUTFILE.find_first_not_of(" \t");
 			OUTPUTFILE.erase(0,first==string::npos ? OUTPUTFILE.size() : first);
+
 			if (!OUTPUTFILE.empty() && OUTPUTFILE[OUTPUTFILE.size()-1] == '\r')
 				OUTPUTFILE.erase(OUTPUTFILE.size()-1);
 		}
-
 		else if (ident == "Midi")
 			s >> MIDIFILE;
-
-		else if (ident == "MidiBackend") {
+		else if (ident == "MidiBackend")
+		{
 			std::getline(s, MIDIBACKEND);
-			if (s && !s.eof()) s.unget(); // as Output: the value may be empty
+
+			if (s && !s.eof())
+				s.unget();
+
 			const string::size_type first=MIDIBACKEND.find_first_not_of(" \t");
 			MIDIBACKEND.erase(0,first==string::npos ? MIDIBACKEND.size() : first);
 			const string::size_type last=MIDIBACKEND.find_last_not_of(" \t\r");
 			MIDIBACKEND.erase(last==string::npos ? 0 : last+1);
 		}
-
 		else if (ident == "UsePluginList")
 			s >> USEPLUGINLIST;
-
 		else if (ident == "Polyphony")
 			s >> POLY;
-
 		else
 			/* ignore idents that don't belong here/we don't know about */
-			s >> temp;	
-			
-		result = true;	
+			s >> temp;
+
+		result = true;
 	}
-	
+
 	return result;
 }
 
-void SpiralInfo::StreamInPrefs (istream &s) 
+void SpiralInfo::StreamInPrefs (istream &s)
 {
-     // These lines are from SpiralInfo
-     char temp[256];
+	// These lines are from SpiralInfo
+	char temp[256];
 
-     /* Sanity Explanation -
-     		Historically the .spiralmodular was a loose ini
-     		without sections, it looked like
-     		
-     		SpiralSound resource file
+	/* Sanity Explanation -
+		Historically the .spiralmodular was a loose ini
+		without sections, it looked like
+
+		SpiralSound resource file
 		Version		  = 1
 		Locale		  = EN
-     		BufferSize	  = 512
+		BufferSize	  = 512
 		FragmentSize	  = 512
 		FragmentCount	  = -1
 		Samplerate	  = 44100
@@ -351,31 +341,31 @@ void SpiralInfo::StreamInPrefs (istream &s)
 		PluginPath        = /usr/lib/SpiralPlugins/
 		Plugins		  =
 		end
-		
+
 		Where ScopeBGColour through ScopeMrkColour
 		were new to Version 1
-		
+
 		It just presumed fixed order, and names.
-		
+
 		This was an unstable format, incapable of easy recovery
 		So I changed it to a more full Ini, which would allow
 		for missing lines, and missing sections, or for
 		sections in a different order.
-		
+
 		Properly It still needs a better backend still, to get away
 		from the >> temp, assumptions.
-		
+
 		It also needs a redone plugin section,
 		as another ini section, name=name, or the like.
-		
+
 		Then you want to be able to get rid of that first bit
 		SpiralSound resource file
 		Version = #
 		Locale = Locale
-		
+
 		Maybe, a simple XML file instead, peak first few values.
 		if they are SpiralSound, its an old format, otherwise, its new.
-	*/		
+	*/
 	s >> temp >> temp >> temp;	//Eat "SpiralSound" "resource" "file"
 	s >> temp >> temp >> m_Version;	//Eat "Version" "=", Read Version#, eg "2"
 	s >> temp >> temp >> LOCALE;	//Eat "Locale" "=", Read Locale, eg "EN"
@@ -387,15 +377,15 @@ void SpiralInfo::StreamInPrefs (istream &s)
 			char test;
 			string section;
 
-			 /* skip next line, since this is just a spacer between file header
-			    and the rest of the file config
-			 */   
+			/* skip next line, since this is just a spacer between file header
+			   and the rest of the file config
+			*/
 			s.seekg (2, ios::cur );
-			
+
 			while (! s.eof () && ! s.fail() )
 			{
 				/* peek first char to find out if this is a delimiter line
-				   a header line, or a regular section 
+				   a header line, or a regular section
 				*/
 				test = s.peek();
 
@@ -409,45 +399,49 @@ void SpiralInfo::StreamInPrefs (istream &s)
 
 						/* read header line up to close bracket or end of line */
 						s.getline (temp, 256, ']');
-						
+
 						/* move to next line */
-						s.seekg (1, ios::cur );  
-						
+						s.seekg (1, ios::cur );
+
 						/* assign current section string for easy testing */
 						section = temp;
 						cout << "at section " + section << endl;
-						
-						/* the plugins format is a bit odd so we 
-						   do it all here at once mostly the same 
+
+						/* the plugins format is a bit odd so we
+						   do it all here at once mostly the same
 						   as the old way
-						*/  
+						*/
 						if (section == "PLUGINS")
 						{
 							s >> temp >> temp >> PLUGIN_PATH;
 							s >> temp >> temp;
-			
+
 							string st;
 							PLUGINVEC.clear();
-							while (st!="end" && !s.eof()) 
+
+							while (st!="end" && !s.eof())
 							{
 								s >> st;
-								if (st!="end" && USEPLUGINLIST) PLUGINVEC.push_back (st);
-                                                                printf ( "loop\n" );
-							}	
+
+								if (st!="end" && USEPLUGINLIST)
+									PLUGINVEC.push_back (st);
+
+								printf ( "loop\n" );
+							}
 
 							/* move to next line */
-							s.seekg (1, ios::cur );  
-						}						
+							s.seekg (1, ios::cur );
+						}
 					}
 					break;
 
 					case '\n':
 					{
-						 /* skip this line, its just a spacer between section */
+						/* skip this line, its just a spacer between section */
 						s.seekg (1, ios::cur );
-					}					
+					}
 					break;
-					
+
 					default:
 					{
 						string ident;
@@ -455,35 +449,42 @@ void SpiralInfo::StreamInPrefs (istream &s)
 						s >> temp;//skip "="
 
 						/* Check to see if this a Audio Settings section */
-						if (StreamInAudioSettingsPrefs(s, section, ident)) { 
+						if (StreamInAudioSettingsPrefs(s, section, ident))
+						{
 #ifdef DEBUG_CONFIG
-							cout << "successfully read " + section + ", " + ident << endl; 
+							cout << "successfully read " + section + ", " + ident << endl;
 #endif
+						}
 						/* Check next to see if this a Main Colour section */
-						} else if (StreamInMainColourPrefs(s, section, ident)) { 
+						else if (StreamInMainColourPrefs(s, section, ident))
+						{
 #ifdef DEBUG_CONFIG
-								cout << "successfully read " + section + ", " + ident << endl;  
+							cout << "successfully read " + section + ", " + ident << endl;
 #endif
+						}
 						/* Check next to see if this a Device Colour section */
-						} else if (StreamInDeviceColourPrefs(s, section, ident)) { 
+						else if (StreamInDeviceColourPrefs(s, section, ident))
+						{
 #ifdef DEBUG_CONFIG
-								cout << "successfully read " + section + ", " + ident << endl;  
+							cout << "successfully read " + section + ", " + ident << endl;
 #endif
+						}
 						/* Ignore idents for sections that are invalid or we don't know about */
-						} else {
+						else
+						{
 							s >> temp;
 #ifdef DEBUG_CONFIG
-							cout << "ignoring. don't know how to handle, " + section + ", " + ident << endl;  
+							cout << "ignoring. don't know how to handle, " + section + ", " + ident << endl;
 #endif
-						}	
+						}
 
 						s.seekg (1, ios::cur );  //move to next line
 					}
-				}	
-			}		
+				}
+			}
 		}
-    		break;
-     		
+		break;
+
 		default: //old file fallback
 		{
 			s >> temp >> temp >> BUFSIZE;
@@ -500,7 +501,9 @@ void SpiralInfo::StreamInPrefs (istream &s)
 			s >> temp >> temp >> USEPLUGINLIST;
 
 			s >> temp >> temp >> POLY;
-			if (m_Version>0) {
+
+			if (m_Version>0)
+			{
 				s >> temp >> temp >> GUI_COLOUR;
 				s >> temp >> temp >> SCOPE_BG_COLOUR;
 				s >> temp >> temp >> SCOPE_FG_COLOUR;
@@ -508,6 +511,7 @@ void SpiralInfo::StreamInPrefs (istream &s)
 				s >> temp >> temp >> SCOPE_IND_COLOUR;
 				s >> temp >> temp >> SCOPE_MRK_COLOUR;
 			}
+
 			s >> temp >> temp;
 			s >> temp >> temp >> GUICOL_Tool;
 			s >> temp >> temp >> GUICOL_Button;
@@ -516,61 +520,70 @@ void SpiralInfo::StreamInPrefs (istream &s)
 			s >> temp >> temp >> GUIDEVICE_Box;
 			s >> temp >> temp >> PLUGIN_PATH;
 			s >> temp >> temp;
-			
+
 			string st;
 			PLUGINVEC.clear();
-			if (USEPLUGINLIST) 
+
+			if (USEPLUGINLIST)
 			{
-				while (st!="end" && !s.eof()) 
+				while (st!="end" && !s.eof())
 				{
 					s >> st;
-					if (st!="end") PLUGINVEC.push_back (st);
-				}	
+
+					if (st!="end")
+						PLUGINVEC.push_back (st);
+				}
 			}
 		}
 	}
-	// Plugins install under the compiled versioned path. A PluginPath saved
-	// before that layout is ignored. --PluginPath still overrides.
+
 	PLUGIN_PATH = PLUGIN_PATH_LOCATION;
 }
 
-void SpiralInfo::StreamOutPrefs (ostream &s) 
+void SpiralInfo::StreamOutPrefs (ostream &s)
 {
 	s << "SpiralSound resource file" << endl << endl;
 	s << "Version           = " << m_Version << endl;
 	s << "Locale            = " << LOCALE << endl;
 
 	s << endl; //section spacer
-	
+
 	/* Write Audio Settings section */
 	StreamOutAudioSettingsPrefs(s);
 
 	/* Write Main Colour section */
 	StreamOutMainColourPrefs(s);
-						
+
 	/* Write Device Colour section */
 	StreamOutDeviceColourPrefs(s);
 
 	/* Write PLUGINS section
-	
+
 	   because of the plugin path output format it must always be appended with an "end" line,
 	   and currently this MUST be the last thing in the file
 	*/
 	s << "[PLUGINS]" << endl;
 	s << "PluginPath        = " << PLUGIN_PATH << endl;
 	s << "PluginList        = " << endl;
-	for (vector<string>::iterator i=PLUGINVEC.begin(); i!=PLUGINVEC.end(); i++)
+
+	for (
+			vector<string>::iterator i=PLUGINVEC.begin();
+			i!=PLUGINVEC.end();
+			i++
+		)
 	{
 		s << *i << endl;
 	}
+
 	s << "end" << endl;
 }
 
-void SpiralInfo::Alert (string Text) {
-     // fl_message (Text.c_str());
-     cerr << "Spiral alert: " << Text << endl;
+void SpiralInfo::Alert (string Text)
+{
+	// fl_message (Text.c_str());
+	cerr << "Spiral alert: " << Text << endl;
 }
 
-void SpiralInfo::Log (string Text) {
-
+void SpiralInfo::Log (string Text)
+{
 }

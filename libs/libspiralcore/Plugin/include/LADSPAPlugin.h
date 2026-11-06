@@ -72,7 +72,6 @@ typedef PortSettings<Spiral::Core::ToggleProperty, bool, &Spiral::Core::NumericP
 class LADSPAPlugin : public Spiral::Core::Device
 {
 public:
-	// Built into the host: registered with the device registry, no module.
 	static const Spiral::Core::DeviceClass &Class();
 
 	LADSPAPlugin();
@@ -89,10 +88,6 @@ public:
 	bool           HasEffect() { return m_PlugDesc != NULL; }
 	virtual void RestoreUnavailablePorts(int inputs, int outputs);
 	const char    *GetName() { return (const char *)m_Name; }
-	// Virtual, and defined in the module that owns m_LADSPAInfo. An inline body
-	// here makes every caller reference that static directly, and the editor
-	// module is dlopened RTLD_LOCAL, so the DSP module's statics are not its to
-	// read. Through the vtable the editor needs no symbol from us at all.
 	virtual const std::vector<LADSPAInfo::PluginEntry> &GetMenuList() const;
 	const char    *GetMaker() { return (const char *)m_Maker; }
 	int            GetPage() { return AsSigned(m_Page); }

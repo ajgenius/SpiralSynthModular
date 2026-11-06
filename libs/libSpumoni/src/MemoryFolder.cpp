@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Spumoni::MemoryFolder — a working tree held entirely in memory.
 
 #include "MemoryFolder.h"
 
@@ -45,14 +44,12 @@ namespace Spumoni
 		m_Bytes=0;
 		delete m_Scratch; m_Scratch=NULL;
 
-		// Ver 2: tear down any owned store and its backing directory.
 		delete m_Store; m_Store=NULL;
 		if(!m_StoreDir.empty()){Path::RemoveTree(m_StoreDir);m_StoreDir.clear();}
 
 		m_Open=false;
 	}
 
-	// "a//b/", "./a" and "" all name what they look like; ".." never.
 	string MemoryFolder::Normalise(const string &relative)
 	{
 		string result;
@@ -206,15 +203,12 @@ namespace Spumoni
 		return true;
 	}
 
-	// A memory stream; the entry appears when CloseWrite lands the bytes.
 	FILE *MemoryFolder::OpenWrite(const string &relative, string &error)
 	{
 		if(!m_Open){error="Folder not created";return NULL;}
 		string key=Normalise(relative);
 		if(key.empty()||!ValidRelative(key)){error="Unsafe path: "+relative;return NULL;}
 		if(!MakeParents(key,error)) return NULL;
-		// open_memstream keeps the addresses it is given until fclose, so the
-		// record must live on the heap, not in a local or a map node that moves.
 		Pending *pending=new Pending;
 		pending->Relative=key; pending->Buffer=NULL; pending->Size=0;
 		FILE *file=open_memstream(&pending->Buffer,&pending->Size);
@@ -229,7 +223,6 @@ namespace Spumoni
 		if(found==m_Pending.end()){error="Not a stream of this folder";return false;}
 		std::auto_ptr<Pending> pending(found->second);
 		m_Pending.erase(found);
-		// The buffer and size are final only after fclose.
 		bool closed=fclose(file)==0;
 		string data;
 		if(closed && pending->Buffer) data.assign(pending->Buffer,pending->Size);
@@ -244,12 +237,11 @@ namespace Spumoni
 		if(found==m_Entries.end()||found->second.Directory){error="Missing "+relative;return NULL;}
 		const string &data=found->second.Data;
 		FILE *file=data.empty() ? NULL : fmemopen((void*)data.data(),data.size(),"rb");
-		if(!file) file=tmpfile();	// an empty entry: any empty stream will do
+		if(!file) file=tmpfile();
 		if(!file) error="Cannot open memory stream";
 		return file;
 	}
 
-	// The one way out: that entry alone, into a private disk scratch.
 	bool MemoryFolder::PathFor(const string &relative, string &path, string &error)
 	{
 		string key=Normalise(relative);
@@ -276,9 +268,6 @@ namespace Spumoni
 		return writer.AddMemory(archiveName,found->second.Data,error);
 	}
 
-	// Ver 2: a store under a private scratch directory, made on first ask.
-	// The directory outlives the DiskFolder that made it (Release) and is
-	// removed with the folder.
 	Store *MemoryFolder::GetStore()
 	{
 		if(!m_Open) return NULL;

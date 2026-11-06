@@ -135,8 +135,6 @@ void KeyboardPlugin::Execute()
 		SetOutput(1,n,m_TriggerLevel);				
 	}
 
-	// A new key, or letting go of the newest while others are held, drops the trigger
-	// for one sample, as the old editor's note off then note on did, so envelopes start again.
 	if (m_Retrigger)
 	{
 		SetOutput(1,0,0.0f);
@@ -202,7 +200,6 @@ void KeyboardPlugin::NoteEvent(bool on)
 	Event.NoteNum=note;
 	Event.Frequency=NoteTable[note];
 
-	// A key pressed again ends its earlier press first.
 	if (m_HeldID[note]>=0)
 	{
 		Event.Type=Spiral::Core::Event::NoteOff;

@@ -137,9 +137,6 @@ namespace Core
 		return *this;
 	}
 
-	// The whole value must be the number; a range error still is one. A denormal
-	// reads as the C library spells it, and an overflow as the largest number,
-	// since an infinity could not be written back. A saved inf or nan is skipped.
 	Description::Reader &Description::Reader::Value(double &x)
 	{
 		if (More())
@@ -203,8 +200,6 @@ namespace Core
 		return *this;
 	}
 
-	// JSON string escaping. Values are what an ostream wrote, so anything
-	// below 0x20 is a raw byte a plugin chose to emit; it is kept, escaped.
 	static void Quote(std::string &out, const std::string &text)
 	{
 		out += '"';

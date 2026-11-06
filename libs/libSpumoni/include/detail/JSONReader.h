@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Shared C++03 reader extracted from public libSpumoni/src/JSON.cpp.
-// Origin: ajgenius/spiral-synth-modular, feature/patch-legacy-name at a98039c.
-// JSON supplies Make*, Get, Text, SetOwned and AppendOwned; Ownership::Release
-// disposes a root. Each tree keeps its native ownership without an intermediate DOM.
 #ifndef SPIRAL_JSON_READER_H
 #define SPIRAL_JSON_READER_H
 
@@ -41,9 +37,6 @@ namespace SpiralJSONDetail
 	const size_t DepthLimit = 64;
 	const size_t SizeLimit = 16 * 1024 * 1024;
 
-	// The bytes of one UTF-8 encoded character at p, or 0 when they are
-	// not one (overlong forms, surrogates and anything past U+10FFFF
-	// included).
 	inline size_t Utf8Length(const unsigned char *p, size_t remaining)
 	{
 		if (p[0] < 0x80) return 1;
@@ -72,8 +65,6 @@ namespace SpiralJSONDetail
 		{
 		}
 
-		// The first byte not consumed, for the caller to check against the
-		// text's length: a NUL byte inside the text ends parsing early.
 		const char *End() const { return m_P; }
 
 		JSON *Parse()

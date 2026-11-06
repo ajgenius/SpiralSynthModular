@@ -37,8 +37,6 @@ bool TimedAudioBuffer::Configure(unsigned capacity, unsigned channels, double in
 	m_Filter.resize((Phases + 1) * m_Taps);
 	m_Cutoff = outputRate < inputRate ? 0.94 * outputRate / inputRate : 1;
 
-	// Symmetric windowed sinc: lookahead supplies the future half, so the
-	// filter adds no unreported presentation delay. Normalize each phase.
 	for (unsigned phase = 0; phase <= Phases; ++phase)
 	{
 		double sum = 0;
@@ -133,9 +131,6 @@ unsigned TimedAudioBuffer::Read(float *samples, unsigned frames, double time, do
 		{
 			const Position &next = m_Positions[(cursor + 1) & m_Mask];
 			const double distance = next.Time - center.Time;
-			// Native rate recovery refines each block's timestamp slope. Use
-			// the actual adjoining sample interval at that boundary, otherwise
-			// a small clock correction is mistaken for a missing sample.
 			if (next.Frame == center.Frame + 1 && distance > 0 && distance < center.Step * 2)
 				interval = distance;
 
@@ -161,9 +156,6 @@ unsigned TimedAudioBuffer::Read(float *samples, unsigned frames, double time, do
 			if (!Covered(index, read, write, generation)) continue;
 
 			const Position &position = m_Positions[index & m_Mask];
-			// Frame/generation gaps identify dropped audio. Native timestamp
-			// quantization and clock corrections can move a contiguous block
-			// by part of a sample; that must not remove half its FIR kernel.
 			if (position.Frame + (m_Taps / 2 - 1) != center.Frame + tap ||
 				std::fabs(position.Time - (center.Time + (int(tap) - int(m_Taps / 2 - 1)) * center.Step)) > center.Step * 4)
 				continue;
@@ -176,7 +168,6 @@ unsigned TimedAudioBuffer::Read(float *samples, unsigned frames, double time, do
 		}
 	}
 
-	// Retain filter history. Only this consumer advances the read cursor.
 	m_Search = cursor;
 	if (cursor - read > m_Taps) read = cursor - m_Taps;
 

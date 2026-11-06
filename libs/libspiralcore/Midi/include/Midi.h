@@ -59,9 +59,6 @@ private:
 	int   m_Note;
 };
 
-/* The synth's view of MIDI: events per channel, a clock, and sends. The
-   bytes come and go through a MidiBackend from the registry, chosen by
-   name; this class knows no hardware API. */
 class MidiDevice
 {
 public:
@@ -70,10 +67,7 @@ public:
 	enum Type{READ,WRITE};
 
 	static void Init(const string &name, Type t);
-	// The backend by registry name; empty means the first one that is not
-	// the dummy. Takes effect at Init, or at once on a running device.
 	static void SetBackendName(const string &name);
-	// What the backend connects to: an OSS device path, a port name.
 	static void SetDeviceName(string s);
         static MidiDevice *Get()      { return m_Singleton; }
 	static void PackUpAndGoHome() { if (m_Singleton) delete m_Singleton; m_Singleton=NULL; }
@@ -84,15 +78,9 @@ public:
 	float GetClock() { return m_Clock; }
 	string GetBackendName() { return m_BackendName; }
 	string GetStatus();
-	// The backend's input ports, and the one asked for by SetDeviceName.
 	vector<string> Sources();
 	static string GetDeviceName() { return m_DeviceName; }
 
-	/* The patch's own MIDI input, apart from the Midi devices in it: every
-	   channel message heard, whether or not a device reads its channel.
-	   Collect drains the backend, and the host calls it once a period so
-	   the input runs with no Midi device in the patch. One reader takes
-	   them off, without locking; what it does not take in time is lost. */
 	void Collect();
 	bool ReadPatchInput(MidiPacket &packet);
 
@@ -117,7 +105,7 @@ private:
 	string m_BackendName;
 };
 
-} // namespace Core
+}
 } // namespace Spiral
 
 #endif

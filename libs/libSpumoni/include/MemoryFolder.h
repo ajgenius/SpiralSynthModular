@@ -1,13 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Spumoni::MemoryFolder — a working tree held entirely in memory.
-//
-// Nothing outside the process can open it: there is no path, no mount, no
-// file record. Entries are byte strings in a map; streaming goes through
-// memory streams. The one way out is PathFor, for code that can only take
-// a path (a plugin reading a sample): that entry alone is written into a
-// private disk scratch the folder owns and removes with itself, and is
-// rewritten if the entry changes. Bytes() says how much the tree holds, so
-// a caller can decide to work on disk instead when a package is too large.
 #ifndef SPUMONI_MEMORY_FOLDER_H
 #define SPUMONI_MEMORY_FOLDER_H
 
@@ -25,7 +16,6 @@ namespace Spumoni
 		MemoryFolder();
 		virtual ~MemoryFolder();
 
-		// * The bytes held by every entry.
 		unsigned long long Bytes() const { return m_Bytes; }
 
 		virtual const char *Kind() const { return "memory"; }
@@ -46,8 +36,6 @@ namespace Spumoni
 		virtual bool AddTo(Container::Writer &writer, const std::string &relative,
 			const std::string &archiveName, std::string &error) const;
 
-		// Ver 2: MemoryFolder can own a Store for shared assets.
-		// Lazily creates one under a private scratch when first requested.
 		virtual Store *GetStore();
 
 	private:
@@ -55,7 +43,7 @@ namespace Spumoni
 		{
 			bool Directory;
 			std::string Data;
-			std::string Materialised;	// relative path in the scratch, when PathFor made one
+			std::string Materialised;
 			Entry() : Directory(false) {}
 		};
 		struct Pending
@@ -77,9 +65,8 @@ namespace Spumoni
 		DiskFolder *m_Scratch;
 		unsigned long long m_Bytes;
 
-		// Ver 2: optional owned store for shared content-addressed assets.
 		Store *m_Store;
-		std::string m_StoreDir; // scratch dir we own when we created the store
+		std::string m_StoreDir;
 	};
 
 } // namespace Spumoni

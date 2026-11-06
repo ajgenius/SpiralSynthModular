@@ -69,8 +69,6 @@ bool OutputAudioClient::Select(const string &client)
 
 bool OutputAudioClient::SelectFirstAvailable()
 {
-	// Registry order is the build's preference. JACK is an external
-	// stack: chosen by name, never as a fallback.
 	const vector<string> names = AudioBackendRegistry::Get()->Names();
 	for (vector<string>::const_iterator i = names.begin(); i != names.end(); ++i)
 		if (*i != "jack" && Select(*i)) return true;

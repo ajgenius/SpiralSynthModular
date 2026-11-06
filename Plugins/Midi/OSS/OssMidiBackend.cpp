@@ -16,10 +16,6 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-// Dave's raw OSS device reader as a loadable backend: the device path is
-// the selected source (and destination), opened non-blocking and read a
-// byte at a time into packets by the worker, as the old reader thread
-// did; writes go straight to the device.
 #include "MidiBackend.h"
 #include "NativeMidi.h"
 #include <fcntl.h>
@@ -82,7 +78,6 @@ std::vector<std::string> OssMidiTransport::Ports(bool output)
 	return names;
 }
 
-// a byte at a time, until a packet completes or the device has no more
 bool OssMidiTransport::Read(MidiPacket &packet)
 {
 	unsigned char c;
@@ -105,8 +100,6 @@ std::string OssMidiTransport::Status() const
 	if (m_MidiFd < 0) return "OSS: closed";
 	return "OSS: " + m_DeviceName;
 }
-
-// * Backend module entry
 
 static void *Create(void *) { return static_cast<MidiBackend *>(new NativeMidiBackend(new OssMidiTransport)); }
 static void Destroy(void *backend) { delete static_cast<MidiBackend *>(backend); }

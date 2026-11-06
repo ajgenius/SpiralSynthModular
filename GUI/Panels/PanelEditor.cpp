@@ -224,8 +224,6 @@ namespace SpiralPanels
 			self->SetLayout((self->m_Panel->Layout() + 1) % self->m_Panel->LayoutCount());
 	}
 
-	// Whether any of w shows: inside every group holding it (the canvas
-	// view clips the canvas) and inside its window.
 	static bool OnScreen(const Fl_Widget *w)
 	{
 		if (!w->visible_r())
@@ -248,8 +246,6 @@ namespace SpiralPanels
 	{
 		if (m_Generated && m_Panel && m_Panel->Plugin() && m_Panel->Plugin()->PanelGeneration() != m_Generation)
 			Rebuild();
-		// A panel nobody can see is not polled, as in the private tree; it
-		// reads everything again when it shows.
 		if (m_Panel && OnScreen(this))
 		{
 			m_Panel->Refresh();

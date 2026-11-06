@@ -36,7 +36,6 @@ namespace SpiralPanels
 		void Finish(int choice);
 		size_t OptionCount() const { return m_Options.size(); }
 		static int ChooseFrom(const std::vector<std::string> &options);
-		// A press opens a list to pick from: not something a controller should do.
 		virtual bool Drivable() const { return false; }
 
 	protected:

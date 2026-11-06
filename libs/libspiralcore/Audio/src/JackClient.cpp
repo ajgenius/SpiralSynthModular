@@ -39,8 +39,6 @@ namespace
 
 	void MapClock()
 	{
-		// One calibration for all clients: independent query jitter must not
-		// introduce phase offsets between ports on the same JACK server.
 		if (ClockMapped) return;
 
 		double best = 1;
@@ -134,11 +132,7 @@ bool JackClient::Attach(const string &clientName)
 	ClientLifecycleLock lock;
 	if (IsAttached()) return true;
 
-	// A server shutdown leaves a handle that still needs to be closed.
 	DetachClient();
-	// A failed open after server shutdown can make libjack discard its
-	// remaining clients. Retire every stale handle before attempting it,
-	// so another wrapper cannot later close an already destroyed client.
 	for (size_t n=0; n<Clients.size(); ++n)
 		if (Clients[n]->m_Client && !Clients[n]->IsAttached())
 			Clients[n]->DetachClient();
@@ -185,7 +179,6 @@ void JackClient::DetachClient()
 	bool notify = IsAttached();
 	if (m_Client)
 	{
-		// Closing waits for process callbacks before releasing native ports.
 		jack_client_close(m_Client);
 		m_Client = NULL;
 	}
@@ -257,8 +250,6 @@ int JackClient::Process(jack_nframes_t frames, void *context)
 
 #endif
 	client->m_CycleTime = current * 1e-6 + ClockOffset;
-	// JACK's DLL maps this entire cycle to system time. Its corrected next
-	// cycle time gives the sample spacing, rather than callback arrival jitter.
 	client->m_Timing.Step = next > current && frames ? double(next - current) * 1e-6 / frames : 0;
 	client->m_Timing.Frame = client->m_NativeFrame;
 	client->m_Timing.Frames = frames;
@@ -361,7 +352,6 @@ void JackClient::RemovePort(PortMap &ports, int id)
 	PortMap::iterator i = ports.find(id);
 	if (i == ports.end()) return;
 
-	// Port maps are traversed by Process; stop callbacks before changing them.
 	bool active = m_Active;
 	if (active && jack_deactivate(m_Client)) return;
 
@@ -475,8 +465,6 @@ void JackClient::SetOutputBuf(int id, float *buffer, unsigned int frames)
 	SetBuffer(m_OutputPortMap, id, buffer, frames);
 }
 
-// These requests do not change engine pause state. A host may opt into transport
-// synchronization separately, without making every audio client a transport owner.
 bool JackClient::QueryTransport(jack_transport_state_t &state, jack_position_t &position) const
 {
 	if (!IsAttached() || !m_Client)

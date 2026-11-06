@@ -6,8 +6,6 @@ namespace Spiral
 {
 namespace Core
 {
-// Engine-owned mapping from monotonically increasing graph frames to physical
-// presentation time. Musical locate/pause never rewinds these frame numbers.
 class PresentationClock
 {
 public:

@@ -70,9 +70,6 @@ namespace SpiralPanels
 			return i < Cells.size() && Cells[i];
 		}
 
-		// Where the note starting at c on row r stops, as the private
-		// tree's grid has it: its own end, the next note on the row, or the
-		// grid's edge. A device that sends no ends has one-step notes.
 		int EndOf(int c, int r) const
 		{
 			const size_t i = (size_t)c * Rows + r;
@@ -83,7 +80,6 @@ namespace SpiralPanels
 			return end;
 		}
 
-		// The start of the note covering cell c on row r, or -1.
 		int StartOf(int c, int r) const
 		{
 			for (int s = c; s >= 0; --s)
@@ -95,7 +91,6 @@ namespace SpiralPanels
 		int ColumnX(int c) const { return CellsX() + c * CellsW() / Columns; }
 		int RowY(int r) const { return CellsY() + (Rows - 1 - r) * CellsH() / Rows; }
 
-		// The cells of a note, or what it covered, drawn again.
 		void DamageNote(int c0, int c1, int r)
 		{
 			if (c0 < 0 || r < 0 || r >= Rows || !visible_r())
@@ -134,8 +129,6 @@ namespace SpiralPanels
 			return c == Step ? FL_GRAY : (c % 4 ? FL_WHITE : fl_rgb_color(225, 225, 225));
 		}
 
-		// The playing step: only the column it left and the one it reached
-		// are drawn again, and the classic grid does not show it at all.
 		void SetStep(int s)
 		{
 			if (s == Step)
@@ -161,7 +154,6 @@ namespace SpiralPanels
 			fl_color(Classic ? FL_BACKGROUND_COLOR : FL_DARK3);
 			fl_rectf(x(), y(), w(), h());
 			const int x0 = CellsX(), y0 = CellsY(), cw0 = CellsW(), ch0 = CellsH();
-			// Only the cells in the clip: a step damages two columns.
 			int kx, ky, kw, kh;
 			fl_clip_box(x(), y(), w(), h(), kx, ky, kw, kh);
 			for (int c = 0; c < Columns; ++c)
@@ -172,7 +164,6 @@ namespace SpiralPanels
 					if (cx > kx + kw || cx + cw < kx || ry > ky + kh || ry + rh < ky)
 						continue;
 					const Fl_Color colour = CellColour(c, r);
-					// A note longer than a step is one bar: no line inside it.
 					const int start = StartOf(c, r);
 					const bool joined = start >= 0 && start < c;
 					fl_color(colour);
@@ -190,8 +181,6 @@ namespace SpiralPanels
 					else
 						fl_rectf(joined ? cx - 1 : cx, ry, joined ? cw : cw - 1, rh - 1);
 				}
-			// The note under the pointer, outlined, with the handle that
-			// drags its end at its right edge.
 			const int hc = m_EndC >= 0 ? m_EndC : m_HoverC, hr = m_EndC >= 0 ? m_EndR : m_HoverR;
 			if (hc >= 0 && At(hc, hr))
 			{
@@ -207,8 +196,6 @@ namespace SpiralPanels
 				for (int r = 0; r < Rows; ++r)
 				{
 					const int ry = y0 + (Rows - 1 - r) * ch0 / Rows, rh = y0 + (Rows - r) * ch0 / Rows - ry;
-					// The trigger rows behind their names, Trigger 1's the
-					// strongest.
 					if (TriggerRow != INT_MIN && r >= TriggerRow && r < TriggerRow + Triggers)
 					{
 						fl_color(fl_color_average(FL_SELECTION_COLOR, FL_BACKGROUND_COLOR, r == TriggerRow ? 0.7f : 0.3f));
@@ -220,8 +207,6 @@ namespace SpiralPanels
 			}
 		}
 
-		// The rows sending Triggers 1 to 16, from the row given, which may
-		// be off the grid.
 		void SetTriggerRow(int row)
 		{
 			if (row == TriggerRow)
@@ -231,8 +216,6 @@ namespace SpiralPanels
 				Fl_DamageArea(this, x(), y(), Gutter() + 1, h() + 1);
 		}
 
-		// The note names mark the trigger rows: a click or a drag there
-		// moves Trigger 1 to the row under the pointer.
 		bool InNames() const
 		{
 			return NoteNames > 0 && Fl::event_x() < CellsX() && Fl::event_y() >= CellsY();
@@ -313,8 +296,6 @@ namespace SpiralPanels
 				DamageNote(c, EndOf(c, r), r);
 		}
 
-		// The end follows the pointer, a step past the cell it is over,
-		// up to the next note on the row.
 		void DragEnd()
 		{
 			const int column = (Fl::event_x() - CellsX()) * Columns / std::max(1, CellsW()) + 1;
@@ -372,13 +353,10 @@ namespace SpiralPanels
 					if (start >= 0 && m_Owner.HasResize() &&
 					    Fl::event_x() >= ColumnX(EndOf(start, r)) - std::max(2, std::min(3, CellsW() / Columns / 4)))
 					{
-						// The right edge of a note: drag its end.
 						m_EndC = start; m_EndR = r;
 						DamageNote(start, EndOf(start, r), r);
 						return 1;
 					}
-					// A click inside a note takes it away; one on an empty
-					// cell puts a note there, and a drag right lengthens it.
 					const int at = start >= 0 ? start : c;
 					const bool on = start < 0;
 					const size_t i = (size_t)at * Rows + r;
@@ -449,13 +427,13 @@ namespace SpiralPanels
 		int NoteNames, BaseH;
 		bool Classic;
 		enum { Triggers = 16 };
-		int TriggerRow;         // Trigger 1's row, or INT_MIN: none shown
-		bool m_Marking;         // dragging the trigger rows
+		int TriggerRow;
+		bool m_Marking;
 		std::vector<unsigned char> Cells, Volumes, Ends;
 		int m_DragC, m_DragR, m_DragY;
 		float m_DragV;
-		int m_EndC, m_EndR;     // the note whose end is being dragged
-		int m_HoverC, m_HoverR; // the note under the pointer
+		int m_EndC, m_EndR;
+		int m_HoverC, m_HoverR;
 		Fl_Slider *m_Slider;
 		int m_SliderC, m_SliderR;
 
@@ -554,7 +532,6 @@ namespace SpiralPanels
 		return Handles("resize");
 	}
 
-	// A note's end dragged: the step after its last.
 	void PanelMatrixGrid::Resize(int x, int y, int end)
 	{
 		if (!HasResize())
@@ -571,7 +548,6 @@ namespace SpiralPanels
 		return Handles("triggers");
 	}
 
-	// Trigger 1 moved to the grid's row y.
 	void PanelMatrixGrid::MoveTriggers(int y)
 	{
 		if (!HasTriggers())

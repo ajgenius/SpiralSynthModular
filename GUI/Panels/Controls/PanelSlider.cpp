@@ -79,8 +79,6 @@ namespace SpiralPanels
 			if (low < high)
 			{
 				m_Slider->range(m_Flip ? high : low, m_Flip ? low : high);
-				// A step that is a share of the range, as the old editors stepped their
-				// own 0..1 slider and scaled it to the limits.
 				if (m_StepFraction > 0)
 					m_Slider->step(m_StepFraction * (high - low));
 			}

@@ -1,6 +1,3 @@
-// Every shipped panel loads with its bindings and handlers accepted, and the
-// handlers do what the older spellings did: the Mixer's +/- buttons bump
-// CHANNELS (delta, with clear_indicators beside it) through a real device.
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "GUI/Panels/Panel.h"
 #include "GUI/Panels/PanelControl.h"
@@ -45,8 +42,6 @@ namespace
 		return files;
 	}
 
-	// One block as the host runs it: the gui copy reaches the device, then
-	// its queued commands run.
 	void Block(MixerPlugin &mixer)
 	{
 		do
@@ -68,11 +63,6 @@ int main()
 {
 	int failures = 0;
 
-	// 1. Every panel builds and nothing it says is refused: a refused binding
-	// or handler is reported as "<control>.<key>: <reason>"; an unregistered
-	// control type is a bare name and only printed. There is no device here,
-	// so a property only the device describes reads as unknown: printed, not
-	// failed (the Mixer below proves the path with a device).
 	const std::vector<std::string> files = PanelFiles();
 	assert(!files.empty());
 	for (size_t i = 0; i < files.size(); ++i)
@@ -112,8 +102,6 @@ int main()
 		delete document;
 	}
 
-	// 2. The Mixer's add and remove buttons, as the file writes them today
-	// (delta CHANNELS, clear_indicators), through a real device.
 	{
 		MixerPlugin mixer;
 		std::string error;

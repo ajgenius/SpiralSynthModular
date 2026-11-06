@@ -1,4 +1,3 @@
-// Native macOS device callbacks through the shared audio-client interface.
 #ifndef SPIRALCORE_CORE_AUDIO_CLIENT
 #define SPIRALCORE_CORE_AUDIO_CLIENT
 

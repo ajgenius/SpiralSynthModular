@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Spumoni::Container::Sniff / ForPath — which kind a path is. The one place
-// that knows every kind by name.
 
 #include "Container.h"
 #include "Directory.h"

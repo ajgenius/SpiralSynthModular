@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Spumoni::Directory — a bare folder as the container.
 
 #include "Directory.h"
 #include "Folder.h"
@@ -19,7 +18,6 @@ namespace Spumoni
 {
 	namespace
 	{
-		// "pkg/" names the same folder as "pkg"; the sibling names need the bare form.
 		string Trimmed(const string &path)
 		{
 			string result=path;
@@ -63,8 +61,6 @@ namespace Spumoni
 		return true;
 	}
 
-	// The children of `from` into `to`, which must exist. Symlinks and
-	// specials are skipped, as the ZIP walker skips them.
 	bool Directory::CopyTree(const string &from, const string &to, string &error)
 	{
 		vector<string> names;
@@ -97,7 +93,6 @@ namespace Spumoni
 		if(!m_Path.empty()) Path::RemoveTree(m_Path);
 	}
 
-	// Build beside the target, swap in on Finish.
 	bool Directory::Writer::Open(const string &given, string &error)
 	{
 		const string path=Trimmed(given);

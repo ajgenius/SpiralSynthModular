@@ -1,5 +1,4 @@
 // Copyright (C) 2003 David Griffiths <dave@pawfal.org>
-// PortAudio v19 transport with native ADC/DAC presentation timestamps.
 
 #include <cctype>
 #include <cstdlib>
@@ -150,7 +149,6 @@ bool PortAudioClient::Attach(const string &device, const AudioClientOptions &opt
 		m_HasOutput = true;
 	}
 
-	// Prepare first; the owner allocates its queues before Start enables callbacks.
 	PaError err = Pa_OpenStream(&m_Stream, in, out,
 	                            opt.Samplerate, opt.BufferSize,
 	                            paNoFlag,
@@ -164,7 +162,6 @@ bool PortAudioClient::Attach(const string &device, const AudioClientOptions &opt
 	m_Opt.Samplerate = (unsigned)info->sampleRate;
 	m_InputLatency = info->inputLatency;
 	m_OutputLatency = info->outputLatency;
-	// Choose the shortest clock-query interval, avoiding scheduler delays.
 	double best = 1;
 	for (unsigned n = 0; n < 8; ++n)
 	{
@@ -285,8 +282,6 @@ void PortAudioClient::Finished(void *context)
 	PortAudioClient *client = static_cast<PortAudioClient *>(context);
 	__sync_lock_test_and_set(&client->m_Attached, 0);
 }
-
-// * Backend module entry
 
 static void *CreatePortAudio(void *) { return static_cast<AudioClient *>(new PortAudioClient); }
 static void DestroyPortAudio(void *client) { delete static_cast<AudioClient *>(client); }

@@ -64,8 +64,6 @@ SpiralPluginGUI(w,h,o,ch)
 
 void OutputPluginGUI::Update()
 {
-	// Polling must not undo the tentative toggle between mouse press and
-	// release, otherwise FLTK treats the click as no change and drops it.
 	if (Fl::pushed()==OpenRead || Fl::pushed()==OpenWrite || Fl::pushed()==OpenDuplex)
 		return;
 

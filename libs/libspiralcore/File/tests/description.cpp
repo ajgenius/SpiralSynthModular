@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Description replays the chain it recorded byte for byte, keeps the
-// values apart from the gaps, and says the same in JSON.
 #include "Description.h"
 #include <cstdio>
 #include <sstream>
@@ -11,8 +9,6 @@ static int fails = 0;
 
 int main()
 {
-	// The shapes the plugins actually use: s<<a<<" "<<b<<"  "<<c<<" "<<endl,
-	// a sentinel literal, a raw char, a trailing-separator-less end.
 	Spiral::Core::Description d;
 	d.Value(4).Separator(" ").Value(0.0566442f).Separator(" ").Value(true).Separator(" ").Line();
 	d.Value(3).Separator(" ").Value(2).Separator("  ").Value(0.5).Separator(" ");
@@ -42,14 +38,12 @@ int main()
 		"{\"values\": [\"4\", \"0.0566442\", \"1\", \"3\", \"2\", \"0.5\", \"-1\", \"w\"], "
 		"\"between\": [\"\", \" \", \" \", \" \\n\", \" \", \"  \", \" \", \" \", \"\"]}");
 
-	// An empty description is an empty stream.
 	Spiral::Core::Description none;
 	std::ostringstream empty;
 	none.Write(empty);
 	CHECK(empty.str().empty());
 	CHECK(none.JSON() == "{\"values\": [], \"between\": [\"\"]}");
 
-	// What a string value with a quote or control byte looks like in JSON.
 	Spiral::Core::Description odd;
 	odd.Value(std::string("a\"b\\c\td")).Value((char)1);
 	CHECK(odd.JSON() == "{\"values\": [\"a\\\"b\\\\c\\td\", \"\\u0001\"], \"between\": [\"\", \"\", \"\"]}");

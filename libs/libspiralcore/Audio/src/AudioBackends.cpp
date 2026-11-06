@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Backends compiled into libspiralcore, registered with the same
-// descriptor a module would export. Each moves to Plugins/Audio as a
-// module in its own change and leaves this file; when only the dummy is
-// left it registers itself and this file goes.
 #include "AudioBackend.h"
 #include "config.h"
 
@@ -20,7 +16,6 @@ static void DestroyJack(void *client) { delete static_cast<AudioClient *>(client
 static const BackendDescriptor JackBackend = { SPIRAL_AUDIO_PLUGIN_ABI, "audio", "jack", CreateJack, DestroyJack };
 #endif
 
-// Registration order is the fallback preference when no backend is named.
 namespace Spiral { namespace Core { void RegisterBuiltinAudioBackends(AudioBackendRegistry *registry); } }
 
 void Spiral::Core::RegisterBuiltinAudioBackends(AudioBackendRegistry *registry)

@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Description::Reader hands a description's values back in order, each
-// extracted as an istream would have, within the span it was given.
 #include "Description.h"
 #include <cstdio>
 #include <string>
@@ -10,7 +8,6 @@ static int fails = 0;
 
 int main()
 {
-	// What description-test writes, read back into the types that wrote it.
 	Spiral::Core::Description d;
 	d.Value(4).Separator(" ").Value(0.0566442f).Separator(" ").Value(true).Separator(" ").Line();
 	d.Value(3).Separator(" ").Value(2).Separator("  ").Value(0.5).Separator(" ");
@@ -33,13 +30,10 @@ int main()
 	CHECK(e == -1 && w == 'w');
 	CHECK(!in.More() && in.Position() == 8 && !in.Failed());
 
-	// Past the end: the target is left alone and the reader says so.
 	int keep = 99;
 	in.Value(keep);
 	CHECK(keep == 99 && in.Failed());
 
-	// Text that does not extract leaves the target alone too; a string
-	// takes the whole value, spaces and all (a counted string in the file).
 	Spiral::Core::Description odd;
 	odd.Value(std::string("a b")).Separator(" ").Value(7).Separator(" ").Value(std::string("x"));
 	Spiral::Core::Description::Reader r(odd);
@@ -53,8 +47,6 @@ int main()
 	r2.Value(n).Value(s);
 	CHECK(n == 7 && s == "x" && !r2.More() && !r2.Failed());
 
-	// A denormal is a number: the file's value, not the default. One C++
-	// library's istream fails on it and stops reading. So is an overflow.
 	Spiral::Core::Description tiny;
 	tiny.Value(std::string("1.4013e-45")).Separator(" ").Value(std::string("0.069")).Separator(" ").Value(std::string("1e999")).Separator(" ").Value(std::string("1x"));
 	Spiral::Core::Description::Reader tr(tiny);
@@ -64,7 +56,6 @@ int main()
 	tr.Value(bad);
 	CHECK(bad == 3 && tr.Failed());
 
-	// The rest of a span as a description of its own: the same bytes back.
 	{
 		Spiral::Core::Description::Reader half(d);
 		int first = 0;
@@ -78,7 +69,6 @@ int main()
 		CHECK(whole.str() == "4" + part.str());
 	}
 
-	// A span: a device reads its own values and no further, whatever it asks.
 	Spiral::Core::Description::Reader span(d, 3, 6);
 	int p = 0, q = 0;
 	double h = 0;

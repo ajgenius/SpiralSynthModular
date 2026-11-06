@@ -1,11 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Spumoni::Directory — a bare folder as the container.
-//
-// The package tree written straight to disk: no archive, every entry a
-// file. Useful for a package kept under version control, for inspecting
-// one, and as the simplest proof that nothing above Container depends on
-// ZIP. Writing builds a sibling folder and swaps it into place on Finish;
-// extracting copies the tree into the working folder.
 #ifndef SPUMONI_DIRECTORY_H
 #define SPUMONI_DIRECTORY_H
 
@@ -43,8 +36,6 @@ namespace Spumoni
 		virtual Container::Writer *NewWriter() const;
 		virtual bool Extract(const std::string &path, Folder &folder, std::string &error) const;
 
-		// * Copy one file or a whole tree; used by Extract and by anyone
-		//   moving a package between folders.
 		static bool CopyFile(const std::string &from, const std::string &to, std::string &error);
 		static bool CopyTree(const std::string &from, const std::string &to, std::string &error);
 	};

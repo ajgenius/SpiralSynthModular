@@ -77,14 +77,12 @@ static void Command(SpiralPlugin &mixer, char command)
 	mixer.ExecuteCommands();
 }
 
-// Jack's port counts are properties the ports follow on the next block.
 static void Follow(SpiralPlugin &plugin)
 {
 	plugin.UpdateChannelHandler();
 	plugin.ExecuteCommands();
 }
 
-// The mixer's count is its Channels property, written as a panel writes it.
 static void Channels(SpiralPlugin &mixer, int count)
 {
 	mixer.GetChannelHandler()->Set("Channels", count);

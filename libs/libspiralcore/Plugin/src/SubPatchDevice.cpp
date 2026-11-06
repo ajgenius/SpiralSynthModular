@@ -5,7 +5,6 @@ using namespace Spiral::Core;
 
 static SpiralPlugin *CreateInstance() { return new SubPatchDevice; }
 
-// No "id" is written for a subpatch, so this ID is the host's alone.
 const DeviceClass &SubPatchDevice::Class()
 {
 	static DeviceClass device;
@@ -41,7 +40,6 @@ SubPatchDevice::SubPatchDevice(): m_Step(NULL), m_Host(NULL)
 		{"Buffer", DefaultUnsigned(0)},
 		{"Jack", DefaultUnsigned(1)}};
 
-	// The private tree's properties, flags and ranges.
 	m_Mode = SetProperty(Property::WriteOnly | Property::ForceUpdate, 0, NamedPropertySet(modes, 3));
 	m_Link = SetProperty(Property::WriteOnly | Property::ForceUpdate, 0, NamedPropertySet(links, 2));
 	m_BufferFrames = UnsignedProperty(DefaultLinearFlags | Property::ForceUpdate, 0, 0, 65536, 1, 64);
@@ -150,9 +148,6 @@ void SubPatchDevice::PortsChanged()
 	}
 }
 
-// Private's subpatch panel, the rows public can run: an isolated subpatch,
-// its transport and buffer are not here yet, and public sums voices, so
-// those are shown but cannot be changed. Its Link Name has no channel here.
 bool SubPatchDevice::GeneratePanel(const std::string &, std::string &Document)
 {
 	Document =

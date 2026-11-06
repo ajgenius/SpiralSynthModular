@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Opt-in acoustic/cabled loopback. Two backends emit alternating quiet chirps.
 #include "AudioBackend.h"
 #include "AudioTimeline.h"
 #include "JackClient.h"
@@ -215,7 +214,6 @@ static bool Run(const char *firstBackend, const char *secondBackend, const char 
 	FILE *samples = std::fopen((stem + ".f32").c_str(), "wb");
 	FILE *times = std::fopen((stem + ".f64").c_str(), "wb");
 	FILE *info = std::fopen((stem + ".txt").c_str(), "w");
-	// Cycle zero is warmup. The first measured chirp's search window starts at +0.8 s.
 	const bool captureReady = !capture.Errors || capture.LastErrorTime < epoch + .8;
 	bool ok = samples && times && info && capture.Written > size_t(rate) * options.Pairs && captureReady;
 	if (samples)
@@ -278,7 +276,6 @@ static bool ParseOptions(int argc, char **argv, RunOptions &options)
 			return false;
 	}
 
-	// JACK uses generated client names and the server's physical output ports.
 	if ((std::string(argv[2]) == "jack" && std::string(options.OutputDevice[0]) != "default") ||
 		(std::string(argv[3]) == "jack" && std::string(options.OutputDevice[1]) != "default"))
 		return false;

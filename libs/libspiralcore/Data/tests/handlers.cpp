@@ -1,7 +1,3 @@
-// A panel file's handlers: `on` from event to actions (write, delta, set,
-// clear), and the older write lists read as the same. Driven by the
-// fixture shared with SpiralTesting (Foundation/libSSMUI/tests/handlers.json
-// there): both trees must agree on every case.
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "Handlers.h"
 #include "JSON.h"
@@ -60,7 +56,6 @@ namespace
 		}
 	};
 
-	// Records every call as one line, in order.
 	struct RecordingSink: Handlers::Sink
 	{
 		const FixtureScope &scope;
@@ -100,7 +95,6 @@ namespace
 		return ControlValue(std::atof(node->Text().c_str()));
 	}
 
-	// Parses a case's handlers: `on`, or a legacy `writes` list under `event`.
 	bool Read(const Spumoni::JSON *entry, const FixtureScope &scope, Handlers &out, std::string &problem)
 	{
 		if (entry->Get("writes"))

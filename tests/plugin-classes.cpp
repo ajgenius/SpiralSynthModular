@@ -1,8 +1,3 @@
-// Devices and editors are two kinds on the loader. Editors load first,
-// with no device module in the process, since none may need one; every
-// editor names a device that exists; a device may have no editor; a
-// second scan of the same root adds nothing; Amp makes a device and an
-// editor for it.
 #include "SpiralSynthModular.h"
 #include "DeviceClassRegistry.h"
 #include "EditorClassRegistry.h"
@@ -27,7 +22,6 @@ int main(int argc, char **argv)
 {
 	if (argc != 2) return 77;
 
-	// The host's built-in Output, registered before any scan.
 	assert(DeviceClassRegistry::Get()->Register(OutputPlugin::Class()));
 	assert(EditorClassRegistry::Get()->Register(OutputPluginGUI::Class()));
 	const unsigned editors=EditorClassRegistry::Get()->LoadModules(argv[1])+1;
@@ -60,7 +54,6 @@ int main(int argc, char **argv)
 		}
 	assert(alone==devices-editors);
 
-	// The same root again: every ID is taken, nothing is kept.
 	assert(DeviceClassRegistry::Get()->LoadModules(argv[1])==0);
 	assert(EditorClassRegistry::Get()->LoadModules(argv[1])==0);
 	assert(DeviceClassRegistry::Get()->Classes().size()==devices);
@@ -83,7 +76,6 @@ int main(int argc, char **argv)
 	delete gui;
 	delete plugin;
 
-	// A builtin registers the same struct with no module.
 	DeviceClass builtin=*amp;
 	builtin.ID=500;
 	builtin.Module="";

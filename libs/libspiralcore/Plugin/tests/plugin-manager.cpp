@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// The loader finds a kind's modules under <root>/<subdirectory>, resolves
-// the kind's entry symbol and lets the kind accept or refuse; a module
-// without the symbol is dropped, a missing root loads nothing.
 #include <config.h>
 #include "PluginManager.h"
 #include <cassert>
@@ -36,7 +33,6 @@ struct ProbeKind : public PluginKind
 	}
 };
 
-// A kind that claims a host-dependent variant beside its own suffix.
 struct VariantKind : public ProbeKind
 {
 	bool Claims(const std::string &file) const
@@ -60,7 +56,6 @@ int main(int argc, char **argv)
 
 	assert(loader->Load(probe, "/nonexistent") == 0);
 
-	// probe/probe_Probe.so and probe/sub/sub_Probe.so load; stranger_Probe.so has no entry.
 	const unsigned loaded = loader->LoadAll(root);
 	for (size_t n = 0; n < probe.Seen.size(); ++n) printf("accepted %s\n", probe.Seen[n].c_str());
 	assert(loaded == 2 && probe.Seen.size() == 2);
@@ -80,8 +75,6 @@ int main(int argc, char **argv)
 	assert(loader->LoadAll(root) == 0);
 	assert(loader->UnloadAll());
 
-	// probe/variant_Native.so is a stranger to the plain kind and a third
-	// module to the one that claims the variant.
 	VariantKind variant;
 	assert(loader->Load(variant, root) == 3 && variant.Seen.size() == 3);
 	loader->RegisterKind(&variant);

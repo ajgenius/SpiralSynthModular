@@ -46,7 +46,6 @@ private:
 	float m_NoteLevel;
 	float m_TriggerLevel;
 
-	// Keys held down, oldest first: the newest sets the pitch.
 	enum { MAX_HELD = 64 };
 	int m_Held[MAX_HELD];
 	int m_HeldCount;
@@ -54,7 +53,6 @@ private:
 
 	void Play(int note);
 
-	// Note events for the Events output, one identity per press, as the Midi device makes them.
 	void NoteEvent(bool on);
 	enum { MAX_PENDING = 64, MIDI_NOTES = 128 };
 	Spiral::Core::Event m_Pending[MAX_PENDING];

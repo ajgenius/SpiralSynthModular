@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// The switch between the two forms of a description: what Write() replays
-// as positional text, JSON() says as values and gaps, and FromJSON() takes
-// back, so either form can feed Apply and either can be written out again.
 #include "Description.h"
 #include "JSON.h"
 #include "PositionalReader.h"
@@ -24,8 +21,6 @@ int main()
 {
 	std::string error;
 
-	// The chain description-test uses, through JSON and back: same values,
-	// same gaps, same bytes on replay, same JSON again.
 	Spiral::Core::Description d;
 	d.Value(4).Separator(" ").Value(0.0566442f).Separator(" ").Value(true).Separator(" ").Line();
 	d.Value(3).Separator(" ").Value(2).Separator("  ").Value(0.5).Separator(" ");
@@ -38,18 +33,15 @@ int main()
 	CHECK(Replay(back) == "4 0.0566442 1 \n3 2  0.5 -1 w");
 	CHECK(back.JSON() == d.JSON());
 
-	// Escapes survive the trip: quote, backslash, tab, a control byte.
 	Spiral::Core::Description odd;
 	odd.Value(std::string("a\"b\\c\td")).Value((char)1);
 	CHECK(Spiral::Core::Description::FromJSON(odd.JSON(), back, error));
 	CHECK(back.Values() == odd.Values());
 	CHECK(Replay(back) == Replay(odd));
 
-	// An empty description.
 	CHECK(Spiral::Core::Description::FromJSON("{\"values\": [], \"between\": [\"\"]}", back, error));
 	CHECK(back.Values().empty() && Replay(back).empty());
 
-	// A patch: positional text -> reader -> JSON -> description -> the same text.
 	std::auto_ptr<Spumoni::JSON> contract(Spumoni::ParseJSON(SPIRALCORE_SCHEMA_DIR "/SpiralPositionalText-0.2.x.json", &error));
 	std::auto_ptr<Spumoni::JSON> history(Spumoni::ParseJSON(SPIRALCORE_SCHEMA_DIR "/SpiralPositionalText.history.json", &error));
 	CHECK(contract.get() && history.get());
@@ -72,14 +64,11 @@ int main()
 	CHECK(Spiral::Core::Description::FromJSON(json, back, error));
 	CHECK(Replay(back) == patch);
 	CHECK(back.JSON() == json);
-	// ... and the description that came back decodes under the contract
-	// exactly as the file did.
 	Spiral::Core::Description again;
 	CHECK(reader.Read(Replay(back), again, error));
 	CHECK(reader.Status() == "Decoded" && reader.Devices().size() == 2);
 	CHECK(again.JSON() == json);
 
-	// What is refused, and that a refusal leaves the target alone.
 	Spiral::Core::Description keep;
 	keep.Value(1);
 	CHECK(!Spiral::Core::Description::FromJSON("[1, 2]", keep, error) && error == "a description is an object");

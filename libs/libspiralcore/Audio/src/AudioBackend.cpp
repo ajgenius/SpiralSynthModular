@@ -9,8 +9,6 @@ namespace Spiral
 {
 namespace Core
 {
-	// Backends still compiled into libspiralcore register here; each moves
-	// out to Plugins/Audio in its own change and its line leaves that list.
 	void RegisterBuiltinAudioBackends(AudioBackendRegistry *registry);
 
 	AudioBackendRegistry *AudioBackendRegistry::m_Singleton= NULL;
@@ -57,7 +55,6 @@ namespace Core
 		const BackendDescriptor *d= ((SpiralPlugin_GetAudioBackendFn)entry)();
 		if(!d || !d->Name)
 			return false;
-		// A compiled-in backend of the same name keeps its place.
 		if(Find(d->Name))
 			return false;
 		Register(d);
@@ -113,5 +110,5 @@ namespace Core
 		clients.erase(found);
 		d->Destroy(client);
 	}
-} // namespace Core
+}
 } // namespace Spiral

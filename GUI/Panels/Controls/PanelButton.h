@@ -47,7 +47,6 @@ namespace SpiralPanels
 
 		static void Changed(Fl_Widget *widget, void *data);
 		void DeclareEvents(std::vector<Event> &out) const;
-		// The label, when it is bound: `text` as a binding, or the older `text_when`.
 		Spiral::Data::ValueRule m_TextRule;
 		bool m_TextBound;
 		std::string m_Text;

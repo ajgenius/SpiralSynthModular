@@ -1,14 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Spumoni::Zip — a ZIP32 container.
-//
-// Spumoni is the layered package: a manifest, save points as branch folders,
-// assets beside them, all boxed in a container. This is the box. It knows
-// entries, offsets and CRCs and nothing about what the entries mean, so a
-// tarball or a bare directory can stand in its place later.
-//
-// Writer builds a new archive entry by entry and replaces the target
-// atomically on Finish; the static readers extract by central directory.
-// Limits: ZIP32, single disk, stored or deflated entries, no encryption.
 #ifndef SPUMONI_ZIP_H
 #define SPUMONI_ZIP_H
 
@@ -36,7 +26,6 @@ namespace Spumoni
 			uint16_t Method;
 		};
 
-		// * Little-endian field helpers.
 		static bool Write16(FILE *file, uint16_t value);
 		static bool Write32(FILE *file, uint32_t value);
 		static uint16_t Read16(const unsigned char *p);
@@ -66,12 +55,10 @@ namespace Spumoni
 			std::set<std::string> m_Names;
 		};
 
-		// * The Container interface.
 		virtual const char *Kind() const;
 		virtual Container::Writer *NewWriter() const;
 		virtual bool Extract(const std::string &path, Folder &folder, std::string &error) const;
 
-		// * The pieces of Extract, for callers that want to stop between them.
 		static bool ReadCentralDirectory(FILE *file, std::vector<Entry> &entries, std::string &error);
 		static bool ExtractEntry(FILE *archive, const Entry &entry,
 			Folder &folder, std::string &error);

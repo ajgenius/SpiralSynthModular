@@ -6,7 +6,6 @@ CoreMIDI_Midi_la_SOURCES = CoreMidiBackend.cpp
 CoreMIDI_Midi_la_LDFLAGS = -module -avoid-version -shared -no-undefined
 CoreMIDI_Midi_la_LIBADD = $(top_builddir)/libs/libspiralcore/libspiralcore.la $(MIDI_LIBS) -lpthread
 
-# Live: the transport's virtual destination receives what a client sends it.
 check_PROGRAMS = coremidi-midi-test
 TESTS = $(check_PROGRAMS)
 coremidi_midi_test_SOURCES = coremidi-midi-test.cpp CoreMidiBackend.cpp

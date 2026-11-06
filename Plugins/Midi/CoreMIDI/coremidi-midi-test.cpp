@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Live: a CoreMIDI client of our own sends to the backend's virtual
-// "SpiralSynth" destination and the packets come out of Poll, in order,
-// with running status and a clock tick in between; a send from the
-// backend appears on its virtual source. Skips without --live.
 #include "MidiBackend.h"
 #include <CoreMIDI/MIDIServices.h>
 #include <cassert>
@@ -52,8 +48,6 @@ int main(int argc, char **argv)
 	assert(d && std::string(d->Kind) == "midi" && std::string(d->Name) == "coremidi");
 	MidiBackend *backend = static_cast<MidiBackend *>(d->Create(NULL));
 	assert(backend);
-	// No source named: the virtual destination listens anyway. The
-	// virtual source is the output.
 	backend->Select("", "SpiralSynth");
 
 	MIDIEndpointRef synth = 0, source = 0;
@@ -75,7 +69,6 @@ int main(int argc, char **argv)
 	assert(!MIDIInputPortCreate(client, CFSTR("in"), Receive, NULL, &in));
 	assert(!MIDIPortConnectSource(in, source, NULL));
 
-	// Note on, clock, running-status note on, note off, as a keyboard would.
 	const unsigned char bytes[] = { 0x90, 60, 100, 0xf8, 64, 90, 0x80, 60, 0 };
 	Byte buffer[128];
 	MIDIPacketList *list = (MIDIPacketList *)buffer;
@@ -98,7 +91,6 @@ int main(int argc, char **argv)
 	assert(got[2].Status == 0x90 && got[2].Data1 == 64 && got[2].Data2 == 90);
 	assert(got[3].Status == 0x80 && got[3].Data1 == 60);
 
-	// The other way: what the backend sends shows up on its virtual source.
 	printf("%s\n", backend->Status().c_str());
 	bool sent = false;
 	int tries = 0;

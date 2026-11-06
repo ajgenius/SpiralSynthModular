@@ -16,11 +16,6 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-// The PoshSampler editor's waveform: the sample at a zoom, a range to
-// select, the play position, and the play start, loop start and loop end
-// markers to drag (left button), the view to pan (middle) and samples to
-// draw at full zoom (right). Lifted from PoshSamplerPluginGUI so a panel
-// can build it, holding its samples itself rather than a Sample.
 #ifndef FL_WAVEDISPLAY_H
 #define FL_WAVEDISPLAY_H
 
@@ -58,13 +53,10 @@ class Fl_WaveDisplay : public Fl_Widget {
       }
    private:
       Fl_Color m_BGColour, m_FGColour, m_SelColour, m_IndColour, m_MrkColour;
-      // The samples themselves, so the control owes the synth nothing.
       std::vector<float> m_Sample;
       long m_StartPos, m_EndPos, m_ViewStart, m_ViewEnd;
       long m_PlayPos, m_PlayStart, m_LoopStart, m_LoopEnd;
       bool m_PosMarker;
-      // Each column's lowest and highest sample at the zoom last drawn,
-      // so a redraw does not scan the sample again.
       std::vector<float> m_Min, m_Max;
       long m_EnvStart, m_EnvJump;
       bool m_EnvValid;

@@ -55,7 +55,6 @@ EditorClassRegistry *EditorClassRegistry::Get()
 void EditorClassRegistry::PackUpAndGoHome()
 {
 	if (!m_Singleton) return;
-	// Releases every module of this kind first.
 	PluginManager::Get()->UnregisterKind(m_Singleton);
 	delete m_Singleton;
 	m_Singleton = NULL;
@@ -68,8 +67,6 @@ unsigned EditorClassRegistry::LoadModules(const string &root)
 
 bool EditorClassRegistry::Accept(void *entry, const string &path)
 {
-	// The loader holds the module; this is its handle counted once more
-	// while the old exports beside the entry are read.
 	void *handle = dlopen(path.c_str(), RTLD_NOW | RTLD_NOLOAD);
 	if (handle == NULL)
 	{
@@ -108,7 +105,6 @@ bool EditorClassRegistry::Accept(void *entry, const string &path)
 	if (editor.ForDevice < 0)
 		return false;
 
-	// A second editor for this device is not an error; it is just not kept.
 	return Register(editor);
 }
 

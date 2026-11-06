@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Spumoni::Folder — the tree walkers over the interface, the plain path
-// helpers, and DiskFolder, a private working tree on disk.
-// Tree helpers lifted from Spiral::File::Archive::Zip (ChatGPT GPT-5.6).
 
 #include "Folder.h"
 
@@ -19,8 +16,6 @@ using namespace std;
 
 namespace Spumoni
 {
-
-	// ---- Path -----------------------------------------------------------
 
 	string Path::TemporaryRoot()
 	{
@@ -47,7 +42,6 @@ namespace Spumoni
 		return stat(path.c_str(),&st)==0 && S_ISREG(st.st_mode);
 	}
 
-	// Sorted child names, "." and ".." left out. False when unreadable.
 	bool Path::List(const string &path, vector<string> &names)
 	{
 		names.clear();
@@ -144,11 +138,6 @@ namespace Spumoni
 		return total;
 	}
 
-	// ---- Folder: the walkers -------------------------------------------
-
-	// A disk tree's children into this folder under `relative`, streamed,
-	// names kept. Symlinks and specials are skipped, as the container walkers
-	// skip them.
 	bool Folder::ImportTree(const string &diskPath, const string &relative, string &error)
 	{
 		vector<string> names;
@@ -185,8 +174,6 @@ namespace Spumoni
 		return true;
 	}
 
-	// This folder's tree under `relative` into a Writer at `archivePath`,
-	// exact names, directories included.
 	bool Folder::ExportTree(Container::Writer &writer, const string &relative,
 		const string &archivePath, string &error) const
 	{
@@ -200,8 +187,6 @@ namespace Spumoni
 				return false;
 		return true;
 	}
-
-	// ---- DiskFolder -------------------------------------------------------
 
 	DiskFolder::DiskFolder():m_Owned(false),m_Store(NULL)
 	{
@@ -331,7 +316,6 @@ namespace Spumoni
 		return writer.AddFile(archiveName,Path::Join(m_Path,relative),error);
 	}
 
-	// Ver 2: lazily create (or return) a Store under <root>/assets.
 	Store *DiskFolder::GetStore()
 	{
 		if (m_Path.empty())
@@ -339,7 +323,6 @@ namespace Spumoni
 		if (m_Store)
 			return m_Store;
 
-		// assets/ lives at the root of this working tree.
 		std::string assetRoot = Path::Join(m_Path, "assets");
 		std::string err;
 		if (!Path::MakeDirectories(assetRoot + "/", err))

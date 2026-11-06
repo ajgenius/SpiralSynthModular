@@ -28,7 +28,6 @@ struct Engine
 
 	}
 
-	// The engine thread: one graph pass per transport period.
 	AudioDriver *Driver;
 	volatile int Stop;
 	static void *Run(void *context)

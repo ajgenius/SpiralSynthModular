@@ -38,7 +38,7 @@ int main()
 	for (unsigned n = 0; n < 128; ++n)
 		input[n] = n % 2 ? -8192 : 8192;
 	assert(write(capture, input, 100) == 100);
-	assert(client.WaitForCycle(1) == 0); // Incomplete capture is retained.
+	assert(client.WaitForCycle(1) == 0);
 	assert(write(capture, reinterpret_cast<char *>(input) + 100, sizeof(input) - 100) == sizeof(input) - 100);
 	assert(client.WaitForCycle(1) == 1);
 	float received[128], sent[64];

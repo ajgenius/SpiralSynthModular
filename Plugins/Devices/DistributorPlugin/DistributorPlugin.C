@@ -227,7 +227,6 @@ void DistributorPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int Version;
 
-	// an old patch has no state for it at all
 	if (r.More())
 	{
 		r.Value(Version);

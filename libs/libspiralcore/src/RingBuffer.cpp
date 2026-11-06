@@ -22,7 +22,6 @@
 
 using namespace std;
 
-// The mask arithmetic needs a power of two.
 static unsigned int RoundPow2(unsigned int n)
 {
 	unsigned int p = 1;
@@ -57,7 +56,6 @@ bool RingBuffer::Write(char *src, unsigned int size)
 	unsigned int write = m_WritePos;
 	if (size<m_Size-write)
 	{
-		//cerr<<"written to: "<<write<<endl;
 		memcpy(&(m_Buffer[write]), src, size);
 		write += size;
 	}
@@ -70,7 +68,6 @@ bool RingBuffer::Write(char *src, unsigned int size)
 		write = size-first;
 	}
 	
-	// Publish the position only after the data it covers.
 	__sync_synchronize();
 	m_WritePos = write & m_SizeMask;
 	return true;
@@ -79,14 +76,12 @@ bool RingBuffer::Write(char *src, unsigned int size)
 bool RingBuffer::Read(char *dest, unsigned int size)
 {
 	//cerr<<"read pos: "<<m_ReadPos<<endl;
-	// A short read must not copy bytes the writer has not published.
 	unsigned int space=ReadSpace();
 	if (space<size || size>m_Size) return false;
 	
 	unsigned int read = m_ReadPos;
 	if (size<m_Size-read)
 	{
-		//cerr<<"reading from: "<<read<<endl;
 		memcpy(dest, &(m_Buffer[read]), size);
 		read += size;
 	}
@@ -99,7 +94,6 @@ bool RingBuffer::Read(char *dest, unsigned int size)
 		read = size-first;
 	}
 	
-	// Release the space only after the data has been copied out.
 	__sync_synchronize();
 	m_ReadPos = read & m_SizeMask;
 	return true;
@@ -117,7 +111,6 @@ unsigned int RingBuffer::WriteSpace()
 	unsigned int write = m_WritePos;
 	__sync_synchronize();
 	
-	// `& m_SizeMask - 1` parsed as `& (mask - 1)` and over-reported by one.
 	return (read - write - 1) & m_SizeMask;
 }
 

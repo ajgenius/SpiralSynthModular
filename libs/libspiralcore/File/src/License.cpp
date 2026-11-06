@@ -13,8 +13,6 @@ namespace
 		const char *body;
 	};
 
-	// Dropdown order. A NULL body is offered as an identifier only: the
-	// panel will not claim to have inlined a text it does not have.
 	const char kReserved[] =
 		"All rights reserved.\n\n"
 		"No licence is granted. Copying, modification, and redistribution "

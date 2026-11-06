@@ -1,4 +1,3 @@
-// Real host hub, plugin and client against deterministic JACK periods.
 #define JACK_CLIENT_TEST_FIXTURE
 #include "../libs/libspiralcore/Audio/tests/jack-client.cpp"
 #include "JackPlugin.h"

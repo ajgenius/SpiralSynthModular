@@ -8,9 +8,6 @@ namespace Spiral
 {
 namespace Core
 {
-// Seconds on the system monotonic clock. Native clocks must be mapped to this
-// domain before publishing timestamps; wall time and musical transport are not
-// presentation clocks.
 double AudioMonotonicTime();
 
 struct AudioCycleTiming
@@ -40,9 +37,6 @@ struct AudioStamp
 	AudioStamp() : Frame(0), Generation(0), Time(0), Step(0) {}
 };
 
-// A bounded single-writer/single-reader latest-value handoff. Each side owns a
-// different slot; exchanging the middle slot transfers ownership, never a live
-// structure. No reader retries and no callback takes a lock.
 class AudioTimingMailbox
 {
 public:
@@ -58,9 +52,6 @@ private:
 	AudioTimingMailbox &operator=(const AudioTimingMailbox &);
 };
 
-// Estimates seconds per native frame. Timestamps drive rate recovery; callback
-// arrival jitter must not be mistaken for hardware clock drift. Discontinuous
-// observations reset the estimate rather than manufacturing a large rate jump.
 class AudioRateEstimator
 {
 public:

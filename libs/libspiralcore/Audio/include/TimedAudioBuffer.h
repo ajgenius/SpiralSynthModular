@@ -9,17 +9,12 @@ namespace Spiral
 {
 namespace Core
 {
-// Timestamped SPSC audio. A producer publishes whole blocks. The consumer plays
-// samples at requested presentation times, discarding expired audio instead of
-// retaining an offset after a missed callback. Configure requires both sides
-// stopped. Write/Read allocate nothing, never lock, and have bounded storage.
 class TimedAudioBuffer
 {
 public:
 	TimedAudioBuffer();
 	bool Configure(unsigned capacityFrames, unsigned channels, double inputRate, double outputRate);
 	bool Write(const float *samples, unsigned frames, const AudioStamp &stamp);
-	// Returns frames covered by the timeline; uncovered samples are silence.
 	unsigned Read(float *samples, unsigned frames, double time, double step, unsigned generation);
 	unsigned Capacity() const { return m_Capacity; }
 	unsigned Buffered() const;

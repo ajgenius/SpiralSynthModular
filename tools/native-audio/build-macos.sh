@@ -1,5 +1,4 @@
 #!/bin/bash
-# Build the reviewed native timing fixes without replacing system libraries.
 set -euo pipefail
 
 if [[ $# != 1 || $1 != /* || $(uname -s) != Darwin ]]; then
@@ -20,7 +19,6 @@ deps=${NATIVE_DEPS_PREFIX:-/opt/local}
 "$python" -c 'import sys; assert (3, 6) <= sys.version_info[:2] < (3, 12), "JACK 1.9.22 waf requires Python 3.6-3.11"'
 for tool in git clang clang++ make; do command -v "$tool" >/dev/null; done
 
-# JACK's macOS build needs Aften. These search paths are local to this process.
 export CPATH="$deps/include${CPATH:+:$CPATH}"
 export LIBRARY_PATH="$deps/lib${LIBRARY_PATH:+:$LIBRARY_PATH}"
 mkdir -p "$prefix/src" "$prefix/logs"
@@ -65,8 +63,6 @@ printf 'JACK build and latency regression passed.\n'
 ) >"$prefix/logs/portaudio.log" 2>&1
 printf 'PortAudio build and latency regression passed.\n'
 
-# Sourcing this file opts the invoking shell into these libraries and tools.
-# It does not start a JACK server or change any running application's libraries.
 {
 	printf 'ssm_native_prefix=%q\n' "$prefix"
 	cat <<'ENV'

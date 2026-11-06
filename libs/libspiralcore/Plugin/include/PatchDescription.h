@@ -97,9 +97,6 @@ namespace Core
 
 		SubPatchConfig(): Mode("Virtual"), Voices(1), PolyOutput(false), Link("Buffer"), BufferFrames(0) {}
 
-		// The spellings the file uses, as the private tree reads and writes
-		// them: Virtual, Inline or Isolated; Buffer or Jack. Anything else
-		// reads as Virtual, and as Buffer.
 		static std::string ModeSpelling(const std::string &text)
 		{
 			if (text == "Inline" || text == "inline")
@@ -218,8 +215,6 @@ namespace Core
 		bool IsComment() const { return Devices.empty(); }
 	};
 
-	// A control the patch's MIDI input moves: a controller number on a
-	// channel from 1 to 16, or on any channel when Channel is 0.
 	class MidiBindingDescription
 	{
 	public:
@@ -232,8 +227,6 @@ namespace Core
 			Control(control), Channel(channel), Controller(controller) {}
 	};
 
-	// A device the patch's MIDI map lists, by patch id, and its bound
-	// controls. A device is listed from when it is added, bound or not.
 	class MidiDeviceDescription
 	{
 	public:
@@ -254,8 +247,6 @@ namespace Core
 
 		std::vector<MidiDeviceDescription> Midi;
 
-		// The patch's own voice pool, as the private tree saves it; zero
-		// inherits the system default.
 		unsigned Voices;
 
 		PatchDescription(): Voices(0) {}

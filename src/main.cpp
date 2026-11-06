@@ -47,10 +47,11 @@ static bool audioStopRequested = false;
 
 static bool AudioStopRequested()
 {
-    pthread_mutex_lock(&audioStopMutex);
-    bool stop = audioStopRequested;
-    pthread_mutex_unlock(&audioStopMutex);
-    return stop;
+	pthread_mutex_lock(&audioStopMutex);
+	bool stop = audioStopRequested;
+	pthread_mutex_unlock(&audioStopMutex);
+
+	return stop;
 }
 
 char watchdog_check = 1;
@@ -76,14 +77,21 @@ void *watchdog (void *arg)
 	while (1)
 	{
 		usleep (10000000);
+
 		// gui watchdog goes off with modal dialog boxes
 		if (watchdog_check == 0)// || gui_watchdog_check== 0)
 		{
 			cerr<<"ssm watchdog: timeout - killing ssm"<<endl;
-			if (watchdog_check==0) cerr<<"diagnosis: audio hung?"<<endl;
-			if (gui_watchdog_check==0) cerr<<"diagnosis: gui starved by audio"<<endl;
+
+			if (watchdog_check==0)
+				cerr<<"diagnosis: audio hung?"<<endl;
+
+			if (gui_watchdog_check==0)
+				cerr<<"diagnosis: gui starved by audio"<<endl;
+
 			exit (1);
 		}
+
 		watchdog_check = 0;
 		gui_watchdog_check = 0;
 	}
@@ -95,11 +103,10 @@ void *audioloop(void* o)
 {
 	while(!AudioStopRequested())
 	{
-		// Update paces itself on the transport, or the platform clock when
-		// no stream is open; there is nothing to sleep for here.
 		synth->Update();
 		watchdog_check = 1;
 	}
+
 	return NULL;
 }
 
@@ -107,24 +114,24 @@ void *audioloop(void* o)
 #include "GraphSort.h"
 
 #ifdef __APPLE__
-// Patches Finder hands over, opened from it or dropped on the Dock icon,
-// at launch too: each is opened as a patch dropped on the canvas is, from
-// the event loop, once the patch on screen can take it, and one at a
-// time, as opening one may ask a question.
 static vector<string> s_Handed;
 
 static void OpenHanded(void *)
 {
 	static bool opening = false;
+
 	if (opening || !synth)
 		return;
+
 	opening = true;
+
 	while (!s_Handed.empty())
 	{
 		const string path = s_Handed.front();
 		s_Handed.erase(s_Handed.begin());
 		synth->OpenDropped(path);
 	}
+
 	opening = false;
 }
 
@@ -132,6 +139,7 @@ static void Handed(const char *path)
 {
 	if (!path || !*path)
 		return;
+
 	s_Handed.push_back(path);
 	Fl::add_timeout(0.0, OpenHanded);
 }
@@ -139,25 +147,29 @@ static void Handed(const char *path)
 
 int main(int argc, char **argv)
 {
-        srand(time(NULL));
+	srand(time(NULL));
 	SpiralInfo::Get()->LoadPrefs();
 
 	// get args
-    string cmd_filename="";
-    bool cmd_specd = false;
-    string cmd_saveAs="";
-	string cmd_pluginPath=SSMBundlePluginPath();
+	string cmd_filename="";
+	bool cmd_specd = false;
+	string cmd_saveAs="";
+	string cmd_pluginPath=SpiralBundlePluginPath();
+
 	// parse the args
-    if (argc>1)
+	if (argc>1)
 	{
 		for (int a=1; a<argc; a++)
 		{
 #ifdef __APPLE__
-			// Older Finder versions pass a process serial number at launch.
-			if (!strncmp(argv[a], "-psn_", 5)) continue;
+			if (!strncmp(argv[a], "-psn_", 5))
+				continue;
 #endif
-			if (!strcmp(argv[a],"--NoGUI")) GUI = false;
-			else if (!strcmp(argv[a],"--Realtime")) FIFO = true;
+
+			if (!strcmp(argv[a],"--NoGUI"))
+				GUI = false;
+			else if (!strcmp(argv[a],"--Realtime"))
+				FIFO = true;
 			else if (!strcmp(argv[a],"-h"))
 			{
 				cout<<"usage: spiralsynthmodular [patch.ssm|patch.ssmp] [options]"<<endl<<endl
@@ -170,10 +182,11 @@ int main(int argc, char **argv)
 				<<"--SaveAs <FILE> : save the loaded patch to FILE and exit (with --NoGUI, a headless re-save)"<<endl;
 				exit(0);
 			}
-			else if (!strcmp(argv[a],"-v")) 
+			else if (!strcmp(argv[a],"-v"))
 			{
-				cout<<VER_STRING<<endl; exit(0);
-			} 			
+				cout<<VER_STRING<<endl;
+				exit(0);
+			}
 			else if (!strcmp(argv[a],"--PluginPath"))
 			{
 				a++;
@@ -184,59 +197,41 @@ int main(int argc, char **argv)
 				a++;
 				cmd_saveAs=argv[a];
 			}
-			else 
+			else
 			{
 				cmd_filename = argv[a];
 				cmd_specd = true;
 			}
 		}
-    }	
-	
+	}
+
 	// set some fltk defaults
-	Fl_Tooltip::size(10);	
+	Fl_Tooltip::size(10);
 	Fl::visible_focus(false);
 	Fl::visual(FL_DOUBLE|FL_RGB);
 
 #ifdef __APPLE__
-	// With "Prefer tabs" on, macOS folds every new window into a tab of
-	// the main one: device help, the licence text, About. These are
-	// windows of their own, so opt the application out, as the native
-	// apps do with NSWindow.allowsAutomaticWindowTabbing. Through the
-	// runtime, so this file stays C++ and the build stays as it is.
 	((void (*)(id, SEL, BOOL))objc_msgSend)((id)objc_getClass("NSWindow"),
 		sel_registerName("setAllowsAutomaticWindowTabbing:"), NO);
 #endif
-	
+
 	synth=new SynthModular;
 
 	// setup the synth
 	synth->WantChrome(GUI);
 	Fl_Window* win = synth->CreateWindow();
-	
-	// LADSPA plugins shipped with the application sit beside the device
-	// plugins, under whichever root they were found in: a bundle resolves
-	// that at runtime, an installed copy has it compiled in, and
-	// --PluginPath overrides both.
-	//
-	// Ours goes on the front of the search path. LADSPAInfo keeps the first
-	// instance of a duplicated plugin ID, and the copy shipped here is the
-	// one this build was tested against; anything else the user has
-	// installed still shows up behind it.
-	//
-	// An unset LADSPA_PATH does not mean there is nothing to keep: it means
-	// LADSPAInfo would have scanned the two standard directories itself, so
-	// putting only our own directory there would hide every system wide
-	// plugin, including the four FFT ones this build leaves out when FFTW is
-	// missing. The list matches the one LADSPAInfo assumes in that case
-	// (LADSPAInfo.C, ScanPlugins); the host does not link LADSPAInfo, so it
-	// cannot share the constant.
+
 	{
 		string root = cmd_pluginPath.empty() ? SpiralInfo::PLUGIN_PATH : cmd_pluginPath;
+
 		if (!root.empty())
 		{
-			if (root[root.size()-1] != '/') root += '/';
+			if (root[root.size()-1] != '/')
+				root += '/';
+
 			const string bundled = root + "ladspa";
 			struct stat info;
+
 			if (stat(bundled.c_str(), &info) == 0 && S_ISDIR(info.st_mode))
 			{
 				const char *existing = getenv("LADSPA_PATH");
@@ -250,39 +245,50 @@ int main(int argc, char **argv)
 
 	synth->LoadPlugins(cmd_pluginPath);
 #ifdef __APPLE__
-	// Before the window opens the display, as FLTK asks.
-	if (GUI) fl_open_callback(Handed);
+	if (GUI)
+		fl_open_callback(Handed);
 #endif
 	win->xclass("");
-	if (GUI) win->show(1, argv); // prevents stuff happening before the plugins have loaded
-	
+
+	if (GUI)
+		win->show(1, argv); // prevents stuff happening before the plugins have loaded
+
 	// spawn the audio thread
 	bool watchdogStarted = false;
 	int audioError;
-	if (FIFO) 
-	{	
+
+	if (FIFO)
+	{
 		watchdogStarted = (pthread_create_realtime(&watchdogthread,watchdog,NULL,sched_get_priority_max(SCHED_FIFO)) == 0);
 		audioError = pthread_create_realtime(&loopthread,audioloop,NULL,sched_get_priority_max(SCHED_FIFO)-1);
 	}
-	else 
+	else
 	{
 		audioError = pthread_create(&loopthread,NULL,audioloop,NULL);
+
 		// reduce the priority of the gui
-		if (setpriority(PRIO_PROCESS,0,20)) cerr<<"Could not set priority for GUI thread"<<endl;
+		if (setpriority(PRIO_PROCESS,0,20))
+			cerr<<"Could not set priority for GUI thread"<<endl;
 	}
-	
-	if (audioError != 0) {
+
+	if (audioError != 0)
+	{
 		cerr << "Cannot start audio thread" << endl;
-		if (watchdogStarted) {
+
+		if (watchdogStarted)
+		{
 			pthread_cancel(watchdogthread);
 			pthread_join(watchdogthread, NULL);
 		}
+
 		delete synth;
+
 		return 1;
 	}
 
-	// do we need to load a patch on startup? 
-    if (cmd_specd) synth->LoadPatch(cmd_filename.c_str());        
+	// do we need to load a patch on startup?
+	if (cmd_specd)
+		synth->LoadPatch(cmd_filename.c_str());
 
 	if (!cmd_saveAs.empty())
 	{
@@ -294,32 +300,36 @@ int main(int argc, char **argv)
 		pthread_mutex_unlock(&audioStopMutex);
 		pthread_join(loopthread, NULL);
 		delete synth;
+
 		return 0;
 	}
-	
+
 	if (!GUI)
-	{	
+	{
 		// if there is no gui needed, there is nothing more to do here
 		Fl::check();
-		for (;;) sleep(1);
+
+		for (;;)
+			sleep(1);
 	}
-	
-    for (;;)
+
+	for (;;)
 	{
-    	if (!Fl::check()) break;    	
+		if (!Fl::check())
+			break;
+
 		synth->UpdatePluginGUIs(); // deletes any if necc
-		// Menu state is GUI state. Update() runs on the audio thread, and
-		// the macOS menu bar may only be touched from the main thread.
 		synth->RefreshMenuState();
 		usleep(10000);
 		gui_watchdog_check=1;
-  	}
-	
-	if (watchdogStarted) {
+	}
+
+	if (watchdogStarted)
+	{
 		pthread_cancel(watchdogthread);
 		pthread_join(watchdogthread, NULL);
 	}
-	// Acknowledge the freeze while the engine can still service channels.
+
 	synth->FreezeAll();
 	pthread_mutex_lock(&audioStopMutex);
 	audioStopRequested = true;
@@ -331,45 +341,41 @@ int main(int argc, char **argv)
 }
 
 // nicked from Paul Barton-Davis' Ardour code :)
-int pthread_create_realtime (pthread_t *new_thread,
-			 void *(*start)(void *), void *arg,
-			 int priority)
-
-{	
-	pthread_attr_t *rt_attributes;
-	struct sched_param *rt_param;
-	int retval;
-
-	rt_attributes = (pthread_attr_t *) malloc (sizeof (pthread_attr_t));
-	rt_param = (struct sched_param *) malloc (sizeof (struct sched_param));
+int pthread_create_realtime (pthread_t *new_thread, void *(*start)(void *), void *arg, int priority)
+{
+	pthread_attr_t *rt_attributes = (pthread_attr_t *) malloc (sizeof (pthread_attr_t));
+	struct sched_param *rt_param = (struct sched_param *) malloc (sizeof (struct sched_param));
 
 	pthread_attr_init (rt_attributes);
 
-	if (seteuid (0)) {
+	if (seteuid (0))
+	{
 		cerr << "Cannot obtain root UID for RT scheduling operations"
-		      << endl;
+		     << endl;
+
 		return -1;
+	}
+	else
+	{
+		if (pthread_attr_setschedpolicy (rt_attributes, SCHED_FIFO))
+		{
+			cerr << "Cannot set FIFO scheduling attributes for RT thread" << endl;
+		}
 
-	} else {
+		if (pthread_attr_setscope (rt_attributes, PTHREAD_SCOPE_SYSTEM))
+		{
+			cerr << "Cannot set scheduling scope for RT thread" << endl;
+		}
 
-	    if (pthread_attr_setschedpolicy (rt_attributes, SCHED_FIFO)) {
-		cerr << "Cannot set FIFO scheduling attributes for RT thread" << endl;
+		rt_param->sched_priority = priority;
 
-	    }
-	    
-	    if (pthread_attr_setscope (rt_attributes, PTHREAD_SCOPE_SYSTEM)) {
-		cerr << "Cannot set scheduling scope for RT thread" << endl;
-
-	    }
-	    
-	    rt_param->sched_priority = priority;
-	    if (pthread_attr_setschedparam (rt_attributes, rt_param)) {
-		cerr << "Cannot set scheduling priority for RT thread" << endl;
-
-	    }
+		if (pthread_attr_setschedparam (rt_attributes, rt_param))
+		{
+			cerr << "Cannot set scheduling priority for RT thread" << endl;
+		}
 	}
 
-	retval = pthread_create (new_thread, rt_attributes, start, arg);
+	int retval = pthread_create (new_thread, rt_attributes, start, arg);
 	seteuid (getuid());
 
 	return retval;

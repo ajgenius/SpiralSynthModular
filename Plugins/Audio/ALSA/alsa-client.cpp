@@ -1,4 +1,3 @@
-// ALSA's null PCM exercises negotiation and nonblocking I/O without hardware.
 #include "AlsaClient.h"
 #include <cassert>
 #include <vector>

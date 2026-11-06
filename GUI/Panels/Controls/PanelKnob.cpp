@@ -40,7 +40,6 @@ namespace SpiralPanels
 		m_Knob->color((Fl_Color)GUIColour());
 		m_Knob->type(TextOf(node.Get("style")) == "dot" ? Fl_Knob::DOTLIN : Fl_Knob::LINELIN);
 		m_Knob->scaleticks((int)NumberOf(node.Get("scale_ticks"), 10));
-		// The knob turns from its low end, so an inverted mapping turns it the other way.
 		m_Knob->range(std::min(Mapped(m_Min), Mapped(m_Max)), std::max(Mapped(m_Min), Mapped(m_Max)));
 		if (m_Step > 0)
 			m_Knob->step(m_Step);

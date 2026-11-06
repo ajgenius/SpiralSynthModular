@@ -16,10 +16,6 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-// The Mac MIDI port (Michel Pollet, 2003) as a loadable backend: a
-// virtual "SpiralSynth" destination and source as before, and an input
-// port that follows whichever CoreMIDI source is selected, so a keyboard
-// reaches the synth without a routing app in between.
 #include "MidiBackend.h"
 #include "NativeMidi.h"
 #include <CoreMIDI/MIDIServices.h>
@@ -129,8 +125,6 @@ void CoreMidiTransport::Close()
 	mMIDIClient = 0;
 }
 
-// The virtual source is the first output: what the synth sends is
-// always there for other apps, with or without a destination of its own.
 std::vector<std::string> CoreMidiTransport::Ports(bool output)
 {
 	std::vector<std::string> names;
@@ -139,7 +133,6 @@ std::vector<std::string> CoreMidiTransport::Ports(bool output)
 	for (ItemCount n = 0; n < count; ++n)
 	{
 		MIDIEndpointRef endpoint = output ? MIDIGetDestination(n) : MIDIGetSource(n);
-		// Our own virtual endpoints are not ports to connect to.
 		if (endpoint == mMIDISource || endpoint == mMIDIDestination) continue;
 		names.push_back(Name(endpoint));
 	}
@@ -153,16 +146,12 @@ MIDIEndpointRef CoreMidiTransport::Find(const std::string &name, bool output) co
 	for (ItemCount n = 0; n < count; ++n)
 	{
 		MIDIEndpointRef endpoint = output ? MIDIGetDestination(n) : MIDIGetSource(n);
-		// Never our own endpoints: that would be a loop.
 		if (endpoint == mMIDISource || endpoint == mMIDIDestination) continue;
 		if (Name(endpoint) == name) return endpoint;
 	}
 	return 0;
 }
 
-// The virtual destination always listens; a named source is connected
-// to the input port beside it, a named destination gets the output
-// in addition to the virtual source.
 bool CoreMidiTransport::Connect(const std::string &source, const std::string &destination)
 {
 	if (!Alive()) return false;
@@ -229,8 +218,6 @@ void CoreMidiTransport::sMIDIRead(const MIDIPacketList *pktlist, void *readProcR
 		packet = MIDIPacketNext(packet);
 	}
 }
-
-// * Backend module entry
 
 static void *Create(void *) { return static_cast<MidiBackend *>(new NativeMidiBackend(new CoreMidiTransport)); }
 static void Destroy(void *backend) { delete static_cast<MidiBackend *>(backend); }

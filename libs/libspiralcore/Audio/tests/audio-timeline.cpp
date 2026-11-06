@@ -22,9 +22,6 @@ static void Rates(double sourceRate, double deviceRate, unsigned sourcePeriod, u
 	unsigned missing = 0;
 	double error = 0;
 
-	// Ten seconds of independently clocked devices, with arbitrary callback
-	// phase and unequal periods. The signal's phase is defined by time, not
-	// by queue occupancy; no real-time sleeps or audio hardware are involved.
 	for (unsigned cycle = 0; cycle < unsigned(deviceRate * 10 / devicePeriod); ++cycle)
 	{
 		const double time = origin + (cycle * double(devicePeriod) + 0.371) / deviceRate;
@@ -83,9 +80,6 @@ static void HolesAndGenerations()
 	assert(queue.Read(output, 128, stamp.Time, stamp.Step, 1) == 128);
 	assert(output[0] == 1 && output[127] == 128);
 
-	// Seek/reconnect invalidates old queued audio, without either side moving
-	// the other's cursor. A reader that still holds the old generation must
-	// not throw away already published future audio.
 	stamp.Generation = 2;
 	stamp.Frame = 384;
 	stamp.Time += 128 * stamp.Step;

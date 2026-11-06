@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Spumoni::Tar — a ustar tarball as the container.
 
 #include "Tar.h"
 #include "Folder.h"
@@ -24,7 +23,6 @@ namespace Spumoni
 	{
 		const size_t kBlock = 512;
 
-		// ustar header layout.
 		struct Header
 		{
 			char name[100];
@@ -48,7 +46,6 @@ namespace Spumoni
 
 		void Octal(char *field, size_t width, unsigned long long value)
 		{
-			// width-1 digits and a NUL, as ustar wants.
 			for(size_t i=width-1;i-->0;)
 			{
 				field[i]=(char)('0'+(value&7));
@@ -107,7 +104,6 @@ namespace Spumoni
 		return new Writer;
 	}
 
-	// gzread reads plain files transparently, so one reader serves both.
 	bool Tar::Extract(const string &path, Folder &folder, string &error) const
 	{
 		gzFile file=gzopen(path.c_str(),"rb");
@@ -137,7 +133,6 @@ namespace Spumoni
 			unsigned long long padded=(size+kBlock-1)/kBlock*kBlock;
 			if(type!='0'&&type!='\0'&&!directory)
 			{
-				// Links and specials are skipped, body and all.
 				if(gzseek(file,(z_off_t)padded,SEEK_CUR)<0){error="Damaged tarball";ok=false;break;}
 				continue;
 			}
@@ -175,7 +170,6 @@ namespace Spumoni
 		if(!m_Path.empty()) unlink(m_Path.c_str());
 	}
 
-	// An exclusively created sibling, replaced atomically on Finish.
 	bool Tar::Writer::Open(const string &path, string &error)
 	{
 		string pattern=path+".tmp-XXXXXX";
@@ -183,7 +177,6 @@ namespace Spumoni
 		int fd=mkstemp(&name[0]);
 		if(fd<0){error=ErrnoText("Cannot create tarball");return false;}
 		m_Path=&name[0];
-		// "T" writes transparently (no gzip framing) for a plain .tar.
 		m_File=gzdopen(fd,Compressed(path)?"wb6":"wbT");
 		if(!m_File){close(fd);error=ErrnoText("Cannot create tarball");return false;}
 		return true;
@@ -207,7 +200,6 @@ namespace Spumoni
 		string tail=name,head;
 		if(tail.size()>sizeof(header.name))
 		{
-			// Split at a slash so that prefix/name rejoin to the path.
 			size_t cut=tail.rfind('/',sizeof(header.name));
 			while(cut!=string::npos && tail.size()-cut-1>sizeof(header.name))
 				cut=cut?tail.rfind('/',cut-1):string::npos;

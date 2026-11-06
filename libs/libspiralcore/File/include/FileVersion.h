@@ -27,8 +27,6 @@ namespace Spiral
 	{
 		namespace Version
 		{
-			// As the private tree numbers them: project 9 names the main
-			// branch payload; 10, with patch 3, saves the root patch's voices.
 			const long Project = 10;
 			const long Patch = 3;
 			const long Schema = 1;

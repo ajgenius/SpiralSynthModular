@@ -1,4 +1,3 @@
-// Verify the native JACK controls remain outside the scrolling port list.
 #include "SpiralSynthModular.h"
 #include "SpiralPluginGUI.h"
 #include <FL/Fl_Scroll.H>

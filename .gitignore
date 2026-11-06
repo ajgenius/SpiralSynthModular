@@ -9,7 +9,7 @@ Makefile
 Makefile.in
 SpiralSynthModular
 spiralsynthmodular
-/SpiralSynthPluginLocation.h
+/src/SpiralSynthPluginLocation.h
 /stamp-h1
 /libtool
 /aclocal.m4

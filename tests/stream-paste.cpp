@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Exercise the actual Copy/Paste menu callbacks while the audio loop runs.
 #include "SpiralSynthModular.h"
 #include "SpiralInfo.h"
 #include "StreamPlugin.h"
@@ -24,8 +23,6 @@ template<class T> static T *Find(Fl_Widget *widget)
 	return NULL;
 }
 
-// Slow file/sidecar work makes the publication window deterministic. The
-// actual Stream Apply runs first; the live audio loop must not touch it yet.
 class SlowStream : public StreamPlugin
 {
 public:

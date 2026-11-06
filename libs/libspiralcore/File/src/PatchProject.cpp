@@ -27,11 +27,6 @@ namespace Spiral
 				application->SetOwned("name", Spumoni::JSON::MakeString("SpiralSynthModular"));
 				root.SetOwned("application", application);
 
-				// The project's own title, credits and rights. Spumoni holds
-				// them as opaque text because only this handler knows their
-				// shape, and they are written beside the format rather than
-				// under a key of their own: that is where the newer envelope
-				// spells them. A project that claims none grows no keys.
 				if (!identity.ApplicationMetadata.empty())
 				{
 					Spumoni::JSON *metadata =
@@ -41,9 +36,6 @@ namespace Spiral
 						const std::vector<std::string> keys = metadata->Keys();
 						for (size_t i = 0; i < keys.size(); ++i)
 						{
-							// This host owns the stamp. Carrying it over from
-							// the stored text would write an older project's
-							// version back out as if it were ours.
 							if (keys[i] == "format" || keys[i] == "main"
 								|| keys[i] == "application")
 								continue;
@@ -65,15 +57,11 @@ namespace Spiral
 					return false;
 				}
 
-				// Earlier public drafts had application.name alone. A stamped
-				// project must explicitly identify the payload this host reads.
 				const Spumoni::JSON *format = root.Get("format");
 				const Spumoni::JSON *main = root.Get("main");
 				if (!format && !main)
 					return true;
 
-				// Ver 9 is the first this host wrote; the patch payload may be
-				// any JSON version up to this host's own.
 				const Spumoni::JSON *member = main ? main->Get("name") : NULL;
 				const Spumoni::JSON *header = main ? main->Get("format") : NULL;
 				long found = 0;
@@ -106,8 +94,6 @@ namespace Spiral
 			}
 		};
 
-		// Plugins still take filesystem paths. Keep their sidecars in owned
-		// scratch directories while the package stores them per branch.
 		class Project::SidecarPart : public Spumoni::Part
 		{
 		public:
@@ -196,10 +182,6 @@ namespace Spiral
 			Spumoni::DiskFolder *m_Staged;
 		};
 
-		// The full licence text beside the patch, when the rights ask for
-		// it and this build has it. Nothing to load: the identifier in the
-		// document is what is read back, the file is for whoever opens the
-		// package by hand.
 		class Project::LicensePart : public Spumoni::Part
 		{
 		public:
@@ -215,7 +197,6 @@ namespace Spiral
 
 			static std::string FileName() { return "licenses/LICENSE.txt"; }
 
-			// What the save writes, or empty when there is nothing to.
 			static std::string Text(const DocumentSection &document)
 			{
 				const RightsSection &rights = document.Rights;
@@ -304,9 +285,6 @@ namespace Spiral
 
 		namespace
 		{
-			// A string member, or nothing. A field stated as a number or an
-			// object is not a string and is left unread rather than
-			// stringified into something that was never written.
 			std::string TextOf(const Spumoni::JSON *owner, const char *key)
 			{
 				const Spumoni::JSON *member = owner ? owner->Get(key) : NULL;
@@ -322,10 +300,6 @@ namespace Spiral
 			if (text.empty())
 				return document;
 
-			// The load keeps the metadata file's whole text, so this reads
-			// the same keys the save path writes. A key the project does
-			// not state stays empty, which Empty() reports as nothing to
-			// show: an absent title is not an empty title.
 			Spumoni::JSONOwner root(Spumoni::ParseJSONText(text));
 			if (!root.get() || root->GetType() != Spumoni::JSON::Object)
 				return document;
@@ -346,9 +320,6 @@ namespace Spiral
 				document.Rights.LicenseFile = TextOf(rights, "LicenseFile");
 			}
 
-			// Credits are a list of who did what. An entry naming nobody
-			// says nothing, so it is dropped rather than shown as a blank
-			// row with a role beside it.
 			const Spumoni::JSON *credits = root->Get("Credits");
 			if (credits && credits->GetType() == Spumoni::JSON::Array)
 			{
@@ -374,9 +345,6 @@ namespace Spiral
 			typedef Spumoni::JSON J;
 			std::string &text = GetIdentity().ApplicationMetadata;
 
-			// Start from what is there, minus the document's own keys,
-			// so a key this host does not know survives the round trip.
-			// JSON has no erase: the object is rebuilt without them.
 			J *root = J::MakeObject();
 			if (!text.empty())
 			{
@@ -397,8 +365,6 @@ namespace Spiral
 				}
 			}
 
-			// The same keys, in the same shape, as the private tree's
-			// patch writer: a field left empty grows no key.
 			if (!document.Title.empty())
 				root->SetOwned("Title", J::MakeString(document.Title));
 			if (!document.Description.empty())
@@ -427,9 +393,6 @@ namespace Spiral
 			}
 
 			RightsSection rights = document.Rights;
-			// Bundling is a promise about the save. It is only made when
-			// there is a text to keep it with, and the path recorded is
-			// the one LicensePart writes.
 			rights.LicenseFile = LicensePart::Text(document).empty()
 				? std::string() : LicensePart::FileName();
 			rights.BundleText = !rights.LicenseFile.empty();
@@ -447,8 +410,6 @@ namespace Spiral
 				root->SetOwned("Rights", section);
 			}
 
-			// A project that claims nothing carries no metadata text at
-			// all, which is what Empty() reads back as absent.
 			text = root->Keys().empty() ? std::string() : root->Stringify(true);
 			delete root;
 		}

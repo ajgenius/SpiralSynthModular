@@ -10,7 +10,6 @@ class Fl_LED_Button : public Fl_Light_Button {
 public:
   Fl_LED_Button(int x, int y, int w, int h, const char* l=0);
   ~Fl_LED_Button();
-  // As Fl_Button's, but a change damages only what the light is drawn on.
   using Fl_Light_Button::value;
   int value(int v);
 private:

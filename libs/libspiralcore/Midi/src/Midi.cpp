@@ -26,8 +26,6 @@
 using namespace Spiral::Core;
 
 static const int MIDI_SCANBUFSIZE=256;
-// Events kept for a channel nothing reads: the patch input polls with or
-// without a Midi device in the patch, so a channel may never be read.
 static const size_t MIDI_CHANNEL_QUEUE=1024;
 static const int MIDI_KEYOFFSET=0;
 
@@ -101,8 +99,6 @@ MidiDevice::~MidiDevice() {
      delete m_PatchInput;
 }
 
-// The named backend, else the first registered that is not the dummy,
-// else the dummy; connected to whatever device name is set.
 void MidiDevice::OpenBackend()
 {
 	MidiBackendRegistry *registry=MidiBackendRegistry::Get();
@@ -207,9 +203,6 @@ void MidiDevice::SendEvent (int Device, const MidiEvent &Event) {
 	pthread_mutex_unlock(m_Mutex);
 }
 
-// collect events drains what the backend has polled since last time
-// into the per channel lists; the clock is counted here as it comes.
-// Called with the mutex held.
 void MidiDevice::CollectEvents()
 {
 	if (!m_Backend) return;
@@ -230,11 +223,9 @@ void MidiDevice::CollectEvents()
 			m_PatchInput->Push(packet);
 			AddEvent(packet);
 		}
-		// 0xff from the backend is a reset: the notes it knew are gone.
 	}
 }
 
-// addevent converts the midi packet into midi message objects and
 // stacks them onto the event list to be picked up by the app
 void MidiDevice::AddEvent(const MidiPacket &packet)
 {

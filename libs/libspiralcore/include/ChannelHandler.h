@@ -59,10 +59,7 @@ public:
 		{ RegisterData(ID, t,(char*)pData,sizeof(char)*4096); }
     void     Register(const std::string &ID, void** pData, Type t=ChannelHandler::INPUT)    
 		{ RegisterData(ID, t,(void**)pData,sizeof(void*)); }
-	// The frame stamps the snapshot the gui thread will read next.
 	void     UpdateDataNow(unsigned long frame=0);
-	// A table registered for the largest case copies only the bytes in use
-	// each update (all of it until this is said).
 	void     SetUsed(const std::string &ID, int bytes);
 	unsigned long GetFrame() const { return m_Frame; }
 		
@@ -151,7 +148,6 @@ private:
     };
 
     std::map<std::string,Channel*> m_ChannelMap;
-    // The same channels in a row, for the update each period to walk.
     std::vector<std::map<std::string,Channel*>::iterator> m_Order;
 	char m_Command[2];
 

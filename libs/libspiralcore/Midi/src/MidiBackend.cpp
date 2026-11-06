@@ -9,7 +9,6 @@ namespace Spiral
 {
 namespace Core
 {
-	// The dummy is the only compiled-in midi backend.
 	static void *CreateDummyMidi(void *) { return static_cast<MidiBackend *>(new DummyMidiBackend); }
 	static void DestroyDummyMidi(void *p) { delete static_cast<MidiBackend *>(p); }
 	const BackendDescriptor *DummyMidi()
@@ -62,7 +61,6 @@ namespace Core
 		const BackendDescriptor *d= ((SpiralPlugin_GetMidiBackendFn)entry)();
 		if(!d || !d->Name)
 			return false;
-		// A compiled-in backend of the same name keeps its place.
 		if(Find(d->Name))
 			return false;
 		Register(d);
@@ -118,5 +116,5 @@ namespace Core
 		backends.erase(found);
 		d->Destroy(backend);
 	}
-} // namespace Core
+}
 } // namespace Spiral

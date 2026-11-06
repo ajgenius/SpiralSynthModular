@@ -115,11 +115,9 @@ void MixerPlugin::Execute () {
          for (int c=0; c<m_NumChannels; c++) {
              in = 0.0f;
              const float volume = GetChannel(c);
-             // Muting must not evaluate NaN * 0 or infinity * 0.
              if (volume != 0.0f && Spiral::Core::IsFinite(volume)) {
                  const float contribution = GetInput (c, n) * volume;
                  const float mixed = out + contribution;
-                 // Reject only this channel, including arithmetic overflow.
                  if (Spiral::Core::IsFinite(contribution) && Spiral::Core::IsFinite(mixed)) {
                      in = contribution;
                      out = mixed;
@@ -135,7 +133,6 @@ void MixerPlugin::Execute () {
 void MixerPlugin::ExecuteCommands() {
      if ((int)AsUnsigned(m_Channels) != m_NumChannels) {
          while (m_NumChannels < (int)AsUnsigned(m_Channels) && m_NumChannels < MAX_CHANNELS) AddChannel ();
-         // Fewer channels stop at the last one wired, so no wire is dropped.
          while (m_NumChannels > (int)AsUnsigned(m_Channels) && m_NumChannels > 2 && !InputExists (m_NumChannels-1)) RemoveChannel ();
          AsUnsigned(m_Channels) = m_NumChannels;
      }
@@ -176,7 +173,7 @@ void MixerPlugin::RemoveChannel (void) {
      m_PluginInfo.PortTips.pop_back();
      m_PluginInfo.PortTips.pop_back();
      m_PluginInfo.PortTips.push_back ("Output");
-     UpdatePluginInfoWithHost (); // disconnect the removed port before discarding its DSP input
+     UpdatePluginInfoWithHost ();
      RemoveInput();
 }
 
@@ -204,7 +201,6 @@ void MixerPlugin::Apply(Spiral::Core::Description::Reader &r) {
                SetChannels (chans);
                break;
      }
-     // Consume old oversized records without writing beyond the fixed gains.
      for (int n=0; n<chans && !r.Failed(); n++) {
           if (n<m_NumChannels) r.Value(Channel(n));
           else { float value; r.Value(value); }

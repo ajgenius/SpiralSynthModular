@@ -1,8 +1,5 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-2.0-or-later
-# Written by GROK (Grok Bot): builds the property dumper into
-# <build>/tools/panel-gen/dump against that build's libspiralcore.
-# Usage: tools/panel-gen/build-dump.sh [build-dir]   (default <root>/.build)
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$here/../.." && pwd)

@@ -34,14 +34,8 @@ namespace Spiral
 {
 namespace Core
 {
-	/* A control change: its channel from 1 to 16, its controller number and
-	   value. False for every other message. */
 	bool ControlChange(const MidiPacket &packet, int &channel, int &controller, int &value);
 
-	/* The patch's MIDI map while it runs: the devices it lists, by patch id,
-	   and the controls a control change moves on each. Nothing is bound
-	   until it is asked for. A control has one binding; a control change
-	   may move any number of controls. The map is the file's, as is. */
 	class MidiMap
 	{
 	public:
@@ -53,17 +47,13 @@ namespace Core
 		std::vector<MidiDeviceDescription> Devices;
 
 		const MidiDeviceDescription *Find(const std::string &device) const;
-		// Listed once, after those already listed.
 		MidiDeviceDescription &Add(const std::string &device);
 		bool Remove(const std::string &device);
 
 		const MidiBindingDescription *Binding(const std::string &device, const std::string &control) const;
-		// Lists the device if it is not, and replaces the control's binding.
 		void Bind(const std::string &device, const MidiBindingDescription &binding);
 		bool Unbind(const std::string &device, const std::string &control);
 
-		// Each control a control change on this channel and number moves, in
-		// the order they are listed.
 		void Match(int channel, int controller, std::vector<Target> &out) const;
 	};
 }

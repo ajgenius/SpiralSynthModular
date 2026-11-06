@@ -24,11 +24,8 @@ int main()
 	Spumoni::Store store;
 	std::string error;
 
-	// Open
 	assert(store.Open(root, error));
 
-	// SHA256 helper, against FIPS 180-4's own vectors: "", "abc", and the
-	// two-block "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq".
 	std::string h = Spumoni::StoreSHA256::hash_bytes("hello", 5);
 	assert(h.size() == 64);
 	assert(Spumoni::StoreSHA256::hash_bytes("", 0)
@@ -38,7 +35,6 @@ int main()
 	assert(Spumoni::StoreSHA256::hash_bytes("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", 56)
 		== "248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1");
 
-	// PutFile
 	std::string src = root + "/input.bin";
 	{
 		std::ofstream f(src.c_str(), std::ios::binary);
@@ -49,10 +45,8 @@ int main()
 	assert(Spumoni::Store::ValidAddress(addr));
 	assert(addr.compare(0, 7, "sha256:") == 0);
 
-	// Verify
 	assert(store.Verify(addr, error));
 
-	// CopyFile to new location
 	std::string dst = root + "/copy.bin";
 	assert(store.CopyFile(addr, dst, error));
 	{
@@ -61,11 +55,9 @@ int main()
 		assert(got == "content for store test");
 	}
 
-	// Bad address rejected
 	assert(!Spumoni::Store::ValidAddress("sha256:deadbeef"));
 	assert(!store.Verify("sha256:0000000000000000000000000000000000000000000000000000000000000000", error));
 
-	// PutBytes / ReadBytes: the same object whichever way the bytes arrive.
 	{
 		std::string fromBytes, back;
 		assert(store.PutBytes("content for store test", fromBytes, error));
@@ -75,7 +67,6 @@ int main()
 		assert(!store.ReadBytes("sha256:" + std::string(64, '0'), back, error));
 	}
 
-	// Clean
 	unlink(src.c_str());
 	unlink(dst.c_str());
 	rmdir(root.c_str());

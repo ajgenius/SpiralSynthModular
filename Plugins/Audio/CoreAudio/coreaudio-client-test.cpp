@@ -39,7 +39,6 @@ int main(int argc, char **argv)
 	if (argc!=2 || strcmp(argv[1],"--live")) return 0;
 
 	alarm(20);
-	// Resolve a real UID, then exercise both default and explicit device paths.
 	AudioObjectPropertyAddress address={kAudioHardwarePropertyDefaultOutputDevice,kAudioObjectPropertyScopeGlobal,0};
 	AudioDeviceID device=kAudioObjectUnknown;
 	UInt32 size=sizeof(device);

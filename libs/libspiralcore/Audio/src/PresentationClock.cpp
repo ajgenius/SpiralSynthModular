@@ -24,8 +24,6 @@ bool PresentationClock::Prepare(double now, unsigned frames, double rate,
 		master->SampleRate > 0 && now - master->CallbackTime < 0.25;
 	const double nativeRate = native ? master->SampleRate : rate;
 	const double step = native ? master->Step * nativeRate / rate : 1 / rate;
-	// Changes of clock, format or required lookahead establish a fresh epoch.
-	// Old queued audio is never replayed while new clients join the timeline.
 	if ((native && master->Epoch != m_MasterEpoch) || m_Native != native || m_Rate != rate || m_MasterRate != nativeRate ||
 		ahead > m_Ahead + 0.5 / rate || (m_Ready && now > m_NextTime + 0.05)) m_Ready = false;
 
@@ -40,7 +38,6 @@ bool PresentationClock::Prepare(double now, unsigned frames, double rate,
 		m_NextTime = now + ahead;
 		if (native)
 		{
-			// Start on the native sample grid, including its current DAC latency.
 			const double offset = std::ceil((m_NextTime - master->OutputTime) / master->Step);
 			m_TargetFrame = double(master->Frame) + offset;
 			m_NextTime = master->OutputTime + offset * master->Step;
@@ -63,8 +60,6 @@ bool PresentationClock::Prepare(double now, unsigned frames, double rate,
 			return Prepare(now, frames, rate, master, ahead, stamp);
 		}
 
-		// Bounded phase recovery preserves continuity at block boundaries. A
-		// master timestamp correction must not create overlaps or FIFO backlog.
 		const double correction = std::max(-step * 0.0005,
 			std::min(step * 0.0005, error / (rate * 0.25)));
 		m_Step += correction;

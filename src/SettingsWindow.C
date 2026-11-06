@@ -27,13 +27,10 @@
 #include "MidiBackend.h"
 #include "GUI/options.xpm"
 
-// Each option row is 20px high. The panel is sized from the number of rows so
-// that adding one does not mean adjusting every constant below by hand.
 static const int OPTION_ROW = 20;
 
 static int OptionRows()
 {
-	// Show Menubar is offered everywhere now, so the count is the same.
 	return 10;
 }
 
@@ -42,7 +39,6 @@ static int OptionsHeight()
 	return OptionRows() * OPTION_ROW;
 }
 
-// The rows sit below the icon block at 115, and the buttons below them.
 static int PanelHeight()
 {
 	return 115 + OptionsHeight() + 40;
@@ -77,7 +73,6 @@ m_ShowMenuBar(NULL)
 	TextBox = new Fl_Box(180,73,50,20,"We are the dreamers of dreams");
 	TextBox->align(FL_ALIGN_RIGHT | FL_ALIGN_INSIDE);
 	TextBox->labelsize(10);
-
 
 	Fl_Group *OptionsGrp = new Fl_Group(5,95,240,OptionsHeight()+30,"");
 	OptionsGrp->box(FL_FLAT_BOX);
@@ -208,8 +203,6 @@ m_ShowMenuBar(NULL)
 	Line->end();
 	m_Options->add(Line);
 
-	// View options. These change the canvas, not the audio path, and they are
-	// not written to the resource file yet.
 	Line = new Fl_Pack(0,0,100,20,"");
 	Line->type(FL_HORIZONTAL);
 	Name = new Fl_Box(55,0,150,20,"Curved Wires");
@@ -234,10 +227,6 @@ m_ShowMenuBar(NULL)
 	Line->add(Name);
 	m_ShowMenuBar = new Fl_Choice(0,0,80,20,"");
 	m_ShowMenuBar->labelsize(10);
-	// Offered everywhere, not only where a system menu bar duplicates it:
-	// the toolbar is never hidden and carries the Options button, so the
-	// strip can always be asked back. What differs by platform is the
-	// default, not whether the choice exists.
 	m_ShowMenuBar->tooltip("Show the menu strip inside the window. The toolbar's Options button stays available either way");
 	m_ShowMenuBar->add("No");
 	m_ShowMenuBar->add("Yes");
@@ -251,10 +240,10 @@ m_ShowMenuBar(NULL)
 	const int ButtonY = 115 + OptionsHeight() + 15;
 
 	m_Save = new Fl_Button(140,ButtonY,50,20,"Save");
- 	m_Save->labelsize(10);
- 	m_Save->tooltip("Save these settings");
+	m_Save->labelsize(10);
+	m_Save->tooltip("Save these settings");
 	m_Save->callback((Fl_Callback*)cb_Save);
- 	add(m_Save);
+	add(m_Save);
 
 	m_Apply = new Fl_Button(195,ButtonY,50,20,"Apply");
 	m_Apply->labelsize(10);
@@ -270,39 +259,48 @@ void SettingsWindow::show()
 	ListAudioClients();
 	ListMidiBackends();
 	m_CurvedWires->value(SpiralInfo::CURVEDWIRES ? 1 : 0);
-	if (m_ShowMenuBar) m_ShowMenuBar->value(SpiralInfo::SHOWMENUBAR ? 1 : 0);
+
+	if (m_ShowMenuBar)
+		m_ShowMenuBar->value(SpiralInfo::SHOWMENUBAR ? 1 : 0);
+
 	Fl_Double_Window::show();
 }
 
-// Every backend the registry knows, compiled in or loaded, the current
-// one selected.
 void SettingsWindow::ListAudioClients()
 {
 	m_AudioClient->clear();
 	const std::vector<std::string> names = Spiral::Core::AudioBackendRegistry::Get()->Names();
 	int active = 0;
+
 	for (size_t n = 0; n < names.size(); ++n)
 	{
 		m_AudioClient->add(names[n].c_str());
-		if (SpiralInfo::AUDIOCLIENT == names[n]) active = n;
+
+		if (SpiralInfo::AUDIOCLIENT == names[n])
+			active = n;
 	}
-	if (names.empty()) m_AudioClient->add("none");
+
+	if (names.empty())
+		m_AudioClient->add("none");
+
 	m_AudioClient->value(active);
 }
 
-// As the audio list; "auto" is the empty preference, the first backend
-// registered that is not the dummy.
 void SettingsWindow::ListMidiBackends()
 {
 	m_MidiBackend->clear();
 	m_MidiBackend->add("auto");
 	const std::vector<std::string> names = Spiral::Core::MidiBackendRegistry::Get()->Names();
 	int active = 0;
+
 	for (size_t n = 0; n < names.size(); ++n)
 	{
 		m_MidiBackend->add(names[n].c_str());
-		if (SpiralInfo::MIDIBACKEND == names[n]) active = n+1;
+
+		if (SpiralInfo::MIDIBACKEND == names[n])
+			active = n+1;
 	}
+
 	m_MidiBackend->value(active);
 }
 
@@ -316,38 +314,57 @@ inline void SettingsWindow::cb_Apply_i(Fl_Button* o, void* v)
 	SpiralInfo::FRAGSIZE=(int)atof(m_FragmentSize->value());
 	SpiralInfo::FRAGCOUNT=(int)atof(m_FragmentCount->value());
 	SpiralInfo::SAMPLERATE=(int)atof(m_Samplerate->value());
-	if (m_AudioClient->text()) SpiralInfo::AUDIOCLIENT=m_AudioClient->text();
+
+	if (m_AudioClient->text())
+		SpiralInfo::AUDIOCLIENT=m_AudioClient->text();
+
 	SpiralInfo::OUTPUTFILE=m_OutputDevice->value();
 	SpiralInfo::MIDIBACKEND=m_MidiBackend->value() ? m_MidiBackend->text() : "";
 	SpiralInfo::MIDIFILE=m_MidiDevice->value();
 	SpiralInfo::CURVEDWIRES=m_CurvedWires->value()!=0;
-	if (m_ShowMenuBar) SpiralInfo::SHOWMENUBAR=m_ShowMenuBar->value()!=0;
+
+	if (m_ShowMenuBar)
+		SpiralInfo::SHOWMENUBAR=m_ShowMenuBar->value()!=0;
 
 	assert(m_App);
+
 	if (m_App)
 	{
 		m_App->UpdateHostInfo();
 		m_App->ApplyViewOptions();
 	}
 }
+
 void SettingsWindow::cb_Apply(Fl_Button* o, void* v)
-{ ((SettingsWindow*)(o->parent()))->cb_Apply_i(o,v); }
+{
+	((SettingsWindow*)(o->parent()))->cb_Apply_i(o,v);
+}
 
 inline void SettingsWindow::cb_Save_i(Fl_Button* o, void* v)
 {
- 	SpiralInfo::BUFSIZE=(int)atof(m_BufferSize->value());
- 	SpiralInfo::FRAGSIZE=(int)atof(m_FragmentSize->value());
- 	SpiralInfo::FRAGCOUNT=(int)atof(m_FragmentCount->value());
- 	SpiralInfo::SAMPLERATE=(int)atof(m_Samplerate->value());
-	if (m_AudioClient->text()) SpiralInfo::AUDIOCLIENT=m_AudioClient->text();
+	SpiralInfo::BUFSIZE=(int)atof(m_BufferSize->value());
+	SpiralInfo::FRAGSIZE=(int)atof(m_FragmentSize->value());
+	SpiralInfo::FRAGCOUNT=(int)atof(m_FragmentCount->value());
+	SpiralInfo::SAMPLERATE=(int)atof(m_Samplerate->value());
+
+	if (m_AudioClient->text())
+		SpiralInfo::AUDIOCLIENT=m_AudioClient->text();
+
 	SpiralInfo::OUTPUTFILE=m_OutputDevice->value();
 	SpiralInfo::MIDIBACKEND=m_MidiBackend->value() ? m_MidiBackend->text() : "";
- 	SpiralInfo::MIDIFILE=m_MidiDevice->value();
-	// SavePrefs does not carry the view options yet; Save still applies them.
+	SpiralInfo::MIDIFILE=m_MidiDevice->value();
 	SpiralInfo::CURVEDWIRES=m_CurvedWires->value()!=0;
-	if (m_ShowMenuBar) SpiralInfo::SHOWMENUBAR=m_ShowMenuBar->value()!=0;
-	if (m_App) m_App->ApplyViewOptions();
- 	SpiralInfo::Get()->SavePrefs();
+
+	if (m_ShowMenuBar)
+		SpiralInfo::SHOWMENUBAR=m_ShowMenuBar->value()!=0;
+
+	if (m_App)
+		m_App->ApplyViewOptions();
+
+	SpiralInfo::Get()->SavePrefs();
 }
+
 void SettingsWindow::cb_Save(Fl_Button* o, void* v)
-{ ((SettingsWindow*)(o->parent()))->cb_Save_i(o,v); }
+{
+	((SettingsWindow*)(o->parent()))->cb_Save_i(o,v);
+}

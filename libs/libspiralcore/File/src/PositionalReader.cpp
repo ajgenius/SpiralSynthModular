@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// The decode walk of SpiralTesting's PositionalPatchReader, kept to what a
-// token stream needs: no item tree is built, the few integers a layout
-// refers back to (counts, the plugin id, a sentinel) live in a scope map.
 #include "PositionalReader.h"
 #include "JSON.h"
 #include <cerrno>
@@ -55,8 +52,6 @@ namespace
 		return number;
 	}
 
-	// Numeric syntax is checked without converting through double, so the
-	// source lexeme (precision, exponent, a denormal) survives untouched.
 	bool Numeric(const std::string &text)
 	{
 		size_t at = 0;
@@ -134,9 +129,6 @@ namespace
 		}
 	}
 
-	// Every layout a plugin id may carry: the contract's own entry plus the
-	// history's inline Fields. Revisions that only point back at the
-	// contract add nothing.
 	struct Layouts
 	{
 		const Value &contract;
@@ -220,7 +212,6 @@ namespace
 				++at;
 		}
 
-		// A value occupies [start, at); the gap before it is [mark, start).
 		void Log(size_t start)
 		{
 			Reader::Span token = { start, at };
@@ -228,7 +219,6 @@ namespace
 			mark = at;
 		}
 
-		// Decoding of a record is rolled back by restoring both cursors.
 		void Rewind(size_t start, size_t logged)
 		{
 			at = start;
@@ -369,8 +359,6 @@ namespace
 			}
 		}
 
-		// Consumes one definition. True when the value is an integer the
-		// layout may refer back to, returned in integer.
 		bool Read(const Value &definition, Scope &scope, unsigned depth, long &integer)
 		{
 			if (++nodes > itemLimit || depth > 64)
@@ -489,7 +477,6 @@ namespace
 
 			if (type == "Number")
 			{
-				// Non-JSON numeric spellings are kept as they are, with a diagnostic.
 				std::auto_ptr<Value> parsed(Spumoni::ParseJSONText(token));
 				if (!Numeric(token) || !parsed.get() || parsed->GetType() != Value::Number)
 					Warn("InvalidNumber", field, "Retained raw numeric token");
@@ -501,8 +488,6 @@ namespace
 			return false;
 		}
 
-		// The Devices and Wires arrays: complete records until the -1 marker
-		// or the end, with the declared count treated as advisory.
 		void Records(const Value &definition, const Scope &root)
 		{
 			const std::string &name = definition.Get("Name")->Text();
@@ -569,7 +554,6 @@ namespace
 			}
 		}
 
-		// The gap-value log as a Description: between[0] value[0] ... between[n].
 		void Finish(Spiral::Core::Description &out) const
 		{
 			size_t last = origin;
@@ -697,7 +681,6 @@ namespace Core
 			Decoder decoder(layouts, text, m_Diagnostics);
 			decoder.at = decoder.origin = decoder.mark = at;
 
-			// The Device structure's State field: a PluginState keyed by PluginID.
 			const Value &device = Require(Require(m_Contract, "Structures", Value::Object), "Device", Value::Object);
 			const Value &fields = Require(device, "Fields", Value::Array);
 			const Value *state = NULL;

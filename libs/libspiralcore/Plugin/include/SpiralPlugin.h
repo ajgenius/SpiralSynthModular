@@ -84,19 +84,16 @@ struct HostInfo
 	bool   PAUSED;
 	std::string AUDIOCLIENT;
 
-	// Engine position of the period being rendered.
 	unsigned long FRAME;
 	bool   ROLLING;
 };
 
 /////////////////////////////////////////////////////////////////////
 
-// Opt-in for plugins that retain port indices and sample buffers when resized.
 class StablePortLayout
 {
 public:
 	virtual ~StablePortLayout();
-	// While it updates the host: where the input at port now is, or -1 if it went.
 	virtual int MovedInput(int port) const { return port; }
 };
 
@@ -118,13 +115,8 @@ public:
 
 	virtual void        SetVoice(SpiralPlugin *first, unsigned voice, unsigned voices) {}
 
-	// The plugin's state as a description; the host decides how it is
-	// written. StreamOut is the transitional writer, the legacy stream
-	// the description would have produced.
 	virtual void        Describe(Spiral::Core::Description &d)=0;
 	void                StreamOut(std::ostream &s);
-	// The state read back from a description, in the order Describe gave
-	// it; the host finds the description.
 	virtual void        Apply(Spiral::Core::Description::Reader &r)=0;
 	virtual void        Migrate(Spiral::Core::Description &d) {}
 
@@ -158,7 +150,6 @@ public:
 	void SetParent(void *s) { m_Parent=s; }
 
 	void UpdateChannelHandler();
-	// Host only: mark every output with the period just rendered.
 	void StampOutputs(unsigned long frame);
 	// is the plugin connected to an external device (oss/alsa/jack)
 	bool IsTerminal() { return m_IsTerminal; }

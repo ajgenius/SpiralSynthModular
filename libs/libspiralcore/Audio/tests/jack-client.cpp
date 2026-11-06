@@ -1,4 +1,3 @@
-// Exercise the real JackClient against a deterministic JACK API, without a server.
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -97,7 +96,6 @@ jack_client_t *jack_client_new(const char *name)
 {
 	if (failOpen)
 	{
-		// libjack may destroy remaining stale clients on a failed reopen.
 		assert(clients.empty());
 		return NULL;
 	}
@@ -219,7 +217,6 @@ int jack_connect(jack_client_t *c, const char *source, const char *destination)
 
 }
 
-// The plugin period tests reuse this server without running the client suite.
 #ifndef JACK_CLIENT_TEST_FIXTURE
 struct Notifications
 {
@@ -302,7 +299,6 @@ int main()
 	assert(input[0] == 5 && input[3] == 8);
 	assert(native->Ports[1]->Buffer[0] == 1 && native->Ports[1]->Buffer[3] == 4);
 
-	// A server buffer change must not overrun patch buffers awaiting resize.
 	native->Size(8, native->SizeContext);
 	native->Rate(96000, native->RateContext);
 	native->Process(8, native->ProcessContext);
@@ -323,7 +319,6 @@ int main()
 	assert(a.AddOutputPort(1) == 1);
 	assert(native->Active);
 
-	// Shutdown reports zero frames, preserves port descriptors, and permits reconnect.
 	native->Shutdown(native->ShutdownContext);
 	assert(!a.IsAttached() && first.Stops == 1 && b.IsAttached());
 	assert(a.Attach("SSM0"));
@@ -343,8 +338,6 @@ int main()
 	assert(a.Attach("SSM0"));
 	a.Detach();
 	assert(clients.empty());
-	// The shared AudioClient prepares before activation and exchanges stereo
-	// only during a callback. Blocking backends retain their original API.
 	Spiral::Core::AudioClient *audio = &a;
 	Spiral::Core::AudioClientOptions options;
 	options.InChannels = options.OutChannels = 2;

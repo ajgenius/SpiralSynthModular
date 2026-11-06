@@ -1,5 +1,4 @@
 #!/bin/sh
-# Package a staged Unix installation using the macOS developer tools.
 set -eu
 
 fail() { echo "bundle: $*" >&2; exit 1; }
@@ -24,8 +23,6 @@ if [ -e "$destination" ] || [ -L "$destination" ]; then
     [ "$old_id" = "$identifier" ] || fail "refusing to replace unrelated output: $destination"
 fi
 mkdir -p "$(dirname "$destination")"
-# Legacy libtool install recipes cannot reliably quote a DESTDIR with spaces.
-# Stage in /tmp, then move the finished app to the requested destination.
 work=$(mktemp -d /tmp/ssm-bundle-XXXXXX)
 trap 'rm -rf "$work"' 0
 trap 'exit 1' 1 2 3 15
@@ -65,7 +62,6 @@ rpaths() {
 resolve() (
     dependency=$1
     source=$2
-    # Prefer this staged installation over older installed project libraries.
     installed=$stage$libdir/$(basename "$dependency")
     if [ -f "$installed" ]; then canonical "$installed"; exit; fi
     case $dependency in
@@ -118,7 +114,6 @@ while IFS= read -r target; do
     relative=${target#"$resources/SpiralPlugins/"}
     relocate "$stage$plugindir/$relative" "$target"
 done
-# Version is substituted into XML, so escape XML metacharacters.
 xml_version=$(printf '%s' "$version" | sed 's/\&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
 cat > "$contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>

@@ -1,12 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Spumoni::Tar — a ustar tarball as the container, gzip-compressed when the
-// path says so (.tgz, .tar.gz); a plain .tar otherwise.
-//
-// The second archive kind, here so that Container is an interface in fact
-// and not only in name. Streams rather than seeks: entries are written in
-// order with their sizes known up front (memory and regular files), read
-// header by header. Limits: ustar names (100, or 155/100 with the prefix
-// split), regular files and directories only, no links.
 #ifndef SPUMONI_TAR_H
 #define SPUMONI_TAR_H
 
@@ -39,7 +31,7 @@ namespace Spumoni
 				unsigned long long size, std::string &error);
 			bool Put(const void *data, size_t size, std::string &error);
 
-			void *m_File;	// gzFile
+			void *m_File;
 			std::string m_Path;
 			std::set<std::string> m_Names;
 		};
@@ -48,7 +40,6 @@ namespace Spumoni
 		virtual Container::Writer *NewWriter() const;
 		virtual bool Extract(const std::string &path, Folder &folder, std::string &error) const;
 
-		// * Whether a path names a compressed tarball.
 		static bool Compressed(const std::string &path);
 	};
 

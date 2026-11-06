@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Shared behavioral contract for public Spumoni and retained Spicy trees.
 #ifndef SPIRAL_JSON_CONFORMANCE_H
 #define SPIRAL_JSON_CONFORMANCE_H
 #include <cassert>

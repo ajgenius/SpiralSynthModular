@@ -161,8 +161,6 @@ void Fl_Canvas::draw()
 		if (m_Isolated < 0)
 			DrawWires();
 
-		// draw maximised modules on top of everything else; an isolated
-		// device was drawn above, alone
    	 	Fl_Widget*const* a = array();
 		for (int i=m_Isolated < 0 ? children() : 0; i--;)
 		{
@@ -187,10 +185,6 @@ void Fl_Canvas::draw()
 	}
 	else // only redraw the children that need it:
 	{
-		// A device drawn again alone, for a meter, waveform or light in it,
-		// would be drawn over the devices in front of it: draw those again
-		// after it, clipped to the same area. A minimised device stays under
-		// the maximised ones, as the full redraw draws it.
 		for (int i = 0; i < children(); ++i)
 		{
 			Fl_DeviceGUI *below = AsDevice(child(i));
@@ -215,7 +209,6 @@ void Fl_Canvas::draw()
 			{
 				const bool drawn = o.damage() && o.visible();
 				update_child(o);
-				// Its selection outline, which the full redraw draws after it.
 				if (drawn && device && std::find(m_Selection.m_DeviceIds.begin(), m_Selection.m_DeviceIds.end(), device->GetID()) != m_Selection.m_DeviceIds.end())
 				{
 					fl_color(FL_YELLOW);
@@ -232,8 +225,6 @@ void Fl_Canvas::draw()
 	DrawPick();
 }
 
-////////////////////////////////////////////////////////////////////////
-
 void Fl_Canvas::DrawPick()
 {
 	if (!m_PickAt)
@@ -247,7 +238,6 @@ void Fl_Canvas::DrawPick()
 		fl_line_style(0);
 	}
 
-	// What a click does now, at the top of the view rather than the canvas.
 	Fl_Widget *view = parent() ? parent() : this;
 	fl_font(FL_HELVETICA, 11);
 	const int W = (int)fl_width(m_PickHint.c_str()) + 16, H = 20;
@@ -282,9 +272,6 @@ void Fl_Canvas::Isolate(int id)
 	redraw();
 }
 
-// While picking, the pointer is the canvas's own: nothing under it sees a
-// move or a click, so a device can be named without being dragged and a
-// control without being turned.
 int Fl_Canvas::PickEvent(int event)
 {
 	switch (event)
@@ -504,7 +491,6 @@ void Fl_Canvas::PopupEditMenu (Fl_Group *group) {
      Fl_Menu_Item *groupItem=(Fl_Menu_Item*)&(m_Menu->menu()[7]);
      Fl_Menu_Item *ungroupItem=(Fl_Menu_Item*)&(m_Menu->menu()[8]);
      Fl_Menu_Item *backItem=(Fl_Menu_Item*)&(m_Menu->menu()[9]);
-     // Ungroup takes one subpatch: with more selected, which is meant is not clear.
      const bool box = m_Selection.m_DeviceIds.size() == 1 && IsBox(m_Selection.m_DeviceIds[0]);
      if (cb_GroupDevices && m_HaveSelection) groupItem->activate(); else groupItem->deactivate();
      if (cb_UngroupDevices && box) ungroupItem->activate(); else ungroupItem->deactivate();
@@ -518,8 +504,6 @@ void Fl_Canvas::AddPluginName (const string &s, int ID) {
      // This isn't IMMEDIATELY important, as if you've no plugins - there's nothing to copy/paste/etc anyway.
      if (! (m_Menu)) {
         m_Menu = new Fl_Menu_Button (0, 0, 4, 4, NULL);
-        // The canvas owns this popup even when another group is current.
-        // PopupEditMenu attaches it only for the duration of popup().
         if (m_Menu->parent()) m_Menu->parent()->remove(m_Menu);
         m_Menu->type (Fl_Menu_Button::POPUP123);
         m_Menu->textsize (10);
@@ -538,10 +522,6 @@ void Fl_Canvas::AddPluginName (const string &s, int ID) {
 
 void Fl_Canvas::AddAboutPatch () {
      if (!m_Menu || !cb_AboutPatch) return;
-     // The divider sits on the item before, which is the last top-level
-     // entry: a submenu title. Flagging a title draws the line under its
-     // whole group. Top level is depth 0, walking the flat array: a
-     // submenu title opens a level and a null text closes one.
      int last = -1;
      int depth = 0;
      for (int item = 0; item < m_Menu->size(); item++) {
@@ -636,7 +616,6 @@ void Fl_Canvas::DrawWires()
                 ep2_mid_x = fabs(ep1_x-ep2_x)/2;
                 ep2_new_x = ep2_x-ep2_mid_x;
 
-                // A curve by default; the straight line is the view option.
                 if (SpiralInfo::CURVEDWIRES)
                 {
                         fl_begin_line();
@@ -751,8 +730,6 @@ void Fl_Canvas::ClearIncompleteWire()
 ////////////////////////////////////////////////////////////////////////
 //  Event handlers for the canvas and the deviceGUIs
 
-// The first file a drop brought: a path, or a file: URI as X11 sends them,
-// its escapes undone. Empty when the drop held no file.
 static string DroppedPath(const char *text)
 {
 	string line;
@@ -768,7 +745,7 @@ static string DroppedPath(const char *text)
 	}
 	if (line.compare(0, 7, "file://") != 0)
 		return line;
-	const size_t slash = line.find('/', 7);	// after the host, if one is named
+	const size_t slash = line.find('/', 7);
 	if (slash == string::npos)
 		return string();
 	string path;
@@ -795,9 +772,6 @@ void Fl_Canvas::cb_Dropped(void *data)
 
 int Fl_Canvas::handle (int event) {
     if (m_PickAt) return PickEvent(event);
-    // A file dropped anywhere on the patch, over a device too, is the
-    // host's to open. It is opened after the drop has finished, so a
-    // question it asks does not hold the window that dragged it.
     switch (event) {
        case FL_DND_ENTER:
        case FL_DND_DRAG:
@@ -1151,7 +1125,6 @@ void Fl_Canvas::RemoveWire(vector<CanvasWire>::iterator i)
 
 void Fl_Canvas::MoveInputs(Fl_DeviceGUI* Device, const vector<int> &to)
 {
-	// A wire whose input went is removed by its old port, while that still exists.
 	for (vector<CanvasWire>::iterator i=m_WireVec.begin(); i!=m_WireVec.end(); )
 	{
 		if (i->InputID==Device->GetID() && i->InputPort>=0 && i->InputPort<(int)to.size() && to[i->InputPort]<0)
@@ -1161,13 +1134,11 @@ void Fl_Canvas::MoveInputs(Fl_DeviceGUI* Device, const vector<int> &to)
 		}
 		else ++i;
 	}
-	// The rest follow their inputs.
 	for (vector<CanvasWire>::iterator i=m_WireVec.begin(); i!=m_WireVec.end(); ++i)
 	{
 		if (i->InputID==Device->GetID() && i->InputPort>=0 && i->InputPort<(int)to.size())
 			i->InputPort=to[i->InputPort];
 	}
-	// So do the boundary ports bound to them.
 	RenumberBinds(Device->GetID(), true, to);
 }
 
@@ -1175,7 +1146,6 @@ void Fl_Canvas::MoveInputs(Fl_DeviceGUI* Device, const vector<int> &to)
 
 void Fl_Canvas::RestorePortConnections(Fl_DeviceGUI* Device)
 {
-	// Only this device's buttons were rebuilt; peer counts are still intact.
 	for (vector<CanvasWire>::const_iterator i=m_WireVec.begin(); i!=m_WireVec.end(); ++i)
 	{
 		if (i->InputID==Device->GetID()) Device->AddConnection(i->InputPort);
@@ -1226,8 +1196,6 @@ void Fl_Canvas::Clear()
 	redraw();
 }
 
-////////////////////////////////////////////////////////////////////////
-
 void Fl_Canvas::ShowPage(int box)
 {
 	const int shown = m_Page;
@@ -1249,10 +1217,6 @@ void Fl_Canvas::ShowPage(int box)
 	if (cb_PageChanged) cb_PageChanged(this, user_data());
 }
 
-// The device menu, in the private tree's order: where the device sits,
-// its name, deleting it, then grouping, then what the device is. A
-// subpatch's own settings are on its panel. A device outside the
-// selection is chosen alone, as a click on it would.
 void Fl_Canvas::DeviceMenu(Fl_DeviceGUI *device)
 {
 	const int id = device->GetID();
@@ -1681,8 +1645,6 @@ void Fl_Canvas::UnbindBoxPort(int box, bool input, int port)
 	redraw();
 }
 
-// A boundary port is an audio port unless it says otherwise, as the private
-// tree types them.
 void Fl_Canvas::AddBoxPort(int box, bool input, const string &name)
 {
 	AddBoxPort(box, input, name, "AudioPort");
@@ -1756,7 +1718,6 @@ void Fl_Canvas::RenumberBinds(int box, bool input, const vector<int> &moved)
 	}
 }
 
-// The device's ports, laid out on its box as a subpatch's are.
 void Fl_Canvas::RefreshBox(int box)
 {
 	SubPatchDevice *shown = Box(box);
@@ -1849,8 +1810,6 @@ void Fl_Canvas::Reschedule()
 		return;
 	}
 
-	// The patch's own graph here; a subpatch that owns its graph sorts what
-	// it holds in its device, and is one node in the graph it sits in.
 	GraphSort root;
 	map<int,GraphSort*> graphs;
 	graphs[-1] = &root;
@@ -1893,13 +1852,6 @@ void Fl_Canvas::cb_ParentPage(Fl_Widget *, void *data)
 		canvas->ShowPage(canvas->PageOf(canvas->m_Page));
 }
 
-// A patch is laid out at the window coordinates its devices were saved at,
-// so where they land on the canvas depends on where the view is when they
-// are placed. Before a patch, the view goes back to where a fresh window
-// starts, the middle of the canvas at its top left: the same patch then
-// lands at the same offsets every time, and a view left far to one side by
-// the last patch cannot push the next one over the canvas's edge, where
-// the scroll cannot reach it and nothing is drawn.
 void Fl_Canvas::ResetView()
 {
 	Fl_Scroll *scroll = dynamic_cast<Fl_Scroll*>(parent());
@@ -1909,26 +1861,16 @@ void Fl_Canvas::ResetView()
 	const int DesiredX = scroll->x() - w() / 2;
 	const int DesiredY = scroll->y() - h() / 2;
 
-	// The displacement, as CenterPatch asks for it.
 	scroll->scroll_to(scroll->xposition() + x() - DesiredX,
 	                  scroll->yposition() + y() - DesiredY);
 }
 
-// A patch carries the window coordinates its devices were saved at, which say
-// nothing about where the view is now. Centering moves the view, never the
-// devices: the canvas is one big widget inside a scroll, so this is a scroll.
 void Fl_Canvas::CenterPatch()
 {
 	Fl_Scroll *scroll = dynamic_cast<Fl_Scroll*>(parent());
 
 	if (!scroll) return;
 
-	// Offsets inside the canvas, not window coordinates. Scrolling moves the
-	// canvas and every device on it together, so these differences read the
-	// same before and after the first draw, and they are what scroll_to
-	// takes. Asking the scroll where it is instead only works once it has
-	// been drawn: fresh, xposition() reads 0 while the canvas sits at -5000,
-	// and a position worked out from that lands outside the canvas.
 	int left = 0, top = 0, right = 0, bottom = 0;
 	bool any = false;
 
@@ -1960,43 +1902,24 @@ void Fl_Canvas::CenterOn(int id)
 	CenterView(o->x() - x(), o->y() - y(), o->x() - x() + o->w(), o->y() - y() + o->h());
 }
 
-// Offsets inside the canvas, as CenterPatch finds them.
 void Fl_Canvas::CenterView(int left, int top, int right, int bottom)
 {
 	Fl_Scroll *scroll = dynamic_cast<Fl_Scroll*>(parent());
 
 	if (!scroll) return;
 
-	// The page is what the scroll shows once its scrollbars are taken off.
 	const int PageW = scroll->w() - scroll->scrollbar.w();
 	const int PageH = scroll->h() - scroll->hscrollbar.h();
 
-	// Where the middle of the patch has to sit for the view to be looking at
-	// it. A patch larger than the page scrolls to its middle like any other:
-	// anchoring the corner instead leaves the view on whichever devices
-	// happen to be furthest up and left, which on a big patch is nowhere
-	// near the work.
 	int TargetX = (left + right) / 2 - PageW / 2;
 	int TargetY = (top + bottom) / 2 - PageH / 2;
 
-	// There is nothing to see past the edges of the canvas, and a view parked
-	// outside it leaves the scrollbars describing somewhere the view is not:
-	// the display stops tracking the scroll, and it stays that way into the
-	// next patch because nothing else ever moves the view.
 	TargetX = std::max(0, std::min(TargetX, w() - PageW));
 	TargetY = std::max(0, std::min(TargetY, h() - PageH));
 
-	// Where the canvas itself has to end up for that offset to be at the top
-	// left of the view.
 	const int DesiredX = scroll->x() - TargetX;
 	const int DesiredY = scroll->y() - TargetY;
 
-	// scroll_to displaces the children by (position - argument), so ask for
-	// the argument that produces the displacement this needs. Going through
-	// the displacement rather than handing it the offset directly is what
-	// makes this work before the first draw, when the scroll's idea of its
-	// own position is still 0 and the canvas is already at -5000; the next
-	// draw re-derives the position from where the canvas actually is.
 	scroll->scroll_to(scroll->xposition() + x() - DesiredX,
 	                  scroll->yposition() + y() - DesiredY);
 }

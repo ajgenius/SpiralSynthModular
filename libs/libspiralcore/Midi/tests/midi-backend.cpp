@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// The midi registry hands out backends by name: the dummy is built in
-// and last, a descriptor registered at runtime creates and destroys
-// through its own functions, a wrong ABI, wrong kind or duplicate name
-// is refused, a module arrives through the manager and leaves with it.
 #include "MidiBackend.h"
 #include <cassert>
 #include <cstdio>
@@ -24,7 +20,6 @@ int main()
 	const BackendDescriptor null = { SPIRAL_MIDI_PLUGIN_ABI, "midi", "null", Create, Destroy };
 	registry->Register(&null);
 	assert(registry->Find("null") == &null);
-	// The dummy stays last however late the others register.
 	names = registry->Names();
 	assert(names.size() == 2 && names[0] == "null" && names[1] == "dummy");
 
@@ -46,7 +41,6 @@ int main()
 	assert(destroyed == 1);
 	assert(!registry->Create("nonesuch"));
 
-	// The dummy: no ports, nothing to poll, sends are accepted.
 	MidiBackend *dummy = registry->Create("dummy");
 	assert(dummy && dummy->Ports(false).empty() && dummy->Ports(true).empty());
 	MidiPacket packet;
@@ -60,7 +54,6 @@ int main()
 	MidiBackend *module = registry->Create("probe");
 	assert(module && module->Poll(packet) && packet.Status == 0x90 && packet.Data1 == 60);
 	assert(module->Ports(false).size() == 1);
-	// A live backend keeps its module loaded and the registry in place.
 	assert(!PluginManager::Get()->UnloadAll());
 	MidiBackendRegistry::PackUpAndGoHome();
 	assert(MidiBackendRegistry::Get() == registry);
@@ -68,8 +61,6 @@ int main()
 	assert(PluginManager::Get()->UnloadAll());
 	assert(!registry->Find("probe") && registry->Find("dummy"));
 	assert(registry->LoadModules(root) == 1);
-	// Nothing live: the registry goes, and with it its kind, so the
-	// manager has nothing left to load the probe into.
 	MidiBackendRegistry::PackUpAndGoHome();
 	assert(PluginManager::Get()->LoadAll(root) == 0);
 	PluginManager::PackUpAndGoHome();

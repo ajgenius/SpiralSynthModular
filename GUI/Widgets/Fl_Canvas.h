@@ -101,23 +101,17 @@ public:
 	void SetGroupCallback (Fl_Callback* s) { cb_GroupDevices=s; }
 	void SetUngroupCallback (Fl_Callback* s) { cb_UngroupDevices=s; }
 	void SetPageCallback (Fl_Callback* s) { cb_PageChanged=s; }
-	// A file dropped on the patch: the callback runs once the drop is
-	// over, and DroppedFile() is the first file dropped.
 	void SetDropFileCallback (Fl_Callback* s) { cb_DropFile=s; }
 	const string &DroppedFile() const { return m_DroppedFile; }
 
 	int Page() const { return m_Page; }
 	void ShowPage(int box);
-	// The device menu, as the private tree's editor has it.
 	void DeviceMenu(Fl_DeviceGUI *device);
-	// A subpatch box's name, and the boxes on a page, for the breadcrumb.
 	string BoxTitle(int id);
 	vector<int> BoxesOn(int page) const;
 	int PageOf(int id) const;
 	void SetPageOf(int id, int page);
 	bool IsBox(int id) const { return m_Boxes.count(id) != 0; }
-	// The device a subpatch is hosted in holds its ports and settings; the
-	// canvas looks it up by ID, and forgets it when it goes.
 	SubPatchDevice *Box(int id);
 	void SetBox(int id, SubPatchDevice *box) { m_Boxes[id] = box; Reschedule(); }
 	void RemoveBox(int id);
@@ -141,9 +135,6 @@ public:
 	void SetBoxVoices(int box, long voices);
 	bool Owns(int box) const;
 	unsigned Topology() const { return m_Topology; }
-	// The last item on the popup, after a divider: the patch's own entry
-	// below the device groups. Added once the plugins are in, so it
-	// lands at the end rather than ahead of them.
 	void AddAboutPatch ();
 
         void DeleteSelection (void);
@@ -153,19 +144,10 @@ public:
 	void RestorePortConnections(Fl_DeviceGUI* Device);
 	void RemoveDevice(Fl_DeviceGUI* Device);
 	void Clear();
-	// Scroll the view back to where a fresh window starts.
 	void ResetView();
-	// Scroll the view so the patch sits in the middle of it.
 	void CenterPatch();
-	// Scroll the view so one device sits in the middle of it.
 	void CenterOn(int id);
 
-	/* Picking, as a page inspector picks: until it stops, the canvas takes
-	   the pointer itself and a click names what is under it instead of
-	   acting on it. The host says what that is -- a device, a control on
-	   one -- and its bounds, which are outlined as the pointer passes.
-	   Escape, or a click on nothing, picks Device -1, and either way the
-	   pick has stopped before Picked runs, so Picked may start another. */
 	struct Pick
 	{
 		Pick(): Device(-1), X(0), Y(0), W(0), H(0) {}
@@ -178,7 +160,6 @@ public:
 	void StartPick(PickAt at, Picked picked, void *data, const string &hint);
 	void StopPick();
 	bool Picking() const { return m_PickAt != NULL; }
-	// Only this device is drawn, the patch around it set aside; -1 draws all.
 	void Isolate(int id);
 	int Isolated() const { return m_Isolated; }
         void AddPluginName(const string &s, int ID);
@@ -319,6 +300,6 @@ istream &operator>>(istream &s, Fl_Canvas &o);
 Spiral::Core::Description &Describe(Spiral::Core::Description &d, Fl_Canvas &o);
 void Describe(Spiral::Core::PatchDescription &patch, Fl_Canvas &o, int page = -1);
 void Apply(const Spiral::Core::PatchDescription &patch, Fl_Canvas &o, const std::map<std::string, int> &ids);
-ostream &operator<<(ostream &s, Fl_Canvas &o);   // the description, written
+ostream &operator<<(ostream &s, Fl_Canvas &o);
 
 #endif

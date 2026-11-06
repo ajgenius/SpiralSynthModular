@@ -78,9 +78,6 @@ namespace
 		return node;
 	}
 
-	// A port's name under its knob or slider, as the old editor showed it:
-	// without its " (CV)" or " (AU)", cut to 19 characters for a knob and
-	// 11 for a slider, in small Courier clipped to its box.
 	JSON *PortLabel(const string &name, int x, int y, int w, const char *port, bool slider)
 	{
 		size_t len = strlen(port);
@@ -180,7 +177,6 @@ namespace
 		}
 		else if (count < 3)
 		{
-			// One or two knobs sit in one row, as the old editor put them.
 			cols = (int)count;
 			rows = 1;
 			width = 10 + (int)count * 100;
@@ -195,9 +191,6 @@ namespace
 			width = 170;
 	}
 
-	// As the old editor: up to eight sliders in one row; more in a grid of
-	// about four columns to a row, the first fullrows rows full and the rest
-	// one short.
 	void SliderGrid(unsigned long count, int &cols, int &rows, int &fullrows, int &width, int &height)
 	{
 		if (count < 9)
@@ -382,7 +375,6 @@ bool LADSPAPlugin::GeneratePanel(const string &Directory, string &Document)
 		{
 			if (connected[p])
 				continue;
-			// One or two sliders are centred in the 170 wide device.
 			const int offset = unconnected < 3 ? (160 - (int)unconnected * 60) / 2 : 0;
 			int sx = 25 + offset + column * 60, y = 45 + row * 140;
 			JSON *slider = Node("Slider", Indexed("slider-", p), sx, y, 20, 100);

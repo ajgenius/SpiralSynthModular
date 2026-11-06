@@ -1,5 +1,3 @@
-# Toolkit controls with nothing of the synth in them: knobs, LEDs, meters,
-# drag bars, loop and event displays, the Pawfal dialogs, the wave chooser.
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir) $(FLTK_CXXFLAGS)
 
 EXTRA_DIST = Fl_DragBar.fld Fl_Knob.fld Fl_LED_Button.fld Fl_SevenSeg.fld
@@ -45,5 +43,4 @@ libSpiralControls_la_SOURCES = \
 	WS_Square.h \
 	WS_Tri.h
 libSpiralControls_la_LDFLAGS = -shared -version-info $(LT_VERSION_INFO)
-# WaveChooser reads the format list straight from libsndfile.
 libSpiralControls_la_LIBADD = $(FLTK_LIBS) $(SFLIBS) -lm

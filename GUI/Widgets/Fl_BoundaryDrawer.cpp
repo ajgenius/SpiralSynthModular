@@ -19,8 +19,6 @@ namespace
 	const int Pad = 6;
 	const int RowHeight = 22;
 	const int LabelWidth = 64;
-	/* The rail is the drag bar. The panel beside it opens to a width that
-	   fits the fields; it will not grow past twice that. */
 	const int Rail = 18;
 	const int Panel = 320;
 	const int PanelMax = 560;
@@ -45,17 +43,12 @@ namespace
 		return SessionPanel < 36;
 	}
 
-	/* The document fields the panel edits, in display order. Credits are a
-	   list and are not one of these: a document either states its credits
-	   or it does not, so they get their own section rather than a field
-	   row. */
 	const Fl_BoundaryDrawer::Field FieldOrder[] = {
 		Fl_BoundaryDrawer::FieldTitle, Fl_BoundaryDrawer::FieldDescription,
 		Fl_BoundaryDrawer::FieldCopyright, Fl_BoundaryDrawer::FieldLicense
 	};
 	const size_t FieldCount = sizeof(FieldOrder) / sizeof(FieldOrder[0]);
 
-	/* About is a paragraph and gets five lines; the rest are a line each. */
 	const int AboutHeight = RowHeight * 4;
 
 	int RowHeightOf(Fl_BoundaryDrawer::Field field)
@@ -63,7 +56,6 @@ namespace
 		return field == Fl_BoundaryDrawer::FieldDescription ? AboutHeight : RowHeight;
 	}
 
-	/* Where a field's row starts, below the ones before it. */
 	int RowTop(size_t index)
 	{
 		int top = 0;
@@ -74,14 +66,11 @@ namespace
 		return top;
 	}
 
-	/* The fields, the bundle checkbox, the dates the file recorded, then
-	   the patch's voices. */
 	int DocumentHeight()
 	{
 		return RowTop(FieldCount) + 3 * RowHeight;
 	}
 
-	/* Beside the voices, how many the patch plays. */
 	const int PlaysW = 60;
 
 	const char *FieldLabel(Fl_BoundaryDrawer::Field field)
@@ -118,9 +107,6 @@ namespace
 		return document.Rights.License;
 	}
 
-	/* The host's chrome is plastic: the toolbar buttons and the plugin tabs
-	   are FL_PLASTIC_UP_BOX at 10pt. The drawer follows, so it reads as
-	   part of the same window rather than a stock FLTK panel. */
 	void PlasticButton(Fl_Widget *button)
 	{
 		button->box(FL_PLASTIC_UP_BOX);
@@ -143,11 +129,6 @@ namespace
 		return std::string(word) + " (" + buf + ")";
 	}
 
-	/* Selection in an Fl_Input is a minimal update: the box is not redrawn,
-	   and the caret is a 2px bar that can stick outside the field. The
-	   private tree's port name fields had the same: after the field has
-	   moved its selection, widen the damage to the whole window and force
-	   a full box paint, or the previous glyphs stay. */
 	class Fl_PanelInput: public Fl_Input
 	{
 	public:
@@ -182,9 +163,6 @@ namespace
 		}
 	};
 
-	/* The paragraph editor, dressed and damaged like the inputs: its
-	   scrollbars are plastic like the rest, and an edit or a selection
-	   repaints the whole field rather than the caret's rectangle. */
 	class Fl_PanelText: public Fl_Text_Editor
 	{
 	public:
@@ -224,9 +202,6 @@ namespace
 		}
 	};
 
-	/* The rows under the credits heading are rebuilt as credits come and
-	   go. A plain group that paints its own box: the rows are placed by
-	   hand, so FLTK's proportional resize is kept out of it. */
 	class Fl_CreditRows: public Fl_Group
 	{
 	public:
@@ -316,14 +291,8 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 {
 	box(FL_NO_BOX);
 
-	// Two sections, both plain groups: no scroll area anywhere in here,
-	// because the whole point of the drawer is to be chrome outside the
-	// canvas's scrolling and damage.
 	m_DocumentSection = new Fl_Group(x + Rail + Pad, y + Pad,
 		std::max(0, w - Rail - 2 * Pad), DocumentHeight());
-	/* FLTK scales children against the first resize snapshot. These rows
-	   are placed by hand; a proportional pass is what collapsed fields to
-	   slivers in the private tree. */
 	m_DocumentSection->resizable(NULL);
 
 	for (size_t i = 0; i < FieldCount; ++i)
@@ -360,10 +329,6 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 			m_License->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 			m_License->callback(LicenseEdited, this);
 
-			// The known identifiers, typed or picked: the menu fills the
-			// input, which is what is read.
-			// No label: Fl_Menu_Button draws its own arrow, placed from
-			// the label size, and at this width and size it sits centred.
 			m_LicenseMenu = new Fl_Menu_Button(m_License->x() + fieldW, rowY,
 				MenuW, RowHeight - 2, "");
 			PlasticButton(m_LicenseMenu);
@@ -400,7 +365,6 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 	m_ViewLicense->tooltip("Read the licence text");
 	m_ViewLicense->callback(ViewLicenseClicked, this);
 
-	// Created and saved, as the file recorded them. Not typed here.
 	m_Dates = new Fl_Box(m_DocumentSection->x(),
 		m_DocumentSection->y() + RowTop(FieldCount) + RowHeight,
 		m_DocumentSection->w(), RowHeight - 2);
@@ -438,7 +402,6 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 	m_PortSection->resizable(NULL);
 	m_PortSection->end();
 
-	// The tabs, shown once there is a MIDI page to switch to.
 	m_PatchTab = new Fl_Button(x + Rail + Pad, y + Pad, 72, RowHeight - 2, "Patch");
 	m_MidiTab = new Fl_Button(x + Rail + Pad + 72, y + Pad, 72, RowHeight - 2, "MIDI");
 	PlasticButton(m_PatchTab);
@@ -455,7 +418,6 @@ Fl_BoundaryDrawer::Fl_BoundaryDrawer(int x, int y, int w, int h):
 	end();
 	resizable(NULL);
 
-	// Nothing bound yet, so nothing to show.
 	m_DocumentSection->hide();
 	m_CreditSection->hide();
 	m_PortSection->hide();
@@ -469,7 +431,6 @@ Fl_BoundaryDrawer::~Fl_BoundaryDrawer()
 	Fl::remove_timeout(RemovePortCommitted, this);
 	Fl::remove_timeout(DragCommitted, this);
 
-	// The editor is a child and goes with the group; the buffer is ours.
 	if (m_About)
 		m_About->buffer(NULL);
 	delete m_AboutBuffer;
@@ -479,15 +440,11 @@ void Fl_BoundaryDrawer::resize(int x, int y, int w, int h)
 {
 	Fl_Group::resize(x, y, w, h);
 	Relayout();
-	/* resize() does not damage the new rectangle. Without this the
-	   opened panel is a dirty strip of the window underneath. */
 	redraw();
 }
 
 void Fl_BoundaryDrawer::draw()
 {
-	// The sections and the credit rows paint in the drawer's colour; the
-	// rail is a shade off it, with a grip in the middle.
 	m_DocumentSection->color(color());
 	m_CreditSection->color(color());
 	m_PortSection->color(color());
@@ -496,8 +453,6 @@ void Fl_BoundaryDrawer::draw()
 
 	fl_color(color());
 	fl_rectf(x(), y(), w(), h());
-	// The rail is a plastic bar in the host's button colour, like the
-	// toolbar beside it; the grip is a darker shade of the same.
 	fl_draw_box(FL_PLASTIC_UP_BOX, x(), y(), Rail, h(), selection_color());
 	fl_color(fl_darker(selection_color()));
 	const int mid = y() + h() / 2;
@@ -569,8 +524,6 @@ void Fl_BoundaryDrawer::SetPanelWidth(int panel)
 
 void Fl_BoundaryDrawer::ShowSections()
 {
-	// Collapsed is the rail alone. The sections stay built so opening
-	// does not have to recreate the fields.
 	const bool midi = ShowsMidi() && !m_Collapsed;
 
 	if (ShowsDocument() && !m_Collapsed && !midi)
@@ -646,7 +599,6 @@ void Fl_BoundaryDrawer::TabClicked(Fl_Widget *widget, void *data)
 	self->ShowMidi(widget == self->m_MidiTab);
 }
 
-// The sections sit below the tabs when there are any.
 int Fl_BoundaryDrawer::ContentTop() const
 {
 	return y() + Pad + (m_MidiPage ? RowHeight : 0);
@@ -680,8 +632,6 @@ bool Fl_BoundaryDrawer::PanelShown() const
 void Fl_BoundaryDrawer::SetCollapsed(bool collapsed)
 {
 	m_Collapsed = collapsed;
-	// Asked open, the panel is at least its full width: a rail dragged to
-	// a sliver earlier in the session is not what About Patch means.
 	SessionPanel = collapsed ? 0 : std::max(OpenPanel(), Panel);
 
 	if (!collapsed)
@@ -829,7 +779,6 @@ void Fl_BoundaryDrawer::Repopulate()
 		const bool same = shown && text == shown;
 		free(shown);
 
-		// Only when it differs: resetting the buffer moves the caret.
 		if (!same)
 			m_AboutBuffer->text(text.c_str());
 	}
@@ -871,9 +820,6 @@ void Fl_BoundaryDrawer::Repopulate()
 	}
 
 	m_CreditSection->clear();
-	/* FLTK 1.4 clear() sets resizable() to the group itself, and the next
-	   resize then scales every row from that snapshot. NULL keeps the
-	   positions PlaceCredits just set. */
 	m_CreditSection->resizable(NULL);
 	m_CreditHeader = NULL;
 	m_CreditNames.clear();
@@ -1054,9 +1000,6 @@ void Fl_BoundaryDrawer::Repopulate()
 	NoteLayout();
 	redraw();
 
-	/* The rows were deleted and rebuilt. A child redraw leaves the old
-	   boxes on the parent. Damage the window so the new geometry is all
-	   that remains. */
 	if (window())
 		window()->redraw();
 }
@@ -1076,9 +1019,6 @@ void Fl_BoundaryDrawer::PlaceCredits()
 		rowY += RowHeight;
 	}
 
-	// Name, then the role indented under it, then a gap: two lines per
-	// credit, because a name and a role side by side do not fit a panel
-	// this narrow.
 	for (size_t i = 0; i < m_CreditNames.size(); ++i)
 	{
 		const int nameW = std::max(0, w - RemoveW - 2);
@@ -1293,7 +1233,6 @@ void Fl_BoundaryDrawer::ShowLicenseText()
 	if (text.empty())
 		return;
 
-	// What the bundle writes, so reading it here is reading the file.
 	if (!m_Document->Rights.Copyright.empty())
 		text = "Copyright " + m_Document->Rights.Copyright + "\n\n" + text;
 
@@ -1302,9 +1241,6 @@ void Fl_BoundaryDrawer::ShowLicenseText()
 	const int Margin = 8;
 	const int ButtonH = 24;
 
-	// The (w, h, label) form: it ends whatever group is current, so the
-	// dialog is a window of its own. The (x, y, w, h) form would add it
-	// to that group as a subwindow, at screen coordinates, off the edge.
 	Fl_Double_Window dialog(Width, Height);
 	dialog.position((Fl::w() - Width) / 2, (Fl::h() - Height) / 2);
 	dialog.copy_label(id.c_str());
@@ -1333,7 +1269,6 @@ void Fl_BoundaryDrawer::ShowLicenseText()
 	while (dialog.shown())
 		Fl::wait();
 
-	// The buffer is on the stack: detach before it goes.
 	display->buffer(NULL);
 }
 
@@ -1386,8 +1321,6 @@ void Fl_BoundaryDrawer::RemoveClicked(Fl_Widget *widget, void *data)
 	for (size_t i = 0; i < self->m_CreditRemove.size(); ++i)
 		if (self->m_CreditRemove[i] == widget)
 		{
-			/* Applied on a timeout so the button is not deleted inside
-			   its own callback. */
 			self->m_RemoveRow = i;
 			Fl::remove_timeout(RemoveCommitted, self);
 			Fl::add_timeout(0, RemoveCommitted, self);

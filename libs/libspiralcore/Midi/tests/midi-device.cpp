@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// MidiDevice over a backend from the registry: packets become events on
-// their channel, note-on at zero velocity is a note-off, six clock ticks
-// flip the clock, a send reaches the backend as a packet, and the
-// backend can be swapped on a running device.
 #include "Midi.h"
 #include <cassert>
 #include <cstdio>
@@ -35,13 +31,13 @@ int main()
 	assert(device && script && device->GetBackendName() == "script");
 	printf("%s\n", device->GetStatus().c_str());
 
-	script->in.push_back(MidiPacket(0x90, 60, 100));   // channel 0 on
-	script->in.push_back(MidiPacket(0x91, 62, 90));    // channel 1 on
-	script->in.push_back(MidiPacket(0x90, 60, 0));     // channel 0 off by zero velocity
-	script->in.push_back(MidiPacket(0xb0, 7, 127));    // channel 0 controller 7
-	script->in.push_back(MidiPacket(0xe0, 0, 64));     // channel 0 pitch bend
+	script->in.push_back(MidiPacket(0x90, 60, 100));
+	script->in.push_back(MidiPacket(0x91, 62, 90));
+	script->in.push_back(MidiPacket(0x90, 60, 0));
+	script->in.push_back(MidiPacket(0xb0, 7, 127));
+	script->in.push_back(MidiPacket(0xe0, 0, 64));
 	for (int n = 0; n < 6; ++n) script->in.push_back(MidiPacket(0xf8));
-	script->in.push_back(MidiPacket(0xff));            // a backend reset, ignored here
+	script->in.push_back(MidiPacket(0xff));
 
 	assert(device->GetClock() == 1.0f);
 	MidiEvent e = device->GetEvent(0);
@@ -64,14 +60,12 @@ int main()
 	assert(script->out[0].Status == 0x93 && script->out[0].Data1 == 64 && script->out[0].Data2 == 99);
 	assert(script->out[1].Status == 0x83 && script->out[1].Data1 == 64);
 
-	// Swap to the dummy while running; back to the script, which is a new one.
 	MidiDevice::SetBackendName("dummy");
 	assert(device->GetBackendName() == "dummy" && !script);
 	assert(device->GetEvent(0).GetType() == MidiEvent::NONE);
 	MidiDevice::SetBackendName("script");
 	assert(script && device->GetBackendName() == "script");
 
-	// An unknown name falls back to the first registered that is not the dummy.
 	MidiDevice::SetBackendName("nonesuch");
 	assert(device->GetBackendName() == "script");
 

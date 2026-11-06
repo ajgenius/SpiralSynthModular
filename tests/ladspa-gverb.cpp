@@ -1,10 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// GVerb is the plugin Examples/Tutorial7-LADSPA.ssm asks for by name, and the
-// copy bundled with the macOS application is the only one most Macs will ever
-// have. Two things have to hold, and loading proves neither on its own: the
-// device has to find it on the search path, and the reverb has to keep making
-// sound after its input stops. A plugin that instantiates and returns silence
-// would pass a smoke test and fail a listener.
 #include "LADSPAPlugin.h"
 #include <ladspa.h>
 #include <cassert>
@@ -29,8 +23,6 @@ double Energy(const float *buffer, unsigned long n)
 	return sum;
 }
 
-// Run the module directly, which is the only way to see what it does with a
-// signal: the device wrapper's own buffers are not reachable from here.
 bool TailOutlastsInput(const std::string &module, double &driven, double &tail)
 {
 	void *handle = dlopen(module.c_str(), RTLD_NOW | RTLD_LOCAL);
@@ -46,8 +38,6 @@ bool TailOutlastsInput(const std::string &module, double &driven, double &tail)
 	LADSPA_Handle instance = d->instantiate(d, RATE);
 	if (!instance) { printf("  instantiate failed\n"); return false; }
 
-	// Connect by port role rather than by index: the descriptor is upstream's
-	// to order, not ours to assume.
 	float *audio_in = new float[BLOCK];
 	float *audio_out[8];
 	unsigned outputs = 0;
@@ -65,7 +55,6 @@ bool TailOutlastsInput(const std::string &module, double &driven, double &tail)
 		}
 		else
 		{
-			// Control ports keep the plugin's own default where it states one.
 			const LADSPA_PortRangeHint &hint = d->PortRangeHints[p];
 			float value = 0.5f;
 			if (LADSPA_IS_HINT_DEFAULT_LOW(hint.HintDescriptor)) value = hint.LowerBound;
@@ -80,7 +69,6 @@ bool TailOutlastsInput(const std::string &module, double &driven, double &tail)
 	if (!outputs) { printf("  no audio output ports\n"); return false; }
 	if (d->activate) d->activate(instance);
 
-	// A short burst, the way a key press drives the example, then silence.
 	driven = 0.0;
 	for (unsigned block = 0; block < 8; ++block)
 	{
@@ -111,13 +99,9 @@ bool TailOutlastsInput(const std::string &module, double &driven, double &tail)
 	dlclose(handle);
 
 	printf("  driven %.6f, tail %.6f, decaying to %.6f\n", driven, early, late);
-	// A reverb goes on sounding after the input stops, and fades while it does.
 	return driven > 0.0 && early > 0.0 && late < early;
 }
 
-// Every module shipped alongside it has to load too. A module whose symbols
-// are only resolved at load time links cleanly on macOS and fails here, which
-// is the last place to find out before a user does.
 unsigned ModulesThatWillNotLoad(const std::string &directory)
 {
 	DIR *d = opendir(directory.c_str());
@@ -147,8 +131,6 @@ int main(int argc, char **argv)
 	const std::string directory = given;
 	setenv("LADSPA_PATH", directory.c_str(), 1);
 
-	// The device has to find GVerb through its own search, as it would when
-	// the example names it.
 	HostInfo host = HostInfo();
 	host.BUFSIZE = BLOCK;
 	host.SAMPLERATE = RATE;

@@ -162,7 +162,6 @@ bool AlsaClient::Timestamp(snd_pcm_t *stream, bool input, double &time)
 	snd_htimestamp_t timestamp;
 	snd_pcm_status_get_htstamp(status, &timestamp);
 	double now = timestamp.tv_sec + timestamp.tv_nsec / 1e9;
-	// A prepared stream has not acquired its first hardware timestamp yet.
 	if (now <= 0 || after - now > 1)
 	{
 		now = (before + after) * 0.5;
@@ -170,8 +169,6 @@ bool AlsaClient::Timestamp(snd_pcm_t *stream, bool input, double &time)
 	}
 
 #else
-	// Old ALSA has no selectable monotonic timestamp. Bound the query with
-	// the system clock instead of combining a wall timestamp with DAC time.
 	const double now = (before + after) * 0.5;
 	m_Timing.Estimated = true;
 #endif
@@ -219,8 +216,6 @@ bool AlsaClient::Write(const float *interleaved, unsigned int frames)
 {
 	if (!m_Playback || !interleaved) return false;
 
-	// WaitForCycle reserved a complete period. Never wait or recover midway
-	// through timestamped audio: a short write invalidates this stream epoch.
 	const snd_pcm_sframes_t written = snd_pcm_writei(m_Playback, interleaved, frames);
 	if (written > 0) m_Written += written;
 

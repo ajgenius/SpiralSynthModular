@@ -267,9 +267,6 @@ namespace Spiral
 				return true;
 			}
 
-			/* The patch's MIDI map: the devices it lists, each with the controls
-			   bound on it. A binding that is not whole is skipped; a map that is
-			   not the shape this reads is refused, as the wires are. */
 			bool ReadMidi(const J *midi, PatchDescription &out, std::string &error)
 			{
 				if (!midi)
@@ -322,7 +319,6 @@ namespace Spiral
 						const MidiBindingDescription &bound = midi[d].Bindings[b];
 						J *binding = J::MakeObject();
 						binding->SetOwned("control", J::MakeString(bound.Control));
-						// Any channel is the absence of one.
 						if (bound.Channel)
 							binding->SetOwned("channel", J::MakeNumber(Decimal(bound.Channel)));
 						binding->SetOwned("controller", J::MakeNumber(Decimal(bound.Controller)));
@@ -464,7 +460,6 @@ namespace Spiral
 				{
 					J *port = J::MakeObject();
 					port->SetOwned("name", J::MakeString(ports[i].Name));
-					// An unspecified type is left out, as the private tree writes it.
 					if (!ports[i].Type.empty())
 						port->SetOwned("type", J::MakeString(ports[i].Type));
 					list->AppendOwned(port);
@@ -712,8 +707,6 @@ namespace Spiral
 				else node->SetValue(field, values[i]);
 			}
 
-			// The classes and names the keys cannot carry, on nodes the
-			// values built: a shape for a node no value reached is dropped.
 			const std::vector<Description::Shape> &shapes = described.Shapes();
 			for (size_t s = 0; s < shapes.size(); ++s)
 			{

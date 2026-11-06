@@ -62,9 +62,6 @@ namespace
 			+ " \xc2\xb7 CC " + Number(binding.Controller);
 	}
 
-	/* A row of the list: which row it is, for the buttons on it. Rows are
-	   rebuilt whenever the map changes, and a row's own button may be what
-	   changed it, so old rows go by Fl::delete_widget, after the callback. */
 	class Fl_MidiRow: public Fl_Group
 	{
 	public:
@@ -93,7 +90,6 @@ Fl_MidiBindings::Fl_MidiBindings(int x, int y, int w, int h):
 {
 	box(FL_NO_BOX);
 
-	// The patch's own input first: what it hears from, and how that is going.
 	m_Status = new Fl_Box(x, y, w, RowHeight - 2, "MIDI in");
 	m_Status->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
 	m_Status->labelsize(10);
@@ -149,7 +145,6 @@ void Fl_MidiBindings::draw()
 	fl_color(color());
 	fl_rectf(x(), y(), w(), h());
 	draw_children();
-	// The backend connects in its own time: while the page is up, look again.
 	if (!Fl::has_timeout(PollStatus, this))
 		Fl::add_timeout(1.0, PollStatus, this);
 }
@@ -175,7 +170,6 @@ void Fl_MidiBindings::Refresh()
 	ListSources();
 	ShowStatus();
 	Repopulate();
-	// The control being bound may have gone with its device.
 	if (Editing() && (!m_Map || !m_Map->Find(m_EditDevice)))
 		CloseWindow();
 }
@@ -204,12 +198,9 @@ void Fl_MidiBindings::Repopulate()
 		}
 	}
 
-	// Built with no group open, so nothing lands in whatever the caller has
-	// open, and that is left open after.
 	Fl_Group *current = Fl_Group::current();
 	Fl_Group::current(NULL);
 
-	// The scroll's scrollbars are its last two children; the rows go.
 	const int top = m_List->y() - m_List->yposition();
 	for (int i = m_List->children(); i-- > 0; )
 	{
@@ -299,8 +290,6 @@ void Fl_MidiBindings::ListSources()
 		return;
 	m_Sources = sources;
 
-	// A name the backend has no input for connects nothing more than its
-	// default: the old /dev/midi setting, on a backend that names ports.
 	m_Source->clear();
 	m_Source->add("Default");
 	m_Source->copy_tooltip(chosen.empty() || there
@@ -309,7 +298,6 @@ void Fl_MidiBindings::ListSources()
 	int active = 0;
 	for (size_t s = 0; s < m_Sources.size(); ++s)
 	{
-		// Not a menu path: the slashes of a port name are its own.
 		m_Source->add("-");
 		m_Source->replace((int)s + 1, m_Sources[s].c_str());
 		if (m_Sources[s] == chosen)
@@ -421,8 +409,6 @@ void Fl_MidiBindings::UnbindClicked(Fl_Widget *widget, void *)
 		self->Changed(self->Data);
 }
 
-// The binding window
-
 void Fl_MidiBindings::BuildWindow()
 {
 	if (m_Window)
@@ -484,7 +470,6 @@ void Fl_MidiBindings::BuildWindow()
 	m_Bind->callback(BindClicked, this);
 
 	m_Window->end();
-	// Not modal: the GUI loop has to keep running for the control to be heard.
 	m_Window->set_non_modal();
 	Fl_Group::current(current);
 }
@@ -506,7 +491,6 @@ void Fl_MidiBindings::EditBinding(const std::string &device, const std::string &
 	else
 		m_Unbind->deactivate();
 	m_Heard->copy_label(binding ? ("Bound to " + Bound(*binding)).c_str() : "");
-	// Nothing bound yet: listen straight away, so moving the knob is enough.
 	Listen(!binding);
 
 	if (!m_Window->shown() && window())

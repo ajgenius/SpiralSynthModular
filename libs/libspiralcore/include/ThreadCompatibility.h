@@ -26,8 +26,6 @@ namespace SSMCompat
 		Sequential
 	};
 #endif
-	// The GCC 4.2 fallback uses full-barrier atomic operations, never a mutex
-	// on the realtime path. New compilers retain the lighter ordered operations.
 	template <class T> class Atomic
 	{
 #if __cplusplus >= 201103L

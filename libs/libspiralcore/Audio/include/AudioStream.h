@@ -10,8 +10,6 @@ namespace Spiral
 {
 namespace Core
 {
-// Borrows a prepared native client. The owner stops callbacks before Configure
-// or destruction. Engine and callback own separate scratch and queue ends.
 class AudioStream
 {
 public:

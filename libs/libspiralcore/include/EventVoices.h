@@ -37,8 +37,6 @@ namespace Core
 			float Frequency, Level;
 			uint64_t Age;
 			bool Held, Retrigger;
-			// Its note ended since its gate was last read: a note taking
-			// the voice then starts with the gate down, as a new note must.
 			bool Released;
 
 			Voice():
@@ -108,9 +106,6 @@ namespace Core
 			return result;
 		}
 
-		// A note may name the voice it takes, as the Matrix does to keep
-		// its highest notes; otherwise it takes the first free voice, or
-		// else the oldest.
 		void Apply(const Event &event, int lane = -1)
 		{
 			if (!event.Valid())

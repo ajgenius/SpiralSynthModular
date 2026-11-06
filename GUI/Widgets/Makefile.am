@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_srcdir)                                              \
+AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src                                              \
                 $(FLTK_CXXFLAGS)                        \
                 -I$(top_srcdir)/GUI/Widgets           \
                 -I$(top_srcdir)/GUI/Controls          \

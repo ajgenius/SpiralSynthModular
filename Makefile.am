@@ -1,24 +1,23 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = libs/libSpumoni libs/libspiralcore GUI Plugins third-party/swh-plugins
+SUBDIRS = libs/libSpumoni libs/libspiralcore GUI src Plugins third-party/swh-plugins
 
 AM_CPPFLAGS =                                              \
                 $(FLTK_CXXFLAGS)                        \
                 $(SPIRALGUI_CFLAGS)           \
                 $(SPIRALCORE_CFLAGS)                    \
                 $(SPIRALPANELS_CFLAGS)                  \
-                -I$(top_srcdir)/libs/libSpumoni/include
-# The file contract: the host hands each device its own state under it.
+                -I$(top_srcdir)/libs/libSpumoni/include \
+                -I$(top_srcdir)/src -I$(top_builddir)/src
 AM_CPPFLAGS += -DSSM_INSTALLED_SCHEMA_DIR='"$(pkgdatadir)/schemas"'
 AM_CPPFLAGS += -DSPIRALCORE_SCHEMA_DIR='"$(abs_top_srcdir)/libs/libspiralcore/File/schemas"'
 
-SpiralSynthModular_LDADD = 							\
+HOST_LDADD = 							\
 	$(FLTK_LIBS) $(MIDI_LIBS)					\
 	-lm				\
 	$(top_builddir)/GUI/Panels/libSpiralPanels.la \
 	$(top_builddir)/GUI/Widgets/libSpiralWidgets.la \
 	$(top_builddir)/GUI/Controls/libSpiralControls.la \
                 $(top_builddir)/libs/libspiralcore/libspiralcore.la
-
 
 EXTRA_DIST = autogen.sh build-aux/macos-bundle.sh GUI/SpiralSynthModular.icns Examples
 EXTRA_DIST += third-party/ladspa
@@ -27,26 +26,9 @@ EXTRA_DIST += tools/native-audio/README.md tools/native-audio/build-macos.sh \
 	tools/native-audio/patches/portaudio-coreaudio-latency.patch
 SpiralPlugins = $(libdir)/SpiralPlugins
 
-bin_PROGRAMS = SpiralSynthModular
-SpiralSynthModular_SOURCES = MacBundle.h \
-		SpiralSynthPluginLocation.h \
-		SpiralInfo.h		\
-		SpiralInfo.C		\
-		SpiralSynthModular.h \
-		SpiralSynthModular.C \
-		SettingsWindow.h \
-		SettingsWindow.C \
-		UnavailablePlugin.h \
-		UnavailablePlugin.C \
-		main.cpp
-
 AM_CPPFLAGS += -DSSM_EXAMPLES_DIR=\"$(pkgdatadir)/Examples\"
-# The host registers the built-in LADSPA device, whose header names ladspa.h.
 AM_CPPFLAGS += $(LADSPA_CFLAGS)
 ssm_plugindir = @PLUGINDIR@
-
-# Widgets and loadable plugins resolve host symbols from the executable.
-SpiralSynthModular_LDFLAGS = -export-dynamic
 
 BUNDLE_DIR = $(abs_builddir)/SpiralSynthModular.app
 .PHONY: bundle
@@ -62,15 +44,14 @@ endif
 
 check_PROGRAMS = mixer-ports-test
 TESTS = $(check_PROGRAMS)
-mixer_ports_test_SOURCES = tests/mixer-ports.cpp Plugins/Devices/MixerPlugin/MixerPlugin.C SpiralInfo.C
+mixer_ports_test_SOURCES = tests/mixer-ports.cpp Plugins/Devices/MixerPlugin/MixerPlugin.C src/SpiralInfo.C
 mixer_ports_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir) -I$(srcdir)/Plugins/Devices/MixerPlugin
-mixer_ports_test_LDADD = $(SpiralSynthModular_LDADD)
+mixer_ports_test_LDADD = $(HOST_LDADD)
 
-# Every shipped panel loads with nothing refused, and a handler drives a device.
 check_PROGRAMS += panel-handlers-test
-panel_handlers_test_SOURCES = tests/panel-handlers.cpp Plugins/Devices/MixerPlugin/MixerPlugin.C SpiralInfo.C
+panel_handlers_test_SOURCES = tests/panel-handlers.cpp Plugins/Devices/MixerPlugin/MixerPlugin.C src/SpiralInfo.C
 panel_handlers_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir) -I$(srcdir)/Plugins/Devices/MixerPlugin -I$(srcdir)/libs/libSpumoni/include
-panel_handlers_test_LDADD = $(SpiralSynthModular_LDADD)
+panel_handlers_test_LDADD = $(HOST_LDADD)
 
 check_PROGRAMS += mixer-signal-test stereo-mixer-signal-test
 mixer_signal_test_SOURCES = tests/mixer-signal.cpp Plugins/Devices/MixerPlugin/MixerPlugin.C
@@ -81,34 +62,34 @@ stereo_mixer_signal_test_CPPFLAGS = $(AM_CPPFLAGS) -DTEST_STEREO -I$(srcdir)/Plu
 stereo_mixer_signal_test_LDADD = $(mixer_signal_test_LDADD)
 
 check_PROGRAMS += plugin-classes-test
-plugin_classes_test_SOURCES = tests/plugin-classes.cpp SpiralSynthModular.C UnavailablePlugin.C SpiralInfo.C SettingsWindow.C
+plugin_classes_test_SOURCES = tests/plugin-classes.cpp src/SpiralSynthModular.C src/UnavailablePlugin.C src/SpiralInfo.C src/SettingsWindow.C
 plugin_classes_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
-plugin_classes_test_LDADD = $(SpiralSynthModular_LDADD)
+plugin_classes_test_LDADD = $(HOST_LDADD)
 plugin_classes_test_LDFLAGS = -export-dynamic
 
 check_PROGRAMS += waveshaper-editor-test
-waveshaper_editor_test_SOURCES = tests/waveshaper-editor.cpp SpiralSynthModular.C UnavailablePlugin.C SpiralInfo.C SettingsWindow.C
+waveshaper_editor_test_SOURCES = tests/waveshaper-editor.cpp src/SpiralSynthModular.C src/UnavailablePlugin.C src/SpiralInfo.C src/SettingsWindow.C
 waveshaper_editor_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
-waveshaper_editor_test_LDADD = $(SpiralSynthModular_LDADD)
+waveshaper_editor_test_LDADD = $(HOST_LDADD)
 waveshaper_editor_test_LDFLAGS = -export-dynamic
 
 check_PROGRAMS += menu-chrome-test
-menu_chrome_test_SOURCES = tests/menu-chrome.cpp SpiralSynthModular.C UnavailablePlugin.C SpiralInfo.C SettingsWindow.C
+menu_chrome_test_SOURCES = tests/menu-chrome.cpp src/SpiralSynthModular.C src/UnavailablePlugin.C src/SpiralInfo.C src/SettingsWindow.C
 menu_chrome_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
-menu_chrome_test_LDADD = $(SpiralSynthModular_LDADD)
+menu_chrome_test_LDADD = $(HOST_LDADD)
 menu_chrome_test_LDFLAGS = -export-dynamic
 
 check_PROGRAMS += center-patch-test
-center_patch_test_SOURCES = tests/center-patch.cpp SpiralSynthModular.C UnavailablePlugin.C SpiralInfo.C SettingsWindow.C
+center_patch_test_SOURCES = tests/center-patch.cpp src/SpiralSynthModular.C src/UnavailablePlugin.C src/SpiralInfo.C src/SettingsWindow.C
 center_patch_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
-center_patch_test_LDADD = $(SpiralSynthModular_LDADD)
+center_patch_test_LDADD = $(HOST_LDADD)
 center_patch_test_LDFLAGS = -export-dynamic
 
 if HAVE_JACK_CLIENT
 check_PROGRAMS += jack-gui-test jack-plugin-test
-jack_gui_test_SOURCES = tests/jack-gui.cpp SpiralSynthModular.C UnavailablePlugin.C SpiralInfo.C SettingsWindow.C
+jack_gui_test_SOURCES = tests/jack-gui.cpp src/SpiralSynthModular.C src/UnavailablePlugin.C src/SpiralInfo.C src/SettingsWindow.C
 jack_gui_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
-jack_gui_test_LDADD = $(SpiralSynthModular_LDADD) $(JACK_LIBS)
+jack_gui_test_LDADD = $(HOST_LDADD) $(JACK_LIBS)
 jack_gui_test_LDFLAGS = -export-dynamic
 jack_plugin_test_SOURCES = tests/jack-plugin.cpp
 jack_plugin_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/Devices/JackPlugin
@@ -122,37 +103,37 @@ coreaudio_output_test_LDADD = libs/libspiralcore/libspiralcore.la
 endif
 
 check_PROGRAMS += midi-plugin-test
-midi_plugin_test_SOURCES = tests/midi-plugin.cpp SpiralSynthModular.C UnavailablePlugin.C SpiralInfo.C SettingsWindow.C
+midi_plugin_test_SOURCES = tests/midi-plugin.cpp src/SpiralSynthModular.C src/UnavailablePlugin.C src/SpiralInfo.C src/SettingsWindow.C
 midi_plugin_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
-midi_plugin_test_LDADD = $(SpiralSynthModular_LDADD) $(MIDI_LIBS)
+midi_plugin_test_LDADD = $(HOST_LDADD) $(MIDI_LIBS)
 midi_plugin_test_LDFLAGS = -export-dynamic
 check_PROGRAMS += dummy-host-test
-dummy_host_test_SOURCES = tests/dummy-host.cpp SpiralSynthModular.C UnavailablePlugin.C SpiralInfo.C SettingsWindow.C
+dummy_host_test_SOURCES = tests/dummy-host.cpp src/SpiralSynthModular.C src/UnavailablePlugin.C src/SpiralInfo.C src/SettingsWindow.C
 dummy_host_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
-dummy_host_test_LDADD = $(SpiralSynthModular_LDADD)
+dummy_host_test_LDADD = $(HOST_LDADD)
 dummy_host_test_LDFLAGS = -export-dynamic
 
 if HAVE_CORE_AUDIO_CLIENT
 check_PROGRAMS += coreaudio-host-test
-coreaudio_host_test_SOURCES = tests/coreaudio-host.cpp SpiralSynthModular.C UnavailablePlugin.C SpiralInfo.C SettingsWindow.C
+coreaudio_host_test_SOURCES = tests/coreaudio-host.cpp src/SpiralSynthModular.C src/UnavailablePlugin.C src/SpiralInfo.C src/SettingsWindow.C
 coreaudio_host_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
-coreaudio_host_test_LDADD = $(SpiralSynthModular_LDADD)
+coreaudio_host_test_LDADD = $(HOST_LDADD)
 coreaudio_host_test_LDFLAGS = -export-dynamic
 endif
 
 if HAVE_JACK_CLIENT
 check_PROGRAMS += jack-output-host-test
-jack_output_host_test_SOURCES = tests/jack-output-host.cpp SpiralSynthModular.C UnavailablePlugin.C SpiralInfo.C SettingsWindow.C
+jack_output_host_test_SOURCES = tests/jack-output-host.cpp src/SpiralSynthModular.C src/UnavailablePlugin.C src/SpiralInfo.C src/SettingsWindow.C
 jack_output_host_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
-jack_output_host_test_LDADD = $(SpiralSynthModular_LDADD) $(JACK_LIBS)
+jack_output_host_test_LDADD = $(HOST_LDADD) $(JACK_LIBS)
 jack_output_host_test_LDFLAGS = -export-dynamic
 endif
 
 if HAVE_JACK_CLIENT
 check_PROGRAMS += jack-output-timing-test
-jack_output_timing_test_SOURCES = tests/jack-output-timing.cpp SpiralSynthModular.C UnavailablePlugin.C SpiralInfo.C SettingsWindow.C
+jack_output_timing_test_SOURCES = tests/jack-output-timing.cpp src/SpiralSynthModular.C src/UnavailablePlugin.C src/SpiralInfo.C src/SettingsWindow.C
 jack_output_timing_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
-jack_output_timing_test_LDADD = $(SpiralSynthModular_LDADD) $(JACK_LIBS)
+jack_output_timing_test_LDADD = $(HOST_LDADD) $(JACK_LIBS)
 jack_output_timing_test_LDFLAGS = -export-dynamic
 endif
 
@@ -184,10 +165,10 @@ package_project_test_CPPFLAGS = $(SPIRALCORE_CFLAGS) -I$(srcdir)/libs/libSpumoni
 package_project_test_LDADD = libs/libspiralcore/libspiralcore.la
 
 check_PROGRAMS += package-sidecars-host-test
-package_sidecars_host_test_SOURCES = tests/package-sidecars-host.cpp SpiralSynthModular.C UnavailablePlugin.C SpiralInfo.C SettingsWindow.C
+package_sidecars_host_test_SOURCES = tests/package-sidecars-host.cpp src/SpiralSynthModular.C src/UnavailablePlugin.C src/SpiralInfo.C src/SettingsWindow.C
 package_sidecars_host_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir) \
 	-DPUBLIC_SAMPLER_SOURCE='"$(abs_srcdir)/Examples/Tutorial5-MatrixSampler.ssm"'
-package_sidecars_host_test_LDADD = $(SpiralSynthModular_LDADD)
+package_sidecars_host_test_LDADD = $(HOST_LDADD)
 package_sidecars_host_test_LDFLAGS = -export-dynamic
 
 check_PROGRAMS += import-branch-test
@@ -208,7 +189,6 @@ tests_ladspa_ports_la_SOURCES = tests/ladspa/ports.cpp
 tests_ladspa_ports_la_LDFLAGS = -module -avoid-version -rpath /unused
 TESTS_ENVIRONMENT = LADSPA_PATH='$(abs_builddir)/tests/ladspa/.libs'
 
-# The bundled reverb the LADSPA example asks for, played and listened to.
 if BUNDLE_LADSPA_PLUGINS
 check_PROGRAMS += ladspa-gverb-test
 ladspa_gverb_test_SOURCES = tests/ladspa-gverb.cpp
@@ -217,23 +197,23 @@ ladspa_gverb_test_LDADD = libs/libspiralcore/libspiralcore.la
 TESTS_ENVIRONMENT += LADSPA_BUNDLE_DIR='$(abs_builddir)/third-party/swh-plugins/.libs'
 endif
 endif
-canvas_menu_test_SOURCES = tests/canvas-menu.cpp SpiralInfo.C
-canvas_menu_test_LDADD = $(SpiralSynthModular_LDADD)
+canvas_menu_test_SOURCES = tests/canvas-menu.cpp src/SpiralInfo.C
+canvas_menu_test_LDADD = $(HOST_LDADD)
 
 check_PROGRAMS += drawer-test
-drawer_test_SOURCES = tests/drawer.cpp SpiralInfo.C
-drawer_test_LDADD = $(SpiralSynthModular_LDADD)
+drawer_test_SOURCES = tests/drawer.cpp src/SpiralInfo.C
+drawer_test_LDADD = $(HOST_LDADD)
 
 check_PROGRAMS += stream-paste-test
-stream_paste_test_SOURCES = Plugins/Devices/StreamPlugin/StreamPlugin.C tests/stream-paste.cpp SpiralSynthModular.C UnavailablePlugin.C SpiralInfo.C SettingsWindow.C
+stream_paste_test_SOURCES = Plugins/Devices/StreamPlugin/StreamPlugin.C tests/stream-paste.cpp src/SpiralSynthModular.C src/UnavailablePlugin.C src/SpiralInfo.C src/SettingsWindow.C
 stream_paste_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir) -I$(srcdir)/Plugins/Devices/StreamPlugin
-stream_paste_test_LDADD = $(SpiralSynthModular_LDADD)
+stream_paste_test_LDADD = $(HOST_LDADD)
 stream_paste_test_LDFLAGS = -export-dynamic
 
 check_PROGRAMS += schema-deployment-test plugin-abi-test
-schema_deployment_test_SOURCES = tests/schema-deployment.cpp SpiralSynthModular.C UnavailablePlugin.C SpiralInfo.C SettingsWindow.C
+schema_deployment_test_SOURCES = tests/schema-deployment.cpp src/SpiralSynthModular.C src/UnavailablePlugin.C src/SpiralInfo.C src/SettingsWindow.C
 schema_deployment_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
-schema_deployment_test_LDADD = $(SpiralSynthModular_LDADD)
+schema_deployment_test_LDADD = $(HOST_LDADD)
 schema_deployment_test_LDFLAGS = -export-dynamic
 plugin_abi_test_SOURCES = tests/plugin-abi.cpp
 plugin_abi_test_LDADD = libs/libspiralcore/libspiralcore.la
@@ -244,8 +224,8 @@ EXTRA_DIST += tests/fixtures/controller-v4.ssm
 
 if HAVE_JACK_CLIENT
 check_PROGRAMS += module-ports-test
-module_ports_test_SOURCES = tests/module-ports.cpp SpiralInfo.C
+module_ports_test_SOURCES = tests/module-ports.cpp src/SpiralInfo.C
 module_ports_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir) -I$(srcdir)/Plugins/Devices/MixerPlugin -I$(srcdir)/Plugins/Devices/JackPlugin
-module_ports_test_LDADD = $(SpiralSynthModular_LDADD) $(JACK_LIBS) -ldl
+module_ports_test_LDADD = $(HOST_LDADD) $(JACK_LIBS) -ldl
 endif
 

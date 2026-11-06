@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 	SpiralInfo::OUTPUTFILE = "default";
 	Host host;
 	std::string plugins = argv[1];
-	host.Synth.LoadPlugins(plugins.empty() ? SSMBundlePluginPath() : plugins);
+	host.Synth.LoadPlugins(plugins.empty() ? SpiralBundlePluginPath() : plugins);
 	pthread_t thread;
 	assert(!pthread_create(&thread, NULL, Host::Run, &host));
 	host.Synth.LoadPatch(argv[2]);

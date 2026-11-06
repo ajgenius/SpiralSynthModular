@@ -1,10 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Spumoni::Package — the mechanics of the layered package: unpacking into a
-// working folder, the manifest, carrying branch folders and extras forward,
-// writing the active branch through the application's Payload.
-// Grown out of Spiral::File::Archive, the SpiralSynthModular .ssmp package:
-// Code generated/modified by ChatGPT (GPT-5.6).
-// Save-time named branches generated/modified by GROK (Grok Build).
 
 #include "Package.h"
 #include "Store.h"
@@ -39,8 +33,6 @@ namespace Spumoni
 		}
 	}
 
-	// A read-only look at a Folder someone else owns, so OpenPreserveSource
-	// can hand every source back the same way.
 	class Package::View : public Folder
 	{
 	public:
@@ -63,8 +55,6 @@ namespace Spumoni
 		virtual bool AddTo(Container::Writer &writer, const string &relative, const string &archiveName, string &error) const
 		{ return m_Folder.AddTo(writer,relative,archiveName,error); }
 
-		// Ver 2: forward the store so Package::Write can export shared assets
-		// from a preservation View of the current workspace.
 		virtual Store *GetStore() { return const_cast<Folder&>(m_Folder).GetStore(); }
 	private:
 		const Folder &m_Folder;
@@ -77,7 +67,6 @@ namespace Spumoni
 	{
 	}
 
-	/* Branch folders present in a source package or workspace. */
 	std::vector<std::string> Package::ListBranches(const Folder &source)
 	{
 		vector<string> ids;
@@ -111,8 +100,6 @@ namespace Spumoni
 		return true;
 	}
 
-	/* Anything in the source branch beside the application's payload files
-	   carries over to the active branch as it is. */
 	bool Package::CopyActiveExtras(Container::Writer &writer, const Folder &source,
 		const string &sourceID, const string &activeID, string &error) const
 	{
@@ -134,9 +121,6 @@ namespace Spumoni
 		return true;
 	}
 
-	/* The source a write preserves from: the request's package, unpacked for
-	   the look by whatever container it is, or its live workspace adopted in
-	   place. The caller owns what comes back. */
 	bool Package::OpenPreserveSource(const SaveRequest &request,
 		Folder *&source, string &error) const
 	{
@@ -183,8 +167,6 @@ namespace Spumoni
 		return text;
 	}
 
-	/* The manifest: the package's stamp and identity, then whatever the
-	   application adds (its own stamp first among them). */
 	string Package::ManifestJSON(const Identity &identity) const
 	{
 		JSONOwner root(J::MakeObject());
@@ -298,9 +280,6 @@ namespace Spumoni
 		const J &root=*storage.get();
 		if(root.GetType()!=J::Object){error="Not a package manifest";return false;}
 
-		// The package level first: a newer arrangement is refused whatever
-		// the payload says. A manifest without the stamp predates it and is
-		// Ver 1, the only arrangement there was.
 		if(const J *package=Member(root,"package",J::String))
 		{
 			long found=0;
@@ -309,7 +288,6 @@ namespace Spumoni
 			{error=m_Layout.ManifestName+": "+Reason(status,found);return false;}
 		}
 
-		// Then the application's part: its own stamp and members.
 		const J *metadata = Member(root, "metadata", J::Object);
 		if (!m_Layout.MetadataName.empty() && metadata)
 		{
@@ -356,10 +334,6 @@ namespace Spumoni
 		branchRoot=activePath;return true;
 	}
 
-	/* Write the package: the payload as the active branch, every other
-	   branch folder of the source carried over, the active branch's extras
-	   (anything beside the payload files) carried from the source branch,
-	   and the manifest. The identity is written as given. */
 	bool Package::Write(const string &path, const Identity &identity,
 		const SaveRequest &request, Payload &payload, string &error) const
 	{
@@ -395,9 +369,6 @@ namespace Spumoni
 			return false;
 		if(!payload.Write(*writer,branchRoot,error)) return false;
 
-		// Ver 2: the shared objects at the package root, outside any branch:
-		// the request's store, else the preserve source's own. The store is
-		// owned by the workspace folder.
 		Store *shared=request.SharedStore;
 		if(!shared && source.get()) shared=source->GetStore();
 		if(shared)
@@ -412,9 +383,6 @@ namespace Spumoni
 		return writer->Finish(path,error);
 	}
 
-	/* The branch folders a write would preserve from: the request's package
-	   (extracted for the look) or workspace. The application asks before
-	   deciding the identity, so folders the manifest never listed are kept too. */
 	std::vector<std::string> Package::BranchesIn(const SaveRequest &request, string &error) const
 	{
 		Folder *sourceFolder=NULL;
@@ -485,7 +453,6 @@ namespace Spumoni
 		if (!m_Layout.LegacyManifestName.empty())
 			folder->RemoveEntry(m_Layout.LegacyManifestName);
 
-		// Re-pack the whole tree so branch files are byte-copied.
 		std::auto_ptr<Container::Writer> writer(m_Container.NewWriter());
 		if(!writer->Open(path,error)) return false;
 		if(!folder->ExportTree(*writer,string(),string(),error)) return false;

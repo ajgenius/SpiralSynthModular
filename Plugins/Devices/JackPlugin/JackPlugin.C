@@ -206,7 +206,6 @@ void JackPlugin::Attach()
 	options.OutChannels = m_OutputCount;
 	if (m_JackClient->Attach(name, options))
 	{
-		// Attach negotiates the native period before any callback can run.
 		BuildRings();
 		if (!m_Stream.Configure(m_JackClient, m_InputCount, m_OutputCount,
 			m_HostInfo->BUFSIZE, m_HostInfo->SAMPLERATE)) { Detach(); return; }
@@ -224,8 +223,6 @@ void JackPlugin::Detach()
 	m_JackClient->Detach();
 }
 
-// Engine scratch is rebuilt only under the host gate. AudioStream owns its
-// separate native scratch and queues, configured before callbacks start.
 void JackPlugin::BuildRings()
 {
 	if (!m_HostInfo || m_HostInfo->BUFSIZE <= 0) return;
@@ -248,8 +245,6 @@ void JackPlugin::Execute()
 
 	const unsigned frames = m_HostInfo->BUFSIZE;
 
-	// The graph has now produced this period's inputs. Enqueue it once;
-	// ProcessAudio only supplies capture before the graph is evaluated.
 	for (unsigned frame = 0; frame < frames; ++frame)
 		for (int channel = 0; channel < m_OutputCount; ++channel)
 			m_EnginePeriod[frame * m_OutputCount + channel] = !m_HostInfo->PAUSED && InputExists(channel)
@@ -333,9 +328,6 @@ bool JackPlugin::Kill()
 	m_IsDead=true;
 	if (m_JackClient) Detach();
 
-	// The host may already have removed neighboring devices during a patch
-	// replacement. Stop callbacks here; leave port and canvas disposal to the
-	// normal destruction path rather than issuing live topology updates.
 	return true;
 }
 
@@ -352,8 +344,6 @@ void JackPlugin::Reset()
 
 void JackPlugin::ServiceAudio()
 {
-	// A slave port does not set the host format; the master port does.
-	// A jack period larger than the rings were built for needs new rings.
 	if (m_IsDead || !m_JackClient->IsAttached()) return;
 
 	if (m_JackClient->GetBufferSize() != m_RingFrames ||
@@ -385,8 +375,6 @@ void  JackPlugin::SetNumberPorts (int nInputs, int nOutputs) {
      const int oldInputs = m_PluginInfo.NumInputs;
      const int oldOutputs = m_PluginInfo.NumOutputs;
      CreatePorts (nInputs, nOutputs, false);
-     // Disconnect only removed ports before releasing their Sample objects.
-     // Surviving inputs and output Sample addresses keep their graph wires.
      UpdatePluginInfoWithHost();
      for (int n = nInputs; n < oldInputs; ++n) RemoveInput();
      for (int n = nOutputs; n < oldOutputs; ++n) RemoveOutput();
@@ -438,7 +426,6 @@ void JackPlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	int Version;
 
-	// an old patch has no state for it at all
 	if (r.More())
 	{
 		r.Value(Version);

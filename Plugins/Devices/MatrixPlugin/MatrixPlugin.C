@@ -72,7 +72,6 @@ string SpiralPlugin_GetGroupName()
 
 ///////////////////////////////////////////////////////
 
-// A pattern's or a sequence step's name, as the private tree gives them.
 static std::string Numbered(int n)
 {
 	char text[16];
@@ -99,8 +98,6 @@ m_ResetEvents(false)
 {
 	for (int y=0; y<MATRIX_PITCHES; y++) { m_RowID[y]=-1; m_RowStart[y]=-1; }
 
-	// Named as the private tree names them: each step of the sequence and
-	// each pattern by its number, and a pattern's octave, length and speed.
 	m_PatSeq = ListProperty(Property::WriteOnly);
 	for (int n=0; n<NUM_PATSEQ; n++)
 	{
@@ -272,14 +269,11 @@ PluginInfo &MatrixPlugin::Initialise(const HostInfo *Host)
 	return Info;
 }
 
-// In a patch with voices every device has a copy per voice; the first
-// Matrix gives its notes to the voices, and each copy plays its own.
 void MatrixPlugin::SetVoice(SpiralPlugin *first, unsigned voice, unsigned voices)
 {
 	m_First = voice ? dynamic_cast<MatrixPlugin *>(first) : NULL;
 	m_Voice = m_First ? voice : 0;
 	m_VoiceCount = std::max(1u, voices);
-	// A copy plays from where the first Matrix is: the file does not say.
 	if (m_First)
 	{
 		AsSigned(m_Current) = AsSigned(m_First->m_Current);
@@ -402,7 +396,6 @@ void MatrixPlugin::Execute()
 				}
 			}
 			
-			// Reset the position on a signal from input 1
 			if (!AsBoolean(m_TriggerSelect) && InputExists(0) && GetInput(0,n)!=0)
 			{
 				AsSigned(m_Step)=-1;
@@ -438,9 +431,6 @@ void MatrixPlugin::Execute()
 				m_TriggerLevel[t]=0;
 			}
 
-			// Scan the matrix at current time: a note starting on this step,
-			// or one carrying on from an earlier step until its end. A row
-			// trigger is a pitch from the pattern's trigger rows up.
 			const Pattern &p = m_Matrix[AsSigned(m_Current)];
 			const int step = AsSigned(m_Step), lowest = p.Triggers;
 			bool carried = false;
@@ -455,8 +445,6 @@ void MatrixPlugin::Execute()
 			}
 
 			// reset the triggers between steps to clear them
-			// otherwise consecutive events wont get triggered;
-			// a note carrying on is not triggered again
 			if (!carried) SetOutput(1,n,0);
 			for (int t=0; t<NUM_PATTERNS; t++)
 			{
@@ -467,8 +455,6 @@ void MatrixPlugin::Execute()
 			NoteEvents(p, step, n);
 		}
 
-		// With voices, each copy plays its voice's note on the pitch and
-		// trigger outputs, the first Matrix having shared them out.
 		if (voices)
 		{
 			if (!m_First)
@@ -485,12 +471,6 @@ void MatrixPlugin::Execute()
 	}
 }
 
-// The notes that stop and start on this step, as events for the voices: each
-// note keeps its identity from its start to its end, as the Keyboard's and
-// Midi's do. Ends go first; then starts, highest first, as the Matrix alone
-// plays the highest note: the first voice takes the highest note of a
-// column and the next voices go downward, so the highest are the ones that
-// sound.
 void MatrixPlugin::NoteEvents(const Pattern &p, int step, unsigned frame)
 {
 	if (m_First)
@@ -533,10 +513,6 @@ void MatrixPlugin::NoteEvents(const Pattern &p, int step, unsigned frame)
 	}
 }
 
-// The voice for a note starting: any free voice (AnyVoice), or else that of
-// the lowest note sounding, when this one is higher; it takes that voice
-// over, as a new note does, and the lower note is no longer the row's. A
-// note lower than every one sounding is left out (NoVoice).
 int MatrixPlugin::VoiceFor(int key)
 {
 	if (m_VoiceCount <= 1)
@@ -570,7 +546,6 @@ int MatrixPlugin::Shown(int x, int y) const
 	return x >= 0 && x < MATX && y >= 0 && y < MATY && pitch < MATRIX_PITCHES ? pitch : -1;
 }
 
-// What the grid shows of the edited pattern: its rows from its octave up.
 void MatrixPlugin::RefreshEcho()
 {
 	const int current = Edited();
@@ -592,8 +567,6 @@ void MatrixPlugin::RefreshEcho()
 		}
 }
 
-// Where the note starting at x stops: its own end, or the next note's start
-// at its pitch, or the grid's edge, whichever comes first.
 int MatrixPlugin::NoteEnd(const Pattern &p, int x, int pitch)
 {
 	const int end = std::max(x + 1, std::min(MATX, (int)p.End[x][pitch]));
@@ -602,7 +575,6 @@ int MatrixPlugin::NoteEnd(const Pattern &p, int x, int pitch)
 	return end;
 }
 
-// The start of the note sounding at step at the pitch, or -1.
 int MatrixPlugin::Covering(const Pattern &p, int step, int pitch)
 {
 	if (step < 0 || step >= MATX) return -1;
@@ -611,8 +583,6 @@ int MatrixPlugin::Covering(const Pattern &p, int step, int pitch)
 	return -1;
 }
 
-// Whether the panel chose another pattern, or wrote the pattern sequence:
-// both are properties it writes, with no command.
 bool MatrixPlugin::EchoStale()
 {
 	if (Edited() != m_Echoed)
@@ -625,14 +595,9 @@ bool MatrixPlugin::EchoStale()
 
 void MatrixPlugin::ExecuteCommands()
 {
-	// The echo (the edited pattern's grid and volumes, 10 KB) is copied again
-	// only when a command or the panel may have changed what it shows; Apply
-	// refreshes it itself.
 	const bool command = m_AudioCH->IsCommandWaiting();
 	if (command)
 	{
-		// The cell the panel names is the edited pattern's, in the octave
-		// its grid shows.
 		const int pitch = Shown(m_GUIArgs.X, m_GUIArgs.Y);
 		switch (m_AudioCH->GetCommand())
 		{
@@ -661,13 +626,9 @@ void MatrixPlugin::ExecuteCommands()
 			case MAT_DEACTIVATE :
 				if (pitch >= 0) m_Matrix[Edited()].Matrix[m_GUIArgs.X][pitch]=false;
 			break;
-			// The grid shows the pattern from another octave; its notes stay
-			// where they are.
 			case MAT_OCTAVE :
 				m_Matrix[Edited()].Octave=std::max(0, std::min(6, m_GUIArgs.Octave));
 			break;
-			// Trigger 1 moves to the grid's row Y, and the other fifteen
-			// with it.
 			case MAT_TRIGGERS :
 				m_Matrix[Edited()].Triggers=std::max(0, std::min(MATRIX_PITCHES - NUM_TRIGGERS,
 					m_GUIArgs.Y + m_Matrix[Edited()].Octave*12));
@@ -703,9 +664,6 @@ void MatrixPlugin::ExecuteCommands()
 		RefreshEcho();
 }
 
-// The patterns as the file keeps them, as the private tree does: the octave
-// the grid shows, then each note at its pitch, column by column and the
-// highest first, ending a step after its last at the soonest.
 void MatrixPlugin::PatternsFromGrid()
 {
 	for (int n=0; n<NUM_PATTERNS; n++)
@@ -722,8 +680,6 @@ void MatrixPlugin::PatternsFromGrid()
 	}
 }
 
-// The patterns from the file: a note past the grid's steps, or higher than
-// the Matrix plays, is left out.
 void MatrixPlugin::GridFromPatterns()
 {
 	for (int n=0; n<NUM_PATTERNS; n++)
@@ -771,10 +727,6 @@ void MatrixPlugin::ClearNotes(int pattern)
 	while (NoteCount(pattern) > 0) PatternProperties(pattern).RemoveLast();
 }
 
-// The notes copied are added to the pattern's own, at their pitches, and the
-// grid shows them from the copy's octave: a cell empty in the copy leaves
-// the cell it lands on as it was. With nothing copied, pattern 0 is pasted,
-// as before.
 void MatrixPlugin::PastePattern() {
      const Pattern &from = m_Copied ? m_Clipboard : m_Matrix[0];
      Pattern &to = m_Matrix[Edited()];
@@ -802,7 +754,6 @@ void MatrixPlugin::ClearPattern() {
      }
 }
 
-// Every note of the pattern moves, shown or not, with its volume and end.
 void MatrixPlugin::TransposeUp() {
      Pattern &p = m_Matrix[Edited()];
      int x, y;
@@ -851,10 +802,6 @@ bool MatrixPlugin::CanTransposeUp()
      return true;
 }
 
-// What the private tree saves of a Matrix, in its order: whether a step cuts
-// the note, the patterns, the pattern sequence and Trigger Select, each list
-// and pattern under the class and name it gives them. Where it is playing is
-// not saved.
 void MatrixPlugin::Describe(Spiral::Core::Description &d)
 {
 	PatternsFromGrid();
@@ -895,7 +842,6 @@ void MatrixPlugin::Apply(Spiral::Core::Description::Reader &r) {
         ApplyNamed(r, version);
         return;
      }
-     // A legacy stream, which kept where the Matrix was playing.
      r.Value(m_Current).Value(m_Time).Value(m_Step).Value(m_Loop).Value(m_NoteCut);
      if (version > 4) r.Value(m_TriggerSelect);
      for (int n=0; n<NUM_PATTERNS; n++) {
@@ -905,8 +851,6 @@ void MatrixPlugin::Apply(Spiral::Core::Description::Reader &r) {
          m_Matrix[n].Length = AsUnsigned(PatternLength(n));
          m_Matrix[n].Speed = AsFloat(PatternSpeed(n));
          m_Matrix[n].Octave = AsUnsigned(PatternOctave(n));
-         // Its rows were the pattern's octave up, and its trigger rows the
-         // first sixteen of them.
          const int lowest = m_Matrix[n].Octave*12;
          m_Matrix[n].Triggers = lowest;
          AsUnsigned(PatternTriggers(n)) = lowest;
@@ -914,7 +858,6 @@ void MatrixPlugin::Apply(Spiral::Core::Description::Reader &r) {
              for (int y=0; y<MATRIX_PITCHES; y++)
                  m_Matrix[n].End[x][y] = x + 1;
          if (version > 5) {
-            // Version 6 kept its notes' octaves under the pattern's.
             int count = 0;
             r.Value(count);
             ClearNotes(n);
@@ -971,9 +914,6 @@ void MatrixPlugin::Apply(Spiral::Core::Description::Reader &r) {
      RefreshEcho();
 }
 
-// A file's Matrix. Version 7 is what both trees write. Before it, the private
-// tree wrote the patterns as now without their trigger rows, its notes
-// counted from 0, with 12 the next C.
 void MatrixPlugin::ApplyNamed(Spiral::Core::Description::Reader &r, int version)
 {
 	r.Value(m_NoteCut).Value(m_TriggerSelect);
@@ -981,8 +921,6 @@ void MatrixPlugin::ApplyNamed(Spiral::Core::Description::Reader &r, int version)
 	{
 		r.Value(PatternOctave(n)).Value(PatternLength(n)).Value(PatternSpeed(n));
 		AsUnsigned(PatternOctave(n)) = std::min(6u, (unsigned)AsUnsigned(PatternOctave(n)));
-		// Its trigger rows; a file from before them has its first note
-		// there, and its triggers were the sixteen rows from its octave.
 		const bool marked = version >= 7 && r.Find(PatternTriggers(n).GetKey()) >= 0;
 		AsUnsigned(PatternTriggers(n)) = AsUnsigned(PatternOctave(n)) * 12;
 		if (marked)

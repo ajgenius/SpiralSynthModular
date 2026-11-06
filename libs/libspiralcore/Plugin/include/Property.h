@@ -763,8 +763,6 @@ namespace Core
 		void Release();
 	};
 
-	// A list of properties, under the class name the private tree's files
-	// give one: the same vector, written as a ListProperty.
 	class ListProperty : public VectorProperty
 	{
 	public:

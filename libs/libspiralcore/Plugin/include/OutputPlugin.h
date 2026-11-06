@@ -25,10 +25,8 @@
 class OutputPlugin : public AudioEndpoint
 {
 public:
-	// Same values as AudioTransportHub::Mode; the GUI reads these.
 	enum Mode {NO_MODE,INPUT,OUTPUT,DUPLEX,CLOSED};
 
-	// Built into the host: registered with the device registry, no module.
 	static const Spiral::Core::DeviceClass &Class();
 
 	OutputPlugin();
@@ -43,7 +41,6 @@ public:
 	virtual void Reset();
 
 	virtual bool IsAudioDriver() { return true; }
-	// The hub moves the periods; this device only mixes in Execute.
 	virtual AudioProcessType ProcessType() { return AudioDriver::NEVER; }
 	virtual void ProcessAudio() {}
 	virtual void ServiceAudio();

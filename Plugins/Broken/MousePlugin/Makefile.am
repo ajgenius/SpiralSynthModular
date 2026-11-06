@@ -30,7 +30,6 @@ MousePlugin_la_LIBADD = 							\
 install-data-hook:
 	-rm -f "$(DESTDIR)$(plugindir)/MousePlugin.la"
 
-# The installed .la is removed, so libtool cannot discover the module at uninstall.
 uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/$(plugin)"
 

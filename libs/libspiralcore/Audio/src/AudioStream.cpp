@@ -285,8 +285,6 @@ void *AudioStream::Worker(void *context)
 			break;
 		}
 
-		// A driver that returns early must not spin while another duplex side
-		// has no period ready. Shutdown is bounded even for a stalled device.
 		if (!ready) usleep(1000);
 
 	}

@@ -33,7 +33,6 @@ using Spiral::Core::Sample;
 
 #ifndef USE_LIBSNDFILE
 #if defined(__APPLE__) && defined(__MACH__)
-// WAV headers use two-byte alignment, including on Intel and ARM Macs.
 #pragma pack(push, 2)
 #endif
 

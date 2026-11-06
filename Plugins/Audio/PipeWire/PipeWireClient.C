@@ -116,8 +116,6 @@ bool PipeWireClient::CreateStream(Stream &stream, bool input, const std::string 
 	spa_pod_builder builder = SPA_POD_BUILDER_INIT(storage, sizeof(storage));
 	const spa_pod *parameters[] = {spa_format_audio_raw_build(&builder, SPA_PARAM_EnumFormat, &info)};
 	stream.State.store(PW_STREAM_STATE_CONNECTING);
-	// Both directions run on this one loop, so duplex capture history has one
-	// producer and consumer. No callback runs the graph or takes the host gate.
 	return pw_stream_connect(stream.Handle, input ? PW_DIRECTION_INPUT : PW_DIRECTION_OUTPUT,
 				 PW_ID_ANY, static_cast<pw_stream_flags>(PW_STREAM_FLAG_AUTOCONNECT |
 		PW_STREAM_FLAG_MAP_BUFFERS | PW_STREAM_FLAG_INACTIVE), parameters, 1)
@@ -193,15 +191,9 @@ bool PipeWireClient::Timestamp(Stream &stream, unsigned frames, AudioCycleTiming
 	timing = AudioCycleTiming();
 	timing.Frame = stream.Frame;
 	timing.CallbackTime = AudioMonotonicTime();
-	// Let AudioStream estimate sample-clock drift from successive timestamps.
-	// The negotiated rate alone is not a measured monotonic-clock slope.
 	timing.Step = 0;
 	timing.SampleRate = m_Options.Samplerate;
 	timing.Frames = frames;
-	// pw_time.now is CLOCK_MONOTONIC. Playback follows PipeWire's documented
-	// delay + queued + resampler-buffered formula; capture covers the preceding
-	// buffer interval. Capture timing remains an estimate until loopback checked.
-	// https://docs.pipewire.org/structpw__time.html
 	timing.OutputTime = value.now / 1e9 + delay + queued;
 	timing.InputTime = value.now / 1e9 - delay - queued - frames * step;
 	timing.Valid = true;
@@ -243,7 +235,6 @@ void PipeWireClient::Transfer(Stream &stream)
 		return;
 	}
 
-	// Account for the negotiated quantum in host pacing and duplex lookback.
 	m_Quantum.store(std::max(m_Quantum.load(), frames));
 
 	float *samples = reinterpret_cast<float *>(static_cast<char *>(data.data) + offset);

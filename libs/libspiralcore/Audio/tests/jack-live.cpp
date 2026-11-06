@@ -1,4 +1,3 @@
-// Live-server smoke test. Routes only between its own temporary clients.
 #include "JackClient.h"
 #include <cstdio>
 #include <cstdlib>

@@ -9,10 +9,6 @@ namespace Spiral
 {
 namespace Core
 {
-// One timeline per engine. The host excludes graph/control edits while calling
-// these methods; native callbacks own only their AudioStream queue ends.
-// Register/unregister before starting or destroying streams. No host/GUI types
-// cross this boundary, so both SSM engines use the same scheduling policy.
 class AudioTimeline
 {
 public:

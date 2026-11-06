@@ -16,15 +16,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-// The drawer's MIDI page: the patch's own MIDI input and the source it
-// listens to, the devices the patch's MIDI map lists, and the controls
-// bound on each. A device is added by picking it on the canvas, and a
-// control by picking it on the device; the host does the picking, since
-// the canvas and the panels are its. A control is bound in a small window
-// of its own, by channel and controller number, typed or learned from the
-// next control change the patch hears.
-//
-// Colours come from the host, as the drawer's do.
 #ifndef SSM_FL_MIDIBINDINGS_H
 #define SSM_FL_MIDIBINDINGS_H
 #include <FL/Fl_Group.H>
@@ -55,23 +46,12 @@ public:
 	void resize(int, int, int, int);
 	void draw();
 
-	/* The map the page shows and edits. NULL unbinds: the list goes empty. */
 	void Bind(Spiral::Core::MidiMap *map);
-	/* Re-read the map, the MIDI device and the device names. */
 	void Refresh();
-	/* The binding window for one control, on what it is bound to now. An
-	   unbound control starts out listening for the control to move. */
 	void EditBinding(const std::string &device, const std::string &control);
 	bool Editing() const;
-	/* While the host picks, Add device stops the pick instead. */
 	void SetPicking(bool picking);
 
-	/* The host's side; each is given Data. DeviceName labels a listed
-	   device. PickDevice starts a device pick, or stops the one running;
-	   PickControl starts a control pick on a listed device. Learn hands the
-	   next control change to learned, or stops listening when it is NULL.
-	   SourcePicked is a source chosen, empty for the default. Changed is
-	   any edit of the map. */
 	std::string (*DeviceName)(const std::string &device, void *);
 	void (*PickDevice)(void *);
 	void (*PickControl)(const std::string &device, void *);
@@ -80,7 +60,6 @@ public:
 	void (*Changed)(void *);
 	void *Data;
 
-	/* What the list shows, a device row or a binding row under it. */
 	size_t Rows() const { return m_Rows.size(); }
 	std::string RowDevice(size_t row) const;
 	std::string RowControl(size_t row) const;

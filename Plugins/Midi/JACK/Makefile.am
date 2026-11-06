@@ -6,7 +6,6 @@ JACK_Midi_la_SOURCES = JackMidiBackend.cpp
 JACK_Midi_la_LDFLAGS = -module -avoid-version -shared -no-undefined
 JACK_Midi_la_LIBADD = $(top_builddir)/libs/libspiralcore/libspiralcore.la $(JACK_MIDI_LIBS) -lpthread
 
-# The transport against a stubbed libjack: no server needed.
 check_PROGRAMS = jack-midi-test
 TESTS = $(check_PROGRAMS)
 jack_midi_test_SOURCES = jack-midi-test.cpp

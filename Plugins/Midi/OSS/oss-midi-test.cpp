@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// A FIFO stands in for /dev/midi: bytes written to it come out of Poll
-// as packets, running status and a clock tick included; a Send lands in
-// the FIFO the other way. No device needed.
 #include "MidiBackend.h"
 #include <cassert>
 #include <cstdio>
@@ -20,7 +17,6 @@ int main()
 	snprintf(in, sizeof(in), "/tmp/oss-midi-in-%ld", long(getpid()));
 	snprintf(out, sizeof(out), "/tmp/oss-midi-out-%ld", long(getpid()));
 	assert(!mkfifo(in, 0600) && !mkfifo(out, 0600));
-	// Both ends open before the backend connects, so its opens never block.
 	const int writer = open(in, O_RDWR), reader = open(out, O_RDWR | O_NONBLOCK);
 	assert(writer >= 0 && reader >= 0);
 

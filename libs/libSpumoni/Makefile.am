@@ -2,8 +2,6 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 AM_CPPFLAGS = -I$(srcdir)/include
 AM_CXXFLAGS = -std=c++03 -fPIC
 
-# A libtool convenience library, not a plain archive: libspiralcore lists it in
-# LIBADD and libtool then links every object in, in the place a library belongs.
 noinst_LTLIBRARIES = libSpumoni.la
 libSpumoni_la_SOURCES = \
 	include/JSON.h include/detail/JSONReader.h src/JSON.cpp \

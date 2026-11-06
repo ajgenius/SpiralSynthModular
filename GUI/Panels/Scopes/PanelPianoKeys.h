@@ -61,10 +61,10 @@ namespace SpiralPanels
 		std::vector<Fl_Button *> m_Keys;
 		bool m_ComputerKeys;
 		int m_Octave;
-		std::vector<int> m_Held; // the note each computer key is playing, or -1
-		std::string m_Status;    // the Label under the keys that says their octaves, if any
+		std::vector<int> m_Held;
+		std::string m_Status;
 		std::string m_StatusText;
-		bool m_Framed;           // the focus and octave the keys are tinted for
+		bool m_Framed;
 		int m_FramedOctave;
 	};
 }

@@ -142,14 +142,12 @@ void StereoMixerPlugin::Execute()
 			if (InputExists(c))
 			{
 				const float cv = GetInput(c+m_NumChannels,n);
-				// Invalid CV leaves the channel at its base pan.
 				if (Spiral::Core::IsFinite(cv)) pan += cv * 0.5;
 			}
 			const float channelLeft = (in * volume) * pan;
 			const float channelRight = (in * volume) * (1 - pan);
 			const float mixedLeft = left + channelLeft;
 			const float mixedRight = right + channelRight;
-			// Keep both sides together, retaining the other healthy channels.
 			if (Spiral::Core::IsFinite(channelLeft) && Spiral::Core::IsFinite(channelRight) &&
 			    Spiral::Core::IsFinite(mixedLeft) && Spiral::Core::IsFinite(mixedRight))
 			{
@@ -171,7 +169,6 @@ void StereoMixerPlugin::ExecuteCommands()
 void StereoMixerPlugin::SetChannels(int num)
 {
 	num = std::max(2, std::min(MAX_CHANNELS, num));
-	// Fewer channels stop at the last one wired, so no wire is dropped.
 	for (int c=m_NumChannels-1; c>=num; c--)
 	{
 		if (InputExists(c) || InputExists(m_NumChannels+c))
@@ -186,8 +183,6 @@ void StereoMixerPlugin::SetChannels(int num)
 		return;
 	}
 
-	// The host moves the pan wires along with the audio inputs (MovedInput),
-	// then the inputs themselves move, so every wire keeps its port.
 	m_MovedFrom = m_NumChannels;
 	m_NumChannels = num;
 	m_PluginInfo.NumInputs = num*2;

@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Spumoni::Package — the package-format stamp; the mechanics are in Package.cpp.
 
 #include "Package.h"
 

@@ -1,4 +1,3 @@
-// Backend modules alone link hardware API libraries.
 #include "BackendPath.h"
 #include "AudioBackend.h"
 #include "MidiBackend.h"
@@ -29,5 +28,5 @@ namespace Core
 	{
 		LoadPaths(*MidiBackendRegistry::Get(), root);
 	}
-} // namespace Core
+}
 } // namespace Spiral

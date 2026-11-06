@@ -36,7 +36,6 @@ class JackClient : public AudioClient
 public:
 	JackClient();
 	virtual ~JackClient();
-	// Retain the original singleton API for existing libspiralcore callers.
 	static JackClient *Get();
 	static void PackUpAndGoHome();
 
@@ -50,7 +49,6 @@ public:
 	void Detach();
 	bool IsAttached() const { return __sync_fetch_and_add(&m_Attached, 0) != 0; }
 
-	// Zero frames reports shutdown; engine/patch policy belongs to the caller.
 	void SetCallback(void (*run)(void *, unsigned int), void *context);
 	unsigned long GetBufferSize() const { return __sync_fetch_and_add(&m_BufferSize, 0); }
 
@@ -61,7 +59,6 @@ public:
 	double GetInputLatency() const;
 	double GetOutputLatency() const;
 
-	// Transport is optional application policy; attaching never starts it.
 	bool QueryTransport(jack_transport_state_t &state, jack_position_t &position) const;
 	virtual bool GetTransport(unsigned long &frame, bool &rolling) const;
 

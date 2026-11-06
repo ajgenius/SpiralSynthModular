@@ -73,7 +73,6 @@ namespace SpiralPanels
 
 	void PanelSevenSegment::Show(double value)
 	{
-		// Refreshed every tick: the digits are drawn again only when the value changes.
 		if (value == m_Shown)
 			return;
 		m_Shown = value;
@@ -91,7 +90,6 @@ namespace SpiralPanels
 			const char *c = text;
 			for (size_t i = 0; i < m_Digits.size(); ++i)
 			{
-				// The point set once, so a digit that keeps it is not drawn again.
 				const bool dot = *c == '.';
 				m_Digits[i]->dp(dot ? point : off);
 				if (*c == 0)

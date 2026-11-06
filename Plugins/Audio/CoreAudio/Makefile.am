@@ -6,7 +6,6 @@ CoreAudio_Audio_la_SOURCES = CoreAudioClient.h CoreAudioClient.cpp
 CoreAudio_Audio_la_LDFLAGS = -module -avoid-version -shared -no-undefined
 CoreAudio_Audio_la_LIBADD = $(top_builddir)/libs/libspiralcore/libspiralcore.la $(CORE_AUDIO_LIBS)
 
-# A module cannot be linked against on macOS; the test builds the client itself.
 check_PROGRAMS = coreaudio-client-test
 TESTS = $(check_PROGRAMS)
 coreaudio_client_test_SOURCES = coreaudio-client-test.cpp CoreAudioClient.cpp

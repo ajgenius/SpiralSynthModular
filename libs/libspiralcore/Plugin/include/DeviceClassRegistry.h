@@ -30,7 +30,6 @@ namespace Spiral
 namespace Core
 {
 
-// What a module's SpiralPlugin_GetType export answers.
 enum
 {
 	SPIRAL_PLUGIN_TYPE_DEVICE = 1,
@@ -38,11 +37,6 @@ enum
 	SPIRAL_PLUGIN_TYPE_PAIRED = 3
 };
 
-/* The DSP half of the paired slot (0.3.1 split), one per plugin ID. A
-   module's is read from its exports when the loader accepts it; a
-   compiled-in device registers one with no module. An editor pairs with
-   it by ID through the EditorClassRegistry. GUI<->DSP traffic stays on
-   ChannelHandler (libspiralcore mutex trylock). */
 struct DeviceClass
 {
 	int   ID;
@@ -74,10 +68,6 @@ struct DeviceClass
 
 //////////////////////////////////////////////////////////
 
-/* The device kind: modules are <plugins>/dsp/<X>/<X>_DSP<ext>, the entry
-   is the instance factory, and the identity beside it (ID, type, name,
-   category, icon, host ABI) is the old export set, read back through the
-   module until modules carry a descriptor. */
 class DeviceClassRegistry : public PluginKind
 {
 public:
@@ -93,7 +83,6 @@ public:
 
 	unsigned            LoadModules(const std::string &root);
 	unsigned            LoadBuiltins(const std::string &root);
-	// The first registration of an ID keeps its place.
 	bool                Register(const DeviceClass &device);
 	const DeviceClass*  Find(int ID) const;
 	const std::vector<DeviceClass*> &Classes() const { return m_PluginVec; }

@@ -30,7 +30,6 @@ int main(int argc, char **argv)
 	assert(writer.BeginSidecars(error));
 	assert(Spumoni::Path::WriteFile(writer.SidecarDirectory() + "PoshSampler3_0.wav", "second sample", error));
 	assert(writer.CreateSavePoint("Second", false, error));
-	// Relocation must not depend on a directory beside the original package.
 	const std::string relocated = argc == 3 ? path : std::string(temporary) + "/moved.ssmp";
 	if (argc != 3)
 		assert(rename(path.c_str(), relocated.c_str()) == 0);
@@ -48,7 +47,6 @@ int main(int argc, char **argv)
 	const std::string kept = reader.SidecarDirectory();
 	assert(!reader.SwitchBranch("missing", error));
 	assert(reader.SidecarDirectory() == kept);
-	// Saving an empty replacement removes the old samples in that branch.
 	if (argc != 3)
 	{
 		assert(reader.BeginSidecars(error));

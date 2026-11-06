@@ -90,7 +90,6 @@ namespace SpiralPanels
 			self->Commit(self->Ordered(value));
 	}
 
-	// A limit typed past its partner swaps with it, as the old Controller editor did.
 	double PanelTextEntry::Ordered(double value)
 	{
 		const PanelProperty *partner = m_Below ? m_Below : m_Above;

@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Content-addressed storage follows the Git loose-object idea, as discussed in
-// GROK's research/cas/NOTES.md. This implementation includes no Git/Darcs code.
 #include "Store.h"
 #include "StoreSHA256.h"
 #include "Folder.h"
@@ -82,7 +80,6 @@ namespace
 			return -1;
 		}
 
-		// Sync even an existing entry: another writer may just have created it.
 		if (create && fsync(parent) != 0)
 		{
 			SystemError("Cannot sync object directory", error);
@@ -161,7 +158,6 @@ namespace
 		return true;
 	}
 
-	// Hash the exact bytes written. No second read of a mutable source path.
 	bool Transfer(int input, int output, std::string &address, std::string &error)
 	{
 		Spumoni::StoreSHA256 hash;
@@ -181,7 +177,6 @@ namespace
 			if (!count)
 				break;
 
-			// FIPS 180-4 represents the bit length in 64 bits.
 			if (static_cast<uint64_t>(count) > (std::numeric_limits<uint64_t>::max() / 8) - total)
 				return Fail("Object exceeds the SHA-256 message length", error);
 
@@ -218,8 +213,6 @@ namespace
 
 		bool Create(std::string &error)
 		{
-			// O_EXCL arbitrates threads and processes. Never open or remove a
-			// colliding name, including abandoned files and planted symlinks.
 			for (unsigned int serial = 0; serial < UINT_MAX; ++serial)
 			{
 				char name[80];
@@ -315,7 +308,6 @@ namespace
 		return true;
 	}
 
-	// The staged bytes, hashed to `next`, become the object at that address.
 	bool Publish(int root, StagingFile &staged, const std::string &next,
 		     std::string &address, std::string &error)
 	{
@@ -327,9 +319,6 @@ namespace
 		if (directory.Value < 0)
 			return false;
 
-		// POSIX linkat publishes without replacing an existing object. Concurrent
-		// writers can share a verified winner; no lock or stale-lock recovery is
-		// needed. The temporary hard link stays private and is removed on return.
 		if (linkat(root, staged.Name.c_str(), directory.Value, next.substr(11).c_str(), 0) != 0)
 		{
 			if (errno != EEXIST)
@@ -480,9 +469,6 @@ bool Spumoni::Store::CopyFile(const std::string &address,
 	return true;
 }
 
-// Ver 2: walk the on-disk sha256 object tree and feed every object file
-// into the writer under the given archivePrefix (normally "assets").
-// Keeps the two-level split layout so readers can locate objects by address.
 bool Spumoni::Store::ExportObjects(Container::Writer &writer,
 				   const std::string &archivePrefix,
 				   std::string &error) const
@@ -492,7 +478,7 @@ bool Spumoni::Store::ExportObjects(Container::Writer &writer,
 
 	std::string shaDir = Path::Join(m_RootPath, "sha256");
 	if (!Path::IsDirectory(shaDir))
-		return true; // nothing stored yet
+		return true;
 
 	std::vector<std::string> first;
 	if (!Path::List(shaDir, first))
@@ -519,10 +505,6 @@ bool Spumoni::Store::ExportObjects(Container::Writer &writer,
 				std::string objPath = Path::Join(d2, objs[k]);
 				if (!Path::IsFile(objPath)) continue;
 
-				// Preserve the store's internal sha256/ layout under the
-				// archive prefix so that on extract + GetStore() the
-				// reopened workspace sees a correct store root containing
-				// sha256/XX/YY/...
 				std::string arcName = archivePrefix;
 				if (!arcName.empty() && arcName[arcName.size()-1] != '/')
 					arcName += "/";

@@ -55,7 +55,6 @@ public:
 
 	int GetOutputCount() const { return m_OutputCount; }
 	unsigned GetDrift() const { return m_Stream.Errors(); }
-	// Native callback position and the monotonic graph capture position.
 	unsigned long GetClientFrame() { Spiral::Core::AudioCycleTiming timing; return m_Stream.Timing(timing) ? timing.Frame : 0; }
 	unsigned long GetCaptureFrame() const { return m_CaptureFrame; }
 

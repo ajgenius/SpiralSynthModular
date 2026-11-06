@@ -257,8 +257,6 @@ int OSSClient::WaitForCycle(unsigned milliseconds)
 	m_Timing.Frames = m_Frames;
 	m_Timing.SampleRate = m_Samplerate;
 	m_Timing.CallbackTime = now;
-	// OSS exposes queue depth rather than hardware timestamps. This is a
-	// query-time estimate; its accuracy is limited by the device's reporting.
 	m_Timing.OutputTime = now + std::max(0, delay) / bytesPerSecond;
 	m_Timing.InputTime = now - input.bytes / bytesPerSecond;
 	m_Timing.Valid = true;

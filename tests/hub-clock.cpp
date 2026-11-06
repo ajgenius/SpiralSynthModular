@@ -1,4 +1,3 @@
-// The engine must keep its format and frame count without an Output device.
 #include "AudioTransportHub.h"
 #include <cassert>
 #include <cstdio>

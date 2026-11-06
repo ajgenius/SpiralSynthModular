@@ -33,7 +33,6 @@ namespace Spiral
 				return false;
 			}
 
-			// The property names a write or delta names: one, or a list for delta.
 			bool Properties(const Spumoni::JSON *node, const Handlers::Scope &scope, bool list,
 					std::vector<std::string> &out, std::string &problem)
 			{
@@ -54,8 +53,6 @@ namespace Spiral
 				return true;
 			}
 
-			// A write's value and arguments, shared by {write, value, with} and
-			// the older {property, value, with} entry.
 			bool WriteAction(const Spumoni::JSON *value, const Spumoni::JSON *with, const Handlers::Scope &scope,
 					 const std::string &event, const std::vector<std::string> &carried, Handlers::Action &out,
 					 std::string &problem)
@@ -241,7 +238,6 @@ namespace Spiral
 				return Refuse(problem, "the control declares no event " + event);
 			for (size_t i = 0; i < list->Size(); ++i)
 			{
-				// Today's entry spells the verb by its key: {property, value?, with?}.
 				const Spumoni::JSON *entry = list->At(i);
 				if (!entry || entry->GetType() != Spumoni::JSON::Object || !IsString(entry->Get("property")))
 					return Refuse(problem, "a write entry names a property");

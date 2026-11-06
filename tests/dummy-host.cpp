@@ -1,6 +1,3 @@
-// The built-in dummy backend runs the real host with no audio device:
-// Output opens on it, the engine advances at the nominal rate, and a
-// switch to a backend that is not there falls back without stopping.
 #include "SpiralSynthModular.h"
 #include "AudioTransportHub.h"
 #include "SpiralInfo.h"

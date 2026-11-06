@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// The platform clock ticks at the requested rate: 100 ticks at 250 Hz
-// take 0.4 s of wall time within a loose tolerance, and the reported
-// time tracks the wall clock. 250 Hz stays inside what a virtual
-// machine's system timer can deliver.
 #include "AtomicClock.h"
 #include <cstdio>
 #include <cmath>
@@ -21,7 +17,6 @@ static double Now()
 int main()
 {
 #ifdef __linux__
-	// The optional ALSA timer requires a usable kernel timer device.
 	if (access("/dev/snd/timer", R_OK | W_OK) != 0) return 77;
 #endif
 	const float frequency = 250.f;

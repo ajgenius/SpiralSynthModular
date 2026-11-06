@@ -44,9 +44,6 @@ m_Frequency(frequency)
     snd_timer_info_alloca(&info);
     snd_timer_params_alloca(&params);
  		
-	// The card must be an integer node: as a string in "hw:CARD=0" it is
-	// looked up as a sound card, which fails on a machine without one, and
-	// the global system timer is exactly for that machine.
 	snprintf(timername, sizeof(timername),
 		"timer.ssm { type hw class %i sclass %i card %i device %i subdevice %i }",
 		timer.Class, timer.SClass, timer.Card, timer.Device, timer.Subdevice);
@@ -122,8 +119,6 @@ double AtomicClock::Tick()
     	fprintf(stderr, "timer time out!!\n");   
     }  
 	
-	// Time comes from what the timer delivered: a late wake-up brings one
-	// event spanning several ticks, not one tick.
 	snd_timer_read_t tr;
 	while (snd_timer_read(m_Platform->m_Handle, &tr, sizeof(tr)) == sizeof(tr)) 
 	{

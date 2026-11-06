@@ -51,8 +51,6 @@ static float ssm_sanitize(float in, float replacement)
 
 ////////////////////////////////////////////////////
 
-// Built into the host like Output: the LADSPA plugins it hosts stay
-// external, under <plugins>/ladspa and the LADSPA_PATH LADSPAInfo scans.
 static SpiralPlugin *CreateInstance() { return new LADSPAPlugin; }
 
 const Spiral::Core::DeviceClass &LADSPAPlugin::Class()
@@ -205,8 +203,6 @@ LADSPAPlugin::LADSPAPlugin()
 	RefreshPanelData();
 }
 
-// The port tables are sized for the installed plugin with the most inputs
-// (over a thousand with lsp-plugins); each update copies only this one's.
 void LADSPAPlugin::UsePorts()
 {
 	const unsigned long n = m_InputPortCount < m_MaxInputPortCount ? m_InputPortCount : m_MaxInputPortCount;
@@ -1075,8 +1071,6 @@ void LADSPAPlugin::ResetPortSettings(void)
 	if (!m_PlugDesc || !m_HostInfo)
 		return;
 
-	// Reset keeps saved defaults for surviving ports. A different installed
-	// descriptor can add or remove inputs; all four setting vectors must agree.
 	if (m_SSMPluginReset && m_InputPortDefault.size() > (size_t)m_PluginInfo.NumInputs)
 		m_InputPortDefault.resize(m_PluginInfo.NumInputs);
 

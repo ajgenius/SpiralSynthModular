@@ -1,9 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// A small JSON DOM, C++03: Spumoni's manifests and whatever else in the
-// tree reads or writes JSON. Numbers keep the lexeme they were parsed
-// with; object keys are sorted when stringified. The reader is strict:
-// duplicate keys, invalid UTF-8, a NUL byte, more than 64 nested
-// containers or more than 16 MiB are refused.
 #ifndef SPUMONI_JSON_H
 #define SPUMONI_JSON_H
 
@@ -37,9 +32,7 @@ namespace Spumoni
 		JSON *Duplicate() const;
 
 		Type GetType() const { return m_Type; }
-		bool AsBool() const { return m_Bool; }   // X11's Bool macro breaks Bool() under FLTK
-		// A Number whose lexeme is a whole number long can hold; value is
-		// untouched otherwise.
+		bool AsBool() const { return m_Bool; }
 		bool Integer(long &value) const;
 		const std::string &Text() const { return m_Text; }
 		size_t Size() const;
@@ -80,11 +73,6 @@ namespace Spumoni
 		std::vector<Member> m_Members;
 	};
 
-	// Scoped ownership of one root. A raw pointer and a destructor rather
-	// than a standard smart pointer: this header is included by consumers
-	// that pick their own C++ standard, and auto_ptr was removed in C++17
-	// while unique_ptr does not exist in the C++03 this library builds as.
-	// Same shape as Spicy's JSONOwner, which is where it came from.
 	class JSONOwner
 	{
 	public:
@@ -100,11 +88,7 @@ namespace Spumoni
 		JSON *m_Value;
 	};
 
-	// Parse one JSON value, the whole text. Trailing whitespace is allowed;
-	// anything else fails. On failure returns NULL and, when error is not
-	// NULL, sets it. Delete the returned root once; Get and At are borrowed.
 	JSON *ParseJSONText(const std::string &text, std::string *error = NULL);
-	// The same for a file's bytes.
 	JSON *ParseJSON(const char *fileName, std::string *error = NULL);
 
 }

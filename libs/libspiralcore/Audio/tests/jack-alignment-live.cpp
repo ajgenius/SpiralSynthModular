@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Opt-in live JACK test. All connections stay between these temporary clients.
 #include "AudioTimeline.h"
 #include "JackClient.h"
 #include <algorithm>

@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Importing a patch as a branch is not a save point: a save point descends
-// from the branch it was taken from, an import descends from nothing in this
-// project. The host wires the menu item to CreateSavePoint's independent
-// flag, and this is what that flag has to mean on disk.
 #include "PatchProject.h"
 #include <cassert>
 #include <cstdio>
@@ -27,7 +23,6 @@ int main()
 	const std::string foreign = Scratch("import-branch-foreign.ssm");
 	std::remove(package.c_str());
 
-	// Something recognisable in each, so it is clear which branch holds what.
 	const std::string mine = "SpiralSynthModular File Ver 4\nmine\n";
 	const std::string theirs = "SpiralSynthModular File Ver 4\ntheirs\n";
 	{
@@ -43,7 +38,6 @@ int main()
 		assert(project.GetIdentity().Branches.size() == 1);
 	}
 
-	// What the menu item does once a file has been chosen.
 	std::string brought;
 	{
 		std::ifstream in(foreign.c_str());
@@ -61,7 +55,6 @@ int main()
 		assert(project.CreateSavePoint("Theirs", false, error, true));
 	}
 
-	// Two branches now, and the imported one is a root of its own.
 	{
 		Project project(package);
 		assert(project.OpenPackage("", error));
@@ -79,14 +72,12 @@ int main()
 		assert(original && imported);
 
 		assert(imported->Kind == "imported");
-		assert(imported->ParentID.empty());	// descends from nothing here
+		assert(imported->ParentID.empty());
 		assert(imported->ForkSaveID.empty());
 
-		// And the patch that came in is the one stored under it.
 		assert(project.SwitchBranch(imported->ID, error));
 		assert(project.Source().Bytes() == brought);
 
-		// The branch that was already here still holds its own patch.
 		assert(project.SwitchBranch(ours, error));
 		assert(project.Source().Bytes() == mine);
 	}

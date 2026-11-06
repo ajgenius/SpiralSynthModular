@@ -74,7 +74,6 @@ namespace
 		UInt32 size=sizeof(device);
 		device=kAudioObjectUnknown;
 
-		// AudioObject uses the UID as qualifier data and returns the device ID.
 		OSStatus result=AudioObjectGetPropertyData(kAudioObjectSystemObject,&address,sizeof(uid),&uid,&size,&device);
 		CFRelease(uid);
 		return result==noErr && device!=kAudioObjectUnknown;
@@ -156,8 +155,6 @@ bool CoreAudioClient::Attach(const std::string &device, const AudioClientOptions
 
 	if (!GetDevice(device,!options.OutChannels,m_Device)) return false;
 
-	// One HAL unit uses one hardware clock. Separate default input/output
-	// devices require a user-selected aggregate device for duplex operation.
 	if (options.InChannels && options.OutChannels && (device.empty() || device=="default"))
 	{
 		AudioDeviceID input=kAudioObjectUnknown;
@@ -222,8 +219,6 @@ bool CoreAudioClient::Attach(const std::string &device, const AudioClientOptions
 		++m_Listeners;
 	}
 
-	// Optional properties vary across drivers. Register only supported scopes;
-	// all queries and allocation happen off the render callback.
 	const AudioObjectPropertySelector timingProperties[] = {
 		kAudioDevicePropertyLatency, kAudioDevicePropertySafetyOffset, kAudioDevicePropertyStreams
 	};
@@ -266,8 +261,6 @@ void CoreAudioClient::Detach()
 	bool notify=IsAttached();
 	if (m_Unit)
 	{
-		// Only the control thread stops/disposes the unit. Callback buffers and
-		// context remain valid until CoreAudio has stopped invoking it.
 		if (m_Started) AudioOutputUnitStop(m_Unit);
 
 		for (unsigned n=0; n<m_Listeners; ++n)
@@ -409,8 +402,6 @@ double CoreAudioClient::GetChannelTime(bool input, unsigned channel) const
 	if (!input)
 		return m_HostTime + __sync_fetch_and_add(&m_OutputHardware[channel], 0) / rate;
 
-	// HAL's output timestamp already includes its software buffer and safety
-	// offset. Duplex input is older by both sides' software pipelines.
 	const unsigned software = m_Outputs ? __sync_fetch_and_add(&m_InputSoftware, 0) +
 		__sync_fetch_and_add(&m_OutputSoftware, 0) : 0;
 	return m_HostTime - (software + __sync_fetch_and_add(&m_InputHardware[channel], 0)) / rate;
@@ -431,8 +422,6 @@ double CoreAudioClient::GetOutputLatency() const
 	return double(__sync_fetch_and_add(&m_OutputSoftware, 0) +
 		std::max(__sync_fetch_and_add(&m_OutputHardware[0], 0), __sync_fetch_and_add(&m_OutputHardware[1], 0))) / GetSampleRate();
 }
-
-// * Backend module entry
 
 static void *CreateCoreAudio(void *) { return static_cast<AudioClient *>(new CoreAudioClient); }
 static void DestroyCoreAudio(void *client) { delete static_cast<AudioClient *>(client); }

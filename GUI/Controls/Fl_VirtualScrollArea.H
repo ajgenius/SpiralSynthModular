@@ -16,10 +16,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-// Written by GROK (Grok Bot), after the private tree's VirtualScrollArea:
-// one clipped viewport over content of its own (virtual) size, with the
-// scrollbars wanted. Its bounds stay the host's; the content may be wider
-// or taller. A reusable container: a piano, a long table, a port list.
 #ifndef FL_VIRTUAL_SCROLL_AREA_H
 #define FL_VIRTUAL_SCROLL_AREA_H
 
@@ -32,24 +28,18 @@ class Fl_VirtualScrollArea : public Fl_Scroll
 public:
 	Fl_VirtualScrollArea(int x, int y, int w, int h, const char *label = 0);
 
-	// Which bars may show; each shows only when the content needs it,
-	// or always ("always").
 	void Show(bool horizontal, bool vertical, bool always = false);
 	bool ShowHorizontal() const { return m_Horizontal; }
 	bool ShowVertical() const { return m_Vertical; }
 
-	// The virtual content's size; 0 keeps the children's own extent.
-	// Call once the children are added.
 	void SetContentSize(int width, int height);
 	int ContentWidth() const;
 	int ContentHeight() const;
 
-	// The content point at the viewport's top left, kept in range.
 	void SetView(int x, int y);
 	int ViewX() const { return xposition(); }
 	int ViewY() const { return yposition(); }
 
-	// The viewport left for content under the bars that show.
 	int ViewportWidth() const;
 	int ViewportHeight() const;
 

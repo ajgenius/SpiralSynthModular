@@ -45,7 +45,6 @@ public:
 
 	virtual bool IsAudioDriver() { return true; }
 
-	// Lifecycle and format work belongs to the host control loop.
 	virtual void ServiceAudio() {}
 
 	virtual void ProcessAudio()=0;

@@ -14,7 +14,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*/ 
+*/
 
 #ifndef SETTINGSWINDOW
 #define SETTINGSWINDOW
@@ -36,36 +36,33 @@ class SettingsWindow : public Fl_Double_Window
 public:
 	SettingsWindow();
 	~SettingsWindow();
-		
+
 	void RegisterApp(SynthModular *s) { m_App=s; }
-	// The backend list is read from the registry each time the window
-	// opens: modules load after this window exists.
 	virtual void show();
-	
+
 private:
 	void ListAudioClients();
 	void ListMidiBackends();
 	SynthModular *m_App;
-	
+
 	Fl_Pack      *m_Options;
 	Fl_Int_Input *m_BufferSize;
 	Fl_Int_Input *m_FragmentSize;
 	Fl_Int_Input *m_FragmentCount;
-	Fl_Int_Input *m_Samplerate;	
+	Fl_Int_Input *m_Samplerate;
 	Fl_Choice    *m_AudioClient;
 	Fl_Input     *m_OutputDevice;
 	Fl_Choice    *m_MidiBackend;
 	Fl_Input     *m_MidiDevice;
 	Fl_Choice    *m_CurvedWires;
-	// Only built on macOS; NULL elsewhere.
 	Fl_Choice    *m_ShowMenuBar;
-	Fl_Button    *m_Save;	
+	Fl_Button    *m_Save;
 	Fl_Button    *m_Apply;
-		
+
 	inline void cb_Apply_i(Fl_Button* o, void* v);
-    static void cb_Apply(Fl_Button* o, void* v);	
+	static void cb_Apply(Fl_Button* o, void* v);
 	inline void cb_Save_i(Fl_Button* o, void* v);
-    static void cb_Save(Fl_Button* o, void* v);
+	static void cb_Save(Fl_Button* o, void* v);
 };
 
 #endif

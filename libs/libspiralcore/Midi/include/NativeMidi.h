@@ -6,7 +6,6 @@
 #include <memory>
 #include "ThreadCompatibility.h"
 #include "Compatibility.h"
-// As in MidiBackend.h: Xlib's Status macro set aside for the declarations.
 #ifdef Status
 #pragma push_macro("Status")
 #undef Status
@@ -60,9 +59,6 @@ inline bool ValidMidi(const MidiPacket &p)
 	unsigned size= MidiSize(p.Status);
 	return size && (size < 2 || p.Data1 < 128) && (size < 3 || p.Data2 < 128);
 }
-// Bytes in, fixed packets out, for transports that hand over a raw
-// stream: running status, one- or two-byte data, realtime messages
-// passed as they come, sysex and the other system messages dropped.
 class MidiByteStream
 {
 	unsigned char status, data[2];
@@ -70,7 +66,6 @@ class MidiByteStream
 	bool sysex;
 public:
 	MidiByteStream(): status(0), have(0), sysex(false) {}
-	// True when this byte completed a packet.
 	bool Push(unsigned char byte, MidiPacket &out)
 	{
 		if(byte >= 0xf8)

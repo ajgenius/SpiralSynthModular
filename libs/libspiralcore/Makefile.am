@@ -22,11 +22,6 @@ libspiralcore_la_SOURCES = \
     include/SpiralTime.h \
     src/Time.cpp
 libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 3:0:0
-# Spumoni is linked in whole as a convenience library. It has to arrive as a
-# library and not as a trailing linker flag: libtool emits LDFLAGS after the
-# crt epilogue, which puts the archive's .eh_frame past crtend's __FRAME_END__
-# and leaves the unwinder registering a frame table it cannot parse. musl's
-# loader segfaults in frame_dummy before main; glibc tolerates it silently.
 libspiralcore_la_LIBADD = $(SFLIBS) $(JACK_LIBS) -lm \
 	$(top_builddir)/libs/libSpumoni/libSpumoni.la \
 	$(ZLIB_LIBS)
@@ -59,7 +54,6 @@ libspiralcore_la_SOURCES += Plugin/include/BackendPath.h Plugin/src/BackendPath.
 libspiralcore_la_SOURCES += Plugin/include/DeviceClassRegistry.h Plugin/src/DeviceClassRegistry.cpp Plugin/include/EditorClassRegistry.h Plugin/src/EditorClassRegistry.cpp
 libspiralcore_la_SOURCES += Plugin/include/SpiralPlugin.h Plugin/src/SpiralPlugin.cpp Audio/include/OutputAudioClient.h Audio/src/OutputAudioClient.cpp Audio/include/AudioTransportHub.h Audio/src/AudioTransportHub.cpp Plugin/include/OutputPlugin.h Plugin/src/OutputPlugin.cpp Plugin/include/OutputIcon.xpm Plugin/include/EventInputPlugin.h Plugin/src/EventInputPlugin.cpp Plugin/include/EventInputIcon.xpm Plugin/include/SubPatchDevice.h Plugin/src/SubPatchDevice.cpp Plugin/include/VoicePool.h Plugin/src/VoicePool.cpp
 if BUILD_LADSPA
-# The LADSPA device (id 22) and its catalog, built in like Output.
 libspiralcore_la_SOURCES += Plugin/include/LADSPAInfo.h Plugin/src/LADSPAInfo.cpp \
 	Plugin/include/LADSPAPlugin.h Plugin/src/LADSPAPlugin.cpp Plugin/src/LADSPAPanel.cpp
 AM_CPPFLAGS += $(LADSPA_CFLAGS)
@@ -83,8 +77,6 @@ native_midi_test_LDADD = libspiralcore.la
 check_PROGRAMS += audio-backend-test
 audio_backend_test_SOURCES = Audio/tests/audio-backend.cpp
 audio_backend_test_LDADD = libspiralcore.la
-# A panel file's bindings and handlers, against the fixtures shared with the
-# private tree (Foundation/libSSMUI/tests there): both trees must agree.
 check_PROGRAMS += value-rule-test handlers-test
 value_rule_test_SOURCES = Data/tests/value-rule.cpp
 value_rule_test_LDADD = libspiralcore.la
@@ -106,9 +98,6 @@ sub_Probe_la_SOURCES = Plugin/tests/plugin-manager/probe.cpp
 sub_Probe_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
 stranger_Probe_la_SOURCES = Plugin/tests/plugin-manager/stranger.cpp
 stranger_Probe_la_LDFLAGS = -module -avoid-version -shared -rpath /nowhere
-# The test root: probe/probe_Probe.so, probe/sub/sub_Probe.so, probe/stranger_Probe.so,
-# probe/variant_Native.so (the probe again, under a host-tagged name)
-# The plugin manifest the host reads before opening a module.
 check_PROGRAMS += manifest-test
 manifest_test_SOURCES = Plugin/tests/manifest.cpp
 manifest_test_LDADD = libspiralcore.la
@@ -132,8 +121,6 @@ check_PROGRAMS += ring-buffer-test
 ring_buffer_test_SOURCES = tests/ring-buffer.cpp
 ring_buffer_test_LDADD = libspiralcore.la
 
-# The description: a device's state as positional tokens, the form the
-# files have always been written in.
 libspiralcore_la_SOURCES += File/include/Description.h File/src/Description.cpp
 libspiralcore_la_SOURCES += Data/include/DataSource.h Data/src/DataSource.cpp \
 	Data/include/Binding.h Data/src/Binding.cpp \
@@ -151,8 +138,6 @@ check_PROGRAMS += project-document-test
 project_document_test_SOURCES = File/tests/project-document.cpp
 project_document_test_LDADD = libspiralcore.la
 
-# The positional contract and its reader. The contract is data; Spumoni's
-# JSON reader loads it.
 schemadir = $(pkgdatadir)/schemas
 dist_schema_DATA = \
     File/schemas/SpiralPositionalText-0.2.x.json \
@@ -194,7 +179,6 @@ endif
 
 EXTRA_DIST += Audio/tests/jack-live.cpp Audio/tests/analyze-loopback.py Audio/tests/LOOPBACK.md
 
-# Build these explicitly; live routing and microphone tests are opt-in.
 if HAVE_JACK_CLIENT
 EXTRA_PROGRAMS = jack-alignment-live native-loopback
 jack_alignment_live_SOURCES = Audio/tests/jack-alignment-live.cpp

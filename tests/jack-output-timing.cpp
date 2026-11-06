@@ -1,4 +1,3 @@
-// Check callback output continuity while the real host polls many controls.
 #include "SpiralSynthModular.h"
 #include "AudioTransportHub.h"
 #include "SpiralInfo.h"
@@ -75,7 +74,6 @@ int main(int argc, char **argv)
 	pthread_t thread;
 	assert(!pthread_create(&thread,NULL,Host::Run,&host));
 	std::stringstream patch;
-	// Many idle control channels stress polling without adding DSP cost.
 	patch << "SpiralSynthModular File Ver 4\n0 0 700 600 0 0 0 0\nSectionList 130\n"
 		"Device 0 Plugin 3\n20 20 10 Controller 0 0 0\n5 1\n4 Test -1 1 0.25\n"
 		"Device 1 Plugin 0\n200 20 6 Output 0 0 0\n\n";
@@ -87,9 +85,6 @@ int main(int argc, char **argv)
 	usleep(300000);
 	observer.ConnectInput(0,std::string(name)+":Out0");
 	observer.ConnectInput(1,std::string(name)+":Out1");
-	// Complete native format negotiation through the normal GUI/control path
-	// before measuring steady playback. A new presentation epoch deliberately
-	// primes its lookahead with silence; that is separate from steady underruns.
 	for (unsigned n = 0; n < 100; ++n)
 	{
 		host.Synth.UpdatePluginGUIs();
@@ -111,7 +106,6 @@ int main(int argc, char **argv)
 	printf("JACK constant output: %u signal blocks, %u silent gaps\n",received,gaps);
 	assert(received>100 && gaps==0);
 
-	// The engine frame is jack's transport frame: locate moves it, start rolls it.
 	AudioTransportHub *hub=AudioTransportHub::Get();
 	host.Synth.FreezeAll(); hub->Stop(); host.Synth.ThawAll(); usleep(100000);
 	host.Synth.FreezeAll(); hub->Locate(100000); host.Synth.ThawAll(); usleep(100000);

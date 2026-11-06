@@ -1,4 +1,3 @@
-// Exercise the client adapter without property-state or SSMJ dependencies.
 #include "SpiralPlugin.h"
 #include "JackPlugin.h"
 #include "OutputPlugin.h"
@@ -13,8 +12,6 @@
 struct Engine
 {
 	pthread_mutex_t Gate;
-	// The engine thread: one graph pass per period, paced by the hub's
-	// stream or the platform clock when only the Jack device is open.
 	SpiralPlugin *Plugin;
 	volatile int Stop;
 	static void *Run(void *context)
@@ -73,12 +70,9 @@ int main(int argc, char **argv)
 {
 	if (argc!=2 && argc!=3) return 77;
 
-	// "out" exercises the Output device on jack; "half" runs the Jack
-	// device with a host period half of jack's, as a slave port must allow.
 	const bool output=argc==3 && std::string(argv[2])=="out";
 	const bool half=argc==3 && std::string(argv[2])=="half";
 	alarm(20);
-	// The Output device is built into the host; the Jack device is a module.
 	SpiralPlugin *(*create)()=OutputPlugin::Class().Create;
 	if (!output)
 	{
@@ -120,7 +114,7 @@ int main(int argc, char **argv)
 		pthread_mutex_lock(&engine.Gate);
 		if (!output)
 		{
-		channel->Set("NumInputs",6); channel->Set("NumOutputs",10);   // the ports follow the counts
+		channel->Set("NumInputs",6); channel->Set("NumOutputs",10);
 		plugin->UpdateChannelHandler(); plugin->ExecuteCommands();
 		}
 
@@ -162,8 +156,6 @@ int main(int argc, char **argv)
 		pthread_mutex_lock(&engine.Gate);
 		if (!output)
 		{
-			// Native callbacks keep running through a control stall. After the
-			// new epoch has filled, capture must recover without a lasting lag.
 			for (unsigned n=0; n<2; ++n) received[n]->Set(0);
 
 			usleep(150000);

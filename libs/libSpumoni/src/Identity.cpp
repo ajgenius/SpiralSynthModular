@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Spumoni::Identity — see Identity.h. The bookkeeping and the UUID helpers
-// came out of Spumoni::File::Archive (ChatGPT / GROK originals) by way of
-// libSSMCore's ProjectIdentity.cpp.
 #include "Identity.h"
 
 #include <cstdio>

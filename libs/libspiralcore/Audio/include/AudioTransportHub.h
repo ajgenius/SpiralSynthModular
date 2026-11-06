@@ -27,8 +27,6 @@
 
 class AtomicClock;
 
-// A device that moves samples across the shared transport. The hub tells
-// it when the transport mode changes so it can report that to its GUI.
 class AudioEndpoint : public AudioDriver
 {
 public:
@@ -38,9 +36,6 @@ public:
 		{ if (ChangeBufferAndSampleRate) ChangeBufferAndSampleRate(frames, rate, m_Parent); }
 };
 
-// One engine timeline shared by Output and named JACK clients. Control and
-// engine access require the host cycle gate. Native callbacks touch only their
-// AudioStream; no device pointer is retained across an engine sleep.
 class AudioTransportHub
 {
 public:
@@ -48,8 +43,6 @@ public:
 
 	static AudioTransportHub *Get();
 
-	// The engine supplies its format even when no Output endpoint exists.
-	// Set or clear it before starting the engine, or while it is stopped.
 	void SetHost(const HostInfo *host);
 
 	void Attach(AudioEndpoint *endpoint, const HostInfo *host);
@@ -60,15 +53,12 @@ public:
 	OutputAudioClient *Transport() const { return OUTPUTCLIENT::Get(); }
 	bool IsCallbackDriven() const { return Transport()->IsCallbackDriven(); }
 	Mode GetMode() const { return m_Mode; }
-	// Periods the transport played as silence because the engine was late.
 	unsigned Underruns() const { return Transport()->Underruns(); }
 
 	void OpenMode(Mode mode);
 	void Close();
-	// Configure again from the host's current settings and reopen.
 	void Reconfigure();
 
-	// Control thread, representative only.
 	void Service();
 
 	void RegisterStream(Spiral::Core::AudioStream *stream);
@@ -76,17 +66,12 @@ public:
 	bool PreparePeriod();
 	bool PreparePeriod(double monotonicNow);
 	unsigned SleepMicroseconds() const;
-	// Convenience for single-threaded clients; the host uses PreparePeriod
-	// under its gate and sleeps afterwards using a copied scalar duration.
 	bool WaitPeriod();
 	void BeginPeriod();
 	void CommitPeriod();
 	const Spiral::Core::AudioStamp &PlaybackStamp() const { return m_Timeline.PlaybackStamp(); }
 	const Spiral::Core::AudioStamp &CaptureStamp() const { return m_Timeline.CaptureStamp(); }
 
-	// Engine position: the frame the period being rendered starts at.
-	// Slaved to the stream's transport when it has one (JACK), free
-	// running otherwise; start, stop and locate ride the same clock.
 	unsigned long Frame() const { return m_Timeline.Frame(); }
 	bool Rolling() const { return m_Timeline.Rolling(); }
 	void Start();

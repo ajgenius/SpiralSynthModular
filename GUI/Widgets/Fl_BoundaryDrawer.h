@@ -1,19 +1,5 @@
 // The boundary drawer: what a patch says about itself, and -- when the
 // subpatch work arrives here -- what a subpatch exposes. GPL-2.0-or-later.
-//
-// Chrome, like the menu strip and the toolbar: it sits OUTSIDE the canvas
-// scroll, so it cannot ride the canvas scroll, join canvas hit-testing, or
-// land in the canvas invalidation path. The host lays it out beside the
-// scroll and gives the scroll what is left.
-//
-// This is the private tree's Fl_BoundaryDrawer with the parts this tree has
-// no model for left out: one document for the project, no scopes to inherit
-// from, no boundary ports. The shape is kept so the two meet without a
-// translation step when those arrive.
-//
-// Colours come from the host: color() for the panel, selection_color() for
-// the rail, which is drawn like the toolbar's plastic buttons. The widget
-// knows nothing about where the host keeps its palette.
 #ifndef SSM_FL_BOUNDARYDRAWER_H
 #define SSM_FL_BOUNDARYDRAWER_H
 #include <FL/Fl_Group.H>
@@ -35,8 +21,6 @@ class SubPatchDevice;
 class Fl_BoundaryDrawer: public Fl_Group
 {
 public:
-	// The document fields the panel edits one per row. Credits are a list
-	// and are not one of these: they get their own section.
 	enum Field
 	{
 		FieldTitle,
@@ -52,9 +36,6 @@ public:
 	void draw();
 	int handle(int);
 
-	/* Point the panel at a document. The panel edits it in place and
-	   fires DocumentChanged after each edit; the host decides when that
-	   reaches a file. NULL unbinds: the panel goes blank. */
 	void Bind(Spiral::File::DocumentSection *document);
 	bool Bound() const;
 	bool ShowsDocument() const;
@@ -62,19 +43,10 @@ public:
 	void BindPorts(Fl_Canvas *canvas);
 	bool ShowsPorts() const;
 
-	/* The patch's MIDI page, beside what the patch says about itself: a
-	   tab at the top of the panel switches between them. The page is the
-	   host's, made with its hooks; the drawer shows it. With no page there
-	   are no tabs. */
 	void BindMidi(Fl_Group *page);
 	bool ShowsMidi() const;
 	void ShowMidi(bool on);
 
-	/* A vertical drag bar, like a GTK paned: drag the rail to set the
-	   panel width. The width is remembered for this process only, not
-	   written anywhere, so a new launch starts collapsed again.
-	   PanelShown is the document section actually on screen, which a
-	   collapsed drawer is not. */
 	bool Collapsed() const;
 	void SetCollapsed(bool collapsed);
 	bool PanelShown() const;
@@ -89,32 +61,19 @@ public:
 	void (*DocumentChanged)(void *);
 	void *DocumentChangedData;
 
-	/* The patch's own voice count, under what it says about itself, as
-	   the private tree's patch settings give it: zero takes the system's.
-	   The host says what the patch has and how many it plays;
-	   PatchVoicesChanged reports an edit. */
 	void SetPatchVoices(unsigned voices, unsigned plays);
 	void (*PatchVoicesChanged)(unsigned voices, void *);
 	void *PatchVoicesChangedData;
 
-	/* What the panel displays for a field. Empty when unbound. */
 	std::string FieldText(Field field) const;
 
-	/* Licence is a dropdown of known identifiers plus whatever is already
-	   stored. Bundle asks a save to drop the full text into the SSMP.
-	   False when this identifier has no text to inline. */
 	bool CanBundleLicense() const;
 	bool BundleLicenseText() const;
 	bool SetBundleLicenseText(bool on);
-	/* The full text the bundle would write, copyright line on top, in a
-	   window of its own. Nothing when the identifier has no text. */
 	void ShowLicenseText();
 
-	/* Write the field on the bound document. False when unbound. An
-	   empty value clears the field. */
 	bool Apply(Field field, const std::string &value);
 
-	/* Credits: one row per entry, name and role. */
 	size_t CreditRows() const;
 	bool SetCredit(size_t row, const std::string &name, const std::string &role);
 	bool AddCredit();
@@ -130,7 +89,6 @@ public:
 	bool MovePort(size_t fromRow, size_t toRow, std::string &error);
 	void DropPortRow(size_t fromRow, int y);
 
-	/* Re-read the bound document after it changed under the panel. */
 	void Refresh();
 
 private:
@@ -143,16 +101,10 @@ private:
 	int m_SplitW;
 	Fl_Group *m_DocumentSection;
 	Fl_Group *m_CreditSection;
-	/* One-line fields, title and copyright, with the field each edits. */
 	std::vector<Fl_Input *> m_Fields;
 	std::vector<Field> m_FieldKinds;
-	/* About is a paragraph: a wrapping, scrolling editor a few lines tall,
-	   applied when it loses focus. */
 	Fl_Text_Editor *m_About;
 	Fl_Text_Buffer *m_AboutBuffer;
-	/* Not an Fl_Input_Choice: FLTK 1.3's draws its own FL_UP_BOX and
-	   FL_DOWN_BOX whatever it is told, so it cannot be dressed like the
-	   rest of the panel. An input and a menu button side by side can. */
 	Fl_Input *m_License;
 	Fl_Menu_Button *m_LicenseMenu;
 	Fl_Check_Button *m_Bundle;

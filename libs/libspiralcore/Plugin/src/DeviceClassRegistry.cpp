@@ -59,7 +59,6 @@ DeviceClassRegistry *DeviceClassRegistry::Get()
 void DeviceClassRegistry::PackUpAndGoHome()
 {
 	if (!m_Singleton) return;
-	// Releases every module of this kind first.
 	PluginManager::Get()->UnregisterKind(m_Singleton);
 	delete m_Singleton;
 	m_Singleton = NULL;
@@ -102,8 +101,6 @@ unsigned DeviceClassRegistry::LoadBuiltins(const string &root)
 
 bool DeviceClassRegistry::Accept(void *entry, const string &path)
 {
-	// The loader holds the module; this is its handle counted once more
-	// while the old exports beside the entry are read.
 	void *handle = dlopen(path.c_str(), RTLD_NOW | RTLD_NOLOAD);
 	if (handle == NULL)
 	{
@@ -158,7 +155,6 @@ bool DeviceClassRegistry::Accept(void *entry, const string &path)
 		return false;
 	}
 
-	// A second module with this ID is not an error; it is just not kept.
 	return Register(device);
 }
 

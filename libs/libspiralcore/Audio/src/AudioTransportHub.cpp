@@ -185,8 +185,6 @@ void AudioTransportHub::Service()
 	if (m_Members.empty()) return;
 	if (m_Mode==NO_MODE) OpenMode(OUTPUT);
 
-	// Server shutdown removes the native ports without another audio callback.
-	// Keep the requested mode, but reopen only here on the control thread.
 	if ((!OUTPUTCLIENT::Get()->IsAttached() || OUTPUTCLIENT::Get()->Stream()->Failed()) &&
 		m_RequestedMode!=CLOSED && m_RequestedMode!=NO_MODE)
 	{

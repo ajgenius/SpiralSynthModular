@@ -1,8 +1,3 @@
-// Damage part of a widget so only that part is drawn again. A widget with
-// something drawn after it there (a later sibling, or one of a group that
-// holds it: another device box on the canvas) damages its window instead,
-// so whatever is on top is drawn again over it, in order, rather than the
-// widget alone on top.
 #ifndef FL_DAMAGEAREA_H
 #define FL_DAMAGEAREA_H
 
@@ -32,10 +27,6 @@ inline void Fl_DamageArea(Fl_Widget *w, int X, int Y, int W, int H)
 		w->damage(FL_DAMAGE_ALL, X, Y, W, H);
 }
 
-// Damage what a box-less widget is drawn on: the nearest group that draws a
-// box, over the widget, so that box and whatever else is there are drawn
-// again in order, the widget among them. FLTK damages the window there
-// instead, which draws everything in the window under it, every wire too.
 inline void Fl_DamageBehind(Fl_Widget *w)
 {
 	Fl_Widget *o = w->parent();

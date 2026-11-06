@@ -1,6 +1,3 @@
-// Spumoni::Package on its own: a toy application writes a package, reads it
-// back, adds a save point that keeps the first, carries extras forward, and
-// is refused a newer package format at the package level.
 #include "Package.h"
 #include "Folder.h"
 #include "MemoryFolder.h"
@@ -24,7 +21,6 @@ static int Fail(const std::string &why)
 	return 1;
 }
 
-// The toy application: one stamp, one file per branch.
 struct ToyApplication : Package::Application
 {
 	virtual void Describe(J &root, const Identity &) const
@@ -68,7 +64,6 @@ static int Story(const Container &container, const char *extension)
 		return Fail(error);
 	const std::string path = scratch.Root() + "/toy" + extension;
 
-	// First save: a fresh identity.
 	Identity identity;
 	identity.Begin();
 	identity.ActiveBranchName = "first";
@@ -78,7 +73,6 @@ static int Story(const Container &container, const char *extension)
 	if (!package.Write(path, identity, request, first, error))
 		return Fail("write: " + error);
 
-	// Read it back.
 	DiskFolder work;
 	Identity read;
 	std::string branchRoot;
@@ -96,18 +90,12 @@ static int Story(const Container &container, const char *extension)
 	std::string manifest;
 	if (!work.Read("toy.manifest.json", manifest, error))
 		return Fail(error);
-	// Ver 2 default: the package stamp reflects FormatVersion.
 	const std::string expectedStamp = std::string("\"package\": \"") + Package::Stamp() + "\"";
 	if (manifest.find(expectedStamp) == std::string::npos)
 		return Fail("manifest lacks the package stamp: " + manifest + " (expected " + expectedStamp + ")");
 	if (manifest.find("\"format\": \"Toy File Ver 1\"") == std::string::npos)
 		return Fail("manifest lacks the application stamp");
 
-	// Ver 2: exercise the package-wide content-addressed store.
-	// Stage a small asset via the workspace folder, promote it into the
-	// store (which lives under the workspace root "assets/"), remember the
-	// address, then remove the staging file so it does not become a normal
-	// per-branch extra.
 	std::string sharedAddr;
 	{
 		std::string assetRel = "_tmp_shared.bin";
@@ -127,12 +115,9 @@ static int Story(const Container &container, const char *extension)
 		work.RemoveEntry(assetRel);
 	}
 
-	// An extra file in the branch is carried forward by the next save;
-	// the payload file is not (the new payload replaces it).
 	if (!work.Write(branchRoot + "notes.txt", "kept", error))
 		return Fail(error);
 
-	// Second save point in the same package, preserving the first.
 	Identity second = read;
 	const std::string firstID = second.ActiveBranchID;
 	if (!second.Fork("second", error))
@@ -162,22 +147,16 @@ static int Story(const Container &container, const char *extension)
 	if (!work2.Read(Package::BranchRoot(firstID) + "toy.json", body, error) || body != "{\"toy\": 1}")
 		return Fail("first branch was not preserved");
 
-	// Ver 2: the shared asset written via the store on the previous workspace
-	// must survive the save and be retrievable from the reopened workspace.
 	if (!sharedAddr.empty())
 	{
 		Store *st = work2.GetStore();
 		if (!st)
 			return Fail("reopened workspace has no store");
-		// Explicitly confirm the package-root assets/ tree (outside any branch)
-		// survived the roundtrip and is visible to the workspace folder.
 		if (!work2.IsDirectory("assets") || !work2.IsDirectory("assets/sha256"))
 			return Fail("package root assets/ tree not present after reopen");
 		std::string e2;
 		if (!st->Verify(sharedAddr, e2))
 			return Fail("Verify shared asset after reopen: " + e2);
-		// Prove CopyFile produces a usable independent file with the right bytes.
-		// CopyFile refuses to overwrite, so hand it a path that does not exist yet.
 		std::string vpath;
 		if (!work2.PathFor("", vpath, e2))
 			return Fail("PathFor workspace root: " + e2);
@@ -202,7 +181,6 @@ static int Story(const Container &container, const char *extension)
 			return Fail("shared asset bytes did not survive package roundtrip");
 	}
 
-	// Opening the first save point by id.
 	DiskFolder work3;
 	Identity read3;
 	std::string root3;
@@ -211,13 +189,10 @@ static int Story(const Container &container, const char *extension)
 	if (read3.ActiveBranchID != firstID || read3.ActiveBranchName != "first")
 		return Fail("open by id selected the wrong branch");
 
-	// A newer package format is refused at the package level, whatever the
-	// application stamp says.
 	{
 		std::string text;
 		if (!work2.Read("toy.manifest.json", text, error))
 			return Fail(error);
-		// Forge a stamp from a future version using the live FormatVersion.
 		long next = Package::FormatVersion + 1;
 		std::string oldStamp = Package::Stamp(Package::FormatVersion);
 		std::string newStamp = Package::Stamp(next);
@@ -233,7 +208,6 @@ static int Story(const Container &container, const char *extension)
 			return Fail("newer package format must be refused with a package reason: " + error);
 	}
 
-	// Rewriting only the manifest keeps the branches byte for byte.
 	read2.ActiveBranchName = "renamed";
 	Branch *active = read2.Find(read2.ActiveBranchID);
 	if (active) active->Name = "renamed";
@@ -249,7 +223,6 @@ static int Story(const Container &container, const char *extension)
 	if (!work4.Read(Package::BranchRoot(firstID) + "toy.json", body, error) || body != "{\"toy\": 1}")
 		return Fail("manifest rewrite lost a branch");
 
-	// A released folder is removed only through its own prefix.
 	std::string released = work4.Release();
 	std::string wrong = released;
 	DiskFolder::RemoveReleased(wrong, "some-other-prefix-");
@@ -263,8 +236,6 @@ static int Story(const Container &container, const char *extension)
 	return 0;
 }
 
-// The same package opened into memory: nothing on disk until PathFor asks,
-// and then only that one entry, in a scratch the folder removes with itself.
 static int MemoryStory()
 {
 	std::string error;
@@ -305,7 +276,6 @@ static int MemoryStory()
 	if (work.Bytes() == 0)
 		return Fail("Bytes() should count the tree");
 
-	// Streaming in and out of memory.
 	FILE *out = work.OpenWrite(branchRoot + "big.bin", error);
 	if (!out) return Fail(error);
 	for (int i = 0; i < 100000; ++i) std::fputc('x', out);
@@ -319,7 +289,6 @@ static int MemoryStory()
 		return Fail("streamed read");
 	std::fclose(in);
 
-	// Nothing on disk yet; PathFor puts exactly one entry there.
 	std::string realPath;
 	if (!work.PathFor(branchRoot + "toy.json", realPath, error))
 		return Fail("PathFor: " + error);
@@ -335,8 +304,6 @@ static int MemoryStory()
 	if (Path::IsFile(scratchRoot + "/toy.manifest.json") || Path::IsFile(scratchRoot + "/" + branchRoot + "big.bin"))
 		return Fail("other entries must stay in memory");
 
-	// A save point written from the memory workspace preserves the first
-	// branch and carries an extra forward, all from memory.
 	if (!work.Write(branchRoot + "notes.txt", "kept", error))
 		return Fail(error);
 	Identity second = read;
@@ -360,8 +327,6 @@ static int MemoryStory()
 	if (!work2.Read(Package::BranchRoot(firstID) + "big.bin", body, error) || body.size() != 100000)
 		return Fail("first branch from memory was not preserved");
 
-	// Removing an entry drops its materialised copy; removing the folder
-	// drops the scratch.
 	work.RemoveEntry(branchRoot + "toy.json");
 	if (Path::IsFile(realPath))
 		return Fail("RemoveEntry must drop the materialised copy");

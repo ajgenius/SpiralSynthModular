@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Spumoni::JSON reader: what the tree relies on. These are the cases the
-// yajl reader it replaced was held to.
 #include "JSON.h"
 #include <cassert>
 #include <climits>
@@ -74,7 +72,7 @@ int main()
 	for (size_t i = 0; i < sizeof(bad)/sizeof(*bad); ++i) invalid(bad[i]);
 	invalid(std::string("{}\0[]", 5));
 	invalid(std::string("\"\xFF\""));
-	invalid(std::string("\"\xC0\x80\""));   // overlong NUL
+	invalid(std::string("\"\xC0\x80\""));
 	invalid("\"\\ud800\"");
 	invalid("\"\\udc00\"");
 	invalid("\"\\ud800x\"");
@@ -85,7 +83,7 @@ int main()
 	assert(root->Get("a")->Integer(n) && n == 2);
 
 	root.reset(ParseJSONText("{\"Name\":1}"));
-	assert(root->Get("Name") && !root->Get("name"));   // keys are what they are
+	assert(root->Get("Name") && !root->Get("name"));
 	root.reset(ParseJSONText(std::string(64, '[') + "0" + std::string(64, ']')));
 	assert(root.get());
 	invalid(std::string(65, '[') + "0" + std::string(65, ']'));
@@ -93,7 +91,6 @@ int main()
 	root.reset(ParseJSONText("0" + std::string(16 * 1024 * 1024 - 1, ' ')));
 	assert(root.get());
 
-	// What is written reads back the same.
 	root.reset(ParseJSONText("{\"b\":[1,2.5,\"x\\n\"],\"a\":{\"t\":true,\"n\":null}}"));
 	std::string text = root->Stringify(false);
 	assert(text == "{\"a\":{\"n\":null,\"t\":true},\"b\":[1,2.5,\"x\\n\"]}");

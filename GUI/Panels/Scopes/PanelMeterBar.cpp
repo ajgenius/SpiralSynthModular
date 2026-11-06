@@ -106,7 +106,6 @@ namespace SpiralPanels
 			if (datum > m_Max) m_Max = datum;
 		}
 		m_Datum = datum;
-		// Refreshed every tick: drawn again only when the reading moves.
 		if (m_Meter->value() != (float)datum)
 			m_Meter->value(datum);
 	}

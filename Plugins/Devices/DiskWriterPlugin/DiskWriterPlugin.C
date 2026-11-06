@@ -191,7 +191,6 @@ void DiskWriterPlugin::Apply(Spiral::Core::Description::Reader &r)
 	int Version;
 
 	// originally DiskWriter had NO streaming code whatsover
-	// so an old patch has no state for it at all
 	if (r.More())
 	{
 		r.Value(Version);

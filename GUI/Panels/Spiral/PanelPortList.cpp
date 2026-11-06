@@ -132,7 +132,6 @@ namespace SpiralPanels
 			return;
 		std::vector<unsigned char> bytes;
 		m_Panel.Source()->ReadBytes(column.Connections, bytes);
-		// Refreshed every tick: shown again only when the connections change.
 		if (bytes == column.Shown && !column.Shown.empty())
 			return;
 		column.Shown = bytes;

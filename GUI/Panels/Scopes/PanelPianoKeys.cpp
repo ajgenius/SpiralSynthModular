@@ -41,12 +41,9 @@ namespace SpiralPanels
 		return n == 1 || n == 3 || n == 6 || n == 8 || n == 10;
 	}
 
-	// The old Keyboard editor's computer keys, in SoundTracker order: the bottom row
-	// is the chosen octave, the top row the octave above.
 	static const char ComputerKeys[] = "zsxdcvgbhnjmq2w3er5t6y7ui9o0p[";
 	static const int ComputerKeyCount = sizeof(ComputerKeys) - 1;
 
-	// The keys' group, which hands its events to the control so it can play the computer keyboard.
 	class PianoKeysGroup: public Fl_Group
 	{
 	public:
@@ -59,8 +56,6 @@ namespace SpiralPanels
 			return m_Owner.Typed(event) || used;
 		}
 
-		// A white key drawn again alone covers the black keys over its
-		// edges, which come after it: draw those again on top of it.
 		virtual void draw()
 		{
 			if (!(damage() & ~FL_DAMAGE_CHILD))
@@ -106,8 +101,6 @@ namespace SpiralPanels
 	{
 		const int keys = (int)NumberOf(node.Get("note_count"), 60);
 		const int KeyWidth = (int)NumberOf(node.Get("white_key_width"), 10);
-		// Where a document gives them, black keys of their own size, set into
-		// the white key before them, as in the private tree.
 		const int BlackWidth = (int)NumberOf(node.Get("black_key_width"), KeyWidth);
 		const int BlackHeight = (int)NumberOf(node.Get("black_key_height"), m_H * 3 / 5);
 		const int BlackOffset = (int)NumberOf(node.Get("black_key_offset"), KeyWidth / 2);
@@ -201,22 +194,16 @@ namespace SpiralPanels
 		return index >= 0 && index < (int)m_Keys.size() ? m_Keys[index] : NULL;
 	}
 
-	// The keys' group, or a key clicked inside it, has the keyboard.
 	bool PanelPianoKeys::Focused() const
 	{
 		return m_ComputerKeys && Fl::focus() && Fl::focus()->inside(m_Group);
 	}
 
-	// The last note the computer keys reach: two octaves and a fourth up, or
-	// the top key, which the keys past it share.
 	int PanelPianoKeys::LastMapped() const
 	{
 		return std::min(m_First + (int)m_Keys.size() - 1, m_Octave * 12 + ComputerKeyCount - 1);
 	}
 
-	// While the keys have the computer keyboard, as in the private tree's
-	// Keyboard: the keys it plays are tinted, and framed and lettered by
-	// DrawOverlay, and the status line says which octaves they are.
 	void PanelPianoKeys::RefreshFocus()
 	{
 		const bool focused = Focused();
@@ -266,7 +253,6 @@ namespace SpiralPanels
 		fl_rect(from->x() + 1, m_Group->y() + 1, to->x() + to->w() - from->x() - 2, m_Group->h() - 2);
 		fl_line_style(0);
 
-		// Each key's computer key; the top key, shared by the keys past it, is marked +.
 		for (int i = 0; i < ComputerKeyCount; ++i)
 		{
 			const int note = first + i;
@@ -283,7 +269,6 @@ namespace SpiralPanels
 		}
 	}
 
-	// The chosen octave scrolled to the left of the view.
 	void PanelPianoKeys::ShowOctave()
 	{
 		Fl_VirtualScrollArea *area = dynamic_cast<Fl_VirtualScrollArea *>(m_Group->parent());
@@ -323,7 +308,6 @@ namespace SpiralPanels
 		switch (event)
 		{
 			case FL_ENTER:
-				// Hovering takes the keys without sounding a note, unless a text field is being edited.
 				if (!dynamic_cast<Fl_Input_ *>(Fl::focus()))
 					Fl::focus(m_Group);
 				RefreshFocus();
@@ -361,7 +345,6 @@ namespace SpiralPanels
 		if (!found)
 			return false;
 
-		// The keyboard repeats a held key, which must not play it again.
 		const int index = (int)(found - ComputerKeys);
 		if (event == FL_KEYDOWN && m_Held[index] < 0)
 		{

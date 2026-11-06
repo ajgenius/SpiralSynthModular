@@ -1,11 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// The unchanged MidiPlugin over a backend from the registry. The midi
-// modules are loaded from the plugin root like the host does, the
-// preference names the backend, and the plugin's Note and Trigger
-// outputs follow the packets the backend delivers.
-//   midi-plugin-test <pluginroot>            dummy: loads, runs, silent
-//   midi-plugin-test <pluginroot> coremidi   live: a CoreMIDI client
-//                                            plays into "SpiralSynth"
 #include "SpiralSynthModular.h"
 #include "MidiBackend.h"
 #include "Midi.h"
@@ -77,7 +70,6 @@ int main(int argc, char **argv)
 
 	assert(MidiBackendRegistry::Get()->LoadModules(root) >= (backend == "dummy" ? 0u : 1u));
 	assert(MidiBackendRegistry::Get()->Find(backend));
-	// What the host does with the preference, before any plugin exists.
 	MidiDevice::SetBackendName(backend);
 
 	void *module = dlopen((root + "dsp/MidiPlugin/MidiPlugin_DSP.so").c_str(), RTLD_NOW|RTLD_GLOBAL);
@@ -91,9 +83,6 @@ int main(int argc, char **argv)
 	SpiralPlugin *plugin = create();
 	plugin->Initialise(&info);
 	assert(MidiDevice::Get() && MidiDevice::Get()->GetBackendName() == backend);
-	// The backend's worker opens its transport on its own time; only it
-	// touches the MIDI API until then. Its first Poll after connecting
-	// is a reset, which this Execute absorbs.
 	for (int n = 0; n < 300 && MidiDevice::Get()->GetStatus() == "Starting MIDI"; ++n) usleep(10000);
 	printf("midi plugin: %s\n", MidiDevice::Get()->GetStatus().c_str());
 	plugin->Execute();

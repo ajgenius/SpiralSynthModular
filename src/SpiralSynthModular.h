@@ -53,14 +53,6 @@ using Spiral::Core::ChannelHandler;
 
 const static string VER_STRING = PACKAGE_VERSION;
 
-// The chrome is laid out by hand rather than by FLTK's resizable, because the
-// menu strip comes and goes and the toolbar must keep its height while the
-// canvas takes the rest. FLTK only tells a widget it was resized, so the
-// window passes that on and the host re-runs its layout; without this the
-// bars keep whatever width the window first opened at.
-//
-// A hook rather than a call into SynthModular: the window is declared before
-// it, and this is the idiom the canvas and the device GUIs already use.
 class SpiralWindow : public Fl_Double_Window
 {
 public:
@@ -70,7 +62,9 @@ public:
 	void resize(int X, int Y, int W, int H)
 	{
 		Fl_Double_Window::resize(X, Y, W, H);
-		if (Relayout) Relayout(RelayoutData);
+
+		if (Relayout)
+			Relayout(RelayoutData);
 	}
 
 	void (*Relayout)(void *);
@@ -106,7 +100,6 @@ public:
 	virtual void draw() { draw_label(); }
 };
 
-// The devices a merge brings in: each one's ID in the file, and its new one.
 class DeviceGroup
 {
 public:
@@ -128,17 +121,10 @@ public:
 	void ClearUp(bool synchronize = true);
 	void UpdateHostInfo();
 	void UpdatePluginGUIs();
-	// The options panel applies the view options through here. Nothing on this
-	// path is persisted yet.
 	void ApplyViewOptions();
-	// The in-window menu strip hides like a toolbar: the chrome below it moves
-	// up into its row, so nothing is left behind. The drawer beside the canvas
-	// is chrome too, and the canvas scroll takes what the two leave.
 	void LayoutChrome();
 	void LoadPatch(const char *fn, const char *branchId = NULL);
 	void MergePatch(const char *fn);
-	// A patch file dropped on the patch, or handed over by the desktop:
-	// opened into an empty patch, else merged in or opened in its place.
 	void OpenDropped(const string &path);
 	void Apply(const Spiral::Core::PatchDescription &patch, const string &sidecars, bool merge = false);
 	bool ApplyPage(const Spiral::Core::PatchDescription &patch, const string &sidecars, bool merge, int page,
@@ -198,28 +184,14 @@ public:
 	bool IsFrozen() { return m_Frozen; }
 
 	iostream &StreamPatchIn(iostream &s, bool merge, const string &sidecars = string());
-	// Menu items that are only worth offering when there is something for
-	// them to act on. Called from the GUI loop on the main thread, and it
-	// compares against what it last set rather than rewriting the menus
-	// every pass.
 	void RefreshMenuState();
 
-	// The patch's MIDI map: the devices it lists by patch id and the controls
-	// bound on each, saved with the patch.
 	Spiral::Core::MidiMap &MidiMap() { return m_MidiMap; }
-	// The panel control a binding names; NULL while there is no such device,
-	// panel or control.
 	SpiralPanels::PanelControl *MidiControl(const string &device, const string &control);
-	// The next control change the patch hears goes to learned, with its
-	// channel from 1 to 16 and its number, and moves nothing. Once only;
-	// NULL stops listening.
 	void LearnMidi(void (*learned)(int channel, int controller, void *data), void *data);
-	// Drains the patch's MIDI input and moves the controls bound to it. On
-	// the GUI loop, because a control is moved as the pointer moves it.
 	void ServiceMidiInput();
+
 private:
-
-
 	DeviceWin* NewDeviceWin(int n, int x, int y);
 	DeviceWin* NewComment(int n, int x, int y);
 
@@ -231,76 +203,55 @@ private:
 	HostInfo m_Info;
 	bool m_ResetingAudioThread, m_HostNeedsUpdate, m_Frozen;
 
-
 	static DeviceGUIInfo BuildDeviceGUIInfo(PluginInfo &PInfo);
 
 	// currently static, to allow the callback
 	// cb_UpdatePluginInfo to access the map.
 	static map<int,DeviceWin*> m_DeviceWinMap;
 
-        int m_NextID;
-	// Each device in a voice pool, and the pool it is in.
+	int m_NextID;
 	map<int, VoicePool *> m_VoicePools;
 	unsigned m_VoiceTopology;
 	string m_Sidecars;
-	// The patch's own voice count, as the private tree saves it, zero for
-	// one; its devices have it, unless a subpatch around one gives its own.
 	unsigned m_PatchVoices;
 	VoicePool m_PatchPool;
-	// The pools are built again at the next look, the count having changed.
 	bool m_VoicesStale;
 	void SetPatchVoices(unsigned voices);
 	static void cb_PatchVoices(unsigned voices, void *data);
 	static bool m_CallbackUpdateMode;
 	string m_FilePath, m_MergeFilePath, m_BranchID;
 	unsigned m_SavePointCount;
-	// What the open patch says about itself. Read from a project when it
-	// is opened, edited in the drawer, written back when it is saved; a
-	// legacy patch or a new one carries an empty document until it is
-	// saved as a project.
 	Spiral::File::DocumentSection m_Document;
 	Spiral::Core::MidiMap m_MidiMap;
 	void (*m_MidiLearn)(int, int, void *);
 	void *m_MidiLearnData;
-	// The drawer's MIDI page, and the device whose controls are being
-	// picked on the canvas, -1 while none is. A device the pick opened is
-	// closed again after.
 	Fl_MidiBindings *m_MidiPage;
 	int m_PickDevice;
 	bool m_PickOpened;
 	void PickMidiDevice();
 	void PickMidiControl(int id);
 	void StopMidiPick();
-	// Every device the patch being applied placed, on any page, by its
-	// patch id: the names its MIDI map uses.
 	std::map<std::string, int> m_AppliedIds;
 	bool m_MenuStateKnown, m_MenuSelection, m_MenuPaste, m_MenuSavePoints;
 	bool m_MenuPackage;
 
 	// Main GUI stuff
 	void CreateGUI (int xoff=0, int yoff=0, const char *name="");
-	// The macOS system menu bar and the in-window strip each hold their own
-	// items - FLTK inserts its own Window menu into the system bar's array, so
-	// the two cannot share one - and every menu edit goes to both.
 	void MenuAdd(const string &path, Fl_Callback *cb, void *data, int flags);
 	void MenuRelabel(const string &oldLabel, const string &newLabel);
 	void MenuEnable(const string &label, bool on);
 	void MenuDropPlaceholders();
-        Fl_Menu_Bar *m_MainMenu;
-        // Created on macOS only: elsewhere Fl_Sys_Menu_Bar is another in-window
-        // bar, and a second strip is not what it is for.
-        Fl_Sys_Menu_Bar *m_SysMenu;
-        bool             m_WantChrome;
-        Fl_Pack *m_Topbar, *m_ToolbarPanel, *m_Toolbar;
-        Fl_Group *m_GroupFiller;
+	Fl_Menu_Bar *m_MainMenu;
+	Fl_Sys_Menu_Bar *m_SysMenu;
+	bool             m_WantChrome;
+	Fl_Pack *m_Topbar, *m_ToolbarPanel, *m_Toolbar;
+	Fl_Group *m_GroupFiller;
 	Fl_Button *m_Load, *m_Save, *m_New, *m_Options, *m_NewComment;
 	Fl_Pack *m_PlayResetGroup;
 	Fl_Button *m_PlayPause, *m_Reset;
-        Fl_Tabs         *m_GroupTab;
+	Fl_Tabs         *m_GroupTab;
 	Fl_Canvas 	*m_Canvas;
 	Fl_Scroll	*m_CanvasScroll;
-	// Chrome beside the canvas scroll, not inside it: the scroll gets
-	// what the drawer leaves.
 	Fl_BoundaryDrawer *m_Drawer;
 	Fl_Breadcrumb *m_Breadcrumb;
 	map<string,Fl_Pack*> m_PluginGroupMap;
@@ -310,23 +261,23 @@ private:
 	ChannelHandler m_CH; // used for threadsafe communication
 	DeviceGroup	m_Copied;
 	Spiral::Core::PatchDescription m_CopiedPatch;
-	string m_CopiedFrom; // the file the copy was made in, for its samplers' files
+	string m_CopiedFrom;
 
 	inline void cb_NewComment_i(Fl_Button* o, void* v);
 	static void cb_NewComment(Fl_Button* o, void* v);
-        // File menu - and associated buttons, etc.
-        inline void cb_New_i (Fl_Widget *o, void *v);
+	// File menu - and associated buttons, etc.
+	inline void cb_New_i (Fl_Widget *o, void *v);
 	static void cb_New (Fl_Widget *o, void *v);
 	inline void cb_Load_i (Fl_Widget *o, void *v);
 	static void cb_Load (Fl_Widget *o, void *v);
-        void ChooseAndLoadPatch(const char *directory);
-        static void cb_Examples(Fl_Widget *o, void *v);
+	void ChooseAndLoadPatch(const char *directory);
+	static void cb_Examples(Fl_Widget *o, void *v);
 	inline void cb_Save_i (Fl_Widget *o, void *v);
 	static void cb_Save (Fl_Widget *o, void *v);
-        inline void cb_SaveAs_i (Fl_Widget *o, void *v);
+	inline void cb_SaveAs_i (Fl_Widget *o, void *v);
 	static void cb_SaveAs (Fl_Widget *o, void *v);
 	void SaveBranch(bool ask = true);
-        inline void cb_SavePoints_i (Fl_Widget *o, void *v);
+	inline void cb_SavePoints_i (Fl_Widget *o, void *v);
 	static void cb_SavePoints (Fl_Widget *o, void *v);
 	inline void cb_Merge_i (Fl_Widget *o, void *v);
 	static void cb_Merge (Fl_Widget *o, void *v);
@@ -335,7 +286,7 @@ private:
 	static void cb_ImportBranch (Fl_Widget *o, void *v);
 	inline void cb_Close_i (Fl_Widget *o, void *v);
 	static void cb_Close (Fl_Widget *o, void *v);
-        // Edit menu
+	// Edit menu
 	inline void cb_Cut_i (Fl_Widget *o, void *v);
 	static void cb_Cut (Fl_Widget *o, void *v);
 	inline void cb_Copy_i (Fl_Widget *o, void *v);
@@ -345,22 +296,15 @@ private:
 	static void cb_PasteAsSubPatch (Fl_Widget *o, void *v);
 	inline void cb_Delete_i (Fl_Widget *o, void *v);
 	static void cb_Delete (Fl_Widget *o, void *v);
-        inline void cb_Options_i (Fl_Widget *o, void *v);
+	inline void cb_Options_i (Fl_Widget *o, void *v);
 	static void cb_Options (Fl_Widget *o, void *v);
-	// Not an Fl_Callback: the window hands back the host it was given,
-	// there being no widget whose user_data would carry it.
 	static void cb_Relayout (void *v);
-	// The drawer's rail was dragged: the canvas has to give or take the
-	// width. Same shape as cb_Relayout, for the same reason.
 	static void cb_DrawerCollapse (void *v);
 	static void cb_AddEvents (void *v);
-	// Canvas popup: open the drawer on the patch's own entry.
 	inline void cb_AboutPatch_i (Fl_Widget *o, void *v);
 	static void cb_AboutPatch (Fl_Widget *o, void *v);
-	// View menu: open the drawer on the MIDI page.
 	inline void cb_MidiBindings_i (Fl_Widget *o, void *v);
 	static void cb_MidiBindings (Fl_Widget *o, void *v);
-	// The MIDI page's hooks, and the canvas picks it starts.
 	static std::string cb_MidiDeviceName (const std::string &device, void *v);
 	static void cb_PickMidiDevice (void *v);
 	static void cb_PickMidiControl (const std::string &device, void *v);
@@ -373,24 +317,22 @@ private:
 	static void cb_Group (Fl_Widget *o, void *v);
 	static void cb_Ungroup (Fl_Widget *o, void *v);
 	static void cb_PageShown (Fl_Widget *o, void *v);
-        // Help menu
-        inline void cb_About_i (Fl_Widget *o, void *v);
+	inline void cb_About_i (Fl_Widget *o, void *v);
 	static void cb_About (Fl_Widget *o, void *v);
 	static void cb_CloseAbout (Fl_Widget *o, void *v);
-        // View menu
-        inline void cb_CenterPatch_i (Fl_Widget *o, void *v);
+	inline void cb_CenterPatch_i (Fl_Widget *o, void *v);
 	static void cb_CenterPatch (Fl_Widget *o, void *v);
-        // Plugin Menu
-        inline void cb_NewDevice_i (Fl_Button *o, void *v);
+	// Plugin Menu
+	inline void cb_NewDevice_i (Fl_Button *o, void *v);
 	static void cb_NewDevice (Fl_Button *o, void *v);
 	inline void cb_NewDeviceFromMenu_i (Fl_Widget *o, void *v);
 	static void cb_NewDeviceFromMenu (Fl_Widget *o, void *v);
 	inline void cb_NewDeviceFromCanvasMenu_i (Fl_Canvas *o, void *v);
 	static void cb_NewDeviceFromCanvasMenu (Fl_Canvas *o, void *v);
-        // Audio Menu
-        inline void cb_PlayPause_i (Fl_Widget *o, void *v);
+	// Audio Menu
+	inline void cb_PlayPause_i (Fl_Widget *o, void *v);
 	static void cb_PlayPause (Fl_Widget *o, void *v);
-        inline void cb_Reset_i (Fl_Widget *o, void *v);
+	inline void cb_Reset_i (Fl_Widget *o, void *v);
 	static void cb_Reset (Fl_Widget *o, void *v);
 
 	inline void cb_Connection_i(Fl_Canvas* o, void* v);
@@ -402,7 +344,7 @@ private:
 	static void cb_GroupTab(Fl_Tabs* o, void* v);
 	static void cb_Update(void* o, bool Mode);
 	static void cb_UpdatePluginInfo(int ID, void *PluginInfo);
-        void cb_ChangeBufferAndSampleRate_i(long int NewBufferSize, long int NewSamplerate);
+	void cb_ChangeBufferAndSampleRate_i(long int NewBufferSize, long int NewSamplerate);
 	static void cb_ChangeBufferAndSampleRate(long unsigned int NewBufferSize, long unsigned int NewSamplerate, void *o)
 	{
 		((SynthModular*)o)->cb_ChangeBufferAndSampleRate_i(NewBufferSize, NewSamplerate);

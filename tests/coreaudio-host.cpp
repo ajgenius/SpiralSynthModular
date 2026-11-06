@@ -1,4 +1,3 @@
-// Exercise backend changes through the real host control and callback loops.
 #include "SpiralSynthModular.h"
 #include "AudioTransportHub.h"
 #include "SpiralInfo.h"
@@ -67,7 +66,6 @@ int main(int argc, char **argv)
 		usleep(200000);
 		assert(hub->GetMode()==AudioTransportHub::OUTPUT && hub->IsCallbackDriven());
 
-		// The engine frame advances one period per cycle and reaches every snapshot.
 		const unsigned long before=hub->Frame();
 		usleep(100000);
 		const unsigned long advanced=hub->Frame()-before;

@@ -1,7 +1,3 @@
-// A panel file's bindings: literal, property truth or comparison, selected
-// text, another control's attribute, and their composition. Driven by the
-// fixture shared with SpiralTesting (Foundation/libSSMUI/tests/bindings.json
-// there): both trees must agree on every case.
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "ValueRule.h"
 #include "Binding.h"

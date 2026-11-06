@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Spumoni::Container — what every container shares: the entry-name rules and
-// walking a disk tree into a Writer. Lifted from Spiral::File::Archive::Zip
-// (ChatGPT GPT-5.6).
 
 #include "Container.h"
 

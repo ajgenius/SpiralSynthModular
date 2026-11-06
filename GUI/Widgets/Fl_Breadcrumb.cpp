@@ -16,8 +16,6 @@ namespace
 		return title.empty() ? std::string("Group") : title;
 	}
 
-	// Draws only its ">", as the private tree's chevron does, without the
-	// drop-down arrow a menu button draws.
 	class ChevronButton: public Fl_Menu_Button
 	{
 	public:
@@ -55,8 +53,6 @@ void Fl_Breadcrumb::Refresh()
 		page = m_Canvas->PageOf(page);
 	}
 
-	// What the bar shows: the names on the way and the subpatches under
-	// each page, so a rename, a group or an ungroup builds it again.
 	std::string shown = m_Root;
 	char number[16];
 	for (size_t step = 0; step < path.size(); ++step)
@@ -82,9 +78,6 @@ void Fl_Breadcrumb::Refresh()
 void Fl_Breadcrumb::Rebuild()
 {
 	clear();
-	// The crumbs keep their size when the bar is resized, as the drawer
-	// opens beside it; only a rebuild lays them out. clear() makes the bar
-	// resizable again, so this follows it.
 	resizable(NULL);
 	m_Crumbs.clear();
 	m_Chevrons.clear();
@@ -101,8 +94,6 @@ void Fl_Breadcrumb::Rebuild()
 		fl_font(last ? FL_HELVETICA_BOLD : FL_HELVETICA, 11);
 		const int width = (int)fl_width(label.c_str()) + 12;
 
-		// Every crumb stays active, the one shown included: weight, not
-		// greying, says where you are, as in the private tree.
 		Fl_Button *crumb = new Fl_Button(left, y() + 2, width, h() - 4);
 		crumb->copy_label(label.c_str());
 		crumb->box(FL_FLAT_BOX);
@@ -140,8 +131,6 @@ void Fl_Breadcrumb::Rebuild()
 		const int next = last ? -2 : m_Path[step + 1];
 		for (size_t c = 0; c < children.size(); ++c)
 		{
-			// replace() sets the text as it is, so a '/' in a name does
-			// not make a submenu.
 			const int item = chevron->add("x", 0, Chevron, this,
 				FL_MENU_RADIO | (children[c] == next ? FL_MENU_VALUE : 0));
 			chevron->replace(item, Title(m_Canvas, children[c]).c_str());

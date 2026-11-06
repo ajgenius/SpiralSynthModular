@@ -6,7 +6,6 @@ OSS_Midi_la_SOURCES = OssMidiBackend.cpp
 OSS_Midi_la_LDFLAGS = -module -avoid-version -shared -no-undefined
 OSS_Midi_la_LIBADD = $(top_builddir)/libs/libspiralcore/libspiralcore.la -lpthread
 
-# A pipe stands in for the device: bytes written to it come out as packets.
 check_PROGRAMS = oss-midi-test
 TESTS = $(check_PROGRAMS)
 oss_midi_test_SOURCES = oss-midi-test.cpp OssMidiBackend.cpp

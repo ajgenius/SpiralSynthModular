@@ -1,4 +1,3 @@
-// Exercise the Output buttons through the real host and inspect JACK ports.
 #include "SpiralSynthModular.h"
 #include "AudioTransportHub.h"
 #include "SpiralInfo.h"
@@ -82,7 +81,6 @@ int main(int argc, char **argv)
 		Fl_Button *button=FindButton(host.Window,buttons[step]);
 		assert(button);
 		button->value(step!=4);
-		// The main GUI loop polls while a real mouse press is held down.
 		Fl::pushed(button);
 		host.Synth.UpdatePluginGUIs();
 		assert(button->value()==(step!=4));

@@ -1,9 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// What a project says about itself survives a save: the drawer writes the
-// document through SetDocument, the package carries it, and a reopen reads
-// it back. Asking for the licence text puts the full text in the package
-// beside the patch and records where; asking for one this build does not
-// carry is not a promise it keeps.
 #include "PatchProject.h"
 #include "License.h"
 #include "Folder.h"
@@ -28,7 +23,6 @@ int main()
 	std::remove(package.c_str());
 	std::string error;
 
-	// The LBITF licence is one this build can inline.
 	assert(!LicenseFullText("CC-BY-SA-1.0").empty());
 	assert(LicenseFullText("CC-BY-SA-4.0").empty());
 	bool offered = false;
@@ -54,7 +48,6 @@ int main()
 		project.Source().Set("SpiralSynthModular File Ver 4\n");
 		project.SetDocument(document);
 
-		// Set then read, before any save: the promise is already recorded.
 		const DocumentSection back = project.GetDocument();
 		assert(back.Title == document.Title);
 		assert(back.Rights.BundleText);
@@ -78,8 +71,6 @@ int main()
 		assert(back.Rights.License == "CC-BY-SA-1.0");
 		assert(back.Rights.BundleText);
 
-		// The text is in the package where the document says it is,
-		// with the copyright line on top.
 		std::string text;
 		const std::string path = "branches/" + branch + "/" + back.Rights.LicenseFile;
 		assert(project.Workspace()->IsFile(path));
@@ -87,8 +78,6 @@ int main()
 		assert(text.find("Copyright (c) 2003 UNIT-E") == 0);
 		assert(text.find("Attribution-ShareAlike 1.0") != std::string::npos);
 
-		// Switching to a licence with no text drops the promise, and
-		// the next save writes no file.
 		DocumentSection changed = back;
 		changed.Rights.License = "CC-BY-SA-4.0";
 		project.SetDocument(changed);
@@ -105,7 +94,6 @@ int main()
 		assert(!project.Workspace()->IsFile(path));
 		assert(project.GetDocument().Rights.License == "CC-BY-SA-4.0");
 
-		// Claiming nothing leaves no document at all.
 		project.SetDocument(DocumentSection());
 		assert(project.GetDocument().Empty());
 	}

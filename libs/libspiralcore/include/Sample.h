@@ -79,8 +79,6 @@ public:
 	void setSampleType(SampleType t) { m_SampleType=t; }
 	SampleType getSampleType() { return m_SampleType; }
 
-	// Engine frame of the period this buffer holds, set by whoever
-	// filled it, so every reader agrees on position.
 	void Stamp(unsigned long frame) { m_Frame=frame; }
 	unsigned long GetFrame() const { return m_Frame; }
 

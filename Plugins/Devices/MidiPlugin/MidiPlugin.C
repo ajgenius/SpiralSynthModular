@@ -92,8 +92,6 @@ m_NextID(0)
 
 	m_Version=2;
 	
-	// The host keeps the device open from startup. A Midi device opens it
-	// only where nothing has, and then the last one closes it again.
 	if (m_RefCount==0 && !MidiDevice::Get())
 	{
 		MidiDevice::Init("SpiralModular",MidiDevice::READ);
@@ -471,7 +469,7 @@ void MidiPlugin::Apply(Spiral::Core::Description::Reader &r)
 				r.Value(Control(n));
 				if (!r.Named()) r.Value(size);
 
-				r.Value(ControlName(n));   // the counted bytes, one value
+				r.Value(ControlName(n));
 				m_PluginInfo.PortTips[m_PluginInfo.NumInputs+6+n] = ControlName(n).Value;
 			}			
 		}

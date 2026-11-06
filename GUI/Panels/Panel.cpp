@@ -585,7 +585,7 @@ namespace SpiralPanels
 	bool Panel::Scope::HasAttribute(const std::string &control, const std::string &attribute) const
 	{
 		if (m_Panel.Building())
-			return true;      // checked again once every control exists
+			return true;
 		const PanelControl *source = m_Panel.FindControl(control);
 		double value;
 		return source && source->GetAttribute(attribute, value);
@@ -613,7 +613,7 @@ namespace SpiralPanels
 	bool Panel::HandlerScope::HasAttribute(const std::string &control, const std::string &attribute) const
 	{
 		if (m_Panel.Building())
-			return true;      // checked again once every control exists
+			return true;
 		const PanelControl *source = m_Panel.FindControl(control);
 		double value;
 		return source && source->GetAttribute(attribute, value);

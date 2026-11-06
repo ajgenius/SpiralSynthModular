@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Mach absolute-time AtomicClock for macOS. Each Tick waits for an
-// absolute deadline computed from the start, so periods do not
-// accumulate sleep error.
 #include "AtomicClock.h"
 #include <mach/mach_time.h>
 #include <stdint.h>
@@ -20,7 +17,6 @@ m_Frequency(frequency)
 {
 	mach_timebase_info_data_t timebase;
 	mach_timebase_info(&timebase);
-	// Period in mach units: nanoseconds * denom / numer.
 	const double nanoseconds = 1e9 / frequency;
 	m_Platform->m_Period = (uint64_t)(nanoseconds * timebase.denom / timebase.numer);
 	m_Platform->m_Ticks = 0;

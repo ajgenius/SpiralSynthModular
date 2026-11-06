@@ -1,9 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Spumoni::StoreSHA256 — internal streaming SHA-256 digest (for Store).
-// Adapted from research/cas/src/sha256.cpp, authored by GROK / ajgenius.
-// Algorithm: NIST FIPS PUB 180-4, sections 4.1.2, 4.2.2, 5 and 6.2.
-// https://doi.org/10.6028/NIST.FIPS.180-4
-// No OpenSSL, Crypto++, Git or Darcs source is included.
 #include "StoreSHA256.h"
 
 #include <cstring>

@@ -1,13 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// positional-tokens — decode positional .ssm files under the 0.2.x contract
-// and print, one JSON object per file, the token stream the reader consumed
-// and the index range of each device and its plugin state:
-//   {Path, Status, Tokens:{values,between}, Spans:[{ID,PluginID,Record,State}], Diagnostics}
-// Concatenating between[0] value[0] between[1] ... reproduces the file.
-//
-//   positional-tokens <patch.ssm> [more.ssm ...]
-//
-// SPIRALCORE_SCHEMA_DIR (or the build-time default) locates the contract.
 #include "JSON.h"
 #include "PositionalReader.h"
 #include <cstdio>

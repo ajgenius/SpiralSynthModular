@@ -87,7 +87,6 @@ m_Minimised (true)
 
 	m_Menu->add("rename", 0, (Fl_Callback*)cb_Rename,this);
 	m_Menu->add("delete", 0, (Fl_Callback*)cb_Delete,this);
-	// The canvas brings up the device menu (Fl_Canvas::DeviceMenu).
 	m_Menu->hide();
 
 	int Centx=x()+w()/2;
@@ -131,8 +130,6 @@ void Fl_DeviceGUI::cb_Resize (Fl_DeviceGUI *o) {
 
 
 int Fl_DeviceGUI::handle (int event) {
-    // A right click on the title or the icon, or anywhere the controls
-    // leave it, brings up the device menu, which the canvas fills in.
     Fl_Canvas *canvas = dynamic_cast<Fl_Canvas*>(parent());
     const bool menu = canvas && event == FL_PUSH && Fl::event_button() == FL_RIGHT_MOUSE;
     if (menu && ((m_DragBar && Fl::event_inside(m_DragBar)) ||
@@ -149,8 +146,6 @@ int Fl_DeviceGUI::handle (int event) {
        return 1;
     }
 
-    // A minimised subpatch has no icon to click: a click on its body
-    // opens its panel instead.
     if (event == FL_PUSH && !t && Fl::event_button() == FL_LEFT_MOUSE && m_Minimised && m_PluginWindow
         && !m_IconButton && !(m_DragBar && Fl::event_inside(m_DragBar)))
     {
@@ -182,9 +177,6 @@ int Fl_DeviceGUI::handle (int event) {
           if (!m_PluginWindow->visible()) Maximise();
        }
     }
-    // plugin GUI killed - minimise device, show icon.
-    // else-if: Maximise() in this same event must not immediately Minimise()
-    // if show() has not yet marked the child visible.
     else if (!m_Minimised && m_PluginWindow && !m_PluginWindow->visible()) {
        Minimise();
        if (m_IconButton) m_IconButton->show();
@@ -238,7 +230,6 @@ void Fl_DeviceGUI::Setup(const DeviceGUIInfo& Info, bool FirstTime)
 
 void Fl_DeviceGUI::SetupPorts(const DeviceGUIInfo& Info, bool FirstTime, bool preserveConnections, const vector<int> *movedInputs)
 {
-	// Disconnect removed ports while the old buttons and DSP inputs still exist.
 	if (parent() && !FirstTime)
 	{
 		if (preserveConnections)

@@ -27,34 +27,20 @@ namespace Spiral
 namespace Core
 {
 
-/* A plugin kind says what to look for under the plugin root and what to
-   do with a module once its entry symbol resolves. The loader knows
-   nothing else: no tables, no devices, no GUI. A kind registers itself
-   the first time it is used, and built-in members of a kind never pass
-   through the loader at all. */
 class PluginKind
 {
 public:
 	virtual ~PluginKind() {}
 
 	virtual const char *Name() const = 0;
-	// Under the plugin root; modules are <root>/<subdirectory>/*<suffix><ext>
-	// and one level of directories below that, where the extension is the
-	// host's loadable module extension and never part of the suffix.
 	virtual const char *Subdirectory() const = 0;
 	virtual const char *Suffix() const = 0;
 	virtual const char *EntrySymbol() const = 0;
 
-	// Which file names under Subdirectory() are this kind's modules: by
-	// default those ending in Suffix() plus the module extension. A kind
-	// with host-dependent variants widens this.
 	virtual bool Claims(const std::string &file) const;
 
-	// The resolved entry; return true to keep the module loaded.
 	virtual bool Accept(void *entry, const std::string &path) = 0;
 
-	// Control-thread lifetime boundary. Forget borrowed module data before
-	// dlclose; refuse unloading while instances still execute module code.
 	virtual bool CanUnload() const { return true; }
 	virtual void Release(void *entry, const std::string &path) {}
 };

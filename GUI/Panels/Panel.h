@@ -88,13 +88,8 @@ namespace SpiralPanels
 		size_t Mode() const { return m_Mode; }
 		void SelectMode(size_t index);
 		const std::vector<std::string> &Unsupported() const { return m_Unsupported; }
-		// A node the panel could not honour: an unknown control type, a binding
-		// that names what the panel cannot see.
 		void Report(const std::string &problem) { m_Unsupported.push_back(problem); }
-		// True while the children are being built, when a control binding may
-		// still name a control that comes later in the file.
 		bool Building() const { return m_Building; }
-		// What a binding reads: the panel's properties and its controls' attributes.
 		class Scope: public Spiral::Data::ValueRule::Scope
 		{
 		public:
@@ -103,14 +98,10 @@ namespace SpiralPanels
 			double Field(const std::string &name) const;
 			bool HasAttribute(const std::string &control, const std::string &attribute) const;
 			double Attribute(const std::string &control, const std::string &attribute) const;
-			// The public tree shows the default text: it has no UI language
-			// yet, where SpiralTesting picks a translation by its language tag.
 			std::string Localize(const Spiral::Data::ValueRule::Text &text) const { return text.fallback; }
 		private:
 			const Panel &m_Panel;
 		};
-		// What a control's handlers may name: the panel's properties, its
-		// controls and their attributes, and the control's own events.
 		class HandlerScope: public Spiral::Data::Handlers::Scope
 		{
 		public:
@@ -118,8 +109,6 @@ namespace SpiralPanels
 			bool HasField(const std::string &name) const;
 			bool HasControl(const std::string &name) const;
 			bool HasAttribute(const std::string &control, const std::string &attribute) const;
-			// Settable attributes are not declared in this tree (SetAttribute
-			// answers per call), so a set target is any control that exists.
 			bool CanSetAttribute(const std::string &control, const std::string &attribute) const;
 			bool Event(const std::string &name, std::vector<std::string> &arguments) const;
 		private:

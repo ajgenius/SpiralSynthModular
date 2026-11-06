@@ -31,7 +31,7 @@ public:
 	virtual void Setup(const DeviceGUIInfo& Info, bool FirstTime = false);
 	virtual void Clear();
 	virtual void	    Describe(Spiral::Core::Description &d);
-	void                StreamOut(ostream &s);   // the description, written
+	void                StreamOut(ostream &s);
 	virtual void	    StreamIn(istream &s);
 	const string &GetComment() const { return m_Comment; }
 	void SetComment(const string &text) { m_Comment = text; NewText(); }

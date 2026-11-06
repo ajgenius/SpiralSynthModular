@@ -1,4 +1,3 @@
-// Exercise the host save/load path with real sampler sidecars and a moved package.
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "SpiralSynthModular.h"
 #include "SpiralInfo.h"
@@ -27,7 +26,6 @@ struct Host
 
 int main(int argc, char **argv)
 {
-	// Plugin root and an existing Tutorial5-MatrixSampler.ssm_files directory.
 	if (argc != 3)
 		return 77;
 

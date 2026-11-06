@@ -1,4 +1,3 @@
-// Multiple physical clocks and channel latencies, without audio hardware.
 #include "AudioStream.h"
 #include "PresentationClock.h"
 #include <cassert>
@@ -162,7 +161,6 @@ static void ClockTransitions()
 	assert(clock.Prepare(101, 480, 48000, NULL, 0.04, stamp));
 	assert(stamp.Frame == 480 && stamp.Generation != initial && stamp.Time >= 101.04);
 	clock.Commit(480);
-	// A long control stall discards old playout, keeping the graph frame monotonic.
 	assert(clock.Prepare(105, 480, 48000, NULL, 0.04, stamp));
 	assert(stamp.Frame == 960 && stamp.Time >= 105.04);
 	clock.Commit(480);
@@ -178,7 +176,6 @@ static void ClockTransitions()
 
 	const unsigned generation = stamp.Generation;
 	clock.Commit(480);
-	// A native xrun with a continuous callback counter still needs a new map.
 	native.Epoch = 2;
 	native.Frame += 480;
 	native.CallbackTime = native.OutputTime = 106.02;

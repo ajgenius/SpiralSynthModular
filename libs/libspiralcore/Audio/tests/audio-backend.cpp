@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// The registry hands out clients by name: builtins are present, a
-// descriptor registered at runtime creates and destroys through its own
-// functions, a wrong ABI, wrong kind or duplicate name is refused, and
-// unknown names yield NULL.
 #include "AudioBackend.h"
 #include <cassert>
 #include <cstdio>
@@ -44,7 +40,6 @@ int main()
 	const BackendDescriptor null = { SPIRAL_AUDIO_PLUGIN_ABI, "audio", "null", Create, Destroy };
 	registry->Register(&null);
 	assert(registry->Find("null") == &null);
-	// The dummy stays last however late the others register.
 	names = registry->Names();
 	assert(names.size() >= 2 && names.back() == "dummy" && names[names.size() - 2] == "null");
 
@@ -82,8 +77,6 @@ int main()
 	assert(AudioBackendRegistry::Get() == registry);
 	assert(PluginManager::Get()->LoadAll(root) == 1);
 
-	// The built-in dummy paces at the nominal rate with no device:
-	// 50 periods of 256 frames at 48 kHz take about 0.267 s.
 	AudioClient *dummy = registry->Create("dummy");
 	assert(dummy);
 	AudioClientOptions options;

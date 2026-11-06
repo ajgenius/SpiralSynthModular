@@ -39,8 +39,6 @@ void DummyClient::Detach()
 {
 	attached= false;
 }
-// Ready once per period, on the deadline rather than after a sleep, so
-// the rate holds over time; a bounded wait keeps shutdown prompt.
 int DummyClient::WaitForCycle(unsigned milliseconds)
 {
 	if(!attached)
@@ -54,14 +52,11 @@ int DummyClient::WaitForCycle(unsigned milliseconds)
 		if(AudioMonotonicTime() < next)
 			return 0;
 	}
-	// The period presented at next: there is no device, so input and
-	// output are "now" with no latency.
 	timing.CallbackTime= next;
 	timing.InputTime= next;
 	timing.OutputTime= next;
 	timing.Frame+= frames;
 	next+= period;
-	// A long stall restarts the schedule instead of catching up forever.
 	if(AudioMonotonicTime() > next + period * 8)
 		next= AudioMonotonicTime();
 	return 1;
@@ -85,7 +80,6 @@ bool DummyClient::Read(float *interleaved, unsigned int nframes)
 	return true;
 }
 
-// * Built in: the backend of last resort registers itself.
 static void *Create(void *)
 {
 	return static_cast<AudioClient *>(new DummyClient);

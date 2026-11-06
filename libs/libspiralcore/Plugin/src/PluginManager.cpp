@@ -149,7 +149,6 @@ bool PluginManager::LoadModule(PluginKind &kind, const string &path)
 		return false;
 	}
 
-	// The kind decides; it says why on its own.
 	if (!kind.Accept(entry, path))
 	{
 		dlclose(handle);
@@ -169,7 +168,6 @@ void PluginManager::ReleaseModule(const Module &module)
 
 bool PluginManager::UnloadAll()
 {
-	// Check the whole set before releasing any descriptor or library.
 	for (size_t n = 0; n < m_Modules.size(); ++n)
 		if (!m_Modules[n].Kind->CanUnload())
 			return false;

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// The JSON form of a description read back: an object whose "values" and
-// "between" are arrays of strings, one more gap than values. Anything else
-// is refused with a reason; a value is whatever string the writer put there.
 #include "Description.h"
 #include "JSON.h"
 #include <memory>
