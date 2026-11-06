@@ -45,25 +45,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 48;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "BeatMatch";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Maths/Logic";
 }
 }
 
@@ -84,7 +68,6 @@ m_OutputLevel(1.0f)
 	m_PluginInfo.PortTips.push_back("Input");	
 	m_PluginInfo.PortTips.push_back("Output");
 	
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 
 	m_Sensitivity = FloatProperty(DefaultLinearFlags, 0.5, 0.0, 1.0, 0.0001, 0.01);
@@ -99,8 +82,6 @@ PluginInfo &BeatMatchPlugin::Initialise(const HostInfo *Host)
 {	
 	return SpiralPlugin::Initialise(Host);
 }
-
-
 
 void BeatMatchPlugin::Reset()
 {

@@ -1,0 +1,155 @@
+{
+  "namespace": "Controls",
+  "version": 1,
+  "controls": {
+    "Button": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "choice": ["integer"],
+        "color_role": ["string"],
+        "file": ["object"],
+        "label": ["string"],
+        "list": ["object"],
+        "max": ["integer"],
+        "min": ["integer"],
+        "pressed": ["boolean"],
+        "property": ["string"],
+        "repeat": ["boolean"],
+        "size": ["integer"],
+        "text": ["binding", "text"],
+        "toggle": ["boolean"]
+      }
+    },
+    "CheckBox": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "property": ["string"],
+        "size": ["integer"],
+        "text": ["binding", "text"]
+      }
+    },
+    "Choice": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "items": ["array"],
+        "property": ["string"],
+        "size": ["integer"]
+      }
+    },
+    "Container": {
+      "extends": "Controls::Control",
+      "abstract": true,
+      "attributes": {
+        "children": ["nodes"]
+      }
+    },
+    "Control": {
+      "abstract": true,
+      "required": ["bounds"],
+      "attributes": {
+        "bounds": ["array"],
+        "enabled": ["binding", "boolean"],
+        "if_property": ["string"],
+        "name": ["string"],
+        "on": ["handlers"],
+        "tooltip": ["text"],
+        "value": ["binding"],
+        "visible": ["binding", "boolean"]
+      }
+    },
+    "Knob": {
+      "extends": "Controls::ValueControl",
+      "attributes": {
+        "scale_ticks": ["integer"]
+      }
+    },
+    "Label": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "align": ["string"],
+        "property": ["string"],
+        "size": ["integer"],
+        "text": ["binding", "text"],
+        "texts": ["array"]
+      }
+    },
+    "Notebook": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "page_padding": ["integer"],
+        "pages": ["pages"],
+        "tab_height": ["integer"]
+      }
+    },
+    "RadioButton": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "choice": ["integer"],
+        "glyph": ["string"],
+        "property": ["string"],
+        "text": ["binding", "text"]
+      }
+    },
+    "Repeat": {
+      "extends": "Controls::Container",
+      "attributes": {
+        "children": ["template"],
+        "count_property": ["string"],
+        "items": ["array"],
+        "max_count": ["integer"],
+        "step_x": ["integer"],
+        "step_y": ["integer"]
+      }
+    },
+    "Slider": {
+      "extends": "Controls::ValueControl",
+      "attributes": {
+        "inverted": ["boolean"],
+        "show_trough": ["boolean"],
+        "step_fraction": ["number"],
+        "value_label": ["string"],
+        "vertical": ["boolean"]
+      }
+    },
+    "Spinner": {
+      "extends": "Controls::ValueControl",
+      "attributes": {
+        "digits": ["integer"],
+        "simple": ["boolean"],
+        "size": ["integer"]
+      }
+    },
+    "TextEntry": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "above": ["object"],
+        "below": ["object"],
+        "format": ["string"],
+        "property": ["string"]
+      }
+    },
+    "ValueControl": {
+      "extends": "Controls::Control",
+      "abstract": true,
+      "attributes": {
+        "mapping": ["object", "string"],
+        "max": ["number", "object"],
+        "min": ["number", "object"],
+        "page": ["number"],
+        "property": ["string"],
+        "step": ["number"]
+      }
+    },
+    "VirtualScrollArea": {
+      "extends": "Controls::Container",
+      "attributes": {
+        "always": ["boolean"],
+        "content_size": ["array"],
+        "horizontal": ["boolean"],
+        "show_horizontal": ["boolean"],
+        "vertical": ["boolean"],
+        "view": ["array"]
+      }
+    }
+  }
+}

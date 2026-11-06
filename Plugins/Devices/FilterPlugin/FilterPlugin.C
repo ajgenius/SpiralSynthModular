@@ -50,25 +50,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x000b;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Filter";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Filters/FX";
 }
 }
 
@@ -90,7 +74,6 @@ k(1.0)               // Set overall filter gain
 	m_PluginInfo.PortTips.push_back("Emphasis CV");	
 	m_PluginInfo.PortTips.push_back("Output");
 	
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 
 	fc = FloatProperty(DefaultLinearFlags, 100, 0, 100, 0.01,  1);
@@ -98,7 +81,6 @@ k(1.0)               // Set overall filter gain
 
 	RegisterSharedProperty(fc, "Cutoff", "Cutoff");
 	RegisterSharedProperty(Q, "Resonance", "Resonance");
-
 
 	m_RevCutoffMod = ToggleProperty(Property::WriteOnly, false);
 	m_RevResonanceMod = ToggleProperty(Property::WriteOnly, false);
@@ -130,8 +112,6 @@ PluginInfo &FilterPlugin::Initialise(const HostInfo *Host)
 	
 	return Info;
 }
-
-
 
 void FilterPlugin::Reset()
 {

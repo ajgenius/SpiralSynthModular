@@ -14,5 +14,106 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "TransposePlugin_DSP.so"
+  "module": "TransposePlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Controls": 1
+    },
+    "host_version": "0.3.43",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            13,
+            6,
+            50,
+            20
+          ],
+          "digits": 0,
+          "max": 48,
+          "min": -48,
+          "name": "amount-spinner",
+          "property": "AMOUNT",
+          "simple": true,
+          "step": 1,
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            13,
+            26,
+            50,
+            11
+          ],
+          "name": "amount-label",
+          "text": "Amount",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            13,
+            40,
+            10,
+            18
+          ],
+          "name": "aliasing",
+          "property": "ALIASING",
+          "size": 12,
+          "text": "Aliasing",
+          "tooltip": "Round each pitch to a whole semitone",
+          "type": "CheckBox"
+        }
+      ],
+      "height": 62,
+      "help": "The transposition in semitones. With Aliasing on, the input and CV pitches are rounded to whole semitones first.",
+      "schema_version": 1,
+      "width": 76
+    },
+    "plugin_id": 122,
+    "properties": [
+      {
+        "class": "IntProperty",
+        "default": 0,
+        "display_name": "Amount",
+        "hint": "Amount",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "page": 1,
+        "property": "AMOUNT",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Transpose",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 1,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      }
+    ],
+    "schema_version": 1
+  }
 }

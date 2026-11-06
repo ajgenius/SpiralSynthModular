@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "id": 8,
-  "name": "StereoMixer",
+  "name": "Stereo Mixer",
   "type": "dsp",
   "category": "Amps/Mixers",
   "authors": [
@@ -14,5 +14,164 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "StereoMixerPlugin_DSP.so"
+  "module": "StereoMixerPlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Controls": 1
+    },
+    "host_version": "0.3.43",
+    "panel": {
+      "auto_width": true,
+      "children": [
+        {
+          "bounds": [
+            8,
+            8,
+            42,
+            140
+          ],
+          "children": [
+            {
+              "bounds": [
+                10,
+                0,
+                20,
+                100
+              ],
+              "max": 2,
+              "min": 0,
+              "name": "volume-{index}",
+              "property": "VOLUME{index}",
+              "step": 0.01,
+              "tooltip": "The input's level in the mix",
+              "type": "Slider",
+              "vertical": true
+            },
+            {
+              "bounds": [
+                0,
+                100,
+                40,
+                40
+              ],
+              "mapping": {
+                "offset": 1,
+                "scale": -1
+              },
+              "max": 1,
+              "min": 0,
+              "name": "pan-{index}",
+              "property": "PAN{index}",
+              "step": 0.01,
+              "tooltip": "Where the input sits, left to right",
+              "type": "Knob"
+            },
+            {
+              "bounds": [
+                0,
+                140,
+                40,
+                12
+              ],
+              "name": "pan-label-{index}",
+              "size": 10,
+              "text": "Pan",
+              "type": "Label"
+            }
+          ],
+          "count_property": "CHANNELS",
+          "max_count": 10,
+          "name": "channels",
+          "step_x": 42,
+          "type": "Repeat"
+        },
+        {
+          "bounds": [
+            8,
+            158,
+            20,
+            20
+          ],
+          "name": "remove",
+          "on": {
+            "pressed": [
+              {
+                "amount": -1,
+                "delta": "CHANNELS"
+              }
+            ]
+          },
+          "text": "-",
+          "tooltip": "One channel fewer, down to two",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            28,
+            158,
+            20,
+            20
+          ],
+          "name": "add",
+          "on": {
+            "pressed": [
+              {
+                "amount": 1,
+                "delta": "CHANNELS"
+              }
+            ]
+          },
+          "text": "+",
+          "tooltip": "One channel more, up to ten",
+          "type": "Button"
+        }
+      ],
+      "height": 182,
+      "help": "Two to ten inputs mixed to a stereo pair: each a level, 0 to 2, and a pan knob, left to right; the pan CV inputs move each from its knob. + and - add and remove inputs.",
+      "schema_version": 1,
+      "width": 186
+    },
+    "plugin_id": 8,
+    "properties": [
+      {
+        "class": "StringProperty",
+        "default": "",
+        "display_name": "COMMAND",
+        "hint": "Command",
+        "internal": true,
+        "omitted": "internal",
+        "property": "COMMAND",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "StereoMixer",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 1,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      }
+    ],
+    "schema_version": 1
+  }
 }

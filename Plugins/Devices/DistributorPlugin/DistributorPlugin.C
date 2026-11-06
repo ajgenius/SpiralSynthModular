@@ -39,7 +39,6 @@ const char *SpiralPlugin_GetHostABI()
 	return SSM_HOST_ABI;
 }
 
-
 SpiralPlugin* SpiralPlugin_CreateInstance() {
       return new DistributorPlugin;
 }
@@ -49,24 +48,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon() {
        return SpiralIcon_xpm;
 }
-
-int SpiralPlugin_GetID() {
-    return 0x0056;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Distributor";
-}
-
-string SpiralPlugin_GetGroupName() {
-       return "Control";
-}
-
 }
 
 ///////////////////////////////////////////////////////
@@ -76,7 +60,6 @@ m_Triggered (false),
 m_ChannelSelect (0),
 m_TrigDelay (0)
 {
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 
 	m_ChannelCount = SignedProperty(Property::ForceUpdate|DefaultLinearFlags, 2, 1, 256, 1, 1);
@@ -141,13 +124,10 @@ void DistributorPlugin::SetChannelCount (int count)
 	UpdatePluginInfoWithHost ();
 }
 
-
 PluginInfo &DistributorPlugin::Initialise (const HostInfo *Host) 
 {
            return SpiralPlugin::Initialise (Host);
 }
-
-
 
 void DistributorPlugin::Reset()
 {
@@ -156,7 +136,6 @@ void DistributorPlugin::Reset()
 	m_ChannelSelect = false;
 	m_TrigDelay = 0;			
 }
-
 
 void DistributorPlugin::Execute() {
 	const int Stream = 0;

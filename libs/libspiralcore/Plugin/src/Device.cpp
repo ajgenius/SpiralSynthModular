@@ -30,6 +30,12 @@ Device::Device()
 	DeviceName = StringProperty(Property::ReadOnly, "Device");
 }
 
+void Device::Named(const std::string &name)
+{
+	if (DeviceName.Value == "Device")
+		DeviceName.Value = name;
+}
+
 Device::~Device()
 {
 }

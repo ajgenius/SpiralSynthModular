@@ -14,5 +14,124 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "EnvFollowerPlugin_DSP.so"
+  "module": "EnvFollowerPlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Controls": 1
+    },
+    "host_version": "0.3.43",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            6,
+            4,
+            40,
+            40
+          ],
+          "name": "attack-knob",
+          "property": "ATTACK",
+          "type": "Knob"
+        },
+        {
+          "bounds": [
+            6,
+            44,
+            40,
+            11
+          ],
+          "name": "attack-label",
+          "text": "Attack",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            62,
+            4,
+            40,
+            40
+          ],
+          "name": "decay-knob",
+          "property": "DECAY",
+          "type": "Knob"
+        },
+        {
+          "bounds": [
+            62,
+            44,
+            40,
+            11
+          ],
+          "name": "decay-label",
+          "text": "Decay",
+          "type": "Label"
+        }
+      ],
+      "height": 64,
+      "help": "How fast the envelope follows a rising and a falling input.",
+      "schema_version": 1,
+      "width": 116
+    },
+    "plugin_id": 19,
+    "properties": [
+      {
+        "class": "FloatProperty",
+        "default": 0.5,
+        "display_name": "Attack",
+        "hint": "Attack",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.1,
+        "property": "ATTACK",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0.5,
+        "display_name": "Decay",
+        "hint": "Decay",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.1,
+        "property": "DECAY",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "StringProperty",
+        "default": "EnvFollower",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 1,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      }
+    ],
+    "schema_version": 1
+  }
 }

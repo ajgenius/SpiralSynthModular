@@ -18,23 +18,38 @@
 
 #include "OutputPlugin.h"
 #include "OutputIcon.xpm"
+#include "DeviceClassRegistry.h"
 #include "Finite.h"
 #include <algorithm>
+#include <iostream>
 
 using namespace std;
 
 static SpiralPlugin *CreateInstance() { return new OutputPlugin; }
 
+const unsigned char *OutputManifest(size_t *size);
+
 const Spiral::Core::DeviceClass &OutputPlugin::Class()
 {
 	static Spiral::Core::DeviceClass device;
-	device.ID = 0x0000;
-	device.Name = "Output";
-	device.Category = "InputOutput";
-	device.Icon = SpiralIcon_xpm;
-	device.Create = CreateInstance;
+
+	if (device.ID < 0)
+	{
+		size_t size = 0;
+		const unsigned char *manifest = OutputManifest(&size);
+		std::string error;
+
+		if (!Spiral::Core::DeviceClassRegistry::ReadManifest(manifest, size, device, error))
+			std::cerr << "Output: " << error << std::endl;
+
+		device.Icon = SpiralIcon_xpm;
+		device.Create = CreateInstance;
+	}
+
 	return device;
 }
+
+static const Spiral::Core::BuiltinDevice Registration(OutputPlugin::Class);
 
 OutputPlugin::OutputPlugin() :
 m_Volume(1.0f),
@@ -56,6 +71,12 @@ m_Registered(false)
 	m_PluginInfo.PortTips.push_back("Right In");
 	m_AudioCH->Register ("Volume", &m_Volume);
 	m_AudioCH->Register ("OpenOut", &m_NotifyOpenOut, ChannelHandler::OUTPUT);
+	const std::vector<std::string> none;
+	m_AudioCH->RegisterCommand("OPENREAD", OPENREAD, none);
+	m_AudioCH->RegisterCommand("OPENWRITE", OPENWRITE, none);
+	m_AudioCH->RegisterCommand("OPENDUPLEX", OPENDUPLEX, none);
+	m_AudioCH->RegisterCommand("CLOSE", CLOSE, none);
+	m_AudioCH->RegisterCommand("SET_VOLUME", SET_VOLUME, none);
 }
 
 OutputPlugin::~OutputPlugin()

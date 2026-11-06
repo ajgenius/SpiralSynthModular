@@ -1,9 +1,9 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir)
 EXTRA_DIST = SpiralIcon.xpm
 plugindir = @PLUGINDIR@/dsp/EnvFollowerPlugin
-dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = EnvFollowerPlugin_DSP.la
 EnvFollowerPlugin_DSP_la_SOURCES = EnvFollowerPlugin.h EnvFollowerPlugin.C
+nodist_EnvFollowerPlugin_DSP_la_SOURCES = manifest.cpp
 EnvFollowerPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
 EnvFollowerPlugin_DSP_la_LIBADD = $(top_builddir)/libs/libspiralcore/libspiralcore.la -lm
 install-data-hook:
@@ -11,4 +11,4 @@ install-data-hook:
 uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/EnvFollowerPlugin_DSP.so"
 
-include $(top_srcdir)/Plugins/Devices/default-ui.am
+include $(top_srcdir)/Plugins/Devices/manifest.am

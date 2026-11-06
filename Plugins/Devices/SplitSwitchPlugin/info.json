@@ -14,5 +14,163 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "SplitSwitchPlugin_DSP.so"
+  "module": "SplitSwitchPlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Controls": 1
+    },
+    "host_version": "0.3.42",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            13,
+            0,
+            50,
+            20
+          ],
+          "max": {
+            "property": "CHANS"
+          },
+          "min": 1,
+          "name": "select-spinner",
+          "on": {
+            "value_changed": [
+              {
+                "write": "SWITCH"
+              }
+            ]
+          },
+          "property": "ECHO",
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            13,
+            20,
+            50,
+            11
+          ],
+          "name": "select-label",
+          "text": "Select",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            13,
+            36,
+            50,
+            15
+          ],
+          "max": 256,
+          "min": 2,
+          "name": "channels-spinner",
+          "property": "CHANS",
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            13,
+            51,
+            50,
+            9
+          ],
+          "name": "channels-label",
+          "size": 8,
+          "text": "Channels",
+          "type": "Label"
+        }
+      ],
+      "height": 64,
+      "help": "It's a simple 1-input n-output rotary switch.\n\nThe 'Channels' parameter controls the number of outputs.\n\nThe 'Select' parameter selects which output echos the input.\n\nThe 'CV' input also selects which output echos the input.\n\nThe 'Clock' input is a trigger to select the next output chanel.\n\nThe 'CV' output enables you to gang several switches together, by\nconnecting it to the other switches' 'CV' input.\n",
+      "schema_version": 1,
+      "width": 76
+    },
+    "plugin_id": 125,
+    "properties": [
+      {
+        "class": "ToggleProperty",
+        "default": false,
+        "display_name": "Auto",
+        "hint": "Auto",
+        "internal": false,
+        "property": "AUTO",
+        "read_only": true,
+        "type": "boolean"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 2,
+        "display_name": "Chans",
+        "hint": "Chans",
+        "internal": false,
+        "logarithmic": false,
+        "max": 256,
+        "min": 2,
+        "page": 1,
+        "property": "CHANS",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "StringProperty",
+        "default": "SplitSwitch",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 1,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 1,
+        "display_name": "Echo",
+        "hint": "Echo",
+        "internal": false,
+        "logarithmic": false,
+        "max": 128,
+        "min": 0,
+        "page": 1,
+        "property": "ECHO",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 1,
+        "display_name": "Switch",
+        "hint": "Switch",
+        "internal": false,
+        "logarithmic": false,
+        "max": 100,
+        "min": 1,
+        "page": 1,
+        "property": "SWITCH",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      }
+    ],
+    "schema_version": 1
+  }
 }

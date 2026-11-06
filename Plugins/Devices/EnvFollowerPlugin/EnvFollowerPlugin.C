@@ -44,25 +44,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x0013;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "EnvFollower";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Control";
 }
 }
 
@@ -79,7 +63,6 @@ m_Value(0)
 	m_PluginInfo.PortTips.push_back("Input");
 	m_PluginInfo.PortTips.push_back("Output");
 
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 
 	m_Decay = FloatProperty(DefaultLinearFlags, 0.5, 0, 1, 0.001, 0.01);
@@ -87,8 +70,6 @@ m_Value(0)
 
 	RegisterSharedProperty(m_Attack, "Attack", "Attack");
 	RegisterSharedProperty(m_Decay, "Decay", "Decay");
-
-
 }
 
 EnvFollowerPlugin::~EnvFollowerPlugin()
@@ -99,8 +80,6 @@ PluginInfo &EnvFollowerPlugin::Initialise(const HostInfo *Host)
 {
 	return SpiralPlugin::Initialise(Host);
 }
-
-
 
 void EnvFollowerPlugin::Reset()
 {

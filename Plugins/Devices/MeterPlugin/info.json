@@ -14,5 +14,185 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "MeterPlugin_DSP.so"
+  "module": "MeterPlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Controls": 1,
+      "Meters": 1
+    },
+    "host_version": "0.3.43",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            0,
+            4,
+            54,
+            20
+          ],
+          "name": "bypass",
+          "on": {
+            "value_changed": [
+              {
+                "attribute": "bypass",
+                "set": "meter"
+              }
+            ]
+          },
+          "text": "Bypass",
+          "toggle": true,
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            116,
+            4,
+            54,
+            20
+          ],
+          "choice": 1,
+          "name": "vu",
+          "property": "VUMODE",
+          "text": "VU",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            172,
+            4,
+            54,
+            20
+          ],
+          "choice": 0,
+          "name": "mm",
+          "property": "VUMODE",
+          "text": "Min/Max",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            0,
+            26,
+            224,
+            40
+          ],
+          "digits": 8,
+          "name": "digits",
+          "type": "Meters::SevenSegment",
+          "value": {
+            "attribute": "datum",
+            "control": "meter"
+          }
+        },
+        {
+          "bounds": [
+            0,
+            68,
+            226,
+            20
+          ],
+          "name": "meter",
+          "property": "VUMODE",
+          "samples": {
+            "port": "in:0"
+          },
+          "type": "Meters::MeterBar"
+        },
+        {
+          "bounds": [
+            0,
+            90,
+            84,
+            20
+          ],
+          "format": "%1.5f",
+          "name": "min",
+          "type": "Meters::LCD",
+          "value": {
+            "attribute": "min",
+            "control": "meter"
+          }
+        },
+        {
+          "bounds": [
+            86,
+            90,
+            54,
+            20
+          ],
+          "name": "reset",
+          "on": {
+            "value_changed": [
+              {
+                "attribute": "reset",
+                "set": "meter"
+              }
+            ]
+          },
+          "text": "Reset",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            142,
+            90,
+            84,
+            20
+          ],
+          "format": "%1.5f",
+          "name": "max",
+          "type": "Meters::LCD",
+          "value": {
+            "attribute": "max",
+            "control": "meter"
+          }
+        }
+      ],
+      "height": 112,
+      "help": "Shows the level of its input: VU is the peak of |x| from 0 to 1, MM the minimum and maximum from -1 to 1.",
+      "schema_version": 1,
+      "width": 226
+    },
+    "plugin_id": 123,
+    "properties": [
+      {
+        "class": "StringProperty",
+        "default": "Meter",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 1,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      },
+      {
+        "class": "ToggleProperty",
+        "default": true,
+        "display_name": "VU mode",
+        "hint": "Use an absolute 0 to 1 display instead of signed min/max",
+        "internal": false,
+        "property": "VUMODE",
+        "read_only": false,
+        "type": "boolean"
+      }
+    ],
+    "schema_version": 1
+  }
 }

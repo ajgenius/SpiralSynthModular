@@ -168,7 +168,7 @@ found ahead of any system copy of the same plugin, and the system LADSPA
 directories stay on the search path behind them.
 
 --with-plugindir=DIR puts the plugins somewhere other than
-$libdir/SpiralPlugins/$VERSION. They install as dsp/, panels/, audio/, midi/
+$libdir/SpiralPlugins/$VERSION. They install as dsp/, audio/, midi/
 and ladspa/ under it, and the application looks for them there.
 
 --enable-debug for a debugging build.

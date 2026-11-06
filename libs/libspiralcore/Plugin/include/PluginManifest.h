@@ -4,12 +4,18 @@
 #include <string>
 #include <vector>
 
+namespace Spumoni
+{
+	class JSON;
+}
+
 struct PluginManifest {
 	int id;
 	std::string name, type, category, version, hostVersion, hostABI;
 	std::string module, registration, guiName, guiABI, guiVersion;
 	std::vector<std::string> authors;
 	std::string builtin;
+	std::string ui;
 	struct Port {
 		std::string input, output, shadow;
 	};
@@ -24,8 +30,12 @@ struct PluginManifest {
 	int stateVersion;
 	PluginManifest() : id(-1), width(0), height(0), stateVersion(0) {}
 	bool Read(const std::string &path, std::string &error);
+	bool Parse(const std::string &text, std::string &error);
 	bool Compatible(const std::string &hostVersion, const std::string &hostABI,
 			const std::string &guiName, const std::string &guiABI,
 			std::string &error) const;
+
+private:
+	bool Take(Spumoni::JSON *root, std::string &error);
 };
 #endif

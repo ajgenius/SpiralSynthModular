@@ -1,0 +1,69 @@
+{
+  "namespace": "Meters",
+  "version": 1,
+  "controls": {
+    "FunctionPlot": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "samples": ["object"]
+      }
+    },
+    "LCD": {
+      "extends": "Controls::TextEntry",
+      "attributes": {
+        "placeholder": ["string"],
+        "size": ["integer"]
+      }
+    },
+    "LED": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "choice": ["integer"],
+        "color_role": ["string"],
+        "latch": ["boolean"],
+        "property": ["string"]
+      }
+    },
+    "LoopWaveform": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "length": ["string"],
+        "pos": ["string"],
+        "sample": ["object"],
+        "triggers": ["object"]
+      }
+    },
+    "MeterBar": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "property": ["string"],
+        "samples": ["object"]
+      }
+    },
+    "SampleWaveform": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "loop_end": ["string"],
+        "loop_start": ["string"],
+        "play_start": ["string"],
+        "pos": ["string"],
+        "sample": ["object"]
+      }
+    },
+    "Scope": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "samples": ["object"],
+        "time_base": ["integer"]
+      }
+    },
+    "SevenSegment": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "digits": ["integer"],
+        "format": ["string"],
+        "property": ["string"]
+      }
+    }
+  }
+}

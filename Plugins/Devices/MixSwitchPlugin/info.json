@@ -14,5 +14,169 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "MixSwitchPlugin_DSP.so"
+  "module": "MixSwitchPlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Controls": 1
+    },
+    "host_version": "0.3.43",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            9,
+            0,
+            58,
+            20
+          ],
+          "max": {
+            "property": "CHANNELS"
+          },
+          "min": 1,
+          "name": "select-spinner",
+          "on": {
+            "value_changed": [
+              {
+                "write": "SWITCH POSITION"
+              }
+            ]
+          },
+          "property": "ECHO",
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            9,
+            20,
+            58,
+            11
+          ],
+          "name": "select-label",
+          "text": "Select",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            13,
+            36,
+            50,
+            15
+          ],
+          "max": 100,
+          "min": 2,
+          "name": "channels-spinner",
+          "property": "CHANNELS",
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            13,
+            51,
+            50,
+            9
+          ],
+          "name": "channels-label",
+          "size": 8,
+          "text": "Channels",
+          "type": "Label"
+        }
+      ],
+      "height": 64,
+      "help": "It's a simple n-input 1-output rotary switch.\n\nThe 'Channels' parameter controls the number of outputs.\n\nThe 'Select' parameter selects which input is echoed at the output.\n\nThe 'CV' input also selects which input is echoed at the output.\n\nThe 'Clock' input is a trigger to select the next input chanel.\n\nThe 'CV' output enables you to gang several switches together, by\nconnecting it to the other switches' 'CV' input.\n",
+      "schema_version": 1,
+      "width": 76
+    },
+    "plugin_id": 126,
+    "properties": [
+      {
+        "class": "ToggleProperty",
+        "default": false,
+        "display_name": "Auto",
+        "hint": "Auto",
+        "internal": false,
+        "property": "AUTO",
+        "read_only": true,
+        "type": "boolean"
+      },
+      {
+        "class": "StringProperty",
+        "default": "MixSwitch",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 1,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 1,
+        "display_name": "Echo",
+        "hint": "Echo",
+        "internal": false,
+        "logarithmic": false,
+        "max": 128,
+        "min": 0,
+        "page": 1,
+        "property": "ECHO",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 2,
+        "display_name": "Channels",
+        "hint": "Number of channels",
+        "internal": false,
+        "logarithmic": false,
+        "max": 100,
+        "min": 2,
+        "page": 1,
+        "property": "CHANNELS",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 1,
+        "display_name": {
+          "default": "Switch",
+          "key": "plugin.126.property.SWITCH"
+        },
+        "hint": {
+          "default": "Switch",
+          "key": "plugin.126.property.SWITCH.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 100,
+        "min": 1,
+        "page": 1,
+        "property": "SWITCH POSITION",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      }
+    ],
+    "schema_version": 1
+  }
 }

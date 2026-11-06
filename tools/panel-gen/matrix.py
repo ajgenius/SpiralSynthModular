@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import json, os, sys
+from uifile import write_ui
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-OUT = os.path.join(ROOT, "Plugins/Devices/MatrixPlugin/prebuilt-ui.json")
+OUT = os.path.join(ROOT, "Plugins/Devices/MatrixPlugin/info.json")
 PLUGIN = 18
 NUM_PATSEQ = 16
 MATX, MATY = 64, 32
@@ -125,7 +126,7 @@ CHILDREN = [
            tip="Under the external clock, select the pattern by the trigger's pitch rather than resetting on its level"),
     button("notecut", "NoteCut", 5, 240, 85, 20, property="NOTECUT", tip="Cut the note on a new step"),
     {"type": "MatrixGrid", "name": "grid", "bounds": [90, 40, 463, 224], "columns": MATX, "rows": MATY,
-     "note_names": 15, "scheme": "classic",
+     "note_names": 15,
      "channel": "EchoGrid", "step_channel": "Step", "on": "MAT_ACTIVATE", "off": "MAT_DEACTIVATE",
      "volume_channel": "EchoVolume", "volume_command": "MAT_VOLUME",
      "tooltip": i18n("panel.grid.tooltip", "Click a step on or off; right-drag or scroll an on step to set its volume")},
@@ -138,7 +139,7 @@ for n in range(MATX):
 for n in range(NUM_PATSEQ):
     y = 40 + n * 14
     CHILDREN.append({"type": "Spinner", "name": "patseq-%d" % n, "bounds": [560, y, 25, 12], "property": "ECHOPATSEQ%d" % n,
-                     "simple": True, "box": "plain", "digits": 0, "step": 1, "min": 0 if n == 0 else -1, "max": 15,
+                     "simple": True, "digits": 0, "step": 1, "min": 0 if n == 0 else -1, "max": 15,
                      "write": [command("SET_PATSEQ", n, "value")]})
     CHILDREN.append({"type": "LED", "name": "patseq-%d-led" % n, "bounds": [585, y, 15, 15], "property": "PATSEQSTEP", "choice": n, "color_role": "matrix.status"})
 
@@ -181,7 +182,5 @@ DOCUMENT = {
 
 if __name__ == "__main__":
     out = sys.argv[1] if len(sys.argv) > 1 else OUT
-    with open(out, "w") as f:
-        json.dump(DOCUMENT, f, indent=2, sort_keys=True)
-        f.write("\n")
+    write_ui(out, DOCUMENT)
     print("wrote", out, len(CHILDREN), "controls")

@@ -45,25 +45,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 46;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Flipflop";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Maths/Logic";
 }
 }
 
@@ -84,15 +68,12 @@ m_TriggerSamples(0)
 	m_PluginInfo.PortTips.push_back("Input");	
 	m_PluginInfo.PortTips.push_back("Output");
 
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 
 	m_TriggerTime = FloatProperty(DefaultLinearFlags, 0.01, 0, 1, 0.0001f, 0.001f);
 	RegisterSharedProperty(m_TriggerTime, "TriggerTime", "TriggerTime");
 	m_Monostable = ToggleProperty(Property::WriteOnly,false);
 	RegisterSharedProperty(m_Monostable, "Monostable", "Monostable");
-
-
 }
 
 FlipflopPlugin::~FlipflopPlugin()
@@ -103,8 +84,6 @@ PluginInfo &FlipflopPlugin::Initialise(const HostInfo *Host)
 {	
 	return SpiralPlugin::Initialise(Host);
 }
-
-
 
 void FlipflopPlugin::Reset()
 {

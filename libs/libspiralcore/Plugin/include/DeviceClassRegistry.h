@@ -19,6 +19,7 @@
 #ifndef SPIRAL_DEVICE_CLASS_REGISTRY_H
 #define SPIRAL_DEVICE_CLASS_REGISTRY_H
 
+#include <cstddef>
 #include <string>
 #include <vector>
 #include "PluginManager.h"
@@ -32,9 +33,7 @@ namespace Core
 
 enum
 {
-	SPIRAL_PLUGIN_TYPE_DEVICE = 1,
-	SPIRAL_PLUGIN_TYPE_EDITOR = 2,
-	SPIRAL_PLUGIN_TYPE_PAIRED = 3
+	SPIRAL_PLUGIN_TYPE_DEVICE = 1
 };
 
 struct DeviceClass
@@ -47,16 +46,12 @@ struct DeviceClass
 	std::string Module;
 	SpiralPlugin *(*Build)(const DeviceClass &device);
 	std::string Manifest;
+	std::string Panel;
 	bool PanelGenerated;
 
 	DeviceClass() : ID(-1), Icon(NULL), Create(NULL), Build(NULL), PanelGenerated(false) {}
 
-	SpiralPlugin *CreateInstance() const
-	{
-		if (Build)
-			return Build(*this);
-		return (Create) ? Create() : NULL;
-	}
+	SpiralPlugin *CreateInstance() const;
 
 	std::string Directory() const
 	{
@@ -66,7 +61,18 @@ struct DeviceClass
 	}
 };
 
-//////////////////////////////////////////////////////////
+class BuiltinDevice
+{
+public:
+	typedef const DeviceClass &(*ClassFunction)();
+
+	explicit BuiltinDevice(ClassFunction function);
+	static const std::vector<ClassFunction> &All();
+
+private:
+	static std::vector<ClassFunction> &List();
+};
+
 
 class DeviceClassRegistry : public PluginKind
 {
@@ -83,6 +89,9 @@ public:
 
 	unsigned            LoadModules(const std::string &root);
 	unsigned            LoadBuiltins(const std::string &root);
+	unsigned            RegisterBuiltins();
+	const std::string  &Root() const { return m_Root; }
+	static bool         ReadManifest(const unsigned char *data, size_t size, DeviceClass &device, std::string &error);
 	bool                Register(const DeviceClass &device);
 	const DeviceClass*  Find(int ID) const;
 	const std::vector<DeviceClass*> &Classes() const { return m_PluginVec; }
@@ -93,6 +102,7 @@ private:
 	~DeviceClassRegistry();
 
 	std::vector<DeviceClass*> m_PluginVec;
+	std::string m_Root;
 	static DeviceClassRegistry *m_Singleton;
 };
 

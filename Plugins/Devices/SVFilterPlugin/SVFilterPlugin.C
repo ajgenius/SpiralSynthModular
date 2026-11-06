@@ -48,25 +48,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x000c;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "SVF";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Filters/FX";
 }
 }
 
@@ -99,7 +83,6 @@ m_n(0.0f)
 	m_PluginInfo.PortTips.push_back("HighPass output");
 	m_PluginInfo.PortTips.push_back("Notch output");
 	m_PluginInfo.PortTips.push_back("Peaking output");
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 
 	Cutoff = FloatProperty(DefaultLinearFlags, 0.0f, 0, 1, 0.0001, 0.001);
@@ -107,8 +90,6 @@ m_n(0.0f)
 
 	RegisterSharedProperty(Cutoff, "Cutoff", "Cutoff");
 	RegisterSharedProperty(Resonance, "Resonance", "Resonance");
-
-
 }
 
 SVFilterPlugin::~SVFilterPlugin()
@@ -121,8 +102,6 @@ PluginInfo &SVFilterPlugin::Initialise(const HostInfo *Host)
 	fs = m_HostInfo->SAMPLERATE;
 	return Info;
 }
-
-
 
 void SVFilterPlugin::Reset()
 {

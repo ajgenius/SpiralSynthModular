@@ -1,0 +1,642 @@
+{
+  "schema_version": 1,
+  "name": "GVerb",
+  "type": "panel",
+  "description": "A hand written panel for GVerb (swh-plugins, unique id 1216): the device's Panel page. Its inputs are the ones the generated pages would show, named as the plugin names them and written as their own command; the sliders are the Envelope's, and the Numbers tab is the same seven values to read and type.",
+  "for": {
+    "ladspa": 1216
+  },
+  "ui": {
+    "control_contracts": {
+      "Controls": 1
+    },
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            0,
+            0,
+            320,
+            190
+          ],
+          "name": "pages",
+          "page_padding": 4,
+          "pages": [
+            {
+              "children": [
+                {
+                  "bounds": [
+                    6,
+                    2,
+                    20,
+                    96
+                  ],
+                  "mapping": "sqrt",
+                  "max": {
+                    "property": "MAX0"
+                  },
+                  "min": {
+                    "property": "MIN0"
+                  },
+                  "name": "room",
+                  "on": {
+                    "value_changed": [
+                      {
+                        "value": "SETDEFAULT",
+                        "with": [
+                          0,
+                          "value"
+                        ],
+                        "write": "COMMAND"
+                      }
+                    ]
+                  },
+                  "property": "DEFAULT0",
+                  "tooltip": {
+                    "default": "Roomsize (m)"
+                  },
+                  "type": "Slider"
+                },
+                {
+                  "bounds": [
+                    -4,
+                    100,
+                    40,
+                    12
+                  ],
+                  "name": "room-label",
+                  "size": 9,
+                  "text": {
+                    "default": "Room"
+                  },
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    49,
+                    2,
+                    20,
+                    96
+                  ],
+                  "mapping": "sqrt",
+                  "max": {
+                    "property": "MAX1"
+                  },
+                  "min": {
+                    "property": "MIN1"
+                  },
+                  "name": "time",
+                  "on": {
+                    "value_changed": [
+                      {
+                        "value": "SETDEFAULT",
+                        "with": [
+                          1,
+                          "value"
+                        ],
+                        "write": "COMMAND"
+                      }
+                    ]
+                  },
+                  "property": "DEFAULT1",
+                  "tooltip": {
+                    "default": "Reverb time (s)"
+                  },
+                  "type": "Slider"
+                },
+                {
+                  "bounds": [
+                    39,
+                    100,
+                    40,
+                    12
+                  ],
+                  "name": "time-label",
+                  "size": 9,
+                  "text": {
+                    "default": "Time"
+                  },
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    92,
+                    2,
+                    20,
+                    96
+                  ],
+                  "max": {
+                    "property": "MAX2"
+                  },
+                  "min": {
+                    "property": "MIN2"
+                  },
+                  "name": "damping",
+                  "on": {
+                    "value_changed": [
+                      {
+                        "value": "SETDEFAULT",
+                        "with": [
+                          2,
+                          "value"
+                        ],
+                        "write": "COMMAND"
+                      }
+                    ]
+                  },
+                  "property": "DEFAULT2",
+                  "tooltip": {
+                    "default": "Damping"
+                  },
+                  "type": "Slider"
+                },
+                {
+                  "bounds": [
+                    82,
+                    100,
+                    40,
+                    12
+                  ],
+                  "name": "damping-label",
+                  "size": 9,
+                  "text": {
+                    "default": "Damp"
+                  },
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    135,
+                    2,
+                    20,
+                    96
+                  ],
+                  "max": {
+                    "property": "MAX3"
+                  },
+                  "min": {
+                    "property": "MIN3"
+                  },
+                  "name": "bandwidth",
+                  "on": {
+                    "value_changed": [
+                      {
+                        "value": "SETDEFAULT",
+                        "with": [
+                          3,
+                          "value"
+                        ],
+                        "write": "COMMAND"
+                      }
+                    ]
+                  },
+                  "property": "DEFAULT3",
+                  "tooltip": {
+                    "default": "Input bandwidth"
+                  },
+                  "type": "Slider"
+                },
+                {
+                  "bounds": [
+                    125,
+                    100,
+                    40,
+                    12
+                  ],
+                  "name": "bandwidth-label",
+                  "size": 9,
+                  "text": {
+                    "default": "Band"
+                  },
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    178,
+                    2,
+                    20,
+                    96
+                  ],
+                  "max": {
+                    "property": "MAX4"
+                  },
+                  "min": {
+                    "property": "MIN4"
+                  },
+                  "name": "dry",
+                  "on": {
+                    "value_changed": [
+                      {
+                        "value": "SETDEFAULT",
+                        "with": [
+                          4,
+                          "value"
+                        ],
+                        "write": "COMMAND"
+                      }
+                    ]
+                  },
+                  "property": "DEFAULT4",
+                  "tooltip": {
+                    "default": "Dry signal level (dB)"
+                  },
+                  "type": "Slider"
+                },
+                {
+                  "bounds": [
+                    168,
+                    100,
+                    40,
+                    12
+                  ],
+                  "name": "dry-label",
+                  "size": 9,
+                  "text": {
+                    "default": "Dry"
+                  },
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    221,
+                    2,
+                    20,
+                    96
+                  ],
+                  "max": {
+                    "property": "MAX5"
+                  },
+                  "min": {
+                    "property": "MIN5"
+                  },
+                  "name": "early",
+                  "on": {
+                    "value_changed": [
+                      {
+                        "value": "SETDEFAULT",
+                        "with": [
+                          5,
+                          "value"
+                        ],
+                        "write": "COMMAND"
+                      }
+                    ]
+                  },
+                  "property": "DEFAULT5",
+                  "tooltip": {
+                    "default": "Early reflection level (dB)"
+                  },
+                  "type": "Slider"
+                },
+                {
+                  "bounds": [
+                    211,
+                    100,
+                    40,
+                    12
+                  ],
+                  "name": "early-label",
+                  "size": 9,
+                  "text": {
+                    "default": "Early"
+                  },
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    264,
+                    2,
+                    20,
+                    96
+                  ],
+                  "max": {
+                    "property": "MAX6"
+                  },
+                  "min": {
+                    "property": "MIN6"
+                  },
+                  "name": "tail",
+                  "on": {
+                    "value_changed": [
+                      {
+                        "value": "SETDEFAULT",
+                        "with": [
+                          6,
+                          "value"
+                        ],
+                        "write": "COMMAND"
+                      }
+                    ]
+                  },
+                  "property": "DEFAULT6",
+                  "tooltip": {
+                    "default": "Tail level (dB)"
+                  },
+                  "type": "Slider"
+                },
+                {
+                  "bounds": [
+                    254,
+                    100,
+                    40,
+                    12
+                  ],
+                  "name": "tail-label",
+                  "size": 9,
+                  "text": {
+                    "default": "Tail"
+                  },
+                  "type": "Label"
+                }
+              ],
+              "title": "Reverb"
+            },
+            {
+              "children": [
+                {
+                  "align": "left",
+                  "bounds": [
+                    4,
+                    2,
+                    170,
+                    16
+                  ],
+                  "name": "room-name",
+                  "size": 10,
+                  "text": {
+                    "default": "Roomsize (m)"
+                  },
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    180,
+                    2,
+                    70,
+                    16
+                  ],
+                  "format": "%.2f",
+                  "name": "room-value",
+                  "on": {
+                    "value_changed": [
+                      {
+                        "value": "SETDEFAULT",
+                        "with": [
+                          0,
+                          "value"
+                        ],
+                        "write": "COMMAND"
+                      }
+                    ]
+                  },
+                  "property": "DEFAULT0",
+                  "type": "TextEntry"
+                },
+                {
+                  "align": "left",
+                  "bounds": [
+                    4,
+                    23,
+                    170,
+                    16
+                  ],
+                  "name": "time-name",
+                  "size": 10,
+                  "text": {
+                    "default": "Reverb time (s)"
+                  },
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    180,
+                    23,
+                    70,
+                    16
+                  ],
+                  "format": "%.2f",
+                  "name": "time-value",
+                  "on": {
+                    "value_changed": [
+                      {
+                        "value": "SETDEFAULT",
+                        "with": [
+                          1,
+                          "value"
+                        ],
+                        "write": "COMMAND"
+                      }
+                    ]
+                  },
+                  "property": "DEFAULT1",
+                  "type": "TextEntry"
+                },
+                {
+                  "align": "left",
+                  "bounds": [
+                    4,
+                    44,
+                    170,
+                    16
+                  ],
+                  "name": "damping-name",
+                  "size": 10,
+                  "text": {
+                    "default": "Damping"
+                  },
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    180,
+                    44,
+                    70,
+                    16
+                  ],
+                  "format": "%.2f",
+                  "name": "damping-value",
+                  "on": {
+                    "value_changed": [
+                      {
+                        "value": "SETDEFAULT",
+                        "with": [
+                          2,
+                          "value"
+                        ],
+                        "write": "COMMAND"
+                      }
+                    ]
+                  },
+                  "property": "DEFAULT2",
+                  "type": "TextEntry"
+                },
+                {
+                  "align": "left",
+                  "bounds": [
+                    4,
+                    65,
+                    170,
+                    16
+                  ],
+                  "name": "bandwidth-name",
+                  "size": 10,
+                  "text": {
+                    "default": "Input bandwidth"
+                  },
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    180,
+                    65,
+                    70,
+                    16
+                  ],
+                  "format": "%.2f",
+                  "name": "bandwidth-value",
+                  "on": {
+                    "value_changed": [
+                      {
+                        "value": "SETDEFAULT",
+                        "with": [
+                          3,
+                          "value"
+                        ],
+                        "write": "COMMAND"
+                      }
+                    ]
+                  },
+                  "property": "DEFAULT3",
+                  "type": "TextEntry"
+                },
+                {
+                  "align": "left",
+                  "bounds": [
+                    4,
+                    86,
+                    170,
+                    16
+                  ],
+                  "name": "dry-name",
+                  "size": 10,
+                  "text": {
+                    "default": "Dry signal level (dB)"
+                  },
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    180,
+                    86,
+                    70,
+                    16
+                  ],
+                  "format": "%.2f",
+                  "name": "dry-value",
+                  "on": {
+                    "value_changed": [
+                      {
+                        "value": "SETDEFAULT",
+                        "with": [
+                          4,
+                          "value"
+                        ],
+                        "write": "COMMAND"
+                      }
+                    ]
+                  },
+                  "property": "DEFAULT4",
+                  "type": "TextEntry"
+                },
+                {
+                  "align": "left",
+                  "bounds": [
+                    4,
+                    107,
+                    170,
+                    16
+                  ],
+                  "name": "early-name",
+                  "size": 10,
+                  "text": {
+                    "default": "Early reflection level (dB)"
+                  },
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    180,
+                    107,
+                    70,
+                    16
+                  ],
+                  "format": "%.2f",
+                  "name": "early-value",
+                  "on": {
+                    "value_changed": [
+                      {
+                        "value": "SETDEFAULT",
+                        "with": [
+                          5,
+                          "value"
+                        ],
+                        "write": "COMMAND"
+                      }
+                    ]
+                  },
+                  "property": "DEFAULT5",
+                  "type": "TextEntry"
+                },
+                {
+                  "align": "left",
+                  "bounds": [
+                    4,
+                    128,
+                    170,
+                    16
+                  ],
+                  "name": "tail-name",
+                  "size": 10,
+                  "text": {
+                    "default": "Tail level (dB)"
+                  },
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    180,
+                    128,
+                    70,
+                    16
+                  ],
+                  "format": "%.2f",
+                  "name": "tail-value",
+                  "on": {
+                    "value_changed": [
+                      {
+                        "value": "SETDEFAULT",
+                        "with": [
+                          6,
+                          "value"
+                        ],
+                        "write": "COMMAND"
+                      }
+                    ]
+                  },
+                  "property": "DEFAULT6",
+                  "type": "TextEntry"
+                }
+              ],
+              "title": "Numbers"
+            }
+          ],
+          "tab_height": 18,
+          "type": "Notebook"
+        }
+      ],
+      "height": 190,
+      "schema_version": 1,
+      "width": 320
+    }
+  }
+}

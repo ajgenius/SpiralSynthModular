@@ -48,25 +48,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x0012;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Matrix";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Sequencing";
 }
 }
 
@@ -184,7 +168,6 @@ m_ResetEvents(false)
 		if (n ==0) SetPatSeq(n, 0); else SetPatSeq(n, -1);
 	}
 
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 7);
 
 	m_Time = FloatProperty(Property::ReadOnly, 0.0f, 0.0f, 1000.0f, 0.0001f, 0.001f);
@@ -283,8 +266,6 @@ void MatrixPlugin::SetVoice(SpiralPlugin *first, unsigned voice, unsigned voices
 	}
 }
 
-
-
 void MatrixPlugin::Reset()
 {
 	ResetPorts();
@@ -372,7 +353,6 @@ void MatrixPlugin::Execute()
 		{
 			m_Triggered=false;
 		}
-
 
 		// set the individual triggers
 		for (int t=0; t<NUM_PATTERNS; t++) SetOutput(t+2,n,m_TriggerLevel[t]);

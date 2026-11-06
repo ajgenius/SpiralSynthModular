@@ -1,0 +1,27 @@
+{
+  "namespace": "Input",
+  "version": 1,
+  "controls": {
+    "EnvelopeCurve": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "length": ["object"],
+        "mode": ["object"],
+        "playhead": ["object"],
+        "points": ["object"]
+      }
+    },
+    "ValueTable": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "columns": ["integer"],
+        "count": ["string"],
+        "max": ["integer"],
+        "min": ["integer"],
+        "position": ["string"],
+        "row_height": ["integer"],
+        "values": ["string"]
+      }
+    }
+  }
+}

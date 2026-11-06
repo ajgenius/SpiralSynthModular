@@ -47,25 +47,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x0008;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Stereo Mixer";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Amps/Mixers";
 }
 }
 
@@ -106,7 +90,6 @@ m_MovedFrom(4)
 	m_PluginInfo.PortTips.push_back("Output left");
 	m_PluginInfo.PortTips.push_back("Output right");
 	
-	SetString(DeviceName, SpiralPlugin_GetName());
 
 	for (int n=0; n<MAX_CHANNELS; n++)
 	{
@@ -124,8 +107,6 @@ PluginInfo &StereoMixerPlugin::Initialise(const HostInfo *Host)
 {		
 	return SpiralPlugin::Initialise(Host);
 }
-
-
 
 void StereoMixerPlugin::Execute()
 {
@@ -241,5 +222,4 @@ void StereoMixerPlugin::Apply(Spiral::Core::Description::Reader &r)
 		r.Value(Channel(n)).Value(Pan(n));
 	}
 }
-
 

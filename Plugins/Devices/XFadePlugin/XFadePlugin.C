@@ -45,25 +45,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x001b;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "XFade";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Amps/Mixers";
 }
 }
 
@@ -84,7 +68,6 @@ XFadePlugin::XFadePlugin()
 	m_PluginInfo.PortTips.push_back("Left");
 	m_PluginInfo.PortTips.push_back("Right");
 
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 
 	m_Mix = FloatProperty(DefaultLinearFlags, 0.5, 0, 1, 0.0001, 0.001);
@@ -101,8 +84,6 @@ PluginInfo &XFadePlugin::Initialise(const HostInfo *Host)
 {
 	return SpiralPlugin::Initialise(Host);;
 }
-
-
 
 void XFadePlugin::Execute()
 {

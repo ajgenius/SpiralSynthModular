@@ -43,8 +43,6 @@ namespace Core
 }
 }
 using Spiral::Core::SPIRAL_PLUGIN_TYPE_DEVICE;
-using Spiral::Core::SPIRAL_PLUGIN_TYPE_EDITOR;
-using Spiral::Core::SPIRAL_PLUGIN_TYPE_PAIRED;
 
 static const float MAX_FREQ = 13000;
 
@@ -128,6 +126,7 @@ public:
 
 	virtual bool        GeneratePanel(const std::string &Directory, std::string &Document) { return false; }
 	virtual unsigned    PanelGeneration() { return 0; }
+	virtual void        Named(const std::string &name) {}
 
 	const PluginInfo& GetPluginInfo() const { return m_PluginInfo; }
 	const HostInfo*     GetHostInfo() { return m_HostInfo; }

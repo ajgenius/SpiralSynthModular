@@ -87,6 +87,20 @@ bool PluginManifest::Read(const std::string &path, std::string &error)
 	JSONValue *root = Spumoni::ParseJSON(path.c_str(), &error);
 	if (!root)
 		return false;
+	return Take(root, error);
+}
+
+bool PluginManifest::Parse(const std::string &text, std::string &error)
+{
+	*this = PluginManifest();
+	JSONValue *root = Spumoni::ParseJSONText(text, &error);
+	if (!root)
+		return false;
+	return Take(root, error);
+}
+
+bool PluginManifest::Take(Spumoni::JSON *root, std::string &error)
+{
 	const JSONValue *schema = root->Get("schema_version"), *identifier = root->Get("id");
 	long s = 0, i = 0;
 	bool reference = text(root, "registration", registration) && registration == "reference";
@@ -125,12 +139,18 @@ bool PluginManifest::Read(const std::string &path, std::string &error)
 	} else {
 		ok = ok && (registration == "module" || registration == "builtin" || reference) && !root->Get("gui_stack");
 		if (ok && registration == "builtin")
-			ok = text(root, "builtin", builtin) && builtin == "passthrough" && passthrough(root, *this);
+			ok = text(root, "builtin", builtin) &&
+			     (builtin == "core" || (builtin == "passthrough" && passthrough(root, *this)));
 	}
 	if (registration == "module")
 		ok = ok && text(root, "module", module) && basename(module);
 	else
 		ok = ok && !root->Get("module");
+	const JSONValue *panel = root->Get("ui");
+	if (panel && panel->GetType() == JSONValue::Object)
+		ui = panel->Stringify(false);
+	else if (panel)
+		ok = false;
 	delete root;
 	if (!ok)
 		error = "Invalid plugin manifest: required fields, types, or schema_version";

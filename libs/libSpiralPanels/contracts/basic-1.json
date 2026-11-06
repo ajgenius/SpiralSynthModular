@@ -1,0 +1,19 @@
+{
+  "namespace": "Basic",
+  "version": 1,
+  "controls": {
+    "LEDButton": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "bordered": ["boolean"],
+        "choice": ["integer"],
+        "color_role": ["string"],
+        "down": ["boolean"],
+        "property": ["string"],
+        "size": ["integer"],
+        "text": ["binding", "text"],
+        "toggle": ["boolean"]
+      }
+    }
+  }
+}

@@ -14,5 +14,169 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "FilterPlugin_DSP.so"
+  "module": "FilterPlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Controls": 1
+    },
+    "host_version": "0.3.42",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            13,
+            6,
+            20,
+            70
+          ],
+          "inverted": false,
+          "mapping": {
+            "kind": "sqrt",
+            "offset": 10
+          },
+          "max": 10010,
+          "min": 10,
+          "name": "cutoff-slider",
+          "property": "CUTOFF",
+          "type": "Slider",
+          "vertical": true
+        },
+        {
+          "bounds": [
+            13,
+            76,
+            20,
+            11
+          ],
+          "name": "cutoff-label",
+          "text": "Cutoff",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            56,
+            4,
+            45,
+            45
+          ],
+          "max": 11,
+          "min": 1,
+          "name": "resonance-knob",
+          "property": "RESONANCE",
+          "type": "Knob"
+        },
+        {
+          "bounds": [
+            55,
+            54,
+            50,
+            15
+          ],
+          "if_property": "REVC",
+          "name": "revc-button",
+          "property": "REVC",
+          "text": "RvCMod",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            55,
+            72,
+            50,
+            15
+          ],
+          "if_property": "REVR",
+          "name": "revr-button",
+          "property": "REVR",
+          "text": "RvRMod",
+          "type": "Button"
+        }
+      ],
+      "height": 94,
+      "help": "The standard SpiralSynth filter, based on the (zxforms design).\nQuite a meaty sound - low pass only, nice for bass modulations.\nWith variable emphasis/cutoff CV's.\n\nIt's also pretty fast, and well tested in SpiralSynth.",
+      "schema_version": 1,
+      "width": 116
+    },
+    "plugin_id": 11,
+    "properties": [
+      {
+        "class": "FloatProperty",
+        "default": 8200,
+        "display_name": "Cutoff",
+        "hint": "Cutoff",
+        "internal": false,
+        "logarithmic": false,
+        "max": 10010,
+        "min": 10,
+        "page": 1,
+        "property": "CUTOFF",
+        "read_only": false,
+        "step": 0.01,
+        "type": "number"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Filter",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 2,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 1,
+        "display_name": "Resonance",
+        "hint": "Resonance",
+        "internal": false,
+        "logarithmic": false,
+        "max": 11,
+        "min": 1,
+        "page": 0.10000000149011612,
+        "property": "RESONANCE",
+        "read_only": false,
+        "step": 0.1,
+        "type": "number"
+      },
+      {
+        "class": "ToggleProperty",
+        "default": false,
+        "display_name": "RevC",
+        "hint": "Reverse cutoff CV",
+        "internal": false,
+        "property": "REVC",
+        "read_only": false,
+        "type": "boolean"
+      },
+      {
+        "class": "ToggleProperty",
+        "default": false,
+        "display_name": "RevR",
+        "hint": "Reverse resonance CV",
+        "internal": false,
+        "property": "REVR",
+        "read_only": false,
+        "type": "boolean"
+      }
+    ],
+    "schema_version": 1
+  }
 }

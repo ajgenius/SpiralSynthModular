@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "id": 0,
+  "name": "Output",
+  "type": "audio-driver",
+  "category": "InputOutput",
+  "authors": [
+    "David Griffiths"
+  ],
+  "version": "1",
+  "host": {
+    "name": "SpiralSynthModular",
+    "version": "0.3.1",
+    "abi": "0.3.1"
+  },
+  "registration": "builtin",
+  "builtin": "core",
+  "ui": {
+    "control_contracts": {
+      "Controls": 1
+    },
+    "host_version": "0.3.43",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            30,
+            10,
+            40,
+            40
+          ],
+          "max": 1,
+          "min": 0,
+          "name": "volume",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SET_VOLUME",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "VOLUME",
+          "step": 0.001,
+          "type": "Knob"
+        },
+        {
+          "bounds": [
+            25,
+            50,
+            50,
+            14
+          ],
+          "name": "volume-label",
+          "text": "Volume",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            2,
+            68,
+            30,
+            15
+          ],
+          "choice": 1,
+          "name": "mode-read",
+          "on": {
+            "off": [
+              {
+                "value": "CLOSE",
+                "write": "COMMAND"
+              }
+            ],
+            "on": [
+              {
+                "value": "CLOSE",
+                "write": "COMMAND"
+              },
+              {
+                "value": "OPENREAD",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "MODE",
+          "text": "Read",
+          "toggle": true,
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            34,
+            68,
+            31,
+            15
+          ],
+          "choice": 3,
+          "name": "mode-dplx",
+          "on": {
+            "off": [
+              {
+                "value": "CLOSE",
+                "write": "COMMAND"
+              }
+            ],
+            "on": [
+              {
+                "value": "CLOSE",
+                "write": "COMMAND"
+              },
+              {
+                "value": "OPENDUPLEX",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "MODE",
+          "text": "Dplx",
+          "toggle": true,
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            68,
+            68,
+            30,
+            15
+          ],
+          "choice": 2,
+          "name": "mode-write",
+          "on": {
+            "off": [
+              {
+                "value": "CLOSE",
+                "write": "COMMAND"
+              }
+            ],
+            "on": [
+              {
+                "value": "CLOSE",
+                "write": "COMMAND"
+              },
+              {
+                "value": "OPENWRITE",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "MODE",
+          "text": "Write",
+          "toggle": true,
+          "type": "Button"
+        }
+      ],
+      "height": 85,
+      "help": "Audio i/o device. It opens the audio backend chosen in Options / Audio Client and sends whatever arrives at its inputs to the soundcard, in stereo, with separate left and right inputs.\n\nThere are three modes: Read records or processes sound from the soundcard, Write plays sound (the default), and Duplex, if the card supports it, does both at once. Click the active mode again to close the device.",
+      "schema_version": 1,
+      "width": 100
+    },
+    "plugin_id": 0,
+    "properties": [
+      {
+        "class": "StringProperty",
+        "default": "",
+        "display_name": "COMMAND",
+        "hint": "Command",
+        "internal": true,
+        "omitted": "internal",
+        "property": "COMMAND",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "IntProperty",
+        "default": 0,
+        "display_name": "Mode",
+        "hint": "Open mode",
+        "internal": false,
+        "property": "MODE",
+        "read_only": true,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 1,
+        "display_name": "Volume",
+        "hint": "Output volume",
+        "internal": false,
+        "max": 1,
+        "min": 0,
+        "property": "VOLUME",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      }
+    ],
+    "schema_version": 1
+  }
+}

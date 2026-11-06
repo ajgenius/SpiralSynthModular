@@ -48,25 +48,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 53;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Trig";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Maths/Logic";
 }
 }
 
@@ -84,7 +68,6 @@ TrigPlugin::TrigPlugin()
 	m_PluginInfo.PortTips.push_back("Input");	
 	m_PluginInfo.PortTips.push_back("Output");
 		
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 
 	m_Operator = SignedProperty(DefaultLinearFlags,1,0,3, 1, 1);
@@ -100,8 +83,6 @@ PluginInfo &TrigPlugin::Initialise(const HostInfo *Host)
 {	
 	return SpiralPlugin::Initialise(Host);
 }
-
-
 
 void TrigPlugin::Execute()
 {	

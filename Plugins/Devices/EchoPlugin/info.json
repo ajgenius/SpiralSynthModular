@@ -14,5 +14,222 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "EchoPlugin_DSP.so"
+  "module": "EchoPlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Basic": 1,
+      "Controls": 1
+    },
+    "host_version": "0.3.42",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            0,
+            0,
+            118,
+            90
+          ],
+          "name": "notebook-notebook",
+          "page_padding": 0,
+          "pages": [
+            {
+              "children": [
+                {
+                  "bounds": [
+                    10,
+                    10,
+                    45,
+                    45
+                  ],
+                  "name": "delay-knob",
+                  "property": "DELAY",
+                  "type": "Knob"
+                },
+                {
+                  "bounds": [
+                    10,
+                    55,
+                    45,
+                    11
+                  ],
+                  "name": "delay-label",
+                  "text": "Delay",
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    64,
+                    10,
+                    45,
+                    45
+                  ],
+                  "max": 1.100000023841858,
+                  "min": 0,
+                  "name": "feedback-knob",
+                  "property": "FEEDBACK",
+                  "type": "Knob"
+                },
+                {
+                  "bounds": [
+                    64,
+                    55,
+                    45,
+                    11
+                  ],
+                  "name": "feedback-label",
+                  "text": "Feedback",
+                  "type": "Label"
+                }
+              ],
+              "title": "Control"
+            },
+            {
+              "children": [
+                {
+                  "bounds": [
+                    4,
+                    8,
+                    110,
+                    20
+                  ],
+                  "name": "delay-spinner",
+                  "property": "DELAY",
+                  "simple": false,
+                  "type": "Spinner"
+                },
+                {
+                  "bounds": [
+                    4,
+                    28,
+                    110,
+                    11
+                  ],
+                  "name": "delay-secs-label",
+                  "text": "Delay (secs)",
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    4,
+                    42,
+                    110,
+                    20
+                  ],
+                  "max": 1.100000023841858,
+                  "min": 0,
+                  "name": "feedback-spinner",
+                  "property": "FEEDBACK",
+                  "simple": false,
+                  "type": "Spinner"
+                },
+                {
+                  "bounds": [
+                    4,
+                    62,
+                    110,
+                    11
+                  ],
+                  "name": "feedback-spinner-label",
+                  "text": "Feedback",
+                  "type": "Label"
+                }
+              ],
+              "title": "Numbers"
+            }
+          ],
+          "tab_height": 14,
+          "type": "Notebook"
+        },
+        {
+          "bordered": false,
+          "bounds": [
+            60,
+            92,
+            23,
+            23
+          ],
+          "name": "bounce-ledbutton",
+          "property": "BOUNCE",
+          "text": "Bounce",
+          "type": "Basic::LEDButton"
+        }
+      ],
+      "height": 124,
+      "help": "This plugin is a fully operational delay with feedback\n- providing a no-frills echo effect. The delay and\nfeedback controls can be modulated via CV inputs.\n\nBounce mode makes the echo bounce to-and-fro between\nthe 2 (stereo) outputs.\n",
+      "schema_version": 1,
+      "width": 116
+    },
+    "plugin_id": 14,
+    "properties": [
+      {
+        "class": "ToggleProperty",
+        "default": false,
+        "display_name": "Bounce",
+        "hint": "Stereo Bounce",
+        "internal": false,
+        "property": "BOUNCE",
+        "read_only": false,
+        "type": "boolean"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0.75,
+        "display_name": "Delay",
+        "hint": "Delay",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.10000000149011612,
+        "property": "DELAY",
+        "read_only": false,
+        "step": 0.0010000000474974513,
+        "type": "number"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Echo",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 2,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0.4000000059604645,
+        "display_name": "Feedback",
+        "hint": "Feedback",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1.100000023841858,
+        "min": 0,
+        "page": 0.10000000149011612,
+        "property": "FEEDBACK",
+        "read_only": false,
+        "step": 0.009999999776482582,
+        "type": "number"
+      }
+    ],
+    "schema_version": 1
+  }
 }

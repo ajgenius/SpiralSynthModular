@@ -54,25 +54,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 54;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Masher";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Filters/FX";
 }
 }
 
@@ -92,7 +76,6 @@ m_WriteGrain(0)
 	m_PluginInfo.PortTips.push_back("Density");
 	m_PluginInfo.PortTips.push_back("Output");
 	
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 
 	m_GrainStoreSize = SignedProperty(DefaultLinearFlags,MAX_GRAINSTORE_SIZE, 0, MAX_GRAINSTORE_SIZE, 1, 1);
@@ -118,8 +101,6 @@ PluginInfo &MasherPlugin::Initialise(const HostInfo *Host)
 	return SpiralPlugin::Initialise(Host);
 }
 
-
-
 void MixPitch(Sample &src, Sample &dst, int Pos, float Pitch)
 {
 	float n=0; 
@@ -138,7 +119,6 @@ void MasherPlugin::Reset()
 	m_ReadGrain = 0;
 	m_WriteGrain = 0;
 }
-
 
 void MasherPlugin::Execute()
 {

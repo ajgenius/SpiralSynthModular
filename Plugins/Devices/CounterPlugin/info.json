@@ -14,5 +14,88 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "CounterPlugin_DSP.so"
+  "module": "CounterPlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Controls": 1
+    },
+    "host_version": "0.3.42",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            13,
+            6,
+            50,
+            20
+          ],
+          "name": "count-textentry",
+          "property": "COUNT",
+          "type": "TextEntry"
+        },
+        {
+          "bounds": [
+            13,
+            26,
+            50,
+            9
+          ],
+          "name": "count-label",
+          "size": 8,
+          "text": "Count",
+          "type": "Label"
+        }
+      ],
+      "height": 34,
+      "help": "Counts input pulses (zero crossings) and flips the output\nCV every time the count is reached.",
+      "schema_version": 1,
+      "width": 76
+    },
+    "plugin_id": 45,
+    "properties": [
+      {
+        "class": "UnsignedProperty",
+        "default": 4,
+        "display_name": "Count",
+        "hint": "Count",
+        "internal": false,
+        "logarithmic": false,
+        "max": 10000,
+        "min": 0,
+        "page": 1,
+        "property": "COUNT",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Counter",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 1,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      }
+    ],
+    "schema_version": 1
+  }
 }

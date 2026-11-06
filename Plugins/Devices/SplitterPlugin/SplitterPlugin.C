@@ -48,25 +48,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x0006;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Splitter";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Control";
 }
 }
 
@@ -74,7 +58,6 @@ string SpiralPlugin_GetGroupName()
 
 SplitterPlugin::SplitterPlugin()
 {
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 
 	m_ChannelCount = SignedProperty(Property::ForceUpdate|DefaultLinearFlags, 4, 1, 256, 1, 1);
@@ -137,8 +120,6 @@ PluginInfo &SplitterPlugin::Initialise(const HostInfo *Host)
 {	
 	return SpiralPlugin::Initialise( Host);
 }
-
-
 
 void SplitterPlugin::Execute()
 {

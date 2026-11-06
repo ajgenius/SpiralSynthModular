@@ -47,25 +47,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 49;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Noise";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Oscillators";
 }
 }
 
@@ -82,7 +66,6 @@ NoisePlugin::NoisePlugin()
 	m_Type = SetProperty(Property::WriteOnly, 0, NamedPropertySet(NoiseTypes, sizeof(NoiseTypes)/sizeof(NoiseTypes[0])));
 	RegisterSharedProperty(m_Type, "NoiseType", "NoiseType");	
 
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 	m_PluginInfo.Name="Noise";
 	m_PluginInfo.Width=80;
@@ -103,8 +86,6 @@ PluginInfo &NoisePlugin::Initialise(const HostInfo *Host)
 {	
 	return SpiralPlugin::Initialise(Host);
 }
-
-
 
 void NoisePlugin::Execute()
 {

@@ -1,9 +1,9 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir)
-EXTRA_DIST = SpiralIcon.xpm
+EXTRA_DIST = SpiralIcon.xpm README.md
 plugindir = @PLUGINDIR@/dsp/MeterPlugin
-dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = MeterPlugin_DSP.la
 MeterPlugin_DSP_la_SOURCES = MeterPlugin.h MeterPlugin.C
+nodist_MeterPlugin_DSP_la_SOURCES = manifest.cpp
 MeterPlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
 MeterPlugin_DSP_la_LIBADD = $(top_builddir)/libs/libspiralcore/libspiralcore.la -lm
 install-data-hook:
@@ -11,4 +11,4 @@ install-data-hook:
 uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/MeterPlugin_DSP.so"
 
-include $(top_srcdir)/Plugins/Devices/default-ui.am
+include $(top_srcdir)/Plugins/Devices/manifest.am

@@ -1,6 +1,0 @@
-EXTRA_DIST += prebuilt-ui.json
-nodist_plugin_DATA = default-ui.json
-default-ui.json: $(srcdir)/prebuilt-ui.json
-	cp $(srcdir)/prebuilt-ui.json $@
-all-local: default-ui.json
-CLEANFILES = default-ui.json

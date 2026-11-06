@@ -14,5 +14,1818 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "SpiralLoopPlugin_DSP.so"
+  "module": "SpiralLoopPlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Basic": 1,
+      "Controls": 1,
+      "Meters": 1
+    },
+    "host_version": "0.3.43",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            -2,
+            -4,
+            300,
+            305
+          ],
+          "length": "LOOPPOINT",
+          "name": "loop",
+          "pos": "POS",
+          "sample": {
+            "buffer": "SAMPLEBUFFER",
+            "command": "GETSAMPLE",
+            "size": "SAMPLESIZE"
+          },
+          "triggers": {
+            "channel": "TRIGGERCHANNEL{index}",
+            "count": "TRIGGERCOUNT",
+            "new": "NEW_TRIGGER",
+            "time": "TRIGGERTIME{index}"
+          },
+          "type": "Meters::LoopWaveform"
+        },
+        {
+          "bounds": [
+            253,
+            271,
+            40,
+            25
+          ],
+          "down": true,
+          "name": "play",
+          "on": {
+            "off": [
+              {
+                "value": "STOP",
+                "write": "COMMAND"
+              }
+            ],
+            "on": [
+              {
+                "value": "START",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "text": "Play",
+          "toggle": true,
+          "type": "Basic::LEDButton"
+        },
+        {
+          "bounds": [
+            93,
+            86,
+            45,
+            45
+          ],
+          "max": 2,
+          "min": 0,
+          "name": "volume",
+          "property": "VOLUME",
+          "step": 0.0001,
+          "type": "Knob"
+        },
+        {
+          "bounds": [
+            93,
+            131,
+            45,
+            9
+          ],
+          "name": "volume-label",
+          "size": 8,
+          "text": "Volume",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            58,
+            136,
+            45,
+            45
+          ],
+          "max": 2,
+          "min": 0,
+          "name": "speed",
+          "property": "SPEED",
+          "step": 0.0001,
+          "type": "Knob"
+        },
+        {
+          "bounds": [
+            58,
+            181,
+            45,
+            9
+          ],
+          "name": "speed-label",
+          "size": 8,
+          "text": "Speed",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            118,
+            146,
+            45,
+            45
+          ],
+          "max": 1,
+          "min": 0,
+          "name": "length",
+          "on": {
+            "value_changed": [
+              {
+                "value": "CHANGE_LENGTH",
+                "with": [
+                  "value"
+                ],
+                "write": "COMMAND"
+              },
+              {
+                "attribute": "length",
+                "set": "loop"
+              }
+            ]
+          },
+          "step": 0.0001,
+          "type": "Knob"
+        },
+        {
+          "bounds": [
+            118,
+            191,
+            45,
+            9
+          ],
+          "name": "length-label",
+          "size": 8,
+          "text": "Length",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            253,
+            1,
+            30,
+            30
+          ],
+          "max": 3,
+          "min": 0,
+          "name": "wave-size",
+          "on": {
+            "value_changed": [
+              {
+                "attribute": "wave_size",
+                "set": "loop"
+              }
+            ]
+          },
+          "step": 0.0001,
+          "type": "Knob"
+        },
+        {
+          "bounds": [
+            253,
+            31,
+            30,
+            9
+          ],
+          "name": "wave-size-label",
+          "size": 8,
+          "text": "WaveSize",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            3,
+            276,
+            30,
+            14
+          ],
+          "digits": 0,
+          "min": 1,
+          "name": "ticks",
+          "property": "TICKSPERLOOP",
+          "simple": true,
+          "size": 8,
+          "step": 1,
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            3,
+            290,
+            30,
+            9
+          ],
+          "name": "ticks-label",
+          "size": 8,
+          "text": "Ticks/Loop",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            118,
+            46,
+            60,
+            12
+          ],
+          "color_role": "record",
+          "name": "record",
+          "on": {
+            "off": [
+              {
+                "value": "ENDRECORD",
+                "write": "COMMAND"
+              }
+            ],
+            "on": [
+              {
+                "value": "RECORD",
+                "write": "COMMAND"
+              }
+            ],
+            "value_changed": [
+              {
+                "attribute": "reload",
+                "set": "loop"
+              }
+            ]
+          },
+          "size": 8,
+          "text": "Record",
+          "toggle": true,
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            131,
+            58,
+            60,
+            12
+          ],
+          "color_role": "record",
+          "name": "overdub",
+          "on": {
+            "off": [
+              {
+                "value": "ENDRECORD",
+                "write": "COMMAND"
+              }
+            ],
+            "on": [
+              {
+                "value": "OVERDUB",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "size": 8,
+          "text": "OverDub",
+          "toggle": true,
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            143,
+            70,
+            60,
+            12
+          ],
+          "name": "keep-dub",
+          "on": {
+            "pressed": [
+              {
+                "value": "KEEPDUB",
+                "write": "COMMAND"
+              }
+            ],
+            "value_changed": [
+              {
+                "attribute": "reload",
+                "set": "loop"
+              }
+            ]
+          },
+          "size": 8,
+          "text": "Keep Dub",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            155,
+            82,
+            60,
+            12
+          ],
+          "name": "undo-dub",
+          "on": {
+            "pressed": [
+              {
+                "value": "UNDODUB",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "size": 8,
+          "text": "Undo Dub",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            166,
+            94,
+            60,
+            12
+          ],
+          "file": {
+            "extension": ".wav",
+            "save": false,
+            "then": [
+              {
+                "property": "COMMAND",
+                "value": "LOAD",
+                "with": [
+                  "text"
+                ]
+              }
+            ],
+            "title": "Load a sample"
+          },
+          "name": "load",
+          "on": {
+            "value_changed": [
+              {
+                "attribute": "reload",
+                "set": "loop"
+              }
+            ]
+          },
+          "size": 8,
+          "text": "Load",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            174,
+            106,
+            60,
+            12
+          ],
+          "file": {
+            "extension": ".wav",
+            "save": true,
+            "then": [
+              {
+                "property": "COMMAND",
+                "value": "SAVE",
+                "with": [
+                  "text"
+                ]
+              }
+            ],
+            "title": "Save the loop"
+          },
+          "name": "save",
+          "size": 8,
+          "text": "Save",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            181,
+            118,
+            60,
+            12
+          ],
+          "name": "new-trigger",
+          "on": {
+            "value_changed": [
+              {
+                "attribute": "new_trigger",
+                "set": "loop"
+              }
+            ]
+          },
+          "size": 8,
+          "text": "New trigger",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            185,
+            130,
+            60,
+            12
+          ],
+          "name": "cut",
+          "on": {
+            "pressed": [
+              {
+                "value": "CUT",
+                "with": [
+                  {
+                    "attribute": "range_start",
+                    "control": "loop"
+                  },
+                  {
+                    "attribute": "range_end",
+                    "control": "loop"
+                  }
+                ],
+                "write": "COMMAND"
+              }
+            ],
+            "value_changed": [
+              {
+                "attribute": "reload",
+                "set": "loop"
+              }
+            ]
+          },
+          "size": 8,
+          "text": "Cut",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            187,
+            142,
+            60,
+            12
+          ],
+          "name": "copy",
+          "on": {
+            "pressed": [
+              {
+                "value": "COPY",
+                "with": [
+                  {
+                    "attribute": "range_start",
+                    "control": "loop"
+                  },
+                  {
+                    "attribute": "range_end",
+                    "control": "loop"
+                  }
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "size": 8,
+          "text": "Copy",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            187,
+            154,
+            60,
+            12
+          ],
+          "name": "paste",
+          "on": {
+            "pressed": [
+              {
+                "value": "PASTE",
+                "with": [
+                  {
+                    "attribute": "range_start",
+                    "control": "loop"
+                  }
+                ],
+                "write": "COMMAND"
+              }
+            ],
+            "value_changed": [
+              {
+                "attribute": "reload",
+                "set": "loop"
+              }
+            ]
+          },
+          "size": 8,
+          "text": "Paste",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            184,
+            166,
+            60,
+            12
+          ],
+          "name": "paste-mix",
+          "on": {
+            "pressed": [
+              {
+                "value": "PASTEMIX",
+                "with": [
+                  {
+                    "attribute": "range_start",
+                    "control": "loop"
+                  }
+                ],
+                "write": "COMMAND"
+              }
+            ],
+            "value_changed": [
+              {
+                "attribute": "reload",
+                "set": "loop"
+              }
+            ]
+          },
+          "size": 8,
+          "text": "PasteMix",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            178,
+            178,
+            60,
+            12
+          ],
+          "name": "zero-range",
+          "on": {
+            "pressed": [
+              {
+                "value": "ZERO_RANGE",
+                "with": [
+                  {
+                    "attribute": "range_start",
+                    "control": "loop"
+                  },
+                  {
+                    "attribute": "range_end",
+                    "control": "loop"
+                  }
+                ],
+                "write": "COMMAND"
+              }
+            ],
+            "value_changed": [
+              {
+                "attribute": "reload",
+                "set": "loop"
+              }
+            ]
+          },
+          "size": 8,
+          "text": "Zero Range",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            171,
+            190,
+            60,
+            12
+          ],
+          "name": "rev-range",
+          "on": {
+            "pressed": [
+              {
+                "value": "REVERSE_RANGE",
+                "with": [
+                  {
+                    "attribute": "range_start",
+                    "control": "loop"
+                  },
+                  {
+                    "attribute": "range_end",
+                    "control": "loop"
+                  }
+                ],
+                "write": "COMMAND"
+              }
+            ],
+            "value_changed": [
+              {
+                "attribute": "reload",
+                "set": "loop"
+              }
+            ]
+          },
+          "size": 8,
+          "text": "Rev Range",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            161,
+            202,
+            60,
+            12
+          ],
+          "name": "select-all",
+          "on": {
+            "value_changed": [
+              {
+                "attribute": "select_all",
+                "set": "loop"
+              }
+            ]
+          },
+          "size": 8,
+          "text": "Select all",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            150,
+            214,
+            60,
+            12
+          ],
+          "name": "double",
+          "on": {
+            "pressed": [
+              {
+                "value": "DOUBLE",
+                "write": "COMMAND"
+              }
+            ],
+            "value_changed": [
+              {
+                "attribute": "reload",
+                "set": "loop"
+              }
+            ]
+          },
+          "size": 8,
+          "text": "Double",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            138,
+            226,
+            60,
+            12
+          ],
+          "name": "half",
+          "on": {
+            "pressed": [
+              {
+                "value": "HALF",
+                "write": "COMMAND"
+              }
+            ],
+            "value_changed": [
+              {
+                "attribute": "reload",
+                "set": "loop"
+              }
+            ]
+          },
+          "size": 8,
+          "text": "Half",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            125,
+            238,
+            60,
+            12
+          ],
+          "name": "crop",
+          "on": {
+            "pressed": [
+              {
+                "value": "CROP",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "size": 8,
+          "text": "Crop",
+          "type": "Button"
+        }
+      ],
+      "height": 304,
+      "help": "Volume and speed of the loop, its length in ticks, transport and recording; Load and Save choose a WAV file. Range edits stay in the editor.",
+      "schema_version": 1,
+      "width": 296
+    },
+    "plugin_id": 26,
+    "properties": [
+      {
+        "class": "StringProperty",
+        "default": "",
+        "display_name": "COMMAND",
+        "hint": "Command",
+        "internal": true,
+        "omitted": "internal",
+        "property": "COMMAND",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "SpiralLoop",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 2,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": 0,
+        "display_name": "End",
+        "hint": "End",
+        "internal": true,
+        "property": "END",
+        "read_only": false,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Length",
+        "hint": "Length",
+        "internal": true,
+        "property": "LENGTH",
+        "read_only": false,
+        "type": "number"
+      },
+      {
+        "class": "IntProperty",
+        "default": 0,
+        "display_name": "Looppoint",
+        "hint": "Looppoint",
+        "internal": false,
+        "property": "LOOPPOINT",
+        "read_only": true,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Pos",
+        "hint": "Pos",
+        "internal": false,
+        "property": "POS",
+        "read_only": true,
+        "type": "number"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 1,
+        "display_name": "Speed",
+        "hint": "Speed",
+        "internal": false,
+        "logarithmic": false,
+        "max": 2,
+        "min": -2,
+        "page": 0.1,
+        "property": "SPEED",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "IntProperty",
+        "default": 0,
+        "display_name": "Start",
+        "hint": "Start",
+        "internal": true,
+        "property": "START",
+        "read_only": false,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": 64,
+        "display_name": "Ticks",
+        "hint": "Ticks per loop",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1024,
+        "min": 1,
+        "page": 1,
+        "property": "TICKSPERLOOP",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 1,
+        "display_name": "Volume",
+        "hint": "Volume",
+        "internal": false,
+        "logarithmic": false,
+        "max": 2,
+        "min": 0,
+        "page": 0.1,
+        "property": "VOLUME",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Triggers in use",
+        "hint": "Triggers in use",
+        "internal": false,
+        "logarithmic": false,
+        "max": 32,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCOUNT",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 1 output",
+        "hint": "Trigger 1 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL0",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 1 position",
+        "hint": "Trigger 1 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME0",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 2 output",
+        "hint": "Trigger 2 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL1",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 2 position",
+        "hint": "Trigger 2 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME1",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 3 output",
+        "hint": "Trigger 3 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL2",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 3 position",
+        "hint": "Trigger 3 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME2",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 4 output",
+        "hint": "Trigger 4 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL3",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 4 position",
+        "hint": "Trigger 4 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME3",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 5 output",
+        "hint": "Trigger 5 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL4",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 5 position",
+        "hint": "Trigger 5 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME4",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 6 output",
+        "hint": "Trigger 6 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL5",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 6 position",
+        "hint": "Trigger 6 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME5",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 7 output",
+        "hint": "Trigger 7 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL6",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 7 position",
+        "hint": "Trigger 7 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME6",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 8 output",
+        "hint": "Trigger 8 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL7",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 8 position",
+        "hint": "Trigger 8 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME7",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 9 output",
+        "hint": "Trigger 9 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL8",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 9 position",
+        "hint": "Trigger 9 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME8",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 10 output",
+        "hint": "Trigger 10 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL9",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 10 position",
+        "hint": "Trigger 10 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME9",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 11 output",
+        "hint": "Trigger 11 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL10",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 11 position",
+        "hint": "Trigger 11 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME10",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 12 output",
+        "hint": "Trigger 12 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL11",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 12 position",
+        "hint": "Trigger 12 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME11",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 13 output",
+        "hint": "Trigger 13 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL12",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 13 position",
+        "hint": "Trigger 13 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME12",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 14 output",
+        "hint": "Trigger 14 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL13",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 14 position",
+        "hint": "Trigger 14 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME13",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 15 output",
+        "hint": "Trigger 15 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL14",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 15 position",
+        "hint": "Trigger 15 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME14",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 16 output",
+        "hint": "Trigger 16 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL15",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 16 position",
+        "hint": "Trigger 16 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME15",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 17 output",
+        "hint": "Trigger 17 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL16",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 17 position",
+        "hint": "Trigger 17 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME16",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 18 output",
+        "hint": "Trigger 18 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL17",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 18 position",
+        "hint": "Trigger 18 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME17",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 19 output",
+        "hint": "Trigger 19 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL18",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 19 position",
+        "hint": "Trigger 19 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME18",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 20 output",
+        "hint": "Trigger 20 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL19",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 20 position",
+        "hint": "Trigger 20 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME19",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 21 output",
+        "hint": "Trigger 21 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL20",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 21 position",
+        "hint": "Trigger 21 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME20",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 22 output",
+        "hint": "Trigger 22 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL21",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 22 position",
+        "hint": "Trigger 22 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME21",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 23 output",
+        "hint": "Trigger 23 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL22",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 23 position",
+        "hint": "Trigger 23 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME22",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 24 output",
+        "hint": "Trigger 24 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL23",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 24 position",
+        "hint": "Trigger 24 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME23",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 25 output",
+        "hint": "Trigger 25 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL24",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 25 position",
+        "hint": "Trigger 25 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME24",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 26 output",
+        "hint": "Trigger 26 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL25",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 26 position",
+        "hint": "Trigger 26 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME25",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 27 output",
+        "hint": "Trigger 27 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL26",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 27 position",
+        "hint": "Trigger 27 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME26",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 28 output",
+        "hint": "Trigger 28 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL27",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 28 position",
+        "hint": "Trigger 28 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME27",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 29 output",
+        "hint": "Trigger 29 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL28",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 29 position",
+        "hint": "Trigger 29 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME28",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 30 output",
+        "hint": "Trigger 30 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL29",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 30 position",
+        "hint": "Trigger 30 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME29",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 31 output",
+        "hint": "Trigger 31 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL30",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 31 position",
+        "hint": "Trigger 31 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME30",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "Trigger 32 output",
+        "hint": "Trigger 32 output",
+        "internal": false,
+        "logarithmic": false,
+        "max": 8,
+        "min": 0,
+        "page": 1,
+        "property": "TRIGGERCHANNEL31",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Trigger 32 position",
+        "hint": "Trigger 32 position",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.001,
+        "property": "TRIGGERTIME31",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      }
+    ],
+    "schema_version": 1
+  }
 }

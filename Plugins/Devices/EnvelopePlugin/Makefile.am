@@ -1,9 +1,9 @@
 AM_CPPFLAGS = $(SPIRALGUI_CFLAGS) $(SPIRALCORE_CFLAGS) -I$(top_srcdir)
 EXTRA_DIST = SpiralIcon.xpm
 plugindir = @PLUGINDIR@/dsp/EnvelopePlugin
-dist_plugin_DATA = info.json
 plugin_LTLIBRARIES = EnvelopePlugin_DSP.la
 EnvelopePlugin_DSP_la_SOURCES = EnvelopePlugin.h EnvelopePlugin.C
+nodist_EnvelopePlugin_DSP_la_SOURCES = manifest.cpp
 EnvelopePlugin_DSP_la_LDFLAGS = -module -avoid-version -shared -no-undefined
 EnvelopePlugin_DSP_la_LIBADD = $(top_builddir)/libs/libspiralcore/libspiralcore.la -lm
 install-data-hook:
@@ -11,4 +11,4 @@ install-data-hook:
 uninstall-local:
 	rm -f "$(DESTDIR)$(plugindir)/EnvelopePlugin_DSP.so"
 
-include $(top_srcdir)/Plugins/Devices/default-ui.am
+include $(top_srcdir)/Plugins/Devices/manifest.am

@@ -14,5 +14,427 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "StreamPlugin_DSP.so"
+  "module": "StreamPlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Controls": 1,
+      "Meters": 1
+    },
+    "host_version": "0.3.43",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            3,
+            1,
+            168,
+            38
+          ],
+          "digits": 6,
+          "format": "time",
+          "name": "time",
+          "property": "TIMEOUT",
+          "type": "Meters::SevenSegment"
+        },
+        {
+          "bounds": [
+            178,
+            -4,
+            50,
+            50
+          ],
+          "max": 2,
+          "min": 0,
+          "name": "volume",
+          "property": "VOLUME",
+          "step": 0.001,
+          "type": "Knob"
+        },
+        {
+          "bounds": [
+            178,
+            46,
+            50,
+            12
+          ],
+          "name": "volume-label",
+          "text": "Volume",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            3,
+            41,
+            170,
+            20
+          ],
+          "name": "filename",
+          "placeholder": "Nothing Loaded",
+          "property": "FILENAME",
+          "size": 8,
+          "type": "Meters::LCD"
+        },
+        {
+          "bounds": [
+            3,
+            64,
+            235,
+            20
+          ],
+          "mapping": {
+            "offset": -10
+          },
+          "max": 10,
+          "min": -10,
+          "name": "pitch",
+          "property": "PITCH",
+          "step": 0.001,
+          "type": "Slider",
+          "value_label": "%1.3f",
+          "vertical": false
+        },
+        {
+          "bounds": [
+            3,
+            86,
+            235,
+            20
+          ],
+          "max": {
+            "property": "MAXTIME"
+          },
+          "min": 0,
+          "name": "position",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SET_TIME",
+                "with": [
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "TIMEOUT",
+          "type": "Slider",
+          "vertical": false
+        },
+        {
+          "bounds": [
+            0,
+            110,
+            30,
+            30
+          ],
+          "file": {
+            "extension": ".wav",
+            "save": false,
+            "then": [
+              {
+                "property": "COMMAND",
+                "value": "LOAD",
+                "with": [
+                  "text"
+                ]
+              }
+            ],
+            "title": "Open a file to stream"
+          },
+          "name": "load",
+          "size": 9,
+          "text": "Load",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            30,
+            110,
+            30,
+            30
+          ],
+          "label": "symbol",
+          "name": "restart",
+          "on": {
+            "pressed": [
+              {
+                "value": "RESTART",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "size": 10,
+          "text": "@|<",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            60,
+            110,
+            30,
+            30
+          ],
+          "label": "symbol",
+          "name": "play",
+          "on": {
+            "off": [
+              {
+                "value": "STOP",
+                "write": "COMMAND"
+              }
+            ],
+            "on": [
+              {
+                "value": "PLAY",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "PLAYING",
+          "size": 10,
+          "text": {
+            "off": {
+              "default": "@>",
+              "key": "plugin.281.panel.play.text"
+            },
+            "on": "@||",
+            "property": "PLAYING"
+          },
+          "toggle": true,
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            90,
+            110,
+            30,
+            30
+          ],
+          "name": "reset",
+          "on": {
+            "pressed": [
+              {
+                "value": 1,
+                "write": "PITCH"
+              }
+            ]
+          },
+          "size": 9,
+          "text": "Reset",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            120,
+            110,
+            30,
+            30
+          ],
+          "label": "symbol",
+          "max": 2,
+          "min": -2,
+          "name": "reverse",
+          "on": {
+            "pressed": [
+              {
+                "delta": "PITCH",
+                "factor": -1
+              }
+            ]
+          },
+          "size": 10,
+          "text": "@<-",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            150,
+            110,
+            30,
+            30
+          ],
+          "max": 2,
+          "min": -2,
+          "name": "half",
+          "on": {
+            "pressed": [
+              {
+                "delta": "PITCH",
+                "factor": 0.5
+              }
+            ]
+          },
+          "size": 9,
+          "text": "/2",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            180,
+            110,
+            30,
+            30
+          ],
+          "max": 2,
+          "min": -2,
+          "name": "double",
+          "on": {
+            "pressed": [
+              {
+                "delta": "PITCH",
+                "factor": 2
+              }
+            ]
+          },
+          "size": 9,
+          "text": "X2",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            210,
+            110,
+            30,
+            30
+          ],
+          "name": "nudge",
+          "on": {
+            "pressed": [
+              {
+                "value": "SET_TIME",
+                "with": [
+                  "value"
+                ],
+                "write": "COMMAND"
+              },
+              {
+                "amount": 1,
+                "delta": "TIMEOUT"
+              }
+            ]
+          },
+          "repeat": true,
+          "size": 9,
+          "text": "Nudge",
+          "type": "Button"
+        }
+      ],
+      "height": 144,
+      "help": "Volume and pitch of the streamed file, and its transport; Open chooses the WAV file to stream.",
+      "schema_version": 1,
+      "width": 241
+    },
+    "plugin_id": 281,
+    "properties": [
+      {
+        "class": "StringProperty",
+        "default": "",
+        "display_name": "COMMAND",
+        "hint": "Command",
+        "internal": true,
+        "omitted": "internal",
+        "property": "COMMAND",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Stream",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 1,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      },
+      {
+        "class": "StringProperty",
+        "default": "",
+        "display_name": "File name",
+        "hint": "File name",
+        "internal": true,
+        "property": "FILENAME",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 1,
+        "display_name": "Maxtime",
+        "hint": "Maxtime",
+        "internal": false,
+        "property": "MAXTIME",
+        "read_only": true,
+        "type": "number"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 1,
+        "display_name": "Pitch",
+        "hint": "Pitch",
+        "internal": false,
+        "logarithmic": false,
+        "max": 2,
+        "min": -2,
+        "page": 0.1,
+        "property": "PITCH",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "ToggleProperty",
+        "default": false,
+        "display_name": "Playing",
+        "hint": "Playing",
+        "internal": false,
+        "property": "PLAYING",
+        "read_only": true,
+        "type": "boolean"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Timeout",
+        "hint": "Timeout",
+        "internal": false,
+        "property": "TIMEOUT",
+        "read_only": true,
+        "type": "number"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 1,
+        "display_name": "Volume",
+        "hint": "Volume",
+        "internal": false,
+        "logarithmic": false,
+        "max": 2,
+        "min": 0,
+        "page": 0.1,
+        "property": "VOLUME",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      }
+    ],
+    "schema_version": 1
+  }
 }

@@ -48,25 +48,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 40;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Keyboard";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "InputOutput";
 }
 }
 
@@ -108,8 +92,6 @@ m_NextID(0)
 KeyboardPlugin::~KeyboardPlugin()
 {
 }
-
-
 
 PluginInfo &KeyboardPlugin::Initialise(const HostInfo *Host)
 {

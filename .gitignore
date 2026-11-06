@@ -51,3 +51,7 @@ spiralsynthmodular
 .build/
 /libs/libspiralcore/plugin-manager-root/
 /third-party/swh-plugins/*_[0-9]*.c
+Plugins/Devices/*/manifest.cpp
+libs/libspiralcore/Devices/*/manifest.cpp
+tools/embed-manifest/embed-manifest
+libs/libSpiralPanels/toolkits/fltk/theme.cpp

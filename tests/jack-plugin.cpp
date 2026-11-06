@@ -75,12 +75,7 @@ int main(int argc, char **argv)
 	alarm(20);
 	SpiralPlugin *(*create)()=OutputPlugin::Class().Create;
 	if (!output)
-	{
-		void *module=dlopen((std::string(argv[1])+"/dsp/JackPlugin/JackPlugin_DSP.so").c_str(),RTLD_NOW|RTLD_GLOBAL);
-		if (!module) { puts(dlerror()); return 1; }
-
-		create=(SpiralPlugin *(*)())dlsym(module,"SpiralPlugin_CreateInstance");
-	}
+		create=JackPlugin::Class().Create;
 	assert(create);
 	Capture capture;
 	Spiral::Core::AudioClientOptions options;

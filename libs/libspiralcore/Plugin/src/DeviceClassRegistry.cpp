@@ -22,6 +22,9 @@
 #include <stdio.h>
 #include <iostream>
 #include "DeviceClassRegistry.h"
+#include "PanelRegistry.h"
+#include "Gzip.h"
+#include "PluginManifest.h"
 #include "PassthroughPlugin.h"
 #include <algorithm>
 #include <dirent.h>
@@ -64,9 +67,78 @@ void DeviceClassRegistry::PackUpAndGoHome()
 	m_Singleton = NULL;
 }
 
+SpiralPlugin *DeviceClass::CreateInstance() const
+{
+	SpiralPlugin *plugin = Build ? Build(*this) : (Create ? Create() : NULL);
+
+	if (plugin)
+		plugin->Named(Name);
+
+	return plugin;
+}
+
+BuiltinDevice::BuiltinDevice(ClassFunction function)
+{
+	List().push_back(function);
+}
+
+vector<BuiltinDevice::ClassFunction> &BuiltinDevice::List()
+{
+	static vector<ClassFunction> list;
+
+	return list;
+}
+
+const vector<BuiltinDevice::ClassFunction> &BuiltinDevice::All()
+{
+	return List();
+}
+
+unsigned DeviceClassRegistry::RegisterBuiltins()
+{
+	unsigned count = 0;
+	const vector<BuiltinDevice::ClassFunction> &builtins = BuiltinDevice::All();
+
+	for (size_t i = 0; i < builtins.size(); ++i)
+		if (Register(builtins[i]()))
+			++count;
+
+	return count;
+}
+
+bool DeviceClassRegistry::ReadManifest(const unsigned char *data, size_t size, DeviceClass &device, string &error)
+{
+	string text;
+
+	if (!data || !Spumoni::Gzip::Decompress(data, size, text, error))
+		return false;
+
+	PluginManifest manifest;
+
+	if (!manifest.Parse(text, error))
+		return false;
+
+	if (manifest.type != "dsp" && manifest.type != "audio-driver")
+	{
+		error = "not a dsp manifest";
+
+		return false;
+	}
+
+	device.ID = manifest.id;
+	device.Name = manifest.name;
+	device.Category = manifest.category;
+	device.Panel = manifest.ui;
+
+	return true;
+}
+
 unsigned DeviceClassRegistry::LoadModules(const string &root)
 {
-	unsigned count = LoadBuiltins(root);
+	m_Root = root;
+	unsigned count = RegisterBuiltins();
+	count += LoadBuiltins(root);
+
 	return count + PluginManager::Get()->Load(*this, root);
 }
 
@@ -112,12 +184,10 @@ bool DeviceClassRegistry::Accept(void *entry, const string &path)
 	TextFn GetHostABI = (TextFn)dlsym(handle, "SpiralPlugin_GetHostABI");
 	const char *abi = GetHostABI ? GetHostABI() : NULL;
 
-	int (*GetID)(void) = (int(*)()) dlsym(handle, "SpiralPlugin_GetID");
 	int (*GetType)(void) = (int(*)()) dlsym(handle, "SpiralPlugin_GetType");
 	const char **(*GetIcon)(void) = (const char **(*)()) dlsym(handle, "SpiralPlugin_GetIcon");
-	std::string (*GetGroupName)(void) =
-		(std::string(*)()) dlsym(handle, "SpiralPlugin_GetGroupName");
-	std::string (*GetName)(void) = (std::string(*)()) dlsym(handle, "SpiralPlugin_GetName");
+	typedef const unsigned char *(*ManifestFn)(size_t *);
+	ManifestFn GetManifest = (ManifestFn)dlsym(handle, "SpiralPlugin_GetManifest");
 	dlclose(handle);
 
 	if (!abi || strcmp(abi, SSM_HOST_ABI) != 0)
@@ -126,22 +196,29 @@ bool DeviceClassRegistry::Accept(void *entry, const string &path)
 		return false;
 	}
 
-	if (!GetID || !GetType || GetType() != SPIRAL_PLUGIN_TYPE_DEVICE)
+	if (!GetType || GetType() != SPIRAL_PLUGIN_TYPE_DEVICE)
 	{
 		cerr << "Obsolete or invalid plugin module: " << path << endl;
 		return false;
 	}
 
-	if (!GetIcon || !GetGroupName || !GetName)
+	if (!GetIcon || !GetManifest)
 	{
 		cerr << "Error linking to plugin " << path << endl;
 		return false;
 	}
 
 	DeviceClass device;
-	device.ID = GetID();
-	device.Name = GetName();
-	device.Category = GetGroupName();
+	size_t size = 0;
+	const unsigned char *manifest = GetManifest(&size);
+	string error;
+
+	if (!ReadManifest(manifest, size, device, error))
+	{
+		cerr << "Invalid embedded manifest in " << path << ": " << error << endl;
+		return false;
+	}
+
 	device.Icon = GetIcon();
 	device.Create = (SpiralPlugin *(*)()) entry;
 	device.Module = path;
@@ -165,6 +242,7 @@ void DeviceClassRegistry::Release(void *, const string &path)
 	{
 		if ((*i)->Module == path)
 		{
+			PanelRegistry::Get()->Forget((*i)->ID);
 			delete *i;
 			i = m_PluginVec.erase(i);
 		}
@@ -176,6 +254,8 @@ bool DeviceClassRegistry::Register(const DeviceClass &device)
 {
 	if (device.ID < 0 || Find(device.ID)) return false;
 	m_PluginVec.push_back(new DeviceClass(device));
+	if (!device.Panel.empty() || device.PanelGenerated)
+		PanelRegistry::Get()->Offer(device);
 	return true;
 }
 

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-#include "GUI/Panels/Panel.h"
-#include "GUI/Panels/PanelControl.h"
+#include "libs/libSpiralPanels/include/Panel.h"
+#include "libs/libSpiralPanels/include/PanelControl.h"
+#include "DeviceSource.h"
+#include "FltkView.h"
 #include "MixerPlugin.h"
 #include "JSON.h"
 #include <FL/Fl_Button.H>
@@ -11,7 +13,7 @@
 #include <string>
 #include <vector>
 
-using namespace SpiralPanels;
+using namespace Spiral::Panels;
 
 namespace
 {
@@ -31,12 +33,10 @@ namespace
 		{
 			if (entry->d_name[0] == '.')
 				continue;
-			const std::string path = devices + "/" + entry->d_name + "/prebuilt-ui.json";
-			if (FILE *f = fopen(path.c_str(), "r"))
-			{
-				fclose(f);
+			const std::string path = devices + "/" + entry->d_name + "/info.json";
+			Spumoni::JSONOwner info(Spumoni::ParseJSON(path.c_str()));
+			if (info.get() && info->Get("ui"))
 				files.push_back(path);
-			}
 		}
 		closedir(dir);
 		return files;
@@ -59,6 +59,17 @@ namespace
 	}
 }
 
+static Spumoni::JSON *UI(const std::string &path, std::string &error)
+{
+	Spumoni::JSONOwner info(Spumoni::ParseJSON(path.c_str(), &error));
+	const Spumoni::JSON *ui = info.get() ? info->Get("ui") : NULL;
+
+	if (info.get() && !ui)
+		error = "no ui";
+
+	return ui ? ui->Duplicate() : NULL;
+}
+
 int main()
 {
 	int failures = 0;
@@ -68,14 +79,15 @@ int main()
 	for (size_t i = 0; i < files.size(); ++i)
 	{
 		std::string error;
-		Spumoni::JSON *document = Spumoni::ParseJSON(files[i].c_str(), &error);
+		Spumoni::JSON *document = UI(files[i], error);
 		if (!document)
 		{
 			std::printf("FAIL %s: %s\n", files[i].c_str(), error.c_str());
 			++failures;
 			continue;
 		}
-		Panel loaded(0, 0, NULL);
+		FltkPanel host(0, 0, new DeviceSource(NULL));
+		Panel &loaded = host.Model();
 		if (!loaded.Build(*document, &error))
 		{
 			std::printf("FAIL %s: %s\n", files[i].c_str(), error.c_str());
@@ -105,9 +117,10 @@ int main()
 	{
 		MixerPlugin mixer;
 		std::string error;
-		Spumoni::JSON *document = Spumoni::ParseJSON((Root() + "/Plugins/Devices/MixerPlugin/prebuilt-ui.json").c_str(), &error);
+		Spumoni::JSON *document = UI(Root() + "/Plugins/Devices/MixerPlugin/info.json", error);
 		assert(document);
-		Panel loaded(0, 0, &mixer);
+		FltkPanel host(0, 0, new DeviceSource(&mixer));
+		Panel &loaded = host.Model();
 		if (!loaded.Build(*document, &error))
 			std::printf("mixer: %s\n", error.c_str());
 		assert(error.empty());
@@ -115,10 +128,10 @@ int main()
 		const int before = Channels(mixer);
 		PanelControl *add = loaded.FindControl("add");
 		PanelControl *remove = loaded.FindControl("remove");
-		assert(add && remove && add->Widget() && remove->Widget());
+		assert(add && remove && FltkView::WidgetOf(*add) && FltkView::WidgetOf(*remove));
 		assert(add->Handles("pressed") && remove->Handles("pressed"));
 
-		add->Widget()->do_callback();
+		FltkView::WidgetOf(*add)->do_callback();
 		Block(mixer);
 		if (Channels(mixer) != before + 1)
 		{
@@ -128,7 +141,7 @@ int main()
 		else
 			std::printf("ok   mixer add: channels %d -> %d\n", before, Channels(mixer));
 
-		remove->Widget()->do_callback();
+		FltkView::WidgetOf(*remove)->do_callback();
 		Block(mixer);
 		if (Channels(mixer) != before)
 		{

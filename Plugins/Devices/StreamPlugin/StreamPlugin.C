@@ -38,7 +38,6 @@ const char *SpiralPlugin_GetHostABI()
 	return SSM_HOST_ABI;
 }
 
-
 SpiralPlugin* SpiralPlugin_CreateInstance() { return new StreamPlugin; }
 
 int SpiralPlugin_GetType()
@@ -46,18 +45,7 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
-
-int SpiralPlugin_GetID() { return 0x0119; }
-
-string SpiralPlugin_GetName()
-{
-	return "Stream";
-}
-
-string SpiralPlugin_GetGroupName() { return "Delay/Sampling"; }
-
 }
 
 ///////////////////////////////////////////////////////
@@ -88,7 +76,6 @@ m_Mode(STOPM)
 	AsFloat(m_PitchMod) = 1.0f;
         m_GUIArgs.Time = 0;
         strcpy (m_GUIArgs.FileName, "");
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 
 	m_Volume = FloatProperty(DefaultLinearFlags, 1.0, 0, 2, 0.001, 0.01);
@@ -137,8 +124,6 @@ PluginInfo &StreamPlugin::Initialise(const HostInfo *Host)
 	return Info;
 }
 
-
-
 void StreamPlugin::Reset()
 {
 	ResetPorts();
@@ -147,7 +132,6 @@ void StreamPlugin::Reset()
 	m_SamplePos = -1;
 	AsFloat(m_Pos) = 0;
 }
-
 
 void StreamPlugin::Execute() {
      if (m_File.IsOpen() && m_SampleSize > 0) {

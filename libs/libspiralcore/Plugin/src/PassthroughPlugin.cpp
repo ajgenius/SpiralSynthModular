@@ -130,6 +130,7 @@ bool PassthroughPlugin::ReadClass(const string &manifest, DeviceClass &device)
 	device.Name = read.name;
 	device.Category = read.category;
 	device.Manifest = manifest;
+	device.Panel = read.ui;
 	device.Build = Build;
 	device.Icon = Icon(device.Directory());
 	return true;

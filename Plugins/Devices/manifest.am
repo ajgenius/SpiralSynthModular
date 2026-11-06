@@ -1,0 +1,7 @@
+EMBED_MANIFEST = $(top_builddir)/tools/embed-manifest/embed-manifest$(EXEEXT)
+EXTRA_DIST += info.json
+BUILT_SOURCES = manifest.cpp
+CLEANFILES = manifest.cpp
+
+manifest.cpp: $(srcdir)/info.json $(EMBED_MANIFEST)
+	$(EMBED_MANIFEST) $(srcdir)/info.json $@

@@ -39,7 +39,6 @@ const char *SpiralPlugin_GetHostABI()
 	return SSM_HOST_ABI;
 }
 
-
 SpiralPlugin* SpiralPlugin_CreateInstance() { return new LFOPlugin; }
 
 int SpiralPlugin_GetType()
@@ -47,18 +46,7 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
-
-int SpiralPlugin_GetID() { return 124; }
-
-string SpiralPlugin_GetName()
-{
-	return "LFO";
-}
-
-string SpiralPlugin_GetGroupName() { return "Oscillators"; }
-
 }
 
 ///////////////////////////////////////////////////////
@@ -79,7 +67,6 @@ m_TableLength (DEFAULT_TABLE_LEN) {
 	RegisterSharedProperty(m_Type, "Wave Type", "Wave Type");
 	RegisterSharedProperty(m_Freq, "Frequency", "Frequency");
 
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 	m_CyclePos = 0;
 	m_Note = 0;
@@ -103,8 +90,6 @@ PluginInfo &LFOPlugin::Initialise (const HostInfo *Host) {
            WriteWaves();
            return Info;
 }
-
-
 
 void LFOPlugin::WriteWaves() {
      float RadCycle = (M_PI/180) * 360;

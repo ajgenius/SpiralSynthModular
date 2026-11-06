@@ -1,0 +1,253 @@
+{
+  "schema_version": 1,
+  "id": 41,
+  "name": "DiskWriter",
+  "type": "audio-driver",
+  "category": "InputOutput",
+  "authors": [
+    "David Griffiths"
+  ],
+  "version": "2",
+  "host": {
+    "name": "SpiralSynthModular",
+    "version": "0.3.1",
+    "abi": "0.3.1"
+  },
+  "registration": "builtin",
+  "builtin": "core",
+  "ui": {
+    "control_contracts": {
+      "Basic": 1,
+      "Controls": 1,
+      "Meters": 1
+    },
+    "host_version": "0.3.43",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            -2,
+            1,
+            23,
+            23
+          ],
+          "children": [
+            {
+              "bounds": [
+                0,
+                0,
+                23,
+                23
+              ],
+              "choice": "{choice}",
+              "enabled": {
+                "equals": 0,
+                "property": "RECORDING"
+              },
+              "name": "bits-{choice}",
+              "property": "BITS PER SAMPLE",
+              "text": "{choice}bit",
+              "type": "Basic::LEDButton"
+            }
+          ],
+          "items": [
+            {
+              "choice": 16
+            },
+            {
+              "choice": 24
+            },
+            {
+              "choice": 32
+            }
+          ],
+          "name": "bits",
+          "step_y": 23,
+          "type": "Repeat"
+        },
+        {
+          "bounds": [
+            48,
+            6,
+            108,
+            38
+          ],
+          "digits": 4,
+          "format": "time",
+          "name": "time",
+          "property": "TIME RECORDED",
+          "type": "Meters::SevenSegment"
+        },
+        {
+          "bounds": [
+            103,
+            49,
+            10,
+            18
+          ],
+          "enabled": {
+            "equals": 0,
+            "property": "RECORDING"
+          },
+          "name": "stereo",
+          "property": "STEREO",
+          "size": 12,
+          "text": "Stereo",
+          "type": "CheckBox"
+        },
+        {
+          "bounds": [
+            -2,
+            71,
+            75,
+            20
+          ],
+          "file": {
+            "extension": ".wav",
+            "save": true,
+            "then": [
+              {
+                "property": "COMMAND",
+                "value": "OPENWAV",
+                "with": [
+                  "text"
+                ]
+              }
+            ],
+            "title": "Pick a Wav file to save to"
+          },
+          "name": "open",
+          "on": {
+            "off": [
+              {
+                "value": "CLOSEWAV",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "text": "Open",
+          "toggle": true,
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            83,
+            71,
+            75,
+            20
+          ],
+          "name": "record",
+          "on": {
+            "off": [
+              {
+                "value": "STOP",
+                "write": "COMMAND"
+              }
+            ],
+            "on": [
+              {
+                "value": "RECORD",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "RECORDING",
+          "text": "Record",
+          "toggle": true,
+          "type": "Button"
+        }
+      ],
+      "height": 99,
+      "help": "Stereo or mono, the bit depth, and recording: Open picks the WAV file, Record and Stop write to it, Close finishes it.",
+      "schema_version": 1,
+      "width": 156
+    },
+    "plugin_id": 41,
+    "properties": [
+      {
+        "class": "IntProperty",
+        "default": 16,
+        "display_name": "Bits Per Sample",
+        "hint": "Bits Per Sample",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "page": 1,
+        "property": "BITS PER SAMPLE",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "StringProperty",
+        "default": "",
+        "display_name": "COMMAND",
+        "hint": "Command",
+        "internal": true,
+        "omitted": "internal",
+        "property": "COMMAND",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "DiskWriter",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 2,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      },
+      {
+        "class": "ToggleProperty",
+        "default": false,
+        "display_name": "Recording",
+        "hint": "Recording",
+        "internal": false,
+        "property": "RECORDING",
+        "read_only": true,
+        "type": "boolean"
+      },
+      {
+        "class": "ToggleProperty",
+        "default": true,
+        "display_name": "Stereo",
+        "hint": "Stereo",
+        "internal": false,
+        "property": "STEREO",
+        "read_only": false,
+        "type": "boolean"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Timerecorded",
+        "hint": "Timerecorded",
+        "internal": false,
+        "property": "TIME RECORDED",
+        "read_only": true,
+        "type": "number"
+      }
+    ],
+    "schema_version": 1
+  }
+}

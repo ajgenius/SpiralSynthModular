@@ -65,6 +65,8 @@ const Spiral::Core::DeviceClass &LADSPAPlugin::Class()
 	return device;
 }
 
+static const Spiral::Core::BuiltinDevice Registration(LADSPAPlugin::Class);
+
 ///////////////////////////////////////////////////////
 
 

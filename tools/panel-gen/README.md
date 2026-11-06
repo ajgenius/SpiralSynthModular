@@ -1,6 +1,6 @@
 # panel-gen
 
-Written by GROK (Grok Bot). Generates the `prebuilt-ui.json` panel documents
+Written by GROK (Grok Bot). Generates the panel documents
 for the devices listed in `specs.py` from each device's registered
 properties, so the property entries match the device exactly.
 
@@ -15,8 +15,8 @@ directly.
 
 Commands are named: a spec passes `commands={'NAME': number | {'command':
 number, 'args': [channels...]}}` (the device header's `GUICommands`), the
-helpers write `{"property": "COMMAND", "value": "NAME"}` and `finish`
-adds the COMMAND property entry carrying the map.
+helpers put `{"write": "COMMAND", "value": "NAME"}` in the control's `on`
+handlers and `finish` adds the COMMAND property entry carrying the map.
 
 ## Usage
 
@@ -25,7 +25,7 @@ adds the COMMAND property entry carrying the map.
 
        tools/panel-gen/build-dump.sh [build-dir]
 
-3. Regenerate (writes into `Plugins/Devices/<Name>Plugin/prebuilt-ui.json`):
+3. Regenerate (writes the `ui` node of `Plugins/Devices/<Name>Plugin/info.json`):
 
        PANELGEN_BUILD=<build-dir> python3 tools/panel-gen/specs.py
 

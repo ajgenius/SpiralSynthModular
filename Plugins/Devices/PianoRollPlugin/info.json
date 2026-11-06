@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "id": 288,
+  "name": "PianoRoll",
+  "type": "dsp",
+  "category": "Control",
+  "authors": [
+    "ajgenius"
+  ],
+  "version": "1",
+  "host": {
+    "name": "SpiralSynthModular",
+    "version": "0.3.1",
+    "abi": "0.3.1"
+  },
+  "registration": "module",
+  "module": "PianoRollPlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Basic": 1,
+      "Controls": 1,
+      "Meters": 1,
+      "Patch": 1
+    },
+    "host_version": "0.3.43",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            4,
+            4,
+            52,
+            20
+          ],
+          "name": "play",
+          "on": {
+            "pressed": [
+              {
+                "value": "PLAY",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "text": "Play",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            60,
+            4,
+            52,
+            20
+          ],
+          "name": "record",
+          "on": {
+            "pressed": [
+              {
+                "value": "RECORD",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "text": "Record",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            116,
+            4,
+            52,
+            20
+          ],
+          "name": "stop",
+          "on": {
+            "pressed": [
+              {
+                "value": "STOP",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "text": "Stop",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            172,
+            4,
+            52,
+            20
+          ],
+          "name": "clear",
+          "on": {
+            "pressed": [
+              {
+                "value": "CLEAR",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "text": "Clear",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            232,
+            4,
+            56,
+            20
+          ],
+          "name": "loop",
+          "property": "LOOP",
+          "text": "Loop",
+          "type": "Basic::LEDButton"
+        },
+        {
+          "bounds": [
+            292,
+            4,
+            56,
+            20
+          ],
+          "name": "thru",
+          "property": "THRU",
+          "text": "Thru",
+          "type": "Basic::LEDButton"
+        },
+        {
+          "bounds": [
+            352,
+            4,
+            64,
+            20
+          ],
+          "format": "%6.2f",
+          "name": "position",
+          "property": "POSITION",
+          "size": 10,
+          "type": "Meters::LCD"
+        },
+        {
+          "bounds": [
+            4,
+            30,
+            412,
+            234
+          ],
+          "count": "NOTES",
+          "grid": 0.25,
+          "keys": 24,
+          "low_key": 48,
+          "name": "roll",
+          "notes": "NoteRows",
+          "on": {
+            "note_added": [
+              {
+                "value": "ADD_NOTE",
+                "with": [
+                  "start",
+                  "end",
+                  "key",
+                  "velocity"
+                ],
+                "write": "COMMAND"
+              }
+            ],
+            "note_changed": [
+              {
+                "value": "EDIT_NOTE",
+                "with": [
+                  "index",
+                  "start",
+                  "end",
+                  "key",
+                  "velocity"
+                ],
+                "write": "COMMAND"
+              }
+            ],
+            "note_removed": [
+              {
+                "value": "DELETE_NOTE",
+                "with": [
+                  "index"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "playhead": "POSITION",
+          "span": 4,
+          "tooltip": "Click to add a note, drag to move it, drag an edge to resize, Delete removes the selected note. Wheel scrolls keys, Shift+wheel scrolls time.",
+          "type": "Patch::PianoRoll"
+        }
+      ],
+      "height": 268,
+      "help": "A clip of notes played as events. Play, record from the event input, loop and edit the notes.",
+      "schema_version": 1,
+      "width": 420
+    },
+    "plugin_id": 288,
+    "properties": [
+      {
+        "class": "StringProperty",
+        "default": "",
+        "display_name": "COMMAND",
+        "hint": "Command",
+        "internal": true,
+        "omitted": "internal",
+        "property": "COMMAND",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "PianoRoll",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 0,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      }
+    ],
+    "schema_version": 1
+  }
+}

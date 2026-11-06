@@ -20,7 +20,7 @@ def posh(pl,props):
         pl.prefix=f'sample{i+1}-'
         ch+=pl.file('Load','NAME','LOAD',190,8,title=f'Load sample {i+1}',then=[('NUM',i)])+pl.file('Save','NAME','SAVE',190,32,save=True,title=f'Save sample {i+1}',then=[('NUM',i)])
         pl.prefix=''
-        pages.append({'children':ch,'title':{'default':str(i+1),'key':f'plugin.{pl.pid}.panel.samples.page.{i}'}})
+        pages.append({'children':ch,'title':str(i+1)})
     return [{'bounds':[2,2,256,104],'name':'samples','page_padding':0,'pages':pages,'tab_height':14,'type':'Notebook'}]
 make('PoshSampler',posh,260,108,'One page per sample: volume, pitch, the note and octave it plays on, looping and retrigger; Load and Save choose its WAV file. Recording and editing samples stay in the editor.',commands={'LOAD':1,'SAVE':2})
 
@@ -29,13 +29,13 @@ make('Splitter',lambda pl,p: pl.spin('CHANNELCOUNT','Channels',13,6,50,command='
 make('EnvFollower',lambda pl,p: pl.knob('ATTACK','Attack',6,4)+pl.knob('DECAY','Decay',62,4),116,64,'How fast the envelope follows a rising and a falling input.')
 def snap(pl,p):
     pl.used.add('NOTE')
-    return [{'bounds':[0,2,296,64],'first_note':0,'note_count':132,'name':'keys','note_off':2,'note_on':1,'property':'NOTE','scroll_x':100,'type':'PianoKeys','white_key_width':10}]
+    return [{'bounds':[0,2,296,64],'first_note':0,'note_count':132,'name':'keys','note_off':2,'note_on':1,'property':'NOTE','scroll_x':100,'type':'Patch::PianoKeys','white_key_width':10}]
 if False: make('NoteSnap',snap,296,68,'Click a key to set the note the input snaps to.')
 make('Transpose',lambda pl,p: pl.spin('AMOUNT','Amount',13,6,50,mn=-48,mx=48,h=20,below=True),76,44,'The transposition in semitones.')
 
 pl=P(0,{'OPENREAD':1,'OPENWRITE':2,'OPENDUPLEX':3,'CLOSE':4,'SET_VOLUME':{'command':5,'args':['VOLUME']}}); props,ver=props_of('Output')
 ch=pl.knob('VOLUME','Volume',10,8)
-ch[0]['write']=[pl.command('SET_VOLUME','value')]
+ch[0]['on']={'value_changed':[pl.command('SET_VOLUME','value')]}
 for i,(lab,cmd) in enumerate([('Output','OPENWRITE'),('Input','OPENREAD'),('Duplex','OPENDUPLEX'),('Close','CLOSE')]):
     ch+=pl.button(lab,cmd,60+(i%2)*58,8+(i//2)*24,56)
 finish('Output',0,props,ver,pl,ch,180,64,'Volume of the sound card output, and opening it for output, input or both, or closing it.')

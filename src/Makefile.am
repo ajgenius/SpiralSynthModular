@@ -18,7 +18,8 @@ SpiralSynthModular_SOURCES = MacBundle.h \
 		main.cpp
 
 SpiralSynthModular_LDADD = $(FLTK_LIBS) $(MIDI_LIBS) -lm \
-		$(top_builddir)/GUI/Panels/libSpiralPanels.la \
+		$(top_builddir)/GUI/Panels/libSpiralPanelWindow.la \
+		$(top_builddir)/libs/libSpiralPanels/toolkits/fltk/libSpiralPanelsFltk.la \
 		$(top_builddir)/GUI/Widgets/libSpiralWidgets.la \
 		$(top_builddir)/GUI/Controls/libSpiralControls.la \
 		$(top_builddir)/libs/libspiralcore/libspiralcore.la

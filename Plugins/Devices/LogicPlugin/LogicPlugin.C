@@ -48,25 +48,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 52;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Logic";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Maths/Logic";
 }
 }
 
@@ -95,7 +79,6 @@ LogicPlugin::LogicPlugin()
 	m_Inputs = UnsignedProperty(DefaultLinearFlags | Property::ForceUpdate, 2, 2, 256, 1, 1);
 	RegisterSharedProperty(m_Inputs, "Inputs", "Inputs");
 
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 3);
         CreatePorts ();
 
@@ -109,8 +92,6 @@ PluginInfo &LogicPlugin::Initialise(const HostInfo *Host)
 {
 	return SpiralPlugin::Initialise(Host);
 }
-
-
 
 void LogicPlugin::Execute (void) {
     float Freq=0, OldFreq=0;
@@ -149,7 +130,6 @@ void LogicPlugin::Execute (void) {
         }
     }
 }
-
 
 void LogicPlugin::ExecuteCommands() {
   if (m_AudioCH->IsCommandWaiting ()) {

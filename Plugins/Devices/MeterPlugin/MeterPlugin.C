@@ -35,7 +35,6 @@ const char *SpiralPlugin_GetHostABI()
 	return SSM_HOST_ABI;
 }
 
-
 SpiralPlugin* SpiralPlugin_CreateInstance() { return new MeterPlugin; }
 
 int SpiralPlugin_GetType()
@@ -43,18 +42,7 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
-
-int SpiralPlugin_GetID() { return 123; }
-
-string SpiralPlugin_GetName()
-{
-	return "Meter";
-}
-
-string SpiralPlugin_GetGroupName() { return "InputOutput"; }
-
 }
 
 MeterPlugin::MeterPlugin():
@@ -91,8 +79,6 @@ PluginInfo &MeterPlugin::Initialise (const HostInfo *Host) {
   m_AudioCH->RegisterData ("AudioData", ChannelHandler::OUTPUT, m_Data, m_DataSize * sizeof (float));
   return Info;
 }
-
-
 
 void MeterPlugin::Reset()
 {

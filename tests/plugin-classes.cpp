@@ -1,9 +1,9 @@
 #include "SpiralSynthModular.h"
 #include "DeviceClassRegistry.h"
-#include "EditorClassRegistry.h"
+#include "PanelRegistry.h"
 #include "SpiralPluginGUI.h"
 #include "OutputPlugin.h"
-#include "OutputPluginGUI.h"
+#include "PanelWindow.h"
 #include <cassert>
 #include <cstdio>
 
@@ -22,46 +22,39 @@ int main(int argc, char **argv)
 {
 	if (argc != 2) return 77;
 
-	assert(DeviceClassRegistry::Get()->Register(OutputPlugin::Class()));
-	assert(EditorClassRegistry::Get()->Register(OutputPluginGUI::Class()));
-	const unsigned editors=EditorClassRegistry::Get()->LoadModules(argv[1])+1;
-	const unsigned devices=DeviceClassRegistry::Get()->LoadModules(argv[1])+1;
-	printf("%u editors, %u devices\n", editors, devices);
-	assert(editors>1 && devices>1);
-	assert(EditorClassRegistry::Get()->Classes().size()==editors);
+	Spiral::Panels::PanelWindow::Provide();
+	const unsigned devices=DeviceClassRegistry::Get()->LoadModules(argv[1]);
+	printf("%u devices\n", devices);
+	assert(devices>1);
 	assert(DeviceClassRegistry::Get()->Classes().size()==devices);
 	const DeviceClass *output=DeviceClassRegistry::Get()->Find(0);
-	assert(output && output->Name=="Output" && output->Module.empty());
-	assert(EditorClassRegistry::Get()->Find(0)->Module.empty());
+	assert(output && output->Name=="Output" && output->Module.empty() && !output->Panel.empty());
+	assert(PanelRegistry::Get()->Find(0));
 	assert(!Named("Output") || Named("Output")==output);
 
-	const std::vector<EditorClass*> &editing=EditorClassRegistry::Get()->Classes();
-	for (size_t n=0; n<editing.size(); ++n)
+	const std::vector<PanelClass*> &panels=PanelRegistry::Get()->Classes();
+	for (size_t n=0; n<panels.size(); ++n)
 	{
-		const DeviceClass *device=DeviceClassRegistry::Get()->Find(editing[n]->ForDevice);
-		if (!device) printf("editor %s names no device\n", editing[n]->Module.c_str());
-		assert(device && editing[n]->Toolkit=="fltk");
-		assert(EditorClassRegistry::Get()->Find(device->ID)==editing[n]);
+		const DeviceClass *device=DeviceClassRegistry::Get()->Find(panels[n]->ForDevice);
+		assert(device && panels[n]->Toolkit=="fltk" && (!device->Panel.empty() || device->PanelGenerated));
+		assert(PanelRegistry::Get()->Find(device->ID)==panels[n]);
 	}
 
-	unsigned alone=0;
 	const std::vector<DeviceClass*> &all=DeviceClassRegistry::Get()->Classes();
 	for (size_t n=0; n<all.size(); ++n)
-		if (!EditorClassRegistry::Get()->Find(all[n]->ID))
+		if (!PanelRegistry::Get()->Find(all[n]->ID))
 		{
-			printf("device %s has no editor\n", all[n]->Name.c_str());
-			++alone;
+			printf("device %s has no panel\n", all[n]->Name.c_str());
+			assert(all[n]->Panel.empty() && !all[n]->PanelGenerated);
 		}
-	assert(alone==devices-editors);
 
 	assert(DeviceClassRegistry::Get()->LoadModules(argv[1])==0);
-	assert(EditorClassRegistry::Get()->LoadModules(argv[1])==0);
 	assert(DeviceClassRegistry::Get()->Classes().size()==devices);
 
 	const DeviceClass *amp=Named("Amp");
 	assert(amp && amp->ID==9 && amp->Category=="Amps/Mixers" && amp->Icon);
-	const EditorClass *editor=EditorClassRegistry::Get()->Find(amp->ID);
-	assert(editor);
+	const PanelClass *panel=PanelRegistry::Get()->Find(amp->ID);
+	assert(panel);
 	HostInfo info=HostInfo();
 	info.BUFSIZE=256;
 	info.SAMPLERATE=44100;
@@ -70,7 +63,7 @@ int main(int argc, char **argv)
 	assert(plugin);
 	plugin->Initialise(&info);
 	Fl_Double_Window window(300,300,"plugin classes test");
-	SpiralGUIType *gui=editor->CreateEditor(plugin);
+	SpiralGUIType *gui=panel->Open(plugin);
 	window.end();
 	assert(gui);
 	delete gui;
@@ -83,8 +76,8 @@ int main(int argc, char **argv)
 	assert(!DeviceClassRegistry::Get()->Register(builtin));
 	assert(DeviceClassRegistry::Get()->Find(500)->Create==amp->Create);
 
-	EditorClassRegistry::PackUpAndGoHome();
+	PanelRegistry::PackUpAndGoHome();
 	DeviceClassRegistry::PackUpAndGoHome();
-	puts("devices and editors are two kinds on the loader PASS");
+	puts("every device with a panel opens it PASS");
 	return 0;
 }

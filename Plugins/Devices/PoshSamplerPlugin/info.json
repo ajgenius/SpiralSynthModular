@@ -14,5 +14,798 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "PoshSamplerPlugin_DSP.so"
+  "module": "PoshSamplerPlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Controls": 1,
+      "Meters": 1
+    },
+    "host_version": "0.3.43",
+    "panel": {
+      "auto_width": false,
+      "children": [
+        {
+          "bounds": [
+            0,
+            0,
+            396,
+            199
+          ],
+          "children": [
+            {
+              "bounds": [
+                3,
+                6,
+                50,
+                20
+              ],
+              "file": {
+                "extension": ".wav",
+                "save": false,
+                "then": [
+                  {
+                    "property": "COMMAND",
+                    "value": "LOAD",
+                    "with": [
+                      "{index}",
+                      "text"
+                    ]
+                  }
+                ],
+                "title": "Load a sample"
+              },
+              "name": "load-{index}",
+              "on": {
+                "value_changed": [
+                  {
+                    "attribute": "reload",
+                    "set": "wave-{index}"
+                  }
+                ]
+              },
+              "text": "Load",
+              "tooltip": "Load a wav into this sample",
+              "type": "Button",
+              "visible": {
+                "equals": "{index}",
+                "property": "CURRENTSAMPLE"
+              }
+            },
+            {
+              "bounds": [
+                53,
+                6,
+                50,
+                20
+              ],
+              "file": {
+                "extension": ".wav",
+                "save": true,
+                "then": [
+                  {
+                    "property": "COMMAND",
+                    "value": "SAVE",
+                    "with": [
+                      "{index}",
+                      "text"
+                    ]
+                  }
+                ],
+                "title": "Save the sample"
+              },
+              "name": "save-{index}",
+              "text": "Save",
+              "tooltip": "Save this sample as a wav",
+              "type": "Button",
+              "visible": {
+                "equals": "{index}",
+                "property": "CURRENTSAMPLE"
+              }
+            },
+            {
+              "bounds": [
+                3,
+                26,
+                75,
+                20
+              ],
+              "name": "loop-{index}",
+              "property": "LOOP{index}",
+              "text": "Loop",
+              "tooltip": "Play the sample round between its loop points",
+              "type": "Button",
+              "visible": {
+                "equals": "{index}",
+                "property": "CURRENTSAMPLE"
+              }
+            },
+            {
+              "bounds": [
+                78,
+                26,
+                75,
+                20
+              ],
+              "name": "pingpong-{index}",
+              "property": "PINGPONG{index}",
+              "text": "PingPong",
+              "tooltip": "Loop forwards then backwards",
+              "type": "Button",
+              "visible": {
+                "equals": "{index}",
+                "property": "CURRENTSAMPLE"
+              }
+            },
+            {
+              "bounds": [
+                3,
+                46,
+                75,
+                20
+              ],
+              "name": "pos-marker-{index}",
+              "on": {
+                "value_changed": [
+                  {
+                    "attribute": "position_marker",
+                    "set": "wave-{index}"
+                  }
+                ]
+              },
+              "pressed": true,
+              "text": "PosMarker",
+              "toggle": true,
+              "tooltip": "Show the play position on the waveform",
+              "type": "Button",
+              "visible": {
+                "equals": "{index}",
+                "property": "CURRENTSAMPLE"
+              }
+            },
+            {
+              "bounds": [
+                78,
+                46,
+                75,
+                20
+              ],
+              "name": "retrig-{index}",
+              "property": "RETRIG{index}",
+              "text": "Re-Trigger",
+              "tooltip": "A trigger restarts the sample while it plays",
+              "type": "Button",
+              "visible": {
+                "equals": "{index}",
+                "property": "CURRENTSAMPLE"
+              }
+            },
+            {
+              "bounds": [
+                158,
+                6,
+                50,
+                50
+              ],
+              "max": 2,
+              "min": 0,
+              "name": "volume-{index}",
+              "property": "VOLUME{index}",
+              "step": 0.001,
+              "tooltip": "The sample's level",
+              "type": "Knob",
+              "visible": {
+                "equals": "{index}",
+                "property": "CURRENTSAMPLE"
+              }
+            },
+            {
+              "bounds": [
+                218,
+                6,
+                50,
+                50
+              ],
+              "max": 10,
+              "min": 0,
+              "name": "pitch-{index}",
+              "property": "PITCHMOD{index}",
+              "step": 0.001,
+              "tooltip": "The sample's pitch, 1 as recorded",
+              "type": "Knob",
+              "visible": {
+                "equals": "{index}",
+                "property": "CURRENTSAMPLE"
+              }
+            },
+            {
+              "bounds": [
+                278,
+                6,
+                50,
+                50
+              ],
+              "mapping": {
+                "offset": -6
+              },
+              "max": 6,
+              "min": -6,
+              "name": "octave-{index}",
+              "property": "OCTAVE{index}",
+              "step": 1,
+              "tooltip": "The sample's octave, 6 as recorded",
+              "type": "Knob",
+              "visible": {
+                "equals": "{index}",
+                "property": "CURRENTSAMPLE"
+              }
+            },
+            {
+              "bounds": [
+                338,
+                36,
+                45,
+                20
+              ],
+              "max": 131,
+              "min": 0,
+              "name": "note-{index}",
+              "property": "NOTE{index}",
+              "step": 1,
+              "tooltip": "The note that triggers this sample",
+              "type": "Spinner",
+              "visible": {
+                "equals": "{index}",
+                "property": "CURRENTSAMPLE"
+              }
+            },
+            {
+              "bounds": [
+                3,
+                71,
+                390,
+                100
+              ],
+              "loop_end": "LOOPEND{index}",
+              "loop_start": "LOOPSTART{index}",
+              "name": "wave-{index}",
+              "on": {
+                "value_changed": [
+                  {
+                    "value": "SETPLAYPOINTS",
+                    "with": [
+                      "{index}",
+                      {
+                        "attribute": "play_start",
+                        "control": "wave-{index}"
+                      },
+                      {
+                        "attribute": "loop_end",
+                        "control": "wave-{index}"
+                      },
+                      {
+                        "attribute": "loop_start",
+                        "control": "wave-{index}"
+                      }
+                    ],
+                    "write": "COMMAND"
+                  }
+                ]
+              },
+              "play_start": "PLAYSTART{index}",
+              "pos": "SAMPLEPOS{index}",
+              "sample": {
+                "buffer": "SampleBuffer",
+                "command": "GETSAMPLE",
+                "size": "SampleSize"
+              },
+              "tooltip": "The sample: drag a range, drag the play start, loop start and loop end markers, middle-drag to pan, right-drag to draw at full zoom",
+              "type": "Meters::SampleWaveform",
+              "visible": {
+                "equals": "{index}",
+                "property": "CURRENTSAMPLE"
+              }
+            },
+            {
+              "bounds": [
+                3,
+                176,
+                42,
+                20
+              ],
+              "name": "cut-{index}",
+              "on": {
+                "pressed": [
+                  {
+                    "value": "CUT",
+                    "with": [
+                      "{index}",
+                      {
+                        "attribute": "range_start",
+                        "control": "wave-{index}"
+                      },
+                      {
+                        "attribute": "range_end",
+                        "control": "wave-{index}"
+                      }
+                    ],
+                    "write": "COMMAND"
+                  }
+                ],
+                "value_changed": [
+                  {
+                    "attribute": "reload",
+                    "set": "wave-{index}"
+                  }
+                ]
+              },
+              "text": "Cut",
+              "tooltip": "Cut the selected range",
+              "type": "Button",
+              "visible": {
+                "equals": "{index}",
+                "property": "CURRENTSAMPLE"
+              }
+            },
+            {
+              "bounds": [
+                45,
+                176,
+                42,
+                20
+              ],
+              "name": "copy-{index}",
+              "on": {
+                "pressed": [
+                  {
+                    "value": "COPY",
+                    "with": [
+                      "{index}",
+                      {
+                        "attribute": "range_start",
+                        "control": "wave-{index}"
+                      },
+                      {
+                        "attribute": "range_end",
+                        "control": "wave-{index}"
+                      }
+                    ],
+                    "write": "COMMAND"
+                  }
+                ],
+                "value_changed": [
+                  {
+                    "attribute": "reload",
+                    "set": "wave-{index}"
+                  }
+                ]
+              },
+              "text": "Copy",
+              "tooltip": "Copy the selected range",
+              "type": "Button",
+              "visible": {
+                "equals": "{index}",
+                "property": "CURRENTSAMPLE"
+              }
+            },
+            {
+              "bounds": [
+                87,
+                176,
+                42,
+                20
+              ],
+              "name": "paste-{index}",
+              "on": {
+                "pressed": [
+                  {
+                    "value": "PASTE",
+                    "with": [
+                      "{index}",
+                      {
+                        "attribute": "range_start",
+                        "control": "wave-{index}"
+                      },
+                      {
+                        "attribute": "range_end",
+                        "control": "wave-{index}"
+                      }
+                    ],
+                    "write": "COMMAND"
+                  }
+                ],
+                "value_changed": [
+                  {
+                    "attribute": "reload",
+                    "set": "wave-{index}"
+                  }
+                ]
+              },
+              "text": "Paste",
+              "tooltip": "Paste the selected range",
+              "type": "Button",
+              "visible": {
+                "equals": "{index}",
+                "property": "CURRENTSAMPLE"
+              }
+            },
+            {
+              "bounds": [
+                129,
+                176,
+                42,
+                20
+              ],
+              "name": "mix-{index}",
+              "on": {
+                "pressed": [
+                  {
+                    "value": "MIX",
+                    "with": [
+                      "{index}",
+                      {
+                        "attribute": "range_start",
+                        "control": "wave-{index}"
+                      },
+                      {
+                        "attribute": "range_end",
+                        "control": "wave-{index}"
+                      }
+                    ],
+                    "write": "COMMAND"
+                  }
+                ],
+                "value_changed": [
+                  {
+                    "attribute": "reload",
+                    "set": "wave-{index}"
+                  }
+                ]
+              },
+              "text": "Mix",
+              "tooltip": "Mix the selected range",
+              "type": "Button",
+              "visible": {
+                "equals": "{index}",
+                "property": "CURRENTSAMPLE"
+              }
+            },
+            {
+              "bounds": [
+                171,
+                176,
+                42,
+                20
+              ],
+              "name": "crop-{index}",
+              "on": {
+                "pressed": [
+                  {
+                    "value": "CROP",
+                    "with": [
+                      "{index}",
+                      {
+                        "attribute": "range_start",
+                        "control": "wave-{index}"
+                      },
+                      {
+                        "attribute": "range_end",
+                        "control": "wave-{index}"
+                      }
+                    ],
+                    "write": "COMMAND"
+                  }
+                ],
+                "value_changed": [
+                  {
+                    "attribute": "reload",
+                    "set": "wave-{index}"
+                  }
+                ]
+              },
+              "text": "Crop",
+              "tooltip": "Crop the selected range",
+              "type": "Button",
+              "visible": {
+                "equals": "{index}",
+                "property": "CURRENTSAMPLE"
+              }
+            },
+            {
+              "bounds": [
+                213,
+                176,
+                42,
+                20
+              ],
+              "name": "reverse-{index}",
+              "on": {
+                "pressed": [
+                  {
+                    "value": "REV",
+                    "with": [
+                      "{index}",
+                      {
+                        "attribute": "range_start",
+                        "control": "wave-{index}"
+                      },
+                      {
+                        "attribute": "range_end",
+                        "control": "wave-{index}"
+                      }
+                    ],
+                    "write": "COMMAND"
+                  }
+                ],
+                "value_changed": [
+                  {
+                    "attribute": "reload",
+                    "set": "wave-{index}"
+                  }
+                ]
+              },
+              "text": "Reverse",
+              "tooltip": "Reverse the selected range",
+              "type": "Button",
+              "visible": {
+                "equals": "{index}",
+                "property": "CURRENTSAMPLE"
+              }
+            },
+            {
+              "bounds": [
+                255,
+                176,
+                42,
+                20
+              ],
+              "name": "amp-{index}",
+              "on": {
+                "pressed": [
+                  {
+                    "value": "AMP",
+                    "with": [
+                      "{index}",
+                      {
+                        "attribute": "range_start",
+                        "control": "wave-{index}"
+                      },
+                      {
+                        "attribute": "range_end",
+                        "control": "wave-{index}"
+                      }
+                    ],
+                    "write": "COMMAND"
+                  }
+                ],
+                "value_changed": [
+                  {
+                    "attribute": "reload",
+                    "set": "wave-{index}"
+                  }
+                ]
+              },
+              "text": "Amp",
+              "tooltip": "Amp the selected range",
+              "type": "Button",
+              "visible": {
+                "equals": "{index}",
+                "property": "CURRENTSAMPLE"
+              }
+            },
+            {
+              "bounds": [
+                297,
+                176,
+                42,
+                20
+              ],
+              "name": "zoom-in-{index}",
+              "on": {
+                "value_changed": [
+                  {
+                    "attribute": "zoom_in",
+                    "set": "wave-{index}"
+                  }
+                ]
+              },
+              "repeat": true,
+              "text": "Zoom +",
+              "tooltip": "Zoom in while held",
+              "type": "Button",
+              "visible": {
+                "equals": "{index}",
+                "property": "CURRENTSAMPLE"
+              }
+            },
+            {
+              "bounds": [
+                339,
+                176,
+                42,
+                20
+              ],
+              "name": "zoom-out-{index}",
+              "on": {
+                "value_changed": [
+                  {
+                    "attribute": "zoom_out",
+                    "set": "wave-{index}"
+                  }
+                ]
+              },
+              "repeat": true,
+              "text": "Zoom -",
+              "tooltip": "Zoom out while held",
+              "type": "Button",
+              "visible": {
+                "equals": "{index}",
+                "property": "CURRENTSAMPLE"
+              }
+            }
+          ],
+          "max_count": 8,
+          "name": "samples",
+          "step_x": 0,
+          "step_y": 0,
+          "type": "Repeat"
+        },
+        {
+          "bounds": [
+            103,
+            6,
+            50,
+            20
+          ],
+          "color_role": "record",
+          "name": "record",
+          "on": {
+            "off": [
+              {
+                "value": "SETREC",
+                "with": [
+                  0
+                ],
+                "write": "COMMAND"
+              }
+            ],
+            "on": [
+              {
+                "value": "SETREC",
+                "with": [
+                  1
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "RECORDING",
+          "text": "Record",
+          "toggle": true,
+          "tooltip": "Record the input into the current sample",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            158,
+            56,
+            50,
+            12
+          ],
+          "name": "volume-label",
+          "size": 10,
+          "text": "Volume",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            218,
+            56,
+            50,
+            12
+          ],
+          "name": "pitch-label",
+          "size": 10,
+          "text": "Pitch",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            278,
+            56,
+            50,
+            12
+          ],
+          "name": "octave-label",
+          "size": 10,
+          "text": "Octave",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            338,
+            1,
+            45,
+            20
+          ],
+          "max": 7,
+          "min": 0,
+          "name": "sample",
+          "property": "CURRENTSAMPLE",
+          "step": 1,
+          "tooltip": "The sample shown and edited",
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            338,
+            21,
+            45,
+            12
+          ],
+          "name": "sample-label",
+          "size": 10,
+          "text": "Sample",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            338,
+            56,
+            45,
+            12
+          ],
+          "name": "note-label",
+          "size": 10,
+          "text": "Trig Note",
+          "type": "Label"
+        }
+      ],
+      "height": 199,
+      "help": "Eight samples, one shown at a time: Load and Save it, set its Volume, Pitch and Octave, the note that triggers it, whether it loops (and ping-pongs) and re-triggers. Drag on the waveform to select a range for Cut, Copy, Paste, Mix, Crop, Reverse and Amp; drag the play start, loop start and loop end markers; Zoom while held. Record takes the input into the current sample.",
+      "schema_version": 1,
+      "width": 396
+    },
+    "plugin_id": 32,
+    "properties": [
+      {
+        "class": "StringProperty",
+        "default": "",
+        "display_name": "COMMAND",
+        "hint": "Command",
+        "internal": true,
+        "omitted": "internal",
+        "property": "COMMAND",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "PoshSampler",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 4,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      }
+    ],
+    "schema_version": 1
+  }
 }

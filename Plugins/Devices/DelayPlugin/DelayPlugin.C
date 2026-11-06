@@ -46,25 +46,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x000f;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Delay";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Delay/Sampling";
 }
 }
 
@@ -83,7 +67,6 @@ m_WriteHeadPos(0)
 	m_PluginInfo.PortTips.push_back("Delay CV");
 	m_PluginInfo.PortTips.push_back("ReadHead CV");
 	m_PluginInfo.PortTips.push_back("Output");
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 
 	m_Delay = FloatProperty(DefaultLinearFlags, 0.75, 0.0, 1.0, 0.001, 0.1);
@@ -103,8 +86,6 @@ PluginInfo &DelayPlugin::Initialise(const HostInfo *Host)
 	m_Buffer.Allocate((int)(m_HostInfo->SAMPLERATE*MAX_DELAY));
 	return Info;
 }
-
-
 
 void DelayPlugin::Reset()
 {

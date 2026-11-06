@@ -45,25 +45,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 45;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Counter";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Maths/Logic";
 }
 }
 
@@ -81,7 +65,6 @@ m_CurrentLevel(1.0f)
 	m_PluginInfo.PortTips.push_back("Input");	
 	m_PluginInfo.PortTips.push_back("Output");
 
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 
 	m_Count = SignedProperty(DefaultLinearFlags, 4, 0, 10000, 1, 1);
@@ -99,8 +82,6 @@ PluginInfo &CounterPlugin::Initialise(const HostInfo *Host)
 	return SpiralPlugin::Initialise(Host);
 }
 
-
-
 void CounterPlugin::Reset()
 {
 	ResetPorts();
@@ -108,7 +89,6 @@ void CounterPlugin::Reset()
 	m_Triggered = false;
 	m_CurrentLevel = 1.0f;
 }
-
 
 void CounterPlugin::Execute()
 {	

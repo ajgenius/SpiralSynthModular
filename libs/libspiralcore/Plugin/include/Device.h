@@ -42,6 +42,7 @@ namespace Core
 		virtual bool LoadProperties(std::map<std::string, Property *> &properties);
 		bool CopyDevice(Device *device);
 		virtual bool UpdateProperty(std::string name) { return true; }
+		virtual void Named(const std::string &name);
 
 		virtual void Describe(Description &d);
 		virtual void Apply(Description::Reader &r);

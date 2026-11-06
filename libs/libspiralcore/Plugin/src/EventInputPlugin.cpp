@@ -36,6 +36,8 @@ const Spiral::Core::DeviceClass &EventInputPlugin::Class()
 	return device;
 }
 
+static const Spiral::Core::BuiltinDevice Registration(EventInputPlugin::Class);
+
 EventInputPlugin::EventInputPlugin() :
 m_First(NULL),
 m_Voice(0),

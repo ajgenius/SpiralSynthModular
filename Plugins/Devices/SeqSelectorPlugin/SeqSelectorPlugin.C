@@ -48,25 +48,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x0015;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "SeqSelector";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Sequencing";
 }
 }
 
@@ -104,7 +88,6 @@ SeqSelectorPlugin::SeqSelectorPlugin()
 	
 	m_Triggered=false;
 
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 	
 	m_Begin = SignedProperty(DefaultLinearFlags, 0, 0, 255, 1, 1);
@@ -138,8 +121,6 @@ PluginInfo &SeqSelectorPlugin::Initialise(const HostInfo *Host)
 {	
 	return SpiralPlugin::Initialise(Host);
 }
-
-
 
 void SeqSelectorPlugin::Reset()
 {

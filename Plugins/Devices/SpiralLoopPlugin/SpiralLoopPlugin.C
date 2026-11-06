@@ -21,6 +21,7 @@
 
 #include "RiffWav.h"
 #include <sstream>
+#include <unistd.h>
 
 using namespace std;
 using namespace Spiral::Core;
@@ -52,25 +53,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x001a;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "SpiralLoop";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Delay/Sampling";
 }
 }
 
@@ -111,7 +96,6 @@ m_Triggered(false)
 	m_PluginInfo.PortTips.push_back("LoopTrigger 6");
 	m_PluginInfo.PortTips.push_back("LoopTrigger 7");			
 	
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 
 	m_TicksPerLoop = SignedProperty(DefaultLinearFlags, 64, 1, 1024, 1, 1);
@@ -197,8 +181,6 @@ PluginInfo &SpiralLoopPlugin::Initialise(const HostInfo *Host)
 {	
 	return SpiralPlugin::Initialise(Host);
 }
-
-
 
 void SpiralLoopPlugin::Reset()
 {
@@ -322,21 +304,32 @@ void SpiralLoopPlugin::Apply(Spiral::Core::Description::Reader &r)
 	}
 }
 
+static const int SharedSampleID = 0x001a;
+
+static std::string SampleFile(const std::string &Dir, int id)
+{
+	ostringstream name;
+	name << Dir << "SpiralLoopSample" << id << ".wav";
+
+	return name.str();
+}
+
 bool SpiralLoopPlugin::SaveExternalFiles(const string &Dir)
 {
-	ostringstream temp;
-	temp<<Dir<<"SpiralLoopSample"<<SpiralPlugin_GetID()<<".wav";
-	SaveWav(temp.str().c_str());
+	SaveWav(SampleFile(Dir, GetID()).c_str());
+
 	return true;
 }
 
 void SpiralLoopPlugin::LoadExternalFiles(const string &Dir, int withID)
 {
-	ostringstream temp;
-	temp<<Dir<<"SpiralLoopSample"<<(withID == -1 ? SpiralPlugin_GetID() : withID)<<".wav";
-	LoadWav(temp.str().c_str());
-}
+	std::string file = SampleFile(Dir, withID == -1 ? GetID() : withID);
 
+	if (access(file.c_str(), R_OK) != 0)
+		file = SampleFile(Dir, SharedSampleID);
+
+	LoadWav(file.c_str());
+}
 
 void SpiralLoopPlugin::LoadWav(const char *Filename)
 {

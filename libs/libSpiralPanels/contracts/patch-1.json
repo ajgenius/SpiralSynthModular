@@ -1,0 +1,62 @@
+{
+  "namespace": "Patch",
+  "version": 1,
+  "controls": {
+    "MatrixGrid": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "columns": ["integer"],
+        "end": ["string"],
+        "grid": ["string"],
+        "note_names": ["integer"],
+        "rows": ["integer"],
+        "step": ["string"],
+        "triggers": ["string"],
+        "volume": ["string"]
+      }
+    },
+    "PianoKeys": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "black_key_height": ["integer"],
+        "black_key_offset": ["integer"],
+        "black_key_width": ["integer"],
+        "computer_keys": ["boolean"],
+        "first_note": ["integer"],
+        "labels": ["boolean"],
+        "note_count": ["integer"],
+        "note_off": ["string"],
+        "note_on": ["string"],
+        "notes": ["object"],
+        "status": ["string"],
+        "toggle_mode": ["boolean"],
+        "white_key_width": ["integer"]
+      }
+    },
+    "PianoRoll": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "count": ["string"],
+        "grid": ["number"],
+        "gutter": ["integer"],
+        "header": ["integer"],
+        "keys": ["integer"],
+        "low_key": ["integer"],
+        "notes": ["string"],
+        "playhead": ["string"],
+        "snap": ["boolean"],
+        "span": ["number"]
+      }
+    },
+    "PortList": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "connected": ["string"],
+        "inputs": ["object"],
+        "list": ["string"],
+        "outputs": ["object"],
+        "refresh": ["string"]
+      }
+    }
+  }
+}

@@ -45,25 +45,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x000a;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Ring Mod";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Filters/FX";
 }
 }
 
@@ -80,7 +64,6 @@ RingModPlugin::RingModPlugin()
 	m_PluginInfo.PortTips.push_back("Input 2");	
 	m_PluginInfo.PortTips.push_back("Output");	
 	
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 
 	m_Amount= FloatProperty(DefaultLinearFlags,1.0f, 0, 3, 0.0001, 0.001);
@@ -97,8 +80,6 @@ PluginInfo &RingModPlugin::Initialise(const HostInfo *Host)
 {	
 	return SpiralPlugin::Initialise(Host);
 }
-
-
 
 void RingModPlugin::Execute()
 {

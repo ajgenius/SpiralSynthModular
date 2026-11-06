@@ -45,25 +45,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 44;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Operator";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Maths/Logic";
 }
 }
 
@@ -82,15 +66,12 @@ OperatorPlugin::OperatorPlugin()
 	m_PluginInfo.PortTips.push_back("Input 2");	
 	m_PluginInfo.PortTips.push_back("Output");
 		
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 
 	m_Constant = FloatProperty(DefaultLinearFlags,0,0,1,0.01,0.1);
 	RegisterSharedProperty(m_Constant, "Constant", "Constant");
 	m_Operator = SignedProperty(DefaultLinearFlags,ADD,NONE,MUL,1,1);
 	RegisterSharedProperty(m_Operator, "Operator", "Operator");
-
-
 }
 
 OperatorPlugin::~OperatorPlugin()
@@ -101,8 +82,6 @@ PluginInfo &OperatorPlugin::Initialise(const HostInfo *Host)
 {	
 	return SpiralPlugin::Initialise(Host);
 }
-
-
 
 void OperatorPlugin::Execute()
 {	

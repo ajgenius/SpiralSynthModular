@@ -21,6 +21,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <dirent.h>
 #include <sstream>
 #include <unistd.h>
 
@@ -62,7 +63,8 @@ namespace
 	JSON *Node(const string &type, const string &name, int x, int y, int w, int h, bool inContent = false)
 	{
 		JSON *node = JSON::MakeObject();
-		node->SetOwned("type", Text(type));
+		const string prefix = type == "LCD" ? "Meters::" : type == "LEDButton" ? "Basic::" : "";
+		node->SetOwned("type", Text(prefix + type));
 		node->SetOwned("name", Text(name));
 		node->SetOwned("bounds", inContent ? Bounds(x + FrameX, y + FrameY, w, h) : Bounds(x, y, w, h));
 		return node;
@@ -85,7 +87,6 @@ namespace
 		if (slider && len > 11)
 			len = 11;
 		JSON *node = Label(name, x, y, w, 15, string(port, len), 9);
-		node->SetOwned("font", Text("courier"));
 		node->SetOwned("clip", JSON::MakeBoolean(true));
 		return node;
 	}
@@ -109,7 +110,7 @@ namespace
 	void Writes(JSON *node, const char *command, long index = -1)
 	{
 		JSON *write = JSON::MakeObject();
-		write->SetOwned("property", Text("COMMAND"));
+		write->SetOwned("write", Text("COMMAND"));
 		write->SetOwned("value", Text(command));
 		JSON *with = JSON::MakeArray();
 		if (index >= 0)
@@ -118,7 +119,9 @@ namespace
 		write->SetOwned("with", with);
 		JSON *writes = JSON::MakeArray();
 		writes->AppendOwned(write);
-		node->SetOwned("write", writes);
+		JSON *handlers = JSON::MakeObject();
+		handlers->SetOwned("value_changed", writes);
+		node->SetOwned("on", handlers);
 	}
 
 	void Locked(JSON *node, unsigned long index)
@@ -126,7 +129,7 @@ namespace
 		JSON *when = JSON::MakeObject();
 		when->SetOwned("property", Text(Indexed("CONNECTED", index)));
 		when->SetOwned("equals", Number(0));
-		node->SetOwned("enabled_when", when);
+		node->SetOwned("enabled", when);
 	}
 
 	void Range(JSON *node, const PortSetting &setting, unsigned long index)
@@ -157,7 +160,7 @@ namespace
 		JSON *other = JSON::MakeObject();
 		other->SetOwned("property", Text("PAGE"));
 		other->SetOwned("not_equals", Number(page));
-		node->SetOwned("enabled_when", other);
+		node->SetOwned("enabled", other);
 		return node;
 	}
 
@@ -254,6 +257,40 @@ unsigned LADSPAPlugin::PanelGeneration()
 	return (unsigned)generation;
 }
 
+static JSON *FindPanel(const string &directory, unsigned uniqueID)
+{
+	DIR *dir = opendir(directory.c_str());
+
+	if (!dir)
+		return NULL;
+
+	JSON *found = NULL;
+
+	while (struct dirent *entry = readdir(dir))
+	{
+		if (found || entry->d_name[0] == '.')
+			continue;
+
+		const string path = directory + "/" + entry->d_name + "/info.json";
+
+		if (access(path.c_str(), R_OK) != 0)
+			continue;
+
+		Spumoni::JSONOwner info(Spumoni::ParseJSON(path.c_str()));
+		const JSON *target = info.get() ? info->Get("for") : NULL;
+		const JSON *ladspa = target ? target->Get("ladspa") : NULL;
+		const JSON *ui = info.get() ? info->Get("ui") : NULL;
+		long id = 0;
+
+		if (ladspa && ladspa->Integer(id) && id == (long)uniqueID && ui && ui->GetType() == JSON::Object)
+			found = ui->Duplicate();
+	}
+
+	closedir(dir);
+
+	return found;
+}
+
 bool LADSPAPlugin::GeneratePanel(const string &Directory, string &Document)
 {
 	unsigned long count = 0;
@@ -274,20 +311,18 @@ bool LADSPAPlugin::GeneratePanel(const string &Directory, string &Document)
 	m_AudioCH->GetData("GetInputPortSettings", &settings[0]);
 	m_AudioCH->GetData("Connected", &connected[0]);
 
-	string custom;
-	if (uniqueID)
-	{
-		ostringstream path;
-		path << Directory << "/" << uniqueID << ".json";
-		if (access(path.str().c_str(), R_OK) == 0)
-			custom = path.str();
-	}
-	if (page < 0 || page >= Pages || (page == PanelPage && custom.empty()))
+	Spumoni::JSONOwner custom(uniqueID ? FindPanel(Directory, uniqueID) : NULL);
+	if (page < 0 || page >= Pages || (page == PanelPage && !custom.get()))
 		page = SetupPage;
 
 	JSON *root = JSON::MakeObject();
 	root->SetOwned("schema_version", Number(1));
 	root->SetOwned("plugin_id", Number(Class().ID));
+	JSON *contracts = JSON::MakeObject();
+	contracts->SetOwned("Controls", Number(1));
+	contracts->SetOwned("Basic", Number(1));
+	contracts->SetOwned("Meters", Number(1));
+	root->SetOwned("control_contracts", contracts);
 	root->SetOwned("generated", JSON::MakeBoolean(true));
 
 	JSON *properties = JSON::MakeArray();
@@ -346,7 +381,6 @@ bool LADSPAPlugin::GeneratePanel(const string &Directory, string &Document)
 			}
 			JSON *knob = Node("Knob", Indexed("knob-", p), kx, y, 40, 40);
 			knob->SetOwned("property", Text(Indexed("DEFAULT", p)));
-			knob->SetOwned("style", Text("dot"));
 			Writes(knob, "SETDEFAULT", (long)p);
 			Locked(knob, p);
 			Range(knob, settings[p], p);
@@ -356,7 +390,6 @@ bool LADSPAPlugin::GeneratePanel(const string &Directory, string &Document)
 			Writes(entry, "SETDEFAULT", (long)p);
 			Locked(entry, p);
 			entry->SetOwned("format", Text("%.4f"));
-			entry->SetOwned("box", Text("plastic"));
 			children->AppendOwned(entry);
 			children->AppendOwned(PortLabel(Indexed("knob-label-", p), lx, y + 55, 100, &names[p * 256], false));
 			if (++column == cols)
@@ -389,7 +422,6 @@ bool LADSPAPlugin::GeneratePanel(const string &Directory, string &Document)
 			Writes(entry, "SETDEFAULT", (long)p);
 			Locked(entry, p);
 			entry->SetOwned("format", Text("%.4f"));
-			entry->SetOwned("box", Text("plastic"));
 			children->AppendOwned(entry);
 			children->AppendOwned(PortLabel(Indexed("slider-label-", p), sx - 20, y + 116, 60, &names[p * 256], true));
 			if (++column == cols - (row < fullrows ? 0 : 1))
@@ -442,30 +474,26 @@ bool LADSPAPlugin::GeneratePanel(const string &Directory, string &Document)
 			value->SetOwned("property", Text(Indexed("VALUE", p)));
 			value->SetOwned("format", Text("%.4f"));
 			value->SetOwned("size", Number(10));
-			value->SetOwned("box", Text("up"));
 			rows->AppendOwned(value);
 			JSON *fallback = Node("TextEntry", Indexed("default-", p), 67, y, 60, 18, true);
 			fallback->SetOwned("property", Text(Indexed("DEFAULT", p)));
 			Writes(fallback, "SETDEFAULT", (long)p);
 			Locked(fallback, p);
 			fallback->SetOwned("format", Text("%.4f"));
-			fallback->SetOwned("box", Text("plastic"));
 			JSON *unwired = JSON::MakeObject();
 			unwired->SetOwned("property", Text(Indexed("CONNECTED", p)));
 			unwired->SetOwned("equals", Number(0));
-			fallback->SetOwned("enabled_when", unwired);
+			fallback->SetOwned("enabled", unwired);
 			rows->AppendOwned(fallback);
 			JSON *min = Node("TextEntry", Indexed("min-", p), 129, y, 60, 18, true);
 			min->SetOwned("property", Text(Indexed("MIN", p)));
 			Writes(min, "SETMIN", (long)p);
 			min->SetOwned("format", Text("%.4f"));
-			min->SetOwned("box", Text("plastic"));
 			rows->AppendOwned(min);
 			JSON *max = Node("TextEntry", Indexed("max-", p), 191, y, 60, 18, true);
 			max->SetOwned("property", Text(Indexed("MAX", p)));
 			Writes(max, "SETMAX", (long)p);
 			max->SetOwned("format", Text("%.4f"));
-			max->SetOwned("box", Text("plastic"));
 			rows->AppendOwned(max);
 			JSON *clamp = Node("CheckBox", Indexed("clamp-", p), 260, y, 18, 18, true);
 			clamp->SetOwned("property", Text(Indexed("CLAMP", p)));
@@ -483,7 +511,6 @@ bool LADSPAPlugin::GeneratePanel(const string &Directory, string &Document)
 		JSON *scroll = Node("VirtualScrollArea", "inputs", 10, 135, 480, 145);
 		scroll->SetOwned("children", rows);
 		scroll->SetOwned("show_horizontal", JSON::MakeBoolean(false));
-		scroll->SetOwned("box", Text("plastic"));
 		JSON *content = JSON::MakeArray();
 		content->AppendOwned(Number(455));
 		content->AppendOwned(Number(5 + (int)count * 24));
@@ -498,9 +525,7 @@ bool LADSPAPlugin::GeneratePanel(const string &Directory, string &Document)
 	}
 	else if (page == PanelPage)
 	{
-		string error;
-		JSON *document = Spumoni::ParseJSON(custom.c_str(), &error);
-		const JSON *panel = document ? document->Get("panel") : NULL;
+		const JSON *panel = custom->Get("panel");
 		const JSON *custom_children = panel ? panel->Get("children") : NULL;
 		if (custom_children && custom_children->GetType() == JSON::Array)
 		{
@@ -522,12 +547,11 @@ bool LADSPAPlugin::GeneratePanel(const string &Directory, string &Document)
 				children->AppendOwned(child);
 			}
 		}
-		delete document;
 	}
 
 	children->AppendOwned(PageButton("knobs", 5, 15, "Knobs", KnobsPage));
 	children->AppendOwned(PageButton("sliders", 60, 15, "Sliders", SlidersPage));
-	if (!custom.empty())
+	if (custom.get())
 		children->AppendOwned(PageButton("panel", 115, 15, "Panel", PanelPage));
 	children->AppendOwned(PageButton("setup", width - 55, 15, "Setup...", SetupPage));
 
@@ -536,7 +560,7 @@ bool LADSPAPlugin::GeneratePanel(const string &Directory, string &Document)
 	panel->SetOwned("width", Number(width - 2 * FrameX));
 	panel->SetOwned("height", Number(height - FrameY - FrameX));
 	panel->SetOwned("children", children);
-	if (!custom.empty())
+	if (custom.get())
 	{
 		JSON *modes = JSON::MakeArray();
 		JSON *made = JSON::MakeObject();

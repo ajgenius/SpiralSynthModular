@@ -55,25 +55,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x0017;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "WaveTable";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Oscillators";
 }
 }
 
@@ -104,7 +88,6 @@ m_TableLength(DEFAULT_TABLE_LEN)
 	RegisterSharedProperty(m_FineFreq, "FineFreq", "FineFreq");
 	RegisterSharedProperty(m_ModAmount, "ModAmount", "ModAmount");
 
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 	m_CyclePos=0;	
 	m_Note=0;
@@ -136,8 +119,6 @@ PluginInfo &WaveTablePlugin::Initialise(const HostInfo *Host)
 		
 	return Info;
 }
-
-
 
 void WaveTablePlugin::WriteWaves()
 {

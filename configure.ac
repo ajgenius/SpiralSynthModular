@@ -147,11 +147,11 @@ AC_SUBST([CORE_AUDIO_LIBS])
 AM_CONDITIONAL([HAVE_CORE_AUDIO_CLIENT], [test "$have_coreaudio" = yes])
 AC_MSG_NOTICE([Native CoreAudio client: $have_coreaudio])
 
-SPIRALCORE_CFLAGS='-I$(top_srcdir)/libs/libspiralcore/include -I$(top_srcdir)/libs/libspiralcore/File/include -I$(top_srcdir)/libs/libspiralcore/Data/include -I$(top_srcdir)/libs/libspiralcore/Plugin/include -I$(top_srcdir)/libs/libspiralcore/Audio/include -I$(top_srcdir)/libs/libspiralcore/Midi/include'
+SPIRALCORE_CFLAGS='-I$(top_srcdir)/libs/libspiralcore/include -I$(top_srcdir)/libs/libspiralcore/File/include -I$(top_srcdir)/libs/libspiralcore/Data/include -I$(top_srcdir)/libs/libSpiralPanels/include -I$(top_srcdir)/libs/libspiralcore/Plugin/include -I$(top_srcdir)/libs/libspiralcore/Audio/include -I$(top_srcdir)/libs/libspiralcore/Midi/include'
 AC_SUBST([SPIRALCORE_CFLAGS])
 
 SPIRALGUI_CFLAGS='-I$(top_srcdir)/GUI/Widgets -I$(top_srcdir)/GUI/Controls'
-SPIRALPANELS_CFLAGS='-I$(top_srcdir)/GUI/Panels -I$(top_srcdir)/GUI/Panels/Controls -I$(top_srcdir)/GUI/Panels/Scopes -I$(top_srcdir)/GUI/Panels/Spiral'
+SPIRALPANELS_CFLAGS='-I$(top_srcdir)/GUI/Panels -I$(top_srcdir)/libs/libSpiralPanels/toolkits/fltk -I$(top_srcdir)/libs/libSpiralPanels/toolkits/fltk/Input -I$(top_srcdir)/libs/libSpiralPanels/toolkits/fltk/Meters'
 AC_SUBST([SPIRALPANELS_CFLAGS])
 AC_SUBST([SPIRALGUI_CFLAGS])
 
@@ -319,23 +319,23 @@ dnl build plugin list - plugins that do not require an optional component
 dnl (i.e. Jack, and LADSPA)
 
 PLUGINLIST="AmpPlugin AnotherFilterPlugin BeatMatchPlugin ComplexEnvelopePlugin ControllerPlugin \
-CounterPlugin DelayPlugin DiskWriterPlugin DistributorPlugin EchoPlugin \
+CounterPlugin DelayPlugin DistributorPlugin EchoPlugin \
 EnvFollowerPlugin EnvelopePlugin FilterPlugin FlipflopPlugin FormantFilterPlugin \
 KeyboardPlugin LFOPlugin LogicPlugin MasherPlugin MatrixPlugin \
 MeterPlugin MidiPlugin MixSwitchPlugin MixerPlugin MoogFilterPlugin NoisePlugin \
-NoteSnapPlugin OperatorPlugin OscillatorPlugin PoshSamplerPlugin \
+NoteSnapPlugin OperatorPlugin OscillatorPlugin PianoRollPlugin PoshSamplerPlugin \
 RingModPlugin SVFilterPlugin SampleHoldPlugin ScopePlugin SeqSelectorPlugin \
 SmoothPlugin SpiralLoopPlugin SplitSwitchPlugin SplitterPlugin StereoMixerPlugin \
 StreamPlugin SwitchPlugin TranslatePlugin TransposePlugin TrigPlugin WaveShaperPlugin \
 WaveTablePlugin XFadePlugin"
 
-ALL_PLUGINLIST="JackPlugin $PLUGINLIST"
+ALL_PLUGINLIST="$PLUGINLIST"
 
 dnl Check whether jack is present or has been disabled
 jack_message=""
 AC_ARG_ENABLE(
     jack,
-    [  --disable-jack          Do not build JackPlugin],
+    [  --disable-jack          Do not build the Jack device],
     [if test "$enableval" = "no"; then build_jack="n"; jack_message="manually disabled"; else build_jack="y"; fi],
     [build_jack="y"]
 )
@@ -354,7 +354,6 @@ if test "$build_jack" = "y" ; then
       [AC_DEFINE([HAVE_JACK_GET_CYCLE_TIMES], [1], [Define if JACK provides native cycle timing])])
    AC_CHECK_LIB(jack, jack_port_get_latency_range,
       [AC_DEFINE([HAVE_JACK_PORT_GET_LATENCY_RANGE], [1], [Define if JACK provides latency ranges])])
-   PLUGINLIST="JackPlugin $PLUGINLIST"
 fi
 
 AM_CONDITIONAL([HAVE_JACK_CLIENT], [test "$build_jack" = "y"])
@@ -561,35 +560,7 @@ dnl AC_CHECK_LIB(png, png_get_copyright)
 
 AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
-PANEL_ONLY="SampleHoldPlugin ScopePlugin ComplexEnvelopePlugin MatrixPlugin \
-    AmpPlugin AnotherFilterPlugin BeatMatchPlugin CounterPlugin \
-    DelayPlugin EchoPlugin EnvelopePlugin FilterPlugin FlipflopPlugin \
-    FormantFilterPlugin LogicPlugin MasherPlugin MixSwitchPlugin \
-    MoogFilterPlugin NoisePlugin OperatorPlugin RingModPlugin \
-    SVFilterPlugin SmoothPlugin SplitSwitchPlugin SwitchPlugin \
-    TranslatePlugin TrigPlugin XFadePlugin DistributorPlugin \
-    SplitterPlugin TransposePlugin EnvFollowerPlugin SeqSelectorPlugin \
-    WaveShaperPlugin OscillatorPlugin WaveTablePlugin LFOPlugin \
-    KeyboardPlugin NoteSnapPlugin MeterPlugin DiskWriterPlugin StreamPlugin \
-    MidiPlugin JackPlugin SpiralLoopPlugin ControllerPlugin MixerPlugin \
-    StereoMixerPlugin PoshSamplerPlugin"
-GUI_PLUGINLIST=""
-for plugin in $PLUGINLIST; do
-    case " $PANEL_ONLY " in
-        *" $plugin "*) ;;
-        *) GUI_PLUGINLIST="$GUI_PLUGINLIST $plugin" ;;
-    esac
-done
-ALL_GUI_PLUGINLIST="LADSPAPlugin"
-for plugin in $ALL_PLUGINLIST; do
-    case " $PANEL_ONLY " in
-        *" $plugin "*) ;;
-        *) ALL_GUI_PLUGINLIST="$ALL_GUI_PLUGINLIST $plugin" ;;
-    esac
-done
-AC_SUBST(GUI_PLUGINLIST)
 AC_SUBST(PLUGINLIST)
-AC_SUBST(ALL_GUI_PLUGINLIST)
 AC_SUBST(ALL_PLUGINLIST)
 
 dnl Modify the output files.
@@ -602,6 +573,8 @@ GUI/Makefile
 GUI/Controls/Makefile
 GUI/Widgets/Makefile
 GUI/Panels/Makefile
+libs/libSpiralPanels/Makefile
+libs/libSpiralPanels/toolkits/fltk/Makefile
 libs/libspiralcore/Makefile
 Plugins/Makefile
 Plugins/Audio/Makefile
@@ -618,9 +591,9 @@ Plugins/Midi/JACK/Makefile
 Plugins/Midi/CoreMIDI/Makefile
 Plugins/Midi/OSS/Makefile
 Plugins/Devices/Makefile
-Plugins/Panels/Makefile
 third-party/swh-plugins/Makefile
-Plugins/Panels/LADSPAPlugin/Makefile
+Plugins/Panels/Makefile
+tools/embed-manifest/Makefile
 Plugins/Devices/AmpPlugin/Makefile
 Plugins/Devices/AnotherFilterPlugin/Makefile
 Plugins/Devices/BeatMatchPlugin/Makefile
@@ -628,7 +601,6 @@ Plugins/Devices/ComplexEnvelopePlugin/Makefile
 Plugins/Devices/ControllerPlugin/Makefile
 Plugins/Devices/CounterPlugin/Makefile
 Plugins/Devices/DelayPlugin/Makefile
-Plugins/Devices/DiskWriterPlugin/Makefile
 Plugins/Devices/DistributorPlugin/Makefile
 Plugins/Devices/EchoPlugin/Makefile
 Plugins/Devices/EnvFollowerPlugin/Makefile
@@ -636,8 +608,8 @@ Plugins/Devices/EnvelopePlugin/Makefile
 Plugins/Devices/FilterPlugin/Makefile
 Plugins/Devices/FlipflopPlugin/Makefile
 Plugins/Devices/FormantFilterPlugin/Makefile
-Plugins/Devices/JackPlugin/Makefile
 Plugins/Devices/KeyboardPlugin/Makefile
+Plugins/Devices/PianoRollPlugin/Makefile
 Plugins/Devices/LFOPlugin/Makefile
 Plugins/Devices/LogicPlugin/Makefile
 Plugins/Devices/MasherPlugin/Makefile
@@ -679,7 +651,7 @@ if test "$use_sndfile" = "y"; then
 else
    printf 'Disabled - %s\n' "$sndfile_message"
 fi
-printf '%35s - ' "Jack support (via JackPlugin)"
+printf '%35s - ' "Jack support (built-in device)"
 if test "$build_jack" = "y"; then
    printf 'Enabled\n'
 else

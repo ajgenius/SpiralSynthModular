@@ -158,12 +158,16 @@ static void Check(SpiralPlugin &plugin, bool jack)
 
 int main(int argc, char **argv)
 {
-	if (argc != 3) return 77;
-	for (int n = 1; n < argc; ++n)
+	if (argc != 2) return 77;
+	for (int n = 1; n <= 2; ++n)
 	{
-		void *module = dlopen(argv[n], RTLD_NOW | RTLD_LOCAL);
-		if (!module) { puts(dlerror()); return 1; }
-		SpiralPlugin *(*create)() = (SpiralPlugin *(*)())dlsym(module, "SpiralPlugin_CreateInstance");
+		SpiralPlugin *(*create)() = JackPlugin::Class().Create;
+		if (n == 1)
+		{
+			void *module = dlopen(argv[n], RTLD_NOW | RTLD_LOCAL);
+			if (!module) { puts(dlerror()); return 1; }
+			create = (SpiralPlugin *(*)())dlsym(module, "SpiralPlugin_CreateInstance");
+		}
 		assert(create);
 		SpiralPlugin *plugin = create();
 		Check(*plugin, n == 2);

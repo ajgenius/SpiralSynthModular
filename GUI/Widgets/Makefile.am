@@ -20,8 +20,6 @@ libSpiralWidgets_la_SOURCES =					\
 					Fl_DeviceGUI.C		\
 					Fl_MidiBindings.h	\
 					Fl_MidiBindings.cpp	\
-					OutputPluginGUI.h	\
-					OutputPluginGUI.cpp	\
 			                SpiralGUI.H		\
 			                SpiralGUI.C		\
 					SpiralPluginGUI.h	\

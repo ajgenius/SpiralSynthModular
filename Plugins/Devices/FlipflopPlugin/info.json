@@ -14,5 +14,111 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "FlipflopPlugin_DSP.so"
+  "module": "FlipflopPlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Controls": 1
+    },
+    "host_version": "0.3.42",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            18,
+            1,
+            40,
+            40
+          ],
+          "name": "triggertime-knob",
+          "property": "TRIGGERTIME",
+          "type": "Knob"
+        },
+        {
+          "bounds": [
+            18,
+            41,
+            40,
+            9
+          ],
+          "name": "trigger-time-label",
+          "size": 8,
+          "text": "Trigger Time",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            8,
+            56,
+            60,
+            20
+          ],
+          "name": "monostable-button",
+          "property": "MONOSTABLE",
+          "size": 8,
+          "text": "Monostable",
+          "type": "Button"
+        }
+      ],
+      "height": 84,
+      "help": "This plugin has two modes, bistable (the default) converts momentary\npulses into sustained pulses, i.e one pulse to set the output to 1.0,\nand another pulse to flip it back to -1.0.\n\nMonostable mode is sort of the reverse, any input pulse detected will\ncause an output pulse to be generated, the length of which is set by the\ntrigger time control (out of 1 second max)\n\nFor a better description, google \"flipflop bistable monostable\" :)",
+      "schema_version": 1,
+      "width": 76
+    },
+    "plugin_id": 46,
+    "properties": [
+      {
+        "class": "StringProperty",
+        "default": "Flipflop",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 2,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      },
+      {
+        "class": "ToggleProperty",
+        "default": false,
+        "display_name": "Monostable",
+        "hint": "Monostable",
+        "internal": false,
+        "property": "MONOSTABLE",
+        "read_only": false,
+        "type": "boolean"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0.009999999776482582,
+        "display_name": "TriggerTime",
+        "hint": "TriggerTime",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.0010000000474974513,
+        "property": "TRIGGERTIME",
+        "read_only": false,
+        "step": 9.999999747378752e-05,
+        "type": "number"
+      }
+    ],
+    "schema_version": 1
+  }
 }

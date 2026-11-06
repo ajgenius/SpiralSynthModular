@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = libs/libSpumoni libs/libspiralcore GUI src Plugins third-party/swh-plugins
+SUBDIRS = libs/libSpumoni libs/libSpiralPanels tools/embed-manifest libs/libspiralcore GUI/Controls libs/libSpiralPanels/toolkits/fltk GUI src Plugins third-party/swh-plugins
 
 AM_CPPFLAGS =                                              \
                 $(FLTK_CXXFLAGS)                        \
@@ -14,7 +14,8 @@ AM_CPPFLAGS += -DSPIRALCORE_SCHEMA_DIR='"$(abs_top_srcdir)/libs/libspiralcore/Fi
 HOST_LDADD = 							\
 	$(FLTK_LIBS) $(MIDI_LIBS)					\
 	-lm				\
-	$(top_builddir)/GUI/Panels/libSpiralPanels.la \
+	$(top_builddir)/GUI/Panels/libSpiralPanelWindow.la \
+	$(top_builddir)/libs/libSpiralPanels/toolkits/fltk/libSpiralPanelsFltk.la \
 	$(top_builddir)/GUI/Widgets/libSpiralWidgets.la \
 	$(top_builddir)/GUI/Controls/libSpiralControls.la \
                 $(top_builddir)/libs/libspiralcore/libspiralcore.la
@@ -61,6 +62,11 @@ stereo_mixer_signal_test_SOURCES = tests/mixer-signal.cpp Plugins/Devices/Stereo
 stereo_mixer_signal_test_CPPFLAGS = $(AM_CPPFLAGS) -DTEST_STEREO -I$(srcdir)/Plugins/Devices/StereoMixerPlugin
 stereo_mixer_signal_test_LDADD = $(mixer_signal_test_LDADD)
 
+check_PROGRAMS += piano-roll-test
+piano_roll_test_SOURCES = tests/piano-roll.cpp Plugins/Devices/PianoRollPlugin/PianoRollPlugin.C
+piano_roll_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/Devices/PianoRollPlugin
+piano_roll_test_LDADD = libs/libspiralcore/libspiralcore.la
+
 check_PROGRAMS += plugin-classes-test
 plugin_classes_test_SOURCES = tests/plugin-classes.cpp src/SpiralSynthModular.C src/UnavailablePlugin.C src/SpiralInfo.C src/SettingsWindow.C
 plugin_classes_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
@@ -92,7 +98,7 @@ jack_gui_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
 jack_gui_test_LDADD = $(HOST_LDADD) $(JACK_LIBS)
 jack_gui_test_LDFLAGS = -export-dynamic
 jack_plugin_test_SOURCES = tests/jack-plugin.cpp
-jack_plugin_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/Devices/JackPlugin
+jack_plugin_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/libs/libspiralcore/Devices/Jack
 jack_plugin_test_LDADD = libs/libspiralcore/libspiralcore.la $(JACK_LIBS) -ldl
 endif
 
@@ -140,8 +146,8 @@ endif
 if HAVE_JACK_CLIENT
 check_PROGRAMS += jack-periods-test
 TESTS += jack-periods-test
-jack_periods_test_SOURCES = tests/jack-periods.cpp Plugins/Devices/JackPlugin/JackPlugin.C libs/libspiralcore/Audio/src/JackClient.cpp
-jack_periods_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/Devices/JackPlugin
+jack_periods_test_SOURCES = tests/jack-periods.cpp libs/libspiralcore/Devices/Jack/JackPlugin.cpp libs/libspiralcore/Audio/src/JackClient.cpp
+jack_periods_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/libs/libspiralcore/Devices/Jack
 jack_periods_test_LDADD = libs/libspiralcore/libspiralcore.la
 endif
 
@@ -225,7 +231,7 @@ EXTRA_DIST += tests/fixtures/controller-v4.ssm
 if HAVE_JACK_CLIENT
 check_PROGRAMS += module-ports-test
 module_ports_test_SOURCES = tests/module-ports.cpp src/SpiralInfo.C
-module_ports_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir) -I$(srcdir)/Plugins/Devices/MixerPlugin -I$(srcdir)/Plugins/Devices/JackPlugin
+module_ports_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir) -I$(srcdir)/Plugins/Devices/MixerPlugin -I$(srcdir)/libs/libspiralcore/Devices/Jack
 module_ports_test_LDADD = $(HOST_LDADD) $(JACK_LIBS) -ldl
 endif
 

@@ -77,25 +77,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 42;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "FormantFilter";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Filters/FX";
 }
 }
 
@@ -114,7 +98,6 @@ FormantFilterPlugin::FormantFilterPlugin()
 	m_PluginInfo.PortTips.push_back("Vowel CV");	
 	m_PluginInfo.PortTips.push_back("Output");	
 	
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 
 	m_Vowel = FloatProperty(DefaultLinearFlags,0, 0, 4, 0.0001, 0.001);
@@ -131,8 +114,6 @@ PluginInfo &FormantFilterPlugin::Initialise(const HostInfo *Host)
 {	
 	return SpiralPlugin::Initialise(Host);		
 }
-
-
 
 void FormantFilterPlugin::Reset()
 {
@@ -231,7 +212,6 @@ void FormantFilterPlugin::Execute()
 void FormantFilterPlugin::Randomise()
 {
 }
-
 
 void FormantFilterPlugin::Clear()
 {

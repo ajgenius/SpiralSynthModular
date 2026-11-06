@@ -14,5 +14,476 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "EnvelopePlugin_DSP.so"
+  "module": "EnvelopePlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Controls": 1
+    },
+    "host_version": "0.3.43",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            3,
+            -2,
+            132,
+            115
+          ],
+          "name": "notebook-notebook",
+          "page_padding": 0,
+          "pages": [
+            {
+              "children": [
+                {
+                  "bounds": [
+                    5,
+                    8,
+                    20,
+                    70
+                  ],
+                  "name": "threshold-slider",
+                  "property": "THRESHOLD",
+                  "type": "Slider"
+                },
+                {
+                  "bounds": [
+                    5,
+                    78,
+                    20,
+                    11
+                  ],
+                  "name": "t-label",
+                  "text": "T",
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    25,
+                    8,
+                    20,
+                    70
+                  ],
+                  "mapping": "sqrt",
+                  "max": 9,
+                  "min": 0,
+                  "name": "attack-slider",
+                  "property": "ATTACK",
+                  "type": "Slider"
+                },
+                {
+                  "bounds": [
+                    25,
+                    78,
+                    20,
+                    11
+                  ],
+                  "name": "a-label",
+                  "text": "A",
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    45,
+                    8,
+                    20,
+                    70
+                  ],
+                  "mapping": "sqrt",
+                  "max": 9,
+                  "min": 0,
+                  "name": "decay-slider",
+                  "property": "DECAY",
+                  "type": "Slider"
+                },
+                {
+                  "bounds": [
+                    45,
+                    78,
+                    20,
+                    11
+                  ],
+                  "name": "d-label",
+                  "text": "D",
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    65,
+                    8,
+                    20,
+                    70
+                  ],
+                  "name": "sustain-slider",
+                  "property": "SUSTAIN",
+                  "type": "Slider"
+                },
+                {
+                  "bounds": [
+                    65,
+                    78,
+                    20,
+                    11
+                  ],
+                  "name": "s-label",
+                  "text": "S",
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    85,
+                    8,
+                    20,
+                    70
+                  ],
+                  "mapping": "sqrt",
+                  "max": 9,
+                  "min": 0,
+                  "name": "release-slider",
+                  "property": "RELEASE",
+                  "type": "Slider"
+                },
+                {
+                  "bounds": [
+                    85,
+                    78,
+                    20,
+                    11
+                  ],
+                  "name": "r-label",
+                  "text": "R",
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    105,
+                    8,
+                    20,
+                    70
+                  ],
+                  "name": "volume-slider",
+                  "property": "VOLUME",
+                  "type": "Slider"
+                },
+                {
+                  "bounds": [
+                    105,
+                    78,
+                    20,
+                    11
+                  ],
+                  "name": "v-label",
+                  "text": "V",
+                  "type": "Label"
+                }
+              ],
+              "title": "Controls"
+            },
+            {
+              "children": [
+                {
+                  "bounds": [
+                    5,
+                    5,
+                    60,
+                    20
+                  ],
+                  "digits": 0,
+                  "mapping": "percent",
+                  "name": "threshold-spinner",
+                  "page": 10,
+                  "property": "THRESHOLD",
+                  "simple": true,
+                  "step": 1,
+                  "type": "Spinner"
+                },
+                {
+                  "bounds": [
+                    5,
+                    25,
+                    60,
+                    9
+                  ],
+                  "name": "threshold-label",
+                  "size": 8,
+                  "text": "Threshold (%)",
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    67,
+                    5,
+                    60,
+                    20
+                  ],
+                  "digits": 3,
+                  "max": 9,
+                  "min": 0,
+                  "name": "attack-spinner",
+                  "page": 1,
+                  "property": "ATTACK",
+                  "simple": true,
+                  "step": 0.001,
+                  "type": "Spinner"
+                },
+                {
+                  "bounds": [
+                    67,
+                    25,
+                    60,
+                    9
+                  ],
+                  "name": "attack-s-label",
+                  "size": 8,
+                  "text": "Attack (s)",
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    5,
+                    35,
+                    60,
+                    20
+                  ],
+                  "digits": 3,
+                  "max": 9,
+                  "min": 0,
+                  "name": "decay-spinner",
+                  "page": 1,
+                  "property": "DECAY",
+                  "simple": true,
+                  "step": 0.001,
+                  "type": "Spinner"
+                },
+                {
+                  "bounds": [
+                    5,
+                    55,
+                    60,
+                    9
+                  ],
+                  "name": "decay-s-label",
+                  "size": 8,
+                  "text": "Decay (s)",
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    67,
+                    35,
+                    60,
+                    20
+                  ],
+                  "digits": 0,
+                  "mapping": "percent",
+                  "name": "sustain-spinner",
+                  "page": 10,
+                  "property": "SUSTAIN",
+                  "simple": true,
+                  "step": 1,
+                  "type": "Spinner"
+                },
+                {
+                  "bounds": [
+                    67,
+                    55,
+                    60,
+                    9
+                  ],
+                  "name": "sustain-label",
+                  "size": 8,
+                  "text": "Sustain (%)",
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    5,
+                    65,
+                    60,
+                    20
+                  ],
+                  "digits": 3,
+                  "max": 9,
+                  "min": 0,
+                  "name": "release-spinner",
+                  "page": 1,
+                  "property": "RELEASE",
+                  "simple": true,
+                  "step": 0.001,
+                  "type": "Spinner"
+                },
+                {
+                  "bounds": [
+                    5,
+                    85,
+                    60,
+                    9
+                  ],
+                  "name": "release-s-label",
+                  "size": 8,
+                  "text": "Release (s)",
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    67,
+                    65,
+                    60,
+                    20
+                  ],
+                  "digits": 0,
+                  "mapping": "percent",
+                  "name": "volume-spinner",
+                  "page": 10,
+                  "property": "VOLUME",
+                  "simple": true,
+                  "step": 1,
+                  "type": "Spinner"
+                },
+                {
+                  "bounds": [
+                    67,
+                    85,
+                    60,
+                    9
+                  ],
+                  "name": "volume-label",
+                  "size": 8,
+                  "text": "Volume (%)",
+                  "type": "Label"
+                }
+              ],
+              "title": "Numbers"
+            }
+          ],
+          "tab_height": 18,
+          "type": "Notebook"
+        }
+      ],
+      "height": 116,
+      "help": "An ADSR envelope. This plugin also has a built in\namplifier for signals, so data fed through the Input\nand Output are amplified according to the envelope value.\nThe envelope is triggered with an input CV, and the output\nCV is the value of the envelope at that time. The signal\nlevel needed to trigger the envelope can be set using\nthe \"T\" slider, also the volume level of the output can\nbe set with the \"V\" slider.\n\nThis envelope can be used to mimic audio triggered effects\nunits, by feeding the audio signal into the trigger CV.\nIn fact, the envelope plugin itself can be made into a\ncompressor, by feeding the audio signal into both inputs,\nand tweaking the ADSR values. \n",
+      "schema_version": 1,
+      "width": 138
+    },
+    "plugin_id": 5,
+    "properties": [
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Attack",
+        "hint": "Attack time",
+        "internal": false,
+        "logarithmic": false,
+        "max": 9,
+        "min": 0,
+        "page": 0.1,
+        "property": "ATTACK",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0.5,
+        "display_name": "Decay",
+        "hint": "Decay time",
+        "internal": false,
+        "logarithmic": false,
+        "max": 9,
+        "min": 0,
+        "page": 0.1,
+        "property": "DECAY",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Envelope",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 2,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 1,
+        "display_name": "Release",
+        "hint": "Release time",
+        "internal": false,
+        "logarithmic": false,
+        "max": 9,
+        "min": 0,
+        "page": 0.1,
+        "property": "RELEASE",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 1,
+        "display_name": "Sustain",
+        "hint": "Sustain level",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.1,
+        "property": "SUSTAIN",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0.01,
+        "display_name": "Threshold",
+        "hint": "Trigger threshold",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.1,
+        "property": "THRESHOLD",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0.5,
+        "display_name": "Volume",
+        "hint": "Output level",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.1,
+        "property": "VOLUME",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      }
+    ],
+    "schema_version": 1
+  }
 }

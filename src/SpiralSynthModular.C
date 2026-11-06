@@ -42,14 +42,14 @@
 #include "BackendPath.h"
 #include "Midi.h"
 #include "DeviceClassRegistry.h"
-#include "EditorClassRegistry.h"
-#include "PanelEditor.h"
-#include "GUI/Panels/Panel.h"
+#include "PanelRegistry.h"
+#include "PanelWindow.h"
+#include "libs/libSpiralPanels/include/Panel.h"
 #include "PanelControl.h"
+#include "FltkView.h"
 #include "OutputPlugin.h"
 #include "EventInputPlugin.h"
 #include "SubPatchDevice.h"
-#include "OutputPluginGUI.h"
 #ifdef HAVE_LADSPA
 #include "LADSPAPlugin.h"
 #endif
@@ -296,7 +296,7 @@ SynthModular::~SynthModular()
 	delete m_SettingsWindow;
 	delete m_TopWindow;
 
-	Spiral::Core::EditorClassRegistry::PackUpAndGoHome();
+	Spiral::Core::PanelRegistry::PackUpAndGoHome();
 	Spiral::Core::DeviceClassRegistry::PackUpAndGoHome();
 	Spiral::Core::MidiDevice::PackUpAndGoHome();
 	Spiral::Core::MidiBackendRegistry::PackUpAndGoHome();
@@ -642,7 +642,7 @@ void SynthModular::UpdatePluginGUIs()
 
 //////////////////////////////////////////////////////////
 
-SpiralPanels::PanelControl *SynthModular::MidiControl(const string &device, const string &control)
+Spiral::Panels::PanelControl *SynthModular::MidiControl(const string &device, const string &control)
 {
 	char *end = NULL;
 	const int id = (int)strtol(device.c_str(), &end, 10);
@@ -651,8 +651,8 @@ SpiralPanels::PanelControl *SynthModular::MidiControl(const string &device, cons
 	if (device.empty() || *end || i == m_DeviceWinMap.end() || !i->second->m_DeviceGUI || control.empty())
 		return NULL;
 
-	SpiralPanels::PanelEditor *editor = dynamic_cast<SpiralPanels::PanelEditor *>(i->second->m_DeviceGUI->GetPluginWindow());
-	SpiralPanels::Panel *panel = editor ? editor->GetPanel() : NULL;
+	Spiral::Panels::PanelWindow *window = dynamic_cast<Spiral::Panels::PanelWindow *>(i->second->m_DeviceGUI->GetPluginWindow());
+	Spiral::Panels::Panel *panel = window ? window->GetPanel() : NULL;
 
 	return panel ? panel->FindControl(control) : NULL;
 }
@@ -698,7 +698,7 @@ void SynthModular::ServiceMidiInput()
 		m_MidiMap.Match(i->first.first, i->first.second, moved);
 
 		for (size_t t = 0; t < moved.size(); ++t)
-			if (SpiralPanels::PanelControl *control = MidiControl(moved[t].Device, moved[t].Control))
+			if (Spiral::Panels::PanelControl *control = MidiControl(moved[t].Device, moved[t].Control))
 				control->Drive(i->second / 127.0);
 	}
 }
@@ -1019,16 +1019,8 @@ void SynthModular::LoadPlugins (string pluginPath)
 	Spiral::Core::MidiDevice::SetBackendName(SpiralInfo::MIDIBACKEND);
 	Spiral::Core::MidiDevice::SetDeviceName(SpiralInfo::MIDIFILE);
 	Spiral::Core::MidiDevice::Init("SpiralModular", Spiral::Core::MidiDevice::READ);
-	Spiral::Core::DeviceClassRegistry::Get()->Register(OutputPlugin::Class());
-	Spiral::Core::EditorClassRegistry::Get()->Register(OutputPluginGUI::Class());
-	Spiral::Core::DeviceClassRegistry::Get()->Register(EventInputPlugin::Class());
-	Spiral::Core::DeviceClassRegistry::Get()->Register(SubPatchDevice::Class());
-#ifdef HAVE_LADSPA
-	Spiral::Core::DeviceClassRegistry::Get()->Register(LADSPAPlugin::Class());
-#endif
+	Spiral::Panels::PanelWindow::Provide();
 	Spiral::Core::DeviceClassRegistry::Get()->LoadModules(PluginRoot);
-	Spiral::Core::EditorClassRegistry::Get()->LoadModules(PluginRoot);
-	SpiralPanels::PanelEditor::RegisterDocuments(PluginRoot);
 	const vector<Spiral::Core::DeviceClass*> &Devices = Spiral::Core::DeviceClassRegistry::Get()->Classes();
 
 	for (
@@ -1349,13 +1341,11 @@ DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 	PluginInfo PInfo    = nlw->m_Device->Initialise(&m_Info);
 	Fl_Group *prev = Fl_Group::current();
 	Fl_Group::current(0);
-	// A device with no editor gets a bare device window; a missing plugin
-	// gets no editor and no icon.
-	const Spiral::Core::EditorClass *Editor = missing ? NULL : Spiral::Core::EditorClassRegistry::Get()->Find(n);
-	if (Editor && getenv("SSM_PREFER_PANELS") && Spiral::Core::EditorClassRegistry::Get()->Find(n, "panel"))
-		Editor = Spiral::Core::EditorClassRegistry::Get()->Find(n, "panel");
+	// A device with no panel gets a bare device window; a missing plugin
+	// gets no panel and no icon.
+	const Spiral::Core::PanelClass *Class = missing ? NULL : Spiral::Core::PanelRegistry::Get()->Find(n);
 
-	SpiralGUIType *temp = Editor ? Editor->CreateEditor(nlw->m_Device) : NULL;
+	SpiralGUIType *temp = Class ? Class->Open(nlw->m_Device) : NULL;
 
 	if (temp)
 		temp->end();
@@ -1480,8 +1470,8 @@ DeviceWin* SynthModular::NewSubPatch(
 
 	Fl_Group *prev = Fl_Group::current();
 	Fl_Group::current(NULL);
-	const Spiral::Core::EditorClass *Editor = Spiral::Core::EditorClassRegistry::Get()->Find(nlw->m_PluginID);
-	SpiralGUIType *panel = Editor ? Editor->CreateEditor(device) : NULL;
+	const Spiral::Core::PanelClass *Class = Spiral::Core::PanelRegistry::Get()->Find(nlw->m_PluginID);
+	SpiralGUIType *panel = Class ? Class->Open(device) : NULL;
 	if (panel)
 		panel->end();
 
@@ -2575,8 +2565,8 @@ void DescribePage(
 		device.SetValue("id", text);
 		device.SetValue("name", SavedDeviceName(i->second));
 
-		if (SpiralPanels::PanelEditor *editor = dynamic_cast<SpiralPanels::PanelEditor *>(i->second->m_DeviceGUI->GetPluginWindow()))
-			editor->SaveState(object.State);
+		if (Spiral::Panels::PanelWindow *window = dynamic_cast<Spiral::Panels::PanelWindow *>(i->second->m_DeviceGUI->GetPluginWindow()))
+			window->SaveState(object.State);
 
 		Spiral::Core::Description described;
 		i->second->m_Device->Describe(described);
@@ -2877,9 +2867,9 @@ bool SynthModular::ApplyPage(
 				if (SpiralPluginGUI *gui = dynamic_cast<SpiralPluginGUI *>(temp->m_DeviceGUI->GetPluginWindow()))
 					gui->UpdateValues(temp->m_Device);
 
-				SpiralPanels::PanelEditor *editor = dynamic_cast<SpiralPanels::PanelEditor *>(temp->m_DeviceGUI->GetPluginWindow());
-				if (editor)
-					editor->LoadState(object.State);
+				Spiral::Panels::PanelWindow *window = dynamic_cast<Spiral::Panels::PanelWindow *>(temp->m_DeviceGUI->GetPluginWindow());
+				if (window)
+					window->LoadState(object.State);
 
 				if (object.Value("collapsed") == "true")
 				{
@@ -3563,14 +3553,14 @@ void SynthModular::StopMidiPick()
 		m_MidiPage->SetPicking(false);
 }
 
-static SpiralPanels::Panel *PanelOf(DeviceWin *win)
+static Spiral::Panels::Panel *PanelOf(DeviceWin *win)
 {
 	if (!win || !win->m_DeviceGUI || !win->m_Device)
 		return NULL;
 
-	SpiralPanels::PanelEditor *editor = dynamic_cast<SpiralPanels::PanelEditor *>(win->m_DeviceGUI->GetPluginWindow());
+	Spiral::Panels::PanelWindow *window = dynamic_cast<Spiral::Panels::PanelWindow *>(win->m_DeviceGUI->GetPluginWindow());
 
-	return editor ? editor->GetPanel() : NULL;
+	return window ? window->GetPanel() : NULL;
 }
 
 bool SynthModular::cb_DeviceAt (Fl_Canvas *canvas, int x, int y, Fl_Canvas::Pick &out, void *v)
@@ -3625,7 +3615,7 @@ bool SynthModular::cb_ControlAt (Fl_Canvas *canvas, int x, int y, Fl_Canvas::Pic
 {
 	SynthModular *synth = (SynthModular*)v;
 	map<int,DeviceWin*>::iterator i = synth->m_DeviceWinMap.find(synth->m_PickDevice);
-	SpiralPanels::Panel *panel = i == synth->m_DeviceWinMap.end() ? NULL : PanelOf(i->second);
+	Spiral::Panels::Panel *panel = i == synth->m_DeviceWinMap.end() ? NULL : PanelOf(i->second);
 	if (!panel)
 		return false;
 
@@ -3633,8 +3623,8 @@ bool SynthModular::cb_ControlAt (Fl_Canvas *canvas, int x, int y, Fl_Canvas::Pic
 
 	for (size_t n = 0; n < panel->ControlCount(); ++n)
 	{
-		SpiralPanels::PanelControl *control = panel->Control(n);
-		Fl_Widget *w = control->Widget();
+		Spiral::Panels::PanelControl *control = panel->Control(n);
+		Fl_Widget *w = Spiral::Panels::FltkView::WidgetOf(*control);
 		if (!w || !w->visible_r() || control->Name().empty() || !control->Drivable())
 			continue;
 

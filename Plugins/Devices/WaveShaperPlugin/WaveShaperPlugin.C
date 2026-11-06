@@ -36,7 +36,6 @@ const char *SpiralPlugin_GetHostABI()
 	return SSM_HOST_ABI;
 }
 
-
 SpiralPlugin* SpiralPlugin_CreateInstance() {
   return new WaveShaperPlugin;
 }
@@ -46,22 +45,8 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon() {
   return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID() {
-  return 0x0032;
-}
-string SpiralPlugin_GetName()
-{
-	return "WaveShaper";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Filters/FX";
 }
 }
 
@@ -80,7 +65,6 @@ WaveShaperPlugin::WaveShaperPlugin () {
   for (i=0; i<512; i++) m_wt[i] = (i / 256.0 - 1.0);
   m_FuncPlot = new float[256];
   for (i=0; i<256; i++) m_FuncPlot[i] = m_wt[i*2];
-  SetString(DeviceName, SpiralPlugin_GetName());
   SetUnsigned(DeviceVersion, 1);
 
   m_Wave = SignedProperty(Property::WriteOnly, 1, 0, 1, 1, 1);
@@ -106,8 +90,6 @@ PluginInfo &WaveShaperPlugin::Initialise (const HostInfo *Host) {
   calc();
   return Info;
 }
-
-
 
 void WaveShaperPlugin::ExecuteCommands () {
   bool changed = (AsSigned(m_Wave) != 0) != m_CalcWave;

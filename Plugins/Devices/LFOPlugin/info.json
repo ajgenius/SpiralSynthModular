@@ -14,5 +14,273 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "LFOPlugin_DSP.so"
+  "module": "LFOPlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Controls": 1
+    },
+    "host_version": "0.3.43",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            -2,
+            -4,
+            23,
+            23
+          ],
+          "children": [
+            {
+              "bounds": "{bounds}",
+              "choice": "{choice}",
+              "glyph": "{glyph}",
+              "name": "wave-{id}",
+              "property": "WAVE TYPE",
+              "tooltip": "{tooltip}",
+              "type": "RadioButton"
+            }
+          ],
+          "items": [
+            {
+              "bounds": [
+                0,
+                0,
+                23,
+                23
+              ],
+              "choice": 0,
+              "glyph": "sine",
+              "id": "sine",
+              "tooltip": "Sine"
+            },
+            {
+              "bounds": [
+                0,
+                21,
+                23,
+                23
+              ],
+              "choice": 1,
+              "glyph": "triangle",
+              "id": "triangle",
+              "tooltip": "Triangle"
+            },
+            {
+              "bounds": [
+                0,
+                43,
+                23,
+                23
+              ],
+              "choice": 2,
+              "glyph": "square",
+              "id": "square",
+              "tooltip": "Square"
+            },
+            {
+              "bounds": [
+                0,
+                64,
+                23,
+                23
+              ],
+              "choice": 3,
+              "glyph": "saw",
+              "id": "saw",
+              "tooltip": "Saw"
+            }
+          ],
+          "name": "wave",
+          "type": "Repeat"
+        },
+        {
+          "bounds": [
+            48,
+            -4,
+            119,
+            88
+          ],
+          "name": "tabs",
+          "page_padding": 0,
+          "pages": [
+            {
+              "children": [
+                {
+                  "bounds": [
+                    35,
+                    6,
+                    50,
+                    50
+                  ],
+                  "mapping": "reciprocal",
+                  "max": 0.008333333333333333,
+                  "min": 10,
+                  "name": "period-knob",
+                  "property": "FREQUENCY",
+                  "scale_ticks": 20,
+                  "step": 0.001,
+                  "tooltip": "Period in seconds; 0 stops the LFO.",
+                  "type": "Knob"
+                },
+                {
+                  "bounds": [
+                    35,
+                    56,
+                    50,
+                    11
+                  ],
+                  "name": "period-label",
+                  "text": "Period",
+                  "type": "Label"
+                }
+              ],
+              "title": "Control"
+            },
+            {
+              "children": [
+                {
+                  "bounds": [
+                    5,
+                    6,
+                    110,
+                    20
+                  ],
+                  "digits": 3,
+                  "mapping": "reciprocal",
+                  "max": 0.008333333333333333,
+                  "min": 10,
+                  "name": "period-spinner",
+                  "page": 0.1,
+                  "property": "FREQUENCY",
+                  "simple": false,
+                  "step": 0.001,
+                  "tooltip": "Period in seconds; 0 stops the LFO.",
+                  "type": "Spinner"
+                },
+                {
+                  "bounds": [
+                    5,
+                    26,
+                    110,
+                    11
+                  ],
+                  "name": "period-secs-label",
+                  "text": "Period (Secs)",
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    5,
+                    40,
+                    110,
+                    20
+                  ],
+                  "digits": 3,
+                  "max": 10,
+                  "min": 0.008333333333333333,
+                  "name": "freq-spinner",
+                  "property": "FREQUENCY",
+                  "simple": false,
+                  "step": 0.001,
+                  "type": "Spinner"
+                },
+                {
+                  "bounds": [
+                    5,
+                    60,
+                    110,
+                    11
+                  ],
+                  "name": "freq-label",
+                  "text": "Freq (Hz)",
+                  "type": "Label"
+                }
+              ],
+              "title": "Numbers"
+            }
+          ],
+          "tab_height": 14,
+          "type": "Notebook"
+        }
+      ],
+      "height": 84,
+      "help": "A very low frequency oscillator. Also produces inverted and \"cosine\"\noutputs (output phase shifted by 180 degrees)\nPeriod length goes down to 2 minutes :]\n",
+      "schema_version": 1,
+      "width": 176
+    },
+    "plugin_id": 124,
+    "properties": [
+      {
+        "class": "StringProperty",
+        "default": "LFO",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 1,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0.1,
+        "display_name": "Frequency",
+        "hint": "Frequency in Hz (period is its reciprocal)",
+        "internal": false,
+        "logarithmic": false,
+        "max": 10,
+        "min": 0.008333333333333333,
+        "page": 0.1,
+        "property": "FREQUENCY",
+        "read_only": false,
+        "step": 0.001,
+        "type": "number"
+      },
+      {
+        "choices": [
+          {
+            "display_name": "Sine",
+            "value": 0
+          },
+          {
+            "display_name": "Triangle",
+            "value": 1
+          },
+          {
+            "display_name": "Square",
+            "value": 2
+          },
+          {
+            "display_name": "Saw",
+            "value": 3
+          }
+        ],
+        "class": "SetProperty",
+        "default": 0,
+        "display_name": "Wave type",
+        "hint": "Wave type",
+        "internal": false,
+        "property": "WAVE TYPE",
+        "read_only": false,
+        "type": "integer"
+      }
+    ],
+    "schema_version": 1
+  }
 }

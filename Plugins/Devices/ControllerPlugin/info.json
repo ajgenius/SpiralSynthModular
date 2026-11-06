@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "id": 3,
-  "name": "Controller",
+  "name": "CV",
   "type": "dsp",
   "category": "Control",
   "authors": [
@@ -14,5 +14,341 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "ControllerPlugin_DSP.so"
+  "module": "ControllerPlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Controls": 1
+    },
+    "host_version": "0.3.43",
+    "panel": {
+      "auto_width": true,
+      "children": [
+        {
+          "bounds": [
+            0,
+            6,
+            60,
+            180
+          ],
+          "children": [
+            {
+              "bounds": [
+                3,
+                2,
+                50,
+                18
+              ],
+              "name": "name-{index}",
+              "property": "NAME{index}",
+              "tooltip": "The channel's name",
+              "type": "TextEntry"
+            },
+            {
+              "above": {
+                "property": "MIN{index}"
+              },
+              "bounds": [
+                3,
+                21,
+                50,
+                17
+              ],
+              "format": "%.6f",
+              "name": "max-{index}",
+              "property": "MAX{index}",
+              "tooltip": "The slider's top",
+              "type": "TextEntry"
+            },
+            {
+              "bounds": [
+                18,
+                40,
+                20,
+                117
+              ],
+              "max": {
+                "property": "MAX{index}"
+              },
+              "min": {
+                "property": "MIN{index}"
+              },
+              "name": "value-{index}",
+              "property": "VALUE{index}",
+              "step_fraction": 0.01,
+              "tooltip": "The CV sent out",
+              "type": "Slider",
+              "vertical": true
+            },
+            {
+              "below": {
+                "property": "MAX{index}"
+              },
+              "bounds": [
+                3,
+                160,
+                50,
+                17
+              ],
+              "format": "%.6f",
+              "name": "min-{index}",
+              "property": "MIN{index}",
+              "tooltip": "The slider's bottom",
+              "type": "TextEntry"
+            }
+          ],
+          "count_property": "CHANNELS",
+          "max_count": 16,
+          "name": "channels",
+          "step_x": 60,
+          "type": "Repeat"
+        },
+        {
+          "bounds": [
+            -2,
+            188,
+            20,
+            20
+          ],
+          "name": "remove",
+          "on": {
+            "pressed": [
+              {
+                "amount": -1,
+                "delta": "CHANNELS"
+              }
+            ]
+          },
+          "text": "-",
+          "tooltip": "One channel fewer",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            18,
+            188,
+            20,
+            20
+          ],
+          "name": "add",
+          "on": {
+            "pressed": [
+              {
+                "amount": 1,
+                "delta": "CHANNELS"
+              }
+            ]
+          },
+          "text": "+",
+          "tooltip": "One channel more, up to sixteen",
+          "type": "Button"
+        }
+      ],
+      "height": 208,
+      "help": "A slider per channel, each sent out as a CV between the bottom and top typed beneath and above it, and a name for it. + and - add and remove channels, up to sixteen.",
+      "schema_version": 1,
+      "width": 236
+    },
+    "plugin_id": 3,
+    "properties": [
+      {
+        "class": "StringProperty",
+        "default": "",
+        "display_name": "COMMAND",
+        "hint": "Command",
+        "internal": true,
+        "omitted": "internal",
+        "property": "COMMAND",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "CV",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 5,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Name",
+        "display_name": "Name 0",
+        "hint": "Name 0",
+        "internal": false,
+        "property": "NAME0",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Name",
+        "display_name": "Name 1",
+        "hint": "Name 1",
+        "internal": false,
+        "property": "NAME1",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Name",
+        "display_name": "Name 10",
+        "hint": "Name 10",
+        "internal": false,
+        "property": "NAME10",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Name",
+        "display_name": "Name 11",
+        "hint": "Name 11",
+        "internal": false,
+        "property": "NAME11",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Name",
+        "display_name": "Name 12",
+        "hint": "Name 12",
+        "internal": false,
+        "property": "NAME12",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Name",
+        "display_name": "Name 13",
+        "hint": "Name 13",
+        "internal": false,
+        "property": "NAME13",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Name",
+        "display_name": "Name 14",
+        "hint": "Name 14",
+        "internal": false,
+        "property": "NAME14",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Name",
+        "display_name": "Name 15",
+        "hint": "Name 15",
+        "internal": false,
+        "property": "NAME15",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Name",
+        "display_name": "Name 2",
+        "hint": "Name 2",
+        "internal": false,
+        "property": "NAME2",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Name",
+        "display_name": "Name 3",
+        "hint": "Name 3",
+        "internal": false,
+        "property": "NAME3",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Name",
+        "display_name": "Name 4",
+        "hint": "Name 4",
+        "internal": false,
+        "property": "NAME4",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Name",
+        "display_name": "Name 5",
+        "hint": "Name 5",
+        "internal": false,
+        "property": "NAME5",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Name",
+        "display_name": "Name 6",
+        "hint": "Name 6",
+        "internal": false,
+        "property": "NAME6",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Name",
+        "display_name": "Name 7",
+        "hint": "Name 7",
+        "internal": false,
+        "property": "NAME7",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Name",
+        "display_name": "Name 8",
+        "hint": "Name 8",
+        "internal": false,
+        "property": "NAME8",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Name",
+        "display_name": "Name 9",
+        "hint": "Name 9",
+        "internal": false,
+        "property": "NAME9",
+        "read_only": false,
+        "type": "string"
+      }
+    ],
+    "schema_version": 1
+  }
 }

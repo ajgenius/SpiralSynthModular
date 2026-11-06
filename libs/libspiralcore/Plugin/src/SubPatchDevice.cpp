@@ -16,6 +16,8 @@ const DeviceClass &SubPatchDevice::Class()
 	return device;
 }
 
+static const Spiral::Core::BuiltinDevice Registration(SubPatchDevice::Class);
+
 namespace
 {
 	const char *const Modes[] = {"Virtual", "Inline", "Isolated"};

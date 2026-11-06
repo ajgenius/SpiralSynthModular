@@ -32,9 +32,6 @@ extern "C"
 	SpiralPlugin *SpiralPlugin_CreateInstance() { return new ComplexEnvelopePlugin; }
 	int SpiralPlugin_GetType() { return SPIRAL_PLUGIN_TYPE_DEVICE; }
 	const char **SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
-	int SpiralPlugin_GetID() { return 33; }
-	string SpiralPlugin_GetName() { return "ComplexEnv"; }
-	string SpiralPlugin_GetGroupName() { return "Control"; }
 }
 
 ///////////////////////////////////////////////////////
@@ -57,7 +54,6 @@ ComplexEnvelopePlugin::ComplexEnvelopePlugin():
 	m_PluginInfo.PortTips.push_back("CV");
 	m_PluginInfo.PortTips.push_back("Output");
 
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 
 	const float def[][2] = {{0.0f, 0.0f}, {0.15f, 1.0f}, {0.4f, 0.6f}, {1.0f, 0.0f}};

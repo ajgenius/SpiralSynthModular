@@ -14,5 +14,3796 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "MatrixPlugin_DSP.so"
+  "module": "MatrixPlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Controls": 1,
+      "Meters": 1,
+      "Patch": 1
+    },
+    "host_version": "0.3.43",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            3,
+            6,
+            40,
+            20
+          ],
+          "digits": 0,
+          "name": "pattern",
+          "property": "PATTERN",
+          "simple": true,
+          "step": 1,
+          "tooltip": "The pattern shown and edited",
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            3,
+            26,
+            40,
+            10
+          ],
+          "name": "pattern-label",
+          "size": 10,
+          "text": "View",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            48,
+            6,
+            40,
+            20
+          ],
+          "digits": 0,
+          "name": "play",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SET_CURRENT",
+                "with": [
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "CURRENT",
+          "simple": true,
+          "step": 1,
+          "tooltip": "The pattern that plays",
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            48,
+            26,
+            40,
+            10
+          ],
+          "name": "play-label",
+          "size": 10,
+          "text": "Play",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            3,
+            41,
+            40,
+            17
+          ],
+          "digits": 0,
+          "name": "length",
+          "on": {
+            "value_changed": [
+              {
+                "value": "MAT_LENGTH",
+                "with": [
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "LENGTH",
+          "simple": true,
+          "step": 1,
+          "tooltip": "Steps in the pattern",
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            3,
+            58,
+            40,
+            10
+          ],
+          "name": "length-label",
+          "size": 10,
+          "text": "Length",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            48,
+            45,
+            40,
+            40
+          ],
+          "mapping": {
+            "scale": 8
+          },
+          "name": "speed",
+          "on": {
+            "value_changed": [
+              {
+                "value": "MAT_SPEED",
+                "with": [
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "SPEED",
+          "step": 1,
+          "tooltip": "Steps a beat, times eight",
+          "type": "Knob"
+        },
+        {
+          "bounds": [
+            48,
+            85,
+            40,
+            11
+          ],
+          "name": "speed-label",
+          "size": 10,
+          "text": "Speed",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            3,
+            73,
+            40,
+            17
+          ],
+          "digits": 0,
+          "name": "octave",
+          "on": {
+            "value_changed": [
+              {
+                "value": "MAT_OCTAVE",
+                "with": [
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "OCTAVE",
+          "simple": true,
+          "step": 1,
+          "tooltip": "Octave of the lowest row",
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            3,
+            90,
+            40,
+            10
+          ],
+          "name": "octave-label",
+          "size": 10,
+          "text": "Octave",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            3,
+            105,
+            85,
+            17
+          ],
+          "digits": 0,
+          "mapping": {
+            "scale": 8
+          },
+          "name": "speed-value",
+          "on": {
+            "value_changed": [
+              {
+                "value": "MAT_SPEED",
+                "with": [
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "SPEED",
+          "simple": true,
+          "step": 1,
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            3,
+            127,
+            40,
+            17
+          ],
+          "name": "copy",
+          "on": {
+            "pressed": [
+              {
+                "value": "COPY",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "text": "Copy",
+          "tooltip": "Copy the pattern shown",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            48,
+            127,
+            40,
+            17
+          ],
+          "name": "paste",
+          "on": {
+            "pressed": [
+              {
+                "value": "PASTE",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "text": "Paste",
+          "tooltip": "Paste over the pattern shown",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            3,
+            149,
+            85,
+            17
+          ],
+          "name": "clear",
+          "on": {
+            "pressed": [
+              {
+                "value": "CLEAR",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "text": "Clear",
+          "tooltip": "Clear the pattern shown",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            3,
+            171,
+            40,
+            17
+          ],
+          "name": "up",
+          "on": {
+            "pressed": [
+              {
+                "value": "TUP",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "text": "Up",
+          "tooltip": "Transpose the pattern up a note",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            48,
+            171,
+            40,
+            17
+          ],
+          "name": "down",
+          "on": {
+            "pressed": [
+              {
+                "value": "TDOWN",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "text": "Down",
+          "tooltip": "Transpose the pattern down a note",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            3,
+            189,
+            85,
+            10
+          ],
+          "name": "transpose-label",
+          "size": 10,
+          "text": "Transpose",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            3,
+            204,
+            85,
+            17
+          ],
+          "name": "trig",
+          "property": "TRIGGERSELECT",
+          "text": "Trig Select",
+          "tooltip": "Under the external clock, select the pattern by the trigger's pitch rather than resetting on its level",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            3,
+            226,
+            85,
+            20
+          ],
+          "name": "notecut",
+          "property": "NOTECUT",
+          "text": "NoteCut",
+          "tooltip": "Cut the note on a new step",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            88,
+            26,
+            463,
+            224
+          ],
+          "columns": 64,
+          "end": "GridEnd",
+          "grid": "Grid",
+          "name": "grid",
+          "note_names": 15,
+          "on": {
+            "activate": [
+              {
+                "value": "MAT_ACTIVATE",
+                "with": [
+                  "x",
+                  "y"
+                ],
+                "write": "COMMAND"
+              }
+            ],
+            "deactivate": [
+              {
+                "value": "MAT_DEACTIVATE",
+                "with": [
+                  "x",
+                  "y"
+                ],
+                "write": "COMMAND"
+              }
+            ],
+            "resize": [
+              {
+                "value": "MAT_END",
+                "with": [
+                  "x",
+                  "y",
+                  "end"
+                ],
+                "write": "COMMAND"
+              }
+            ],
+            "triggers": [
+              {
+                "value": "MAT_TRIGGERS",
+                "with": [
+                  "y"
+                ],
+                "write": "COMMAND"
+              }
+            ],
+            "volume": [
+              {
+                "value": "MAT_VOLUME",
+                "with": [
+                  "x",
+                  "y",
+                  "volume"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "rows": 32,
+          "step": "Step",
+          "tooltip": "Click a step on or off, or click and drag right for a longer note; drag a note's right edge to change its length; right-drag or scroll a note to set its volume; the shaded note names are the rows sending Triggers 1 to 16: click or drag there to move them",
+          "triggers": "TriggerRow",
+          "type": "Patch::MatrixGrid",
+          "volume": "GridVolume"
+        },
+        {
+          "bounds": [
+            558,
+            11,
+            30,
+            10
+          ],
+          "name": "patseq-label",
+          "size": 10,
+          "text": "Pat Seq",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            101,
+            6,
+            15,
+            15
+          ],
+          "children": [
+            {
+              "bounds": [
+                0,
+                0,
+                15,
+                15
+              ],
+              "choice": "{index}",
+              "color_role": "matrix.status",
+              "name": "step-{index}",
+              "property": "STEP",
+              "type": "Meters::LED"
+            }
+          ],
+          "max_count": 64,
+          "name": "step",
+          "step_x": 7,
+          "type": "Repeat"
+        },
+        {
+          "bounds": [
+            558,
+            26,
+            25,
+            12
+          ],
+          "digits": 0,
+          "max": 15,
+          "min": 0,
+          "name": "patseq-0",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SET_PATSEQ",
+                "with": [
+                  0,
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "PATSEQ0",
+          "simple": true,
+          "step": 1,
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            583,
+            26,
+            15,
+            15
+          ],
+          "choice": 0,
+          "color_role": "matrix.status",
+          "name": "patseq-0-led",
+          "property": "PATSEQSTEP",
+          "type": "Meters::LED"
+        },
+        {
+          "bounds": [
+            558,
+            40,
+            25,
+            12
+          ],
+          "digits": 0,
+          "max": 15,
+          "min": -1,
+          "name": "patseq-1",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SET_PATSEQ",
+                "with": [
+                  1,
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "PATSEQ1",
+          "simple": true,
+          "step": 1,
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            583,
+            40,
+            15,
+            15
+          ],
+          "choice": 1,
+          "color_role": "matrix.status",
+          "name": "patseq-1-led",
+          "property": "PATSEQSTEP",
+          "type": "Meters::LED"
+        },
+        {
+          "bounds": [
+            558,
+            54,
+            25,
+            12
+          ],
+          "digits": 0,
+          "max": 15,
+          "min": -1,
+          "name": "patseq-2",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SET_PATSEQ",
+                "with": [
+                  2,
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "PATSEQ2",
+          "simple": true,
+          "step": 1,
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            583,
+            54,
+            15,
+            15
+          ],
+          "choice": 2,
+          "color_role": "matrix.status",
+          "name": "patseq-2-led",
+          "property": "PATSEQSTEP",
+          "type": "Meters::LED"
+        },
+        {
+          "bounds": [
+            558,
+            68,
+            25,
+            12
+          ],
+          "digits": 0,
+          "max": 15,
+          "min": -1,
+          "name": "patseq-3",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SET_PATSEQ",
+                "with": [
+                  3,
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "PATSEQ3",
+          "simple": true,
+          "step": 1,
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            583,
+            68,
+            15,
+            15
+          ],
+          "choice": 3,
+          "color_role": "matrix.status",
+          "name": "patseq-3-led",
+          "property": "PATSEQSTEP",
+          "type": "Meters::LED"
+        },
+        {
+          "bounds": [
+            558,
+            82,
+            25,
+            12
+          ],
+          "digits": 0,
+          "max": 15,
+          "min": -1,
+          "name": "patseq-4",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SET_PATSEQ",
+                "with": [
+                  4,
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "PATSEQ4",
+          "simple": true,
+          "step": 1,
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            583,
+            82,
+            15,
+            15
+          ],
+          "choice": 4,
+          "color_role": "matrix.status",
+          "name": "patseq-4-led",
+          "property": "PATSEQSTEP",
+          "type": "Meters::LED"
+        },
+        {
+          "bounds": [
+            558,
+            96,
+            25,
+            12
+          ],
+          "digits": 0,
+          "max": 15,
+          "min": -1,
+          "name": "patseq-5",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SET_PATSEQ",
+                "with": [
+                  5,
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "PATSEQ5",
+          "simple": true,
+          "step": 1,
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            583,
+            96,
+            15,
+            15
+          ],
+          "choice": 5,
+          "color_role": "matrix.status",
+          "name": "patseq-5-led",
+          "property": "PATSEQSTEP",
+          "type": "Meters::LED"
+        },
+        {
+          "bounds": [
+            558,
+            110,
+            25,
+            12
+          ],
+          "digits": 0,
+          "max": 15,
+          "min": -1,
+          "name": "patseq-6",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SET_PATSEQ",
+                "with": [
+                  6,
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "PATSEQ6",
+          "simple": true,
+          "step": 1,
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            583,
+            110,
+            15,
+            15
+          ],
+          "choice": 6,
+          "color_role": "matrix.status",
+          "name": "patseq-6-led",
+          "property": "PATSEQSTEP",
+          "type": "Meters::LED"
+        },
+        {
+          "bounds": [
+            558,
+            124,
+            25,
+            12
+          ],
+          "digits": 0,
+          "max": 15,
+          "min": -1,
+          "name": "patseq-7",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SET_PATSEQ",
+                "with": [
+                  7,
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "PATSEQ7",
+          "simple": true,
+          "step": 1,
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            583,
+            124,
+            15,
+            15
+          ],
+          "choice": 7,
+          "color_role": "matrix.status",
+          "name": "patseq-7-led",
+          "property": "PATSEQSTEP",
+          "type": "Meters::LED"
+        },
+        {
+          "bounds": [
+            558,
+            138,
+            25,
+            12
+          ],
+          "digits": 0,
+          "max": 15,
+          "min": -1,
+          "name": "patseq-8",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SET_PATSEQ",
+                "with": [
+                  8,
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "PATSEQ8",
+          "simple": true,
+          "step": 1,
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            583,
+            138,
+            15,
+            15
+          ],
+          "choice": 8,
+          "color_role": "matrix.status",
+          "name": "patseq-8-led",
+          "property": "PATSEQSTEP",
+          "type": "Meters::LED"
+        },
+        {
+          "bounds": [
+            558,
+            152,
+            25,
+            12
+          ],
+          "digits": 0,
+          "max": 15,
+          "min": -1,
+          "name": "patseq-9",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SET_PATSEQ",
+                "with": [
+                  9,
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "PATSEQ9",
+          "simple": true,
+          "step": 1,
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            583,
+            152,
+            15,
+            15
+          ],
+          "choice": 9,
+          "color_role": "matrix.status",
+          "name": "patseq-9-led",
+          "property": "PATSEQSTEP",
+          "type": "Meters::LED"
+        },
+        {
+          "bounds": [
+            558,
+            166,
+            25,
+            12
+          ],
+          "digits": 0,
+          "max": 15,
+          "min": -1,
+          "name": "patseq-10",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SET_PATSEQ",
+                "with": [
+                  10,
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "PATSEQ10",
+          "simple": true,
+          "step": 1,
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            583,
+            166,
+            15,
+            15
+          ],
+          "choice": 10,
+          "color_role": "matrix.status",
+          "name": "patseq-10-led",
+          "property": "PATSEQSTEP",
+          "type": "Meters::LED"
+        },
+        {
+          "bounds": [
+            558,
+            180,
+            25,
+            12
+          ],
+          "digits": 0,
+          "max": 15,
+          "min": -1,
+          "name": "patseq-11",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SET_PATSEQ",
+                "with": [
+                  11,
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "PATSEQ11",
+          "simple": true,
+          "step": 1,
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            583,
+            180,
+            15,
+            15
+          ],
+          "choice": 11,
+          "color_role": "matrix.status",
+          "name": "patseq-11-led",
+          "property": "PATSEQSTEP",
+          "type": "Meters::LED"
+        },
+        {
+          "bounds": [
+            558,
+            194,
+            25,
+            12
+          ],
+          "digits": 0,
+          "max": 15,
+          "min": -1,
+          "name": "patseq-12",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SET_PATSEQ",
+                "with": [
+                  12,
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "PATSEQ12",
+          "simple": true,
+          "step": 1,
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            583,
+            194,
+            15,
+            15
+          ],
+          "choice": 12,
+          "color_role": "matrix.status",
+          "name": "patseq-12-led",
+          "property": "PATSEQSTEP",
+          "type": "Meters::LED"
+        },
+        {
+          "bounds": [
+            558,
+            208,
+            25,
+            12
+          ],
+          "digits": 0,
+          "max": 15,
+          "min": -1,
+          "name": "patseq-13",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SET_PATSEQ",
+                "with": [
+                  13,
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "PATSEQ13",
+          "simple": true,
+          "step": 1,
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            583,
+            208,
+            15,
+            15
+          ],
+          "choice": 13,
+          "color_role": "matrix.status",
+          "name": "patseq-13-led",
+          "property": "PATSEQSTEP",
+          "type": "Meters::LED"
+        },
+        {
+          "bounds": [
+            558,
+            222,
+            25,
+            12
+          ],
+          "digits": 0,
+          "max": 15,
+          "min": -1,
+          "name": "patseq-14",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SET_PATSEQ",
+                "with": [
+                  14,
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "PATSEQ14",
+          "simple": true,
+          "step": 1,
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            583,
+            222,
+            15,
+            15
+          ],
+          "choice": 14,
+          "color_role": "matrix.status",
+          "name": "patseq-14-led",
+          "property": "PATSEQSTEP",
+          "type": "Meters::LED"
+        },
+        {
+          "bounds": [
+            558,
+            236,
+            25,
+            12
+          ],
+          "digits": 0,
+          "max": 15,
+          "min": -1,
+          "name": "patseq-15",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SET_PATSEQ",
+                "with": [
+                  15,
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "PATSEQ15",
+          "simple": true,
+          "step": 1,
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            583,
+            236,
+            15,
+            15
+          ],
+          "choice": 15,
+          "color_role": "matrix.status",
+          "name": "patseq-15-led",
+          "property": "PATSEQSTEP",
+          "type": "Meters::LED"
+        }
+      ],
+      "height": 254,
+      "help": "A step sequencer: each column is a step, each row a note. View picks the pattern you edit, Play the one that plays. Right-drag or scroll an on step to set its volume. Pat Seq lists the patterns played in turn; -1 ends it. The square button steps through the layouts.",
+      "layouts": [
+        {
+          "controls": {
+            "clear": [
+              3,
+              149,
+              85,
+              17
+            ],
+            "copy": [
+              3,
+              127,
+              40,
+              17
+            ],
+            "down": [
+              48,
+              171,
+              40,
+              17
+            ],
+            "grid": [
+              88,
+              26,
+              463,
+              224
+            ],
+            "length": [
+              3,
+              41,
+              40,
+              17
+            ],
+            "length-label": [
+              3,
+              58,
+              40,
+              10
+            ],
+            "notecut": [
+              3,
+              226,
+              85,
+              20
+            ],
+            "octave": [
+              3,
+              73,
+              40,
+              17
+            ],
+            "octave-label": [
+              3,
+              90,
+              40,
+              10
+            ],
+            "paste": [
+              48,
+              127,
+              40,
+              17
+            ],
+            "patseq-0": [
+              558,
+              26,
+              25,
+              12
+            ],
+            "patseq-0-led": [
+              583,
+              26,
+              15,
+              15
+            ],
+            "patseq-1": [
+              558,
+              40,
+              25,
+              12
+            ],
+            "patseq-1-led": [
+              583,
+              40,
+              15,
+              15
+            ],
+            "patseq-10": [
+              558,
+              166,
+              25,
+              12
+            ],
+            "patseq-10-led": [
+              583,
+              166,
+              15,
+              15
+            ],
+            "patseq-11": [
+              558,
+              180,
+              25,
+              12
+            ],
+            "patseq-11-led": [
+              583,
+              180,
+              15,
+              15
+            ],
+            "patseq-12": [
+              558,
+              194,
+              25,
+              12
+            ],
+            "patseq-12-led": [
+              583,
+              194,
+              15,
+              15
+            ],
+            "patseq-13": [
+              558,
+              208,
+              25,
+              12
+            ],
+            "patseq-13-led": [
+              583,
+              208,
+              15,
+              15
+            ],
+            "patseq-14": [
+              558,
+              222,
+              25,
+              12
+            ],
+            "patseq-14-led": [
+              583,
+              222,
+              15,
+              15
+            ],
+            "patseq-15": [
+              558,
+              236,
+              25,
+              12
+            ],
+            "patseq-15-led": [
+              583,
+              236,
+              15,
+              15
+            ],
+            "patseq-2": [
+              558,
+              54,
+              25,
+              12
+            ],
+            "patseq-2-led": [
+              583,
+              54,
+              15,
+              15
+            ],
+            "patseq-3": [
+              558,
+              68,
+              25,
+              12
+            ],
+            "patseq-3-led": [
+              583,
+              68,
+              15,
+              15
+            ],
+            "patseq-4": [
+              558,
+              82,
+              25,
+              12
+            ],
+            "patseq-4-led": [
+              583,
+              82,
+              15,
+              15
+            ],
+            "patseq-5": [
+              558,
+              96,
+              25,
+              12
+            ],
+            "patseq-5-led": [
+              583,
+              96,
+              15,
+              15
+            ],
+            "patseq-6": [
+              558,
+              110,
+              25,
+              12
+            ],
+            "patseq-6-led": [
+              583,
+              110,
+              15,
+              15
+            ],
+            "patseq-7": [
+              558,
+              124,
+              25,
+              12
+            ],
+            "patseq-7-led": [
+              583,
+              124,
+              15,
+              15
+            ],
+            "patseq-8": [
+              558,
+              138,
+              25,
+              12
+            ],
+            "patseq-8-led": [
+              583,
+              138,
+              15,
+              15
+            ],
+            "patseq-9": [
+              558,
+              152,
+              25,
+              12
+            ],
+            "patseq-9-led": [
+              583,
+              152,
+              15,
+              15
+            ],
+            "patseq-label": [
+              558,
+              11,
+              30,
+              10
+            ],
+            "pattern": [
+              3,
+              6,
+              40,
+              20
+            ],
+            "pattern-label": [
+              3,
+              26,
+              40,
+              10
+            ],
+            "play": [
+              48,
+              6,
+              40,
+              20
+            ],
+            "play-label": [
+              48,
+              26,
+              40,
+              10
+            ],
+            "speed": [
+              48,
+              45,
+              40,
+              40
+            ],
+            "speed-label": [
+              48,
+              85,
+              40,
+              11
+            ],
+            "speed-value": [
+              3,
+              105,
+              85,
+              17
+            ],
+            "step-0": [
+              101,
+              6,
+              15,
+              15
+            ],
+            "step-1": [
+              108,
+              6,
+              15,
+              15
+            ],
+            "step-10": [
+              171,
+              6,
+              15,
+              15
+            ],
+            "step-11": [
+              178,
+              6,
+              15,
+              15
+            ],
+            "step-12": [
+              185,
+              6,
+              15,
+              15
+            ],
+            "step-13": [
+              192,
+              6,
+              15,
+              15
+            ],
+            "step-14": [
+              199,
+              6,
+              15,
+              15
+            ],
+            "step-15": [
+              206,
+              6,
+              15,
+              15
+            ],
+            "step-16": [
+              213,
+              6,
+              15,
+              15
+            ],
+            "step-17": [
+              220,
+              6,
+              15,
+              15
+            ],
+            "step-18": [
+              227,
+              6,
+              15,
+              15
+            ],
+            "step-19": [
+              234,
+              6,
+              15,
+              15
+            ],
+            "step-2": [
+              115,
+              6,
+              15,
+              15
+            ],
+            "step-20": [
+              241,
+              6,
+              15,
+              15
+            ],
+            "step-21": [
+              248,
+              6,
+              15,
+              15
+            ],
+            "step-22": [
+              255,
+              6,
+              15,
+              15
+            ],
+            "step-23": [
+              262,
+              6,
+              15,
+              15
+            ],
+            "step-24": [
+              269,
+              6,
+              15,
+              15
+            ],
+            "step-25": [
+              276,
+              6,
+              15,
+              15
+            ],
+            "step-26": [
+              283,
+              6,
+              15,
+              15
+            ],
+            "step-27": [
+              290,
+              6,
+              15,
+              15
+            ],
+            "step-28": [
+              297,
+              6,
+              15,
+              15
+            ],
+            "step-29": [
+              304,
+              6,
+              15,
+              15
+            ],
+            "step-3": [
+              122,
+              6,
+              15,
+              15
+            ],
+            "step-30": [
+              311,
+              6,
+              15,
+              15
+            ],
+            "step-31": [
+              318,
+              6,
+              15,
+              15
+            ],
+            "step-32": [
+              325,
+              6,
+              15,
+              15
+            ],
+            "step-33": [
+              332,
+              6,
+              15,
+              15
+            ],
+            "step-34": [
+              339,
+              6,
+              15,
+              15
+            ],
+            "step-35": [
+              346,
+              6,
+              15,
+              15
+            ],
+            "step-36": [
+              353,
+              6,
+              15,
+              15
+            ],
+            "step-37": [
+              360,
+              6,
+              15,
+              15
+            ],
+            "step-38": [
+              367,
+              6,
+              15,
+              15
+            ],
+            "step-39": [
+              374,
+              6,
+              15,
+              15
+            ],
+            "step-4": [
+              129,
+              6,
+              15,
+              15
+            ],
+            "step-40": [
+              381,
+              6,
+              15,
+              15
+            ],
+            "step-41": [
+              388,
+              6,
+              15,
+              15
+            ],
+            "step-42": [
+              395,
+              6,
+              15,
+              15
+            ],
+            "step-43": [
+              402,
+              6,
+              15,
+              15
+            ],
+            "step-44": [
+              409,
+              6,
+              15,
+              15
+            ],
+            "step-45": [
+              416,
+              6,
+              15,
+              15
+            ],
+            "step-46": [
+              423,
+              6,
+              15,
+              15
+            ],
+            "step-47": [
+              430,
+              6,
+              15,
+              15
+            ],
+            "step-48": [
+              437,
+              6,
+              15,
+              15
+            ],
+            "step-49": [
+              444,
+              6,
+              15,
+              15
+            ],
+            "step-5": [
+              136,
+              6,
+              15,
+              15
+            ],
+            "step-50": [
+              451,
+              6,
+              15,
+              15
+            ],
+            "step-51": [
+              458,
+              6,
+              15,
+              15
+            ],
+            "step-52": [
+              465,
+              6,
+              15,
+              15
+            ],
+            "step-53": [
+              472,
+              6,
+              15,
+              15
+            ],
+            "step-54": [
+              479,
+              6,
+              15,
+              15
+            ],
+            "step-55": [
+              486,
+              6,
+              15,
+              15
+            ],
+            "step-56": [
+              493,
+              6,
+              15,
+              15
+            ],
+            "step-57": [
+              500,
+              6,
+              15,
+              15
+            ],
+            "step-58": [
+              507,
+              6,
+              15,
+              15
+            ],
+            "step-59": [
+              514,
+              6,
+              15,
+              15
+            ],
+            "step-6": [
+              143,
+              6,
+              15,
+              15
+            ],
+            "step-60": [
+              521,
+              6,
+              15,
+              15
+            ],
+            "step-61": [
+              528,
+              6,
+              15,
+              15
+            ],
+            "step-62": [
+              535,
+              6,
+              15,
+              15
+            ],
+            "step-63": [
+              542,
+              6,
+              15,
+              15
+            ],
+            "step-7": [
+              150,
+              6,
+              15,
+              15
+            ],
+            "step-8": [
+              157,
+              6,
+              15,
+              15
+            ],
+            "step-9": [
+              164,
+              6,
+              15,
+              15
+            ],
+            "transpose-label": [
+              3,
+              189,
+              85,
+              10
+            ],
+            "trig": [
+              3,
+              204,
+              85,
+              17
+            ],
+            "up": [
+              3,
+              171,
+              40,
+              17
+            ]
+          },
+          "height": 254,
+          "name": "classic",
+          "width": 596
+        },
+        {
+          "controls": {
+            "clear": [
+              4,
+              163,
+              97,
+              18
+            ],
+            "copy": [
+              4,
+              139,
+              46,
+              18
+            ],
+            "down": [
+              55,
+              187,
+              46,
+              18
+            ],
+            "grid": [
+              101,
+              29,
+              529,
+              243
+            ],
+            "length": [
+              4,
+              46,
+              46,
+              18
+            ],
+            "length-label": [
+              4,
+              64,
+              46,
+              11
+            ],
+            "notecut": [
+              4,
+              246,
+              97,
+              22
+            ],
+            "octave": [
+              4,
+              80,
+              46,
+              18
+            ],
+            "octave-label": [
+              4,
+              99,
+              46,
+              11
+            ],
+            "paste": [
+              55,
+              139,
+              46,
+              18
+            ],
+            "patseq-0": [
+              638,
+              29,
+              29,
+              13
+            ],
+            "patseq-0-led": [
+              667,
+              29,
+              17,
+              16
+            ],
+            "patseq-1": [
+              638,
+              45,
+              29,
+              13
+            ],
+            "patseq-1-led": [
+              667,
+              45,
+              17,
+              16
+            ],
+            "patseq-10": [
+              638,
+              181,
+              29,
+              13
+            ],
+            "patseq-10-led": [
+              667,
+              181,
+              17,
+              16
+            ],
+            "patseq-11": [
+              638,
+              197,
+              29,
+              13
+            ],
+            "patseq-11-led": [
+              667,
+              197,
+              17,
+              16
+            ],
+            "patseq-12": [
+              638,
+              212,
+              29,
+              13
+            ],
+            "patseq-12-led": [
+              667,
+              212,
+              17,
+              16
+            ],
+            "patseq-13": [
+              638,
+              227,
+              29,
+              13
+            ],
+            "patseq-13-led": [
+              667,
+              227,
+              17,
+              16
+            ],
+            "patseq-14": [
+              638,
+              242,
+              29,
+              13
+            ],
+            "patseq-14-led": [
+              667,
+              242,
+              17,
+              16
+            ],
+            "patseq-15": [
+              638,
+              257,
+              29,
+              13
+            ],
+            "patseq-15-led": [
+              667,
+              257,
+              17,
+              16
+            ],
+            "patseq-2": [
+              638,
+              60,
+              29,
+              13
+            ],
+            "patseq-2-led": [
+              667,
+              60,
+              17,
+              16
+            ],
+            "patseq-3": [
+              638,
+              75,
+              29,
+              13
+            ],
+            "patseq-3-led": [
+              667,
+              75,
+              17,
+              16
+            ],
+            "patseq-4": [
+              638,
+              90,
+              29,
+              13
+            ],
+            "patseq-4-led": [
+              667,
+              90,
+              17,
+              16
+            ],
+            "patseq-5": [
+              638,
+              105,
+              29,
+              13
+            ],
+            "patseq-5-led": [
+              667,
+              105,
+              17,
+              16
+            ],
+            "patseq-6": [
+              638,
+              121,
+              29,
+              13
+            ],
+            "patseq-6-led": [
+              667,
+              121,
+              17,
+              16
+            ],
+            "patseq-7": [
+              638,
+              136,
+              29,
+              13
+            ],
+            "patseq-7-led": [
+              667,
+              136,
+              17,
+              16
+            ],
+            "patseq-8": [
+              638,
+              151,
+              29,
+              13
+            ],
+            "patseq-8-led": [
+              667,
+              151,
+              17,
+              16
+            ],
+            "patseq-9": [
+              638,
+              166,
+              29,
+              13
+            ],
+            "patseq-9-led": [
+              667,
+              166,
+              17,
+              16
+            ],
+            "patseq-label": [
+              638,
+              13,
+              34,
+              11
+            ],
+            "pattern": [
+              4,
+              8,
+              46,
+              22
+            ],
+            "pattern-label": [
+              4,
+              29,
+              46,
+              11
+            ],
+            "play": [
+              55,
+              8,
+              46,
+              22
+            ],
+            "play-label": [
+              55,
+              29,
+              46,
+              11
+            ],
+            "speed": [
+              55,
+              50,
+              46,
+              43
+            ],
+            "speed-label": [
+              55,
+              93,
+              46,
+              12
+            ],
+            "speed-value": [
+              4,
+              115,
+              97,
+              18
+            ],
+            "step-0": [
+              116,
+              8,
+              17,
+              16
+            ],
+            "step-1": [
+              124,
+              8,
+              17,
+              16
+            ],
+            "step-10": [
+              196,
+              8,
+              17,
+              16
+            ],
+            "step-11": [
+              204,
+              8,
+              17,
+              16
+            ],
+            "step-12": [
+              212,
+              8,
+              17,
+              16
+            ],
+            "step-13": [
+              220,
+              8,
+              17,
+              16
+            ],
+            "step-14": [
+              228,
+              8,
+              17,
+              16
+            ],
+            "step-15": [
+              236,
+              8,
+              17,
+              16
+            ],
+            "step-16": [
+              244,
+              8,
+              17,
+              16
+            ],
+            "step-17": [
+              252,
+              8,
+              17,
+              16
+            ],
+            "step-18": [
+              260,
+              8,
+              17,
+              16
+            ],
+            "step-19": [
+              268,
+              8,
+              17,
+              16
+            ],
+            "step-2": [
+              132,
+              8,
+              17,
+              16
+            ],
+            "step-20": [
+              276,
+              8,
+              17,
+              16
+            ],
+            "step-21": [
+              284,
+              8,
+              17,
+              16
+            ],
+            "step-22": [
+              292,
+              8,
+              17,
+              16
+            ],
+            "step-23": [
+              300,
+              8,
+              17,
+              16
+            ],
+            "step-24": [
+              308,
+              8,
+              17,
+              16
+            ],
+            "step-25": [
+              316,
+              8,
+              17,
+              16
+            ],
+            "step-26": [
+              324,
+              8,
+              17,
+              16
+            ],
+            "step-27": [
+              332,
+              8,
+              17,
+              16
+            ],
+            "step-28": [
+              340,
+              8,
+              17,
+              16
+            ],
+            "step-29": [
+              348,
+              8,
+              17,
+              16
+            ],
+            "step-3": [
+              140,
+              8,
+              17,
+              16
+            ],
+            "step-30": [
+              356,
+              8,
+              17,
+              16
+            ],
+            "step-31": [
+              364,
+              8,
+              17,
+              16
+            ],
+            "step-32": [
+              372,
+              8,
+              17,
+              16
+            ],
+            "step-33": [
+              380,
+              8,
+              17,
+              16
+            ],
+            "step-34": [
+              388,
+              8,
+              17,
+              16
+            ],
+            "step-35": [
+              396,
+              8,
+              17,
+              16
+            ],
+            "step-36": [
+              404,
+              8,
+              17,
+              16
+            ],
+            "step-37": [
+              412,
+              8,
+              17,
+              16
+            ],
+            "step-38": [
+              420,
+              8,
+              17,
+              16
+            ],
+            "step-39": [
+              428,
+              8,
+              17,
+              16
+            ],
+            "step-4": [
+              148,
+              8,
+              17,
+              16
+            ],
+            "step-40": [
+              436,
+              8,
+              17,
+              16
+            ],
+            "step-41": [
+              444,
+              8,
+              17,
+              16
+            ],
+            "step-42": [
+              452,
+              8,
+              17,
+              16
+            ],
+            "step-43": [
+              460,
+              8,
+              17,
+              16
+            ],
+            "step-44": [
+              468,
+              8,
+              17,
+              16
+            ],
+            "step-45": [
+              476,
+              8,
+              17,
+              16
+            ],
+            "step-46": [
+              484,
+              8,
+              17,
+              16
+            ],
+            "step-47": [
+              492,
+              8,
+              17,
+              16
+            ],
+            "step-48": [
+              500,
+              8,
+              17,
+              16
+            ],
+            "step-49": [
+              508,
+              8,
+              17,
+              16
+            ],
+            "step-5": [
+              156,
+              8,
+              17,
+              16
+            ],
+            "step-50": [
+              516,
+              8,
+              17,
+              16
+            ],
+            "step-51": [
+              524,
+              8,
+              17,
+              16
+            ],
+            "step-52": [
+              532,
+              8,
+              17,
+              16
+            ],
+            "step-53": [
+              540,
+              8,
+              17,
+              16
+            ],
+            "step-54": [
+              548,
+              8,
+              17,
+              16
+            ],
+            "step-55": [
+              556,
+              8,
+              17,
+              16
+            ],
+            "step-56": [
+              564,
+              8,
+              17,
+              16
+            ],
+            "step-57": [
+              572,
+              8,
+              17,
+              16
+            ],
+            "step-58": [
+              580,
+              8,
+              17,
+              16
+            ],
+            "step-59": [
+              588,
+              8,
+              17,
+              16
+            ],
+            "step-6": [
+              164,
+              8,
+              17,
+              16
+            ],
+            "step-60": [
+              596,
+              8,
+              17,
+              16
+            ],
+            "step-61": [
+              604,
+              8,
+              17,
+              16
+            ],
+            "step-62": [
+              612,
+              8,
+              17,
+              16
+            ],
+            "step-63": [
+              620,
+              8,
+              17,
+              16
+            ],
+            "step-7": [
+              172,
+              8,
+              17,
+              16
+            ],
+            "step-8": [
+              180,
+              8,
+              17,
+              16
+            ],
+            "step-9": [
+              188,
+              8,
+              17,
+              16
+            ],
+            "transpose-label": [
+              4,
+              206,
+              97,
+              11
+            ],
+            "trig": [
+              4,
+              223,
+              97,
+              18
+            ],
+            "up": [
+              4,
+              187,
+              46,
+              18
+            ]
+          },
+          "height": 277,
+          "name": "middle",
+          "width": 682
+        },
+        {
+          "controls": {
+            "clear": [
+              4,
+              177,
+              109,
+              20
+            ],
+            "copy": [
+              4,
+              151,
+              51,
+              20
+            ],
+            "down": [
+              62,
+              203,
+              51,
+              20
+            ],
+            "grid": [
+              114,
+              33,
+              596,
+              262
+            ],
+            "length": [
+              4,
+              50,
+              51,
+              20
+            ],
+            "length-label": [
+              4,
+              70,
+              51,
+              12
+            ],
+            "notecut": [
+              4,
+              267,
+              109,
+              23
+            ],
+            "octave": [
+              4,
+              88,
+              51,
+              20
+            ],
+            "octave-label": [
+              4,
+              108,
+              51,
+              12
+            ],
+            "paste": [
+              62,
+              151,
+              51,
+              20
+            ],
+            "patseq-0": [
+              719,
+              33,
+              32,
+              14
+            ],
+            "patseq-0-led": [
+              751,
+              33,
+              19,
+              18
+            ],
+            "patseq-1": [
+              719,
+              49,
+              32,
+              14
+            ],
+            "patseq-1-led": [
+              751,
+              49,
+              19,
+              18
+            ],
+            "patseq-10": [
+              719,
+              197,
+              32,
+              14
+            ],
+            "patseq-10-led": [
+              751,
+              197,
+              19,
+              18
+            ],
+            "patseq-11": [
+              719,
+              213,
+              32,
+              14
+            ],
+            "patseq-11-led": [
+              751,
+              213,
+              19,
+              18
+            ],
+            "patseq-12": [
+              719,
+              229,
+              32,
+              14
+            ],
+            "patseq-12-led": [
+              751,
+              229,
+              19,
+              18
+            ],
+            "patseq-13": [
+              719,
+              246,
+              32,
+              14
+            ],
+            "patseq-13-led": [
+              751,
+              246,
+              19,
+              18
+            ],
+            "patseq-14": [
+              719,
+              262,
+              32,
+              14
+            ],
+            "patseq-14-led": [
+              751,
+              262,
+              19,
+              18
+            ],
+            "patseq-15": [
+              719,
+              279,
+              32,
+              14
+            ],
+            "patseq-15-led": [
+              751,
+              279,
+              19,
+              18
+            ],
+            "patseq-2": [
+              719,
+              66,
+              32,
+              14
+            ],
+            "patseq-2-led": [
+              751,
+              66,
+              19,
+              18
+            ],
+            "patseq-3": [
+              719,
+              82,
+              32,
+              14
+            ],
+            "patseq-3-led": [
+              751,
+              82,
+              19,
+              18
+            ],
+            "patseq-4": [
+              719,
+              98,
+              32,
+              14
+            ],
+            "patseq-4-led": [
+              751,
+              98,
+              19,
+              18
+            ],
+            "patseq-5": [
+              719,
+              115,
+              32,
+              14
+            ],
+            "patseq-5-led": [
+              751,
+              115,
+              19,
+              18
+            ],
+            "patseq-6": [
+              719,
+              131,
+              32,
+              14
+            ],
+            "patseq-6-led": [
+              751,
+              131,
+              19,
+              18
+            ],
+            "patseq-7": [
+              719,
+              148,
+              32,
+              14
+            ],
+            "patseq-7-led": [
+              751,
+              148,
+              19,
+              18
+            ],
+            "patseq-8": [
+              719,
+              164,
+              32,
+              14
+            ],
+            "patseq-8-led": [
+              751,
+              164,
+              19,
+              18
+            ],
+            "patseq-9": [
+              719,
+              180,
+              32,
+              14
+            ],
+            "patseq-9-led": [
+              751,
+              180,
+              19,
+              18
+            ],
+            "patseq-label": [
+              719,
+              15,
+              39,
+              12
+            ],
+            "pattern": [
+              4,
+              9,
+              51,
+              23
+            ],
+            "pattern-label": [
+              4,
+              33,
+              51,
+              12
+            ],
+            "play": [
+              62,
+              9,
+              51,
+              23
+            ],
+            "play-label": [
+              62,
+              33,
+              51,
+              12
+            ],
+            "speed": [
+              62,
+              55,
+              51,
+              47
+            ],
+            "speed-label": [
+              62,
+              102,
+              51,
+              13
+            ],
+            "speed-value": [
+              4,
+              125,
+              109,
+              20
+            ],
+            "step-0": [
+              131,
+              9,
+              19,
+              18
+            ],
+            "step-1": [
+              140,
+              9,
+              19,
+              18
+            ],
+            "step-10": [
+              221,
+              9,
+              19,
+              18
+            ],
+            "step-11": [
+              230,
+              9,
+              19,
+              18
+            ],
+            "step-12": [
+              239,
+              9,
+              19,
+              18
+            ],
+            "step-13": [
+              248,
+              9,
+              19,
+              18
+            ],
+            "step-14": [
+              257,
+              9,
+              19,
+              18
+            ],
+            "step-15": [
+              266,
+              9,
+              19,
+              18
+            ],
+            "step-16": [
+              275,
+              9,
+              19,
+              18
+            ],
+            "step-17": [
+              284,
+              9,
+              19,
+              18
+            ],
+            "step-18": [
+              293,
+              9,
+              19,
+              18
+            ],
+            "step-19": [
+              302,
+              9,
+              19,
+              18
+            ],
+            "step-2": [
+              149,
+              9,
+              19,
+              18
+            ],
+            "step-20": [
+              311,
+              9,
+              19,
+              18
+            ],
+            "step-21": [
+              320,
+              9,
+              19,
+              18
+            ],
+            "step-22": [
+              329,
+              9,
+              19,
+              18
+            ],
+            "step-23": [
+              338,
+              9,
+              19,
+              18
+            ],
+            "step-24": [
+              347,
+              9,
+              19,
+              18
+            ],
+            "step-25": [
+              356,
+              9,
+              19,
+              18
+            ],
+            "step-26": [
+              365,
+              9,
+              19,
+              18
+            ],
+            "step-27": [
+              374,
+              9,
+              19,
+              18
+            ],
+            "step-28": [
+              383,
+              9,
+              19,
+              18
+            ],
+            "step-29": [
+              392,
+              9,
+              19,
+              18
+            ],
+            "step-3": [
+              158,
+              9,
+              19,
+              18
+            ],
+            "step-30": [
+              401,
+              9,
+              19,
+              18
+            ],
+            "step-31": [
+              410,
+              9,
+              19,
+              18
+            ],
+            "step-32": [
+              419,
+              9,
+              19,
+              18
+            ],
+            "step-33": [
+              428,
+              9,
+              19,
+              18
+            ],
+            "step-34": [
+              437,
+              9,
+              19,
+              18
+            ],
+            "step-35": [
+              446,
+              9,
+              19,
+              18
+            ],
+            "step-36": [
+              455,
+              9,
+              19,
+              18
+            ],
+            "step-37": [
+              464,
+              9,
+              19,
+              18
+            ],
+            "step-38": [
+              473,
+              9,
+              19,
+              18
+            ],
+            "step-39": [
+              482,
+              9,
+              19,
+              18
+            ],
+            "step-4": [
+              167,
+              9,
+              19,
+              18
+            ],
+            "step-40": [
+              491,
+              9,
+              19,
+              18
+            ],
+            "step-41": [
+              500,
+              9,
+              19,
+              18
+            ],
+            "step-42": [
+              509,
+              9,
+              19,
+              18
+            ],
+            "step-43": [
+              518,
+              9,
+              19,
+              18
+            ],
+            "step-44": [
+              527,
+              9,
+              19,
+              18
+            ],
+            "step-45": [
+              536,
+              9,
+              19,
+              18
+            ],
+            "step-46": [
+              545,
+              9,
+              19,
+              18
+            ],
+            "step-47": [
+              554,
+              9,
+              19,
+              18
+            ],
+            "step-48": [
+              563,
+              9,
+              19,
+              18
+            ],
+            "step-49": [
+              572,
+              9,
+              19,
+              18
+            ],
+            "step-5": [
+              176,
+              9,
+              19,
+              18
+            ],
+            "step-50": [
+              581,
+              9,
+              19,
+              18
+            ],
+            "step-51": [
+              590,
+              9,
+              19,
+              18
+            ],
+            "step-52": [
+              599,
+              9,
+              19,
+              18
+            ],
+            "step-53": [
+              608,
+              9,
+              19,
+              18
+            ],
+            "step-54": [
+              617,
+              9,
+              19,
+              18
+            ],
+            "step-55": [
+              626,
+              9,
+              19,
+              18
+            ],
+            "step-56": [
+              635,
+              9,
+              19,
+              18
+            ],
+            "step-57": [
+              644,
+              9,
+              19,
+              18
+            ],
+            "step-58": [
+              653,
+              9,
+              19,
+              18
+            ],
+            "step-59": [
+              662,
+              9,
+              19,
+              18
+            ],
+            "step-6": [
+              185,
+              9,
+              19,
+              18
+            ],
+            "step-60": [
+              671,
+              9,
+              19,
+              18
+            ],
+            "step-61": [
+              680,
+              9,
+              19,
+              18
+            ],
+            "step-62": [
+              689,
+              9,
+              19,
+              18
+            ],
+            "step-63": [
+              698,
+              9,
+              19,
+              18
+            ],
+            "step-7": [
+              194,
+              9,
+              19,
+              18
+            ],
+            "step-8": [
+              203,
+              9,
+              19,
+              18
+            ],
+            "step-9": [
+              212,
+              9,
+              19,
+              18
+            ],
+            "transpose-label": [
+              4,
+              224,
+              109,
+              12
+            ],
+            "trig": [
+              4,
+              241,
+              109,
+              20
+            ],
+            "up": [
+              4,
+              203,
+              51,
+              20
+            ]
+          },
+          "height": 300,
+          "name": "large",
+          "width": 768
+        }
+      ],
+      "schema_version": 1,
+      "width": 596
+    },
+    "plugin_id": 18,
+    "properties": [
+      {
+        "class": "StringProperty",
+        "default": "",
+        "display_name": "COMMAND",
+        "hint": "Command",
+        "internal": true,
+        "omitted": "internal",
+        "property": "COMMAND",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Matrix",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 1,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      },
+      {
+        "class": "ToggleProperty",
+        "default": false,
+        "display_name": "NoteCut",
+        "hint": "NoteCut",
+        "internal": false,
+        "property": "NOTECUT",
+        "read_only": false,
+        "type": "boolean"
+      },
+      {
+        "class": "ToggleProperty",
+        "default": false,
+        "display_name": "Trigger Select",
+        "hint": "Trigger Select",
+        "internal": false,
+        "property": "TRIGGERSELECT",
+        "read_only": false,
+        "type": "boolean"
+      },
+      {
+        "class": "IntProperty",
+        "default": 0,
+        "display_name": "Sequence step",
+        "hint": "Sequence step",
+        "internal": false,
+        "logarithmic": false,
+        "max": 15,
+        "min": 0,
+        "page": 1,
+        "property": "PATSEQSTEP",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": 0,
+        "display_name": "Step",
+        "hint": "Step",
+        "internal": false,
+        "logarithmic": false,
+        "max": 63,
+        "min": 0,
+        "page": 1,
+        "property": "STEP",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": 0,
+        "display_name": {
+          "default": "View pattern",
+          "key": "plugin.18.property.CURRENT"
+        },
+        "hint": {
+          "default": "View pattern",
+          "key": "plugin.18.property.CURRENT.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 15,
+        "min": 0,
+        "page": 1,
+        "property": "PATTERN",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": 0,
+        "display_name": {
+          "default": "Play pattern",
+          "key": "plugin.18.property.ECHOCUR"
+        },
+        "hint": {
+          "default": "Play pattern",
+          "key": "plugin.18.property.ECHOCUR.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 15,
+        "min": 0,
+        "page": 1,
+        "property": "CURRENT",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": 64,
+        "display_name": {
+          "default": "Length",
+          "key": "plugin.18.property.ECHOLENGTH"
+        },
+        "hint": {
+          "default": "Length",
+          "key": "plugin.18.property.ECHOLENGTH.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 64,
+        "min": 1,
+        "page": 1,
+        "property": "LENGTH",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 1,
+        "display_name": {
+          "default": "Speed",
+          "key": "plugin.18.property.ECHOSPEED"
+        },
+        "hint": {
+          "default": "Speed",
+          "key": "plugin.18.property.ECHOSPEED.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 50,
+        "min": 0,
+        "page": 0.125,
+        "property": "SPEED",
+        "read_only": true,
+        "step": 0.125,
+        "type": "number"
+      },
+      {
+        "class": "IntProperty",
+        "default": 0,
+        "display_name": {
+          "default": "Octave",
+          "key": "plugin.18.property.ECHOOCTAVE"
+        },
+        "hint": {
+          "default": "Octave",
+          "key": "plugin.18.property.ECHOOCTAVE.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 6,
+        "min": 0,
+        "page": 1,
+        "property": "OCTAVE",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": 0,
+        "display_name": {
+          "default": "Sequence 0",
+          "key": "plugin.18.property.ECHOPATSEQ0"
+        },
+        "hint": {
+          "default": "Sequence 0",
+          "key": "plugin.18.property.ECHOPATSEQ0.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 15,
+        "min": -1,
+        "page": 1,
+        "property": "PATSEQ0",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": -1,
+        "display_name": {
+          "default": "Sequence 1",
+          "key": "plugin.18.property.ECHOPATSEQ1"
+        },
+        "hint": {
+          "default": "Sequence 1",
+          "key": "plugin.18.property.ECHOPATSEQ1.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 15,
+        "min": -1,
+        "page": 1,
+        "property": "PATSEQ1",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": -1,
+        "display_name": {
+          "default": "Sequence 2",
+          "key": "plugin.18.property.ECHOPATSEQ2"
+        },
+        "hint": {
+          "default": "Sequence 2",
+          "key": "plugin.18.property.ECHOPATSEQ2.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 15,
+        "min": -1,
+        "page": 1,
+        "property": "PATSEQ2",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": -1,
+        "display_name": {
+          "default": "Sequence 3",
+          "key": "plugin.18.property.ECHOPATSEQ3"
+        },
+        "hint": {
+          "default": "Sequence 3",
+          "key": "plugin.18.property.ECHOPATSEQ3.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 15,
+        "min": -1,
+        "page": 1,
+        "property": "PATSEQ3",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": -1,
+        "display_name": {
+          "default": "Sequence 4",
+          "key": "plugin.18.property.ECHOPATSEQ4"
+        },
+        "hint": {
+          "default": "Sequence 4",
+          "key": "plugin.18.property.ECHOPATSEQ4.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 15,
+        "min": -1,
+        "page": 1,
+        "property": "PATSEQ4",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": -1,
+        "display_name": {
+          "default": "Sequence 5",
+          "key": "plugin.18.property.ECHOPATSEQ5"
+        },
+        "hint": {
+          "default": "Sequence 5",
+          "key": "plugin.18.property.ECHOPATSEQ5.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 15,
+        "min": -1,
+        "page": 1,
+        "property": "PATSEQ5",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": -1,
+        "display_name": {
+          "default": "Sequence 6",
+          "key": "plugin.18.property.ECHOPATSEQ6"
+        },
+        "hint": {
+          "default": "Sequence 6",
+          "key": "plugin.18.property.ECHOPATSEQ6.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 15,
+        "min": -1,
+        "page": 1,
+        "property": "PATSEQ6",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": -1,
+        "display_name": {
+          "default": "Sequence 7",
+          "key": "plugin.18.property.ECHOPATSEQ7"
+        },
+        "hint": {
+          "default": "Sequence 7",
+          "key": "plugin.18.property.ECHOPATSEQ7.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 15,
+        "min": -1,
+        "page": 1,
+        "property": "PATSEQ7",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": -1,
+        "display_name": {
+          "default": "Sequence 8",
+          "key": "plugin.18.property.ECHOPATSEQ8"
+        },
+        "hint": {
+          "default": "Sequence 8",
+          "key": "plugin.18.property.ECHOPATSEQ8.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 15,
+        "min": -1,
+        "page": 1,
+        "property": "PATSEQ8",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": -1,
+        "display_name": {
+          "default": "Sequence 9",
+          "key": "plugin.18.property.ECHOPATSEQ9"
+        },
+        "hint": {
+          "default": "Sequence 9",
+          "key": "plugin.18.property.ECHOPATSEQ9.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 15,
+        "min": -1,
+        "page": 1,
+        "property": "PATSEQ9",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": -1,
+        "display_name": {
+          "default": "Sequence 10",
+          "key": "plugin.18.property.ECHOPATSEQ10"
+        },
+        "hint": {
+          "default": "Sequence 10",
+          "key": "plugin.18.property.ECHOPATSEQ10.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 15,
+        "min": -1,
+        "page": 1,
+        "property": "PATSEQ10",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": -1,
+        "display_name": {
+          "default": "Sequence 11",
+          "key": "plugin.18.property.ECHOPATSEQ11"
+        },
+        "hint": {
+          "default": "Sequence 11",
+          "key": "plugin.18.property.ECHOPATSEQ11.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 15,
+        "min": -1,
+        "page": 1,
+        "property": "PATSEQ11",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": -1,
+        "display_name": {
+          "default": "Sequence 12",
+          "key": "plugin.18.property.ECHOPATSEQ12"
+        },
+        "hint": {
+          "default": "Sequence 12",
+          "key": "plugin.18.property.ECHOPATSEQ12.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 15,
+        "min": -1,
+        "page": 1,
+        "property": "PATSEQ12",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": -1,
+        "display_name": {
+          "default": "Sequence 13",
+          "key": "plugin.18.property.ECHOPATSEQ13"
+        },
+        "hint": {
+          "default": "Sequence 13",
+          "key": "plugin.18.property.ECHOPATSEQ13.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 15,
+        "min": -1,
+        "page": 1,
+        "property": "PATSEQ13",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": -1,
+        "display_name": {
+          "default": "Sequence 14",
+          "key": "plugin.18.property.ECHOPATSEQ14"
+        },
+        "hint": {
+          "default": "Sequence 14",
+          "key": "plugin.18.property.ECHOPATSEQ14.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 15,
+        "min": -1,
+        "page": 1,
+        "property": "PATSEQ14",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": -1,
+        "display_name": {
+          "default": "Sequence 15",
+          "key": "plugin.18.property.ECHOPATSEQ15"
+        },
+        "hint": {
+          "default": "Sequence 15",
+          "key": "plugin.18.property.ECHOPATSEQ15.hint"
+        },
+        "internal": false,
+        "logarithmic": false,
+        "max": 15,
+        "min": -1,
+        "page": 1,
+        "property": "PATSEQ15",
+        "read_only": true,
+        "step": 1,
+        "type": "integer"
+      }
+    ],
+    "schema_version": 1
+  }
 }

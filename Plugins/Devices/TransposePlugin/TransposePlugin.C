@@ -42,7 +42,6 @@ const char *SpiralPlugin_GetHostABI()
 	return SSM_HOST_ABI;
 }
 
-
 SpiralPlugin* SpiralPlugin_CreateInstance () {
     return new TransposePlugin;
 }
@@ -52,24 +51,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon () {
     return SpiralIcon_xpm;
 }
-
-int SpiralPlugin_GetID () {
-    return 122;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Transpose";
-}
-
-string SpiralPlugin_GetGroupName() {
-    return "Control";
-}
-
 }
 
 ///////////////////////////////////////////////////////
@@ -83,7 +67,6 @@ m_BufferInitialized(false)
 	m_Aliasing = ToggleProperty(Property::WriteOnly, true);
 	RegisterSharedProperty(m_Aliasing, "Aliasing", "Round to whole semitones");
 
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
     m_PluginInfo.Name = "Transpose";
     m_PluginInfo.Width = 80;
@@ -101,10 +84,6 @@ TransposePlugin::~TransposePlugin () {
 PluginInfo &TransposePlugin::Initialise (const HostInfo *Host) {
     return SpiralPlugin::Initialise (Host);
 }
-
-
-
-
 
 void TransposePlugin::Execute () {
 	float base=110, transpose=AsSigned(m_Amount);

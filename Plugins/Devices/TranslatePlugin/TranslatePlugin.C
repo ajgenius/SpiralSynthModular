@@ -39,7 +39,6 @@ const char *SpiralPlugin_GetHostABI()
 	return SSM_HOST_ABI;
 }
 
-
 SpiralPlugin* SpiralPlugin_CreateInstance () { return new TranslatePlugin; }
 
 int SpiralPlugin_GetType()
@@ -47,18 +46,7 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon () { return SpiralIcon_xpm; }
-
-int SpiralPlugin_GetID () { return 121; }
-
-string SpiralPlugin_GetName()
-{
-	return "Translate";
-}
-
-string SpiralPlugin_GetGroupName() { return "Control"; }
-
 }
 
 ///////////////////////////////////////////////////////
@@ -102,7 +90,6 @@ m_Translator (NULL)
 	m_Method = SetProperty(Property::ForceUpdate|DefaultLinearFlags, 0, PropertySet(MethodSet, 5));
 	RegisterSharedProperty(m_Method, "Method", "Method");
 
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
     m_PluginInfo.Name = "Translate";
     m_PluginInfo.Width = 150;
@@ -121,8 +108,6 @@ TranslatePlugin::~TranslatePlugin () {
 PluginInfo &TranslatePlugin::Initialise (const HostInfo *Host) {
     return SpiralPlugin::Initialise (Host);
 }
-
-
 
 void TranslatePlugin::SetUpTranslatorClass (void) {
      if (m_Translator) {

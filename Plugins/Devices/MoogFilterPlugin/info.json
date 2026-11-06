@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "id": 13,
-  "name": "MoogFilter",
+  "name": "Moog Filter",
   "type": "dsp",
   "category": "Filters/FX",
   "authors": [
@@ -14,5 +14,126 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "MoogFilterPlugin_DSP.so"
+  "module": "MoogFilterPlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Controls": 1
+    },
+    "host_version": "0.3.42",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            13,
+            6,
+            20,
+            70
+          ],
+          "inverted": false,
+          "name": "cutoff-slider",
+          "property": "CUTOFF",
+          "type": "Slider",
+          "vertical": true
+        },
+        {
+          "bounds": [
+            13,
+            76,
+            20,
+            11
+          ],
+          "name": "cutoff-label",
+          "text": "Cutoff",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            56,
+            4,
+            45,
+            45
+          ],
+          "name": "resonance-knob",
+          "property": "RESONANCE",
+          "type": "Knob"
+        },
+        {
+          "bounds": [
+            56,
+            49,
+            45,
+            11
+          ],
+          "name": "emphasis-label",
+          "text": "Emphasis",
+          "type": "Label"
+        }
+      ],
+      "height": 94,
+      "help": "Classic moog filter. Very different sound to the other filters,\nneedless to say, very squelchy. As well as lowpass, band and high\npass are simultaneously calculated too. The emphasis can be pushed\ninto self oscillation (careful of the speakers). In this way, it\ncan be used to generate sinewave oscillations.",
+      "schema_version": 1,
+      "width": 116
+    },
+    "plugin_id": 13,
+    "properties": [
+      {
+        "class": "FloatProperty",
+        "default": 0.5,
+        "display_name": "Cutoff",
+        "hint": "Cutoff",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.0010000000474974513,
+        "property": "CUTOFF",
+        "read_only": false,
+        "step": 9.999999747378752e-05,
+        "type": "number"
+      },
+      {
+        "class": "StringProperty",
+        "default": "MoogFilter",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 1,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Resonance",
+        "hint": "Resonance",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 9.999999747378752e-05,
+        "property": "RESONANCE",
+        "read_only": false,
+        "step": 9.999999747378752e-06,
+        "type": "number"
+      }
+    ],
+    "schema_version": 1
+  }
 }

@@ -55,25 +55,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x0002;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Midi";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "InputOutput";
 }
 }
 
@@ -118,7 +102,6 @@ m_NextID(0)
 	
 	for (int n=0; n<128; n++) m_ControlLevel[n]=0;
 	
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 
 	m_DeviceNum = SignedProperty(DefaultLinearFlags, 0, 0, 15, 1, 1);
@@ -159,8 +142,6 @@ PluginInfo &MidiPlugin::Initialise(const HostInfo *Host)
 		
 	return Info;
 }
-
-
 
 void MidiPlugin::Execute()
 {

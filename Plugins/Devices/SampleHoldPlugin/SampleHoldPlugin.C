@@ -44,25 +44,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x0033;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "SampleHold";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Control";
 }
 }
 
@@ -91,8 +75,6 @@ PluginInfo &SampleHoldPlugin::Initialise(const HostInfo *Host)
 	m_flag = 0;
 	return Info;
 }
-
-
 
 void SampleHoldPlugin::Reset()
 {

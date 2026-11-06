@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
-AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include -I$(srcdir)/File/include -I$(srcdir)/Data/include -I$(srcdir)/Plugin/include -I$(srcdir)/Audio/include -I$(srcdir)/Midi/include -I$(top_srcdir)/libs/libSpumoni/include
+AM_CPPFLAGS = -I$(top_builddir) -I$(srcdir)/include -I$(srcdir)/File/include -I$(srcdir)/Data/include -I$(top_srcdir)/libs/libSpiralPanels/include -I$(srcdir)/Plugin/include -I$(srcdir)/Audio/include -I$(srcdir)/Midi/include -I$(top_srcdir)/libs/libSpumoni/include
 lib_LTLIBRARIES = libspiralcore.la
 libspiralcore_la_SOURCES = \
     include/Allocator.h \
@@ -23,6 +23,7 @@ libspiralcore_la_SOURCES = \
     src/Time.cpp
 libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 3:0:0
 libspiralcore_la_LIBADD = $(SFLIBS) $(JACK_LIBS) -lm \
+	$(top_builddir)/libs/libSpiralPanels/libSpiralPanels.la \
 	$(top_builddir)/libs/libSpumoni/libSpumoni.la \
 	$(ZLIB_LIBS)
 
@@ -51,7 +52,7 @@ libspiralcore_la_SOURCES += Plugin/include/Device.h Plugin/src/Device.cpp
 libspiralcore_la_SOURCES += Plugin/include/Property.h Plugin/src/Property.cpp
 libspiralcore_la_SOURCES += Plugin/include/AudioDriver.h
 libspiralcore_la_SOURCES += Plugin/include/BackendPath.h Plugin/src/BackendPath.cpp
-libspiralcore_la_SOURCES += Plugin/include/DeviceClassRegistry.h Plugin/src/DeviceClassRegistry.cpp Plugin/include/EditorClassRegistry.h Plugin/src/EditorClassRegistry.cpp
+libspiralcore_la_SOURCES += Plugin/include/DeviceClassRegistry.h Plugin/src/DeviceClassRegistry.cpp Plugin/include/PanelRegistry.h Plugin/src/PanelRegistry.cpp
 libspiralcore_la_SOURCES += Plugin/include/SpiralPlugin.h Plugin/src/SpiralPlugin.cpp Audio/include/OutputAudioClient.h Audio/src/OutputAudioClient.cpp Audio/include/AudioTransportHub.h Audio/src/AudioTransportHub.cpp Plugin/include/OutputPlugin.h Plugin/src/OutputPlugin.cpp Plugin/include/OutputIcon.xpm Plugin/include/EventInputPlugin.h Plugin/src/EventInputPlugin.cpp Plugin/include/EventInputIcon.xpm Plugin/include/SubPatchDevice.h Plugin/src/SubPatchDevice.cpp Plugin/include/VoicePool.h Plugin/src/VoicePool.cpp
 if BUILD_LADSPA
 libspiralcore_la_SOURCES += Plugin/include/LADSPAInfo.h Plugin/src/LADSPAInfo.cpp \
@@ -77,12 +78,6 @@ native_midi_test_LDADD = libspiralcore.la
 check_PROGRAMS += audio-backend-test
 audio_backend_test_SOURCES = Audio/tests/audio-backend.cpp
 audio_backend_test_LDADD = libspiralcore.la
-check_PROGRAMS += value-rule-test handlers-test
-value_rule_test_SOURCES = Data/tests/value-rule.cpp
-value_rule_test_LDADD = libspiralcore.la
-handlers_test_SOURCES = Data/tests/handlers.cpp
-handlers_test_LDADD = libspiralcore.la
-EXTRA_DIST += Data/tests/bindings.json Data/tests/handlers.json
 
 check_PROGRAMS += plugin-manager-test
 plugin_manager_test_SOURCES = Plugin/tests/plugin-manager.cpp
@@ -116,17 +111,14 @@ TESTS_ENVIRONMENT = PLUGIN_MANAGER_ROOT=$(abs_builddir)/plugin-manager-root SRCD
 clean-local:
 	rm -rf plugin-manager-root
 
+libspiralcore_la_SOURCES += include/EventClip.h src/EventClip.cpp
 libspiralcore_la_SOURCES += src/RingBuffer.cpp include/RingBuffer.h src/CommandRingBuffer.cpp include/CommandRingBuffer.h
 check_PROGRAMS += ring-buffer-test
 ring_buffer_test_SOURCES = tests/ring-buffer.cpp
 ring_buffer_test_LDADD = libspiralcore.la
 
 libspiralcore_la_SOURCES += File/include/Description.h File/src/Description.cpp
-libspiralcore_la_SOURCES += Data/include/DataSource.h Data/src/DataSource.cpp \
-	Data/include/Binding.h Data/src/Binding.cpp \
-	Data/include/MemorySource.h Data/src/MemorySource.cpp \
-	Data/include/PropertySource.h Data/src/PropertySource.cpp \
-	Data/include/ValueRule.h Data/src/ValueRule.cpp Data/include/Handlers.h Data/src/Handlers.cpp
+libspiralcore_la_SOURCES += Data/include/PropertySource.h Data/src/PropertySource.cpp
 libspiralcore_la_SOURCES += File/include/PatchProject.h File/src/PatchProject.cpp
 libspiralcore_la_SOURCES += File/include/License.h File/src/License.cpp File/src/LicenseTexts.inc
 check_PROGRAMS += description-test description-reader-test
@@ -205,4 +197,31 @@ audio_coordinator_test_SOURCES = Audio/tests/audio-coordinator.cpp
 audio_coordinator_test_LDADD = libspiralcore.la
 
 libspiralcore_la_SOURCES += include/AtomicTripleBuffer.h include/SampleFeed.h src/SampleFeed.cpp
-libspiralcore_la_SOURCES += include/BreakpointCurve.h
+
+EMBED_MANIFEST = $(top_builddir)/tools/embed-manifest/embed-manifest$(EXEEXT)
+AM_CPPFLAGS += -I$(srcdir)/Devices/DiskWriter
+libspiralcore_la_SOURCES += Devices/DiskWriter/DiskWriterPlugin.h Devices/DiskWriter/DiskWriterPlugin.cpp Devices/DiskWriter/DiskWriterIcon.xpm
+nodist_libspiralcore_la_SOURCES = Devices/DiskWriter/manifest.cpp Devices/Output/manifest.cpp
+BUILT_SOURCES = Devices/DiskWriter/manifest.cpp Devices/Output/manifest.cpp
+CLEANFILES = Devices/DiskWriter/manifest.cpp Devices/Output/manifest.cpp Devices/Jack/manifest.cpp
+EXTRA_DIST += Devices/DiskWriter/info.json Devices/Output/info.json Devices/Jack/info.json
+if HAVE_JACK_CLIENT
+AM_CPPFLAGS += -I$(srcdir)/Devices/Jack
+libspiralcore_la_SOURCES += Devices/Jack/JackPlugin.h Devices/Jack/JackPlugin.cpp Devices/Jack/JackIcon.xpm
+nodist_libspiralcore_la_SOURCES += Devices/Jack/manifest.cpp
+BUILT_SOURCES += Devices/Jack/manifest.cpp
+else
+EXTRA_DIST += Devices/Jack/JackPlugin.h Devices/Jack/JackPlugin.cpp Devices/Jack/JackIcon.xpm
+endif
+
+Devices/DiskWriter/manifest.cpp: $(srcdir)/Devices/DiskWriter/info.json $(EMBED_MANIFEST)
+	$(MKDIR_P) Devices/DiskWriter
+	$(EMBED_MANIFEST) $(srcdir)/Devices/DiskWriter/info.json $@ DiskWriterManifest
+
+Devices/Jack/manifest.cpp: $(srcdir)/Devices/Jack/info.json $(EMBED_MANIFEST)
+	$(MKDIR_P) Devices/Jack
+	$(EMBED_MANIFEST) $(srcdir)/Devices/Jack/info.json $@ JackManifest
+
+Devices/Output/manifest.cpp: $(srcdir)/Devices/Output/info.json $(EMBED_MANIFEST)
+	$(MKDIR_P) Devices/Output
+	$(EMBED_MANIFEST) $(srcdir)/Devices/Output/info.json $@ OutputManifest

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "id": 10,
-  "name": "RingMod",
+  "name": "Ring Mod",
   "type": "dsp",
   "category": "Filters/FX",
   "authors": [
@@ -14,5 +14,87 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "RingModPlugin_DSP.so"
+  "module": "RingModPlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Controls": 1
+    },
+    "host_version": "0.3.42",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            13,
+            -2,
+            50,
+            50
+          ],
+          "name": "amount-knob",
+          "property": "AMOUNT",
+          "type": "Knob"
+        },
+        {
+          "bounds": [
+            13,
+            48,
+            50,
+            11
+          ],
+          "name": "amount-label",
+          "text": "Amount",
+          "type": "Label"
+        }
+      ],
+      "height": 64,
+      "help": "A ring modulator, multiplies two inputs together.\nAn extra dial sets the amount of modulation. The\nring modulation effect creates an extra harmonic\nin the signal, although this is often out of tune\nwith the other signals, its useful for creating bell\nor struck metallic sounds.\n",
+      "schema_version": 1,
+      "width": 76
+    },
+    "plugin_id": 10,
+    "properties": [
+      {
+        "class": "FloatProperty",
+        "default": 1,
+        "display_name": "Amount",
+        "hint": "Amount",
+        "internal": false,
+        "logarithmic": false,
+        "max": 3,
+        "min": 0,
+        "page": 0.0010000000474974513,
+        "property": "AMOUNT",
+        "read_only": false,
+        "step": 9.999999747378752e-05,
+        "type": "number"
+      },
+      {
+        "class": "StringProperty",
+        "default": "RingMod",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 1,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      }
+    ],
+    "schema_version": 1
+  }
 }

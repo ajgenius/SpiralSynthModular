@@ -49,25 +49,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x000d;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Moog Filter";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Filters/FX";
 }
 }
 
@@ -99,7 +83,6 @@ t2(0.0f)
 	m_PluginInfo.PortTips.push_back("BandPass output");
 	m_PluginInfo.PortTips.push_back("HighPass output");
 	
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 
 	Cutoff = FloatProperty(DefaultLinearFlags,0.5f, 0, 1, 0.0001, 0.001);
@@ -107,8 +90,6 @@ t2(0.0f)
 
 	RegisterSharedProperty(Cutoff, "Cutoff", "Cutoff");
 	RegisterSharedProperty(Resonance, "Resonance", "Resonance");
-
-
 }
 
 MoogFilterPlugin::~MoogFilterPlugin()
@@ -121,8 +102,6 @@ PluginInfo &MoogFilterPlugin::Initialise(const HostInfo *Host)
 	fs = m_HostInfo->SAMPLERATE;
 	return Info;
 }
-
-
 
 void MoogFilterPlugin::Reset()
 {

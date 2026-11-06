@@ -1,0 +1,281 @@
+{
+  "schema_version": 1,
+  "id": 31,
+  "name": "Jack",
+  "type": "audio-driver",
+  "category": "InputOutput",
+  "authors": [
+    "David Griffiths"
+  ],
+  "version": "2",
+  "host": {
+    "name": "SpiralSynthModular",
+    "version": "0.3.1",
+    "abi": "0.3.1"
+  },
+  "registration": "builtin",
+  "builtin": "core",
+  "ui": {
+    "control_contracts": {
+      "Basic": 1,
+      "Controls": 1,
+      "Patch": 1
+    },
+    "host_version": "0.3.43",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            95,
+            1,
+            30,
+            30
+          ],
+          "color_role": "status.on",
+          "name": "attached",
+          "property": "CONNECTED",
+          "type": "Basic::LEDButton"
+        },
+        {
+          "bounds": [
+            3,
+            1,
+            25,
+            25
+          ],
+          "name": "remove",
+          "on": {
+            "pressed": [
+              {
+                "amount": -1,
+                "delta": [
+                  "NUMINPUTS",
+                  "NUMOUTPUTS"
+                ]
+              }
+            ]
+          },
+          "text": "-",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            28,
+            1,
+            25,
+            25
+          ],
+          "name": "add",
+          "on": {
+            "pressed": [
+              {
+                "amount": 1,
+                "delta": [
+                  "NUMINPUTS",
+                  "NUMOUTPUTS"
+                ]
+              }
+            ]
+          },
+          "text": "+",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            3,
+            31,
+            215,
+            20
+          ],
+          "name": "attach",
+          "on": {
+            "pressed": [
+              {
+                "value": "ATTACH",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "text": "Attach",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            3,
+            51,
+            215,
+            20
+          ],
+          "name": "detach",
+          "on": {
+            "pressed": [
+              {
+                "value": "DETACH",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "text": "Detach",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            3,
+            76,
+            215,
+            128
+          ],
+          "connected": "CONNECTED",
+          "inputs": {
+            "connect": "CONNECT_INPUT",
+            "connections": "INPUTCONNECTIONS",
+            "count": "NUMINPUTS",
+            "disconnect": "DISCONNECT_INPUT",
+            "label": "Input %d",
+            "names": "OUTPUTPORTNAMES",
+            "names_count": "NUMOUTPUTPORTNAMES"
+          },
+          "list": "UPDATE_NAMES",
+          "name": "ports",
+          "outputs": {
+            "connect": "CONNECT_OUTPUT",
+            "connections": "OUTPUTCONNECTIONS",
+            "count": "NUMOUTPUTS",
+            "disconnect": "DISCONNECT_OUTPUT",
+            "label": "Output %d",
+            "names": "INPUTPORTNAMES",
+            "names_count": "NUMINPUTPORTNAMES"
+          },
+          "refresh": "CHECK_PORT_CHANGES",
+          "type": "Patch::PortList"
+        }
+      ],
+      "height": 214,
+      "help": "The number of JACK ports each way (2 to 64), applied when changed, and attaching to or detaching from the JACK server. Connecting ports stays in the editor.",
+      "schema_version": 1,
+      "width": 221
+    },
+    "plugin_id": 31,
+    "properties": [
+      {
+        "class": "StringProperty",
+        "default": "",
+        "display_name": "COMMAND",
+        "hint": "Command",
+        "internal": true,
+        "omitted": "internal",
+        "property": "COMMAND",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "ToggleProperty",
+        "default": false,
+        "display_name": "Connected",
+        "hint": "Connected",
+        "internal": false,
+        "property": "CONNECTED",
+        "read_only": true,
+        "type": "boolean"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Jack",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 2,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": 0,
+        "display_name": "Numinputportnames",
+        "hint": "Numinputportnames",
+        "internal": false,
+        "property": "NUMINPUTPORTNAMES",
+        "read_only": true,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": 4,
+        "display_name": "Inputs",
+        "hint": "Number of inputs",
+        "internal": false,
+        "logarithmic": false,
+        "max": 64,
+        "min": 2,
+        "page": 1,
+        "property": "NUMINPUTS",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": 0,
+        "display_name": "Numoutputportnames",
+        "hint": "Numoutputportnames",
+        "internal": false,
+        "property": "NUMOUTPUTPORTNAMES",
+        "read_only": true,
+        "type": "integer"
+      },
+      {
+        "class": "IntProperty",
+        "default": 4,
+        "display_name": "Outputs",
+        "hint": "Number of outputs",
+        "internal": false,
+        "logarithmic": false,
+        "max": 64,
+        "min": 2,
+        "page": 1,
+        "property": "NUMOUTPUTS",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "StringProperty",
+        "default": "",
+        "display_name": "Port",
+        "hint": "Port",
+        "internal": true,
+        "property": "PORT",
+        "read_only": false,
+        "type": "string"
+      },
+      {
+        "class": "IntProperty",
+        "default": 0,
+        "display_name": "Portindex",
+        "hint": "Portindex",
+        "internal": true,
+        "property": "PORTINDEX",
+        "read_only": false,
+        "type": "integer"
+      }
+    ],
+    "schema_version": 1
+  }
+}

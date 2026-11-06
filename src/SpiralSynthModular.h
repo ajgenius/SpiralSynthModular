@@ -76,9 +76,12 @@ typedef SpiralWindow SpiralWindowType;
 
 class SettingsWindow;
 
-namespace SpiralPanels
+namespace Spiral
 {
-	class PanelControl;
+	namespace Panels
+	{
+		class PanelControl;
+	}
 }
 
 class DeviceWin
@@ -187,7 +190,7 @@ public:
 	void RefreshMenuState();
 
 	Spiral::Core::MidiMap &MidiMap() { return m_MidiMap; }
-	SpiralPanels::PanelControl *MidiControl(const string &device, const string &control);
+	Spiral::Panels::PanelControl *MidiControl(const string &device, const string &control);
 	void LearnMidi(void (*learned)(int channel, int controller, void *data), void *data);
 	void ServiceMidiInput();
 

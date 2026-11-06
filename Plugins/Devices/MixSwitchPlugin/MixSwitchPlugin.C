@@ -37,7 +37,6 @@ const char *SpiralPlugin_GetHostABI()
 	return SSM_HOST_ABI;
 }
 
-
    SpiralPlugin* SpiralPlugin_CreateInstance () { return new MixSwitchPlugin; }
 
 int SpiralPlugin_GetType()
@@ -45,17 +44,7 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
    const char** SpiralPlugin_GetIcon () { return SpiralIcon_xpm; }
-
-   int SpiralPlugin_GetID () { return 126; }
-
-   string SpiralPlugin_GetName()
-   {
-       return "MixSwitch";
-   }
-
-   string SpiralPlugin_GetGroupName() { return "Maths/Logic"; }
 }
 
 ///////////////////////////////////////////////////////
@@ -77,7 +66,6 @@ m_Triggered (false)
   m_PluginInfo.Height = 80;
   CreatePorts ();
 
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 }
 
@@ -87,8 +75,6 @@ MixSwitchPlugin::~MixSwitchPlugin () {
 PluginInfo &MixSwitchPlugin::Initialise (const HostInfo *Host) {
   return SpiralPlugin::Initialise (Host);
 }
-
-
 
 void MixSwitchPlugin::ExecuteCommands () {
   if (AsSigned(m_Chans) != GetChans ()) SetChans (AsSigned(m_Chans));
@@ -129,7 +115,6 @@ void MixSwitchPlugin::SetChans (int n) {
   // do the actual update
   UpdatePluginInfoWithHost ();
 }
-
 
 void MixSwitchPlugin::Reset()
 {

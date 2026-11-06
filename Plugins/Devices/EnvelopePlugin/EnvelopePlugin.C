@@ -50,25 +50,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x0005;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Envelope";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Control";
 }
 }
 
@@ -95,7 +79,6 @@ m_Current(0)
 	m_PluginInfo.PortTips.push_back("CV");	
 	m_PluginInfo.PortTips.push_back("Output");
 	
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 
 	m_Attack = FloatProperty(DefaultLinearFlags, 0.0, 0, TIMED_SLIDER_MAX, 0.0001, 0.001);
@@ -111,12 +94,6 @@ m_Current(0)
 	RegisterSharedProperty(m_Release, "Release", "Release");
 	RegisterSharedProperty(m_Volume, "Volume", "Volume");
 	RegisterSharedProperty(m_TrigThresh, "Threshold", "Threshold");
-
-
-
-
-
-
 }
 
 EnvelopePlugin::~EnvelopePlugin()
@@ -137,8 +114,6 @@ void EnvelopePlugin::Reset()
 	m_Trigger = false;
 	m_t = -1.0f;
 }
-
-
 
 void EnvelopePlugin::Execute()
 {

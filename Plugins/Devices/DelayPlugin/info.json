@@ -14,5 +14,194 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "DelayPlugin_DSP.so"
+  "module": "DelayPlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Controls": 1
+    },
+    "host_version": "0.3.42",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            0,
+            0,
+            118,
+            90
+          ],
+          "name": "notebook-notebook",
+          "page_padding": 0,
+          "pages": [
+            {
+              "children": [
+                {
+                  "bounds": [
+                    10,
+                    10,
+                    45,
+                    45
+                  ],
+                  "name": "delay-knob",
+                  "property": "DELAY",
+                  "type": "Knob"
+                },
+                {
+                  "bounds": [
+                    10,
+                    55,
+                    45,
+                    11
+                  ],
+                  "name": "delay-label",
+                  "text": "Delay",
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    64,
+                    10,
+                    45,
+                    45
+                  ],
+                  "name": "mix-knob",
+                  "property": "MIX",
+                  "type": "Knob"
+                },
+                {
+                  "bounds": [
+                    64,
+                    55,
+                    45,
+                    11
+                  ],
+                  "name": "mix-label",
+                  "text": "Mix",
+                  "type": "Label"
+                }
+              ],
+              "title": "Control"
+            },
+            {
+              "children": [
+                {
+                  "bounds": [
+                    4,
+                    8,
+                    110,
+                    20
+                  ],
+                  "name": "delay-spinner",
+                  "property": "DELAY",
+                  "simple": false,
+                  "type": "Spinner"
+                },
+                {
+                  "bounds": [
+                    4,
+                    28,
+                    110,
+                    11
+                  ],
+                  "name": "delay-secs-label",
+                  "text": "Delay (secs)",
+                  "type": "Label"
+                },
+                {
+                  "bounds": [
+                    4,
+                    42,
+                    110,
+                    20
+                  ],
+                  "name": "mix-spinner",
+                  "property": "MIX",
+                  "simple": false,
+                  "type": "Spinner"
+                },
+                {
+                  "bounds": [
+                    4,
+                    62,
+                    110,
+                    11
+                  ],
+                  "name": "mix-spinner-label",
+                  "text": "Mix",
+                  "type": "Label"
+                }
+              ],
+              "title": "Numbers"
+            }
+          ],
+          "tab_height": 14,
+          "type": "Notebook"
+        }
+      ],
+      "height": 94,
+      "help": "The delay plugins delays the input signal, and can\nmix the current signal into the output, the amount\nis set by the dial in the plugin window.\n\nThe delay time and read head position can be modified\nby input CV's. The read head is the place in the buffer\nthe output sample is taken from, relative to the write\nhead.\n\nThis plugin can be used as the base of a number of effects,\nsuch as phasers, flangers and complex echos. If the output\nis fed back into the input, you get a similar effect\nto the echo, but you can add cool effects by routing\nthe signal back through a lowpass filter (for example).\n",
+      "schema_version": 1,
+      "width": 116
+    },
+    "plugin_id": 15,
+    "properties": [
+      {
+        "class": "FloatProperty",
+        "default": 0.75,
+        "display_name": "Delay",
+        "hint": "Delay",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.10000000149011612,
+        "property": "DELAY",
+        "read_only": false,
+        "step": 0.0010000000474974513,
+        "type": "number"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Delay",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 1,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0.4000000059604645,
+        "display_name": "Mix",
+        "hint": "Mix",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 0.10000000149011612,
+        "property": "MIX",
+        "read_only": false,
+        "step": 0.009999999776482582,
+        "type": "number"
+      }
+    ],
+    "schema_version": 1
+  }
 }

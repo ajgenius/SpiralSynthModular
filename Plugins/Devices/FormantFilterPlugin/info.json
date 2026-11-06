@@ -14,5 +14,105 @@
     "abi": "0.3.1"
   },
   "registration": "module",
-  "module": "FormantFilterPlugin_DSP.so"
+  "module": "FormantFilterPlugin_DSP.so",
+  "ui": {
+    "control_contracts": {
+      "Controls": 1
+    },
+    "host_version": "0.3.42",
+    "panel": {
+      "children": [
+        {
+          "bounds": [
+            18,
+            4,
+            45,
+            45
+          ],
+          "name": "vowel-knob",
+          "property": "VOWEL",
+          "type": "Knob"
+        },
+        {
+          "bounds": [
+            18,
+            49,
+            45,
+            11
+          ],
+          "name": "vowel-label",
+          "text": "Vowel",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            28,
+            66,
+            30,
+            20
+          ],
+          "name": "vowel-text",
+          "property": "VOWEL",
+          "texts": [
+            "A",
+            "E",
+            "I",
+            "O",
+            "U"
+          ],
+          "type": "Label"
+        }
+      ],
+      "height": 94,
+      "help": "A formant filter for synthesising vowel sounds by filtering\nhigh harmonic input waveforms.\nFrom the great www.musicdsp.org site, I've added linear\ninterpolation between the filters so you can sweep them with\nan external CV if desired",
+      "schema_version": 1,
+      "width": 86
+    },
+    "plugin_id": 42,
+    "properties": [
+      {
+        "class": "StringProperty",
+        "default": "FormantFilter",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 1,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 0,
+        "display_name": "Vowel",
+        "hint": "Vowel",
+        "internal": false,
+        "logarithmic": false,
+        "max": 4,
+        "min": 0,
+        "page": 0.0010000000474974513,
+        "property": "VOWEL",
+        "read_only": false,
+        "step": 9.999999747378752e-05,
+        "type": "number"
+      }
+    ],
+    "schema_version": 1
+  }
 }

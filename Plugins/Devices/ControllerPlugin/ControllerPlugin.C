@@ -49,25 +49,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x0003;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "CV";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Control";
 }
 }
 
@@ -75,7 +59,6 @@ string SpiralPlugin_GetGroupName()
 
 ControllerPlugin::ControllerPlugin()
 {
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 6);
 
 	m_NumChannels = UnsignedProperty(DefaultLinearFlags, 4, 1, MAX_CHANNELS, 1, 1);
@@ -148,8 +131,6 @@ PluginInfo &ControllerPlugin::Initialise(const HostInfo *Host)
 {	
 	return SpiralPlugin::Initialise(Host);
 }
-
-
 
 void ControllerPlugin::Execute()
 {

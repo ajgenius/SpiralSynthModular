@@ -56,25 +56,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x0004;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Oscillator";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Oscillators";
 }
 }
 
@@ -108,7 +92,6 @@ m_SHModBuf(NULL)
 	RegisterSharedProperty(m_ModAmount, "ModAmount", "ModAmount");
 	RegisterSharedProperty(m_SHLen, "Sample & Hold Length", "Sample & Hold Length");
 
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 
 	m_CyclePos=0;
@@ -135,8 +118,6 @@ PluginInfo &OscillatorPlugin::Initialise(const HostInfo *Host)
 {
 	return SpiralPlugin::Initialise(Host);
 }
-
-
 
 void OscillatorPlugin::Reset()
 {

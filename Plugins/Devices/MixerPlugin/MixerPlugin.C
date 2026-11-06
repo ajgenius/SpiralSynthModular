@@ -45,13 +45,7 @@ int SpiralPlugin_GetType()
 }
 
     const char** SpiralPlugin_GetIcon() { return SpiralIcon_xpm; }
-    int SpiralPlugin_GetID() { return 0x0007; }
-    string SpiralPlugin_GetName()
-    {
-        return "Mixer";
-    }
 
-    string SpiralPlugin_GetGroupName() { return "Amps/Mixers"; }
 }
 
 ///////////////////////////////////////////////////////
@@ -79,7 +73,6 @@ m_NumChannels(4)
 
         int c;
 
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 
         m_Version = 2;

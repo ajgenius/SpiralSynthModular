@@ -49,25 +49,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 43;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "AnotherLPF";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Filters/FX";
 }
 }
 
@@ -87,7 +71,6 @@ vibraspeed(0.0f)
 	m_PluginInfo.PortTips.push_back("Emphasis CV");	
 	m_PluginInfo.PortTips.push_back("LowPass output");
 	
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 
 	Cutoff = FloatProperty(DefaultLinearFlags,0.0, 0.0, 1.0, 0.0001, 0.0001);
@@ -105,8 +88,6 @@ PluginInfo &AnotherFilterPlugin::Initialise(const HostInfo *Host)
 {	
 	return SpiralPlugin::Initialise(Host);		
 }
-
-
 
 void AnotherFilterPlugin::Reset()
 {

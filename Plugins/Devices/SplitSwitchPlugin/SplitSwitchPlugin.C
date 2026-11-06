@@ -37,7 +37,6 @@ const char *SpiralPlugin_GetHostABI()
 	return SSM_HOST_ABI;
 }
 
-
    SpiralPlugin* SpiralPlugin_CreateInstance () { return new SplitSwitchPlugin; }
 
 int SpiralPlugin_GetType()
@@ -45,17 +44,7 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
    const char** SpiralPlugin_GetIcon () { return SpiralIcon_xpm; }
-
-   int SpiralPlugin_GetID () { return 125; }
-
-   string SpiralPlugin_GetName()
-   {
-       return "SplitSwitch";
-   }
-
-   string SpiralPlugin_GetGroupName() { return "Maths/Logic"; }
 }
 
 ///////////////////////////////////////////////////////
@@ -84,7 +73,6 @@ m_Triggered (false)
   m_PluginInfo.PortTips.push_back ("Out 1");
   m_PluginInfo.PortTips.push_back ("Out 2");
 
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 }
 
@@ -94,8 +82,6 @@ SplitSwitchPlugin::~SplitSwitchPlugin () {
 PluginInfo &SplitSwitchPlugin::Initialise (const HostInfo *Host) {
   return SpiralPlugin::Initialise (Host);
 }
-
-
 
 void SplitSwitchPlugin::ExecuteCommands () {
   if (AsSigned(m_Chans) != GetChans ()) SetChans (AsSigned(m_Chans));

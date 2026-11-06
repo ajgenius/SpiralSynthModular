@@ -46,25 +46,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x000e;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Echo";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Delay/Sampling";
 }
 }
 
@@ -76,7 +60,6 @@ m_Buf0 (0),
 m_Buf1 (1)
 {
 
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 2);
 
 	m_Delay = FloatProperty(DefaultLinearFlags, 0.75, 0.0, 1.0, 0.001, 0.1);
@@ -109,8 +92,6 @@ PluginInfo &EchoPlugin::Initialise (const HostInfo *Host)
 	m_Buffer[1].Allocate ((int)(m_HostInfo->SAMPLERATE * MAX_DELAY));
 	return Info;
 }
-
-
 
 void EchoPlugin::Reset()
 {

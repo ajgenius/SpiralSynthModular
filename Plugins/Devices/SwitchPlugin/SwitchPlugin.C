@@ -45,25 +45,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 47;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Switch";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Maths/Logic";
 }
 }
 
@@ -81,7 +65,6 @@ SwitchPlugin::SwitchPlugin()
 	m_PluginInfo.PortTips.push_back("CV");
 	m_PluginInfo.PortTips.push_back("Output");
 
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 
 	m_Mix = ToggleProperty(Property::WriteOnly,false);
@@ -98,8 +81,6 @@ PluginInfo &SwitchPlugin::Initialise(const HostInfo *Host)
 {
 	return SpiralPlugin::Initialise(Host);
 }
-
-
 
 void SwitchPlugin::Execute()
 {	

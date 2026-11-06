@@ -47,25 +47,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x0009;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Amp";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Amps/Mixers";
 }
 }
 
@@ -82,7 +66,6 @@ AmpPlugin::AmpPlugin()
 	m_PluginInfo.PortTips.push_back("Gain CV");
 	m_PluginInfo.PortTips.push_back("DC Offset CV");
 	m_PluginInfo.PortTips.push_back("Output");
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 
 	m_Gain = FloatProperty(DefaultLinearFlags, 1.0, -2.0, 2.0, 0.001, 0.1);
@@ -100,8 +83,6 @@ PluginInfo &AmpPlugin::Initialise(const HostInfo *Host)
 {
 	return SpiralPlugin::Initialise(Host);
 }
-
-
 
 void AmpPlugin::Execute()
 {

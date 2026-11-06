@@ -45,25 +45,9 @@ int SpiralPlugin_GetType()
 	return SPIRAL_PLUGIN_TYPE_DEVICE;
 }
 
-
 const char** SpiralPlugin_GetIcon()
 {
 	return SpiralIcon_xpm;
-}
-
-int SpiralPlugin_GetID()
-{
-	return 0x0018;
-}
-
-string SpiralPlugin_GetName()
-{
-	return "Note Snap";
-}
-
-string SpiralPlugin_GetGroupName()
-{
-	return "Control";
 }
 }
 
@@ -96,7 +80,6 @@ m_LastNote(-1)
 		SetFilter(n, true);
 	}
 
-	SetString(DeviceName, SpiralPlugin_GetName());
 	SetUnsigned(DeviceVersion, 1);
 	
 }
@@ -109,8 +92,6 @@ PluginInfo &NoteSnapPlugin::Initialise(const HostInfo *Host)
 {	
 	return SpiralPlugin::Initialise(Host);
 }
-
-
 
 void NoteSnapPlugin::Reset()
 {

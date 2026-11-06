@@ -1,0 +1,742 @@
+{
+  "schema_version": 1,
+  "toolkit": "fltk",
+  "name": "Plastic",
+  "palette": {
+    "record": "red",
+    "status.on": "red",
+    "matrix.status": "white",
+    "meter.peak": "yellow",
+    "display.face": [
+      20,
+      60,
+      20
+    ],
+    "display.trace": [
+      100,
+      200,
+      100
+    ],
+    "display.indicator": [
+      203,
+      255,
+      0
+    ],
+    "display.marker": [
+      155,
+      155,
+      50
+    ],
+    "display.selection": "white",
+    "playhead": [
+      255,
+      209,
+      15
+    ]
+  },
+  "controls": {
+    "Knob": {
+      "color": "device",
+      "knob_type": "line"
+    },
+    "Slider": {
+      "box": "plastic_down",
+      "selection_color": "device",
+      "slider_type": "nice",
+      "variants": {
+        "value_label": {
+          "label_size": 10,
+          "label_color": "device"
+        }
+      }
+    },
+    "CheckBox": {
+      "label_size": 10
+    },
+    "Label": {
+      "label_size": 10,
+      "variants": {
+        "indexed": {
+          "box": "plastic_up",
+          "color": "background2"
+        }
+      }
+    },
+    "RadioButton": {
+      "variants": {
+        "text": {
+          "label_size": 10,
+          "down_box": "round_down"
+        }
+      }
+    },
+    "Spinner": {
+      "box": "plastic_up",
+      "color": "device",
+      "selection_color": "device",
+      "text_size": 10
+    },
+    "TextEntry": {
+      "text_size": 10
+    },
+    "Choice": {
+      "box": "plastic_up",
+      "label_size": 10,
+      "text_size": 10
+    },
+    "Button": {
+      "box": "plastic_up",
+      "color": "device",
+      "selection_color": "device",
+      "label_size": 10,
+      "roles": {
+        "record": {
+          "color": "$record",
+          "selection_color": "$record"
+        }
+      }
+    },
+    "ListChoosingButton": {
+      "box": "plastic_up",
+      "color": "device",
+      "selection_color": "device",
+      "label_size": 10
+    },
+    "FileChoosingButton": {
+      "box": "plastic_up",
+      "color": "device",
+      "selection_color": "device",
+      "label_size": 10
+    },
+    "Notebook": {
+      "box": "plastic_down",
+      "color": "device",
+      "label_size": 10
+    },
+    "NotebookPage": {
+      "label_size": 10
+    },
+    "VirtualScrollArea": {},
+    "Dialog": {
+      "label_size": 10
+    },
+    "LEDButton": {
+      "label_size": 10,
+      "roles": {
+        "status.on": {
+          "color": "$status.on"
+        },
+        "record": {
+          "color": "$record"
+        }
+      }
+    },
+    "LED": {
+      "label_size": 10,
+      "roles": {
+        "matrix.status": {
+          "selection_color": "$matrix.status"
+        },
+        "meter.peak": {
+          "selection_color": "$meter.peak"
+        }
+      }
+    },
+    "LCD": {
+      "box": "plastic_down",
+      "text_size": 14
+    },
+    "MeterBar": {
+      "color": "$display.face"
+    },
+    "SevenSegment": {
+      "color": "$display.trace",
+      "color2": "$display.face"
+    },
+    "Scope": {
+      "color": "$display.face",
+      "marker": "$display.marker",
+      "trace": "$display.trace"
+    },
+    "FunctionPlot": {
+      "box": "up",
+      "color": "$display.face",
+      "indicator": "$display.indicator",
+      "marker": "$display.marker",
+      "trace": "$display.trace"
+    },
+    "SampleWaveform": {
+      "face": "$display.face",
+      "trace": "$display.trace",
+      "indicator": "$display.indicator",
+      "marker": "$display.marker",
+      "selection": "$display.selection"
+    },
+    "LoopWaveform": {
+      "face": "$display.face",
+      "trace": "$display.trace",
+      "indicator": "$display.indicator",
+      "marker": "$display.marker",
+      "selection": "$display.selection"
+    },
+    "EnvelopeCurve": {
+      "box": "plastic_down",
+      "color": [
+        14,
+        51,
+        14
+      ],
+      "grid": [
+        92,
+        102,
+        20
+      ],
+      "axis": [
+        204,
+        204,
+        20
+      ],
+      "trace": [
+        102,
+        255,
+        77
+      ],
+      "handle": [
+        255,
+        140,
+        38
+      ],
+      "playhead": "$playhead"
+    },
+    "ValueTable": {
+      "face": "background",
+      "beat": "device",
+      "position": "red",
+      "text": "foreground",
+      "cell": "white",
+      "cell_box": "down",
+      "text_font": "helvetica",
+      "text_size": 9
+    },
+    "PortList": {
+      "box": "plastic_down"
+    },
+    "PortListLabel": {
+      "label_size": 8
+    },
+    "PortListButton": {
+      "label_size": 8
+    },
+    "PianoKeys": {
+      "box": "flat",
+      "key_box": "thin_up",
+      "key_label_size": 10,
+      "white": "white",
+      "black": "black",
+      "pressed": "red",
+      "focus": "selection",
+      "focus_percent": 35,
+      "map_font": "helvetica",
+      "map_size_white": 11,
+      "map_size_black": 9,
+      "map_size_last": 8,
+      "map_text_white": [
+        20,
+        18,
+        15
+      ],
+      "map_text_black": "white"
+    },
+    "PianoRoll": {
+      "box": "flat",
+      "face": [
+        20,
+        30,
+        20
+      ],
+      "natural": [
+        40,
+        60,
+        40
+      ],
+      "accidental": [
+        30,
+        45,
+        30
+      ],
+      "row_line": [
+        60,
+        80,
+        60
+      ],
+      "grid_line": [
+        70,
+        95,
+        70
+      ],
+      "text": [
+        170,
+        200,
+        170
+      ],
+      "text_font": "helvetica",
+      "row_text_size": 9,
+      "header_text_size": 10,
+      "playhead": "$playhead",
+      "note_loud": [
+        255,
+        140,
+        38
+      ],
+      "note_quiet": [
+        60,
+        140,
+        60
+      ],
+      "note_edge": [
+        20,
+        30,
+        20
+      ],
+      "note_selected": "white"
+    },
+    "MatrixGrid": {
+      "scheme": "classic",
+      "text_font": "helvetica",
+      "text_size": 8,
+      "hover": "selection",
+      "trigger": "selection",
+      "gutter": "background",
+      "text": "foreground",
+      "variants": {
+        "classic": {
+          "face": "background",
+          "cell_edge": "black",
+          "note": "white",
+          "note_loud": "white",
+          "note_quiet": "blue",
+          "bar": [
+            150,
+            150,
+            150
+          ],
+          "accidental": [
+            170,
+            170,
+            170
+          ],
+          "natural": "gray"
+        },
+        "fade": {
+          "face": "dark3",
+          "note": 179,
+          "note_loud": "blue",
+          "note_quiet": [
+            200,
+            200,
+            255
+          ],
+          "step": "gray",
+          "beat": [
+            225,
+            225,
+            225
+          ],
+          "cell": "white"
+        }
+      }
+    }
+  },
+  "overrides": [
+    {
+      "device": 43,
+      "name": "AnotherLPF",
+      "controls": [
+        "resonance-knob"
+      ],
+      "look": {
+        "knob_type": "dot"
+      }
+    },
+    {
+      "device": 48,
+      "name": "BeatMatch",
+      "controls": [
+        "sensitivity-knob"
+      ],
+      "look": {
+        "knob_type": "dot"
+      }
+    },
+    {
+      "device": 15,
+      "name": "Delay",
+      "controls": [
+        "delay-knob",
+        "mix-knob"
+      ],
+      "look": {
+        "knob_type": "dot"
+      }
+    },
+    {
+      "device": 14,
+      "name": "Echo",
+      "controls": [
+        "delay-knob",
+        "feedback-knob"
+      ],
+      "look": {
+        "knob_type": "dot"
+      }
+    },
+    {
+      "device": 19,
+      "name": "EnvFollower",
+      "controls": [
+        "attack-knob",
+        "decay-knob"
+      ],
+      "look": {
+        "knob_type": "dot"
+      }
+    },
+    {
+      "device": 11,
+      "name": "Filter",
+      "controls": [
+        "resonance-knob"
+      ],
+      "look": {
+        "knob_type": "dot"
+      }
+    },
+    {
+      "device": 46,
+      "name": "Flipflop",
+      "controls": [
+        "triggertime-knob"
+      ],
+      "look": {
+        "knob_type": "dot"
+      }
+    },
+    {
+      "device": 42,
+      "name": "FormantFilter",
+      "controls": [
+        "vowel-knob"
+      ],
+      "look": {
+        "knob_type": "dot"
+      }
+    },
+    {
+      "device": 22,
+      "name": "LADSPA",
+      "controls": [
+        "bandwidth-value",
+        "damping-value",
+        "dry-value",
+        "early-value",
+        "room-value",
+        "tail-value",
+        "time-value"
+      ],
+      "look": {
+        "box": "plastic_down"
+      }
+    },
+    {
+      "device": 22,
+      "name": "LADSPA",
+      "types": [
+        "TextEntry"
+      ],
+      "controls": [
+        "default-*",
+        "knob-value-*",
+        "max-*",
+        "min-*",
+        "slider-value-*"
+      ],
+      "look": {
+        "box": "plastic_down"
+      }
+    },
+    {
+      "device": 22,
+      "name": "LADSPA",
+      "types": [
+        "VirtualScrollArea"
+      ],
+      "controls": [
+        "inputs"
+      ],
+      "look": {
+        "box": "plastic_up"
+      }
+    },
+    {
+      "device": 22,
+      "name": "LADSPA",
+      "types": [
+        "Knob"
+      ],
+      "controls": [
+        "knob-*"
+      ],
+      "look": {
+        "knob_type": "dot"
+      }
+    },
+    {
+      "device": 22,
+      "name": "LADSPA",
+      "types": [
+        "Label"
+      ],
+      "controls": [
+        "knob-label-*",
+        "slider-label-*"
+      ],
+      "look": {
+        "label_font": "courier"
+      }
+    },
+    {
+      "device": 22,
+      "name": "LADSPA",
+      "types": [
+        "LCD"
+      ],
+      "controls": [
+        "value-*"
+      ],
+      "look": {
+        "box": "plastic_up"
+      }
+    },
+    {
+      "device": 54,
+      "name": "Masher",
+      "controls": [
+        "density-knob",
+        "grainpitch-knob",
+        "grainstoresize-knob",
+        "randomness-knob"
+      ],
+      "look": {
+        "knob_type": "dot"
+      }
+    },
+    {
+      "device": 18,
+      "name": "Matrix",
+      "controls": [
+        "patseq-0",
+        "patseq-1",
+        "patseq-10",
+        "patseq-11",
+        "patseq-12",
+        "patseq-13",
+        "patseq-14",
+        "patseq-15",
+        "patseq-2",
+        "patseq-3",
+        "patseq-4",
+        "patseq-5",
+        "patseq-6",
+        "patseq-7",
+        "patseq-8",
+        "patseq-9"
+      ],
+      "look": {
+        "box": "up",
+        "color": "default",
+        "selection_color": "default"
+      }
+    },
+    {
+      "device": 18,
+      "name": "Matrix",
+      "controls": [
+        "speed"
+      ],
+      "look": {
+        "knob_type": "dot"
+      }
+    },
+    {
+      "device": 13,
+      "name": "Moog Filter",
+      "controls": [
+        "resonance-knob"
+      ],
+      "look": {
+        "knob_type": "dot"
+      }
+    },
+    {
+      "device": 0,
+      "name": "Output",
+      "controls": [
+        "volume"
+      ],
+      "look": {
+        "knob_type": "dot"
+      }
+    },
+    {
+      "device": 10,
+      "name": "Ring Mod",
+      "controls": [
+        "amount-knob"
+      ],
+      "look": {
+        "knob_type": "dot"
+      }
+    },
+    {
+      "device": 12,
+      "name": "SVF",
+      "controls": [
+        "resonance-knob"
+      ],
+      "look": {
+        "knob_type": "dot"
+      }
+    },
+    {
+      "device": 21,
+      "name": "SeqSelector",
+      "controls": [
+        "begin",
+        "delete",
+        "end",
+        "new",
+        "range"
+      ],
+      "look": {
+        "box": "up",
+        "color": "default",
+        "selection_color": "default"
+      }
+    },
+    {
+      "device": 20,
+      "name": "Smooth",
+      "controls": [
+        "down-knob",
+        "up-knob"
+      ],
+      "look": {
+        "knob_type": "dot"
+      }
+    },
+    {
+      "device": 26,
+      "name": "SpiralLoop",
+      "controls": [
+        "copy",
+        "crop",
+        "cut",
+        "double",
+        "half",
+        "keep-dub",
+        "load",
+        "new-trigger",
+        "overdub",
+        "paste",
+        "paste-mix",
+        "record",
+        "rev-range",
+        "save",
+        "select-all",
+        "undo-dub",
+        "zero-range"
+      ],
+      "look": {
+        "box": "thin_up",
+        "color": "default",
+        "selection_color": "default",
+        "roles": {
+          "record": {
+            "label_color": "$record"
+          }
+        }
+      }
+    },
+    {
+      "device": 26,
+      "name": "SpiralLoop",
+      "controls": [
+        "length",
+        "speed",
+        "volume",
+        "wave-size"
+      ],
+      "look": {
+        "knob_type": "dot"
+      }
+    },
+    {
+      "device": 26,
+      "name": "SpiralLoop",
+      "controls": [
+        "ticks"
+      ],
+      "look": {
+        "box": "up",
+        "color": "default",
+        "selection_color": "default"
+      }
+    },
+    {
+      "device": 8,
+      "name": "Stereo Mixer",
+      "controls": [
+        "pan-*"
+      ],
+      "look": {
+        "knob_type": "dot"
+      }
+    },
+    {
+      "device": 281,
+      "name": "Stream",
+      "controls": [
+        "filename"
+      ],
+      "look": {
+        "box": "plastic_up"
+      }
+    },
+    {
+      "device": 281,
+      "name": "Stream",
+      "controls": [
+        "pitch",
+        "position"
+      ],
+      "look": {
+        "slider_type": "plain"
+      }
+    },
+    {
+      "device": 50,
+      "name": "WaveShaper",
+      "controls": [
+        "coef-0-knob",
+        "coef-1-knob",
+        "coef-2-knob",
+        "coef-3-knob",
+        "coef-4-knob",
+        "coef-5-knob"
+      ],
+      "look": {
+        "knob_type": "dot"
+      }
+    }
+  ]
+}

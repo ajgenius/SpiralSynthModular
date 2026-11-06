@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import difflib
+from uifile import read_ui, write_ui
 import json
 import os
 import re
@@ -171,8 +172,8 @@ def parity(device, shots, tree_dir, apply):
     if not apply or (apply == "clean" and not clean):
         return
 
-    doc_path = os.path.join(tree_dir, "Plugins", "Devices", device + "Plugin", "prebuilt-ui.json")
-    doc = json.load(open(doc_path))
+    doc_path = os.path.join(tree_dir, "Plugins", "Devices", device + "Plugin", "info.json")
+    doc = read_ui(doc_path)
     root = doc["panel"]
     by_name = {c["name"]: c for c in controls}
     for c in controls:
@@ -191,7 +192,7 @@ def parity(device, shots, tree_dir, apply):
                 node["size"] = sizes[c["name"]]
     root["width"] = ew - 2 * FRAME_X
     root["height"] = eh - FRAME_Y - FRAME_X
-    open(doc_path, "w").write(json.dumps(doc, indent=2, ensure_ascii=False) + "\n")
+    write_ui(doc_path, doc)
     print("   wrote %s" % doc_path)
 
 
