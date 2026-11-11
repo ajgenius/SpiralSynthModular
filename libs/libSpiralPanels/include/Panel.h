@@ -172,6 +172,8 @@ namespace Spiral
 			void FollowRows(Spiral::Data::DataSource &moved);
 			std::map<std::string, Spiral::Data::RowSource *> m_Rows;
 			std::map<std::string, long> m_RowFirst;
+			// The panel's sources as written, for a repeat over one.
+			const Spumoni::JSON *m_Sources;
 			Spiral::Data::DataSource &SourceOf(const PanelProperty &property) const;
 			PanelHost &m_Host;
 			PanelSource *m_Source;

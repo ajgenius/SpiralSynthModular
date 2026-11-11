@@ -21,7 +21,11 @@ namespace Spiral
 		class Repeat
 		{
 		public:
-			explicit Repeat(const Node &node);
+			// With the panel's row sources, a repeat that names one makes a
+			// copy for each of its rows: the count and the first row's number
+			// are the source's, and a property its children name by one of
+			// the source's fields is that row's.
+			explicit Repeat(const Node &node, const Spumoni::JSON *sources = NULL);
 
 			static bool Is(const Node &node);
 
@@ -38,6 +42,7 @@ namespace Spiral
 		private:
 			const Node &m_Node;
 			const Spumoni::JSON *m_Items;
+			const Spumoni::JSON *m_Source;
 			long m_Base, m_StepX, m_StepY, m_X, m_Y;
 		};
 

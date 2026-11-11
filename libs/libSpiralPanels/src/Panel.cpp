@@ -44,6 +44,7 @@ namespace Spiral
 		}
 
 		Panel::Panel(PanelHost &host, PanelSource *source):
+			m_Sources(NULL),
 			m_Host(host),
 			m_Source(source),
 			m_State(NULL),
@@ -74,6 +75,7 @@ namespace Spiral
 				delete i->second;
 			m_Rows.clear();
 			m_RowFirst.clear();
+			m_Sources = NULL;
 			delete m_State;
 			m_State = NULL;
 			for (size_t i = 0; i < m_Controls.size(); ++i)
@@ -220,6 +222,8 @@ namespace Spiral
 		void Panel::BuildSources(const Spumoni::JSON &panel)
 		{
 			const Spumoni::JSON *sources = panel.Get("sources");
+
+			m_Sources = sources;
 
 			if (!sources || sources->GetType() != Spumoni::JSON::Object)
 				return;
@@ -435,7 +439,7 @@ namespace Spiral
 
 		void Panel::BuildRepeat(const Spiral::Panels::Node &node, int originX, int originY)
 		{
-			const Spiral::Panels::Repeat model(node);
+			const Spiral::Panels::Repeat model(node, m_Sources);
 			Repeat repeat;
 			repeat.Count = FindProperty(model.CountProperty());
 			repeat.Shown = -1;
@@ -444,7 +448,9 @@ namespace Spiral
 			repeat.AutoWidth = m_AutoWidth ? m_AutoWidth->AsBool() : repeat.StepX > 0;
 			double most = repeat.Count && repeat.Count->HasRange() ? repeat.Count->Max() : 1;
 
-			if (model.ByItems())
+			// By its items, by the count its panel states, or with no count
+			// property the fixed number its row source has.
+			if (model.ByItems() || (!repeat.Count && !node.Has("max_count")))
 				most = (double)model.DefaultCount();
 			else
 				node.Number("max_count", most);

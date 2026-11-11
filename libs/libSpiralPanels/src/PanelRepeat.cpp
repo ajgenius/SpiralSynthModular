@@ -4,6 +4,7 @@
 #include "PanelDocument.h"
 #include "PanelNode.h"
 #include "JSON.h"
+#include <cstdlib>
 #include <cstdio>
 
 namespace Spiral
@@ -139,9 +140,48 @@ namespace Spiral
 			return JSON::MakeString(SubstituteText(value.Text(), scope));
 		}
 
-		Repeat::Repeat(const Node &node):
+		// A child of a repeat over a row source with each property it names by
+		// one of the source's fields made that field of the copy's row: the
+		// field's name with the row's number after it. The names are those of
+		// a control's own property, of a limit or condition bound to one, and
+		// of what a handler writes or bumps.
+		static JSON *OnRow(const JSON &value, const JSON &fields)
+		{
+			if (value.GetType() == JSON::Array)
+			{
+				JSON *array = JSON::MakeArray();
+
+				for (size_t i = 0; i < value.Size(); ++i)
+					array->AppendOwned(OnRow(*value.At(i), fields));
+
+				return array;
+			}
+
+			if (value.GetType() != JSON::Object)
+				return value.Duplicate();
+
+			JSON *object = JSON::MakeObject();
+			const std::vector<std::string> keys = value.Keys();
+
+			for (size_t i = 0; i < keys.size(); ++i)
+			{
+				const JSON &held = *value.Get(keys[i]);
+				bool field = false;
+
+				if (held.GetType() == JSON::String && (keys[i] == "property" || keys[i] == "write" || keys[i] == "delta"))
+					for (size_t f = 0; f < fields.Size() && !field; ++f)
+						field = fields.At(f)->Text() == held.Text();
+
+				object->SetOwned(keys[i], field ? JSON::MakeString(held.Text() + "{index}") : OnRow(held, fields));
+			}
+
+			return object;
+		}
+
+		Repeat::Repeat(const Node &node, const JSON *sources):
 			m_Node(node),
 			m_Items(NULL),
+			m_Source(NULL),
 			m_Base(IntegerOf(node, "index_base", 0)),
 			m_StepX(IntegerOf(node, "step_x", 0)),
 			m_StepY(IntegerOf(node, "step_y", 0)),
@@ -152,6 +192,15 @@ namespace Spiral
 
 			if (items && items->GetType() == JSON::Array)
 				m_Items = items;
+
+			std::string source;
+
+			if (sources && sources->GetType() == JSON::Object && node.String("source", source))
+				m_Source = sources->Get(source);
+
+			if (m_Source && !node.Has("index_base") && m_Source->Get("first") &&
+			    m_Source->Get("first")->GetType() == JSON::Number)
+				m_Base = std::atol(m_Source->Get("first")->Text().c_str());
 		}
 
 		bool Repeat::Is(const Node &node)
@@ -164,7 +213,12 @@ namespace Spiral
 			if (m_Items)
 				return m_Items->Size();
 
-			const long most = IntegerOf(m_Node, "max_count", 1);
+			const JSON *rows = m_Source ? m_Source->Get("count") : NULL;
+			long most = IntegerOf(m_Node, "max_count", 1);
+
+			// A source that has a fixed number of rows gives that many copies.
+			if (!m_Node.Has("max_count") && rows && rows->GetType() == JSON::Number)
+				most = std::atol(rows->Text().c_str());
 
 			return most > 0 ? (size_t)most : 0;
 		}
@@ -173,6 +227,12 @@ namespace Spiral
 		{
 			std::string name;
 			m_Node.String("count_property", name);
+
+			// A source whose rows are counted by a property shows that many.
+			const JSON *rows = m_Source ? m_Source->Get("count") : NULL;
+
+			if (name.empty() && rows && rows->GetType() == JSON::String)
+				name = rows->Text();
 
 			return name;
 		}
@@ -204,7 +264,9 @@ namespace Spiral
 
 			for (size_t i = 0; i < m_Node.Children().size(); ++i)
 			{
-				Spumoni::JSONOwner child(m_Node.Children()[i]->ToJSON());
+				Spumoni::JSONOwner written(m_Node.Children()[i]->ToJSON());
+				const JSON *fields = m_Source ? m_Source->Get("fields") : NULL;
+				Spumoni::JSONOwner child(fields && fields->GetType() == JSON::Array ? OnRow(*written, *fields) : written->Duplicate());
 				Spumoni::JSONOwner copied(Substitute(*child, scope));
 				out.push_back(Node::FromJSON(*copied));
 			}
