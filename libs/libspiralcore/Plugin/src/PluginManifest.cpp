@@ -47,7 +47,12 @@ static bool passthrough(const JSONValue *root, PluginManifest &m)
 		const JSONValue *p = ports->At(i);
 		if (!text(p, "input", port.input) || !text(p, "output", port.output))
 			return false;
-		if (p->Get("shadow") && (!text(p, "shadow", port.shadow) || port.shadow != "snapshot"))
+		// How the testing tree's host shadows the port for its panels: the
+		// latest block, every block in turn, both or neither. A panel here
+		// asks the device for a feed whatever this says, so each is read
+		// and the one manifest serves both trees.
+		if (p->Get("shadow") && (!text(p, "shadow", port.shadow) ||
+		    (port.shadow != "snapshot" && port.shadow != "ring" && port.shadow != "both" && port.shadow != "none")))
 			return false;
 		m.ports.push_back(port);
 	}
