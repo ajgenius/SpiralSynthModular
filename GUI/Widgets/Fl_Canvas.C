@@ -2013,115 +2013,108 @@ void Fl_Canvas::ToBot(Fl_DeviceGUI *o)
 void Fl_Canvas::StreamWiresIn(istream &s, bool merge)
 {
 	int NumWires;
+	std::vector<CanvasWire> read;
 
 	s>>NumWires;
 
 	// my bad, didn't version this stream - remove one day...
-	if (NumWires==-1)
+	const bool versioned = NumWires==-1;
+
+	if (versioned)
 	{
 		int version;
 
 		s>>version;
 		s>>NumWires;
+	}
 
-		for(int n=0; n<NumWires; n++)
-		{
-			CanvasWire NewWire;
-			int dummy;
+	for(int n=0; n<NumWires; n++)
+	{
+		CanvasWire NewWire;
+		int dummy;
 
-			s>>NewWire.OutputID;
-			s>>dummy;
-			s>>NewWire.OutputPort;
+		s>>NewWire.OutputID;
+		s>>dummy;
+		s>>NewWire.OutputPort;
+
+		if (versioned)
 			s>>NewWire.OutputTerminal;
-			s>>NewWire.InputID;
-			s>>dummy;
-			s>>NewWire.InputPort;
+		else
+			NewWire.OutputTerminal = false;
+
+		s>>NewWire.InputID;
+		s>>dummy;
+		s>>NewWire.InputPort;
+
+		if (versioned)
 			s>>NewWire.InputTerminal;
+		else
+			NewWire.InputTerminal = false;
 
-			if (merge)
-			{
-				std::map<int, int>::iterator inputID = MapNewDeviceIds.find( NewWire.InputID);
-				std::map<int, int>::iterator outputID = MapNewDeviceIds.find(NewWire.OutputID);
+		if (merge)
+		{
+			std::map<int, int>::iterator inputID = MapNewDeviceIds.find( NewWire.InputID);
+			std::map<int, int>::iterator outputID = MapNewDeviceIds.find(NewWire.OutputID);
 
-				if ((inputID != MapNewDeviceIds.end()) && (outputID != MapNewDeviceIds.end()))
-				{
-					NewWire.InputID = inputID->second;
-					NewWire.OutputID = outputID->second;
-				}
-			}
-			// A missing end, or a port the stand-in does not have, must not
-			// drop the rest of the wires.
-			Fl_DeviceGUI *source = FindDevice(NewWire.OutputID);
-			Fl_DeviceGUI *destination = FindDevice(NewWire.InputID);
-			if (!source || !destination
-				|| NewWire.OutputPort < 0 || NewWire.OutputPort >= source->GetInfo()->NumOutputs
-				|| NewWire.InputPort < 0 || NewWire.InputPort >= destination->GetInfo()->NumInputs)
+			if ((inputID != MapNewDeviceIds.end()) && (outputID != MapNewDeviceIds.end()))
 			{
-				std::cerr << "SSM: Skipping unavailable wire "
-					<< NewWire.OutputID << ":" << NewWire.OutputPort << " -> "
-					<< NewWire.InputID << ":" << NewWire.InputPort << ".\n";
-			}
-			else if (source->AddConnection(NewWire.OutputPort + source->GetInfo()->NumInputs) &&
-				destination->AddConnection(NewWire.InputPort))
-			{
-				m_WireVec.push_back(NewWire);
-					// Notify connection by callback
-				cb_Connection(this,(void*)&NewWire);
-				LockGraph();
-				m_Graph.AddConnection(NewWire.OutputID,NewWire.OutputTerminal,NewWire.InputID,NewWire.InputTerminal);
-				UnlockGraph();
-				Reschedule();
+				NewWire.InputID = inputID->second;
+				NewWire.OutputID = outputID->second;
 			}
 		}
-	}
-	else
-	{
-		for(int n=0; n<NumWires; n++)
+
+		// A missing end, or a port the stand-in does not have, must not
+		// drop the rest of the wires.
+		Fl_DeviceGUI *source = FindDevice(NewWire.OutputID);
+		Fl_DeviceGUI *destination = FindDevice(NewWire.InputID);
+		if (!source || !destination
+			|| NewWire.OutputPort < 0 || NewWire.OutputPort >= source->GetInfo()->NumOutputs
+			|| NewWire.InputPort < 0 || NewWire.InputPort >= destination->GetInfo()->NumInputs)
 		{
-			CanvasWire NewWire;
-			int dummy;
+			std::cerr << "SSM: Skipping unavailable wire "
+				<< NewWire.OutputID << ":" << NewWire.OutputPort << " -> "
+				<< NewWire.InputID << ":" << NewWire.InputPort << ".\n";
+			continue;
+		}
 
-			s>>NewWire.OutputID;
-			s>>dummy;
-			s>>NewWire.OutputPort;
-			s>>NewWire.InputID;
-			s>>dummy;
-			s>>NewWire.InputPort;
+		read.push_back(NewWire);
+	}
 
-			if (merge)
-			{
-				std::map<int, int>::iterator inputID = MapNewDeviceIds.find( NewWire.InputID);
-				std::map<int, int>::iterator outputID = MapNewDeviceIds.find(NewWire.OutputID);
+	// An input takes one wire. Some files hold two into the same input,
+	// and each used to be connected in turn: the later one was the one
+	// played, and the earlier stayed on the canvas feeding nothing. Only
+	// the later is made now.
+	for (size_t n = 0; n < read.size(); n++)
+	{
+		CanvasWire &NewWire = read[n];
+		bool later = false;
 
-				if ((inputID != MapNewDeviceIds.end()) && (outputID != MapNewDeviceIds.end()))
-				{
-					NewWire.InputID = inputID->second;
-					NewWire.OutputID = outputID->second;
-				}
-			}
+		for (size_t m = n + 1; m < read.size() && !later; m++)
+			later = read[m].InputID == NewWire.InputID && read[m].InputPort == NewWire.InputPort;
 
-			Fl_DeviceGUI *source = FindDevice(NewWire.OutputID);
-			Fl_DeviceGUI *destination = FindDevice(NewWire.InputID);
-			if (!source || !destination
-				|| NewWire.OutputPort < 0 || NewWire.OutputPort >= source->GetInfo()->NumOutputs
-				|| NewWire.InputPort < 0 || NewWire.InputPort >= destination->GetInfo()->NumInputs)
-			{
-				std::cerr << "SSM: Skipping unavailable wire "
-					<< NewWire.OutputID << ":" << NewWire.OutputPort << " -> "
-					<< NewWire.InputID << ":" << NewWire.InputPort << ".\n";
-			}
-			else if (source->AddConnection(NewWire.OutputPort + source->GetInfo()->NumInputs) &&
-				destination->AddConnection(NewWire.InputPort))
-			{
-				m_WireVec.push_back(NewWire);
+		if (later)
+		{
+			std::cerr << "SSM: Dropping wire "
+				<< NewWire.OutputID << ":" << NewWire.OutputPort << " -> "
+				<< NewWire.InputID << ":" << NewWire.InputPort
+				<< "; a later wire goes to the same input.\n";
+			continue;
+		}
 
-				// Notify connection by callback
-				cb_Connection(this,(void*)&NewWire);
-				LockGraph();
-				m_Graph.AddConnection(NewWire.OutputID,false,NewWire.InputID,false);
-				UnlockGraph();
-				Reschedule();
-			}
+		Fl_DeviceGUI *source = FindDevice(NewWire.OutputID);
+		Fl_DeviceGUI *destination = FindDevice(NewWire.InputID);
+
+		if (source->AddConnection(NewWire.OutputPort + source->GetInfo()->NumInputs) &&
+			destination->AddConnection(NewWire.InputPort))
+		{
+			m_WireVec.push_back(NewWire);
+
+			// Notify connection by callback
+			cb_Connection(this,(void*)&NewWire);
+			LockGraph();
+			m_Graph.AddConnection(NewWire.OutputID,NewWire.OutputTerminal,NewWire.InputID,NewWire.InputTerminal);
+			UnlockGraph();
+			Reschedule();
 		}
 	}
 }
