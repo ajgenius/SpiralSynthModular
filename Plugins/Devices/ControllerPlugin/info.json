@@ -39,13 +39,13 @@
                 18
               ],
               "name": "name-{index}",
-              "property": "NAME{index}",
+              "property": "NAME",
               "tooltip": "The channel's name",
               "type": "TextEntry"
             },
             {
               "above": {
-                "property": "MIN{index}"
+                "property": "MIN"
               },
               "bounds": [
                 3,
@@ -55,7 +55,7 @@
               ],
               "format": "%.6f",
               "name": "max-{index}",
-              "property": "MAX{index}",
+              "property": "MAX",
               "tooltip": "The slider's top",
               "type": "TextEntry"
             },
@@ -67,13 +67,13 @@
                 117
               ],
               "max": {
-                "property": "MAX{index}"
+                "property": "MAX"
               },
               "min": {
-                "property": "MIN{index}"
+                "property": "MIN"
               },
               "name": "value-{index}",
-              "property": "VALUE{index}",
+              "property": "VALUE",
               "step_fraction": 0.01,
               "tooltip": "The CV sent out",
               "type": "Slider",
@@ -81,7 +81,7 @@
             },
             {
               "below": {
-                "property": "MAX{index}"
+                "property": "MAX"
               },
               "bounds": [
                 3,
@@ -91,14 +91,14 @@
               ],
               "format": "%.6f",
               "name": "min-{index}",
-              "property": "MIN{index}",
+              "property": "MIN",
               "tooltip": "The slider's bottom",
               "type": "TextEntry"
             }
           ],
-          "count_property": "CHANNELS",
           "max_count": 16,
           "name": "channels",
+          "source": "channels",
           "step_x": 60,
           "type": "Repeat"
         },
@@ -146,6 +146,17 @@
       "height": 208,
       "help": "A slider per channel, each sent out as a CV between the bottom and top typed beneath and above it, and a name for it. + and - add and remove channels, up to sixteen.",
       "schema_version": 1,
+      "sources": {
+        "channels": {
+          "count": "CHANNELS",
+          "fields": [
+            "NAME",
+            "MIN",
+            "MAX",
+            "VALUE"
+          ]
+        }
+      },
       "width": 236
     },
     "plugin_id": 3,

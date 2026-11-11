@@ -41,7 +41,7 @@
               ],
               "latch": true,
               "name": "peak-{index}",
-              "property": "PEAK{index}",
+              "property": "PEAK",
               "tooltip": {
                 "default": "Lit when the input peaks; click to clear",
                 "key": "plugin.7.panel.peak-channel.tooltip"
@@ -68,15 +68,15 @@
                   }
                 ]
               },
-              "property": "VOLUME{index}",
+              "property": "VOLUME",
               "step": 0.01,
               "tooltip": "The input's level in the mix",
               "type": "Slider",
               "vertical": true
             }
           ],
-          "count_property": "CHANNELS",
           "name": "channels",
+          "source": "channels",
           "step_x": 20,
           "type": "Repeat"
         },
@@ -147,6 +147,15 @@
       "height": 134,
       "help": "A slider per input mixed to the output, 0 to 2, with a lamp that lights and stays lit when the input peaks (click it, or move the slider, to clear). + and - add and remove inputs, two to sixteen; the lamp beside them is the output's peak.",
       "schema_version": 1,
+      "sources": {
+        "channels": {
+          "count": "CHANNELS",
+          "fields": [
+            "VOLUME",
+            "PEAK"
+          ]
+        }
+      },
       "width": 76
     },
     "plugin_id": 7,
