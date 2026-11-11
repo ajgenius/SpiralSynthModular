@@ -109,17 +109,6 @@ namespace Spiral
 			window->m_Generated = generated;
 			window->m_Generation = plugin->PanelGeneration();
 			window->add(host);
-			if (panel->ModeCount() > 1)
-			{
-				window->m_Mode = new Fl_Button(window->w() - (panel->LayoutCount() > 1 ? 38 : 24), 2, 10, 10, "@square");
-				window->m_Mode->labeltype(FL_ENGRAVED_LABEL);
-				window->m_Mode->labelsize(10);
-				window->m_Mode->box(FL_NO_BOX);
-				window->m_Mode->down_box(FL_NO_BOX);
-				window->m_Mode->callback(NextMode, window);
-				window->m_Mode->copy_tooltip(("Panel: " + panel->ModeName(panel->Mode())).c_str());
-				window->add(window->m_Mode);
-			}
 			if (panel->LayoutCount() > 1)
 			{
 				window->m_Layout = new Fl_Button(window->w() - 24, 2, 10, 10, "@-37>");
@@ -131,6 +120,8 @@ namespace Spiral
 				window->m_Layout->copy_tooltip(("Layout: " + panel->LayoutName(0)).c_str());
 				window->add(window->m_Layout);
 			}
+			// After the layout button: the mode button sits beside it.
+			window->OfferModes();
 			window->end();
 			return window;
 		}
@@ -307,9 +298,34 @@ namespace Spiral
 			Resize(host->w() + 2 * Margin, host->h() + TitleHeight + Margin);
 			if (m_Layout)
 				m_Layout->position(x() + w() - 24, y() + 2);
-			if (m_Mode)
-				m_Mode->position(x() + w() - (m_Layout ? 38 : 24), y() + 2);
+			OfferModes();
 			redraw();
+		}
+
+		void PanelWindow::OfferModes()
+		{
+			if (!m_Panel || m_Panel->ModeCount() < 2)
+			{
+				if (m_Mode)
+					m_Mode->hide();
+
+				return;
+			}
+
+			if (!m_Mode)
+			{
+				m_Mode = new Fl_Button(0, 0, 10, 10, "@square");
+				m_Mode->labeltype(FL_ENGRAVED_LABEL);
+				m_Mode->labelsize(10);
+				m_Mode->box(FL_NO_BOX);
+				m_Mode->down_box(FL_NO_BOX);
+				m_Mode->callback(NextMode, this);
+				add(m_Mode);
+			}
+
+			m_Mode->position(x() + w() - (m_Layout ? 38 : 24), y() + 2);
+			m_Mode->copy_tooltip(("Panel: " + m_Panel->ModeName(m_Panel->Mode())).c_str());
+			m_Mode->show();
 		}
 
 		const std::string PanelWindow::GetHelpText(const std::string &loc)

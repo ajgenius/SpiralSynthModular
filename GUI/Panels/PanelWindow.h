@@ -55,6 +55,9 @@ namespace Spiral
 			void LoadState(const std::map<std::string, Spiral::Core::StateValue> &state);
 			SpiralPlugin *Plugin() const;
 			void SetLayout(size_t index);
+			// Shows the mode button while the panel has modes to switch
+			// between, which a panel its device writes may gain or lose.
+			void OfferModes();
 			void SetMode(size_t index);
 
 		protected:
