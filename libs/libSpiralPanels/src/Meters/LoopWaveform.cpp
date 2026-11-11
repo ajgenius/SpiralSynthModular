@@ -156,6 +156,28 @@ namespace Spiral
 				m_Panel.Write(*timeProperty, angle / 360.0f);
 		}
 
+		// Turning the loop and seeking change nothing here: the panel's
+		// handlers send them on to the device.
+		static const PanelControl::Event MovedEvent = {"moved", {"value", "text", NULL}};
+		static const PanelControl::Event SoughtEvent = {"sought", {"value", "text", NULL}};
+
+		void LoopWaveformControl::DeclareEvents(std::vector<Event> &out) const
+		{
+			PanelControl::DeclareEvents(out);
+			out.push_back(MovedEvent);
+			out.push_back(SoughtEvent);
+		}
+
+		void LoopWaveformControl::Moved(int samples)
+		{
+			Fire("moved", samples);
+		}
+
+		void LoopWaveformControl::Sought(int sample)
+		{
+			Fire("sought", sample);
+		}
+
 		void LoopWaveformControl::SetAttribute(const std::string &attribute, double value)
 		{
 			if (attribute == "reload")

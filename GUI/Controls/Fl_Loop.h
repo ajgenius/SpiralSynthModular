@@ -52,7 +52,11 @@ public:
         void SetMrkColour (unsigned c) { m_MrkColour=(Fl_Color)c; }
 
 	typedef void (cb)(Fl_Widget *, int);
-	void SetMoveCallback(cb *cb_Move);
+	// Told how many samples a right drag turned the loop round. Declared
+	// from the start and never defined, so nothing could ask for it.
+	void SetMoveCallback(cb *cb_Move) { this->cb_Move=cb_Move; }
+	// Told the sample a middle click or drag put the play marker on.
+	void SetSeekCallback(cb *cb_Seek) { this->cb_Seek=cb_Seek; }
 
 	void SelectAll();
 	long GetRangeStart() { return m_RangeStart; }
@@ -88,6 +92,7 @@ private:
 	int    m_PosMarkerCount;
 
 	cb *cb_Move;
+	cb *cb_Seek;
 
         Fl_Color m_BGColour, m_WaveColour, m_SelColour, m_IndColour, m_MrkColour;
 

@@ -240,8 +240,14 @@ namespace Spiral
 			virtual void SetAttribute(const std::string &attribute, double value);
 			virtual bool GetAttribute(const std::string &attribute, double &value) const;
 			void TriggerMoved(int id, int channel, float angle);
+			// The view's gestures: the loop turned round by so many samples,
+			// and the play marker put on a sample.
+			void Moved(int samples);
+			void Sought(int sample);
 
 		protected:
+			virtual void DeclareEvents(std::vector<Event> &out) const;
+
 			struct Trigger
 			{
 				int Id, Channel;

@@ -153,6 +153,12 @@ m_Triggered(false)
 		m_AudioCH->RegisterCommand("KEEPDUB", KEEPDUB, none);
 		args.clear(); args.push_back("Name");
 		m_AudioCH->RegisterCommand("LOAD", LOAD, args, "s");
+		// Turning the loop round, which the device always could and the
+		// panel had no way to ask for; and playing from a sample.
+		args.clear(); args.push_back("Start");
+		m_AudioCH->RegisterCommand("MOVE", MOVE, args);
+		args.clear(); args.push_back("Start");
+		m_AudioCH->RegisterCommand("SEEK", SEEK, args);
 		args.clear(); args.push_back("Start"); args.push_back("End"); args.push_back("Length");
 		m_AudioCH->RegisterCommand("NEW_TRIGGER", NEW_TRIGGER, args);
 		m_AudioCH->RegisterCommand("OVERDUB", OVERDUB, none);
@@ -262,6 +268,7 @@ void SpiralLoopPlugin::ExecuteCommands()
 		case DOUBLE			: Double(); break;
 		case HALF			: Halve(); break;
 		case MOVE			: Move(m_GUIArgs.Start); break;
+		case SEEK			: if (m_GUIArgs.Start>=0 && m_GUIArgs.Start<AsSigned(m_LoopPoint)) SetPos(m_GUIArgs.Start); break;
 		case CROP			: Crop(); break;
 		case KEEPDUB		: MixDub(); break;
 		case UNDODUB		: ClearDub(); break;

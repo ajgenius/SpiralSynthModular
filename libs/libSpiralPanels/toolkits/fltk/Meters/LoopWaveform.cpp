@@ -30,6 +30,18 @@ namespace Spiral
 						trigger->GetAngle());
 			}
 
+			// The widget's own callbacks carry no owner; it is kept as the
+			// widget's user data.
+			void LoopMoved(Fl_Widget *widget, int samples)
+			{
+				static_cast<LoopWaveformControl *>(widget->user_data())->Moved(samples);
+			}
+
+			void LoopSought(Fl_Widget *widget, int sample)
+			{
+				static_cast<LoopWaveformControl *>(widget->user_data())->Sought(sample);
+			}
+
 			class FltkLoop: public FltkView, public virtual LoopView
 			{
 			public:
@@ -73,6 +85,9 @@ namespace Spiral
 			ControlView *MakeLoopWaveform(PanelControl &control, const Spumoni::JSON &node)
 			{
 				Fl_Loop *loop = new Fl_Loop(control.X(), control.Y(), control.W(), control.H());
+				loop->user_data(static_cast<LoopWaveformControl *>(&control));
+				loop->SetMoveCallback(LoopMoved);
+				loop->SetSeekCallback(LoopSought);
 				const FltkLook look = FltkTheme::For(control, "LoopWaveform", node);
 				loop->SetBGColour(look.Colour("face"));
 				loop->SetWaveColour(look.Colour("trace"));

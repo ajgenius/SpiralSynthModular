@@ -33,6 +33,30 @@
           ],
           "length": "LOOPPOINT",
           "name": "loop",
+          "on": {
+            "moved": [
+              {
+                "value": "MOVE",
+                "with": [
+                  "value"
+                ],
+                "write": "COMMAND"
+              },
+              {
+                "attribute": "reload",
+                "set": "loop"
+              }
+            ],
+            "sought": [
+              {
+                "value": "SEEK",
+                "with": [
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
           "pos": "POS",
           "sample": {
             "buffer": "SAMPLEBUFFER",

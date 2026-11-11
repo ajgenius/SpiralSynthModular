@@ -60,6 +60,7 @@ m_Snap(false),
 m_SnapDegrees(45),
 m_PosMarkerCount(0),
 cb_Move(NULL),
+cb_Seek(NULL),
 m_BGColour (FL_BLACK),
 m_WaveColour (FL_GREEN),
 m_SelColour (FL_WHITE),
@@ -291,6 +292,9 @@ int Fl_Loop::handle(int event)
 						
 					while (m_Pos < 0) m_Pos += m_Length;
 					while (m_Pos > m_Length) m_Pos -= m_Length;
+
+					// The marker alone moved here; whoever plays the loop is told.
+					if (cb_Seek) cb_Seek(this,(int)m_Pos);
 				}
 				else if (LastButtonPushed==1)			
 				{	
