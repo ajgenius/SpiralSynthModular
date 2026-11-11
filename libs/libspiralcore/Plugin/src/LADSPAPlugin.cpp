@@ -834,6 +834,13 @@ bool LADSPAPlugin::UpdatePlugin(unsigned long UniqueID)
 		return true;
 	}
 
+	// A reset keeps the port defaults to put back on the plugin once it
+	// has been selected again. A plugin that is not installed never is, and
+	// the defaults left behind for ports it no longer has stopped the patch
+	// being saved.
+	if (m_SSMPluginReset)
+		m_InputPortDefault.clear();
+
 	m_SSMPluginReset = false;
 	if (UniqueID)
 	{
