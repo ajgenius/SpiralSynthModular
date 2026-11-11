@@ -55,7 +55,7 @@ m_Triggered (false)
 {
 	m_SwitchPos = SignedProperty(DefaultLinearFlags, 1, 0, 100, 1, 1);
 	RegisterSharedProperty(m_SwitchPos, "Switch Position", "Selected input");
-  m_Chans = SignedProperty(DefaultLinearFlags, 2, 1, 100, 1, 1);
+  m_Chans = SignedProperty(DefaultLinearFlags, 2, 2, 100, 1, 1);
   RegisterSharedProperty(m_Chans, "Channels", "Number of channels");
   m_Echo = UnsignedProperty(Property::ReadOnly, 1, 0, 0, 0, 0);
   RegisterSharedProperty(m_Echo, "Echo", "The input in effect");

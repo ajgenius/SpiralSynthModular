@@ -62,7 +62,7 @@ m_TrigDelay (0)
 {
 	SetUnsigned(DeviceVersion, 2);
 
-	m_ChannelCount = SignedProperty(Property::ForceUpdate|DefaultLinearFlags, 2, 1, 256, 1, 1);
+	m_ChannelCount = SignedProperty(Property::ForceUpdate|DefaultLinearFlags, 2, 2, 256, 1, 1);
 	RegisterSharedProperty(m_ChannelCount, "Channels", "Channels");
 	{
 		std::vector<std::string> none, args;

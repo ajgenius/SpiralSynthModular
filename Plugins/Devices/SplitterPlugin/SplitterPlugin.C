@@ -60,7 +60,7 @@ SplitterPlugin::SplitterPlugin()
 {
 	SetUnsigned(DeviceVersion, 2);
 
-	m_ChannelCount = SignedProperty(Property::ForceUpdate|DefaultLinearFlags, 4, 1, 256, 1, 1);
+	m_ChannelCount = SignedProperty(Property::ForceUpdate|DefaultLinearFlags, 4, 2, 256, 1, 1);
 	RegisterSharedProperty(m_ChannelCount, "Channels", "Channels");
 	{
 		std::vector<std::string> none, args;
