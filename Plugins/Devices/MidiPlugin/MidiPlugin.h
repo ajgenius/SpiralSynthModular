@@ -57,6 +57,14 @@ public:
 private:
 	GUIArgs m_GUIArgs;
 	
+	// Read-outs for the panel: what the MIDI backend says of itself, and
+	// the controllers that have outputs, by name.
+	char m_Status[256];
+	char m_Mapped[1024];
+	long m_StatusAge;
+	void TellStatus();
+	void TellMapped();
+
 	void AddControl(int s,const std::string &Name);
 	void DeleteControl();
 	void PlaceEvents();

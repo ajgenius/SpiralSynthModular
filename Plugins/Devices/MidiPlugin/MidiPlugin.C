@@ -113,6 +113,11 @@ m_NextID(0)
 	RegisterSharedProperty(m_ContinuousNotes, "ContinuousNotes", "Keep the trigger up between notes");
 	m_Controls = VectorProperty(Property::WriteOnly);
 	RegisterSharedPropertyWithKey(m_Controls, "CONTROLS", "Controls", "Controller output mappings");
+	m_Status[0] = m_Mapped[0] = 0;
+	m_StatusAge = 0;
+	m_AudioCH->RegisterData("Status", ChannelHandler::OUTPUT, m_Status, sizeof(m_Status));
+	m_AudioCH->RegisterData("Mapped", ChannelHandler::OUTPUT, m_Mapped, sizeof(m_Mapped));
+	TellStatus();
 	m_AudioCH->Register("CC",&m_GUIArgs.s);
 	m_AudioCH->RegisterData("Name",ChannelHandler::INPUT,
 		&m_GUIArgs.Name,sizeof(m_GUIArgs.Name));
@@ -143,8 +148,37 @@ PluginInfo &MidiPlugin::Initialise(const HostInfo *Host)
 	return Info;
 }
 
+void MidiPlugin::TellStatus()
+{
+	const std::string status = MidiDevice::Get()->GetStatus();
+
+	strncpy(m_Status, status.c_str(), sizeof(m_Status) - 1);
+	m_Status[sizeof(m_Status) - 1] = 0;
+}
+
+void MidiPlugin::TellMapped()
+{
+	std::string names;
+
+	for (unsigned n = 0; n < m_Controls.size(); n++)
+		names += (n ? ", " : "") + ControlName(n).Value;
+
+	strncpy(m_Mapped, names.c_str(), sizeof(m_Mapped) - 1);
+	m_Mapped[sizeof(m_Mapped) - 1] = 0;
+}
+
 void MidiPlugin::Execute()
 {
+	// The backend may be changed under the device from the settings; its
+	// status is asked for again every couple of seconds.
+	m_StatusAge += m_HostInfo->BUFSIZE;
+
+	if (m_StatusAge >= 2L * m_HostInfo->SAMPLERATE)
+	{
+		m_StatusAge = 0;
+		TellStatus();
+	}
+
 
 	// Done to clear IsEmpty field... 
 	GetOutputBuf(0)->Zero();
@@ -311,6 +345,7 @@ void MidiPlugin::AddControl(int s, const string &Name)
 	m_PluginInfo.PortTips.push_back("Events");
 	PlaceEvents();
 	UpdatePluginInfoWithHost();
+	TellMapped();
 }
 
 void MidiPlugin::DeleteControl()
@@ -327,6 +362,7 @@ void MidiPlugin::DeleteControl()
 	m_PluginInfo.PortTips.push_back("Events");
 	PlaceEvents();
 	UpdatePluginInfoWithHost();
+	TellMapped();
 }
 
 void MidiPlugin::PlaceEvents()
@@ -455,4 +491,7 @@ void MidiPlugin::Apply(Spiral::Core::Description::Reader &r)
 			}			
 		}
 	}
+
+	// The names arrive after their controls are made.
+	TellMapped();
 }
