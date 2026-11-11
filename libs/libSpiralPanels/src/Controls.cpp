@@ -654,6 +654,7 @@ namespace Spiral
 			m_Button(NULL),
 			m_Target(NULL),
 			m_Then(NULL),
+			m_Row(0),
 			m_Save(false),
 			m_Pending(false),
 			m_Request(NULL)
@@ -702,6 +703,7 @@ namespace Spiral
 				return;
 
 			m_Pending = true;
+			m_Row = m_Panel.RowNumber(RowSourceName());
 			m_Request = new Request;
 			m_Request->Owner = this;
 			const std::string filter = m_Extension.empty() ? std::string() : "*" + m_Extension;
@@ -770,7 +772,7 @@ namespace Spiral
 					if (given.GetType() == Spumoni::JSON::String && given.Text() == "text")
 						arguments.push_back(m_Filename);
 					else if (given.GetType() == Spumoni::JSON::String && given.Text() == "row")
-						arguments.push_back(TextOfNumber((double)m_Panel.RowNumber(RowSourceName())));
+						arguments.push_back(TextOfNumber((double)m_Row));
 					else if (given.GetType() == Spumoni::JSON::Number)
 						arguments.push_back(TextOfNumber(NumberOf(&given, 0)));
 				}

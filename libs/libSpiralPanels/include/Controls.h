@@ -303,6 +303,9 @@ namespace Spiral
 			const PanelProperty *m_Target;
 			// What the panel does with a chosen file, beyond keeping its path.
 			const Spumoni::JSON *m_Then;
+			// The row the button's source was on when the chooser opened: the
+			// file is for that row, wherever the cursor is when one is chosen.
+			long m_Row;
 			bool m_Save, m_Pending;
 			std::string m_Title, m_Extension, m_Filename;
 			Request *m_Request;
