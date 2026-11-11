@@ -92,6 +92,8 @@ LADSPAPlugin::LADSPAPlugin()
 	m_UpdateInputs = ToggleProperty(Property::WriteOnly, true);
 	m_UnconnectedInputs = UnsignedProperty(DefaultLinearFlags, 0, 0, 0, 0, 0);
 	RegisterSharedProperty(m_Page, "Page", "Panel page");
+	m_PanelMode = SignedProperty(DefaultLinearFlags, 0, 0, 1, 1, 1);
+	RegisterSharedProperty(m_PanelMode, "PanelMode", "The generic panel, or the plugin's own");
 	RegisterSharedProperty(m_UpdateInputs, "UpdateInputs", "Update inputs");
 	RegisterSharedProperty(m_UnconnectedInputs, "UnconnectedInputs", "Unconnected inputs");
 	m_InputPortMin.List = VectorProperty(Property::WriteOnly);
@@ -246,6 +248,11 @@ void LADSPAPlugin::RefreshPanelData()
 	if (m_PanelData.Page != AsSigned(m_Page))
 	{
 		m_PanelData.Page = AsSigned(m_Page);
+		PanelChanged();
+	}
+	if (m_PanelData.Mode != AsSigned(m_PanelMode))
+	{
+		m_PanelData.Mode = AsSigned(m_PanelMode);
 		PanelChanged();
 	}
 }
@@ -798,6 +805,15 @@ void LADSPAPlugin::Apply(Spiral::Core::Description::Reader &r)
 			}
 		}
 		break;
+	}
+
+	// A device that comes from a patch opens on its plugin's own panel.
+	// The panel's side of the setting is told too: it is the panel's to
+	// write, and would otherwise put the old value back.
+	{
+		int own = 1;
+		AsSigned(m_PanelMode) = own;
+		m_AudioCH->SetDataAt("PanelMode", 0, &own, sizeof(own));
 	}
 
 	if (Version == 1) {

@@ -169,6 +169,10 @@ private:
 	unsigned long   m_UniqueID;
 	Spiral::Core::UnsignedProperty m_UniqueIDShown;
 	Spiral::Core::SignedProperty   m_Page;
+	// Which panel is on show: the generic pages, or the one written for
+	// the plugin loaded, when there is one. Not saved: a device from a
+	// patch opens on the plugin's own, one newly added on the generic.
+	Spiral::Core::SignedProperty   m_PanelMode;
 	Spiral::Core::ToggleProperty   m_UpdateInputs;
 
 	unsigned long   m_MaxInputPortCount;
@@ -209,6 +213,7 @@ private:
 		bool         *Connected;
 		bool         *Enabled;
 		int           Page;
+		int           Mode;
 		unsigned      Generation;
 	};
 	PanelChannelData      m_PanelData;

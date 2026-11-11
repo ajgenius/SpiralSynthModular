@@ -31,8 +31,8 @@ using Spumoni::JSON;
 namespace
 {
 	const int FrameX = 2, FrameY = 14;
-	const int Pages = 4;
-	enum { KnobsPage, SlidersPage, SetupPage, PanelPage };
+	const int Pages = 3;
+	enum { KnobsPage, SlidersPage, SetupPage };
 
 	JSON *Number(double value)
 	{
@@ -250,6 +250,24 @@ namespace
 	}
 }
 
+// The switch between the generic pages and the plugin's own panel.
+static JSON *Modes()
+{
+	JSON *modes = JSON::MakeArray();
+	const char *names[] = {"Generic", "Panel"};
+
+	for (int mode = 0; mode < 2; ++mode)
+	{
+		JSON *entry = JSON::MakeObject();
+		entry->SetOwned("name", Text(names[mode]));
+		entry->SetOwned("property", Text("PANELMODE"));
+		entry->SetOwned("value", Number(mode));
+		modes->AppendOwned(entry);
+	}
+
+	return modes;
+}
+
 unsigned LADSPAPlugin::PanelGeneration()
 {
 	int generation = 0;
@@ -294,11 +312,12 @@ static JSON *FindPanel(const string &directory, unsigned uniqueID)
 bool LADSPAPlugin::GeneratePanel(const string &Directory, string &Document)
 {
 	unsigned long count = 0;
-	int page = SetupPage;
+	int page = SetupPage, mode = 0;
 	unsigned uniqueID = 0;
 	char name[256] = {0}, maker[256] = {0};
 	m_AudioCH->GetData("Ports", &count);
 	m_AudioCH->Peek("Page", 0, &page, sizeof(page));
+	m_AudioCH->Peek("PanelMode", 0, &mode, sizeof(mode));
 	m_AudioCH->Peek("UniqueID", 0, &uniqueID, m_AudioCH->ChannelSize("UniqueID"));
 	m_AudioCH->GetData("PluginName", name);
 	m_AudioCH->GetData("Maker", maker);
@@ -312,8 +331,9 @@ bool LADSPAPlugin::GeneratePanel(const string &Directory, string &Document)
 	m_AudioCH->GetData("Connected", &connected[0]);
 
 	Spumoni::JSONOwner custom(uniqueID ? FindPanel(Directory, uniqueID) : NULL);
-	if (page < 0 || page >= Pages || (page == PanelPage && !custom.get()))
+	if (page < 0 || page >= Pages)
 		page = SetupPage;
+	const bool own = custom.get() && mode == 1 && custom->Get("panel") && custom->Get("panel")->GetType() == JSON::Object;
 
 	JSON *root = JSON::MakeObject();
 	root->SetOwned("schema_version", Number(1));
@@ -334,6 +354,9 @@ bool LADSPAPlugin::GeneratePanel(const string &Directory, string &Document)
 		unique->SetOwned("read_only", JSON::MakeBoolean(true));
 		properties->AppendOwned(unique);
 		properties->AppendOwned(Property("PAGE", "integer"));
+		JSON *panelMode = Property("PANELMODE", "integer");
+		panelMode->SetOwned("internal", JSON::MakeBoolean(true));
+		properties->AppendOwned(panelMode);
 		properties->AppendOwned(Property("UPDATEINPUTS", "boolean"));
 		JSON *pluginName = Property("PLUGINNAME", "string");
 		pluginName->SetOwned("read_only", JSON::MakeBoolean(true));
@@ -360,6 +383,19 @@ bool LADSPAPlugin::GeneratePanel(const string &Directory, string &Document)
 	for (unsigned long p = 0; p < count; p++)
 		if (!connected[p])
 			unconnected++;
+
+	// The plugin's own panel is shown as it was written, at its own size,
+	// with the switch back to the generic pages.
+	if (own)
+	{
+		JSON *panel = custom->Get("panel")->Duplicate();
+		panel->SetOwned("modes", Modes());
+		root->SetOwned("panel", panel);
+		delete children;
+		Document = root->Stringify(false);
+		delete root;
+		return true;
+	}
 
 	if (page == KnobsPage)
 	{
@@ -523,36 +559,9 @@ bool LADSPAPlugin::GeneratePanel(const string &Directory, string &Document)
 		update->SetOwned("size", Number(12));
 		children->AppendOwned(update);
 	}
-	else if (page == PanelPage)
-	{
-		const JSON *panel = custom->Get("panel");
-		const JSON *custom_children = panel ? panel->Get("children") : NULL;
-		if (custom_children && custom_children->GetType() == JSON::Array)
-		{
-			width = panel->Get("width") ? (int)atof(panel->Get("width")->Text().c_str()) + 2 * FrameX : width;
-			height = panel->Get("height") ? (int)atof(panel->Get("height")->Text().c_str()) + 35 + FrameY : height;
-			for (size_t i = 0; i < custom_children->Size(); i++)
-			{
-				JSON *child = custom_children->At(i)->Duplicate();
-				JSON *bounds = child->Get("bounds");
-				if (bounds && bounds->GetType() == JSON::Array && bounds->Size() == 4)
-				{
-					JSON *moved = JSON::MakeArray();
-					moved->AppendOwned(Number(atof(bounds->At(0)->Text().c_str())));
-					moved->AppendOwned(Number(atof(bounds->At(1)->Text().c_str()) + 35));
-					moved->AppendOwned(Number(atof(bounds->At(2)->Text().c_str())));
-					moved->AppendOwned(Number(atof(bounds->At(3)->Text().c_str())));
-					child->SetOwned("bounds", moved);
-				}
-				children->AppendOwned(child);
-			}
-		}
-	}
 
 	children->AppendOwned(PageButton("knobs", 5, 15, "Knobs", KnobsPage));
 	children->AppendOwned(PageButton("sliders", 60, 15, "Sliders", SlidersPage));
-	if (custom.get())
-		children->AppendOwned(PageButton("panel", 115, 15, "Panel", PanelPage));
 	children->AppendOwned(PageButton("setup", width - 55, 15, "Setup...", SetupPage));
 
 	JSON *panel = JSON::MakeObject();
@@ -561,24 +570,11 @@ bool LADSPAPlugin::GeneratePanel(const string &Directory, string &Document)
 	panel->SetOwned("height", Number(height - FrameY - FrameX));
 	panel->SetOwned("children", children);
 	if (custom.get())
-	{
-		JSON *modes = JSON::MakeArray();
-		JSON *made = JSON::MakeObject();
-		made->SetOwned("name", Text("Generated"));
-		made->SetOwned("property", Text("PAGE"));
-		made->SetOwned("value", Number(KnobsPage));
-		modes->AppendOwned(made);
-		JSON *written = JSON::MakeObject();
-		written->SetOwned("name", Text("Panel"));
-		written->SetOwned("property", Text("PAGE"));
-		written->SetOwned("value", Number(PanelPage));
-		modes->AppendOwned(written);
-		panel->SetOwned("modes", modes);
-	}
+		panel->SetOwned("modes", Modes());
 	panel->SetOwned("help", Text("A LADSPA plugin: pick one on the Setup page, where each input has its "
 		"default (used while no wire feeds it), its range and whether a wire's "
 		"signal is clamped to that range. Knobs and Sliders show the unwired "
-		"inputs' defaults to turn; Panel is a hand-written page for this plugin, when there is one."));
+		"inputs' defaults to turn. A plugin with a panel written for it has a switch between that and these pages."));
 	root->SetOwned("panel", panel);
 
 	Document = root->Stringify(false);
