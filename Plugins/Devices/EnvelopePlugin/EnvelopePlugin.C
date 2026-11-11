@@ -21,7 +21,10 @@
 using namespace std;
 using namespace Spiral::Core;
 
-static const FloatType TIMED_SLIDER_MAX = 3.0f;
+// The longest attack, decay or release in seconds. The original editor's
+// sliders ran 0 to 3 and kept the square, so this is 9 and not the 3 the
+// slider showed.
+static const FloatType TIMED_SLIDER_MAX = 9.0f;
 
 // a bit of a crap filter to smooth clicks
 static float SMOOTH = 0.99;
