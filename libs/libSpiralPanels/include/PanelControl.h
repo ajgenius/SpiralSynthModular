@@ -60,6 +60,11 @@ namespace Spiral
 			unsigned Colour() const { return GUIColour(); }
 			bool Toggles() const { return m_Toggle; }
 			const Panel &Owner() const { return m_Panel; }
+			// The row source this control is on, if any; its property is then
+			// a field of that source's rows.
+			const std::string &RowSourceName() const { return m_RowSource; }
+			// The source's cursor moved to another row.
+			virtual void RowMoved() {}
 
 			virtual void Load() {}
 			virtual void Refresh();
@@ -110,6 +115,7 @@ namespace Spiral
 
 			Panel &m_Panel;
 			std::string m_Name;
+			std::string m_RowSource, m_RowField;
 			int m_X, m_Y, m_W, m_H;
 			double m_Min, m_Max, m_Step;
 			bool m_HasRange;

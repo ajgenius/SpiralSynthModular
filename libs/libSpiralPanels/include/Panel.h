@@ -21,6 +21,7 @@
 
 #include "Binding.h"
 #include "MemorySource.h"
+#include "RowSource.h"
 #include "Handlers.h"
 #include "ValueRule.h"
 #include "ControlView.h"
@@ -75,6 +76,12 @@ namespace Spiral
 			double Read(const PanelProperty &property) const;
 			std::string ReadText(const PanelProperty &property) const;
 			PanelSource *Source() const { return m_Source; }
+			// The panel's row sources: the device's numbered properties seen
+			// as rows. The number the device gives a source's first row, and
+			// the row it is on now.
+			Spiral::Data::RowSource *Rows(const std::string &source) const;
+			long FirstRow(const std::string &source) const;
+			long RowNumber(const std::string &source) const;
 			bool IsState(const PanelProperty &property) const;
 			void SaveState(std::map<std::string, Spiral::Data::ControlValue> &state) const;
 			void LoadState(const std::map<std::string, Spiral::Data::ControlValue> &state);
@@ -161,6 +168,10 @@ namespace Spiral
 			size_t m_Mode;
 
 			void Bind();
+			void BuildSources(const Spumoni::JSON &panel);
+			void FollowRows(Spiral::Data::DataSource &moved);
+			std::map<std::string, Spiral::Data::RowSource *> m_Rows;
+			std::map<std::string, long> m_RowFirst;
 			Spiral::Data::DataSource &SourceOf(const PanelProperty &property) const;
 			PanelHost &m_Host;
 			PanelSource *m_Source;

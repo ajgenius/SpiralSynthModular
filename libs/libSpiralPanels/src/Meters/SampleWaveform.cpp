@@ -16,10 +16,14 @@ namespace Spiral
 		SampleWaveformControl::SampleWaveformControl(Panel &panel, const Spumoni::JSON &node):
 			PanelControl(panel, node),
 			m_Display(MakeView<SampleView>("SampleWaveform", *this, node)),
-			m_Pos(panel.FindProperty(TextOf(node.Get("pos")))),
-			m_PlayStart(panel.FindProperty(TextOf(node.Get("play_start")))),
-			m_LoopStart(panel.FindProperty(TextOf(node.Get("loop_start")))),
-			m_LoopEnd(panel.FindProperty(TextOf(node.Get("loop_end")))),
+			m_Pos(NULL),
+			m_PlayStart(NULL),
+			m_LoopStart(NULL),
+			m_LoopEnd(NULL),
+			m_PosName(TextOf(node.Get("pos"))),
+			m_PlayStartName(TextOf(node.Get("play_start"))),
+			m_LoopStartName(TextOf(node.Get("loop_start"))),
+			m_LoopEndName(TextOf(node.Get("loop_end"))),
 			m_Fetched(false),
 			m_SentPlayStart(-1),
 			m_SentLoopStart(-1),
@@ -34,8 +38,33 @@ namespace Spiral
 				m_BufferChannel = TextOf(sample->Get("buffer"));
 			}
 
+			FindMarks();
+
 			if (m_Display)
 				Adopt(m_Display);
+		}
+
+		// The properties the marks are kept in: as named, or on a row source
+		// the row's, the name with the row's number after it.
+		void SampleWaveformControl::FindMarks()
+		{
+			std::string number;
+
+			if (!RowSourceName().empty() && m_Panel.Rows(RowSourceName()))
+				number = TextOfNumber((double)m_Panel.RowNumber(RowSourceName()));
+
+			m_Pos = m_PosName.empty() ? NULL : m_Panel.FindProperty(m_PosName + number);
+			m_PlayStart = m_PlayStartName.empty() ? NULL : m_Panel.FindProperty(m_PlayStartName + number);
+			m_LoopStart = m_LoopStartName.empty() ? NULL : m_Panel.FindProperty(m_LoopStartName + number);
+			m_LoopEnd = m_LoopEndName.empty() ? NULL : m_Panel.FindProperty(m_LoopEndName + number);
+		}
+
+		// Another row's sample is on show: its marks, and the sample itself.
+		void SampleWaveformControl::RowMoved()
+		{
+			FindMarks();
+			m_SentPlayStart = m_SentLoopStart = m_SentLoopEnd = -1;
+			Reload();
 		}
 
 		void SampleWaveformControl::Load()

@@ -70,6 +70,10 @@ namespace Spiral
 			m_Layouts.clear();
 			m_Layout = 0;
 			m_Binder.Clear();
+			for (std::map<std::string, Spiral::Data::RowSource *>::iterator i = m_Rows.begin(); i != m_Rows.end(); ++i)
+				delete i->second;
+			m_Rows.clear();
+			m_RowFirst.clear();
 			delete m_State;
 			m_State = NULL;
 			for (size_t i = 0; i < m_Controls.size(); ++i)
@@ -190,6 +194,8 @@ namespace Spiral
 			m_Help = PanelControl::TextOf(panel->Get("help"));
 			m_AutoWidth = panel->Get("auto_width");
 
+			BuildSources(*panel);
+
 			if (model.Panel() && model.Panel()->HasChildren())
 			{
 				int originX, originY;
@@ -208,12 +214,124 @@ namespace Spiral
 			return true;
 		}
 
+		// A panel's row sources, before the controls that name them: the
+		// fields their rows share, how many rows, and the property a selector
+		// moves the cursor by.
+		void Panel::BuildSources(const Spumoni::JSON &panel)
+		{
+			const Spumoni::JSON *sources = panel.Get("sources");
+
+			if (!sources || sources->GetType() != Spumoni::JSON::Object)
+				return;
+
+			const std::vector<std::string> names = sources->Keys();
+
+			for (size_t i = 0; i < names.size(); ++i)
+			{
+				const Spumoni::JSON &written = *sources->Get(names[i]);
+				const Spumoni::JSON *fields = written.Get("fields"), *count = written.Get("count");
+				const long first = (long)PanelControl::NumberOf(written.Get("first"), 0);
+				Spiral::Data::RowSource *rows = new Spiral::Data::RowSource(&m_Source->Data(), first);
+
+				m_Rows[names[i]] = rows;
+				m_RowFirst[names[i]] = first;
+
+				for (size_t f = 0; fields && fields->GetType() == Spumoni::JSON::Array && f < fields->Size(); ++f)
+					if (rows->AddField(PanelControl::TextOf(fields->At(f))) < 0)
+						m_Unbound.push_back(names[i] + "." + PanelControl::TextOf(fields->At(f)) + ": no row has such a property");
+
+				// A number of rows, or the property that holds it.
+				if (count && count->GetType() == Spumoni::JSON::String)
+				{
+					if (!rows->CountFrom(count->Text()))
+						m_Unbound.push_back(names[i] + ": no count property " + count->Text());
+				}
+				else if (count)
+					rows->SetCount((long)PanelControl::NumberOf(count, 0));
+
+				const std::string position = PanelControl::TextOf(written.Get("position"));
+
+				if (!position.empty() && !rows->PositionFrom(position))
+					m_Unbound.push_back(names[i] + ": no position property " + position);
+
+				rows->Observe(this);
+			}
+		}
+
+		Spiral::Data::RowSource *Panel::Rows(const std::string &source) const
+		{
+			const std::map<std::string, Spiral::Data::RowSource *>::const_iterator found = m_Rows.find(source);
+
+			return found == m_Rows.end() ? NULL : found->second;
+		}
+
+		long Panel::FirstRow(const std::string &source) const
+		{
+			const std::map<std::string, long>::const_iterator found = m_RowFirst.find(source);
+
+			return found == m_RowFirst.end() ? 0 : found->second;
+		}
+
+		long Panel::RowNumber(const std::string &source) const
+		{
+			const Spiral::Data::RowSource *rows = Rows(source);
+
+			return FirstRow(source) + (rows ? rows->Position() : 0);
+		}
+
+		// A source's cursor moved. A control bound to the rows has already
+		// been told by its binding; the property it reads its range and its
+		// unbound value from moves here, to the new row's.
+		void Panel::FollowRows(Spiral::Data::DataSource &moved)
+		{
+			for (std::map<std::string, Spiral::Data::RowSource *>::iterator rows = m_Rows.begin(); rows != m_Rows.end(); ++rows)
+			{
+				if (rows->second != &moved)
+					continue;
+
+				char number[32];
+
+				snprintf(number, sizeof(number), "%ld", RowNumber(rows->first));
+
+				const bool loading = m_Loading;
+
+				m_Loading = true;
+
+				for (size_t i = 0; i < m_Controls.size(); ++i)
+				{
+					PanelControl &control = *m_Controls[i];
+
+					if (control.RowSourceName() != rows->first)
+						continue;
+
+					const PanelProperty *to = control.m_RowField.empty() ? NULL : FindProperty(control.m_RowField + number);
+
+					if (to)
+						control.m_Property = to;
+
+					control.RowMoved();
+
+					if (!control.Bound())
+						control.Load();
+				}
+
+				m_Loading = loading;
+			}
+		}
+
 		void Panel::Bind()
 		{
 			for (size_t i = 0; i < m_Controls.size(); ++i)
 			{
 				const PanelProperty *property = m_Controls[i]->Property();
-				m_Controls[i]->BindTo(m_Binder, property ? SourceOf(*property) : m_Source->Data());
+				Spiral::Data::RowSource *rows = Rows(m_Controls[i]->RowSourceName());
+
+				// A control on a row source binds to the rows' field, so its
+				// binding follows the cursor.
+				if (rows && property && rows->FindField(m_Controls[i]->m_RowField) >= 0)
+					m_Controls[i]->BindTo(m_Binder, *rows);
+				else
+					m_Controls[i]->BindTo(m_Binder, property ? SourceOf(*property) : m_Source->Data());
 			}
 		}
 
@@ -501,6 +619,8 @@ namespace Spiral
 		{
 			m_Loading = true;
 			m_Source->Refresh();
+			for (std::map<std::string, Spiral::Data::RowSource *>::iterator rows = m_Rows.begin(); rows != m_Rows.end(); ++rows)
+				rows->second->Poll();
 			ShowRepeats();
 			m_Binder.Refresh();
 			for (size_t i = 0; i < m_Controls.size(); ++i)
@@ -516,6 +636,9 @@ namespace Spiral
 		{
 			m_Loading = true;
 			m_Source->Refresh();
+			// A device source that tells no one of a moved selector is asked.
+			for (std::map<std::string, Spiral::Data::RowSource *>::iterator rows = m_Rows.begin(); rows != m_Rows.end(); ++rows)
+				rows->second->Poll();
 			for (size_t r = 0; r < m_Repeats.size(); ++r)
 				if (RepeatCount(m_Repeats[r]) != m_Repeats[r].Shown)
 				{
@@ -558,6 +681,11 @@ namespace Spiral
 		void Panel::DataChanged(Spiral::Data::DataSource &source, int field)
 		{
 			if (field < 0)
+			{
+				FollowRows(source);
+				return;
+			}
+			if (source.FieldCount() <= field)
 				return;
 			const PanelProperty *property = FindProperty(source.Field(field).Key);
 			if (!property)

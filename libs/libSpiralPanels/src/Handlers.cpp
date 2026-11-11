@@ -85,7 +85,9 @@ namespace Spiral
 					{
 						a.kind = Handlers::Argument::Named;
 						a.name = arg->Text();
-						if (!Contains(carried, a.name))
+						// "row" is the number of the row the control's source is on,
+						// whatever the event.
+						if (a.name != "row" && !Contains(carried, a.name))
 							return Refuse(problem, event + " carries no argument " + a.name);
 					}
 					else if (arg && arg->GetType() == Spumoni::JSON::Object && IsString(arg->Get("control")) &&

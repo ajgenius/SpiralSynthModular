@@ -122,8 +122,25 @@ namespace Spiral
 			}
 
 			const Spumoni::JSON *property = node.Get("property");
+			const Spumoni::JSON *source = node.Get("source");
+			if (source && source->GetType() == Spumoni::JSON::String)
+				m_RowSource = source->Text();
 			if (property && property->GetType() == Spumoni::JSON::String)
-				m_Property = panel.FindProperty(property->Text());
+			{
+				// On a row source the property is a field of its rows; the
+				// control starts on the first row's own property, for its
+				// range and kind, and the panel moves it with the cursor.
+				if (!m_RowSource.empty() && panel.Rows(m_RowSource))
+				{
+					char number[32];
+
+					snprintf(number, sizeof(number), "%ld", panel.FirstRow(m_RowSource));
+					m_RowField = property->Text();
+					m_Property = panel.FindProperty(m_RowField + number);
+				}
+				else
+					m_Property = panel.FindProperty(property->Text());
+			}
 
 			if (m_Property && m_Property->HasRange())
 			{
@@ -274,7 +291,8 @@ namespace Spiral
 		void PanelControl::BindTo(Spiral::Data::Binder &binder, Spiral::Data::DataSource &source)
 		{
 			if (m_Property && !m_Property->IsCommand())
-				m_Binding = binder.BindValue(this, &source, m_Property->Name(), new PanelConverter(*this));
+				m_Binding = binder.BindValue(this, &source, source.FindField(m_RowField) >= 0 ? m_RowField : m_Property->Name(),
+						new PanelConverter(*this));
 		}
 
 		bool PanelControl::DependsOn(const PanelProperty &property) const
@@ -587,6 +605,8 @@ namespace Spiral
 			Spiral::Data::Handlers::Arguments arguments;
 			arguments["value"] = Spiral::Data::ControlValue(value);
 			arguments["text"] = Spiral::Data::ControlValue(text);
+			if (!m_RowSource.empty())
+				arguments["row"] = Spiral::Data::ControlValue((double)m_Panel.RowNumber(m_RowSource));
 			Fire(event, arguments);
 		}
 

@@ -52,6 +52,7 @@
         "if_property": ["string"],
         "name": ["string"],
         "on": ["handlers"],
+        "source": ["string"],
         "tooltip": ["text"],
         "value": ["binding"],
         "visible": ["binding", "boolean"]

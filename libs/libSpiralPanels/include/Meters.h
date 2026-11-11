@@ -209,6 +209,7 @@ namespace Spiral
 			virtual void Refresh();
 			virtual void SetAttribute(const std::string &attribute, double value);
 			virtual bool GetAttribute(const std::string &attribute, double &value) const;
+			virtual void RowMoved();
 			void MarkerMoved();
 
 		protected:
@@ -219,6 +220,8 @@ namespace Spiral
 			SampleView *m_Display;
 			std::vector<float> m_Samples;
 			const PanelProperty *m_Pos, *m_PlayStart, *m_LoopStart, *m_LoopEnd;
+			std::string m_PosName, m_PlayStartName, m_LoopStartName, m_LoopEndName;
+			void FindMarks();
 			std::string m_SampleCommand, m_SizeChannel, m_BufferChannel;
 			bool m_Fetched;
 			long m_SentPlayStart, m_SentLoopStart, m_SentLoopEnd;
