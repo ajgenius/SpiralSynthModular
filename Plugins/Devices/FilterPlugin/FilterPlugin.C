@@ -76,11 +76,14 @@ k(1.0)               // Set overall filter gain
 	
 	SetUnsigned(DeviceVersion, 2);
 
-	fc = FloatProperty(DefaultLinearFlags, 100, 0, 100, 0.01,  1);
-	Q = FloatProperty(DefaultLinearFlags, 1, 0, 10, 0.01, 0.1);
+	// The original editor's cutoff slider ran 0 to 100 and stored its
+	// square plus 10, and its resonance knob ran 0 to 10 and stored one
+	// more: these are the ranges of the values kept, not of the controls.
+	fc = FloatProperty(DefaultLinearFlags, 100, 10, 10010, 0.01,  1);
+	Q = FloatProperty(DefaultLinearFlags, 1, 1, 11, 0.01, 0.1);
 
-	RegisterSharedProperty(fc, "Cutoff", "Cutoff");
-	RegisterSharedProperty(Q, "Resonance", "Resonance");
+	RegisterSharedProperty(fc, "Cutoff", "Cutoff in Hz, 10 to 10010");
+	RegisterSharedProperty(Q, "Resonance", "Resonance, 1 to 11");
 
 	m_RevCutoffMod = ToggleProperty(Property::WriteOnly, false);
 	m_RevResonanceMod = ToggleProperty(Property::WriteOnly, false);
