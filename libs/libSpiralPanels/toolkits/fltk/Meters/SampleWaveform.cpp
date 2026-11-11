@@ -56,6 +56,7 @@ namespace Spiral
 
 				void SetPlayPosition(long position) { m_Display->SetPlayPos(position); }
 				void ShowPositionMarker(bool shown) { m_Display->SetPosMarker(shown); }
+				bool TakeDrawn(long &position, float &value) { return m_Display->TakeDrawn(position, value); }
 
 				void Zoom(bool in)
 				{

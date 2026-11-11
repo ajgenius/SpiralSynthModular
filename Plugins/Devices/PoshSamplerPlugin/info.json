@@ -230,6 +230,16 @@
           "loop_start": "LOOPSTART",
           "name": "wave",
           "on": {
+            "drawn": [
+              {
+                "value": "DRAW",
+                "with": [
+                  "row",
+                  "text"
+                ],
+                "write": "COMMAND"
+              }
+            ],
             "value_changed": [
               {
                 "value": "SETPLAYPOINTS",

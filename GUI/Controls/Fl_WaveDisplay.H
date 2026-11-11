@@ -45,6 +45,12 @@ class Fl_WaveDisplay : public Fl_Widget {
       void SetLoopEnd(long s)   { m_LoopEnd=s; }
       long GetLoopEnd()         { return m_LoopEnd; }
       void SetPosMarker(bool s) { m_PosMarker=s; }
+      // The sample a right drag last set, once: its place and new value.
+      bool TakeDrawn(long &pos, float &value) {
+           if (!m_Drew) return false;
+           m_Drew=false; pos=m_DrawnPos; value=m_DrawnValue;
+           return true;
+      }
       void ZoomIn();
       void ZoomOut();
       void SetColours (unsigned b, unsigned f, unsigned s, unsigned i, unsigned m) {
@@ -57,6 +63,9 @@ class Fl_WaveDisplay : public Fl_Widget {
       long m_StartPos, m_EndPos, m_ViewStart, m_ViewEnd;
       long m_PlayPos, m_PlayStart, m_LoopStart, m_LoopEnd;
       bool m_PosMarker;
+      bool m_Drew;
+      long m_DrawnPos;
+      float m_DrawnValue;
       std::vector<float> m_Min, m_Max;
       long m_EnvStart, m_EnvJump;
       bool m_EnvValid;

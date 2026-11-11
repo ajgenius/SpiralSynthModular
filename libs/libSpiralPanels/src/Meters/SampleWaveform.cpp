@@ -118,8 +118,24 @@ namespace Spiral
 			return changed;
 		}
 
+		// A stroke drawn on the view: the view changed only its own copy, so
+		// the panel's handler sends the sample's place and value on.
+		static const PanelControl::Event Drawn = {"drawn", {"value", "text", NULL}};
+
+		void SampleWaveformControl::DeclareEvents(std::vector<Event> &out) const
+		{
+			PanelControl::DeclareEvents(out);
+			out.push_back(Drawn);
+		}
+
 		void SampleWaveformControl::MarkerMoved()
 		{
+			long position = 0;
+			float value = 0;
+
+			if (m_Display->TakeDrawn(position, value))
+				Fire("drawn", value, TextOfNumber((double)position) + " " + TextOfNumber(value));
+
 			if (MarkersChanged())
 				Commit(0);
 		}

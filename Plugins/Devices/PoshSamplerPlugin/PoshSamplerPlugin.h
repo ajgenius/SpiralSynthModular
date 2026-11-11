@@ -45,7 +45,7 @@ class PoshSamplerPlugin : public Spiral::Core::Device {
       virtual bool SaveExternalFiles (const std::string &Dir);
       virtual void LoadExternalFiles (const std::string &Dir, int withID=-1);
       enum GUICommands {NONE, LOAD, SAVE, SETPLAYPOINTS, SETREC, CUT, COPY, PASTE, CROP, MIX,
-                        REV, AMP, SETCURRENT, GETSAMPLE};
+                        REV, AMP, SETCURRENT, GETSAMPLE, DRAW};
       struct GUIArgs {
          int Num;
          bool Boole;
@@ -119,6 +119,7 @@ class PoshSamplerPlugin : public Spiral::Core::Device {
       void Crop (int n, long s, long e);
       void Reverse (int n, long s, long e);
       void Amp (int n, long s, long e);
+      void Draw (int n, const char *stroke);
       int m_Current;
       GUIArgs m_GUIArgs;
       Sample m_CopyBuffer;

@@ -67,6 +67,8 @@ namespace Spiral
 			virtual long GetMarker(Marker marker) const = 0;
 			virtual void SetPlayPosition(long position) = 0;
 			virtual void ShowPositionMarker(bool shown) = 0;
+			// The sample a stroke last set on the view, once.
+			virtual bool TakeDrawn(long &position, float &value) = 0;
 			virtual void Zoom(bool in) = 0;
 			virtual long RangeStart() const = 0;
 			virtual long RangeEnd() const = 0;
@@ -214,6 +216,7 @@ namespace Spiral
 
 		protected:
 			SampleWaveformControl(Panel &panel, const Spumoni::JSON &node);
+			virtual void DeclareEvents(std::vector<Event> &out) const;
 			void Reload();
 			bool MarkersChanged();
 

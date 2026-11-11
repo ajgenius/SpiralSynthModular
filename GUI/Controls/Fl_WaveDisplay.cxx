@@ -36,6 +36,9 @@ m_PlayStart(0),
 m_LoopStart(0),
 m_LoopEnd(INT_MAX),
 m_PosMarker(true),
+m_Drew(false),
+m_DrawnPos(0),
+m_DrawnValue(0),
 m_EnvStart(0),
 m_EnvJump(0),
 m_EnvValid(false)
@@ -278,7 +281,16 @@ int Fl_WaveDisplay::handle(int event)
 			{
 				int MousePos=(xx-x())*((m_ViewEnd-m_ViewStart)/w())+m_ViewStart;
 				float Value=-(yy-y())/((float)h()/2.0f)+1.0f;
-				if (MousePos>=0 && MousePos<length) m_Sample[MousePos]=Value;
+				if (Value>1.0f) Value=1.0f;
+				if (Value<-1.0f) Value=-1.0f;
+				if (MousePos>=0 && MousePos<length)
+				{
+					m_Sample[MousePos]=Value;
+					// For whoever owns the sample: this copy is only what is shown.
+					m_Drew=true;
+					m_DrawnPos=MousePos;
+					m_DrawnValue=Value;
+				}
 				m_EnvValid=false;
 				redraw();
 			}

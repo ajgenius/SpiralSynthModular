@@ -17,6 +17,7 @@
 */
 #include "PoshSamplerPlugin.h"
 #include "Finite.h"
+#include <vector>
 #include <cmath>
 #include <algorithm>
 #include "SpiralIcon.xpm"
@@ -169,6 +170,8 @@ m_LastRecording(false)
         	m_AudioCH->RegisterCommand("SETPLAYPOINTS", SETPLAYPOINTS, args, "iiii");
         	args.clear(); args.push_back("Bool");
         	m_AudioCH->RegisterCommand("SETREC", SETREC, args, "i");
+        	args.clear(); args.push_back("Num"); args.push_back("Name");
+        	m_AudioCH->RegisterCommand("DRAW", DRAW, args, "is");
         }
 }
 
@@ -325,6 +328,9 @@ void PoshSamplerPlugin::ExecuteCommands() {
              break;
           case AMP:
              Amp (m_GUIArgs.Num, m_GUIArgs.Start, m_GUIArgs.End);
+             break;
+          case DRAW:
+             Draw (m_GUIArgs.Num, m_GUIArgs.Name);
              break;
           case SETCURRENT:
              m_Current = m_GUIArgs.Num;
@@ -516,6 +522,25 @@ void PoshSamplerPlugin::Reverse(int n, long s, long e)
 {
 	if (m_SampleVec[n]->GetLength()==0) return;
 	m_SampleVec[n]->Reverse(s, e);
+}
+
+// A stroke drawn on the waveform: each sample's place and its new value, in
+// pairs. Nothing is set unless every pair is a place in the sample and a value
+// within one of zero.
+void PoshSamplerPlugin::Draw(int n, const char *stroke)
+{
+	if (n<0 || n>=NUM_SAMPLES) return;
+	std::istringstream in(stroke);
+	std::vector<std::pair<long, float> > points;
+	long place;
+	float value;
+	while (in >> place)
+	{
+		if (!(in >> value) || place<0 || place>=m_SampleVec[n]->GetLength() || !(value>=-1 && value<=1)) return;
+		points.push_back(std::make_pair(place, value));
+	}
+	if (!in.eof()) return;
+	for (size_t i=0; i<points.size(); i++) m_SampleVec[n]->Set(points[i].first, points[i].second);
 }
 
 void PoshSamplerPlugin::Amp(int n, long s, long e)
