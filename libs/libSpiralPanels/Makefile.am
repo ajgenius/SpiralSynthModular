@@ -7,6 +7,7 @@ libSpiralPanels_la_SOURCES = \
 	include/DataSource.h src/DataSource.cpp \
 	include/Binding.h src/Binding.cpp \
 	include/MemorySource.h src/MemorySource.cpp \
+	include/RowSource.h src/RowSource.cpp \
 	include/ValueRule.h src/ValueRule.cpp \
 	include/Handlers.h src/Handlers.cpp \
 	include/PanelNode.h src/PanelNode.cpp \
