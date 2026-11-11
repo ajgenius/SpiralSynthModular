@@ -1,14 +1,7 @@
 #include "AudioTransportHub.h"
 #include <cassert>
 #include <cstdio>
-#include <sys/time.h>
-
-static double Now()
-{
-	struct timeval now;
-	gettimeofday(&now, NULL);
-	return now.tv_sec + now.tv_usec / 1000000.0;
-}
+#include "AudioTiming.h"
 
 int main()
 {
@@ -17,7 +10,7 @@ int main()
 	host.SAMPLERATE = 48000;
 	AudioTransportHub *hub = AudioTransportHub::Get();
 	hub->SetHost(&host);
-	const double start = Now();
+	const double start = Spiral::Core::AudioMonotonicTime();
 	for (unsigned n = 0; n < 10; ++n)
 	{
 		assert(hub->WaitPeriod());
@@ -25,10 +18,13 @@ int main()
 		hub->CommitPeriod();
 	}
 
-	const double elapsed = Now() - start;
+	const double elapsed = Spiral::Core::AudioMonotonicTime() - start;
 	printf("No Output: 9600 frames at 48 kHz in %.4f seconds\n", elapsed);
 	assert(hub->Frame() == 9600);
-	assert(elapsed >= 0.18 && elapsed < 0.5);
+	// The hub's own clock, and its allowance for a period that is due within
+	// 10 microseconds: the wall clock can be slewed, and nine periods of waiting
+	// come to exactly the lower limit.
+	assert(elapsed >= 0.18 - 0.00002 && elapsed < 0.5);
 	hub->SetHost(NULL);
 	return 0;
 }
