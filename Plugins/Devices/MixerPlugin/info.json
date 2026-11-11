@@ -76,7 +76,6 @@
             }
           ],
           "count_property": "CHANNELS",
-          "max_count": 16,
           "name": "channels",
           "step_x": 20,
           "type": "Repeat"
