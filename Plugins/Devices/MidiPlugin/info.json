@@ -30,8 +30,25 @@
             20
           ],
           "digits": 0,
+          "if_property": "DEVICENUM",
           "name": "channel",
           "property": "DEVICENUM",
+          "simple": true,
+          "size": 14,
+          "step": 1,
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            10,
+            1,
+            56,
+            20
+          ],
+          "digits": 0,
+          "if_property": "CHANNEL",
+          "name": "midi-channel",
+          "property": "CHANNEL",
           "simple": true,
           "size": 14,
           "step": 1,
@@ -246,10 +263,138 @@
           },
           "text": "Remove Control",
           "type": "Button"
+        },
+        {
+          "bounds": [
+            84,
+            2,
+            66,
+            20
+          ],
+          "expand_width": 300,
+          "if_property": "BACKEND",
+          "name": "backend-label",
+          "size": 12,
+          "text": "Backend",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            152,
+            2,
+            144,
+            20
+          ],
+          "if_property": "BACKEND",
+          "items_property": "BACKENDS",
+          "name": "backend",
+          "property": "BACKEND",
+          "size": 12,
+          "type": "Choice"
+        },
+        {
+          "bounds": [
+            84,
+            24,
+            66,
+            20
+          ],
+          "if_property": "BACKEND",
+          "name": "source-label",
+          "size": 12,
+          "text": "Source",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            152,
+            24,
+            144,
+            20
+          ],
+          "if_property": "SOURCE",
+          "items_property": "SOURCES",
+          "name": "midi-source",
+          "property": "SOURCE",
+          "size": 12,
+          "type": "Choice"
+        },
+        {
+          "bounds": [
+            84,
+            46,
+            66,
+            20
+          ],
+          "if_property": "BACKEND",
+          "name": "destination-label",
+          "size": 12,
+          "text": "Destination",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            152,
+            46,
+            144,
+            20
+          ],
+          "if_property": "DESTINATION",
+          "items_property": "DESTINATIONS",
+          "name": "destination",
+          "property": "DESTINATION",
+          "size": 12,
+          "type": "Choice"
+        },
+        {
+          "bounds": [
+            84,
+            68,
+            212,
+            18
+          ],
+          "if_property": "VOICE LANES",
+          "name": "voice-lanes",
+          "property": "VOICE LANES",
+          "size": 12,
+          "text": "Voice lanes (instrument pool)",
+          "type": "CheckBox"
+        },
+        {
+          "bounds": [
+            84,
+            88,
+            212,
+            16
+          ],
+          "if_property": "MAPPED",
+          "name": "mapped",
+          "property": "MAPPED",
+          "size": 12,
+          "tooltip": "Controller outputs",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            84,
+            105,
+            212,
+            16
+          ],
+          "if_property": "STATUS",
+          "name": "status",
+          "property": "STATUS",
+          "size": 12,
+          "type": "Label"
         }
       ],
       "height": 124,
       "help": "The MIDI channel to listen on (0 for all) and whether a new note cuts the last.",
+      "poll": [
+        "BACKENDS",
+        "DESTINATIONS",
+        "SOURCES"
+      ],
       "schema_version": 1,
       "width": 76
     },
