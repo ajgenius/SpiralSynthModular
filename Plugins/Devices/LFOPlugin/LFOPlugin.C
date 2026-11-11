@@ -62,10 +62,13 @@ m_TableLength (DEFAULT_TABLE_LEN) {
 	};
 
 	m_Type = SetProperty(Property::WriteOnly, 0, NamedPropertySet(WaveTypes, sizeof(WaveTypes)/sizeof(WaveTypes[0])));
-	m_Freq = FloatProperty(DefaultLinearFlags, 0.1, 0.0, 1.0, 0.001, 0.1);
+	// The original editor's period ran from a tenth of a second to two
+	// minutes, so the frequency runs up to 10 Hz and down to 1/120; zero
+	// is below that and means stopped.
+	m_Freq = FloatProperty(DefaultLinearFlags, 0.1, 0.0, 10.0, 0.001, 0.1);
 
 	RegisterSharedProperty(m_Type, "Wave Type", "Wave Type");
-	RegisterSharedProperty(m_Freq, "Frequency", "Frequency");
+	RegisterSharedProperty(m_Freq, "Frequency", "Frequency in Hz, 1/120 to 10 (period is its reciprocal)");
 
 	SetUnsigned(DeviceVersion, 2);
 	m_CyclePos = 0;
