@@ -2267,7 +2267,24 @@ iostream &SynthModular::StreamPatchIn(iostream &s, bool merge, const string &sid
 		int ID, PluginID, x, y;
 		int ps = 0, px = 0, py = 0;
 
+		// Some files count more devices than they hold, where the original
+		// left one out as it saved. What follows the last device is then the
+		// wires, and read as a device it gave "Duplicate device ID" and the
+		// patch came in with no wires at all. The devices end where the
+		// next word is not "Device".
+		const std::streampos here = s.tellg();
+
 		s>>dummy; // "Device"
+
+		if (dummy != "Device")
+		{
+			cerr << "SSM: The file counts " << Num << " devices and holds " << n << ".\n";
+			s.clear();
+			s.seekg(here);
+
+			break;
+		}
+
 		s>>ID;
 		s>>dummy2; // "Plugin"
 		s>>PluginID;
