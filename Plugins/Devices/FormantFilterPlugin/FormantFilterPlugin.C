@@ -124,6 +124,11 @@ void FormantFilterPlugin::Reset()
 
 void FormantFilterPlugin::Execute()
 {
+	// The vowel played: the knob's setting, or the Vowel CV while one is
+	// wired. The CV used to be written over the setting itself, so a patch
+	// saved whatever the CV happened to be when the audio last ran.
+	float vowel = AsFloat(m_Vowel);
+
 	float res,o[5],out=0, in=0;
 	
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
@@ -175,31 +180,31 @@ void FormantFilterPlugin::Execute()
 			
 			if (InputExists(1)) 
 			{	
-				AsFloat(m_Vowel)=fabs(GetInput(1,n))*4.0f;
+				vowel=fabs(GetInput(1,n))*4.0f;
 			}
 		
 			// mix between vowel sounds
-			if (AsFloat(m_Vowel)<1) 
+			if (vowel<1) 
 			{
-				out=Linear(0,1,AsFloat(m_Vowel),o[1],o[0]); 
+				out=Linear(0,1,vowel,o[1],o[0]); 
 			}	
 			else 
-				if (AsFloat(m_Vowel)>1 && AsFloat(m_Vowel)<2) 
+				if (vowel>1 && vowel<2) 
 				{
-					out=Linear(0,1,AsFloat(m_Vowel)-1.0f,o[2],o[1]);
+					out=Linear(0,1,vowel-1.0f,o[2],o[1]);
 				}	
 			else 
-				if (AsFloat(m_Vowel)>2 && AsFloat(m_Vowel)<3) 
+				if (vowel>2 && vowel<3) 
 				{
-					out=Linear(0,1,AsFloat(m_Vowel)-2.0f,o[3],o[2]);
+					out=Linear(0,1,vowel-2.0f,o[3],o[2]);
 				}	
 			else 
-				if (AsFloat(m_Vowel)>3 && AsFloat(m_Vowel)<4) 
+				if (vowel>3 && vowel<4) 
 				{
-					out=Linear(0,1,AsFloat(m_Vowel)-3.0f,o[4],o[3]);
+					out=Linear(0,1,vowel-3.0f,o[4],o[3]);
 				}	
 			else 
-				if (AsFloat(m_Vowel)==4) 
+				if (vowel==4) 
 				{
 					out=o[4];
 				}	
