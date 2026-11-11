@@ -378,6 +378,7 @@
             224
           ],
           "columns": 64,
+          "dropped": "GridDropped",
           "end": "GridEnd",
           "grid": "Grid",
           "name": "grid",

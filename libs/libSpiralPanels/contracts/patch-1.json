@@ -6,6 +6,7 @@
       "extends": "Controls::Control",
       "attributes": {
         "columns": ["integer"],
+        "dropped": ["string"],
         "end": ["string"],
         "grid": ["string"],
         "note_names": ["integer"],
