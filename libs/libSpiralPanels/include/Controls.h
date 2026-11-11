@@ -301,6 +301,8 @@ namespace Spiral
 
 			ButtonView *m_Button;
 			const PanelProperty *m_Target;
+			// What the panel does with a chosen file, beyond keeping its path.
+			const Spumoni::JSON *m_Then;
 			bool m_Save, m_Pending;
 			std::string m_Title, m_Extension, m_Filename;
 			Request *m_Request;

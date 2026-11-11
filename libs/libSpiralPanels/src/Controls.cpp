@@ -653,6 +653,7 @@ namespace Spiral
 			PanelControl(panel, node),
 			m_Button(NULL),
 			m_Target(NULL),
+			m_Then(NULL),
 			m_Save(false),
 			m_Pending(false),
 			m_Request(NULL)
@@ -662,6 +663,7 @@ namespace Spiral
 			if (file)
 			{
 				m_Target = panel.FindProperty(TextOf(file->Get("property")));
+				m_Then = file->Get("then");
 				const Spumoni::JSON *save = file->Get("save");
 				m_Save = save && save->GetType() == Spumoni::JSON::Boolean && save->AsBool();
 				m_Title = TextOf(file->Get("title"));
@@ -749,6 +751,38 @@ namespace Spiral
 
 			if (m_Target)
 				m_Panel.WriteText(*m_Target, m_Filename);
+
+			// Each step is a write, as a handler's is: a command with its
+			// arguments, the path as "text" and the row the button's source is
+			// on as "row", or a text property given the word.
+			for (size_t i = 0; m_Then && m_Then->GetType() == Spumoni::JSON::Array && i < m_Then->Size(); ++i)
+			{
+				const Spumoni::JSON &step = *m_Then->At(i);
+				const PanelProperty *target = m_Panel.FindProperty(TextOf(step.Get("property")));
+				const Spumoni::JSON *with = step.Get("with");
+				const std::string word = TextOf(step.Get("value"));
+				std::vector<std::string> arguments;
+
+				for (size_t w = 0; with && with->GetType() == Spumoni::JSON::Array && w < with->Size(); ++w)
+				{
+					const Spumoni::JSON &given = *with->At(w);
+
+					if (given.GetType() == Spumoni::JSON::String && given.Text() == "text")
+						arguments.push_back(m_Filename);
+					else if (given.GetType() == Spumoni::JSON::String && given.Text() == "row")
+						arguments.push_back(TextOfNumber((double)m_Panel.RowNumber(RowSourceName())));
+					else if (given.GetType() == Spumoni::JSON::Number)
+						arguments.push_back(TextOfNumber(NumberOf(&given, 0)));
+				}
+
+				if (!target || word.empty())
+					continue;
+
+				if (target->IsCommand())
+					m_Panel.Command(word, arguments);
+				else
+					m_Panel.WriteText(*target, word);
+			}
 
 			Fire("filename_changed", 1, m_Filename);
 		}
