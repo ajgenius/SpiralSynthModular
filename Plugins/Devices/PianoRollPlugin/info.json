@@ -191,10 +191,387 @@
           "span": 4,
           "tooltip": "Click to add a note, drag to move it, drag an edge to resize, Delete removes the selected note. Wheel scrolls keys, Shift+wheel scrolls time.",
           "type": "Patch::PianoRoll"
+        },
+        {
+          "bounds": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "if_property": "SEQUENCE MODE",
+          "name": "sequence-mode",
+          "property": "SEQUENCE MODE",
+          "text": "Sequences",
+          "tooltip": "Keep several sequences; Play launches the one shown",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "digits": 0,
+          "if_property": "SEQUENCE",
+          "min": 1,
+          "name": "sequence",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SELECT_SEQUENCE",
+                "with": [
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "SEQUENCE",
+          "simple": true,
+          "step": 1,
+          "tooltip": "Sequence to edit; Play launches it",
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "if_property": "SEQUENCE COUNT",
+          "name": "new-sequence",
+          "on": {
+            "pressed": [
+              {
+                "value": "ADD_SEQUENCE",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "text": "New sequence",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "if_property": "SEQUENCE COUNT",
+          "name": "delete-sequence",
+          "on": {
+            "pressed": [
+              {
+                "value": "DELETE_SEQUENCE",
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "text": "Delete sequence",
+          "type": "Button"
+        },
+        {
+          "align": "right",
+          "bounds": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "if_property": "END",
+          "name": "end-label",
+          "size": 11,
+          "text": "End (s)",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "format": "%.3f",
+          "if_property": "END",
+          "name": "end",
+          "on": {
+            "value_changed": [
+              {
+                "value": "SET_END",
+                "with": [
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "END",
+          "tooltip": "Where the sequence stops playing, in seconds; events after it stay saved",
+          "type": "TextEntry"
+        },
+        {
+          "bounds": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "if_property": "AUTO END",
+          "name": "auto-end",
+          "on": {
+            "value_changed": [
+              {
+                "value": "AUTO_END",
+                "with": [
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "AUTO END",
+          "size": 12,
+          "text": "Auto end",
+          "tooltip": "End at the last note's release or a later event",
+          "type": "CheckBox"
+        },
+        {
+          "bounds": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "if_property": "SEQUENCE COUNT",
+          "name": "snap",
+          "on": {
+            "value_changed": [
+              {
+                "attribute": "snap",
+                "set": "roll"
+              }
+            ]
+          },
+          "pressed": true,
+          "text": "Snap",
+          "toggle": true,
+          "tooltip": "Notes keep to the grid",
+          "type": "Button"
+        },
+        {
+          "bounds": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "digits": 2,
+          "if_property": "SEQUENCE COUNT",
+          "max": 1,
+          "min": 0,
+          "name": "velocity",
+          "on": {
+            "value_changed": [
+              {
+                "attribute": "selected_velocity",
+                "set": "roll"
+              }
+            ]
+          },
+          "simple": true,
+          "step": 0.05,
+          "tooltip": "The selected note's velocity",
+          "type": "Spinner"
+        },
+        {
+          "align": "left",
+          "bounds": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "if_property": "SEQUENCE COUNT",
+          "name": "velocity-label",
+          "size": 11,
+          "text": "Velocity",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "if_property": "SEQUENCE COUNT",
+          "name": "delete-note",
+          "on": {
+            "pressed": [
+              {
+                "attribute": "remove_selected",
+                "set": "roll"
+              }
+            ]
+          },
+          "text": "Delete note",
+          "type": "Button"
+        },
+        {
+          "align": "left",
+          "bounds": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "if_property": "STATUS",
+          "name": "status",
+          "property": "STATUS",
+          "size": 11,
+          "type": "Label"
         }
       ],
       "height": 268,
       "help": "A clip of notes played as events. Play, record from the event input, loop and edit the notes.",
+      "layouts": [
+        {
+          "height": 268,
+          "name": "small",
+          "width": 420
+        },
+        {
+          "controls": {
+            "auto-end": [
+              166,
+              562,
+              110,
+              22
+            ],
+            "clear": [
+              256,
+              4,
+              80,
+              24
+            ],
+            "delete-note": [
+              508,
+              562,
+              100,
+              22
+            ],
+            "delete-sequence": [
+              768,
+              4,
+              112,
+              24
+            ],
+            "end": [
+              64,
+              562,
+              90,
+              22
+            ],
+            "end-label": [
+              4,
+              562,
+              56,
+              22
+            ],
+            "loop": [
+              344,
+              4,
+              62,
+              24
+            ],
+            "new-sequence": [
+              660,
+              4,
+              104,
+              24
+            ],
+            "play": [
+              4,
+              4,
+              80,
+              24
+            ],
+            "position": [
+              888,
+              4,
+              68,
+              24
+            ],
+            "record": [
+              88,
+              4,
+              80,
+              24
+            ],
+            "roll": [
+              4,
+              34,
+              952,
+              520
+            ],
+            "sequence": [
+              594,
+              4,
+              60,
+              24
+            ],
+            "sequence-mode": [
+              488,
+              4,
+              100,
+              24
+            ],
+            "snap": [
+              288,
+              562,
+              70,
+              22
+            ],
+            "status": [
+              4,
+              590,
+              952,
+              18
+            ],
+            "stop": [
+              172,
+              4,
+              80,
+              24
+            ],
+            "thru": [
+              410,
+              4,
+              70,
+              24
+            ],
+            "velocity": [
+              370,
+              562,
+              70,
+              22
+            ],
+            "velocity-label": [
+              444,
+              562,
+              60,
+              22
+            ]
+          },
+          "height": 612,
+          "name": "large",
+          "width": 960
+        }
+      ],
       "schema_version": 1,
       "width": 420
     },
