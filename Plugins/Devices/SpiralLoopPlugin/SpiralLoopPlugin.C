@@ -99,8 +99,10 @@ m_Triggered(false)
 	SetUnsigned(DeviceVersion, 2);
 
 	m_TicksPerLoop = SignedProperty(DefaultLinearFlags, 64, 1, 1024, 1, 1);
-	m_Volume = FloatProperty(DefaultLinearFlags, 1.0, 0, 2, 0.001, 0.01);
-	m_Speed = FloatProperty(DefaultLinearFlags, 1.0, 0, 4, 0.001, 0.01);
+	// The original editor's volume and speed knobs both ran 0 to 2 in
+	// steps of a ten-thousandth.
+	m_Volume = FloatProperty(DefaultLinearFlags, 1.0, 0, 2, 0.0001, 0.01);
+	m_Speed = FloatProperty(DefaultLinearFlags, 1.0, 0, 2, 0.0001, 0.01);
 
 	RegisterSharedProperty(m_TicksPerLoop, "TicksPerLoop", "Ticks Per Loop");
 	RegisterSharedProperty(m_Volume, "Volume", "Volume");

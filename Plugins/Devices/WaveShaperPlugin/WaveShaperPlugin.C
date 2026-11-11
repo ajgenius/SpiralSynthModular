@@ -73,7 +73,7 @@ WaveShaperPlugin::WaveShaperPlugin () {
     char key[16], hint[32];
     snprintf (key, sizeof key, "Coef%d", i);
     snprintf (hint, sizeof hint, "Coefficient %d", i);
-    m_Coefs[i] = FloatProperty(DefaultLinearFlags, i == 0 ? 1.0f : 0.0f, -1.0f, 1.0f, 0.001f, 0.1f);
+    m_Coefs[i] = FloatProperty(DefaultLinearFlags, i == 0 ? 1.0f : 0.0f, -1.0f, 1.0f, 0.01f, 0.1f);
     RegisterSharedProperty(m_Coefs[i], key, hint);
   }
   m_AudioCH->RegisterData ("WT", ChannelHandler::OUTPUT, m_FuncPlot, 256 * sizeof (float));
