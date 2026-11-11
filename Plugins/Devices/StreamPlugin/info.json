@@ -301,15 +301,15 @@
           "on": {
             "pressed": [
               {
+                "amount": 1,
+                "delta": "TIMEOUT"
+              },
+              {
                 "value": "SET_TIME",
                 "with": [
                   "value"
                 ],
                 "write": "COMMAND"
-              },
-              {
-                "amount": 1,
-                "delta": "TIMEOUT"
               }
             ]
           },
