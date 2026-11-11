@@ -79,7 +79,9 @@ m_Mode(STOPM)
 	SetUnsigned(DeviceVersion, 1);
 
 	m_Volume = FloatProperty(DefaultLinearFlags, 1.0, 0, 2, 0.001, 0.01);
-	m_PitchMod = FloatProperty(DefaultLinearFlags, 1.0, 0, 4, 0.001, 0.01);
+	// The original editor's pitch slider ran 0 to 20 and kept ten less, so
+	// the pitch runs -10 to 10; below zero plays backwards.
+	m_PitchMod = FloatProperty(DefaultLinearFlags, 1.0, -10, 10, 0.001, 0.01);
 
 	RegisterSharedProperty(m_Volume, "Volume", "Volume");
 	RegisterSharedProperty(m_PitchMod, "Pitch", "Pitch Modulation");
