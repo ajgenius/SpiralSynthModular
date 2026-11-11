@@ -266,12 +266,11 @@
         },
         {
           "bounds": [
-            84,
-            2,
-            66,
-            20
+            0,
+            0,
+            0,
+            0
           ],
-          "expand_width": 300,
           "if_property": "BACKEND",
           "name": "backend-label",
           "size": 12,
@@ -280,10 +279,10 @@
         },
         {
           "bounds": [
-            152,
-            2,
-            144,
-            20
+            0,
+            0,
+            0,
+            0
           ],
           "if_property": "BACKEND",
           "items_property": "BACKENDS",
@@ -294,10 +293,10 @@
         },
         {
           "bounds": [
-            84,
-            24,
-            66,
-            20
+            0,
+            0,
+            0,
+            0
           ],
           "if_property": "BACKEND",
           "name": "source-label",
@@ -307,10 +306,10 @@
         },
         {
           "bounds": [
-            152,
-            24,
-            144,
-            20
+            0,
+            0,
+            0,
+            0
           ],
           "if_property": "SOURCE",
           "items_property": "SOURCES",
@@ -321,10 +320,10 @@
         },
         {
           "bounds": [
-            84,
-            46,
-            66,
-            20
+            0,
+            0,
+            0,
+            0
           ],
           "if_property": "BACKEND",
           "name": "destination-label",
@@ -334,10 +333,10 @@
         },
         {
           "bounds": [
-            152,
-            46,
-            144,
-            20
+            0,
+            0,
+            0,
+            0
           ],
           "if_property": "DESTINATION",
           "items_property": "DESTINATIONS",
@@ -348,10 +347,10 @@
         },
         {
           "bounds": [
-            84,
-            68,
-            212,
-            18
+            0,
+            0,
+            0,
+            0
           ],
           "if_property": "VOICE LANES",
           "name": "voice-lanes",
@@ -362,10 +361,10 @@
         },
         {
           "bounds": [
-            84,
-            88,
-            212,
-            16
+            0,
+            0,
+            0,
+            0
           ],
           "if_property": "MAPPED",
           "name": "mapped",
@@ -376,10 +375,10 @@
         },
         {
           "bounds": [
-            84,
-            105,
-            212,
-            16
+            0,
+            0,
+            0,
+            0
           ],
           "if_property": "STATUS",
           "name": "status",
@@ -390,6 +389,116 @@
       ],
       "height": 124,
       "help": "The MIDI channel to listen on (0 for all) and whether a new note cuts the last.",
+      "layouts": [
+        {
+          "height": 124,
+          "name": "small",
+          "width": 76
+        },
+        {
+          "controls": {
+            "add-control": [
+              0,
+              77,
+              80,
+              20
+            ],
+            "backend": [
+              90,
+              14,
+              205,
+              22
+            ],
+            "backend-label": [
+              90,
+              0,
+              200,
+              14
+            ],
+            "channel": [
+              12,
+              0,
+              56,
+              20
+            ],
+            "channel-label": [
+              0,
+              21,
+              80,
+              14
+            ],
+            "continuous-notes": [
+              0,
+              57,
+              80,
+              20
+            ],
+            "destination": [
+              90,
+              94,
+              205,
+              22
+            ],
+            "destination-label": [
+              90,
+              80,
+              200,
+              14
+            ],
+            "mapped": [
+              0,
+              125,
+              295,
+              18
+            ],
+            "midi-channel": [
+              12,
+              0,
+              56,
+              20
+            ],
+            "midi-source": [
+              90,
+              54,
+              205,
+              22
+            ],
+            "note-cut": [
+              0,
+              37,
+              80,
+              20
+            ],
+            "remove-control": [
+              0,
+              97,
+              80,
+              20
+            ],
+            "source-label": [
+              90,
+              40,
+              200,
+              14
+            ],
+            "status": [
+              0,
+              144,
+              295,
+              18
+            ],
+            "voice-lanes": [
+              0,
+              165,
+              295,
+              22
+            ]
+          },
+          "height": 190,
+          "name": "large",
+          "width": 300
+        }
+      ],
       "poll": [
         "BACKENDS",
         "DESTINATIONS",
