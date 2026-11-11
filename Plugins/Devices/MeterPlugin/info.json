@@ -13,8 +13,28 @@
     "version": "0.3.1",
     "abi": "0.3.1"
   },
-  "registration": "module",
-  "module": "MeterPlugin_DSP.so",
+  "registration": "builtin",
+  "builtin": "passthrough",
+  "ports": [
+    {
+      "input": "Input",
+      "output": "Output",
+      "shadow": "ring"
+    }
+  ],
+  "properties": [
+    {
+      "name": "VUMode",
+      "type": "toggle",
+      "default": true,
+      "hint": "Use an absolute 0 to 1 display instead of signed min/max"
+    }
+  ],
+  "size": [
+    230,
+    128
+  ],
+  "state_version": 1,
   "ui": {
     "control_contracts": {
       "Controls": 1,
