@@ -411,6 +411,9 @@ namespace Spiral
 				if (node.Number("expand_height", expand) && (int)expand > m_Host.Height())
 					m_Host.Resize(m_Host.Width(), (int)expand);
 
+				if (node.Number("expand_width", expand) && (int)expand > m_Host.Width())
+					m_Host.Resize((int)expand, m_Host.Height());
+
 				if (Spiral::Panels::Repeat::Is(node))
 				{
 					BuildRepeat(node, originX, originY);

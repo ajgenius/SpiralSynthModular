@@ -32,6 +32,7 @@
       "extends": "Controls::Control",
       "attributes": {
         "items": ["array"],
+        "items_property": ["string"],
         "property": ["string"],
         "size": ["integer"]
       }
@@ -49,6 +50,8 @@
       "attributes": {
         "bounds": ["array"],
         "enabled": ["binding", "boolean"],
+        "expand_height": ["number"],
+        "expand_width": ["number"],
         "if_property": ["string"],
         "name": ["string"],
         "on": ["handlers"],
