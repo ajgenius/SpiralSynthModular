@@ -275,8 +275,18 @@ namespace Spiral
 
 		void LabelControl::Load()
 		{
-			if (!Property() || m_Texts.empty())
+			if (!Property())
 				return;
+
+			// With no texts to choose from, a label on a text setting
+			// shows the setting itself.
+			if (m_Texts.empty())
+			{
+				if (Property()->GetKind() == PanelProperty::String)
+					m_Label->SetText(Text());
+
+				return;
+			}
 
 			int index = (int)Physical();
 

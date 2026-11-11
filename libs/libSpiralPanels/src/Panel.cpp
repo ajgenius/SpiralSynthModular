@@ -558,6 +558,17 @@ namespace Spiral
 						Bounds b = { x - originX, y - originY, w, h };
 						m_Layouts[0].Controls[m_Controls[i]->Name()] = b;
 					}
+
+			// The panel opens in the first layout, which may place some
+			// controls with no size: those are another layout's.
+			if (!m_Layouts.empty())
+				for (size_t i = 0; i < m_Controls.size(); ++i)
+				{
+					std::map<std::string, Bounds>::const_iterator b = m_Layouts[0].Controls.find(m_Controls[i]->Name());
+
+					if (m_Controls[i]->View() && b != m_Layouts[0].Controls.end() && (b->second.W <= 0 || b->second.H <= 0))
+						m_Controls[i]->View()->Show(false);
+				}
 		}
 
 		void Panel::ApplyLayout(size_t index)
@@ -583,6 +594,8 @@ namespace Spiral
 				if (b == m_Layouts[0].Controls.end())
 					continue;
 				view->SetBounds(originX + b->second.X, originY + b->second.Y, b->second.W, b->second.H);
+				// A control a layout gives no size is not shown in it.
+				view->Show(b->second.W > 0 && b->second.H > 0);
 			}
 			m_Layout = index;
 			m_Host.Redraw();
