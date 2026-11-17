@@ -66,25 +66,35 @@ namespace Spiral
 			delete table;
 		}
 
-		void RowSource::TableFrom(TableFeed *feed, int width)
+		void RowSource::TableFrom(TableFeed *feed, const std::vector<std::string> &names)
 		{
 			delete table;
 			table = feed;
-			columns = width > 0 ? width : 1;
+			columns = names.empty() ? 1 : (int)names.size();
 			fields.clear();
 
 			for (int c = 0; c < columns; ++c)
-			{
-				char number[32];
-
-				std::snprintf(number, sizeof(number), "%d", c);
-				fields.push_back(DataField(number, ControlValue::Integer));
-			}
+				fields.push_back(DataField(c < (int)names.size() ? names[c] : std::string("0"), ControlValue::Number));
 
 			cells.clear();
 
 			if (table)
 				table->Cells(cells);
+		}
+
+		void RowSource::TableFrom(TableFeed *feed, int width)
+		{
+			std::vector<std::string> names;
+
+			for (int c = 0; c < width; ++c)
+			{
+				char number[32];
+
+				std::snprintf(number, sizeof(number), "%d", c);
+				names.push_back(number);
+			}
+
+			TableFrom(feed, names);
 		}
 
 		int RowSource::FlatField(long row, int field) const
@@ -231,7 +241,6 @@ namespace Spiral
 					return false;
 
 				out = ControlValue(cells[(size_t)row * columns + field]);
-				out.type = ControlValue::Integer;
 
 				return true;
 			}

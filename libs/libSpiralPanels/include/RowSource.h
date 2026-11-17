@@ -66,10 +66,12 @@ namespace Spiral
 			 * the flat source has no such field for row 0. */
 			int AddField(const std::string &base);
 
-			/* The rows are a table's instead, `columns` cells to a row, and the
-			 * fields its columns: "0", "1" and on, whole numbers, read only. The
-			 * feed is this source's to delete. The count and the cursor are
-			 * still fields of the flat source, or fixed. */
+			/* The rows are a table's instead, a cell to each column named, and
+			 * the fields its columns: numbers, read only. Given a count in
+			 * place of names, the columns are named "0", "1" and on. The feed
+			 * is this source's to delete. The count and the cursor are still
+			 * fields of the flat source, or fixed. */
+			void TableFrom(TableFeed *feed, const std::vector<std::string> &columns);
 			void TableFrom(TableFeed *feed, int columns);
 
 			/* How many rows: this many, or whatever a field of the flat source
