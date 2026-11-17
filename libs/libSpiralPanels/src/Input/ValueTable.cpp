@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "Input.h"
 #include "ControlSupport.h"
+#include "RowSource.h"
 
 namespace Spiral
 {
@@ -16,9 +17,6 @@ namespace Spiral
 		ValueTableControl::ValueTableControl(Panel &panel, const Spumoni::JSON &node):
 			PanelControl(panel, node),
 			m_Table(MakeView<TableView>("ValueTable", *this, node)),
-			m_Values(TextOf(node.Get("values"))),
-			m_Count(TextOf(node.Get("count"))),
-			m_Pos(TextOf(node.Get("position"))),
 			m_Bounded(node.Get("min") && node.Get("max")),
 			m_Low((int)NumberOf(node.Get("min"), 0)),
 			m_High((int)NumberOf(node.Get("max"), 0)),
@@ -28,21 +26,33 @@ namespace Spiral
 				Adopt(m_Table);
 		}
 
+		// The table shows the rows of the source it names: a row to a line,
+		// a field to a column, the source's cursor the line playing.
 		void ValueTableControl::Load()
 		{
-			if (!m_Panel.Source())
+			Spiral::Data::RowSource *rows = m_Panel.Rows(RowSourceName());
+
+			if (!rows)
 				return;
 
-			std::vector<unsigned char> values, count, pos;
+			const long count = rows->Count();
+			const int columns = rows->FieldCount();
+			std::vector<unsigned char> values((size_t)count * columns * sizeof(int));
 
-			if (m_Panel.Source()->ReadBytes(m_Values, values))
-				m_Table->SetValues(values);
+			for (long row = 0; row < count; ++row)
+			{
+				for (int column = 0; column < columns; ++column)
+				{
+					Spiral::Data::ControlValue held;
+					const int cell = rows->GetAt(row, column, held) ? (int)held.number : 0;
 
-			if (m_Panel.Source()->ReadBytes(m_Count, count))
-				m_Table->SetRows(IntAt(count, 0));
+					std::memcpy(&values[((size_t)row * columns + column) * sizeof(int)], &cell, sizeof(cell));
+				}
+			}
 
-			if (m_Panel.Source()->ReadBytes(m_Pos, pos))
-				m_Table->SetPosition(IntAt(pos, 0));
+			m_Table->SetValues(values);
+			m_Table->SetRows((int)count);
+			m_Table->SetPosition((int)rows->Position());
 		}
 
 		void ValueTableControl::Refresh()

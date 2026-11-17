@@ -31,7 +31,6 @@
             150
           ],
           "columns": 8,
-          "count": "LINE COUNT",
           "max": 131,
           "min": -1,
           "name": "lines",
@@ -48,11 +47,10 @@
               }
             ]
           },
-          "position": "POSITION",
           "row_height": 14,
+          "source": "lines",
           "tooltip": "Click a value up, right click down, or use the wheel; the wheel over the line numbers scrolls",
-          "type": "Input::ValueTable",
-          "values": "LINES"
+          "type": "Input::ValueTable"
         },
         {
           "bounds": [
@@ -164,6 +162,14 @@
       "height": 184,
       "help": "Each trigger steps to the next line; its eight values go to the outputs. With Range, only lines Begin to End play.",
       "schema_version": 1,
+      "sources": {
+        "lines": {
+          "columns": 8,
+          "count": "LINE COUNT",
+          "position": "POSITION",
+          "table": "LINES"
+        }
+      },
       "width": 296
     },
     "plugin_id": 21,

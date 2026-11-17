@@ -41,7 +41,6 @@ namespace Spiral
 			ValueTableControl(Panel &panel, const Spumoni::JSON &node);
 
 			TableView *m_Table;
-			std::string m_Values, m_Count, m_Pos;
 			bool m_Bounded;
 			int m_Low, m_High, m_FirstLow;
 		};

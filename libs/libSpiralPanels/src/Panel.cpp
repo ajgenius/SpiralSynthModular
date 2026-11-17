@@ -27,6 +27,7 @@
 #include "PanelRepeat.h"
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <sstream>
 #include <algorithm>
 
@@ -216,9 +217,43 @@ namespace Spiral
 			return true;
 		}
 
+		namespace
+		{
+			// A table a device keeps in one channel, a whole number to a cell.
+			class ChannelTable: public Spiral::Data::TableFeed
+			{
+			public:
+				ChannelTable(const PanelSource &source, const std::string &channel): m_Source(source), m_Channel(channel) {}
+
+				bool Cells(std::vector<double> &out) const
+				{
+					std::vector<unsigned char> bytes;
+
+					if (!m_Source.ReadBytes(m_Channel, bytes))
+						return false;
+
+					out.resize(bytes.size() / sizeof(int));
+
+					for (size_t i = 0; i < out.size(); ++i)
+					{
+						int cell;
+
+						std::memcpy(&cell, &bytes[i * sizeof(int)], sizeof(cell));
+						out[i] = cell;
+					}
+
+					return true;
+				}
+
+			private:
+				const PanelSource &m_Source;
+				std::string m_Channel;
+			};
+		}
+
 		// A panel's row sources, before the controls that name them: the
-		// fields their rows share, how many rows, and the property a selector
-		// moves the cursor by.
+		// fields their rows share or the table they are read from, how many
+		// rows, and the property a selector moves the cursor by.
 		void Panel::BuildSources(const Spumoni::JSON &panel)
 		{
 			const Spumoni::JSON *sources = panel.Get("sources");
@@ -239,6 +274,11 @@ namespace Spiral
 
 				m_Rows[names[i]] = rows;
 				m_RowFirst[names[i]] = first;
+
+				const std::string table = PanelControl::TextOf(written.Get("table"));
+
+				if (!table.empty())
+					rows->TableFrom(new ChannelTable(*m_Source, table), (int)PanelControl::NumberOf(written.Get("columns"), 1));
 
 				for (size_t f = 0; fields && fields->GetType() == Spumoni::JSON::Array && f < fields->Size(); ++f)
 					if (rows->AddField(PanelControl::TextOf(fields->At(f))) < 0)
