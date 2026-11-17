@@ -45,7 +45,6 @@ namespace Spiral
 			int LowRow, Rows;
 			double First, Span, GridStep;
 			bool Snap, Editable, Toggle, Movable, Resizable, VelocityDrag;
-			int Channel;
 			double Playhead;
 			std::vector<GridNote> Notes;
 			int Selected;

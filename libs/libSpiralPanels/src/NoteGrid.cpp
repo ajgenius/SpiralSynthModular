@@ -27,7 +27,6 @@ namespace Spiral
 			Movable(true),
 			Resizable(true),
 			VelocityDrag(false),
-			Channel(0),
 			Playhead(-1),
 			Selected(-1),
 			m_Drag(None),
@@ -79,10 +78,11 @@ namespace Spiral
 			return snapped < 0 ? 0 : snapped;
 		}
 
+		// A note is shown whatever channel it is on: the grid has notes, not
+		// channels.
 		bool NoteGrid::Visible(const GridNote &note) const
 		{
-			return note.Channel == Channel && note.Row >= LowRow && note.Row < LowRow + Rows && note.End >= First
-					&& note.Start <= First + Span;
+			return note.Row >= LowRow && note.Row < LowRow + Rows && note.End >= First && note.Start <= First + Span;
 		}
 
 		int NoteGrid::HitNote(double x, double y) const
@@ -96,8 +96,7 @@ namespace Spiral
 			{
 				const GridNote &note = Notes[i];
 
-				if (note.Row == row && note.Channel == Channel && x >= X(note.Start)
-						&& x <= std::max(X(note.Start) + MinWidth, X(note.End)))
+				if (note.Row == row && x >= X(note.Start) && x <= std::max(X(note.Start) + MinWidth, X(note.End)))
 					return i;
 			}
 
@@ -158,7 +157,6 @@ namespace Spiral
 				return true;
 
 			m_Draft = GridNote();
-			m_Draft.Channel = Channel;
 			m_Draft.Row = m_PressRow;
 			m_Draft.Velocity = Toggle ? 1.0f : 100 / 127.0f;
 			m_Draft.Start = Toggle ? std::floor(TimeAt(x) / GridStep) * GridStep : Snapped(TimeAt(x));
