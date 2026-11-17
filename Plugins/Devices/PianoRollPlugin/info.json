@@ -184,11 +184,20 @@
                 ],
                 "write": "COMMAND"
               }
+            ],
+            "position_moved": [
+              {
+                "value": "SET_POSITION",
+                "with": [
+                  "position"
+                ],
+                "write": "COMMAND"
+              }
             ]
           },
           "playhead": "POSITION",
           "span": 4,
-          "tooltip": "Click to add a note, drag to move it, drag an edge to resize, Delete removes the selected note. Wheel scrolls keys, Shift+wheel scrolls time.",
+          "tooltip": "Click to add a note, drag to move it, drag an edge to resize, Delete removes the selected note. Click or drag in the strip above the notes to move the position. Wheel scrolls keys, Shift+wheel scrolls time.",
           "type": "Patch::PianoRoll"
         },
         {

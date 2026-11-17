@@ -127,14 +127,25 @@ namespace Spiral
 					if (grid.Dragging())
 						DrawNote(grid, grid.Draft(), true);
 
-					if (grid.Playhead >= grid.First && grid.Playhead <= grid.First + grid.Span)
+					const bool marked = grid.Playhead >= grid.First && grid.Playhead <= grid.First + grid.Span;
+					const int px = x() + (int)grid.X(grid.Playhead);
+
+					if (marked)
 					{
-						const int px = x() + (int)grid.X(grid.Playhead);
 						fl_color(m_Look.Colour("playhead"));
 						fl_line(px, top, px, y() + RollH());
 					}
 
 					fl_pop_clip();
+
+					// The marker's handle, in the strip it is moved by.
+					if (marked && m_Control.Marks())
+					{
+						fl_push_clip(left, y(), RollW() - (int)grid.Gutter, (int)grid.Header);
+						fl_color(m_Look.Colour("playhead"));
+						fl_polygon(px - 4, top - 8, px + 4, top - 8, px, top);
+						fl_pop_clip();
+					}
 				}
 
 				int handle(int event)

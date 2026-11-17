@@ -60,6 +60,10 @@ namespace Spiral
 			double TimeEnd() const;
 			void HoldView(bool held) { m_Held = held; }
 
+			// Whether the position marker is moved by hand: where the
+			// panel says what that does.
+			bool Marks() const { return m_Marks; }
+
 		protected:
 			PianoRollControl(Panel &panel, const Spumoni::JSON &node);
 			void Fit();
@@ -70,7 +74,7 @@ namespace Spiral
 			std::string m_Notes;
 			const PanelProperty *m_Playhead;
 			std::vector<double> m_Shown;
-			bool m_Held;
+			bool m_Held, m_Marks, m_Marking;
 		};
 
 		class PortListControl: public PanelControl

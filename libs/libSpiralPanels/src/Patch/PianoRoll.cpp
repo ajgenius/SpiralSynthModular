@@ -30,7 +30,9 @@ namespace Spiral
 			m_Roll(NULL),
 			m_Notes(TextOf(node.Get("notes"))),
 			m_Playhead(panel.FindProperty(TextOf(node.Get("playhead")))),
-			m_Held(false)
+			m_Held(false),
+			m_Marks(node.Get("on") && node.Get("on")->Get("position_moved")),
+			m_Marking(false)
 		{
 			m_Grid.LowRow = (int)NumberOf(node.Get("low_key"), 48);
 			m_Grid.Rows = (int)NumberOf(node.Get("keys"), 24);
@@ -64,7 +66,8 @@ namespace Spiral
 		{
 			bool changed = false;
 
-			if (m_Playhead)
+			// A marker held is where it is held, not where the device is.
+			if (m_Playhead && !m_Marking)
 			{
 				const double playhead = m_Panel.Read(*m_Playhead);
 
@@ -164,6 +167,18 @@ namespace Spiral
 		bool PianoRollControl::Press(double x, double y)
 		{
 			Fit();
+
+			// A press in the strip above the rows puts the position marker
+			// there, and a drag takes it along.
+			if (m_Marks && y >= 0 && y < m_Grid.Header && x >= m_Grid.Gutter && x < m_Grid.Width)
+			{
+				m_Marking = true;
+				m_Grid.Playhead = m_Grid.Snapped(m_Grid.TimeAt(x));
+				m_Roll->Redraw();
+
+				return true;
+			}
+
 			const bool used = m_Grid.Press(x, y);
 			m_Roll->Redraw();
 
@@ -172,23 +187,41 @@ namespace Spiral
 
 		void PianoRollControl::Drag(double x, double y)
 		{
-			if (!m_Grid.Dragging())
+			if (!m_Grid.Dragging() && !m_Marking)
 				return;
 
 			Fit();
 
-			// Dragged to an edge, the view moves on under the note.
+			// Dragged to an edge, the view moves on under the note or the
+			// marker.
 			if (x > m_Grid.Width - 6)
 				m_Grid.First += m_Grid.Span / 32;
 			else if (x < m_Grid.Gutter + 6)
 				m_Grid.First = std::max(0.0, m_Grid.First - m_Grid.Span / 32);
 
-			m_Grid.MoveTo(x, y);
+			if (m_Marking)
+				m_Grid.Playhead = m_Grid.Snapped(m_Grid.TimeAt(std::max(m_Grid.Gutter, std::min(m_Grid.Width, x))));
+			else
+				m_Grid.MoveTo(x, y);
+
 			m_Roll->Redraw();
 		}
 
 		void PianoRollControl::Release(double x, double y)
 		{
+			// The marker let go: the device is told where.
+			if (m_Marking)
+			{
+				Drag(x, y);
+				m_Marking = false;
+
+				Spiral::Data::Handlers::Arguments arguments;
+				arguments["position"] = Spiral::Data::ControlValue(m_Grid.Playhead);
+				Fire("position_moved", arguments);
+
+				return;
+			}
+
 			Fit();
 			GridNote note;
 			const NoteGrid::Outcome outcome = m_Grid.Release(x, y, note);
@@ -198,6 +231,7 @@ namespace Spiral
 
 		void PianoRollControl::Cancel()
 		{
+			m_Marking = false;
 			m_Grid.Cancel();
 			m_Roll->Redraw();
 		}
@@ -276,10 +310,12 @@ namespace Spiral
 			static const Event added = {"note_added", {"start", "end", "key", "velocity", NULL}};
 			static const Event changed = {"note_changed", {"index", "start", "end", "key", "velocity", NULL}};
 			static const Event removed = {"note_removed", {"index", NULL}};
+			static const Event moved = {"position_moved", {"position", NULL}};
 			PanelControl::DeclareEvents(out);
 			out.push_back(added);
 			out.push_back(changed);
 			out.push_back(removed);
+			out.push_back(moved);
 		}
 	}
 }
