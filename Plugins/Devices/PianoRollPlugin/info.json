@@ -145,12 +145,11 @@
             412,
             234
           ],
-          "count": "NOTES",
           "grid": 0.25,
           "keys": 24,
           "low_key": 48,
           "name": "roll",
-          "notes": "NoteRows",
+          "notes": "notes",
           "on": {
             "note_added": [
               {
@@ -569,6 +568,20 @@
         }
       ],
       "schema_version": 1,
+      "sources": {
+        "notes": {
+          "count": "NOTES",
+          "fields": [
+            "start",
+            "end",
+            "key",
+            "velocity",
+            "index",
+            "channel"
+          ],
+          "table": "NOTEROWS"
+        }
+      },
       "width": 420
     },
     "plugin_id": 288,

@@ -39,11 +39,17 @@ public:
 		MAX_RECORDED = 4096
 	};
 
-	struct NoteRow
+	// A note is a row of the table handed to the panel: its start and end
+	// in seconds, key, velocity, the event that names it back, its channel.
+	enum
 	{
-		int OnEvent, Key, Channel;
-		float Velocity;
-		double Start, End;
+		NOTE_START,
+		NOTE_END,
+		NOTE_KEY,
+		NOTE_VELOCITY,
+		NOTE_INDEX,
+		NOTE_CHANNEL,
+		NOTE_CELLS
 	};
 
 	const Spiral::Core::EventClip &Clip() const { return m_Clip; }
@@ -98,7 +104,7 @@ private:
 	Spiral::Core::FloatProperty m_Length, m_Position;
 	Spiral::Core::UnsignedProperty m_NoteCount;
 	Args m_Args;
-	NoteRow m_Rows[MAX_NOTES];
+	double m_Rows[MAX_NOTES][NOTE_CELLS];
 	Held m_Held[MAX_HELD];
 	unsigned m_HeldCount;
 	Recorded *m_Recorded;

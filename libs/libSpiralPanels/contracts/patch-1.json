@@ -35,7 +35,6 @@
     "PianoRoll": {
       "extends": "Controls::Control",
       "attributes": {
-        "count": ["string"],
         "grid": ["number"],
         "gutter": ["integer"],
         "header": ["integer"],

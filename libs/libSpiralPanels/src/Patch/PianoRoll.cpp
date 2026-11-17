@@ -4,9 +4,8 @@
 #include "Panel.h"
 #include "PanelControlRegistry.h"
 #include "PanelProperty.h"
-#include "PanelSource.h"
+#include "RowSource.h"
 #include <cmath>
-#include <cstring>
 
 namespace Spiral
 {
@@ -29,8 +28,7 @@ namespace Spiral
 		PianoRollControl::PianoRollControl(Panel &panel, const Spumoni::JSON &node):
 			PanelControl(panel, node),
 			m_Roll(NULL),
-			m_Rows(TextOf(node.Get("notes"))),
-			m_Count(panel.FindProperty(TextOf(node.Get("count")))),
+			m_Notes(TextOf(node.Get("notes"))),
 			m_Playhead(panel.FindProperty(TextOf(node.Get("playhead")))),
 			m_Held(false)
 		{
@@ -64,7 +62,6 @@ namespace Spiral
 
 		void PianoRollControl::Load()
 		{
-			PanelSource *source = m_Panel.Source();
 			bool changed = false;
 
 			if (m_Playhead)
@@ -85,31 +82,48 @@ namespace Spiral
 				}
 			}
 
-			std::vector<unsigned char> bytes;
+			// The notes are the rows of the source the panel names: a note's
+			// start and end in seconds, its key and velocity, the index it is
+			// named back by (its row, where the device gives none) and its
+			// channel.
+			Spiral::Data::RowSource *notes = m_Panel.Rows(m_Notes);
 
-			if (source && !m_Rows.empty() && source->ReadBytes(m_Rows, bytes) && bytes != m_Shown && !m_Grid.Dragging())
+			if (notes && !m_Grid.Dragging())
 			{
-				m_Shown = bytes;
-				const size_t stored = bytes.size() / sizeof(Row);
-				const size_t count = m_Count ? std::min(stored, (size_t)m_Panel.Read(*m_Count)) : stored;
-				m_Grid.Notes.clear();
+				enum { Start, End, Key, Velocity, Index, Channel, Fields };
+				const int fields[Fields] = {notes->FindField("start"), notes->FindField("end"), notes->FindField("key"),
+							    notes->FindField("velocity"), notes->FindField("index"), notes->FindField("channel")};
+				const long count = notes->Count();
+				std::vector<double> cells;
 
-				for (size_t i = 0; i < count; ++i)
+				for (long n = 0; n < count; ++n)
+					for (int f = 0; f < Fields; ++f)
+					{
+						Spiral::Data::ControlValue cell;
+
+						cells.push_back(notes->GetAt(n, fields[f], cell) ? cell.number : f == Velocity ? 1 : f == Index ? n : 0);
+					}
+
+				if (cells != m_Shown)
 				{
-					Row row;
-					std::memcpy(&row, &bytes[i * sizeof(Row)], sizeof(Row));
-					GridNote note;
-					note.Id = row.OnEvent;
-					note.Index = row.OnEvent;
-					note.Row = row.Key;
-					note.Channel = row.Channel;
-					note.Velocity = row.Velocity;
-					note.Start = row.Start;
-					note.End = row.End;
-					m_Grid.Notes.push_back(note);
-				}
+					m_Grid.Notes.clear();
 
-				changed = true;
+					for (size_t at = 0; at < cells.size(); at += Fields)
+					{
+						GridNote note;
+						note.Id = (int)cells[at + Index];
+						note.Index = note.Id;
+						note.Row = (int)cells[at + Key];
+						note.Channel = (int)cells[at + Channel];
+						note.Velocity = (float)cells[at + Velocity];
+						note.Start = cells[at + Start];
+						note.End = cells[at + End];
+						m_Grid.Notes.push_back(note);
+					}
+
+					m_Shown.swap(cells);
+					changed = true;
+				}
 			}
 
 			if (changed)

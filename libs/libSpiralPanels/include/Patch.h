@@ -38,13 +38,6 @@ namespace Spiral
 		class PianoRollControl: public PanelControl
 		{
 		public:
-			struct Row
-			{
-				int OnEvent, Key, Channel;
-				float Velocity;
-				double Start, End;
-			};
-
 			static PanelControl *Create(Panel &panel, const Spumoni::JSON &node);
 
 			virtual void Load();
@@ -74,9 +67,9 @@ namespace Spiral
 
 			RollView *m_Roll;
 			NoteGrid m_Grid;
-			std::string m_Rows;
-			const PanelProperty *m_Count, *m_Playhead;
-			std::vector<unsigned char> m_Shown;
+			std::string m_Notes;
+			const PanelProperty *m_Playhead;
+			std::vector<double> m_Shown;
 			bool m_Held;
 		};
 

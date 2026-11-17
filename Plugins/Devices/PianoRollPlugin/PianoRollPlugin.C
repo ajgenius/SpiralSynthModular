@@ -76,7 +76,7 @@ PianoRollPlugin::PianoRollPlugin():
 	m_AudioCH->Register("Velocity", &m_Args.Velocity, ChannelHandler::INPUT);
 	m_AudioCH->Register("Start", &m_Args.Start, ChannelHandler::INPUT);
 	m_AudioCH->Register("End", &m_Args.End, ChannelHandler::INPUT);
-	m_AudioCH->RegisterData("NoteRows", ChannelHandler::OUTPUT, m_Rows, sizeof(m_Rows));
+	m_AudioCH->RegisterData("NoteRows", ChannelHandler::OUTPUT, m_Rows, sizeof(m_Rows), 'd');
 	std::vector<std::string> none, note, edit, index;
 	note.push_back("Start");
 	note.push_back("End");
@@ -337,20 +337,21 @@ void PianoRollPlugin::Published()
 {
 	std::vector<NoteSpan> notes;
 	m_Clip.Notes(notes);
-	std::memset(m_Rows, 0, sizeof(m_Rows));
 	unsigned count = 0;
 
 	for (size_t i = 0; i < notes.size() && count < MAX_NOTES; ++i)
 	{
-		NoteRow &row = m_Rows[count++];
-		row.OnEvent = (int)notes[i].OnEvent;
-		row.Key = notes[i].Note.NoteNum;
-		row.Channel = notes[i].Note.Channel;
-		row.Velocity = notes[i].Note.Volume;
-		row.Start = (double)notes[i].Start / m_Clip.Rate();
-		row.End = (double)notes[i].End / m_Clip.Rate();
+		double *row = m_Rows[count++];
+		row[NOTE_START] = (double)notes[i].Start / m_Clip.Rate();
+		row[NOTE_END] = (double)notes[i].End / m_Clip.Rate();
+		row[NOTE_KEY] = notes[i].Note.NoteNum;
+		row[NOTE_VELOCITY] = notes[i].Note.Volume;
+		row[NOTE_INDEX] = (double)notes[i].OnEvent;
+		row[NOTE_CHANNEL] = notes[i].Note.Channel;
 	}
 
+	// Only the notes there are go to the panel.
+	m_AudioCH->SetUsed("NoteRows", (int)(count * sizeof(m_Rows[0])));
 	SetUnsigned(m_NoteCount, count);
 	std::string text = m_Clip.Save();
 	std::replace(text.begin(), text.end(), '\n', ' ');
