@@ -172,6 +172,21 @@ namespace Spiral
 					for (size_t f = 0; f < fields.Size() && !field; ++f)
 						field = fields.At(f)->Text() == held.Text();
 
+				// A command's "row" is the copy's own row here, not the row
+				// the source happens to be on.
+				if (keys[i] == "with" && held.GetType() == JSON::Array)
+				{
+					JSON *with = JSON::MakeArray();
+
+					for (size_t a = 0; a < held.Size(); ++a)
+						with->AppendOwned(held.At(a)->GetType() == JSON::String && held.At(a)->Text() == "row" ?
+							JSON::MakeString("{index}") : OnRow(*held.At(a), fields));
+
+					object->SetOwned(keys[i], with);
+
+					continue;
+				}
+
 				object->SetOwned(keys[i], field ? JSON::MakeString(held.Text() + "{index}") : OnRow(held, fields));
 			}
 
