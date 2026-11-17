@@ -18,6 +18,7 @@
  */
 // Rows over a flat source's numbered fields.
 #include "RowSource.h"
+#include <algorithm>
 #include <cstdio>
 
 namespace Spiral
@@ -49,7 +50,9 @@ namespace Spiral
 		    positionField(-1),
 		    position(0),
 		    seenPosition(-1),
-		    seenCount(-1)
+		    seenCount(-1),
+		    table(NULL),
+		    columns(0)
 		{
 			if (flat)
 				flat->Observe(this);
@@ -59,6 +62,29 @@ namespace Spiral
 		{
 			if (flat)
 				flat->Unobserve(this);
+
+			delete table;
+		}
+
+		void RowSource::TableFrom(TableFeed *feed, int width)
+		{
+			delete table;
+			table = feed;
+			columns = width > 0 ? width : 1;
+			fields.clear();
+
+			for (int c = 0; c < columns; ++c)
+			{
+				char number[32];
+
+				std::snprintf(number, sizeof(number), "%d", c);
+				fields.push_back(DataField(number, ControlValue::Integer));
+			}
+
+			cells.clear();
+
+			if (table)
+				table->Cells(cells);
 		}
 
 		int RowSource::FlatField(long row, int field) const
@@ -75,6 +101,10 @@ namespace Spiral
 
 		long RowSource::Present(long limit) const
 		{
+			// A table has the rows it was handed.
+			if (table)
+				return std::min(limit, (long)(cells.size() / columns));
+
 			long rows = 0;
 
 			while (rows < limit && !fields.empty())
@@ -195,6 +225,17 @@ namespace Spiral
 
 		bool RowSource::GetAt(long row, int field, ControlValue &out) const
 		{
+			if (table)
+			{
+				if (row < 0 || row >= Count() || field < 0 || field >= columns)
+					return false;
+
+				out = ControlValue(cells[(size_t)row * columns + field]);
+				out.type = ControlValue::Integer;
+
+				return true;
+			}
+
 			const int source = row < Count() ? FlatField(row, field) : -1;
 
 			return source >= 0 && flat->Get(source, out);
@@ -202,6 +243,10 @@ namespace Spiral
 
 		bool RowSource::SetAt(long row, int field, const ControlValue &value)
 		{
+			// A table's cell is changed by a command to the device.
+			if (table)
+				return false;
+
 			const int source = row < Count() ? FlatField(row, field) : -1;
 
 			if (source < 0 || fields[field].ReadOnly || !flat->Set(source, value))
@@ -225,8 +270,14 @@ namespace Spiral
 
 		bool RowSource::Poll()
 		{
+			std::vector<double> now;
+			const bool edited = table && table->Cells(now) && now != cells;
+
+			if (edited)
+				cells.swap(now);
+
 			const long row = Position(), rows = Count();
-			const bool moved = row != seenPosition || rows != seenCount;
+			const bool moved = edited || row != seenPosition || rows != seenCount;
 
 			seenPosition = row;
 			seenCount = rows;
@@ -249,6 +300,10 @@ namespace Spiral
 
 				return;
 			}
+
+			// A table's cells are none of the flat source's fields.
+			if (table)
+				return;
 
 			const long row = Position();
 

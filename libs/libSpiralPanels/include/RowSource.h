@@ -28,6 +28,11 @@
  * and a move made here writes the field. The number of rows can be fixed,
  * read from a field (a channel count), or found by counting the numbered
  * fields that exist.
+ *
+ * Some data a device hands over whole instead: a sequencer's lines come as
+ * one table, not as a setting for each cell. The rows can be over such a
+ * table too. Its columns are then the fields, named by their number, and a
+ * cell is changed by a command to the device, not by writing here.
  */
 #ifndef SPIRAL_DATA_ROW_SOURCE_H
 #define SPIRAL_DATA_ROW_SOURCE_H
@@ -37,6 +42,16 @@ namespace Spiral
 {
 	namespace Data
 	{
+		/* A table handed over whole: the cells of its rows one after another,
+		 * as many to a row as the row source was told. False when there is
+		 * nothing to read yet. */
+		class TableFeed
+		{
+		public:
+			virtual ~TableFeed() {}
+			virtual bool Cells(std::vector<double> &out) const = 0;
+		};
+
 		class RowSource: public DataSource, public DataObserver
 		{
 		public:
@@ -50,6 +65,12 @@ namespace Spiral
 			 * type, label and whether it can be written are row 0's. Fails when
 			 * the flat source has no such field for row 0. */
 			int AddField(const std::string &base);
+
+			/* The rows are a table's instead, `columns` cells to a row, and the
+			 * fields its columns: "0", "1" and on, whole numbers, read only. The
+			 * feed is this source's to delete. The count and the cursor are
+			 * still fields of the flat source, or fixed. */
+			void TableFrom(TableFeed *feed, int columns);
 
 			/* How many rows: this many, or whatever a field of the flat source
 			 * holds, limited to the rows whose fields exist. With neither, every
@@ -67,7 +88,7 @@ namespace Spiral
 
 			/* A flat source that tells no one of its changes is asked: observers
 			 * hear a moved row when the position or count fields have changed
-			 * since the last call. True when they had. */
+			 * since the last call, or a table's cells have. True when they had. */
 			bool Poll();
 
 			virtual int FieldCount() const;
@@ -89,6 +110,9 @@ namespace Spiral
 			int countField, positionField;
 			long position;
 			long seenPosition, seenCount;
+			TableFeed *table;
+			int columns;
+			std::vector<double> cells;
 
 			// The flat source's field for a row's field, or -1.
 			int FlatField(long row, int field) const;
