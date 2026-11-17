@@ -43,6 +43,15 @@ namespace Core
 		void Notes(std::vector<NoteSpan> &notes) const;
 		bool EditNote(unsigned on, uint64_t start, uint64_t end, unsigned key, float velocity, bool erase = false);
 		bool AddNote(uint64_t start, uint64_t end, unsigned channel, unsigned key, float velocity);
+
+		// For recording over part of a clip. CopyBefore makes this the part
+		// of a clip before a frame, a note sounding across the frame ended at
+		// it, so a take can be appended from there. AppendFrom then puts
+		// back what of that clip lies at or after the frame the take
+		// stopped at: notes the take left sounding are ended there, and a
+		// note of the clip sounding across it starts again there.
+		bool CopyBefore(const EventClip &source, uint64_t frame);
+		bool AppendFrom(const EventClip &source, uint64_t frame);
 		std::string Save() const;
 		bool Load(const std::string &text);
 		void Swap(EventClip &other);

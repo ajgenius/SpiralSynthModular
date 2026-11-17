@@ -112,6 +112,98 @@ namespace Core
 		}
 	}
 
+	bool EventClip::CopyBefore(const EventClip &source, uint64_t frame)
+	{
+		std::vector<NoteSpan> notes;
+
+		source.Notes(notes);
+		Clear(source.m_Rate);
+
+		for (unsigned i = 0; i < source.m_Count && source.m_Frames[i] < frame; ++i)
+			if (!Append(source.m_Frames[i], source.m_Events[i]))
+				return false;
+
+		const unsigned kept = m_Count;
+
+		for (size_t i = 0; i < notes.size(); ++i)
+		{
+			const NoteSpan &note = notes[i];
+
+			// Begun before the frame and not over before it.
+			if (note.OnEvent >= kept || (note.Closed() && note.OffEvent < kept))
+				continue;
+
+			Event off = note.Note;
+
+			off.Type = Event::NoteOff;
+
+			if (!Append(frame, off))
+				return false;
+		}
+
+		Extend(std::min(frame, source.m_Length));
+
+		return true;
+	}
+
+	bool EventClip::AppendFrom(const EventClip &source, uint64_t frame)
+	{
+		if (source.m_Rate != m_Rate)
+			return false;
+
+		std::vector<NoteSpan> notes;
+
+		Notes(notes);
+
+		for (size_t i = 0; i < notes.size(); ++i)
+			if (!notes[i].Closed())
+			{
+				Event off = notes[i].Note;
+
+				off.Type = Event::NoteOff;
+
+				if (!Append(frame, off))
+					return false;
+			}
+
+		unsigned first = 0;
+
+		while (first < source.m_Count && source.m_Frames[first] < frame)
+			++first;
+
+		// The release of a note that ends exactly where the take does has no
+		// note left to release.
+		std::vector<bool> spent(source.m_Count, false);
+
+		source.Notes(notes);
+
+		for (size_t i = 0; i < notes.size(); ++i)
+		{
+			const NoteSpan &note = notes[i];
+
+			if (note.OnEvent >= first || (note.Closed() && note.OffEvent < first))
+				continue;
+
+			if (note.Closed() && note.End == frame)
+			{
+				spent[note.OffEvent] = true;
+
+				continue;
+			}
+
+			if (!Append(frame, note.Note))
+				return false;
+		}
+
+		for (unsigned i = first; i < source.m_Count; ++i)
+			if (!spent[i] && !Append(source.m_Frames[i], source.m_Events[i]))
+				return false;
+
+		Extend(source.m_Length);
+
+		return true;
+	}
+
 	namespace
 	{
 		struct OrderedEvent
