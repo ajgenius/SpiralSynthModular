@@ -346,7 +346,6 @@
             0,
             0
           ],
-          "if_property": "SEQUENCE COUNT",
           "name": "snap",
           "on": {
             "value_changed": [
@@ -370,7 +369,6 @@
             0
           ],
           "digits": 2,
-          "if_property": "SEQUENCE COUNT",
           "max": 1,
           "min": 0,
           "name": "velocity",
@@ -395,7 +393,6 @@
             0,
             0
           ],
-          "if_property": "SEQUENCE COUNT",
           "name": "velocity-label",
           "size": 11,
           "text": "Velocity",
@@ -408,7 +405,6 @@
             0,
             0
           ],
-          "if_property": "SEQUENCE COUNT",
           "name": "delete-note",
           "on": {
             "pressed": [
