@@ -78,7 +78,7 @@ PianoRollPlugin::PianoRollPlugin():
 	m_AudioCH->Register("Start", &m_Args.Start, ChannelHandler::INPUT);
 	m_AudioCH->Register("End", &m_Args.End, ChannelHandler::INPUT);
 	m_AudioCH->RegisterData("NoteRows", ChannelHandler::OUTPUT, m_Rows, sizeof(m_Rows), 'd');
-	std::vector<std::string> none, note, edit, index;
+	std::vector<std::string> none, note, edit, index, position;
 	note.push_back("Start");
 	note.push_back("End");
 	note.push_back("Key");
@@ -86,6 +86,7 @@ PianoRollPlugin::PianoRollPlugin():
 	edit.push_back("Index");
 	edit.insert(edit.end(), note.begin(), note.end());
 	index.push_back("Index");
+	position.push_back("Start");
 	m_AudioCH->RegisterCommand("PLAY", PLAY, none);
 	m_AudioCH->RegisterCommand("STOP", STOP, none);
 	m_AudioCH->RegisterCommand("RECORD", RECORD, none);
@@ -93,6 +94,7 @@ PianoRollPlugin::PianoRollPlugin():
 	m_AudioCH->RegisterCommand("ADD_NOTE", ADD_NOTE, note);
 	m_AudioCH->RegisterCommand("EDIT_NOTE", EDIT_NOTE, edit);
 	m_AudioCH->RegisterCommand("DELETE_NOTE", DELETE_NOTE, index);
+	m_AudioCH->RegisterCommand("SET_POSITION", SET_POSITION, position);
 	m_Version = 0;
 	SetUnsigned(DeviceVersion, 0);
 	m_PluginInfo.Name = "PianoRoll";
@@ -423,7 +425,7 @@ void PianoRollPlugin::ExecuteCommands()
 
 	const uint64_t start = Frames(m_Args.Start);
 	const uint64_t end = Frames(m_Args.End);
-	bool edited = false;
+	bool edited = false, moved = false;
 
 	switch (m_AudioCH->GetCommand())
 	{
@@ -460,9 +462,21 @@ void PianoRollPlugin::ExecuteCommands()
 			edited = m_Args.Index >= 0 && m_Clip.EditNote((unsigned)m_Args.Index, 0, 0, 0, 0, true);
 
 			break;
+		case SET_POSITION:
+			// The position marker moved by hand, no further than the roll
+			// goes: where a take starts, and where play goes on from once
+			// what was sounding is let go. A take is not moved.
+			if (!m_Recording && m_Args.Start >= 0)
+			{
+				ReleaseAll(NULL, 0);
+				m_Phase = std::min(start, ClipLength());
+				moved = true;
+			}
+
+			break;
 	}
 
-	if (!edited)
+	if (!edited && !moved)
 		return;
 
 	m_Next = 0;
@@ -470,7 +484,8 @@ void PianoRollPlugin::ExecuteCommands()
 	while (m_Next < m_Clip.Count() && m_Clip.FrameAt(m_Next) < m_Phase)
 		++m_Next;
 
-	Published();
+	if (edited)
+		Published();
 }
 
 void PianoRollPlugin::Describe(Description &d)

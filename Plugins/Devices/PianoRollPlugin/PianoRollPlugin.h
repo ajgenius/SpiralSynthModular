@@ -29,7 +29,8 @@ public:
 		CLEAR,
 		ADD_NOTE,
 		EDIT_NOTE,
-		DELETE_NOTE
+		DELETE_NOTE,
+		SET_POSITION
 	};
 
 	enum
