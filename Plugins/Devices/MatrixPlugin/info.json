@@ -486,657 +486,56 @@
           "bounds": [
             558,
             26,
-            25,
-            12
-          ],
-          "digits": 0,
-          "max": 15,
-          "min": 0,
-          "name": "patseq-0",
-          "on": {
-            "value_changed": [
-              {
-                "value": "SET_PATSEQ",
-                "with": [
-                  0,
-                  "value"
-                ],
-                "write": "COMMAND"
-              }
-            ]
-          },
-          "property": "PATSEQ0",
-          "simple": true,
-          "step": 1,
-          "type": "Spinner"
-        },
-        {
-          "bounds": [
-            583,
-            26,
-            15,
-            15
-          ],
-          "choice": 0,
-          "color_role": "matrix.status",
-          "name": "patseq-0-led",
-          "property": "PATSEQSTEP",
-          "type": "Meters::LED"
-        },
-        {
-          "bounds": [
-            558,
             40,
-            25,
-            12
-          ],
-          "digits": 0,
-          "max": 15,
-          "min": -1,
-          "name": "patseq-1",
-          "on": {
-            "value_changed": [
-              {
-                "value": "SET_PATSEQ",
-                "with": [
-                  1,
-                  "value"
-                ],
-                "write": "COMMAND"
-              }
-            ]
-          },
-          "property": "PATSEQ1",
-          "simple": true,
-          "step": 1,
-          "type": "Spinner"
-        },
-        {
-          "bounds": [
-            583,
-            40,
-            15,
             15
           ],
-          "choice": 1,
-          "color_role": "matrix.status",
-          "name": "patseq-1-led",
-          "property": "PATSEQSTEP",
-          "type": "Meters::LED"
-        },
-        {
-          "bounds": [
-            558,
-            54,
-            25,
-            12
+          "children": [
+            {
+              "bounds": [
+                0,
+                0,
+                25,
+                12
+              ],
+              "digits": 0,
+              "max": 15,
+              "min": -1,
+              "name": "patseq-{index}",
+              "on": {
+                "value_changed": [
+                  {
+                    "value": "SET_PATSEQ",
+                    "with": [
+                      "row",
+                      "value"
+                    ],
+                    "write": "COMMAND"
+                  }
+                ]
+              },
+              "property": "PATSEQ",
+              "simple": true,
+              "step": 1,
+              "type": "Spinner"
+            },
+            {
+              "bounds": [
+                25,
+                0,
+                15,
+                15
+              ],
+              "choice": "{index}",
+              "color_role": "matrix.status",
+              "name": "patseq-{index}-led",
+              "property": "PATSEQSTEP",
+              "type": "Meters::LED"
+            }
           ],
-          "digits": 0,
-          "max": 15,
-          "min": -1,
-          "name": "patseq-2",
-          "on": {
-            "value_changed": [
-              {
-                "value": "SET_PATSEQ",
-                "with": [
-                  2,
-                  "value"
-                ],
-                "write": "COMMAND"
-              }
-            ]
-          },
-          "property": "PATSEQ2",
-          "simple": true,
-          "step": 1,
-          "type": "Spinner"
-        },
-        {
-          "bounds": [
-            583,
-            54,
-            15,
-            15
-          ],
-          "choice": 2,
-          "color_role": "matrix.status",
-          "name": "patseq-2-led",
-          "property": "PATSEQSTEP",
-          "type": "Meters::LED"
-        },
-        {
-          "bounds": [
-            558,
-            68,
-            25,
-            12
-          ],
-          "digits": 0,
-          "max": 15,
-          "min": -1,
-          "name": "patseq-3",
-          "on": {
-            "value_changed": [
-              {
-                "value": "SET_PATSEQ",
-                "with": [
-                  3,
-                  "value"
-                ],
-                "write": "COMMAND"
-              }
-            ]
-          },
-          "property": "PATSEQ3",
-          "simple": true,
-          "step": 1,
-          "type": "Spinner"
-        },
-        {
-          "bounds": [
-            583,
-            68,
-            15,
-            15
-          ],
-          "choice": 3,
-          "color_role": "matrix.status",
-          "name": "patseq-3-led",
-          "property": "PATSEQSTEP",
-          "type": "Meters::LED"
-        },
-        {
-          "bounds": [
-            558,
-            82,
-            25,
-            12
-          ],
-          "digits": 0,
-          "max": 15,
-          "min": -1,
-          "name": "patseq-4",
-          "on": {
-            "value_changed": [
-              {
-                "value": "SET_PATSEQ",
-                "with": [
-                  4,
-                  "value"
-                ],
-                "write": "COMMAND"
-              }
-            ]
-          },
-          "property": "PATSEQ4",
-          "simple": true,
-          "step": 1,
-          "type": "Spinner"
-        },
-        {
-          "bounds": [
-            583,
-            82,
-            15,
-            15
-          ],
-          "choice": 4,
-          "color_role": "matrix.status",
-          "name": "patseq-4-led",
-          "property": "PATSEQSTEP",
-          "type": "Meters::LED"
-        },
-        {
-          "bounds": [
-            558,
-            96,
-            25,
-            12
-          ],
-          "digits": 0,
-          "max": 15,
-          "min": -1,
-          "name": "patseq-5",
-          "on": {
-            "value_changed": [
-              {
-                "value": "SET_PATSEQ",
-                "with": [
-                  5,
-                  "value"
-                ],
-                "write": "COMMAND"
-              }
-            ]
-          },
-          "property": "PATSEQ5",
-          "simple": true,
-          "step": 1,
-          "type": "Spinner"
-        },
-        {
-          "bounds": [
-            583,
-            96,
-            15,
-            15
-          ],
-          "choice": 5,
-          "color_role": "matrix.status",
-          "name": "patseq-5-led",
-          "property": "PATSEQSTEP",
-          "type": "Meters::LED"
-        },
-        {
-          "bounds": [
-            558,
-            110,
-            25,
-            12
-          ],
-          "digits": 0,
-          "max": 15,
-          "min": -1,
-          "name": "patseq-6",
-          "on": {
-            "value_changed": [
-              {
-                "value": "SET_PATSEQ",
-                "with": [
-                  6,
-                  "value"
-                ],
-                "write": "COMMAND"
-              }
-            ]
-          },
-          "property": "PATSEQ6",
-          "simple": true,
-          "step": 1,
-          "type": "Spinner"
-        },
-        {
-          "bounds": [
-            583,
-            110,
-            15,
-            15
-          ],
-          "choice": 6,
-          "color_role": "matrix.status",
-          "name": "patseq-6-led",
-          "property": "PATSEQSTEP",
-          "type": "Meters::LED"
-        },
-        {
-          "bounds": [
-            558,
-            124,
-            25,
-            12
-          ],
-          "digits": 0,
-          "max": 15,
-          "min": -1,
-          "name": "patseq-7",
-          "on": {
-            "value_changed": [
-              {
-                "value": "SET_PATSEQ",
-                "with": [
-                  7,
-                  "value"
-                ],
-                "write": "COMMAND"
-              }
-            ]
-          },
-          "property": "PATSEQ7",
-          "simple": true,
-          "step": 1,
-          "type": "Spinner"
-        },
-        {
-          "bounds": [
-            583,
-            124,
-            15,
-            15
-          ],
-          "choice": 7,
-          "color_role": "matrix.status",
-          "name": "patseq-7-led",
-          "property": "PATSEQSTEP",
-          "type": "Meters::LED"
-        },
-        {
-          "bounds": [
-            558,
-            138,
-            25,
-            12
-          ],
-          "digits": 0,
-          "max": 15,
-          "min": -1,
-          "name": "patseq-8",
-          "on": {
-            "value_changed": [
-              {
-                "value": "SET_PATSEQ",
-                "with": [
-                  8,
-                  "value"
-                ],
-                "write": "COMMAND"
-              }
-            ]
-          },
-          "property": "PATSEQ8",
-          "simple": true,
-          "step": 1,
-          "type": "Spinner"
-        },
-        {
-          "bounds": [
-            583,
-            138,
-            15,
-            15
-          ],
-          "choice": 8,
-          "color_role": "matrix.status",
-          "name": "patseq-8-led",
-          "property": "PATSEQSTEP",
-          "type": "Meters::LED"
-        },
-        {
-          "bounds": [
-            558,
-            152,
-            25,
-            12
-          ],
-          "digits": 0,
-          "max": 15,
-          "min": -1,
-          "name": "patseq-9",
-          "on": {
-            "value_changed": [
-              {
-                "value": "SET_PATSEQ",
-                "with": [
-                  9,
-                  "value"
-                ],
-                "write": "COMMAND"
-              }
-            ]
-          },
-          "property": "PATSEQ9",
-          "simple": true,
-          "step": 1,
-          "type": "Spinner"
-        },
-        {
-          "bounds": [
-            583,
-            152,
-            15,
-            15
-          ],
-          "choice": 9,
-          "color_role": "matrix.status",
-          "name": "patseq-9-led",
-          "property": "PATSEQSTEP",
-          "type": "Meters::LED"
-        },
-        {
-          "bounds": [
-            558,
-            166,
-            25,
-            12
-          ],
-          "digits": 0,
-          "max": 15,
-          "min": -1,
-          "name": "patseq-10",
-          "on": {
-            "value_changed": [
-              {
-                "value": "SET_PATSEQ",
-                "with": [
-                  10,
-                  "value"
-                ],
-                "write": "COMMAND"
-              }
-            ]
-          },
-          "property": "PATSEQ10",
-          "simple": true,
-          "step": 1,
-          "type": "Spinner"
-        },
-        {
-          "bounds": [
-            583,
-            166,
-            15,
-            15
-          ],
-          "choice": 10,
-          "color_role": "matrix.status",
-          "name": "patseq-10-led",
-          "property": "PATSEQSTEP",
-          "type": "Meters::LED"
-        },
-        {
-          "bounds": [
-            558,
-            180,
-            25,
-            12
-          ],
-          "digits": 0,
-          "max": 15,
-          "min": -1,
-          "name": "patseq-11",
-          "on": {
-            "value_changed": [
-              {
-                "value": "SET_PATSEQ",
-                "with": [
-                  11,
-                  "value"
-                ],
-                "write": "COMMAND"
-              }
-            ]
-          },
-          "property": "PATSEQ11",
-          "simple": true,
-          "step": 1,
-          "type": "Spinner"
-        },
-        {
-          "bounds": [
-            583,
-            180,
-            15,
-            15
-          ],
-          "choice": 11,
-          "color_role": "matrix.status",
-          "name": "patseq-11-led",
-          "property": "PATSEQSTEP",
-          "type": "Meters::LED"
-        },
-        {
-          "bounds": [
-            558,
-            194,
-            25,
-            12
-          ],
-          "digits": 0,
-          "max": 15,
-          "min": -1,
-          "name": "patseq-12",
-          "on": {
-            "value_changed": [
-              {
-                "value": "SET_PATSEQ",
-                "with": [
-                  12,
-                  "value"
-                ],
-                "write": "COMMAND"
-              }
-            ]
-          },
-          "property": "PATSEQ12",
-          "simple": true,
-          "step": 1,
-          "type": "Spinner"
-        },
-        {
-          "bounds": [
-            583,
-            194,
-            15,
-            15
-          ],
-          "choice": 12,
-          "color_role": "matrix.status",
-          "name": "patseq-12-led",
-          "property": "PATSEQSTEP",
-          "type": "Meters::LED"
-        },
-        {
-          "bounds": [
-            558,
-            208,
-            25,
-            12
-          ],
-          "digits": 0,
-          "max": 15,
-          "min": -1,
-          "name": "patseq-13",
-          "on": {
-            "value_changed": [
-              {
-                "value": "SET_PATSEQ",
-                "with": [
-                  13,
-                  "value"
-                ],
-                "write": "COMMAND"
-              }
-            ]
-          },
-          "property": "PATSEQ13",
-          "simple": true,
-          "step": 1,
-          "type": "Spinner"
-        },
-        {
-          "bounds": [
-            583,
-            208,
-            15,
-            15
-          ],
-          "choice": 13,
-          "color_role": "matrix.status",
-          "name": "patseq-13-led",
-          "property": "PATSEQSTEP",
-          "type": "Meters::LED"
-        },
-        {
-          "bounds": [
-            558,
-            222,
-            25,
-            12
-          ],
-          "digits": 0,
-          "max": 15,
-          "min": -1,
-          "name": "patseq-14",
-          "on": {
-            "value_changed": [
-              {
-                "value": "SET_PATSEQ",
-                "with": [
-                  14,
-                  "value"
-                ],
-                "write": "COMMAND"
-              }
-            ]
-          },
-          "property": "PATSEQ14",
-          "simple": true,
-          "step": 1,
-          "type": "Spinner"
-        },
-        {
-          "bounds": [
-            583,
-            222,
-            15,
-            15
-          ],
-          "choice": 14,
-          "color_role": "matrix.status",
-          "name": "patseq-14-led",
-          "property": "PATSEQSTEP",
-          "type": "Meters::LED"
-        },
-        {
-          "bounds": [
-            558,
-            236,
-            25,
-            12
-          ],
-          "digits": 0,
-          "max": 15,
-          "min": -1,
-          "name": "patseq-15",
-          "on": {
-            "value_changed": [
-              {
-                "value": "SET_PATSEQ",
-                "with": [
-                  15,
-                  "value"
-                ],
-                "write": "COMMAND"
-              }
-            ]
-          },
-          "property": "PATSEQ15",
-          "simple": true,
-          "step": 1,
-          "type": "Spinner"
-        },
-        {
-          "bounds": [
-            583,
-            236,
-            15,
-            15
-          ],
-          "choice": 15,
-          "color_role": "matrix.status",
-          "name": "patseq-15-led",
-          "property": "PATSEQSTEP",
-          "type": "Meters::LED"
+          "name": "patseq",
+          "source": "sequence",
+          "step_y": 14,
+          "type": "Repeat"
         }
       ],
       "height": 254,
@@ -3271,6 +2670,14 @@
         }
       ],
       "schema_version": 1,
+      "sources": {
+        "sequence": {
+          "count": 16,
+          "fields": [
+            "PATSEQ"
+          ]
+        }
+      },
       "width": 596
     },
     "plugin_id": 18,

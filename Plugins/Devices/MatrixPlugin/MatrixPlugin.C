@@ -636,7 +636,9 @@ void MatrixPlugin::ExecuteCommands()
 				AsSigned(m_Current)=m_GUIArgs.Num;
 			break;
 			case SET_PATSEQ :
-				SetPatSeq(m_GUIArgs.Y, m_GUIArgs.Num);
+				// The first slot always plays a pattern; any other may be the end.
+				if (m_GUIArgs.Y >= 0 && m_GUIArgs.Y < NUM_PATSEQ)
+					SetPatSeq(m_GUIArgs.Y, std::max(m_GUIArgs.Y ? -1 : 0, std::min(NUM_PATTERNS - 1, m_GUIArgs.Num)));
 			break;
 		}
 	}
