@@ -34,7 +34,8 @@ public:
 
 	enum
 	{
-		MAX_NOTES = 512,
+		// Every note a clip can hold is shown.
+		MAX_NOTES = Spiral::Core::EventClip::MaxEvents / 2,
 		MAX_HELD = 128,
 		MAX_RECORDED = 4096
 	};
