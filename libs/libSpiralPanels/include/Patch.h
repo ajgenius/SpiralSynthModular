@@ -58,7 +58,14 @@ namespace Spiral
 			void Release(double x, double y);
 			void Cancel();
 			void RemoveSelected();
+			void SetSelectedVelocity(float velocity);
 			void Scroll(int rows, double time);
+
+			// For the view's scroll bars: where the view is put, how far
+			// the time bar reaches, and a bar held so the page stays put.
+			void ShowFrom(int lowRow, double first);
+			double TimeEnd() const;
+			void HoldView(bool held) { m_Held = held; }
 
 		protected:
 			PianoRollControl(Panel &panel, const Spumoni::JSON &node);
@@ -70,6 +77,7 @@ namespace Spiral
 			std::string m_Rows;
 			const PanelProperty *m_Count, *m_Playhead;
 			std::vector<unsigned char> m_Shown;
+			bool m_Held;
 		};
 
 		class PortListControl: public PanelControl

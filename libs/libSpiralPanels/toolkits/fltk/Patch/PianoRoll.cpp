@@ -4,7 +4,8 @@
 #include "FltkTheme.h"
 #include "JSON.h"
 #include <FL/Fl.H>
-#include <FL/Fl_Widget.H>
+#include <FL/Fl_Group.H>
+#include <FL/Fl_Scrollbar.H>
 #include <FL/fl_draw.H>
 #include <algorithm>
 #include <cstdio>
@@ -15,15 +16,61 @@ namespace Spiral
 	{
 		namespace
 		{
-			class PianoRollWidget: public Fl_Widget
+			// A scroll bar of the roll's. While it is held the page does not
+			// turn after the playhead.
+			class RollBar: public Fl_Scrollbar
 			{
 			public:
+				RollBar(PianoRollControl &control): Fl_Scrollbar(0, 0, 1, 1), m_Control(control) {}
+
+				int handle(int event)
+				{
+					if (event == FL_PUSH)
+						m_Control.HoldView(true);
+					else if (event == FL_RELEASE)
+						m_Control.HoldView(false);
+
+					return Fl_Scrollbar::handle(event);
+				}
+
+			private:
+				PianoRollControl &m_Control;
+			};
+
+			// The roll, with its own scroll bars: time along the bottom, as
+			// far as the notes go and a page beyond; keys down the side.
+			class PianoRollWidget: public Fl_Group
+			{
+			public:
+				enum
+				{
+					Bar = 14,
+					Keys = 128
+				};
+
 				PianoRollWidget(int x, int y, int w, int h, PianoRollControl &control, const FltkLook &look):
-					Fl_Widget(x, y, w, h),
+					Fl_Group(x, y, w, h),
 					m_Control(control),
 					m_Look(look)
 				{
 					look.Apply(this);
+					m_Time = new RollBar(control);
+					m_Time->type(FL_HORIZONTAL);
+					m_Time->callback(&TimeMoved, this);
+					m_Keys = new RollBar(control);
+					m_Keys->callback(&KeysMoved, this);
+					end();
+					PlaceBars();
+				}
+
+				// The part the roll draws in, beside its bars.
+				int RollW() const { return w() - Bar; }
+				int RollH() const { return h() - Bar; }
+
+				void resize(int nx, int ny, int nw, int nh)
+				{
+					Fl_Widget::resize(nx, ny, nw, nh);
+					PlaceBars();
 				}
 
 				void draw()
@@ -32,17 +79,19 @@ namespace Spiral
 					const int left = x() + (int)grid.Gutter;
 					const int top = y() + (int)grid.Header;
 					const double rowHeight = grid.RowHeight();
+					SyncBars(grid);
 					fl_color(m_Look.Colour("face"));
 					fl_rectf(x(), y(), w(), h());
-					fl_push_clip(x(), y(), w(), h());
+					draw_children();
+					fl_push_clip(x(), y(), RollW(), RollH());
 
 					for (int row = grid.LowRow; row < grid.LowRow + grid.Rows; ++row)
 					{
 						const int ry = y() + (int)grid.RowY(row);
 						fl_color(m_Look.Colour(NoteGrid::IsAccidental(row) ? "accidental" : "natural"));
-						fl_rectf(left, ry, w() - (int)grid.Gutter, (int)rowHeight + 1);
+						fl_rectf(left, ry, RollW() - (int)grid.Gutter, (int)rowHeight + 1);
 						fl_color(m_Look.Colour("row_line"));
-						fl_line(left, ry, x() + w(), ry);
+						fl_line(left, ry, x() + RollW(), ry);
 						fl_color(m_Look.Colour("text"));
 						fl_font(m_Look.Font("text_font"), m_Look.Size("row_text_size"));
 						fl_draw(NoteGrid::NoteName(row).c_str(), x(), ry, (int)grid.Gutter - 3, (int)rowHeight, FL_ALIGN_RIGHT);
@@ -54,16 +103,16 @@ namespace Spiral
 					{
 						const int lx = x() + (int)grid.X(lines[i]);
 						fl_color(m_Look.Colour("grid_line"));
-						fl_line(lx, top, lx, y() + h());
+						fl_line(lx, top, lx, y() + RollH());
 					}
 
 					char range[64];
 					std::snprintf(range, sizeof(range), "%.2f - %.2f s", grid.First, grid.First + grid.Span);
 					fl_color(m_Look.Colour("text"));
 					fl_font(m_Look.Font("text_font"), m_Look.Size("header_text_size"));
-					fl_draw(range, left + 2, y(), w() - (int)grid.Gutter - 4, (int)grid.Header, FL_ALIGN_LEFT);
+					fl_draw(range, left + 2, y(), RollW() - (int)grid.Gutter - 4, (int)grid.Header, FL_ALIGN_LEFT);
 					fl_pop_clip();
-					fl_push_clip(left, top, w() - (int)grid.Gutter, h() - (int)grid.Header);
+					fl_push_clip(left, top, RollW() - (int)grid.Gutter, RollH() - (int)grid.Header);
 
 					for (size_t i = 0; i < grid.Notes.size(); ++i)
 					{
@@ -82,7 +131,7 @@ namespace Spiral
 					{
 						const int px = x() + (int)grid.X(grid.Playhead);
 						fl_color(m_Look.Colour("playhead"));
-						fl_line(px, top, px, y() + h());
+						fl_line(px, top, px, y() + RollH());
 					}
 
 					fl_pop_clip();
@@ -96,6 +145,10 @@ namespace Spiral
 					switch (event)
 					{
 						case FL_PUSH:
+							// A press on a bar is the bar's.
+							if (lx >= RollW() || ly >= RollH())
+								return Fl_Group::handle(event);
+
 							if (Fl::event_button() != FL_LEFT_MOUSE)
 								return 1;
 
@@ -142,10 +195,47 @@ namespace Spiral
 							return 1;
 					}
 
-					return Fl_Widget::handle(event);
+					return Fl_Group::handle(event);
 				}
 
 			private:
+				static void TimeMoved(Fl_Widget *bar, void *data)
+				{
+					PianoRollWidget *self = static_cast<PianoRollWidget *>(data);
+					self->m_Control.ShowFrom(self->m_Control.Grid().LowRow, static_cast<Fl_Scrollbar *>(bar)->value() / 1000.0);
+				}
+
+				// The bar's top is the highest key.
+				static void KeysMoved(Fl_Widget *bar, void *data)
+				{
+					PianoRollWidget *self = static_cast<PianoRollWidget *>(data);
+					NoteGrid &grid = self->m_Control.Grid();
+					self->m_Control.ShowFrom(Keys - grid.Rows - static_cast<Fl_Scrollbar *>(bar)->value(), grid.First);
+				}
+
+				void PlaceBars()
+				{
+					const NoteGrid &grid = m_Control.Grid();
+					const int gutter = (int)grid.Gutter, header = (int)grid.Header;
+					m_Time->resize(x() + gutter, y() + RollH(), std::max(1, RollW() - gutter), Bar);
+					m_Keys->resize(x() + RollW(), y() + header, Bar, std::max(1, RollH() - header));
+				}
+
+				// The bars follow the view, in thousandths of a second and in
+				// keys; one being dragged is left alone.
+				void SyncBars(const NoteGrid &grid)
+				{
+					if (Fl::pushed() != m_Time)
+					{
+						m_Time->value((int)(grid.First * 1000), (int)(grid.Span * 1000), 0,
+							(int)((m_Control.TimeEnd() + grid.Span) * 1000));
+						m_Time->linesize(std::max(1, (int)(grid.Span * 1000 / 16)));
+					}
+
+					if (Fl::pushed() != m_Keys)
+						m_Keys->value(Keys - grid.Rows - grid.LowRow, grid.Rows, 0, Keys);
+				}
+
 				void DrawNote(const NoteGrid &grid, const GridNote &note, bool marked)
 				{
 					if (!grid.Visible(note))
@@ -163,6 +253,7 @@ namespace Spiral
 
 				PianoRollControl &m_Control;
 				FltkLook m_Look;
+				Fl_Scrollbar *m_Time, *m_Keys;
 			};
 
 			class FltkRoll: public FltkView, public virtual RollView
@@ -174,8 +265,8 @@ namespace Spiral
 
 				void Size(double &w, double &h) const
 				{
-					w = m_Widget->w();
-					h = m_Widget->h();
+					w = m_Widget->RollW();
+					h = m_Widget->RollH();
 				}
 
 			private:

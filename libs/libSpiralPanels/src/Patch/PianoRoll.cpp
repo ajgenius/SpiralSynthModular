@@ -5,6 +5,7 @@
 #include "PanelControlRegistry.h"
 #include "PanelProperty.h"
 #include "PanelSource.h"
+#include <cmath>
 #include <cstring>
 
 namespace Spiral
@@ -30,7 +31,8 @@ namespace Spiral
 			m_Roll(NULL),
 			m_Rows(TextOf(node.Get("notes"))),
 			m_Count(panel.FindProperty(TextOf(node.Get("count")))),
-			m_Playhead(panel.FindProperty(TextOf(node.Get("playhead"))))
+			m_Playhead(panel.FindProperty(TextOf(node.Get("playhead")))),
+			m_Held(false)
 		{
 			m_Grid.LowRow = (int)NumberOf(node.Get("low_key"), 48);
 			m_Grid.Rows = (int)NumberOf(node.Get("keys"), 24);
@@ -72,6 +74,13 @@ namespace Spiral
 				if (playhead != m_Grid.Playhead)
 				{
 					m_Grid.Playhead = playhead;
+
+					// The page turns to keep a moving playhead in view, unless
+					// a note is being drawn or a bar held.
+					if (!m_Grid.Dragging() && !m_Held && playhead >= 0 && m_Grid.Span > 0
+							&& (playhead < m_Grid.First || playhead >= m_Grid.First + m_Grid.Span))
+						m_Grid.First = std::floor(playhead / m_Grid.Span) * m_Grid.Span;
+
 					changed = true;
 				}
 			}
@@ -120,6 +129,18 @@ namespace Spiral
 				m_Grid.GridStep = value;
 			else if (attribute == "span" && value > 0)
 				m_Grid.Span = value;
+			else if (attribute == "selected_velocity")
+			{
+				SetSelectedVelocity((float)value);
+
+				return;
+			}
+			else if (attribute == "remove_selected")
+			{
+				RemoveSelected();
+
+				return;
+			}
 			else
 				return;
 
@@ -141,6 +162,13 @@ namespace Spiral
 				return;
 
 			Fit();
+
+			// Dragged to an edge, the view moves on under the note.
+			if (x > m_Grid.Width - 6)
+				m_Grid.First += m_Grid.Span / 32;
+			else if (x < m_Grid.Gutter + 6)
+				m_Grid.First = std::max(0.0, m_Grid.First - m_Grid.Span / 32);
+
 			m_Grid.MoveTo(x, y);
 			m_Roll->Redraw();
 		}
@@ -166,6 +194,43 @@ namespace Spiral
 
 			if (m_Grid.RemoveSelected(note))
 				Edited(NoteGrid::Removed, note);
+		}
+
+		void PianoRollControl::SetSelectedVelocity(float velocity)
+		{
+			if (m_Grid.Dragging())
+				return;
+
+			for (size_t i = 0; i < m_Grid.Notes.size(); ++i)
+			{
+				if (m_Grid.Notes[i].Id != m_Grid.Selected)
+					continue;
+
+				GridNote changed = m_Grid.Notes[i];
+				changed.Velocity = std::max(0.0f, std::min(1.0f, velocity));
+				Edited(NoteGrid::Changed, changed);
+
+				return;
+			}
+		}
+
+		void PianoRollControl::ShowFrom(int lowRow, double first)
+		{
+			m_Grid.LowRow = std::max(0, std::min(128 - m_Grid.Rows, lowRow));
+			m_Grid.First = std::max(0.0, first);
+			m_Roll->Redraw();
+		}
+
+		// As far as the notes or the playhead go, never less than a page nor
+		// than where the view already is.
+		double PianoRollControl::TimeEnd() const
+		{
+			double last = std::max(0.0, m_Grid.Playhead);
+
+			for (size_t i = 0; i < m_Grid.Notes.size(); ++i)
+				last = std::max(last, m_Grid.Notes[i].End);
+
+			return std::max(m_Grid.First, std::max(last, m_Grid.Span));
 		}
 
 		void PianoRollControl::Scroll(int rows, double time)
