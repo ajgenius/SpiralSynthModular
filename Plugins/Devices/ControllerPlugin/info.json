@@ -96,7 +96,7 @@
               "type": "TextEntry"
             }
           ],
-          "max_count": 16,
+          "max_count": 99,
           "name": "channels",
           "source": "channels",
           "step_x": 60,
@@ -139,7 +139,7 @@
             ]
           },
           "text": "+",
-          "tooltip": "One channel more, up to sixteen",
+          "tooltip": "One channel more, up to ninety-nine",
           "type": "Button"
         }
       ],
