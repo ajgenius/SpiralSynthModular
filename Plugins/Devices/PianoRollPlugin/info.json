@@ -141,8 +141,8 @@
         {
           "bounds": [
             4,
-            30,
-            412,
+            38,
+            500,
             234
           ],
           "grid": 0.25,
@@ -202,15 +202,15 @@
           "name": "sequence-mode",
           "property": "SEQUENCE MODE",
           "text": "Sequences",
-          "tooltip": "Keep several sequences; Play launches the one shown",
+          "tooltip": "Keep several sequences",
           "type": "Button"
         },
         {
           "bounds": [
-            0,
-            0,
-            0,
-            0
+            420,
+            4,
+            40,
+            20
           ],
           "digits": 0,
           "if_property": "SEQUENCE",
@@ -230,8 +230,62 @@
           "property": "SEQUENCE",
           "simple": true,
           "step": 1,
-          "tooltip": "Sequence to edit; Play launches it",
+          "tooltip": "The sequence shown and edited",
           "type": "Spinner"
+        },
+        {
+          "bounds": [
+            420,
+            24,
+            40,
+            10
+          ],
+          "if_property": "SEQUENCE",
+          "name": "sequence-label",
+          "size": 10,
+          "text": "View",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            464,
+            4,
+            40,
+            20
+          ],
+          "digits": 0,
+          "if_property": "PLAY SEQUENCE",
+          "min": 1,
+          "name": "play-sequence",
+          "on": {
+            "value_changed": [
+              {
+                "value": "PLAY_SEQUENCE",
+                "with": [
+                  "value"
+                ],
+                "write": "COMMAND"
+              }
+            ]
+          },
+          "property": "PLAY SEQUENCE",
+          "simple": true,
+          "step": 1,
+          "tooltip": "The sequence that plays",
+          "type": "Spinner"
+        },
+        {
+          "bounds": [
+            464,
+            24,
+            40,
+            10
+          ],
+          "if_property": "PLAY SEQUENCE",
+          "name": "play-sequence-label",
+          "size": 10,
+          "text": "Play",
+          "type": "Label"
         },
         {
           "bounds": [
@@ -415,76 +469,62 @@
           },
           "text": "Delete note",
           "type": "Button"
-        },
-        {
-          "align": "left",
-          "bounds": [
-            0,
-            0,
-            0,
-            0
-          ],
-          "if_property": "STATUS",
-          "name": "status",
-          "property": "STATUS",
-          "size": 11,
-          "type": "Label"
         }
       ],
-      "height": 268,
+      "height": 276,
       "help": "A clip of notes played as events. Play, record from the event input, loop and edit the notes.",
       "layouts": [
         {
-          "height": 268,
+          "height": 276,
           "name": "small",
-          "width": 420
+          "width": 508
         },
         {
           "controls": {
             "auto-end": [
               166,
-              562,
+              570,
               110,
               22
             ],
             "clear": [
-              256,
+              220,
               4,
-              80,
+              68,
               24
             ],
             "delete-note": [
               508,
-              562,
+              570,
               100,
               22
             ],
             "delete-sequence": [
-              768,
+              764,
               4,
               112,
               24
             ],
             "end": [
               64,
-              562,
+              570,
               90,
               22
             ],
             "end-label": [
               4,
-              562,
+              570,
               56,
               22
             ],
             "loop": [
-              344,
+              296,
               4,
-              62,
+              56,
               24
             ],
             "new-sequence": [
-              660,
+              656,
               4,
               104,
               24
@@ -492,8 +532,20 @@
             "play": [
               4,
               4,
-              80,
+              68,
               24
+            ],
+            "play-sequence": [
+              590,
+              4,
+              60,
+              24
+            ],
+            "play-sequence-label": [
+              590,
+              28,
+              60,
+              10
             ],
             "position": [
               888,
@@ -502,67 +554,67 @@
               24
             ],
             "record": [
-              88,
+              76,
               4,
-              80,
+              68,
               24
             ],
             "roll": [
               4,
-              34,
+              42,
               952,
               520
             ],
             "sequence": [
-              594,
+              526,
               4,
               60,
               24
             ],
+            "sequence-label": [
+              526,
+              28,
+              60,
+              10
+            ],
             "sequence-mode": [
-              488,
+              420,
               4,
               100,
               24
             ],
             "snap": [
               288,
-              562,
+              570,
               70,
               22
             ],
-            "status": [
-              4,
-              590,
-              952,
-              18
-            ],
             "stop": [
-              172,
+              148,
               4,
-              80,
+              68,
               24
             ],
             "thru": [
-              410,
+              356,
               4,
-              70,
+              56,
               24
             ],
             "velocity": [
               370,
-              562,
+              570,
               70,
               22
             ],
             "velocity-label": [
               444,
-              562,
+              570,
               60,
               22
             ]
           },
-          "height": 612,
+          "height": 598,
           "name": "large",
           "width": 960
         }
@@ -582,7 +634,7 @@
           "table": "NOTEROWS"
         }
       },
-      "width": 420
+      "width": 508
     },
     "plugin_id": 288,
     "properties": [
