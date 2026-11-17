@@ -250,7 +250,9 @@ void PianoRollPlugin::Record(const EventBuffer *in, EventBuffer *)
 	{
 		const Event &event = in->At(i);
 
-		if (m_Recording && m_RecordedCount < MAX_RECORDED && (event.Type == Event::NoteOn || event.Type == Event::NoteOff))
+		// Whatever comes in is recorded, on any channel; a reset is not,
+		// as none is played back.
+		if (m_Recording && m_RecordedCount < MAX_RECORDED && event.Type != Event::Reset)
 		{
 			m_Recorded[m_RecordedCount].Frame = m_Phase + in->Frame(i);
 			m_Recorded[m_RecordedCount++].Event = event;
@@ -281,6 +283,11 @@ void PianoRollPlugin::MergeRecording()
 	for (unsigned i = 0; i < m_RecordedCount; ++i)
 	{
 		Event &event = m_Recorded[i].Event;
+
+		// Only a note has an ID to keep clear of the clip's.
+		if (event.Type != Event::NoteOn && event.Type != Event::NoteOff)
+			continue;
+
 		const std::pair<int, int> identity(event.Channel, event.ID);
 
 		if (event.Type == Event::NoteOn)
