@@ -265,6 +265,7 @@ namespace Spiral
 			void AddTrigger(int id, int channel, float angle);
 			void SyncTriggers();
 			void NewTrigger();
+			void WriteMadePoints();
 
 			LoopView *m_Loop;
 			std::vector<Trigger> m_Triggers;
@@ -276,6 +277,8 @@ namespace Spiral
 			// fields are a point's output and its place round the loop.
 			Spiral::Data::RowSource *m_TriggerRows;
 			int m_ChannelField, m_TimeField;
+			// New points whose rows the device has not yet made.
+			std::vector<int> m_Unwritten;
 			bool m_Fetched;
 		};
 	}

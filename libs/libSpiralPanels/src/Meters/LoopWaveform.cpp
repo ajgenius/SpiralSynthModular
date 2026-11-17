@@ -74,6 +74,31 @@ namespace Spiral
 
 			if (m_Pos)
 				m_Loop->SetPosition((float)m_Panel.Read(*m_Pos));
+
+			WriteMadePoints();
+		}
+
+		// The device puts a new point where the command says, and the next
+		// exchange with the panel overwrites that with the panel's copy of the
+		// point's fields, which nothing has written yet. So once the device
+		// has made the point's row the panel writes it, as the point stands
+		// by then.
+		void LoopWaveformControl::WriteMadePoints()
+		{
+			for (size_t i = 0; m_TriggerRows && i < m_Unwritten.size();)
+			{
+				const int id = m_Unwritten[i];
+
+				if (id >= m_TriggerRows->Count() || id >= (int)m_Triggers.size())
+				{
+					++i;
+					continue;
+				}
+
+				m_TriggerRows->SetAt(id, m_ChannelField, Spiral::Data::ControlValue((double)m_Triggers[id].Channel));
+				m_TriggerRows->SetAt(id, m_TimeField, Spiral::Data::ControlValue((double)(m_Triggers[id].Angle / 360.0f)));
+				m_Unwritten.erase(m_Unwritten.begin() + i);
+			}
 		}
 
 		void LoopWaveformControl::Reload()
@@ -127,6 +152,7 @@ namespace Spiral
 			args.push_back(TextOfNumber(trigger.Channel));
 			args.push_back(TextOfNumber(trigger.Angle / 360.0f));
 			m_Panel.Command(m_NewTriggerCommand, args);
+			m_Unwritten.push_back(id);
 		}
 
 		void LoopWaveformControl::TriggerMoved(int id, int channel, float angle)
