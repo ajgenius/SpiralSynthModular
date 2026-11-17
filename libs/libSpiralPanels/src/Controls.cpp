@@ -534,10 +534,10 @@ namespace Spiral
 
 			if (!led)
 				m_TextBound = RuleOf(panel, Spiral::Data::ValueRule::Looks(text) ? text : NULL, "text",
-						TextOf(node.Get("name")), m_TextRule);
+						TextOf(node.Get("name")), m_TextRule, m_RowSource);
 
 			if (m_TextBound)
-				m_Text = m_TextRule.Evaluate(Panel::Scope(panel)).text;
+				m_Text = m_TextRule.Evaluate(Panel::Scope(panel, m_RowSource)).text;
 
 			m_Button = MakeView<ButtonView>(led ? "LEDButton" : "Button", *this, node);
 
@@ -567,7 +567,7 @@ namespace Spiral
 			PanelControl::Tick();
 
 			if (m_TextBound)
-				m_Button->SetText(m_TextRule.Evaluate(Panel::Scope(m_Panel)).text);
+				m_Button->SetText(m_TextRule.Evaluate(Panel::Scope(m_Panel, m_RowSource)).text);
 		}
 
 		void ButtonControl::Changed(bool pressed)

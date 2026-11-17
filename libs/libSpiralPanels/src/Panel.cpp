@@ -320,6 +320,23 @@ namespace Spiral
 			return FirstRow(source) + (rows ? rows->Position() : 0);
 		}
 
+		const PanelProperty *Panel::FindOnRow(const std::string &source, const std::string &name) const
+		{
+			const Spiral::Data::RowSource *rows = source.empty() ? NULL : Rows(source);
+
+			if (rows && rows->FindField(name) >= 0)
+			{
+				char number[32];
+
+				snprintf(number, sizeof(number), "%ld", RowNumber(source));
+
+				if (const PanelProperty *found = FindProperty(name + number))
+					return found;
+			}
+
+			return FindProperty(name);
+		}
+
 		// A source's cursor moved. A control bound to the rows has already
 		// been told by its binding; the property it reads its range and its
 		// unbound value from moves here, to the new row's.
@@ -349,6 +366,17 @@ namespace Spiral
 
 					if (to)
 						control.m_Property = to;
+
+					// A limit or a scale it takes from one of the rows'
+					// fields is the new row's too.
+					if (!control.m_MinName.empty())
+						control.m_MinProperty = FindOnRow(rows->first, control.m_MinName);
+
+					if (!control.m_MaxName.empty())
+						control.m_MaxProperty = FindOnRow(rows->first, control.m_MaxName);
+
+					if (!control.m_PowerName.empty())
+						control.m_ScalePower = FindOnRow(rows->first, control.m_PowerName);
 
 					control.RowMoved();
 
@@ -792,12 +820,12 @@ namespace Spiral
 
 		bool Panel::Scope::HasField(const std::string &name) const
 		{
-			return m_Panel.FindProperty(name) != NULL;
+			return m_Panel.FindOnRow(m_Rows, name) != NULL;
 		}
 
 		double Panel::Scope::Field(const std::string &name) const
 		{
-			const PanelProperty *property = m_Panel.FindProperty(name);
+			const PanelProperty *property = m_Panel.FindOnRow(m_Rows, name);
 			return property ? m_Panel.Read(*property) : 0;
 		}
 
@@ -821,7 +849,7 @@ namespace Spiral
 
 		bool Panel::HandlerScope::HasField(const std::string &name) const
 		{
-			return m_Panel.FindProperty(name) != NULL;
+			return m_Panel.FindOnRow(m_Control.RowSourceName(), name) != NULL;
 		}
 
 		bool Panel::HandlerScope::HasControl(const std::string &name) const

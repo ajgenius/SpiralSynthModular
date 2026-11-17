@@ -153,11 +153,11 @@ namespace Spiral
 				m_HasRange = true;
 			const Spumoni::JSON *min = node.Get("min"), *max = node.Get("max");
 			if (min && min->GetType() == Spumoni::JSON::Object)
-				m_MinProperty = panel.FindProperty(TextOf(min->Get("property")));
+				m_MinProperty = panel.FindOnRow(m_RowSource, m_MinName = TextOf(min->Get("property")));
 			else
 				m_Min = NumberOf(min, m_Min);
 			if (max && max->GetType() == Spumoni::JSON::Object)
-				m_MaxProperty = panel.FindProperty(TextOf(max->Get("property")));
+				m_MaxProperty = panel.FindOnRow(m_RowSource, m_MaxName = TextOf(max->Get("property")));
 			else
 				m_Max = NumberOf(max, m_Max);
 			m_Step = NumberOf(node.Get("step"), m_Step);
@@ -172,7 +172,7 @@ namespace Spiral
 				if (m_Scale == 0)
 					m_Scale = 1;
 				if (mapping->Get("pow2"))
-					m_ScalePower = panel.FindProperty(TextOf(mapping->Get("pow2")));
+					m_ScalePower = panel.FindOnRow(m_RowSource, m_PowerName = TextOf(mapping->Get("pow2")));
 			}
 			const std::string named = mapping && mapping->GetType() == Spumoni::JSON::Object ? TextOf(mapping->Get("kind")) : TextOf(mapping);
 			if (named == "percent")
@@ -192,19 +192,21 @@ namespace Spiral
 			m_Toggle = node.Get("toggle") && node.Get("toggle")->GetType() == Spumoni::JSON::Boolean &&
 				node.Get("toggle")->AsBool();
 			const std::string owner = m_Name.empty() ? TextOf(node.Get("type")) : m_Name;
-			m_EnabledBound = RuleOf(panel, node.Get("enabled"), "enabled", owner, m_Enabled);
-			m_VisibleBound = RuleOf(panel, node.Get("visible"), "visible", owner, m_Visible);
+			m_EnabledBound = RuleOf(panel, node.Get("enabled"), "enabled", owner, m_Enabled, m_RowSource);
+			m_VisibleBound = RuleOf(panel, node.Get("visible"), "visible", owner, m_Visible, m_RowSource);
 			const Spumoni::JSON *value = node.Get("value");
-			m_ValueBound = RuleOf(panel, Spiral::Data::ValueRule::Looks(value) ? value : NULL, "value", owner, m_ValueRule);
+			m_ValueBound = RuleOf(panel, Spiral::Data::ValueRule::Looks(value) ? value : NULL, "value", owner, m_ValueRule, m_RowSource);
 		}
 
+		// A rule written in a control on a row source reads the fields it
+		// names from the row the source is on.
 		bool PanelControl::RuleOf(Panel &panel, const Spumoni::JSON *node, const char *attribute, const std::string &owner,
-					  Spiral::Data::ValueRule &out)
+					  Spiral::Data::ValueRule &out, const std::string &rows)
 		{
 			if (!node)
 				return false;
 			std::string problem;
-			const Panel::Scope scope(panel);
+			const Panel::Scope scope(panel, rows);
 			const bool text = std::string(attribute) == "text";
 			if (!Spiral::Data::ValueRule::Parse(node, scope, out, problem))
 				;
@@ -221,7 +223,7 @@ namespace Spiral
 
 		void PanelControl::VerifyBindings()
 		{
-			const Panel::Scope scope(m_Panel);
+			const Panel::Scope scope(m_Panel, m_RowSource);
 			std::string problem;
 			const Spiral::Data::ValueRule *rules[] = {&m_Enabled, &m_Visible, &m_ValueRule};
 			const char *names[] = {"enabled", "visible", "value"};
@@ -242,7 +244,7 @@ namespace Spiral
 
 		void PanelControl::Tick()
 		{
-			const Panel::Scope scope(m_Panel);
+			const Panel::Scope scope(m_Panel, m_RowSource);
 			if (m_ValueBound)
 				SetAttribute("value", m_ValueRule.Evaluate(scope).number);
 			if (m_View && m_EnabledBound)
@@ -493,7 +495,7 @@ namespace Spiral
 			void Write(const std::string &property, const Spiral::Data::ControlValue &value,
 				   const std::vector<Spiral::Data::ControlValue> &arguments)
 			{
-				const PanelProperty *target = m_Control.m_Panel.FindProperty(property);
+				const PanelProperty *target = m_Control.m_Panel.FindOnRow(m_Control.m_RowSource, property);
 				if (!target)
 					return;
 				if (!target->IsCommand())
@@ -510,7 +512,7 @@ namespace Spiral
 
 			double Delta(const std::string &property, double amount, double factor, bool byFactor)
 			{
-				const PanelProperty *target = m_Control.m_Panel.FindProperty(property);
+				const PanelProperty *target = m_Control.m_Panel.FindOnRow(m_Control.m_RowSource, property);
 				if (!target)
 					return 0;
 				double value = byFactor ? m_Control.m_Panel.Read(*target) * factor : m_Control.m_Panel.Read(*target) + amount;

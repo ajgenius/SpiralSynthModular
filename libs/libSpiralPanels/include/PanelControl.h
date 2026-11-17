@@ -116,6 +116,8 @@ namespace Spiral
 			Panel &m_Panel;
 			std::string m_Name;
 			std::string m_RowSource, m_RowField;
+			// The properties a limit and a scale are taken from, as written.
+			std::string m_MinName, m_MaxName, m_PowerName;
 			int m_X, m_Y, m_W, m_H;
 			double m_Min, m_Max, m_Step;
 			bool m_HasRange;
@@ -125,7 +127,7 @@ namespace Spiral
 			Spiral::Data::ValueRule m_Enabled, m_Visible, m_ValueRule;
 			bool m_EnabledBound, m_VisibleBound, m_ValueBound;
 			static bool RuleOf(Panel &panel, const Spumoni::JSON *node, const char *attribute, const std::string &owner,
-					   Spiral::Data::ValueRule &out);
+					   Spiral::Data::ValueRule &out, const std::string &rows = std::string());
 
 		private:
 			enum Mapping

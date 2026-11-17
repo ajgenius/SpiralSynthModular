@@ -69,6 +69,10 @@ namespace Spiral
 			bool Loading() const { return m_Loading; }
 
 			const PanelProperty *FindProperty(const std::string &name) const;
+			// A name written in a control on a row source: the property of
+			// the row the source is on, where the name is one of the
+			// source's fields; otherwise the device's own.
+			const PanelProperty *FindOnRow(const std::string &source, const std::string &name) const;
 			PanelControl *FindControl(const std::string &name) const;
 			bool Write(const PanelProperty &property, double value);
 			void WriteText(const PanelProperty &property, const std::string &text);
@@ -103,7 +107,7 @@ namespace Spiral
 			class Scope: public Spiral::Data::ValueRule::Scope
 			{
 			public:
-				explicit Scope(const Panel &panel): m_Panel(panel) {}
+				explicit Scope(const Panel &panel, const std::string &rows = std::string()): m_Panel(panel), m_Rows(rows) {}
 				bool HasField(const std::string &name) const;
 				double Field(const std::string &name) const;
 				bool HasAttribute(const std::string &control, const std::string &attribute) const;
@@ -111,6 +115,8 @@ namespace Spiral
 				std::string Localize(const Spiral::Data::ValueRule::Text &text) const { return text.fallback; }
 			private:
 				const Panel &m_Panel;
+				// The row source of the control the rule is written in.
+				const std::string m_Rows;
 			};
 			class HandlerScope: public Spiral::Data::Handlers::Scope
 			{
