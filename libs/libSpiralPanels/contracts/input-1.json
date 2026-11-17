@@ -15,12 +15,9 @@
       "extends": "Controls::Control",
       "attributes": {
         "columns": ["integer"],
-        "count": ["string"],
         "max": ["integer"],
         "min": ["integer"],
-        "position": ["string"],
-        "row_height": ["integer"],
-        "values": ["string"]
+        "row_height": ["integer"]
       }
     }
   }
