@@ -181,7 +181,7 @@ void ChannelHandler::SetUsed(const string &ID, int bytes)
         i->second->used = bytes < 0 ? 0 : bytes > i->second->size ? i->second->size : bytes;
 }
 
-void ChannelHandler::RegisterData(const string &ID, Type t,void* pData, int size)
+void ChannelHandler::RegisterData(const string &ID, Type t,void* pData, int size, char kind)
 {
     // probably don't need to lock here, as if get/set are called before
     // the channels have been set up they won't work anyway, but...
@@ -205,6 +205,7 @@ void ChannelHandler::RegisterData(const string &ID, Type t,void* pData, int size
     NewCh->size      = size;
     NewCh->used      = size;
     NewCh->data      = pData;
+	NewCh->kind      = kind;
 	NewCh->requested = false;
 	NewCh->updated   = false;
     memcpy(NewCh->data_buf,NewCh->data,size);
@@ -321,7 +322,18 @@ bool ChannelHandler::CommandArguments(const string &name, vector<string> &channe
 	map<string,NamedCommand>::const_iterator named=m_NamedCommands.find(name);
 	if (named==m_NamedCommands.end()) return false;
 	channels=named->second.Channels;
-	if (types) *types=named->second.Types;
+	if (types)
+	{
+		*types=named->second.Types;
+		// A command that declares no types takes each argument as its
+		// channel was registered, so a whole number sent to a real channel
+		// arrives as a real one. '?' is a channel registered untyped.
+		for (unsigned int n=types->size(); n<channels.size(); n++)
+		{
+			map<string,Channel*>::const_iterator i=m_ChannelMap.find(channels[n]);
+			*types+=i!=m_ChannelMap.end() && i->second->kind ? i->second->kind : '?';
+		}
+	}
 	return true;
 }
 

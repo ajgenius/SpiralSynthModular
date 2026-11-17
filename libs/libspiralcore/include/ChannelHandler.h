@@ -40,23 +40,26 @@ public:
     // only call these from the audio thread
 
 	// don't call Register*() when the audio thread is running
-    void     RegisterData(const std::string &ID, Type t, void *pData, int size);
+	// kind says what a typed Register() knows of the channel: 'i' a whole
+	// number, 'f' a real one, 's' text. A command with no types of its own
+	// has its arguments sent as its channels' kinds.
+    void     RegisterData(const std::string &ID, Type t, void *pData, int size, char kind=0);
     void     Register(const std::string &ID, bool* pData,  Type t=ChannelHandler::INPUT)    
-		{ RegisterData(ID, t,(bool*)pData,sizeof(bool)); }
+		{ RegisterData(ID, t,(bool*)pData,sizeof(bool),'i'); }
     void     Register(const std::string &ID, char* pData,  Type t=ChannelHandler::INPUT)    
-		{ RegisterData(ID, t,(char*)pData,sizeof(char)); }
+		{ RegisterData(ID, t,(char*)pData,sizeof(char),'i'); }
     void     Register(const std::string &ID, int* pData,   Type t=ChannelHandler::INPUT)
-		{ RegisterData(ID, t,(int*)pData,sizeof(int)); }
+		{ RegisterData(ID, t,(int*)pData,sizeof(int),'i'); }
     void     Register(const std::string &ID, long* pData,   Type t=ChannelHandler::INPUT)    
-		{ RegisterData(ID, t,(long*)pData,sizeof(long)); }
+		{ RegisterData(ID, t,(long*)pData,sizeof(long),'i'); }
     void     Register(const std::string &ID, short* pData, Type t=ChannelHandler::INPUT)    
-		{ RegisterData(ID, t,(short*)pData,sizeof(short)); }
+		{ RegisterData(ID, t,(short*)pData,sizeof(short),'i'); }
     void     Register(const std::string &ID, float* pData, Type t=ChannelHandler::INPUT)    
-		{ RegisterData(ID, t,(float*)pData,sizeof(float)); }
+		{ RegisterData(ID, t,(float*)pData,sizeof(float),'f'); }
     void     Register(const std::string &ID, double* pData, Type t=ChannelHandler::INPUT)    
-		{ RegisterData(ID, t,(double*)pData,sizeof(double)); }
+		{ RegisterData(ID, t,(double*)pData,sizeof(double),'f'); }
     void     RegisterString(const std::string &ID, char *pData, Type t=ChannelHandler::INPUT)
-		{ RegisterData(ID, t,(char*)pData,sizeof(char)*4096); }
+		{ RegisterData(ID, t,(char*)pData,sizeof(char)*4096,'s'); }
     void     Register(const std::string &ID, void** pData, Type t=ChannelHandler::INPUT)    
 		{ RegisterData(ID, t,(void**)pData,sizeof(void*)); }
 	void     UpdateDataNow(unsigned long frame=0);
@@ -143,6 +146,7 @@ private:
         int   size;
         int   used;
         void *data;
+		char  kind;
 		bool requested;
 		bool updated;
     };
