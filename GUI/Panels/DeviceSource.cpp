@@ -362,6 +362,31 @@ namespace Spiral
 			return ch->Peek(channel, 0, &bytes[0], size);
 		}
 
+		// Only the part of the channel in use is read; its cells are real
+		// numbers where the device registered it so, whole ones otherwise.
+		bool DeviceSource::ReadTable(const std::string &name, std::vector<double> &cells) const
+		{
+			ChannelHandler *ch = m_Plugin ? m_Plugin->GetChannelHandler() : NULL;
+			const std::string channel = name.empty() ? std::string() : ChannelNamed(name);
+			if (!ch || channel.empty())
+				return false;
+			const bool real = ch->ChannelKind(channel) == 'f';
+			const int width = real ? (int)sizeof(float) : (int)sizeof(int);
+			const int used = ch->ChannelUsed(channel);
+			if (used < 0)
+				return false;
+			std::vector<unsigned char> bytes(used - used % width);
+			if (!bytes.empty() && !ch->Peek(channel, 0, &bytes[0], (int)bytes.size()))
+				return false;
+			cells.resize(bytes.size() / width);
+			for (size_t i = 0; i < cells.size(); ++i)
+			{
+				if (real) { float v; std::memcpy(&v, &bytes[i * width], sizeof(v)); cells[i] = v; }
+				else { int v; std::memcpy(&v, &bytes[i * width], sizeof(v)); cells[i] = v; }
+			}
+			return true;
+		}
+
 		bool DeviceSource::ReadFloats(const std::string &name, std::vector<float> &values) const
 		{
 			ChannelHandler *ch = m_Plugin ? m_Plugin->GetChannelHandler() : NULL;

@@ -129,6 +129,9 @@ public:
 	bool          CommandsQueued() { return m_Commands && !m_Commands->Empty(); }
 
 	int           ChannelSize(const std::string &ID, Type *t=NULL);
+	// The bytes of a channel in use (SetUsed), and the kind it was registered as.
+	int           ChannelUsed(const std::string &ID);
+	char          ChannelKind(const std::string &ID);
 	void          ChannelNames(std::vector<std::string> &names) const;
 	bool          Peek(const std::string &ID, int offset, void *dest, int size);
 	bool          SetDataAt(const std::string &ID, int offset, const void *src, int size);

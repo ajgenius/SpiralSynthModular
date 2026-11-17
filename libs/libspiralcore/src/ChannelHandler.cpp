@@ -504,6 +504,18 @@ int ChannelHandler::ChannelSize(const string &ID, Type *t)
 	return i->second->size;
 }
 
+int ChannelHandler::ChannelUsed(const string &ID)
+{
+	map<string,Channel*>::iterator i=m_ChannelMap.find(ID);
+	return i==m_ChannelMap.end() ? -1 : i->second->used;
+}
+
+char ChannelHandler::ChannelKind(const string &ID)
+{
+	map<string,Channel*>::iterator i=m_ChannelMap.find(ID);
+	return i==m_ChannelMap.end() ? 0 : i->second->kind;
+}
+
 void ChannelHandler::ChannelNames(vector<string> &names) const
 {
 	for (map<string,Channel*>::const_iterator i=m_ChannelMap.begin(); i!=m_ChannelMap.end(); ++i)

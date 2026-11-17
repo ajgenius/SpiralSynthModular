@@ -36,6 +36,8 @@ namespace Spiral
 			virtual bool Command(const std::string &name, const std::vector<std::string> &args) = 0;
 			virtual bool ReadBytes(const std::string &channel, std::vector<unsigned char> &bytes) const = 0;
 			virtual bool ReadFloats(const std::string &channel, std::vector<float> &values) const = 0;
+			// A table the device hands over whole: its cells in use, as numbers.
+			virtual bool ReadTable(const std::string &channel, std::vector<double> &cells) const = 0;
 			virtual bool FetchFloats(const std::string &command, const std::string &sizeChannel,
 					const std::string &bufferChannel, std::vector<float> &values) = 0;
 			virtual void Wait() = 0;

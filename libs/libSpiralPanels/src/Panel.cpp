@@ -219,7 +219,7 @@ namespace Spiral
 
 		namespace
 		{
-			// A table a device keeps in one channel, a whole number to a cell.
+			// A table a device keeps in one channel.
 			class ChannelTable: public Spiral::Data::TableFeed
 			{
 			public:
@@ -227,22 +227,7 @@ namespace Spiral
 
 				bool Cells(std::vector<double> &out) const
 				{
-					std::vector<unsigned char> bytes;
-
-					if (!m_Source.ReadBytes(m_Channel, bytes))
-						return false;
-
-					out.resize(bytes.size() / sizeof(int));
-
-					for (size_t i = 0; i < out.size(); ++i)
-					{
-						int cell;
-
-						std::memcpy(&cell, &bytes[i * sizeof(int)], sizeof(cell));
-						out[i] = cell;
-					}
-
-					return true;
+					return m_Source.ReadTable(m_Channel, out);
 				}
 
 			private:
@@ -276,11 +261,23 @@ namespace Spiral
 				m_RowFirst[names[i]] = first;
 
 				const std::string table = PanelControl::TextOf(written.Get("table"));
+				const bool named = fields && fields->GetType() == Spumoni::JSON::Array;
 
-				if (!table.empty())
+				// Rows over a table: its fields name the columns, or there
+				// are so many of them, numbered.
+				if (!table.empty() && named)
+				{
+					std::vector<std::string> columns;
+
+					for (size_t f = 0; f < fields->Size(); ++f)
+						columns.push_back(PanelControl::TextOf(fields->At(f)));
+
+					rows->TableFrom(new ChannelTable(*m_Source, table), columns);
+				}
+				else if (!table.empty())
 					rows->TableFrom(new ChannelTable(*m_Source, table), (int)PanelControl::NumberOf(written.Get("columns"), 1));
 
-				for (size_t f = 0; fields && fields->GetType() == Spumoni::JSON::Array && f < fields->Size(); ++f)
+				for (size_t f = 0; table.empty() && named && f < fields->Size(); ++f)
 					if (rows->AddField(PanelControl::TextOf(fields->At(f))) < 0)
 						m_Unbound.push_back(names[i] + "." + PanelControl::TextOf(fields->At(f)) + ": no row has such a property");
 
