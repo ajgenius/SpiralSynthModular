@@ -178,6 +178,7 @@ m_ResetEvents(false)
 	m_Speed = FloatProperty(Property::ReadOnly, 1.0f, 0.0f, 50.0f, 0.125f, 0.125f);
 	m_Octave = SignedProperty(Property::ReadOnly, 0, 0, 6, 1, 1);
 	m_TriggerRow = SignedProperty(Property::ReadOnly, 0, -MATRIX_PITCHES, MATRIX_PITCHES, 1, 1);
+	m_NoteCount = UnsignedProperty(Property::ReadOnly, 0, 0, MATX*MATRIX_PITCHES, 1, 1);
 	m_Loop = ToggleProperty(Property::WriteOnly, true);
 	m_NoteCut = ToggleProperty(Property::WriteOnly, false);
 	m_TriggerSelect = ToggleProperty(Property::WriteOnly, false);
@@ -201,15 +202,14 @@ m_ResetEvents(false)
 	RegisterSharedProperty(m_Speed, "Speed", "Pattern speed");
 	RegisterSharedProperty(m_Octave, "Octave", "Pattern octave");
 	RegisterSharedProperty(m_TriggerRow, "TriggerRow", "Trigger 1's row on the grid");
+	RegisterSharedProperty(m_NoteCount, "Note Count", "Notes in the pattern being edited");
 
 	RegisterSharedProperty(m_Time, "Time", "Position within the step");
 	RegisterSharedProperty(m_Loop, "Loop", "Loop the pattern");
 
 	RegisterSharedProperty(m_PatSeq, "Sequences", "Pattern sequence");
-	m_AudioCH->RegisterData("Grid",ChannelHandler::OUTPUT,m_EchoGrid,sizeof(m_EchoGrid));
-	m_AudioCH->RegisterData("GridVolume",ChannelHandler::OUTPUT,m_EchoVolume,sizeof(m_EchoVolume));
+	m_AudioCH->RegisterData("Notes",ChannelHandler::OUTPUT,m_EchoNotes,sizeof(m_EchoNotes),'f');
 	m_AudioCH->RegisterData("PatSeq",ChannelHandler::OUTPUT,m_EchoPatSeq,sizeof(m_EchoPatSeq));
-	m_AudioCH->RegisterData("GridEnd",ChannelHandler::OUTPUT,m_EchoEnd,sizeof(m_EchoEnd));
 	{
 		std::vector<std::string> none, args;
 		m_AudioCH->RegisterCommand("CLEAR", CLEAR, none);
@@ -536,15 +536,21 @@ void MatrixPlugin::RefreshEcho()
 	AsSigned(m_Octave) = p.Octave;
 	AsSigned(m_TriggerRow) = p.Triggers - p.Octave*12;
 	for (int n=0; n<NUM_PATSEQ; n++) m_EchoPatSeq[n] = GetPatSeq(n);
+	// Every note of the pattern, whatever octave the grid is showing.
+	unsigned count = 0;
 	for (int x=0; x<MATX; x++)
-		for (int y=0; y<MATY; y++)
+		for (int pitch=0; pitch<MATRIX_PITCHES; pitch++)
 		{
-			const int pitch = Shown(x, y);
-			const bool on = pitch >= 0 && p.Matrix[x][pitch];
-			m_EchoGrid[x][y] = on;
-			m_EchoVolume[x][y] = pitch >= 0 ? p.Volume[x][pitch] : 1.0f;
-			m_EchoEnd[x][y] = on ? (unsigned char)NoteEnd(p, x, pitch) : 0;
+			if (!p.Matrix[x][pitch]) continue;
+			float *note = m_EchoNotes[count++];
+			note[0] = (float)x;
+			note[1] = (float)NoteEnd(p, x, pitch);
+			note[2] = (float)pitch;
+			note[3] = p.Volume[x][pitch];
+			note[4] = 0;
 		}
+	AsUnsigned(m_NoteCount) = count;
+	m_AudioCH->SetUsed("Notes", (int)(count*sizeof(m_EchoNotes[0])));
 }
 
 int MatrixPlugin::NoteEnd(const Pattern &p, int x, int pitch)

@@ -300,8 +300,7 @@ namespace Spiral
 					const float volume = std::max(0.0f, std::min(1.0f, m_Control.VolumeAt(c, r)));
 
 					if (start >= 0)
-						return m_Control.HasVolumes() ? fl_color_average(m_Look.Colour("note_loud"), m_Look.Colour("note_quiet"), volume)
-								: m_Look.Colour("note");
+						return fl_color_average(m_Look.Colour("note_loud"), m_Look.Colour("note_quiet"), volume);
 
 					if (m_Classic)
 					{

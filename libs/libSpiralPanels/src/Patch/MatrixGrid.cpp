@@ -4,6 +4,8 @@
 #include "Panel.h"
 #include "PanelControlRegistry.h"
 #include "PanelSource.h"
+#include "PanelProperty.h"
+#include "RowSource.h"
 #include <algorithm>
 #include <climits>
 #include <cstring>
@@ -39,11 +41,10 @@ namespace Spiral
 		MatrixGridControl::MatrixGridControl(Panel &panel, const Spumoni::JSON &node):
 			PanelControl(panel, node),
 			m_View(NULL),
-			m_Channel(TextOf(node.Get("grid"))),
+			m_Notes(TextOf(node.Get("notes"))),
 			m_StepChannel(TextOf(node.Get("step"))),
-			m_VolumeChannel(TextOf(node.Get("volume"))),
-			m_EndChannel(TextOf(node.Get("end"))),
 			m_TriggerChannel(TextOf(node.Get("triggers"))),
+			m_Octave(panel.FindProperty(TextOf(node.Get("octave")))),
 			m_Columns(std::max(1, (int)NumberOf(node.Get("columns"), 16))),
 			m_Rows(std::max(1, (int)NumberOf(node.Get("rows"), 8))),
 			m_Step(-1),
@@ -181,38 +182,53 @@ namespace Spiral
 			}
 		}
 
+		// The grid is drawn from the notes of the pattern on show: the rows
+		// of the source it names, each a note's start step, the step it ends
+		// before, its key and its velocity. The grid's bottom row is the
+		// pattern's octave, so a note of another octave has no cell here.
 		void MatrixGridControl::Load()
 		{
-			PanelSource *source = m_Panel.Source();
+			Spiral::Data::RowSource *notes = m_Panel.Rows(m_Notes);
 
-			if (!source)
+			if (!notes || m_Grid.Dragging())
 				return;
 
-			bool changed = false;
-			std::vector<unsigned char> cells, volumes, ends;
-			const bool busy = m_Grid.Dragging();
+			const int start = notes->FindField("start"), end = notes->FindField("end");
+			const int key = notes->FindField("key"), velocity = notes->FindField("velocity");
+			const int low = m_Octave ? (int)m_Panel.Read(*m_Octave) * 12 : 0;
+			const size_t size = (size_t)m_Columns * m_Rows;
+			const float full = 1.0f;
+			std::vector<unsigned char> cells(size, 0), ends(size, 0), volumes(size * sizeof(float));
 
-			if (!busy && source->ReadBytes(m_Channel, cells) && cells != m_Cells)
+			for (size_t i = 0; i < size; ++i)
+				std::memcpy(&volumes[i * sizeof(float)], &full, sizeof(full));
+
+			for (long n = 0; n < notes->Count(); ++n)
 			{
-				m_Cells = cells;
-				changed = true;
+				Spiral::Data::ControlValue at, to, pitch, level;
+
+				if (!notes->GetAt(n, start, at) || !notes->GetAt(n, key, pitch))
+					continue;
+
+				const int column = (int)at.number, row = (int)pitch.number - low;
+
+				if (column < 0 || column >= m_Columns || row < 0 || row >= m_Rows)
+					continue;
+
+				const size_t i = (size_t)column * m_Rows + row;
+				const float volume = notes->GetAt(n, velocity, level) ? (float)level.number : full;
+
+				cells[i] = 1;
+				ends[i] = (unsigned char)(notes->GetAt(n, end, to) ? (int)to.number : column + 1);
+				std::memcpy(&volumes[i * sizeof(float)], &volume, sizeof(volume));
 			}
 
-			if (!busy && source->ReadBytes(m_VolumeChannel, volumes) && volumes != m_Volumes)
-			{
-				m_Volumes = volumes;
-				changed = true;
-			}
-
-			if (!busy && !m_EndChannel.empty() && source->ReadBytes(m_EndChannel, ends) && ends != m_Ends)
-			{
-				m_Ends = ends;
-				changed = true;
-			}
-
-			if (!changed)
+			if (cells == m_Cells && ends == m_Ends && volumes == m_Volumes)
 				return;
 
+			m_Cells.swap(cells);
+			m_Ends.swap(ends);
+			m_Volumes.swap(volumes);
 			Rebuild();
 			m_View->Redraw();
 		}

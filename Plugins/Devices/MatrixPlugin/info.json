@@ -378,11 +378,10 @@
             224
           ],
           "columns": 64,
-          "dropped": "GridDropped",
-          "end": "GridEnd",
-          "grid": "Grid",
           "name": "grid",
           "note_names": 15,
+          "notes": "notes",
+          "octave": "OCTAVE",
           "on": {
             "activate": [
               {
@@ -440,8 +439,7 @@
           "step": "Step",
           "tooltip": "Click a step on or off, or click and drag right for a longer note; drag a note's right edge to change its length; right-drag or scroll a note to set its volume; the shaded note names are the rows sending Triggers 1 to 16: click or drag there to move them",
           "triggers": "TriggerRow",
-          "type": "Patch::MatrixGrid",
-          "volume": "GridVolume"
+          "type": "Patch::MatrixGrid"
         },
         {
           "bounds": [
@@ -2671,6 +2669,17 @@
       ],
       "schema_version": 1,
       "sources": {
+        "notes": {
+          "count": "NOTE COUNT",
+          "fields": [
+            "start",
+            "end",
+            "key",
+            "velocity",
+            "dropped"
+          ],
+          "table": "NOTES"
+        },
         "sequence": {
           "count": 16,
           "fields": [

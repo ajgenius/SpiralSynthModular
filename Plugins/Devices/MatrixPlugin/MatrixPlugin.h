@@ -105,9 +105,13 @@ private:
 	void RefreshEcho();
 	bool EchoStale();
 	int   m_Echoed;
-	bool  m_EchoGrid[MATX][MATY];
-	float m_EchoVolume[MATX][MATY];
-	unsigned char m_EchoEnd[MATX][MATY];
+	// The notes of the pattern being edited, for the panel: a row to a
+	// note, as its start step, the step it ends before, its pitch, its
+	// volume, and whether the voices cannot play all of it (never, until
+	// this device has voices). Only the rows in use are handed over.
+	enum { NOTE_CELLS = 5 };
+	float m_EchoNotes[MATX*MATRIX_PITCHES][NOTE_CELLS];
+	Spiral::Core::UnsignedProperty m_NoteCount;
 	int   m_EchoPatSeq[NUM_PATSEQ];
 	float m_StepTime;
 	Spiral::Core::FloatProperty  m_Time;

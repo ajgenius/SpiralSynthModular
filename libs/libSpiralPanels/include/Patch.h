@@ -178,7 +178,6 @@ namespace Spiral
 			int NoteAt(int column, int row) const;
 			int EndOf(int column, int row) const;
 			float VolumeAt(int column, int row) const;
-			bool HasVolumes() const { return !m_Volumes.empty(); }
 
 			bool Press(double x, double y);
 			void Drag(double x, double y);
@@ -204,7 +203,8 @@ namespace Spiral
 
 			RollView *m_View;
 			NoteGrid m_Grid;
-			std::string m_Channel, m_StepChannel, m_VolumeChannel, m_EndChannel, m_TriggerChannel;
+			std::string m_Notes, m_StepChannel, m_TriggerChannel;
+			const PanelProperty *m_Octave;
 			int m_Columns, m_Rows, m_Step, m_TriggerRow;
 			double m_NoteNames;
 			bool m_Marking;

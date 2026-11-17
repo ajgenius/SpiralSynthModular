@@ -6,14 +6,12 @@
       "extends": "Controls::Control",
       "attributes": {
         "columns": ["integer"],
-        "dropped": ["string"],
-        "end": ["string"],
-        "grid": ["string"],
         "note_names": ["integer"],
+        "notes": ["string"],
+        "octave": ["string"],
         "rows": ["integer"],
         "step": ["string"],
-        "triggers": ["string"],
-        "volume": ["string"]
+        "triggers": ["string"]
       }
     },
     "PianoKeys": {
