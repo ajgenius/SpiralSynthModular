@@ -8,6 +8,11 @@
 
 namespace Spiral
 {
+	namespace Data
+	{
+		class RowSource;
+	}
+
 	namespace Panels
 	{
 		class Feed;
@@ -258,16 +263,19 @@ namespace Spiral
 			void ShowLength();
 			void Reload();
 			void AddTrigger(int id, int channel, float angle);
-			const PanelProperty *TriggerProperty(const std::string &pattern, int index) const;
 			void SyncTriggers();
 			void NewTrigger();
 
 			LoopView *m_Loop;
 			std::vector<Trigger> m_Triggers;
 			std::vector<float> m_Samples;
-			const PanelProperty *m_Pos, *m_Length, *m_TriggerCount;
+			const PanelProperty *m_Pos, *m_Length;
 			std::string m_SampleCommand, m_SizeChannel, m_BufferChannel;
-			std::string m_TriggerChannels, m_TriggerTimes, m_NewTriggerCommand;
+			std::string m_NewTriggerCommand;
+			// The source whose rows are the trigger points, and which of its
+			// fields are a point's output and its place round the loop.
+			Spiral::Data::RowSource *m_TriggerRows;
+			int m_ChannelField, m_TimeField;
 			bool m_Fetched;
 		};
 	}

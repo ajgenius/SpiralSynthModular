@@ -64,10 +64,10 @@
             "size": "SAMPLESIZE"
           },
           "triggers": {
-            "channel": "TRIGGERCHANNEL{index}",
-            "count": "TRIGGERCOUNT",
+            "channel": "TRIGGERCHANNEL",
             "new": "NEW_TRIGGER",
-            "time": "TRIGGERTIME{index}"
+            "source": "triggers",
+            "time": "TRIGGERTIME"
           },
           "type": "Meters::LoopWaveform"
         },
@@ -737,6 +737,15 @@
       "height": 304,
       "help": "Volume and speed of the loop, its length in ticks, transport and recording; Load and Save choose a WAV file. Range edits stay in the editor.",
       "schema_version": 1,
+      "sources": {
+        "triggers": {
+          "count": "TRIGGERCOUNT",
+          "fields": [
+            "TRIGGERCHANNEL",
+            "TRIGGERTIME"
+          ]
+        }
+      },
       "width": 296
     },
     "plugin_id": 26,

@@ -19,7 +19,9 @@ namespace Spiral
 			m_Loop(MakeView<LoopView>("LoopWaveform", *this, node)),
 			m_Pos(panel.FindProperty(TextOf(node.Get("pos")))),
 			m_Length(panel.FindProperty(TextOf(node.Get("length")))),
-			m_TriggerCount(NULL),
+			m_TriggerRows(NULL),
+			m_ChannelField(-1),
+			m_TimeField(-1),
 			m_Fetched(false)
 		{
 			const Spumoni::JSON *sample = node.Get("sample");
@@ -33,12 +35,18 @@ namespace Spiral
 
 			const Spumoni::JSON *triggers = node.Get("triggers");
 
+			// The trigger points are rows of one of the panel's sources: which
+			// of its fields is a point's output and which its place.
 			if (triggers)
 			{
-				m_TriggerCount = panel.FindProperty(TextOf(triggers->Get("count")));
-				m_TriggerChannels = TextOf(triggers->Get("channel"));
-				m_TriggerTimes = TextOf(triggers->Get("time"));
+				m_TriggerRows = panel.Rows(TextOf(triggers->Get("source")));
 				m_NewTriggerCommand = TextOf(triggers->Get("new"));
+
+				if (m_TriggerRows)
+				{
+					m_ChannelField = m_TriggerRows->FindField(TextOf(triggers->Get("channel")));
+					m_TimeField = m_TriggerRows->FindField(TextOf(triggers->Get("time")));
+				}
 			}
 
 			if (!m_Loop)
@@ -91,35 +99,21 @@ namespace Spiral
 			m_Loop->AddTrigger(id, channel, angle);
 		}
 
-		const PanelProperty *LoopWaveformControl::TriggerProperty(const std::string &pattern, int index) const
-		{
-			const std::string::size_type at = pattern.find("{index}");
-
-			if (at == std::string::npos)
-				return NULL;
-
-			char number[16];
-			std::snprintf(number, sizeof number, "%d", index);
-
-			return m_Panel.FindProperty(pattern.substr(0, at) + number + pattern.substr(at + 7));
-		}
-
 		void LoopWaveformControl::SyncTriggers()
 		{
-			if (!m_TriggerCount || !m_Panel.Source())
+			if (!m_TriggerRows || !m_Panel.Source())
 				return;
 
-			const int count = (int)m_Panel.Read(*m_TriggerCount);
+			const long count = m_TriggerRows->Count();
 
-			for (int i = (int)m_Triggers.size(); i < count; ++i)
+			for (long i = (long)m_Triggers.size(); i < count; ++i)
 			{
-				const PanelProperty *channel = TriggerProperty(m_TriggerChannels, i);
-				const PanelProperty *time = TriggerProperty(m_TriggerTimes, i);
+				Spiral::Data::ControlValue channel, time;
 
-				if (!channel || !time)
+				if (!m_TriggerRows->GetAt(i, m_ChannelField, channel) || !m_TriggerRows->GetAt(i, m_TimeField, time))
 					break;
 
-				AddTrigger(i, (int)m_Panel.Read(*channel), (float)m_Panel.Read(*time) * 360.0f);
+				AddTrigger((int)i, (int)channel.number, (float)time.number * 360.0f);
 			}
 		}
 
@@ -146,14 +140,11 @@ namespace Spiral
 				}
 			}
 
-			const PanelProperty *channelProperty = TriggerProperty(m_TriggerChannels, id);
-			const PanelProperty *timeProperty = TriggerProperty(m_TriggerTimes, id);
+			if (!m_TriggerRows || m_Panel.Loading())
+				return;
 
-			if (channelProperty)
-				m_Panel.Write(*channelProperty, channel);
-
-			if (timeProperty)
-				m_Panel.Write(*timeProperty, angle / 360.0f);
+			m_TriggerRows->SetAt(id, m_ChannelField, Spiral::Data::ControlValue((double)channel));
+			m_TriggerRows->SetAt(id, m_TimeField, Spiral::Data::ControlValue((double)(angle / 360.0f)));
 		}
 
 		// Turning the loop and seeking change nothing here: the panel's
