@@ -113,7 +113,9 @@ private:
 	unsigned m_ScratchCount;
 	unsigned m_RecordedCount;
 	bool m_Playing, m_Recording, m_LaunchHigh, m_StopHigh;
-	uint64_t m_Phase;
+	// Where the roll is. Play starts again from the top; Record starts
+	// here and overwrites as it goes, from m_RecordStart on.
+	uint64_t m_Phase, m_RecordStart;
 	unsigned m_Next;
 	int m_NextID;
 	unsigned m_Rate;

@@ -57,6 +57,7 @@ PianoRollPlugin::PianoRollPlugin():
 	m_LaunchHigh(false),
 	m_StopHigh(false),
 	m_Phase(0),
+	m_RecordStart(0),
 	m_Next(0),
 	m_NextID(0),
 	m_Rate(48000)
@@ -204,18 +205,22 @@ void PianoRollPlugin::ReleaseAll(EventBuffer *, unsigned frame)
 
 void PianoRollPlugin::Start(bool record)
 {
-	if (!m_Playing)
+	// Play starts from the top. Record starts where the roll is: where it
+	// last stopped, or where it has got to if it is playing.
+	if (!m_Playing && !record)
 	{
 		m_Phase = 0;
 		m_Next = 0;
-		m_RecordedCount = 0;
 	}
 
 	m_Playing = true;
 
 	if (record && !m_Recording)
 	{
+		// The roll under a take is not heard; what was sounding stops.
+		ReleaseAll(NULL, 0);
 		m_Recording = true;
+		m_RecordStart = m_Phase;
 		m_RecordedCount = 0;
 	}
 }
@@ -268,73 +273,46 @@ void PianoRollPlugin::Record(const EventBuffer *in, EventBuffer *)
 	}
 }
 
+// The take replaces what it ran over, from where Record began to where it
+// stopped: the roll before it stays, with notes sounding into it ended there,
+// and the roll after it stays, with notes it stopped in the middle of starting
+// again there. A take that never ran leaves the roll as it was.
 void PianoRollPlugin::MergeRecording()
 {
-	if (!m_RecordedCount)
+	if (m_Phase == m_RecordStart)
+	{
+		m_RecordedCount = 0;
+
 		return;
+	}
 
 	int base = 0;
 
 	for (unsigned i = 0; i < m_Clip.Count(); ++i)
 		base = std::max(base, m_Clip.At(i).ID);
 
-	std::vector<std::pair<int, int> > open;
+	EventClip merged;
+
+	if (!merged.CopyBefore(m_Clip, m_RecordStart))
+	{
+		m_RecordedCount = 0;
+
+		return;
+	}
 
 	for (unsigned i = 0; i < m_RecordedCount; ++i)
 	{
 		Event &event = m_Recorded[i].Event;
 
 		// Only a note has an ID to keep clear of the clip's.
-		if (event.Type != Event::NoteOn && event.Type != Event::NoteOff)
-			continue;
+		if (event.Type == Event::NoteOn || event.Type == Event::NoteOff)
+			event.ID = base + 1 + event.ID;
 
-		const std::pair<int, int> identity(event.Channel, event.ID);
-
-		if (event.Type == Event::NoteOn)
-			open.push_back(identity);
-		else
-		{
-			std::vector<std::pair<int, int> >::iterator found = std::find(open.begin(), open.end(), identity);
-
-			if (found != open.end())
-				open.erase(found);
-		}
-
-		event.ID = base + 1 + event.ID;
+		merged.Append(m_Recorded[i].Frame, event);
 	}
 
-	EventClip merged;
-	merged.Clear(m_Clip.Rate());
-	unsigned existing = 0;
-	unsigned recorded = 0;
-
-	while (existing < m_Clip.Count() || recorded < m_RecordedCount)
-	{
-		const bool fromClip = recorded == m_RecordedCount
-				|| (existing < m_Clip.Count() && m_Clip.FrameAt(existing) <= m_Recorded[recorded].Frame);
-
-		if (fromClip)
-		{
-			merged.Append(m_Clip.FrameAt(existing), m_Clip.At(existing));
-			++existing;
-		}
-		else
-		{
-			merged.Append(m_Recorded[recorded].Frame, m_Recorded[recorded].Event);
-			++recorded;
-		}
-	}
-
-	for (size_t i = 0; i < open.size(); ++i)
-	{
-		Event off;
-		off.Type = Event::NoteOff;
-		off.Channel = open[i].first;
-		off.ID = base + 1 + open[i].second;
-		merged.Append(std::max(m_Phase, merged.Count() ? merged.FrameAt(merged.Count() - 1) : 0), off);
-	}
-
-	merged.Extend(m_Clip.Length());
+	// A roll too full to take it all keeps what fitted.
+	merged.AppendFrom(m_Clip, m_Phase);
 	m_Clip.Swap(merged);
 	m_RecordedCount = 0;
 	Published();
@@ -413,7 +391,10 @@ void PianoRollPlugin::Execute()
 
 			const uint64_t left = length && !m_Recording && m_Phase < length ? length - m_Phase : frames - offset;
 			const unsigned span = (unsigned)std::min<uint64_t>(left, frames - offset);
-			PlayWindow(out, m_Phase, m_Phase + span, offset);
+
+			// The roll under a take is being written over, not played.
+			if (!m_Recording)
+				PlayWindow(out, m_Phase, m_Phase + span, offset);
 			m_Phase += span;
 			offset += span;
 		}
@@ -462,6 +443,7 @@ void PianoRollPlugin::ExecuteCommands()
 		case CLEAR:
 			ReleaseAll(NULL, 0);
 			m_Clip.Clear(m_Rate);
+			m_Phase = 0;
 			edited = true;
 
 			break;
