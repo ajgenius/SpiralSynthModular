@@ -42,7 +42,8 @@ public:
 	// don't call Register*() when the audio thread is running
 	// kind says what a typed Register() knows of the channel: 'i' a whole
 	// number, 'f' a real one, 's' text. A command with no types of its own
-	// has its arguments sent as its channels' kinds.
+	// has its arguments sent as its channels' kinds. A table of doubles is
+	// registered 'd', so it is read back at their width.
     void     RegisterData(const std::string &ID, Type t, void *pData, int size, char kind=0);
     void     Register(const std::string &ID, bool* pData,  Type t=ChannelHandler::INPUT)    
 		{ RegisterData(ID, t,(bool*)pData,sizeof(bool),'i'); }

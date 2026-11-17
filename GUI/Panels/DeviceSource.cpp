@@ -363,15 +363,16 @@ namespace Spiral
 		}
 
 		// Only the part of the channel in use is read; its cells are real
-		// numbers where the device registered it so, whole ones otherwise.
+		// numbers where the device registered it so (floats, or doubles),
+		// whole ones otherwise.
 		bool DeviceSource::ReadTable(const std::string &name, std::vector<double> &cells) const
 		{
 			ChannelHandler *ch = m_Plugin ? m_Plugin->GetChannelHandler() : NULL;
 			const std::string channel = name.empty() ? std::string() : ChannelNamed(name);
 			if (!ch || channel.empty())
 				return false;
-			const bool real = ch->ChannelKind(channel) == 'f';
-			const int width = real ? (int)sizeof(float) : (int)sizeof(int);
+			const char kind = ch->ChannelKind(channel);
+			const int width = kind == 'd' ? (int)sizeof(double) : kind == 'f' ? (int)sizeof(float) : (int)sizeof(int);
 			const int used = ch->ChannelUsed(channel);
 			if (used < 0)
 				return false;
@@ -381,7 +382,8 @@ namespace Spiral
 			cells.resize(bytes.size() / width);
 			for (size_t i = 0; i < cells.size(); ++i)
 			{
-				if (real) { float v; std::memcpy(&v, &bytes[i * width], sizeof(v)); cells[i] = v; }
+				if (kind == 'd') std::memcpy(&cells[i], &bytes[i * width], sizeof(double));
+				else if (kind == 'f') { float v; std::memcpy(&v, &bytes[i * width], sizeof(v)); cells[i] = v; }
 				else { int v; std::memcpy(&v, &bytes[i * width], sizeof(v)); cells[i] = v; }
 			}
 			return true;
