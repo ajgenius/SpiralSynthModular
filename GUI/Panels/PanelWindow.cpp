@@ -181,6 +181,15 @@ namespace Spiral
 					state[i->first] = StateValue(StateValue::Number, text.str());
 				}
 			}
+
+			// Which layout the panel was left in, by its place in the
+			// panel's list: the name both trees keep it under.
+			if (m_Panel->LayoutCount() > 1)
+			{
+				std::ostringstream text;
+				text << m_Panel->Layout();
+				state["LAYOUT"] = StateValue(StateValue::Number, text.str());
+			}
 		}
 
 		void PanelWindow::LoadState(const std::map<std::string, Spiral::Core::StateValue> &state)
@@ -204,6 +213,11 @@ namespace Spiral
 			}
 
 			m_Panel->LoadState(values);
+
+			std::map<std::string, ControlValue>::const_iterator layout = values.find("LAYOUT");
+
+			if (layout != values.end() && layout->second.number >= 0 && layout->second.number < m_Panel->LayoutCount())
+				SetLayout((size_t)layout->second.number);
 		}
 
 		SpiralPlugin *PanelWindow::Plugin() const
