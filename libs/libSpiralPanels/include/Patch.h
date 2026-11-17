@@ -176,6 +176,7 @@ namespace Spiral
 			void Drag(double x, double y);
 			void Release(double x, double y);
 			void Wheel(double x, double y, int steps);
+			void SetVolumeAt(int column, int row, float volume);
 			void StartMarking(int row);
 			void MarkTo(int row);
 			void EndMarking();

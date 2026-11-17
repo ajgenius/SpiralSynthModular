@@ -332,9 +332,17 @@ namespace Spiral
 				return;
 
 			const GridNote &note = m_Grid.Notes[hit];
-			const float volume = std::max(0.0f, std::min(1.0f, note.Velocity - steps * 0.05f));
-			SetVolume((int)note.Start, note.Row, volume);
-			Volume((int)note.Start, note.Row, volume);
+			SetVolumeAt((int)note.Start, note.Row, note.Velocity - steps * 0.05f);
+		}
+
+		void MatrixGridControl::SetVolumeAt(int column, int row, float volume)
+		{
+			if (!HasVolume() || !On(column, row))
+				return;
+
+			volume = std::max(0.0f, std::min(1.0f, volume));
+			SetVolume(column, row, volume);
+			Volume(column, row, volume);
 			Rebuild();
 			m_View->Redraw();
 		}

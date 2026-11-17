@@ -4,6 +4,8 @@
 #include "FltkView.h"
 #include "JSON.h"
 #include <FL/Fl.H>
+#include <FL/Fl_Group.H>
+#include <FL/Fl_Slider.H>
 #include <FL/Fl_Widget.H>
 #include <FL/fl_draw.H>
 #include <algorithm>
@@ -17,6 +19,23 @@ namespace Spiral
 		{
 			static const char *NoteText[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 
+			// The volume slider sits in the grid's parent, which may delete
+			// it before the grid or after; it tells the grid when it goes.
+			class VolumeSlider: public Fl_Slider
+			{
+			public:
+				VolumeSlider(int x, int y, int w, int h, Fl_Slider **owner): Fl_Slider(x, y, w, h), m_Owner(owner) {}
+
+				~VolumeSlider()
+				{
+					if (*m_Owner == this)
+						*m_Owner = NULL;
+				}
+
+			private:
+				Fl_Slider **m_Owner;
+			};
+
 			class MatrixWidget: public Fl_Widget
 			{
 			public:
@@ -26,8 +45,16 @@ namespace Spiral
 					m_Classic(classic),
 					m_Look(look),
 					m_HoverC(-1),
-					m_HoverR(0)
+					m_HoverR(0),
+					m_Slider(NULL),
+					m_SliderC(-1),
+					m_SliderR(0)
 				{
+				}
+
+				~MatrixWidget()
+				{
+					delete m_Slider;
 				}
 
 				void draw()
@@ -118,8 +145,27 @@ namespace Spiral
 					switch (event)
 					{
 						case FL_PUSH:
+							// The original's volume slider: a right click on a lit
+							// step opens it under the step, another puts it away,
+							// and so does a left click anywhere on the grid.
+							if (Fl::event_button() == FL_RIGHT_MOUSE && !names)
+							{
+								const int column = Column(lx, grid);
+								const int row = grid.RowAt(ly);
+								const int start = column >= 0 ? m_Control.NoteAt(column, row) : -1;
+								const bool same = m_Slider && start == m_SliderC && row == m_SliderR;
+								CloseSlider();
+
+								if (start >= 0 && !same && m_Control.HasVolume())
+									OpenSlider(start, row);
+
+								return 1;
+							}
+
 							if (Fl::event_button() != FL_LEFT_MOUSE)
 								return 1;
+
+							CloseSlider();
 
 							if (names && m_Control.HasTriggers())
 							{
@@ -164,6 +210,69 @@ namespace Spiral
 				}
 
 			private:
+				static const int SliderHeight = 50;
+
+				static void SliderMoved(Fl_Widget *slider, void *data)
+				{
+					MatrixWidget *self = static_cast<MatrixWidget *>(data);
+					const float volume = 1.0f - (float)(static_cast<Fl_Slider *>(slider)->value() / 255.0);
+					self->m_Control.SetVolumeAt(self->m_SliderC, self->m_SliderR, volume);
+				}
+
+				void OpenSlider(int column, int row)
+				{
+					NoteGrid &grid = m_Control.Grid();
+					const int columns = m_Control.Columns();
+					const int rows = m_Control.Rows();
+					const int x0 = x() + (int)grid.Gutter;
+					const int w0 = w() - (int)grid.Gutter;
+					const int cx = x0 + column * w0 / columns;
+					const int cw = std::max(12, x0 + (column + 1) * w0 / columns - cx);
+					const int top = y() + (rows - 1 - row) * h() / rows;
+					const int below = y() + (rows - row) * h() / rows;
+					Fl_Group *group = parent();
+
+					// Under the step, or over it where the panel ends first.
+					const bool fits = !group || below + SliderHeight <= group->y() + group->h();
+					Fl_Group::current(NULL);
+					m_Slider = new VolumeSlider(cx, fits ? below : top - SliderHeight, cw, SliderHeight, &m_Slider);
+					m_Slider->type(FL_VERT_NICE_SLIDER);
+					m_Slider->selection_color(m_Look.Colour("note_loud"));
+					m_Slider->maximum(255);
+					m_Slider->step(1);
+					m_Slider->value(255 - 255 * std::max(0.0f, std::min(1.0f, m_Control.VolumeAt(column, row))));
+					m_Slider->callback(&SliderMoved, this);
+					m_SliderC = column;
+					m_SliderR = row;
+
+					if (group)
+					{
+						group->add(m_Slider);
+						group->redraw();
+					}
+				}
+
+				void CloseSlider()
+				{
+					if (!m_Slider)
+						return;
+
+					Fl_Group *group = m_Slider->parent();
+					m_Slider->hide();
+
+					if (group)
+					{
+						group->remove(m_Slider);
+						group->redraw();
+					}
+
+					// Deleted once the event is over, by when another may be open.
+					Fl_Slider *gone = m_Slider;
+					m_Slider = NULL;
+					m_SliderC = -1;
+					Fl::delete_widget(gone);
+				}
+
 				int Column(double lx, const NoteGrid &grid) const
 				{
 					const int column = (int)grid.TimeAt(lx);
@@ -212,6 +321,8 @@ namespace Spiral
 				bool m_Classic;
 				FltkLook m_Look;
 				int m_HoverC, m_HoverR;
+				Fl_Slider *m_Slider;
+				int m_SliderC, m_SliderR;
 			};
 
 			class FltkMatrix: public FltkView, public virtual RollView
