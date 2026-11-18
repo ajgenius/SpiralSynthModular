@@ -195,27 +195,44 @@ bool AlsaClient::PreparedTiming(AudioCycleTiming &timing) const
 int AlsaClient::WaitForCycle(unsigned milliseconds)
 {
 	snd_pcm_t *streams[] = {m_Playback, m_Capture};
-	for (unsigned n = 0; n < 2; ++n)
+	unsigned timeout = std::min(milliseconds, 10U);
+
+	for (unsigned n = 0; n < 2;)
 	{
-		snd_pcm_t *stream = streams[n];
+		snd_pcm_t *stream = streams[n++];
 		if (!stream) continue;
 
 		snd_pcm_sframes_t available = snd_pcm_avail_update(stream);
+		if (available >= 0 && available < snd_pcm_sframes_t(m_Frames))
+		{
+			if (!timeout)
+				return 0;
+
+			const int ready = snd_pcm_wait(stream, timeout);
+			if (ready > 0)
+			{
+				// A wake can be partial. Recheck both sides before transferring,
+				// with at most one blocking wait per worker cycle.
+				timeout = 0;
+				n = 0;
+				continue;
+			}
+
+			if (ready == 0)
+				return 0;
+
+			available = ready;
+		}
+
 		if (available == -EPIPE || available == -ESTRPIPE)
 		{
-			if (snd_pcm_prepare(stream) < 0 || (n && snd_pcm_start(stream) < 0)) return -1;
+			if (snd_pcm_prepare(stream) < 0 || (stream == m_Capture && snd_pcm_start(stream) < 0))
+				return -1;
 
 			return 0;
 		}
 
 		if (available < 0) return available == -EAGAIN || available == -EINTR ? 0 : -1;
-
-		if (available < snd_pcm_sframes_t(m_Frames))
-		{
-			const int result = snd_pcm_wait(stream, std::min(milliseconds, 10U));
-			return result < 0 && result != -EINTR ? -1 : 0;
-		}
-
 	}
 
 	m_Timing.Frame = m_Playback ? m_Written : m_Read;

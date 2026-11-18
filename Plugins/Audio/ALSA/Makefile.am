@@ -15,6 +15,12 @@ alsa_client_test_SOURCES = alsa-client.cpp AlsaClient.cpp
 alsa_client_test_CPPFLAGS = $(AM_CPPFLAGS)
 alsa_client_test_LDADD = $(top_builddir)/libs/libspiralcore/libspiralcore.la $(ALSA_LIBS)
 
+# Exercise driver wake and error paths against real null PCMs.
+check_PROGRAMS += alsa-wait-test
+alsa_wait_test_SOURCES = alsa-wait.cpp AlsaClient.cpp
+alsa_wait_test_CPPFLAGS = $(AM_CPPFLAGS) -Dsnd_pcm_avail_update=scripted_avail -Dsnd_pcm_wait=scripted_wait
+alsa_wait_test_LDADD = $(alsa_client_test_LDADD)
+
 check_PROGRAMS += alsa-clock-test
 alsa_clock_test_SOURCES = $(top_srcdir)/libs/libspiralcore/Audio/tests/atomic-clock.cpp AlsaAtomicClock.cpp
 alsa_clock_test_CPPFLAGS = $(AM_CPPFLAGS)
