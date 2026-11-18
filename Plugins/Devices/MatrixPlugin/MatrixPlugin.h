@@ -161,6 +161,7 @@ private:
 	
 	bool  m_Triggered;
 	bool  m_ClockHigh;
+	bool  m_FirstClockStep;
 	Pattern m_Clipboard;
 	bool m_Copied;
 	bool  m_PatAdvance;

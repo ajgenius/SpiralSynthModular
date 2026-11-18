@@ -71,6 +71,7 @@ m_CurrentNoteCV(0),
 m_CurrentTriggerCV(0),
 m_Triggered(false),
 m_ClockHigh(false),
+m_FirstClockStep(true),
 m_Copied(false),
 m_PatAdvance(false),
 m_PatReset(false),
@@ -280,6 +281,7 @@ void MatrixPlugin::Reset()
 	m_CurrentTriggerCV = 0;
 	m_Triggered = false;
 	m_ClockHigh = false;
+	m_FirstClockStep = true;
 	m_Copied = false;
 	m_PatAdvance = false;
 	m_PatReset = false;
@@ -390,6 +392,10 @@ void MatrixPlugin::Execute()
 		if ((!ExternalClock && AsFloat(m_Time)>=m_StepTime*(1/m_Matrix[AsSigned(m_Current)].Speed)) ||
 			(ExternalClock && ExternalClockTriggered))
 		{
+			// With only a clock cable, the first edge starts column zero.
+			if (ExternalClock && m_FirstClockStep)
+				AsSigned(m_Step) = -1;
+			m_FirstClockStep = false;
 			AsFloat(m_Time)=0;
 			AsSigned(m_Step)++;
 
@@ -898,6 +904,8 @@ void MatrixPlugin::Apply(Spiral::Core::Description::Reader &r) {
         if (GetPatSeq(0)<0) SetPatSeq(0, 0);
      }
      AsSigned(m_Current) = std::max(0, std::min(NUM_PATTERNS - 1, (int)AsSigned(m_Current)));
+     if (AsSigned(m_Step) > 0)
+          m_FirstClockStep = false;
      AsSigned(m_Step) = std::max(-1, std::min(MATX - 1, (int)AsSigned(m_Step)));
      RefreshEcho();
 }
