@@ -318,7 +318,7 @@ dnl build plugin list - plugins that do not require an optional component
 dnl (i.e. Jack, and LADSPA)
 
 PLUGINLIST="AmpPlugin AnotherFilterPlugin BeatMatchPlugin ComplexEnvelopePlugin ControllerPlugin \
-CounterPlugin DelayPlugin DistributorPlugin EchoPlugin \
+ClockPlugin CounterPlugin DelayPlugin DistributorPlugin EchoPlugin \
 EnvFollowerPlugin EnvelopePlugin FilterPlugin FlipflopPlugin FormantFilterPlugin \
 KeyboardPlugin LFOPlugin LogicPlugin MasherPlugin MatrixPlugin \
 MeterPlugin MidiPlugin MixSwitchPlugin MixerPlugin MoogFilterPlugin NoisePlugin \
@@ -600,6 +600,7 @@ Plugins/Devices/AnotherFilterPlugin/Makefile
 Plugins/Devices/BeatMatchPlugin/Makefile
 Plugins/Devices/ComplexEnvelopePlugin/Makefile
 Plugins/Devices/ControllerPlugin/Makefile
+Plugins/Devices/ClockPlugin/Makefile
 Plugins/Devices/CounterPlugin/Makefile
 Plugins/Devices/DelayPlugin/Makefile
 Plugins/Devices/DistributorPlugin/Makefile

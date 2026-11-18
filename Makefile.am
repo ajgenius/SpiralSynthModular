@@ -62,6 +62,11 @@ stereo_mixer_signal_test_SOURCES = tests/mixer-signal.cpp Plugins/Devices/Stereo
 stereo_mixer_signal_test_CPPFLAGS = $(AM_CPPFLAGS) -DTEST_STEREO -I$(srcdir)/Plugins/Devices/StereoMixerPlugin
 stereo_mixer_signal_test_LDADD = $(mixer_signal_test_LDADD)
 
+check_PROGRAMS += musical-clock-test
+musical_clock_test_SOURCES = tests/musical-clock.cpp Plugins/Devices/ClockPlugin/ClockPlugin.C
+musical_clock_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/Devices/ClockPlugin
+musical_clock_test_LDADD = libs/libspiralcore/libspiralcore.la -ldl
+
 check_PROGRAMS += piano-roll-test
 piano_roll_test_SOURCES = tests/piano-roll.cpp Plugins/Devices/PianoRollPlugin/PianoRollPlugin.C
 piano_roll_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/Devices/PianoRollPlugin

@@ -69,6 +69,20 @@ int main(int argc, char **argv)
 	delete gui;
 	delete plugin;
 
+	const DeviceClass *clock = DeviceClassRegistry::Get()->Find(55);
+	assert(clock && clock->Name == "Clock");
+	plugin = clock->CreateInstance();
+	assert(plugin);
+	plugin->Initialise(&info);
+	panel = PanelRegistry::Get()->Find(55);
+	assert(panel);
+	window.begin();
+	gui = panel->Open(plugin);
+	window.end();
+	assert(gui);
+	delete gui;
+	delete plugin;
+
 	DeviceClass builtin=*amp;
 	builtin.ID=500;
 	builtin.Module="";

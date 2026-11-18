@@ -1,0 +1,445 @@
+{
+  "schema_version": 1,
+  "id": 55,
+  "name": "Clock",
+  "type": "dsp",
+  "category": "Sequencing",
+  "authors": [
+    "ajgenius"
+  ],
+  "version": "1",
+  "host": {
+    "name": "SpiralSynthModular",
+    "version": "0.3.2",
+    "abi": "ssm-fltk-audio-9"
+  },
+  "registration": "module",
+  "module": "ClockPlugin_DSP.so",
+  "ui": {
+    "host_version": "0.3.2",
+    "panel": {
+      "schema_version": 1,
+      "width": 330,
+      "height": 284,
+      "children": [
+        {
+          "type": "Meters::TimingNotation",
+          "name": "score",
+          "bounds": [
+            4,
+            2,
+            322,
+            76
+          ],
+          "tempo": "BPM",
+          "tempo_note": "TEMPONOTE",
+          "beats": "BEATS",
+          "beat_unit": "BEATUNIT"
+        },
+        {
+          "type": "Label",
+          "name": "tempo-label",
+          "bounds": [
+            4,
+            84,
+            64,
+            22
+          ],
+          "text": "Tempo"
+        },
+        {
+          "type": "Choice",
+          "name": "tempo-note",
+          "property": "TEMPONOTE",
+          "bounds": [
+            72,
+            84,
+            125,
+            22
+          ],
+          "items": [
+            {
+              "text": "Quarter",
+              "value": 0
+            },
+            {
+              "text": "Dotted quarter",
+              "value": 1
+            },
+            {
+              "text": "Eighth",
+              "value": 2
+            },
+            {
+              "text": "Sixteenth",
+              "value": 3
+            },
+            {
+              "text": "Half",
+              "value": 4
+            },
+            {
+              "text": "Dotted half",
+              "value": 5
+            }
+          ]
+        },
+        {
+          "type": "Spinner",
+          "name": "bpm",
+          "property": "BPM",
+          "bounds": [
+            202,
+            84,
+            78,
+            22
+          ],
+          "digits": 1,
+          "step": 0.1
+        },
+        {
+          "type": "Label",
+          "name": "bpm-label",
+          "bounds": [
+            281,
+            84,
+            43,
+            22
+          ],
+          "text": "BPM"
+        },
+        {
+          "type": "Label",
+          "name": "meter-label",
+          "bounds": [
+            4,
+            111,
+            64,
+            22
+          ],
+          "text": "Meter"
+        },
+        {
+          "type": "Spinner",
+          "name": "beats",
+          "property": "BEATS",
+          "bounds": [
+            72,
+            111,
+            65,
+            22
+          ],
+          "digits": 0,
+          "step": 1
+        },
+        {
+          "type": "Label",
+          "name": "over",
+          "bounds": [
+            139,
+            111,
+            12,
+            22
+          ],
+          "text": "/"
+        },
+        {
+          "type": "Choice",
+          "name": "beat-unit",
+          "property": "BEATUNIT",
+          "bounds": [
+            155,
+            111,
+            165,
+            22
+          ],
+          "items": [
+            {
+              "text": "1  whole",
+              "value": 1
+            },
+            {
+              "text": "2  half",
+              "value": 2
+            },
+            {
+              "text": "4  quarter",
+              "value": 4
+            },
+            {
+              "text": "8  eighth",
+              "value": 8
+            },
+            {
+              "text": "16  sixteenth",
+              "value": 16
+            },
+            {
+              "text": "32  thirty-second",
+              "value": 32
+            }
+          ]
+        },
+        {
+          "type": "Label",
+          "name": "note-step-label",
+          "bounds": [
+            3,
+            144,
+            124,
+            22
+          ],
+          "text": "Note Clock step"
+        },
+        {
+          "type": "Choice",
+          "name": "step-note",
+          "property": "STEPNOTE",
+          "bounds": [
+            137,
+            144,
+            183,
+            22
+          ],
+          "items": [
+            {
+              "text": "Quarter",
+              "value": 0
+            },
+            {
+              "text": "Dotted quarter",
+              "value": 1
+            },
+            {
+              "text": "Eighth",
+              "value": 2
+            },
+            {
+              "text": "Sixteenth",
+              "value": 3
+            },
+            {
+              "text": "Half",
+              "value": 4
+            },
+            {
+              "text": "Dotted half",
+              "value": 5
+            }
+          ]
+        },
+        {
+          "type": "Label",
+          "name": "steps-label",
+          "bounds": [
+            4,
+            177,
+            209,
+            22
+          ],
+          "text": "Clock steps per meter unit"
+        },
+        {
+          "type": "Spinner",
+          "name": "steps",
+          "property": "STEPS",
+          "bounds": [
+            229,
+            177,
+            91,
+            22
+          ],
+          "digits": 0,
+          "step": 1
+        },
+        {
+          "type": "Label",
+          "name": "bars-label",
+          "bounds": [
+            4,
+            207,
+            209,
+            22
+          ],
+          "text": "Bars per Trigger pulse"
+        },
+        {
+          "type": "Spinner",
+          "name": "bars",
+          "property": "BARS",
+          "bounds": [
+            229,
+            207,
+            91,
+            22
+          ],
+          "digits": 0,
+          "step": 1
+        },
+        {
+          "type": "Label",
+          "name": "matrix-wiring",
+          "bounds": [
+            4,
+            238,
+            322,
+            22
+          ],
+          "text": "Patch Note Clock to Matrix External Clock"
+        },
+        {
+          "type": "Label",
+          "name": "roll-wiring",
+          "bounds": [
+            4,
+            259,
+            322,
+            20
+          ],
+          "text": "Patch Tempo to Piano Roll Tempo"
+        }
+      ],
+      "help": "Connect Note Clock to Matrix External Clock. Each change plays one column at the selected note value. All columns play, even across a bar line. In 6/8, twelve sixteenth notes fill a bar.\n\nTrigger pulses at the start of the selected number of bars. Connect it to Play or Launch to deliberately restart a pattern or clip there. Connect Tempo to Piano Roll Tempo to follow changes. A clip learns its first connected tempo as its original speed. Launch starts the clip separately.\n\nClock subdivides the lower number of the meter using Steps. Older Clock connections use this outlet. Reset starts the grid over."
+    },
+    "plugin_id": 55,
+    "properties": [
+      {
+        "class": "SignedProperty",
+        "default": 1,
+        "display_name": "Bars",
+        "hint": "Bars in a sequence: Trigger fires as each starts",
+        "internal": false,
+        "logarithmic": false,
+        "max": 64,
+        "min": 1,
+        "page": 1,
+        "property": "BARS",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 4,
+        "display_name": "Beats",
+        "hint": "Beats in a bar: the time signature's upper number",
+        "internal": false,
+        "logarithmic": false,
+        "max": 32,
+        "min": 1,
+        "page": 1,
+        "property": "BEATS",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 4,
+        "display_name": "BeatUnit",
+        "hint": "The note a beat is: the time signature's lower number",
+        "internal": false,
+        "logarithmic": false,
+        "max": 32,
+        "min": 1,
+        "page": 1,
+        "property": "BEATUNIT",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "FloatProperty",
+        "default": 120,
+        "display_name": "BPM",
+        "hint": "Tempo notes per minute",
+        "internal": false,
+        "logarithmic": false,
+        "max": 300,
+        "min": 20,
+        "page": 1,
+        "property": "BPM",
+        "read_only": false,
+        "step": 0.10000000149011612,
+        "type": "number"
+      },
+      {
+        "class": "StringProperty",
+        "default": "Clock",
+        "display_name": "DeviceType",
+        "hint": "DeviceType",
+        "internal": false,
+        "omitted": "identity",
+        "property": "DEVICETYPE",
+        "read_only": true,
+        "type": "string"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 1,
+        "display_name": "DeviceVersion",
+        "hint": "DeviceVersion",
+        "internal": false,
+        "logarithmic": false,
+        "max": 0,
+        "min": 0,
+        "omitted": "identity",
+        "page": 0,
+        "property": "DEVICEVERSION",
+        "read_only": true,
+        "step": 0,
+        "type": "integer"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 3,
+        "display_name": "StepNote",
+        "hint": "Note value of each Note Clock step",
+        "internal": false,
+        "logarithmic": false,
+        "max": 5,
+        "min": 0,
+        "page": 1,
+        "property": "STEPNOTE",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 4,
+        "display_name": "Steps",
+        "hint": "Steps in a beat: Clock changes level on each",
+        "internal": false,
+        "logarithmic": false,
+        "max": 32,
+        "min": 1,
+        "page": 1,
+        "property": "STEPS",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      },
+      {
+        "class": "SignedProperty",
+        "default": 0,
+        "display_name": "TempoNote",
+        "hint": "Note value counted by BPM",
+        "internal": false,
+        "logarithmic": false,
+        "max": 5,
+        "min": 0,
+        "page": 1,
+        "property": "TEMPONOTE",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
+      }
+    ],
+    "schema_version": 1,
+    "control_contracts": {
+      "Controls": 1,
+      "Meters": 1
+    }
+  }
+}
