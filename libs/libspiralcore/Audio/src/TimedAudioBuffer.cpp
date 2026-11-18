@@ -117,6 +117,11 @@ unsigned TimedAudioBuffer::Read(float *samples, unsigned frames, double time, do
 	unsigned cursor = m_Search;
 	if (cursor - read >= write - read) cursor = read;
 
+	// Consecutive device periods can overlap after a timestamp correction.
+	// Reposition within retained history before interpolating the first sample.
+	while (cursor != read && m_Positions[cursor & m_Mask].Time > time + 1e-10)
+		--cursor;
+
 	unsigned covered = 0;
 	for (unsigned frame = 0; frame < frames && cursor != write; ++frame)
 	{

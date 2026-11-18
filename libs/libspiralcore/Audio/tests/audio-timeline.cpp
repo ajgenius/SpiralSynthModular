@@ -117,6 +117,33 @@ static void NativeClockCorrections()
 
 }
 
+static void OverlappingPlaybackPeriods()
+{
+	TimedAudioBuffer queue;
+	assert(queue.Configure(512, 1, 48000, 48000));
+	float input[256], output[64];
+	for (unsigned n = 0; n < 256; ++n)
+		input[n] = float(n) / 256;
+
+	AudioStamp stamp;
+	stamp.Generation = 1;
+	stamp.Time = 10;
+	stamp.Step = 1.0 / 48000;
+	assert(queue.Write(input, 256, stamp));
+
+	// The first period ends at frame 127.04. The next timestamp places the
+	// first sample just before frame 127, across the cached interpolation interval.
+	assert(queue.Read(output, 64, stamp.Time + 64.04 * stamp.Step, stamp.Step, 1) == 64);
+	const double start = 126.99;
+	assert(queue.Read(output, 64, stamp.Time + start * stamp.Step, stamp.Step, 1) == 64);
+	for (unsigned n = 0; n < 64; ++n)
+		assert(std::fabs(output[n] - (start + n) / 256) < 0.000005);
+
+	// A request before the retained history still returns silence.
+	assert(queue.Read(output, 1, stamp.Time, stamp.Step, 1) == 0);
+	assert(output[0] == 0);
+}
+
 static void AntiAlias()
 {
 	TimedAudioBuffer queue;
@@ -171,6 +198,7 @@ int main()
 	HolesAndGenerations();
 	AntiAlias();
 	NativeClockCorrections();
+	OverlappingPlaybackPeriods();
 
 	MailboxStress test;
 	pthread_t writer;
