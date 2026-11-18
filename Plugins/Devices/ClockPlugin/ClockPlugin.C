@@ -88,8 +88,10 @@ void ClockPlugin::Apply(Description::Reader &reader)
 	reader.Value(version).Value(m_Tempo).Value(m_Beats).Value(m_BeatUnit).Value(m_Steps).Value(m_Bars);
 	SetSigned(m_TempoNote, 0);
 	SetSigned(m_StepNote, 3);
-	if (reader.More())
-		reader.Value(m_TempoNote).Value(m_StepNote);
+	if (reader.Named() ? reader.Find("TempoNote") >= 0 : reader.More())
+		reader.Value(m_TempoNote);
+	if (reader.Named() ? reader.Find("StepNote") >= 0 : reader.More())
+		reader.Value(m_StepNote);
 }
 
 void ClockPlugin::Reset()

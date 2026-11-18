@@ -39,6 +39,13 @@ int main()
 	Description legacy;
 	clock.Describe(legacy);
 	assert(legacy.Values().size() == 8 && legacy.Values()[6] == "0");
+	// Public patch files also store the original five settings by property name.
+	Description namedLegacy;
+	for (unsigned i = 0; i < 6; ++i)
+		namedLegacy.Value(legacy.Values()[i]).Key(legacy.Keys()[i], legacy.Classes()[i]);
+	Description::Reader oldPatch(namedLegacy);
+	clock.Apply(oldPatch);
+	assert(!oldPatch.Failed());
 	SignedProperty dotted(DefaultLinearFlags, 1, 0, 5, 1, 1);
 	clock.SynchronizeProperty("TEMPONOTE", &dotted);
 	Description compound;
