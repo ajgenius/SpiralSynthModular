@@ -6,6 +6,7 @@
 #include "PatchProject.h"
 #include <cassert>
 #include <cstdio>
+#include <map>
 #include <vector>
 
 using namespace Spiral::Core;
@@ -369,7 +370,39 @@ static void LongTakeRoundTrip(const char *destination)
 		assert(row[PianoRollPlugin::NOTE_END] == double(notes[i].End) / host.SAMPLERATE);
 	}
 	assert(!restored.GetChannelHandler()->ReadTable("NoteRows", revision, rows));
-	std::printf("900-second take: %u note-ons, %u note-offs, %u controllers, %u rows. All saved event fields and frames match after reopening %s\n",
+	EventClip playback;
+	playback.Clear(host.SAMPLERATE);
+	std::map<int, int> sounding;
+	Command(restored, PianoRollPlugin::PLAY);
+	for (unsigned frame = 0; frame <= expected.Length(); frame += host.BUFSIZE)
+	{
+		restored.Execute();
+		const EventBuffer *out = restored.GetEventOutput(0);
+		assert(out && !out->Failed());
+		for (unsigned n = 0; n < out->Count(); ++n)
+		{
+			assert(playback.Count() < expected.Count());
+			const Event &source = expected.At(playback.Count());
+			Event event = out->At(n);
+			assert(source.Type == event.Type);
+			if (event.Type == Event::NoteOn)
+			{
+				assert(sounding.insert(std::make_pair(source.ID, event.ID)).second);
+				event.ID = source.ID;
+			}
+			else if (event.Type == Event::NoteOff)
+			{
+				std::map<int, int>::iterator on = sounding.find(source.ID);
+				assert(on != sounding.end() && on->second == event.ID);
+				sounding.erase(on);
+				event.ID = source.ID;
+			}
+			assert(playback.Append(frame + out->Frame(n), event));
+		}
+	}
+	playback.Extend(expected.Length());
+	assert(!restored.Playing() && sounding.empty() && playback.Save() == reference);
+	std::printf("900-second take: %u note-ons, %u note-offs, %u controllers, %u rows. All stored and replayed events matched after reopening %s\n",
 		3 * chords, 3 * chords, (chords + 7) / 8, (unsigned)notes.size(), path.c_str());
 }
 
