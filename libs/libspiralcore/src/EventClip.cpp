@@ -3,10 +3,9 @@
 #include <algorithm>
 #include <climits>
 #include <cmath>
-#include <deque>
+#include <set>
 #include <iomanip>
 #include <locale>
-#include <map>
 #include <sstream>
 
 namespace Spiral
@@ -73,7 +72,10 @@ namespace Core
 	void EventClip::Notes(std::vector<NoteSpan> &notes) const
 	{
 		typedef std::pair<int, int> Identity;
-		std::map<Identity, std::deque<unsigned> > held;
+		// Sort sounding notes by identity and then note-on order. Reused IDs
+		// release the oldest sounding note first.
+		typedef std::pair<Identity, unsigned> SoundingNote;
+		std::set<SoundingNote> held;
 		notes.clear();
 
 		for (unsigned i = 0; i < m_Count; ++i)
@@ -90,7 +92,7 @@ namespace Core
 			if (event.Type != Event::NoteOn && event.Type != Event::NoteOff)
 				continue;
 
-			std::deque<unsigned> &pending = held[Identity(event.Channel, event.ID)];
+			const Identity identity(event.Channel, event.ID);
 
 			if (event.Type == Event::NoteOn)
 			{
@@ -99,15 +101,18 @@ namespace Core
 				note.Start = m_Frames[i];
 				note.OnEvent = i;
 				note.End = m_Length;
-				pending.push_back(notes.size());
+				held.insert(SoundingNote(identity, (unsigned)notes.size()));
 				notes.push_back(note);
 			}
-			else if (!pending.empty())
+			else
 			{
-				NoteSpan &note = notes[pending.front()];
+				const std::set<SoundingNote>::iterator oldest = held.lower_bound(SoundingNote(identity, 0));
+				if (oldest == held.end() || oldest->first != identity)
+					continue;
+				NoteSpan &note = notes[oldest->second];
 				note.End = m_Frames[i];
 				note.OffEvent = i;
-				pending.pop_front();
+				held.erase(oldest);
 			}
 		}
 	}
