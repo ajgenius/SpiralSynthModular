@@ -25,7 +25,7 @@ namespace Core
 	public:
 		enum
 		{
-			MaxEvents = 16384
+			MaxEvents = 65536
 		};
 
 		EventClip();

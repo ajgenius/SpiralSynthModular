@@ -2,6 +2,8 @@
 #include "PianoRollPlugin.h"
 #include "EventBuffer.h"
 #include "EventClip.h"
+#include "PatchFile.h"
+#include "PatchProject.h"
 #include <cassert>
 #include <cstdio>
 #include <vector>
@@ -253,7 +255,159 @@ static void SavedCueUsesTheClipRate()
 	std::puts("Unclocked 48 kHz patch plays its one-second cue at frame 44100");
 }
 
-int main()
+// Fifteen minutes at the event input, including overlapping same-key
+// notes on two channels, differing release times, and controller changes.
+static void LongTakeRoundTrip(const char *destination)
+{
+	HostInfo host = s_Host;
+	host.SAMPLERATE = 48000;
+	host.BUFSIZE = 256;
+	const unsigned chords = 6000, stride = 7200;
+	EventClip expected;
+	expected.Clear(host.SAMPLERATE);
+	for (unsigned i = 0; i < chords; ++i)
+	{
+		Event chord[3];
+		const unsigned start = i * stride;
+		for (unsigned n = 0; n < 3; ++n)
+		{
+			chord[n].ID = int(3 * i + n);
+			chord[n].Channel = n % 2;
+			chord[n].NoteNum = 48 + i % 24;
+			chord[n].Volume = .25f * (n + 1);
+			assert(expected.Append(start, chord[n]));
+		}
+		if (i % 8 == 0)
+		{
+			Event cc;
+			cc.Type = Event::Controller;
+			cc.Parameter = 11;
+			cc.Value = (i % 32) / 32.f;
+			assert(expected.Append(start + 123, cc));
+		}
+		for (unsigned n = 0; n < 3; ++n)
+		{
+			Event off = chord[2 - n];
+			off.Type = Event::NoteOff;
+			assert(expected.Append(start + 1600 + n * 211, off));
+		}
+	}
+	expected.Extend(chords * stride);
+	const std::string reference = expected.Save();
+	Spumoni::DiskFolder folder;
+	std::string error;
+	assert(folder.Create("ssm-piano-roll-", error));
+	const std::string path = destination ? destination : folder.Root() + "/take.ssmp";
+
+	{
+		PianoRollPlugin roll;
+		roll.Initialise(&host);
+		EventBuffer in;
+		assert(roll.SetEventInput(0, &in));
+		Command(roll, PianoRollPlugin::RECORD);
+		unsigned fed = 0;
+		for (unsigned frame = 0; frame < expected.Length(); frame += host.BUFSIZE)
+		{
+			in.Clear(host.BUFSIZE);
+			while (fed < expected.Count() && expected.FrameAt(fed) < frame + host.BUFSIZE)
+			{
+				assert(in.Append(expected.FrameAt(fed) - frame, expected.At(fed)));
+				++fed;
+			}
+			roll.Execute();
+		}
+		assert(fed == expected.Count() && roll.Recording());
+		Command(roll, PianoRollPlugin::STOP);
+		assert(roll.Clip().Save() == reference);
+
+		PatchDescription patch;
+		DeviceDescription &device = patch.AddObject().AddDevice();
+		device.SetValue("patch_id", "1");
+		device.SetValue("id", "288");
+		device.SetValue("name", "PianoRoll");
+		Description description;
+		roll.Describe(description);
+		Spiral::File::PatchFile::Properties(description, device);
+		std::string json;
+		assert(Spiral::File::PatchFile::Text(patch, json, error));
+		Spiral::File::Project writer("");
+		writer.Patch().Set(json);
+		assert(writer.SaveAs(path, error));
+	}
+
+	Spiral::File::Project reader(path);
+	assert(reader.OpenPackage("", error));
+	PatchDescription reopened;
+	assert(Spiral::File::PatchFile::ReadText(reader.Patch().Bytes(), reopened, error));
+	const DeviceDescription *device = reopened.FindDevice("1");
+	assert(device);
+	Description saved;
+	Spiral::File::PatchFile::Describe(*device, saved);
+	PianoRollPlugin restored;
+	restored.Initialise(&host);
+	Description::Reader state(saved);
+	restored.Apply(state);
+	assert(!state.Failed() && restored.Clip().Save() == reference);
+
+	std::vector<NoteSpan> notes;
+	restored.Clip().Notes(notes);
+	assert(notes.size() == 3 * chords);
+	for (unsigned i = 0; i < notes.size(); ++i)
+	{
+		assert(notes[i].Closed());
+		assert(restored.Clip().At(notes[i].OffEvent).ID == notes[i].Note.ID);
+	}
+	restored.UpdateChannelHandler();
+	std::vector<double> rows;
+	unsigned long revision = 0;
+	assert(restored.GetChannelHandler()->ReadTable("NoteRows", revision, rows));
+	assert(rows.size() == notes.size() * PianoRollPlugin::NOTE_CELLS);
+	for (unsigned i = 0; i < notes.size(); ++i)
+	{
+		const double *row = &rows[i * PianoRollPlugin::NOTE_CELLS];
+		assert(row[PianoRollPlugin::NOTE_INDEX] == notes[i].OnEvent);
+		assert(row[PianoRollPlugin::NOTE_END] == double(notes[i].End) / host.SAMPLERATE);
+	}
+	assert(!restored.GetChannelHandler()->ReadTable("NoteRows", revision, rows));
+	std::printf("900-second take: %u note-ons, %u note-offs, %u controllers, %u rows. All saved event fields and frames match after reopening %s\n",
+		3 * chords, 3 * chords, (chords + 7) / 8, (unsigned)notes.size(), path.c_str());
+}
+
+static void FullTakeRetainsEveryAcceptedEvent()
+{
+	PianoRollPlugin roll;
+	roll.Initialise(&s_Host);
+	EventBuffer input;
+	assert(roll.SetEventInput(0, &input));
+	Command(roll, PianoRollPlugin::RECORD);
+	Event cc;
+	cc.Type = Event::Controller;
+	cc.Parameter = 11;
+	for (unsigned written = 0; written <= EventClip::MaxEvents && roll.Recording();)
+	{
+		input.Clear(s_Host.BUFSIZE);
+		for (int n = 0; n < s_Host.BUFSIZE && written <= EventClip::MaxEvents; ++n, ++written)
+		{
+			Event event = cc;
+			if (written == EventClip::MaxEvents - 1)
+			{
+				event.Type = Event::NoteOn;
+				event.ID = 123;
+			}
+			assert(input.Append(n, event));
+		}
+		roll.Execute();
+	}
+	assert(!roll.Recording() && roll.Clip().Count() == EventClip::MaxEvents);
+	assert(roll.Clip().At(EventClip::MaxEvents - 1).ID == 123);
+	roll.UpdateChannelHandler();
+	char status[80] = {};
+	assert(roll.GetChannelHandler()->Peek("Record Status", 0, status, sizeof(status)));
+	assert(std::string(status).find("Clip full") != std::string::npos);
+	std::puts("Full take retains all accepted events and publishes its capacity status");
+}
+
+int main(int argc, char **argv)
 {
 	s_Host.BUFSIZE = 64;
 	s_Host.ROLLING = true;
@@ -266,6 +420,8 @@ int main()
 	DeleteRemovesTheNote();
 	RecordsTheEventInput();
 	ClipSurvivesSaveAndLoad();
+	FullTakeRetainsEveryAcceptedEvent();
+	LongTakeRoundTrip(argc == 2 ? argv[1] : NULL);
 
 	return 0;
 }

@@ -478,6 +478,19 @@
           },
           "text": "Delete note",
           "type": "Button"
+        },
+        {
+          "bounds": [
+            4,
+            24,
+            348,
+            12
+          ],
+          "name": "record-status",
+          "property": "RECORD STATUS",
+          "size": 10,
+          "type": "Meters::LCD",
+          "placeholder": ""
         }
       ],
       "height": 276,
@@ -621,6 +634,12 @@
               570,
               60,
               22
+            ],
+            "record-status": [
+              4,
+              29,
+              380,
+              13
             ]
           },
           "height": 598,
@@ -631,7 +650,6 @@
       "schema_version": 1,
       "sources": {
         "notes": {
-          "count": "NOTES",
           "fields": [
             "start",
             "end",
@@ -647,6 +665,15 @@
     },
     "plugin_id": 288,
     "properties": [
+      {
+        "class": "StringProperty",
+        "default": "",
+        "display_name": "Record Status",
+        "hint": "Recording and storage status",
+        "property": "RECORD STATUS",
+        "read_only": true,
+        "type": "string"
+      },
       {
         "class": "StringProperty",
         "default": "",

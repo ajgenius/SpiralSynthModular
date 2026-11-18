@@ -4,6 +4,9 @@
 #include "SpiralPluginGUI.h"
 #include "OutputPlugin.h"
 #include "PanelWindow.h"
+#include "libs/libSpiralPanels/include/Panel.h"
+#include "PatchProject.h"
+#include "PatchFile.h"
 #include <cassert>
 #include <cstdio>
 
@@ -18,9 +21,54 @@ static const DeviceClass *Named(const char *name)
 	return NULL;
 }
 
+static void OpenRecordedRoll(const char *path, HostInfo &host)
+{
+	std::string error;
+	Spiral::File::Project project(path);
+	PatchDescription patch;
+	assert(project.OpenPackage("", error));
+	assert(Spiral::File::PatchFile::ReadText(project.Patch().Bytes(), patch, error));
+	const DeviceDescription *device = patch.FindDevice("1");
+	assert(device);
+	Description description;
+	Spiral::File::PatchFile::Describe(*device, description);
+	const DeviceClass *type = Named("PianoRoll");
+	assert(type);
+	SpiralPlugin *roll = type->CreateInstance();
+	assert(roll);
+	roll->Initialise(&host);
+	Description::Reader saved(description);
+	roll->Apply(saved);
+	assert(!saved.Failed());
+	roll->UpdateChannelHandler();
+	Spiral::Panels::PanelWindow *window = Spiral::Panels::PanelWindow::Create(roll, *type);
+	assert(window && window->GetPanel());
+	Spiral::Panels::Panel &panel = *window->GetPanel();
+	panel.Refresh();
+	Spiral::Data::RowSource *rows = panel.Rows("notes");
+	assert(rows && rows->Count() == 18000 && rows->FieldCount() == 6);
+	Spiral::Data::ControlValue key, end;
+	assert(rows->GetAt(17999, rows->FindField("key"), key));
+	assert(rows->GetAt(17999, rows->FindField("end"), end));
+	assert(key.number == 71 && end.number > 899 && end.number < 900);
+	assert(panel.FindProperty("RECORD STATUS") && panel.FindControl("record-status"));
+	const unsigned long seen = rows->TableRevision();
+	panel.Refresh();
+	assert(rows->TableRevision() == seen);
+	assert(panel.Command("CLEAR"));
+	roll->UpdateChannelHandler();
+	roll->ExecuteCommands();
+	roll->UpdateChannelHandler();
+	panel.Refresh();
+	assert(rows->Count() == 0 && rows->TableRevision() != seen);
+	delete window;
+	delete roll;
+	std::puts("Installed Piano Roll panel shows all 18000 rows, reads the final release and clears to zero");
+}
+
 int main(int argc, char **argv)
 {
-	if (argc != 2) return 77;
+	if (argc < 2 || argc > 3) return 77;
 
 	Spiral::Panels::PanelWindow::Provide();
 	const unsigned devices=DeviceClassRegistry::Get()->LoadModules(argv[1]);
@@ -82,6 +130,9 @@ int main(int argc, char **argv)
 	assert(gui);
 	delete gui;
 	delete plugin;
+
+	if (argc == 3)
+		OpenRecordedRoll(argv[2], info);
 
 	DeviceClass builtin=*amp;
 	builtin.ID=500;

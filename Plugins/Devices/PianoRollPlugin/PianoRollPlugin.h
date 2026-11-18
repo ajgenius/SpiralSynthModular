@@ -36,10 +36,7 @@ public:
 
 	enum
 	{
-		// Every note a clip can hold is shown.
-		MAX_NOTES = Spiral::Core::EventClip::MaxEvents / 2,
-		MAX_HELD = 128,
-		MAX_RECORDED = 4096
+		MAX_HELD = 128
 	};
 
 	// A note is a row of the table handed to the panel: its start and end
@@ -66,12 +63,6 @@ private:
 		float Frequency;
 	};
 
-	struct Recorded
-	{
-		uint64_t Frame;
-		Spiral::Core::Event Event;
-	};
-
 	struct Outgoing
 	{
 		unsigned Frame, Order;
@@ -96,23 +87,21 @@ private:
 	void Emit(Spiral::Core::EventBuffer *out, unsigned frame, const Spiral::Core::Event &event);
 	void ReleaseAll(Spiral::Core::EventBuffer *out, unsigned frame);
 	void InputEvent(const Spiral::Core::Event &event, unsigned frame, bool record);
-	void MergeRecording();
+	bool MergeRecording();
 	void Published();
 	uint64_t Frames(double seconds) const;
 
-	Spiral::Core::EventClip m_Clip;
+	Spiral::Core::EventClip m_Clip, m_Take;
 	Spiral::Core::StringProperty m_Saved;
+	char m_RecordStatus[80];
 	Spiral::Core::ToggleProperty m_Loop, m_Thru, m_PlayingState, m_RecordingState;
 	Spiral::Core::FloatProperty m_Length, m_Position;
 	Spiral::Core::UnsignedProperty m_NoteCount;
 	Args m_Args;
-	double m_Rows[MAX_NOTES][NOTE_CELLS];
 	Held m_Held[MAX_HELD];
 	unsigned m_HeldCount;
-	Recorded *m_Recorded;
 	Outgoing *m_Scratch;
 	unsigned m_ScratchCount;
-	unsigned m_RecordedCount;
 	bool m_Playing, m_Recording, m_LaunchHigh, m_StopHigh;
 	// Where the roll is. Play starts again from the top; Record starts
 	// here and overwrites as it goes, from m_RecordStart on.
