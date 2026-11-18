@@ -488,7 +488,7 @@ void PianoRollPlugin::Describe(Description &d)
 	d.Separator(" ");
 	m_Length.Describe(d);
 	if (m_OriginalTempo)
-		d.Separator(" ").Value(m_OriginalTempo);
+		d.Separator(" ").Value(m_OriginalTempo).Key("OriginalTempo", "FloatProperty");
 }
 
 void PianoRollPlugin::Apply(Description::Reader &r)
@@ -504,12 +504,16 @@ void PianoRollPlugin::Apply(Description::Reader &r)
 	m_Thru.Restore(r);
 	m_Length.Restore(r);
 	m_OriginalTempo = 0;
-	if (r.More())
+	if (r.Named())
 	{
-		r.Value(m_OriginalTempo);
-		if (!ClipTempo::Valid(m_OriginalTempo))
-			m_OriginalTempo = 0;
+		const int index = r.Find("OriginalTempo");
+		if (index >= 0)
+			r.At(index, m_OriginalTempo);
 	}
+	else if (r.More())
+		r.Value(m_OriginalTempo);
+	if (!ClipTempo::Valid(m_OriginalTempo))
+		m_OriginalTempo = 0;
 
 	if (!m_Saved.Value.empty() && !m_Clip.Load(m_Saved.Value))
 		m_Clip.Clear(m_Rate);

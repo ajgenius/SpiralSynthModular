@@ -177,6 +177,13 @@ static void FollowsTempoAndLaunchSample()
 	Description::Reader reader(saved);
 	copy.Apply(reader);
 	assert(!reader.Failed());
+
+	Description positional;
+	std::string error;
+	assert(Description::FromJSON(saved.JSON(), positional, error));
+	Description::Reader fileReader(positional);
+	copy.Apply(fileReader);
+	assert(!fileReader.Failed());
 	for (int i = 0; i < s_Host.BUFSIZE; ++i)
 	{
 		tempo.Set(i, 160);
@@ -217,6 +224,35 @@ static void RecordsInMusicalTime()
 	assert(notes.size() == 1 && notes[0].Start == 10 && notes[0].End == 20);
 }
 
+static void SavedCueUsesTheClipRate()
+{
+	HostInfo sourceHost = s_Host;
+	sourceHost.SAMPLERATE = 48000;
+	PianoRollPlugin source;
+	source.Initialise(&sourceHost);
+	AddNote(source, 1.0, 1.1, 60, 1);
+	Description saved;
+	source.Describe(saved);
+
+	HostInfo playbackHost = s_Host;
+	playbackHost.SAMPLERATE = 44100;
+	PianoRollPlugin roll;
+	roll.Initialise(&playbackHost);
+	Description::Reader reader(saved);
+	roll.Apply(reader);
+	assert(!reader.Failed());
+	Command(roll, PianoRollPlugin::PLAY);
+	for (unsigned frame = 0; frame <= 44100; frame += playbackHost.BUFSIZE)
+	{
+		const std::vector<Played> events = Run(roll);
+		if (frame + playbackHost.BUFSIZE <= 44100)
+			assert(events.empty());
+		else
+			assert(events.size() == 1 && events[0].Frame + frame == 44100);
+	}
+	std::puts("Unclocked 48 kHz patch plays its one-second cue at frame 44100");
+}
+
 int main()
 {
 	s_Host.BUFSIZE = 64;
@@ -224,6 +260,7 @@ int main()
 	s_Host.SAMPLERATE = 1000;
 	FollowsTempoAndLaunchSample();
 	RecordsInMusicalTime();
+	SavedCueUsesTheClipRate();
 	ClipEditsAndPlayback();
 	LoopRestartsWithFreshIdentities();
 	DeleteRemovesTheNote();
