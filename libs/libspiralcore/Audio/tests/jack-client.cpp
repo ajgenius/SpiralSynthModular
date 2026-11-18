@@ -58,7 +58,8 @@ int jack_get_cycle_times(const jack_client_t *, jack_nframes_t *frame, jack_time
 {
 	if (!preciseCycle) return -1;
 
-	*frame = cycleFrame;
+	// The precise snapshot has advanced since the legacy frame query.
+	*frame = cycleFrame + 4;
 	*start = 10000000;
 	*end = *start + 84;
 	*estimate = 999;
@@ -370,6 +371,10 @@ int main()
 	preciseCycle = true;
 	native->Process(4, native->ProcessContext);
 	assert(std::fabs(cycle.Timing.Step - 21e-6) < 1e-12);
+	assert(cycle.Timing.Frame == cycleFrame + 4);
+	cycleFrame += 12;
+	native->Process(4, native->ProcessContext);
+	assert(cycle.Timing.Frame == cycleFrame + 4);
 	preciseCycle = false;
 #endif
 	cycleFrame = 0xfffffffcU;

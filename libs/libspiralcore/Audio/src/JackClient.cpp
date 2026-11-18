@@ -231,24 +231,24 @@ int JackClient::Process(jack_nframes_t frames, void *context)
 	}
 
 	__sync_lock_test_and_set(&client->m_BufferSize, frames);
-	const jack_nframes_t frame = jack_last_frame_time(client->m_Client);
+	jack_nframes_t frame;
+	jack_time_t current, next;
+#ifdef HAVE_JACK_GET_CYCLE_TIMES
+	float periodUsecs;
+
+	// Keep the frame and both timestamps from one server cycle.
+	if (jack_get_cycle_times(client->m_Client, &frame, &current, &next, &periodUsecs) != 0)
+#endif
+	{
+		frame = jack_last_frame_time(client->m_Client);
+		current = jack_frames_to_time(client->m_Client, frame);
+		next = jack_frames_to_time(client->m_Client, frame + frames);
+	}
+
 	client->m_NativeFrame = client->m_HaveFrame
 		? client->m_NativeFrame + jack_nframes_t(frame - client->m_LastFrame) : frame;
 	client->m_LastFrame = frame;
 	client->m_HaveFrame = true;
-	jack_time_t current = jack_frames_to_time(client->m_Client, frame);
-	jack_time_t next = jack_frames_to_time(client->m_Client, frame + frames);
-#ifdef HAVE_JACK_GET_CYCLE_TIMES
-	jack_nframes_t cycleFrame;
-	float periodUsecs;
-	jack_time_t cycleStart, cycleEnd;
-	if (jack_get_cycle_times(client->m_Client, &cycleFrame, &cycleStart, &cycleEnd, &periodUsecs) == 0)
-	{
-		current = cycleStart;
-		next = cycleEnd;
-	}
-
-#endif
 	client->m_CycleTime = current * 1e-6 + ClockOffset;
 	client->m_Timing.Step = next > current && frames ? double(next - current) * 1e-6 / frames : 0;
 	client->m_Timing.Frame = client->m_NativeFrame;
