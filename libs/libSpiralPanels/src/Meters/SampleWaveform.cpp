@@ -59,12 +59,15 @@ namespace Spiral
 			m_LoopEnd = m_LoopEndName.empty() ? NULL : m_Panel.FindProperty(m_LoopEndName + number);
 		}
 
-		// Another row's sample is on show: its marks, and the sample itself.
+		// Another row's sample is on show: its marks, and the sample itself,
+		// which is fetched when the panel next refreshes. A row moves while
+		// a patch is still loading too, and the audio thread answers nothing
+		// then: a fetch made here waited for ever, and the patch never opened.
 		void SampleWaveformControl::RowMoved()
 		{
 			FindMarks();
 			m_SentPlayStart = m_SentLoopStart = m_SentLoopEnd = -1;
-			Reload();
+			m_Fetched = false;
 		}
 
 		void SampleWaveformControl::Load()
