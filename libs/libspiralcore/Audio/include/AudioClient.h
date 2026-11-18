@@ -32,6 +32,14 @@ struct AudioClientOptions
 	{}
 };
 
+// A playback-only endpoint whose hardware clock starts on the first write.
+class PreparedPlayback
+{
+public:
+	virtual ~PreparedPlayback() {}
+	virtual bool PreparedTiming(AudioCycleTiming &timing) const = 0;
+};
+
 class AudioClient
 {
 public:

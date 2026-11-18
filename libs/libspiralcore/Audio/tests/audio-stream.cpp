@@ -228,6 +228,93 @@ static void StallRecovery()
 	assert(device.Checked == 512 && device.Peak < 0.0002);
 }
 
+class PreparedDevice : public Device, public PreparedPlayback
+{
+public:
+	PreparedDevice() : Device(64, 48000, 0, 0, 0), Writes(0) {}
+
+	bool PreparedTiming(AudioCycleTiming &timing) const
+	{
+		timing.Valid = timing.Estimated = true;
+		timing.Frames = Period;
+		timing.SampleRate = Rate;
+		timing.Step = 1 / Rate;
+		timing.CallbackTime = timing.OutputTime = Next;
+		return true;
+	}
+
+	int WaitForCycle(unsigned)
+	{
+		const unsigned period = Written();
+		if (period == 4)
+			return 0;
+
+		PreparedTiming(Cycle);
+		Cycle.Frame = period * Period;
+		Cycle.OutputTime = Next + Cycle.Frame / Rate;
+		return 1;
+	}
+
+	double GetChannelTime(bool, unsigned) const { return Cycle.OutputTime; }
+
+	bool Write(const float *samples, unsigned frames)
+	{
+		assert(frames == Period && Written() < 4);
+		std::copy(samples, samples + 2 * frames, Output + 2 * frames * Written());
+		__sync_fetch_and_add(&Writes, 1);
+		return true;
+	}
+
+	unsigned Written() const { return __sync_fetch_and_add(&Writes, 0); }
+	float Output[4 * 64 * 2];
+
+private:
+	mutable unsigned Writes;
+};
+
+static void ColdPlayback()
+{
+	PreparedDevice device;
+	device.Next = 3384237.1991879847;
+	assert(device.Stream.Configure(&device, 0, 2, 64, 48000));
+
+	// Stop must also work while the PCM is waiting for its first graph block.
+	assert(device.Stream.Start());
+	AudioCycleTiming timing;
+	assert(device.Stream.Timing(timing) && timing.Valid);
+	usleep(5000);
+	device.Stream.Stop();
+	assert(device.Written() == 0);
+	assert(device.Stream.Start());
+
+	AudioStamp stamp;
+	stamp.Generation = 2;
+	stamp.Step = 1.0 / 48000;
+	stamp.Time = (device.Next + 64 * stamp.Step) + 16 * stamp.Step;
+	device.Stream.SetGeneration(stamp.Generation);
+	float samples[128];
+	for (unsigned frame = 0; frame < 64; ++frame)
+	{
+		samples[2 * frame] = 0.25f;
+		samples[2 * frame + 1] = -0.5f;
+	}
+	assert(device.Stream.Playback(samples, 64, stamp));
+	for (unsigned n = 0; n < 1000 && device.Written() < 4; ++n)
+		usleep(1000);
+
+	device.Stream.Stop();
+	assert(device.Written() == 4);
+	for (unsigned frame = 0; frame < 256; ++frame)
+	{
+		const bool scheduled = frame >= 80 && frame < 144;
+		assert(std::fabs(device.Output[2 * frame] - (scheduled ? 0.25f : 0)) < 0.0001);
+		assert(std::fabs(device.Output[2 * frame + 1] - (scheduled ? -0.5f : 0)) < 0.0001);
+	}
+
+	// The graph deliberately starves the third and fourth native periods.
+	assert(device.Stream.Errors() == 2 && !device.Stream.Failed());
+}
+
 class StalledDevice : public Device
 {
 public:
@@ -255,6 +342,7 @@ int main()
 	Run(48000, 128, 44100, -200);
 	Run(48000, 384, 48000, 0);
 	ClockTransitions();
+	ColdPlayback();
 	WorkerShutdown();
 	StallRecovery();
 }

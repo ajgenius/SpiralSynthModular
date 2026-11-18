@@ -18,6 +18,8 @@ public:
 	unsigned Read(float *samples, unsigned frames, double time, double step, unsigned generation);
 	unsigned Capacity() const { return m_Capacity; }
 	unsigned Buffered() const;
+	// Consumer-side start of the graph audio available in this generation.
+	bool FirstTime(unsigned generation, double &time) const;
 	unsigned Lookahead() const { return m_Taps / 2; }
 
 private:

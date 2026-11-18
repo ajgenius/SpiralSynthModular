@@ -63,6 +63,20 @@ unsigned TimedAudioBuffer::Buffered() const
 	return std::min(write - read, m_Capacity);
 }
 
+bool TimedAudioBuffer::FirstTime(unsigned generation, double &time) const
+{
+	unsigned read = m_Read;
+	const unsigned write = __sync_fetch_and_add(&m_Write, 0);
+	while (read != write && int32_t(m_Positions[read & m_Mask].Generation - generation) < 0)
+		++read;
+
+	if (read == write || m_Positions[read & m_Mask].Generation != generation)
+		return false;
+
+	time = m_Positions[read & m_Mask].Time;
+	return true;
+}
+
 bool TimedAudioBuffer::Write(const float *samples, unsigned frames, const AudioStamp &stamp)
 {
 	if (!m_Capacity || !samples || !frames || !(stamp.Step > 0 && stamp.Step < 1) ||

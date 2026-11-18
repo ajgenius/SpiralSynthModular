@@ -13,7 +13,7 @@ namespace Spiral
 namespace Core
 {
 
-class AlsaClient : public AudioClient
+class AlsaClient : public AudioClient, public PreparedPlayback
 {
 public:
 	static AlsaClient *Get();
@@ -25,6 +25,7 @@ public:
 	unsigned long GetBufferSize() const { return m_Frames; }
 	unsigned long GetSampleRate() const { return m_Samplerate; }
 	int WaitForCycle(unsigned milliseconds);
+	bool PreparedTiming(AudioCycleTiming &timing) const;
 	bool GetCycleTiming(AudioCycleTiming &timing) const { timing = m_Timing; return timing.Valid; }
 	double GetInputLatency() const { return m_Latency; }
 	double GetOutputLatency() const { return m_Latency; }

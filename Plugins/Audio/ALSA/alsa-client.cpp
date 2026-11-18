@@ -15,6 +15,12 @@ int main()
 		std::vector<float> buffer(client->GetBufferSize() * 2, 0.25);
 		for (unsigned n = 0; n < 10; ++n)
 		{
+			AudioCycleTiming prepared;
+			const bool coldPlayback = options.InChannels == 0 && n == 0;
+			assert(client->PreparedTiming(prepared) == coldPlayback);
+			if (coldPlayback)
+				assert(prepared.Valid && prepared.Frame == 0 && prepared.OutputTime > 0);
+
 			assert(client->WaitForCycle(10) == 1);
 			AudioCycleTiming timing;
 			assert(client->GetCycleTiming(timing) && timing.SampleRate > 0);

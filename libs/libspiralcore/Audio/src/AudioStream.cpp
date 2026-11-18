@@ -110,6 +110,12 @@ void AudioStream::Callback(void *context, unsigned frames)
 
 bool AudioStream::Transfer(unsigned frames)
 {
+	double startTime = -1;
+	return Transfer(frames, startTime);
+}
+
+bool AudioStream::Transfer(unsigned frames, double &startTime)
+{
 	if (!m_Client || !frames || frames > m_Capacity)
 	{
 		__sync_lock_test_and_set(&m_Failed, 1);
@@ -180,14 +186,31 @@ bool AudioStream::Transfer(unsigned frames)
 		}
 
 	bool complete = true;
+	bool pastStart = true;
 	for (unsigned c = 0; c < m_Output.size(); ++c)
 	{
 		const double time = m_Client->GetChannelTime(false, c);
-		if (m_Output[c]->Read(&m_NativeMono[0], frames, time, outputStep, stamp.Generation) != frames) complete = false;
+		unsigned prefix = 0;
+		if (startTime > time)
+		{
+			// The first scheduled sample can fall inside a hardware period.
+			while (prefix < frames && time + prefix * outputStep + 1e-10 < startTime)
+				m_NativeMono[prefix++] = 0;
+			if (prefix == frames)
+				pastStart = false;
+		}
+
+		unsigned count = frames - prefix;
+		if (count && m_Output[c]->Read(&m_NativeMono[prefix], count,
+			time + prefix * outputStep, outputStep, stamp.Generation) != count)
+			complete = false;
 
 		for (unsigned n = 0; n < frames; ++n) m_Native[n * m_Output.size() + c] = m_NativeMono[n];
 
 	}
+
+	if (pastStart)
+		startTime = -1;
 
 	if (!complete) __sync_fetch_and_add(&m_Errors, 1);
 
@@ -251,6 +274,18 @@ double AudioStream::Lookahead() const
 }
 
 
+bool AudioStream::PublishPreparedTiming()
+{
+	PreparedPlayback *prepared = dynamic_cast<PreparedPlayback *>(m_Client);
+	AudioCycleTiming timing;
+	if (!prepared || !prepared->PreparedTiming(timing))
+		return false;
+
+	timing.Epoch = m_NativeEpoch;
+	m_Mailbox.Publish(timing);
+	return true;
+}
+
 bool AudioStream::Start()
 {
 	if (m_Running) return true;
@@ -259,6 +294,8 @@ bool AudioStream::Start()
 
 	if (m_Client->IsCallbackDriven()) return true;
 
+	// Give the graph its presentation clock before the worker can start the PCM.
+	PublishPreparedTiming();
 	__sync_lock_test_and_set(&m_Stop, 0);
 	m_Running = pthread_create(&m_Worker, NULL, Worker, this) == 0;
 	return m_Running;
@@ -276,10 +313,26 @@ void AudioStream::Stop()
 void *AudioStream::Worker(void *context)
 {
 	AudioStream *stream = static_cast<AudioStream *>(context);
+	double startTime = -1;
+	if (stream->m_Input.empty() && !stream->m_Output.empty() && stream->PublishPreparedTiming())
+	{
+		// Playback publishes every channel in order. The last queue becomes
+		// ready only after the entire first graph block has been committed.
+		while (!__sync_fetch_and_add(&stream->m_Stop, 0))
+		{
+			const unsigned generation = __sync_fetch_and_add(&stream->m_Generation, 0);
+			if (stream->m_Output.back()->FirstTime(generation, startTime))
+				break;
+
+			usleep(250);
+			stream->PublishPreparedTiming();
+		}
+	}
+
 	while (!__sync_fetch_and_add(&stream->m_Stop, 0))
 	{
 		const int ready = stream->m_Client->WaitForCycle(10);
-		if (ready < 0 || (ready && !stream->Transfer(stream->m_Client->GetBufferSize())))
+		if (ready < 0 || (ready && !stream->Transfer(stream->m_Client->GetBufferSize(), startTime)))
 		{
 			__sync_lock_test_and_set(&stream->m_Failed, 1);
 			break;

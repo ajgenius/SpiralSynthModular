@@ -33,6 +33,8 @@ public:
 
 private:
 	void Clear();
+	bool PublishPreparedTiming();
+	bool Transfer(unsigned frames, double &startTime);
 	static void *Worker(void *context);
 	pthread_t m_Worker;
 	bool m_Running;

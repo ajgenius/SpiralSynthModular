@@ -176,6 +176,22 @@ bool AlsaClient::Timestamp(snd_pcm_t *stream, bool input, double &time)
 	return true;
 }
 
+bool AlsaClient::PreparedTiming(AudioCycleTiming &timing) const
+{
+	if (!m_Playback || m_Capture || m_Written || snd_pcm_state(m_Playback) != SND_PCM_STATE_PREPARED)
+		return false;
+
+	// An empty, prepared PCM has no DAC latency or running sample clock yet.
+	timing = AudioCycleTiming();
+	timing.CallbackTime = AudioMonotonicTime();
+	timing.OutputTime = timing.CallbackTime;
+	timing.SampleRate = m_Samplerate;
+	timing.Step = 1.0 / m_Samplerate;
+	timing.Frames = m_Frames;
+	timing.Estimated = timing.Valid = true;
+	return true;
+}
+
 int AlsaClient::WaitForCycle(unsigned milliseconds)
 {
 	snd_pcm_t *streams[] = {m_Playback, m_Capture};
