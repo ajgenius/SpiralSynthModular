@@ -316,13 +316,29 @@ void *AudioStream::Worker(void *context)
 	double startTime = -1;
 	if (stream->m_Input.empty() && !stream->m_Output.empty() && stream->PublishPreparedTiming())
 	{
-		// Playback publishes every channel in order. The last queue becomes
-		// ready only after the entire first graph block has been committed.
+		// Wait for all channels before the first write. Each consumer also
+		// makes room for the new timeline if an old generation filled it.
 		while (!__sync_fetch_and_add(&stream->m_Stop, 0))
 		{
 			const unsigned generation = __sync_fetch_and_add(&stream->m_Generation, 0);
-			if (stream->m_Output.back()->FirstTime(generation, startTime))
+			unsigned readyChannels = 0;
+			double firstTime = 0;
+			for (unsigned c = 0; c < stream->m_Output.size(); ++c)
+			{
+				double time;
+				if (stream->m_Output[c]->FirstTime(generation, time))
+				{
+					if (!readyChannels || time < firstTime)
+						firstTime = time;
+					++readyChannels;
+				}
+			}
+
+			if (readyChannels == stream->m_Output.size())
+			{
+				startTime = firstTime;
 				break;
+			}
 
 			usleep(250);
 			stream->PublishPreparedTiming();

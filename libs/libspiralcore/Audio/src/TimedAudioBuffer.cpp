@@ -63,12 +63,20 @@ unsigned TimedAudioBuffer::Buffered() const
 	return std::min(write - read, m_Capacity);
 }
 
-bool TimedAudioBuffer::FirstTime(unsigned generation, double &time) const
+bool TimedAudioBuffer::FirstTime(unsigned generation, double &time)
 {
 	unsigned read = m_Read;
 	const unsigned write = __sync_fetch_and_add(&m_Write, 0);
 	while (read != write && int32_t(m_Positions[read & m_Mask].Generation - generation) < 0)
 		++read;
+
+	// The graph needs room to publish its new generation even if the old
+	// one filled the queue before the device started.
+	if (read != m_Read)
+	{
+		__sync_synchronize();
+		__sync_lock_test_and_set(&m_Read, read);
+	}
 
 	if (read == write || m_Positions[read & m_Mask].Generation != generation)
 		return false;

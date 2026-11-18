@@ -231,10 +231,11 @@ static void StallRecovery()
 class PreparedDevice : public Device, public PreparedPlayback
 {
 public:
-	PreparedDevice() : Device(64, 48000, 0, 0, 0), Writes(0) {}
+	PreparedDevice() : Device(64, 48000, 0, 0, 0), Writes(0), Queries(0) {}
 
 	bool PreparedTiming(AudioCycleTiming &timing) const
 	{
+		__sync_fetch_and_add(&Queries, 1);
 		timing.Valid = timing.Estimated = true;
 		timing.Frames = Period;
 		timing.SampleRate = Rate;
@@ -266,13 +267,14 @@ public:
 	}
 
 	unsigned Written() const { return __sync_fetch_and_add(&Writes, 0); }
+	unsigned PreparedQueries() const { return __sync_fetch_and_add(&Queries, 0); }
 	float Output[4 * 64 * 2];
 
 private:
-	mutable unsigned Writes;
+	mutable unsigned Writes, Queries;
 };
 
-static void ColdPlayback()
+static void ColdPlayback(bool replaceQueuedAudio)
 {
 	PreparedDevice device;
 	device.Next = 3384237.1991879847;
@@ -285,20 +287,42 @@ static void ColdPlayback()
 	usleep(5000);
 	device.Stream.Stop();
 	assert(device.Written() == 0);
-	assert(device.Stream.Start());
 
 	AudioStamp stamp;
 	stamp.Generation = 2;
 	stamp.Step = 1.0 / 48000;
 	stamp.Time = (device.Next + 64 * stamp.Step) + 16 * stamp.Step;
-	device.Stream.SetGeneration(stamp.Generation);
 	float samples[128];
+	if (replaceQueuedAudio)
+	{
+		AudioStamp old = stamp;
+		--old.Generation;
+		device.Stream.SetGeneration(old.Generation);
+		std::fill_n(samples, 128, 0.75f);
+		while (device.Stream.Playback(samples, 64, old))
+		{
+			old.Frame += 64;
+			old.Time += 64 * old.Step;
+		}
+	}
+	device.Stream.SetGeneration(stamp.Generation);
+	const unsigned queries = device.PreparedQueries();
+	assert(device.Stream.Start());
+	if (replaceQueuedAudio)
+	{
+		// Wait for a prepared-clock refresh after the worker's first scan.
+		for (unsigned n = 0; n < 1000 && device.PreparedQueries() < queries + 3; ++n)
+			usleep(1000);
+		assert(device.PreparedQueries() >= queries + 3);
+	}
 	for (unsigned frame = 0; frame < 64; ++frame)
 	{
 		samples[2 * frame] = 0.25f;
 		samples[2 * frame + 1] = -0.5f;
 	}
+	const unsigned producerErrors = device.Stream.Errors();
 	assert(device.Stream.Playback(samples, 64, stamp));
+
 	for (unsigned n = 0; n < 1000 && device.Written() < 4; ++n)
 		usleep(1000);
 
@@ -312,7 +336,7 @@ static void ColdPlayback()
 	}
 
 	// The graph deliberately starves the third and fourth native periods.
-	assert(device.Stream.Errors() == 2 && !device.Stream.Failed());
+	assert(device.Stream.Errors() == producerErrors + 2 && !device.Stream.Failed());
 }
 
 class StalledDevice : public Device
@@ -342,7 +366,8 @@ int main()
 	Run(48000, 128, 44100, -200);
 	Run(48000, 384, 48000, 0);
 	ClockTransitions();
-	ColdPlayback();
+	ColdPlayback(false);
+	ColdPlayback(true);
 	WorkerShutdown();
 	StallRecovery();
 }
