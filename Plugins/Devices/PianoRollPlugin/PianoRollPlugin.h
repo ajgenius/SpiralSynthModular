@@ -3,6 +3,7 @@
 #define PIANO_ROLL_PLUGIN_H
 
 #include "Device.h"
+#include "ClipTempo.h"
 #include "Event.h"
 #include "EventClip.h"
 #include <stdint.h>
@@ -94,8 +95,7 @@ private:
 	void Stop(Spiral::Core::EventBuffer *out, unsigned frame);
 	void Emit(Spiral::Core::EventBuffer *out, unsigned frame, const Spiral::Core::Event &event);
 	void ReleaseAll(Spiral::Core::EventBuffer *out, unsigned frame);
-	void PlayWindow(Spiral::Core::EventBuffer *out, uint64_t from, uint64_t to, unsigned offset);
-	void Record(const Spiral::Core::EventBuffer *in, Spiral::Core::EventBuffer *out);
+	void InputEvent(const Spiral::Core::Event &event, unsigned frame, bool record);
 	void MergeRecording();
 	void Published();
 	uint64_t Frames(double seconds) const;
@@ -117,6 +117,9 @@ private:
 	// Where the roll is. Play starts again from the top; Record starts
 	// here and overwrites as it goes, from m_RecordStart on.
 	uint64_t m_Phase, m_RecordStart;
+	ClipTempo m_Clock;
+	double m_OriginalTempo;
+	bool m_TempoPaused;
 	unsigned m_Next;
 	int m_NextID;
 	unsigned m_Rate;

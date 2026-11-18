@@ -58,6 +58,8 @@ PianoRollPlugin::PianoRollPlugin():
 	m_StopHigh(false),
 	m_Phase(0),
 	m_RecordStart(0),
+	m_OriginalTempo(0),
+	m_TempoPaused(false),
 	m_Next(0),
 	m_NextID(0),
 	m_Rate(48000)
@@ -100,11 +102,12 @@ PianoRollPlugin::PianoRollPlugin():
 	m_PluginInfo.Name = "PianoRoll";
 	m_PluginInfo.Width = 420;
 	m_PluginInfo.Height = 260;
-	m_PluginInfo.NumInputs = 3;
+	m_PluginInfo.NumInputs = 4;
 	m_PluginInfo.NumOutputs = 2;
 	m_PluginInfo.PortTips.push_back("Events");
 	m_PluginInfo.PortTips.push_back("Launch CV");
 	m_PluginInfo.PortTips.push_back("Stop CV");
+	m_PluginInfo.PortTips.push_back("Tempo");
 	m_PluginInfo.PortTips.push_back("Events");
 	m_PluginInfo.PortTips.push_back("End CV");
 	m_Clip.Clear(m_Rate);
@@ -134,7 +137,7 @@ PluginInfo &PianoRollPlugin::Initialise(const HostInfo *Host)
 
 uint64_t PianoRollPlugin::Frames(double seconds) const
 {
-	return seconds > 0 ? (uint64_t)(seconds * m_Rate + 0.5) : 0;
+	return seconds > 0 ? (uint64_t)(seconds * m_Clip.Rate() + 0.5) : 0;
 }
 
 uint64_t PianoRollPlugin::ClipLength() const
@@ -211,6 +214,7 @@ void PianoRollPlugin::Start(bool record)
 	// last stopped, or where it has got to if it is playing.
 	if (!m_Playing && !record)
 	{
+		m_Clock.Reset();
 		m_Phase = 0;
 		m_Next = 0;
 	}
@@ -238,40 +242,20 @@ void PianoRollPlugin::Stop(EventBuffer *out, unsigned frame)
 	m_Recording = false;
 }
 
-void PianoRollPlugin::PlayWindow(EventBuffer *out, uint64_t from, uint64_t to, unsigned offset)
+void PianoRollPlugin::InputEvent(const Event &event, unsigned frame, bool record)
 {
-	while (m_Next < m_Clip.Count() && m_Clip.FrameAt(m_Next) < to)
+	if (record && m_RecordedCount < MAX_RECORDED && event.Type != Event::Reset)
 	{
-		const uint64_t frame = m_Clip.FrameAt(m_Next);
-
-		if (frame >= from)
-			Emit(out, offset + (unsigned)(frame - from), m_Clip.At(m_Next));
-
-		++m_Next;
+		m_Recorded[m_RecordedCount].Frame = m_Phase;
+		m_Recorded[m_RecordedCount++].Event = event;
 	}
-}
 
-void PianoRollPlugin::Record(const EventBuffer *in, EventBuffer *)
-{
-	for (unsigned i = 0; in && i < in->Count(); ++i)
+	if (ValueAsBoolean(m_Thru) && m_ScratchCount < EventBuffer::Capacity)
 	{
-		const Event &event = in->At(i);
-
-		// Whatever comes in is recorded, on any channel; a reset is not,
-		// as none is played back.
-		if (m_Recording && m_RecordedCount < MAX_RECORDED && event.Type != Event::Reset)
-		{
-			m_Recorded[m_RecordedCount].Frame = m_Phase + in->Frame(i);
-			m_Recorded[m_RecordedCount++].Event = event;
-		}
-
-		if (ValueAsBoolean(m_Thru) && m_ScratchCount < EventBuffer::Capacity)
-		{
-			Outgoing &out = m_Scratch[m_ScratchCount];
-			out.Frame = in->Frame(i);
-			out.Order = m_ScratchCount++;
-			out.Value = event;
-		}
+		Outgoing &out = m_Scratch[m_ScratchCount];
+		out.Frame = frame;
+		out.Order = m_ScratchCount++;
+		out.Value = event;
 	}
 }
 
@@ -351,55 +335,56 @@ void PianoRollPlugin::Execute()
 	const EventBuffer *in = GetEventInput(0);
 	const unsigned frames = (unsigned)m_HostInfo->BUFSIZE;
 
+	const double bpm = frames && InputExists(3) ? GetInput(3, 0) : 0;
+	const bool follows = ClipTempo::Valid(bpm);
+	if (follows && !m_OriginalTempo)
+		m_OriginalTempo = bpm;
+	const bool paused = follows && !m_HostInfo->ROLLING;
+	if (paused && !m_TempoPaused && m_Playing)
+		ReleaseAll(out, 0);
+	m_TempoPaused = paused;
+
+	const double advance = double(m_Clip.Rate()) / m_Rate * (follows ? bpm / m_OriginalTempo : 1.0);
+	const uint64_t length = ClipLength();
+	unsigned incoming = 0;
 	for (unsigned n = 0; n < frames; ++n)
 	{
 		SetOutput(1, n, 0);
 		const bool launch = InputExists(1) && GetInput(1, n) > 0.1f;
 		const bool stop = InputExists(2) && GetInput(2, n) > 0.1f;
-
-		if (launch && !m_LaunchHigh)
-			Start(false);
-
 		if (stop && !m_StopHigh && m_Playing)
 			Stop(out, n);
-
+		else if (launch && !m_LaunchHigh)
+		{
+			if (m_Playing)
+				Stop(out, n);
+			Start(false);
+		}
 		m_LaunchHigh = launch;
 		m_StopHigh = stop;
-	}
 
-	Record(in, out);
+		while (in && incoming < in->Count() && in->Frame(incoming) == n)
+			InputEvent(in->At(incoming++), n, m_Recording && !paused);
+		if (!m_Playing || paused)
+			continue;
 
-	if (m_Playing)
-	{
-		const uint64_t length = ClipLength();
-		unsigned offset = 0;
-
-		while (offset < frames)
+		if (!m_Recording && length && m_Phase >= length)
 		{
-			if (length && m_Phase >= length && !m_Recording)
+			while (m_Next < m_Clip.Count() && m_Clip.FrameAt(m_Next) <= length)
+				Emit(out, n, m_Clip.At(m_Next++));
+			ReleaseAll(out, n);
+			SetOutput(1, n, 1);
+			if (!ValueAsBoolean(m_Loop))
 			{
-				if (!ValueAsBoolean(m_Loop))
-				{
-					Stop(out, offset);
-					SetOutput(1, offset, 1);
-
-					break;
-				}
-
-				ReleaseAll(out, offset);
-				m_Phase = 0;
-				m_Next = 0;
+				m_Playing = false;
+				continue;
 			}
-
-			const uint64_t left = length && !m_Recording && m_Phase < length ? length - m_Phase : frames - offset;
-			const unsigned span = (unsigned)std::min<uint64_t>(left, frames - offset);
-
-			// The roll under a take is being written over, not played.
-			if (!m_Recording)
-				PlayWindow(out, m_Phase, m_Phase + span, offset);
-			m_Phase += span;
-			offset += span;
+			m_Phase %= length;
+			m_Next = 0;
 		}
+		while (!m_Recording && m_Next < m_Clip.Count() && m_Clip.FrameAt(m_Next) <= m_Phase)
+			Emit(out, n, m_Clip.At(m_Next++));
+		m_Phase += m_Clock.Advance(advance);
 	}
 
 	std::stable_sort(m_Scratch, m_Scratch + m_ScratchCount);
@@ -415,7 +400,7 @@ void PianoRollPlugin::Execute()
 	m_ScratchCount = 0;
 	ValueSetBoolean(m_PlayingState, m_Playing);
 	ValueSetBoolean(m_RecordingState, m_Recording);
-	SetFloat(m_Position, (float)((double)m_Phase / m_Rate));
+	SetFloat(m_Position, (float)((double)m_Phase / m_Clip.Rate()));
 }
 
 void PianoRollPlugin::ExecuteCommands()
@@ -445,6 +430,8 @@ void PianoRollPlugin::ExecuteCommands()
 		case CLEAR:
 			ReleaseAll(NULL, 0);
 			m_Clip.Clear(m_Rate);
+			m_OriginalTempo = 0;
+			m_Clock.Reset();
 			m_Phase = 0;
 			edited = true;
 
@@ -469,6 +456,7 @@ void PianoRollPlugin::ExecuteCommands()
 			if (!m_Recording && m_Args.Start >= 0)
 			{
 				ReleaseAll(NULL, 0);
+				m_Clock.Reset();
 				m_Phase = std::min(start, ClipLength());
 				moved = true;
 			}
@@ -499,6 +487,8 @@ void PianoRollPlugin::Describe(Description &d)
 	m_Thru.Describe(d);
 	d.Separator(" ");
 	m_Length.Describe(d);
+	if (m_OriginalTempo)
+		d.Separator(" ").Value(m_OriginalTempo);
 }
 
 void PianoRollPlugin::Apply(Description::Reader &r)
@@ -513,6 +503,13 @@ void PianoRollPlugin::Apply(Description::Reader &r)
 	m_Loop.Restore(r);
 	m_Thru.Restore(r);
 	m_Length.Restore(r);
+	m_OriginalTempo = 0;
+	if (r.More())
+	{
+		r.Value(m_OriginalTempo);
+		if (!ClipTempo::Valid(m_OriginalTempo))
+			m_OriginalTempo = 0;
+	}
 
 	if (!m_Saved.Value.empty() && !m_Clip.Load(m_Saved.Value))
 		m_Clip.Clear(m_Rate);

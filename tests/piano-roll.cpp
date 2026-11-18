@@ -159,10 +159,71 @@ static void ClipSurvivesSaveAndLoad()
 	std::printf("ok   clip survives save and load\n");
 }
 
+static void FollowsTempoAndLaunchSample()
+{
+	PianoRollPlugin roll;
+	roll.Initialise(&s_Host);
+	AddNote(roll, .008, .020, 60, 1);
+	Sample tempo(s_Host.BUFSIZE), launch(s_Host.BUFSIZE);
+	for (int i = 0; i < s_Host.BUFSIZE; ++i)
+		tempo.Set(i, 80);
+	assert(roll.SetInput(3, &tempo));
+	Run(roll);
+	Description saved;
+	roll.Describe(saved);
+
+	PianoRollPlugin copy;
+	copy.Initialise(&s_Host);
+	Description::Reader reader(saved);
+	copy.Apply(reader);
+	assert(!reader.Failed());
+	for (int i = 0; i < s_Host.BUFSIZE; ++i)
+	{
+		tempo.Set(i, 160);
+		launch.Set(i, i == 37 ? 1 : 0);
+	}
+	assert(copy.SetInput(3, &tempo) && copy.SetInput(1, &launch));
+	const std::vector<Played> events = Run(copy);
+	assert(events.size() == 2 && events[0].Frame == 41 && events[1].Frame == 47);
+	std::puts("Tempo cable and saved reference place mid-block notes on exact samples");
+}
+
+static void RecordsInMusicalTime()
+{
+	PianoRollPlugin roll;
+	roll.Initialise(&s_Host);
+	Sample tempo(s_Host.BUFSIZE);
+	for (int i = 0; i < s_Host.BUFSIZE; ++i)
+		tempo.Set(i, 80);
+	assert(roll.SetInput(3, &tempo));
+	Run(roll);
+	EventBuffer input;
+	input.Clear(s_Host.BUFSIZE);
+	assert(roll.SetEventInput(0, &input));
+	Command(roll, PianoRollPlugin::RECORD);
+	for (int i = 0; i < s_Host.BUFSIZE; ++i)
+		tempo.Set(i, 160);
+	Event note;
+	note.Type = Event::NoteOn;
+	note.ID = 1;
+	note.NoteNum = 60;
+	assert(input.Append(5, note));
+	note.Type = Event::NoteOff;
+	assert(input.Append(10, note));
+	Run(roll);
+	Command(roll, PianoRollPlugin::STOP);
+	std::vector<NoteSpan> notes;
+	roll.Clip().Notes(notes);
+	assert(notes.size() == 1 && notes[0].Start == 10 && notes[0].End == 20);
+}
+
 int main()
 {
 	s_Host.BUFSIZE = 64;
+	s_Host.ROLLING = true;
 	s_Host.SAMPLERATE = 1000;
+	FollowsTempoAndLaunchSample();
+	RecordsInMusicalTime();
 	ClipEditsAndPlayback();
 	LoopRestartsWithFreshIdentities();
 	DeleteRemovesTheNote();
