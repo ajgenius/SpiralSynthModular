@@ -84,6 +84,10 @@ void ChannelHandler::UpdateDataNow(unsigned long frame)
 
             switch (ch->type)
 			{
+				case TABLE:
+					ch->FlushTable();
+					break;
+
 				case INPUT :
             	{
 					#ifdef CHANNEL_DEBUG
@@ -174,6 +178,47 @@ void ChannelHandler::UpdateDataNow(unsigned long frame)
 	#endif
 }
 
+void ChannelHandler::RegisterTable(const string &ID)
+{
+	RegisterData(ID, TABLE, NULL, 0, 't');
+}
+
+void ChannelHandler::PublishTable(const string &ID, vector<double> &cells)
+{
+	map<string,Channel*>::iterator i = m_ChannelMap.find(ID);
+	if (i == m_ChannelMap.end() || i->second->type != TABLE)
+		return;
+
+	i->second->pendingCells.swap(cells);
+	i->second->tablePending = true;
+}
+
+bool ChannelHandler::ReadTable(const string &ID, unsigned long &revision, vector<double> &cells)
+{
+	map<string,Channel*>::iterator i = m_ChannelMap.find(ID);
+	if (i == m_ChannelMap.end() || i->second->type != TABLE)
+		return false;
+
+	Channel &ch = *i->second;
+	pthread_mutex_lock(m_Mutex);
+	const bool changed = revision != ch.tableRevision;
+	if (changed)
+	{
+		try
+		{
+			cells = ch.cells;
+			revision = ch.tableRevision;
+		}
+		catch (...)
+		{
+			pthread_mutex_unlock(m_Mutex);
+			throw;
+		}
+	}
+	pthread_mutex_unlock(m_Mutex);
+	return changed;
+}
+
 void ChannelHandler::SetUsed(const string &ID, int bytes)
 {
     map<string,Channel*>::iterator i=m_ChannelMap.find(ID);
@@ -208,7 +253,7 @@ void ChannelHandler::RegisterData(const string &ID, Type t,void* pData, int size
 	NewCh->kind      = kind;
 	NewCh->requested = false;
 	NewCh->updated   = false;
-    memcpy(NewCh->data_buf,NewCh->data,size);
+    if (size) memcpy(NewCh->data_buf,NewCh->data,size);
     pair<map<string,Channel*>::iterator,bool> placed=m_ChannelMap.insert(make_pair(ID,NewCh));
     if (placed.second) m_Order.push_back(placed.first);
     else placed.first->second=NewCh;
@@ -392,7 +437,11 @@ void ChannelHandler::FlushChannels()
 	for(map<string, Channel*>::iterator i=m_ChannelMap.begin();
        i!=m_ChannelMap.end(); i++)
     {
-		memcpy(i->second->data_buf,i->second->data,i->second->size);
+		Channel *ch = i->second;
+		if (ch->type == TABLE)
+			ch->FlushTable();
+		else if (ch->size)
+			memcpy(ch->data_buf, ch->data, ch->size);
     }
 	
 	pthread_mutex_unlock(m_Mutex);	

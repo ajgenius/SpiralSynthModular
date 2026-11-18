@@ -27,8 +27,7 @@ namespace Spiral
 	{
 		namespace
 		{
-			// Far more rows than any device keeps; a stop for the count that is
-			// found by looking.
+			// Bound only the search for unnamed, numbered properties.
 			const long kMostRows = 4096;
 
 			bool Whole(const ControlValue &value, long &out)
@@ -52,7 +51,7 @@ namespace Spiral
 		    seenPosition(-1),
 		    seenCount(-1),
 		    table(NULL),
-		    columns(0)
+		    columns(0), revision(1)
 		{
 			if (flat)
 				flat->Observe(this);
@@ -192,7 +191,9 @@ namespace Spiral
 
 		long RowSource::Count() const
 		{
-			long limit = fixedCount >= 0 ? fixedCount : kMostRows;
+			long limit = fixedCount;
+			if (limit < 0)
+				limit = table ? (long)(cells.size() / columns) : kMostRows;
 			ControlValue held;
 
 			if (countField >= 0 && flat && flat->Get(countField, held))
@@ -283,7 +284,10 @@ namespace Spiral
 			const bool edited = table && table->Cells(now) && now != cells;
 
 			if (edited)
+			{
 				cells.swap(now);
+				++revision;
+			}
 
 			const long row = Position(), rows = Count();
 			const bool moved = edited || row != seenPosition || rows != seenCount;

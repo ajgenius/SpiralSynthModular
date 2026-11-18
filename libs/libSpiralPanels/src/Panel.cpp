@@ -223,16 +223,17 @@ namespace Spiral
 			class ChannelTable: public Spiral::Data::TableFeed
 			{
 			public:
-				ChannelTable(const PanelSource &source, const std::string &channel): m_Source(source), m_Channel(channel) {}
+				ChannelTable(const PanelSource &source, const std::string &channel): m_Source(source), m_Channel(channel), m_Revision(0) {}
 
 				bool Cells(std::vector<double> &out) const
 				{
-					return m_Source.ReadTable(m_Channel, out);
+					return m_Source.ReadTableSince(m_Channel, m_Revision, out);
 				}
 
 			private:
 				const PanelSource &m_Source;
 				std::string m_Channel;
+				mutable unsigned long m_Revision;
 			};
 		}
 

@@ -367,11 +367,19 @@ namespace Spiral
 		// whole ones otherwise.
 		bool DeviceSource::ReadTable(const std::string &name, std::vector<double> &cells) const
 		{
+			unsigned long revision = 0;
+			return ReadTableSince(name, revision, cells);
+		}
+
+		bool DeviceSource::ReadTableSince(const std::string &name, unsigned long &revision, std::vector<double> &cells) const
+		{
 			ChannelHandler *ch = m_Plugin ? m_Plugin->GetChannelHandler() : NULL;
 			const std::string channel = name.empty() ? std::string() : ChannelNamed(name);
 			if (!ch || channel.empty())
 				return false;
 			const char kind = ch->ChannelKind(channel);
+			if (kind == 't')
+				return ch->ReadTable(channel, revision, cells);
 			const int width = kind == 'd' ? (int)sizeof(double) : kind == 'f' ? (int)sizeof(float) : (int)sizeof(int);
 			const int used = ch->ChannelUsed(channel);
 			if (used < 0)

@@ -62,6 +62,7 @@ namespace Spiral
 			bool ReadBytes(const std::string &channel, std::vector<unsigned char> &bytes) const;
 			bool ReadFloats(const std::string &channel, std::vector<float> &values) const;
 			bool ReadTable(const std::string &channel, std::vector<double> &cells) const;
+			bool ReadTableSince(const std::string &name, unsigned long &revision, std::vector<double> &cells) const;
 			bool FetchFloats(const std::string &command, const std::string &sizeChannel, const std::string &bufferChannel, std::vector<float> &values);
 			void Wait();
 			Feed *RequestFeed(bool output, int port);

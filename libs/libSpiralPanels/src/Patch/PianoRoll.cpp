@@ -30,6 +30,7 @@ namespace Spiral
 			m_Roll(NULL),
 			m_Notes(TextOf(node.Get("notes"))),
 			m_Playhead(panel.FindProperty(TextOf(node.Get("playhead")))),
+			m_ShownCount(-1), m_ShownRevision(0),
 			m_Held(false),
 			m_Marks(node.Get("on") && node.Get("on")->Get("position_moved")),
 			m_Marking(false)
@@ -91,42 +92,33 @@ namespace Spiral
 			// channel.
 			Spiral::Data::RowSource *notes = m_Panel.Rows(m_Notes);
 
-			if (notes && !m_Grid.Dragging())
+			if (notes && !m_Grid.Dragging() && (!notes->TableRevision() ||
+				notes->TableRevision() != m_ShownRevision || notes->Count() != m_ShownCount))
 			{
 				enum { Start, End, Key, Velocity, Index, Channel, Fields };
 				const int fields[Fields] = {notes->FindField("start"), notes->FindField("end"), notes->FindField("key"),
-							    notes->FindField("velocity"), notes->FindField("index"), notes->FindField("channel")};
-				const long count = notes->Count();
-				std::vector<double> cells;
-
-				for (long n = 0; n < count; ++n)
+					notes->FindField("velocity"), notes->FindField("index"), notes->FindField("channel")};
+				m_ShownCount = notes->Count();
+				m_ShownRevision = notes->TableRevision();
+				m_Grid.Notes.resize(m_ShownCount);
+				for (long n = 0; n < m_ShownCount; ++n)
+				{
+					double values[Fields] = {0, 0, 0, 1, double(n), 0};
 					for (int f = 0; f < Fields; ++f)
 					{
 						Spiral::Data::ControlValue cell;
-
-						cells.push_back(notes->GetAt(n, fields[f], cell) ? cell.number : f == Velocity ? 1 : f == Index ? n : 0);
+						if (notes->GetAt(n, fields[f], cell))
+							values[f] = cell.number;
 					}
-
-				if (cells != m_Shown)
-				{
-					m_Grid.Notes.clear();
-
-					for (size_t at = 0; at < cells.size(); at += Fields)
-					{
-						GridNote note;
-						note.Id = (int)cells[at + Index];
-						note.Index = note.Id;
-						note.Row = (int)cells[at + Key];
-						note.Channel = (int)cells[at + Channel];
-						note.Velocity = (float)cells[at + Velocity];
-						note.Start = cells[at + Start];
-						note.End = cells[at + End];
-						m_Grid.Notes.push_back(note);
-					}
-
-					m_Shown.swap(cells);
-					changed = true;
+					GridNote &note = m_Grid.Notes[n];
+					note.Id = note.Index = (int)values[Index];
+					note.Row = (int)values[Key];
+					note.Channel = (int)values[Channel];
+					note.Velocity = (float)values[Velocity];
+					note.Start = values[Start];
+					note.End = values[End];
 				}
+				changed = true;
 			}
 
 			if (changed)

@@ -32,7 +32,7 @@ namespace Core
 class ChannelHandler
 {
 public:
-    enum Type{INPUT,OUTPUT,OUTPUT_REQUEST};
+    enum Type{INPUT,OUTPUT,OUTPUT_REQUEST,TABLE};
 
     ChannelHandler();
     ~ChannelHandler();
@@ -64,6 +64,11 @@ public:
     void     Register(const std::string &ID, void** pData, Type t=ChannelHandler::INPUT)    
 		{ RegisterData(ID, t,(void**)pData,sizeof(void*)); }
 	void     UpdateDataNow(unsigned long frame=0);
+	// A published table changes only when the writer has a new set of rows.
+	// UpdateDataNow swaps it into view under its usual nonblocking audio lock.
+	void RegisterTable(const std::string &ID);
+	void PublishTable(const std::string &ID, std::vector<double> &cells);
+	bool ReadTable(const std::string &ID, unsigned long &revision, std::vector<double> &cells);
 	void     SetUsed(const std::string &ID, int bytes);
 	unsigned long GetFrame() const { return m_Frame; }
 		
@@ -143,9 +148,21 @@ private:
     class Channel
     {
     public:
-        Channel(Type t) { type=t; }
+        Channel(Type t): type(t), tableRevision(1), tablePending(false) {}
 
         Type type;
+		std::vector<double> pendingCells, cells;
+		unsigned long tableRevision;
+		bool tablePending;
+		void FlushTable()
+		{
+			if (tablePending)
+			{
+				cells.swap(pendingCells);
+				tablePending = false;
+				++tableRevision;
+			}
+		}
         void *data_buf;
         int   size;
         int   used;

@@ -44,6 +44,10 @@ namespace Spiral
 			virtual Feed *RequestFeed(bool output, int port) = 0;
 			virtual void ReleaseFeed(Feed *feed) = 0;
 			virtual unsigned Colour() const = 0;
+			virtual bool ReadTableSince(const std::string &channel, unsigned long &, std::vector<double> &cells) const
+			{
+				return ReadTable(channel, cells);
+			}
 		};
 	}
 }

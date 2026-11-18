@@ -92,6 +92,7 @@ namespace Spiral
 			 * hear a moved row when the position or count fields have changed
 			 * since the last call, or a table's cells have. True when they had. */
 			bool Poll();
+			unsigned long TableRevision() const { return table ? revision : 0; }
 
 			virtual int FieldCount() const;
 			virtual const DataField &Field(int index) const;
@@ -114,6 +115,7 @@ namespace Spiral
 			long seenPosition, seenCount;
 			TableFeed *table;
 			int columns;
+			unsigned long revision;
 			std::vector<double> cells;
 
 			// The flat source's field for a row's field, or -1.

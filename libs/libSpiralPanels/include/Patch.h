@@ -73,7 +73,8 @@ namespace Spiral
 			NoteGrid m_Grid;
 			std::string m_Notes;
 			const PanelProperty *m_Playhead;
-			std::vector<double> m_Shown;
+			long m_ShownCount;
+			unsigned long m_ShownRevision;
 			bool m_Held, m_Marks, m_Marking;
 		};
 
