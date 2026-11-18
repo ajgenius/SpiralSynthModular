@@ -27,6 +27,7 @@ libSpiralPanelsFltk_la_SOURCES = \
 	Meters/Scope.cpp \
 	Meters/ScopeView.cpp \
 	Meters/ScopeView.h \
+	Meters/TimingNotation.cpp Meters/TimingNotationDrawing.h \
 	Meters/SevenSegment.cpp \
 	Patch/MatrixGrid.cpp \
 	Patch/PianoKeys.cpp \

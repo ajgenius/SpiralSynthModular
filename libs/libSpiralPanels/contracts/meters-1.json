@@ -50,6 +50,15 @@
         "sample": ["object"]
       }
     },
+    "TimingNotation": {
+      "extends": "Controls::Control",
+      "attributes": {
+        "tempo": ["string"],
+        "tempo_note": ["string"],
+        "beats": ["string"],
+        "beat_unit": ["string"]
+      }
+    },
     "Scope": {
       "extends": "Controls::Control",
       "attributes": {

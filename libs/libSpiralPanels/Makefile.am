@@ -23,7 +23,7 @@ libSpiralPanels_la_SOURCES = \
 	include/NoteGrid.h src/NoteGrid.cpp \
 	src/Basic/LEDButton.cpp \
 	include/Input.h src/Input/EnvelopeCurve.cpp src/Input/ValueTable.cpp \
-	include/Meters.h src/Meters/FunctionPlot.cpp src/Meters/LCD.cpp src/Meters/LED.cpp src/Meters/LoopWaveform.cpp src/Meters/MeterBar.cpp src/Meters/SampleWaveform.cpp src/Meters/Scope.cpp src/Meters/SevenSegment.cpp \
+	include/Meters.h src/Meters/FunctionPlot.cpp src/Meters/LCD.cpp src/Meters/LED.cpp src/Meters/LoopWaveform.cpp src/Meters/MeterBar.cpp src/Meters/SampleWaveform.cpp src/Meters/Scope.cpp src/Meters/SevenSegment.cpp src/Meters/TimingNotation.cpp \
 	include/Patch.h src/Patch/MatrixGrid.cpp src/Patch/PianoKeys.cpp src/Patch/PianoRoll.cpp src/Patch/PortList.cpp
 
 contractsdir = $(pkgdatadir)/panel-contracts

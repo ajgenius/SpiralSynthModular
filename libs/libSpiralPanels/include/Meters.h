@@ -17,6 +17,25 @@ namespace Spiral
 	{
 		class Feed;
 
+		class TimingNotationView: public virtual ControlView
+		{
+		public:
+			virtual void SetTiming(double bpm, int note, int beats, int unit) = 0;
+		};
+
+		class TimingNotationControl: public PanelControl
+		{
+		public:
+			static PanelControl *Create(Panel &panel, const Spumoni::JSON &node);
+			virtual void Load();
+			virtual void Refresh();
+
+		private:
+			TimingNotationControl(Panel &panel, const Spumoni::JSON &node);
+			TimingNotationView *m_Display;
+			const PanelProperty *m_Tempo, *m_Note, *m_Beats, *m_Unit;
+		};
+
 		class ReadoutView: public virtual ControlView
 		{
 		public:
