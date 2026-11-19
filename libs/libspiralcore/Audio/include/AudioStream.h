@@ -19,6 +19,10 @@ public:
 		unsigned engineFrames, double engineRate);
 	bool Start();
 	void Stop();
+	// Called with graph processing excluded. The native worker keeps its clock
+	// and sends complete silent periods until the replacement supplies audio.
+	void BeginPatchReplacement();
+	void EndPatchReplacement();
 	static void Callback(void *context, unsigned frames);
 	bool Transfer(unsigned frames);
 	bool Playback(const float *samples, unsigned frames, const AudioStamp &stamp);
@@ -34,6 +38,9 @@ public:
 private:
 	void Clear();
 	bool PublishPreparedTiming();
+	bool FirstOutputTime(unsigned generation, double &time);
+	enum OutputState { Playing, Held, WaitingForGraph, GraphReady };
+	int m_OutputState;
 	bool Transfer(unsigned frames, double &startTime);
 	static void *Worker(void *context);
 	pthread_t m_Worker;

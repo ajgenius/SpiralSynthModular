@@ -44,6 +44,8 @@ public:
 	static AudioTransportHub *Get();
 
 	void SetHost(const HostInfo *host);
+	void BeginPatchReplacement();
+	void EndPatchReplacement();
 
 	void Attach(AudioEndpoint *endpoint, const HostInfo *host);
 	void Detach(AudioEndpoint *endpoint);
@@ -85,7 +87,11 @@ private:
 	static AudioTransportHub *m_Singleton;
 	std::vector<AudioEndpoint *> m_Members;
 	const HostInfo *m_Host;
+	void ReleaseTransport();
 	bool m_Configured;
+	bool m_Replacing;
+	std::string m_ReplacementDriver;
+	int m_ReplacementRate, m_ReplacementFrames, m_ReplacementFragmentSize, m_ReplacementFragmentCount;
 	Mode m_Mode;
 	Mode m_RequestedMode;
 	time_t m_NextRetry;

@@ -4034,6 +4034,20 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 		m_SavePointCount = 0;
 	}
 
+	const std::string json = project.get() && project->HasPatch() ? project->Patch().Bytes() : JSONDocument(*stream);
+	Spiral::Core::PatchDescription patch;
+	std::string error;
+	if (!json.empty() && !Spiral::File::PatchFile::ReadText(json, patch, error))
+	{
+		fl_message("%s", error.c_str());
+		return;
+	}
+
+	AudioTransportHub *hub = AudioTransportHub::Get();
+	pthread_mutex_lock(&m_CycleLock);
+	hub->BeginPatchReplacement();
+	pthread_mutex_unlock(&m_CycleLock);
+
 	m_FilePath=fn;
 	m_BranchID=branch;
 	ClearUp();
@@ -4042,26 +4056,14 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 	if (m_Drawer)
 		m_Drawer->Refresh();
 
-	std::string json = project.get() && project->HasPatch() ? project->Patch().Bytes() : JSONDocument(*stream);
-
 	if (!json.empty())
-	{
-		Spiral::Core::PatchDescription patch;
-		std::string error;
-
-		if (!Spiral::File::PatchFile::ReadText(json, patch, error))
-		{
-			fl_message("%s", error.c_str());
-
-			return;
-		}
-
 		Apply(patch, sidecars);
-	}
 	else
-	{
 		StreamPatchIn(*stream, false, sidecars);
-	}
+
+	pthread_mutex_lock(&m_CycleLock);
+	hub->EndPatchReplacement();
+	pthread_mutex_unlock(&m_CycleLock);
 
 	if (stream == &inf)
 		inf.close();

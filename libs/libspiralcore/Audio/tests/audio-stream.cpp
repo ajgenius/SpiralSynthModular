@@ -291,6 +291,41 @@ private:
 	mutable unsigned Writes, Queries;
 };
 
+static void PatchReplacement()
+{
+	PreparedDevice device;
+	assert(device.Stream.Configure(&device, 0, 2, 64, 48000));
+	device.Stream.SetGeneration(1);
+	AudioStamp stamp;
+	stamp.Generation = 1;
+	stamp.Step = 1.0 / 48000;
+	stamp.Time = device.Next;
+	float samples[128];
+	std::fill(samples, samples + 128, 0.25f);
+	assert(device.Stream.Playback(samples, 64, stamp));
+
+	device.Stream.BeginPatchReplacement();
+	device.Tick();
+	device.Stream.EndPatchReplacement();
+	device.Stream.SetGeneration(2);
+	device.Tick();
+	stamp.Generation = 2;
+	stamp.Frame = 128;
+	stamp.Time = device.Next + 81 * stamp.Step;
+	std::fill(samples, samples + 128, 0.75f);
+	assert(device.Stream.Playback(samples, 64, stamp));
+	device.Tick();
+	device.Tick();
+
+	assert(device.Written() == 4 && device.Stream.Errors() == 0);
+	for (unsigned frame = 0; frame < 256; ++frame)
+	{
+		const float expected = frame < 209 ? 0.0f : 0.75f;
+		assert(std::fabs(device.Output[2 * frame] - expected) < 1e-5);
+		assert(std::fabs(device.Output[2 * frame + 1] - expected) < 1e-5);
+	}
+}
+
 static void ColdPlayback(bool replaceQueuedAudio)
 {
 	PreparedDevice device;
@@ -386,5 +421,6 @@ int main()
 	ColdPlayback(false);
 	ColdPlayback(true);
 	WorkerShutdown();
+	PatchReplacement();
 	StallRecovery();
 }

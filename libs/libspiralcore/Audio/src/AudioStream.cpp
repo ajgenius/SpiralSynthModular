@@ -7,7 +7,7 @@
 #include <iostream>
 using namespace Spiral::Core;
 
-AudioStream::AudioStream() : m_Running(false), m_Stop(0), m_Client(NULL), m_Capacity(0), m_EngineFrames(0), m_InvalidTiming(0), m_NativeEpoch(1),
+AudioStream::AudioStream() : m_OutputState(Playing), m_Running(false), m_Stop(0), m_Client(NULL), m_Capacity(0), m_EngineFrames(0), m_InvalidTiming(0), m_NativeEpoch(1),
 	m_EngineRate(0), m_NativeRate(0), m_Errors(0), m_Failed(0), m_Generation(0)
 {
 }
@@ -31,6 +31,7 @@ void AudioStream::Clear()
 	std::vector<float>().swap(m_EngineMono);
 	m_Capacity = m_EngineFrames = 0;
 	m_Client = NULL;
+	m_OutputState = Playing;
 	m_LastTiming.Valid = false;
 	m_PreviousTiming = AudioCycleTiming();
 	++m_NativeEpoch;
@@ -114,6 +115,31 @@ bool AudioStream::Transfer(unsigned frames)
 	return Transfer(frames, startTime);
 }
 
+void AudioStream::BeginPatchReplacement()
+{
+	__sync_lock_test_and_set(&m_OutputState, Held);
+}
+
+void AudioStream::EndPatchReplacement()
+{
+	__sync_lock_test_and_set(&m_OutputState, m_Output.empty() ? Playing : WaitingForGraph);
+}
+
+bool AudioStream::FirstOutputTime(unsigned generation, double &first)
+{
+	bool ready = true;
+	first = -1;
+	for (unsigned c = 0; c < m_Output.size(); ++c)
+	{
+		double time;
+		if (!m_Output[c]->FirstTime(generation, time))
+			ready = false;
+		else if (first < 0 || time < first)
+			first = time;
+	}
+	return ready;
+}
+
 bool AudioStream::Transfer(unsigned frames, double &startTime)
 {
 	if (!m_Client || !frames || frames > m_Capacity)
@@ -167,7 +193,6 @@ bool AudioStream::Transfer(unsigned frames, double &startTime)
 	timing.Step = m_Output.empty() ? inputStep : outputStep;
 	AudioStamp stamp;
 	stamp.Frame = timing.Frame;
-	stamp.Generation = __sync_fetch_and_add(&m_Generation, 0);
 	stamp.Step = inputStep;
 	if (!m_Input.empty() && !m_Client->Read(&m_Native[0], frames))
 	{
@@ -175,7 +200,22 @@ bool AudioStream::Transfer(unsigned frames, double &startTime)
 		return false;
 	}
 
-	if (!m_Input.empty())
+	// The new graph resets presentation time and publishes all channels before
+	// GraphReady. Preserve a silent prefix up to its first scheduled sample.
+	const int outputState = __sync_fetch_and_add(&m_OutputState, 0);
+	stamp.Generation = __sync_fetch_and_add(&m_Generation, 0);
+	bool silence = outputState != Playing;
+	if (outputState == WaitingForGraph || outputState == GraphReady)
+	{
+		double first;
+		if (FirstOutputTime(stamp.Generation, first) && outputState == GraphReady)
+		{
+			startTime = first;
+			silence = false;
+		}
+	}
+
+	if (!m_Input.empty() && !silence)
 		for (unsigned c = 0; c < m_Input.size(); ++c)
 		{
 			for (unsigned n = 0; n < frames; ++n) m_NativeMono[n] = m_Native[n * m_Input.size() + c];
@@ -191,7 +231,12 @@ bool AudioStream::Transfer(unsigned frames, double &startTime)
 	{
 		const double time = m_Client->GetChannelTime(false, c);
 		unsigned prefix = 0;
-		if (startTime > time)
+		if (silence)
+		{
+			std::fill(m_NativeMono.begin(), m_NativeMono.begin() + frames, 0);
+			prefix = frames;
+		}
+		else if (startTime > time)
 		{
 			// The first scheduled sample can fall inside a hardware period.
 			while (prefix < frames && time + prefix * outputStep + 1e-10 < startTime)
@@ -209,8 +254,12 @@ bool AudioStream::Transfer(unsigned frames, double &startTime)
 
 	}
 
-	if (pastStart)
+	if (pastStart && !silence)
+	{
 		startTime = -1;
+		if (outputState == GraphReady)
+			__sync_bool_compare_and_swap(&m_OutputState, GraphReady, Playing);
+	}
 
 	if (!m_Output.empty() && !m_Client->Write(&m_Native[0], frames))
 	{
@@ -245,6 +294,10 @@ bool AudioStream::Playback(const float *samples, unsigned frames, const AudioSta
 {
 	if (!samples || frames > m_EngineFrames) return false;
 
+	const int state = __sync_fetch_and_add(&m_OutputState, 0);
+	if (state == Held)
+		return true;
+
 	bool result = true;
 	for (unsigned c = 0; c < m_Output.size(); ++c)
 	{
@@ -255,6 +308,8 @@ bool AudioStream::Playback(const float *samples, unsigned frames, const AudioSta
 	}
 
 	if (!result) __sync_fetch_and_add(&m_Errors, 1);
+	else if (state == WaitingForGraph)
+		__sync_bool_compare_and_swap(&m_OutputState, WaitingForGraph, GraphReady);
 
 	return result;
 }
@@ -340,24 +395,9 @@ void *AudioStream::Worker(void *context)
 		while (!__sync_fetch_and_add(&stream->m_Stop, 0))
 		{
 			const unsigned generation = __sync_fetch_and_add(&stream->m_Generation, 0);
-			unsigned readyChannels = 0;
-			double firstTime = 0;
-			for (unsigned c = 0; c < stream->m_Output.size(); ++c)
-			{
-				double time;
-				if (stream->m_Output[c]->FirstTime(generation, time))
-				{
-					if (!readyChannels || time < firstTime)
-						firstTime = time;
-					++readyChannels;
-				}
-			}
-
-			if (readyChannels == stream->m_Output.size())
-			{
-				startTime = firstTime;
+			if (__sync_fetch_and_add(&stream->m_OutputState, 0) == Held ||
+			    stream->FirstOutputTime(generation, startTime))
 				break;
-			}
 
 			usleep(250);
 			stream->PublishPreparedTiming();

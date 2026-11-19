@@ -39,6 +39,8 @@ AudioTransportHub *AudioTransportHub::Get()
 AudioTransportHub::AudioTransportHub() :
 m_Host(NULL),
 m_Configured(false),
+m_Replacing(false),
+m_ReplacementRate(0), m_ReplacementFrames(0), m_ReplacementFragmentSize(0), m_ReplacementFragmentCount(0),
 m_Mode(NO_MODE),
 m_RequestedMode(OUTPUT),
 m_NextRetry(0)
@@ -71,10 +73,44 @@ void AudioTransportHub::Detach(AudioEndpoint *endpoint)
 	if (find(m_Members.begin(),m_Members.end(),endpoint)==m_Members.end()) return;
 
 	m_Members.erase(std::remove(m_Members.begin(),m_Members.end(),endpoint),m_Members.end());
-	if (m_Members.empty()) {
-		OUTPUTCLIENT::PackUpAndGoHome();
-		m_Mode=NO_MODE;
-		m_Configured=false;
+	if (m_Members.empty() && !m_Replacing)
+		ReleaseTransport();
+}
+
+void AudioTransportHub::ReleaseTransport()
+{
+	OUTPUTCLIENT::PackUpAndGoHome();
+	m_Mode = NO_MODE;
+	m_Configured = false;
+}
+
+void AudioTransportHub::BeginPatchReplacement()
+{
+	if (!m_Configured || !m_Host || !Streaming() || Transport()->ClientName() != "alsa" ||
+	    Transport()->Stream()->Failed())
+		return;
+
+	m_Replacing = true;
+	m_ReplacementDriver = m_Host->AUDIOCLIENT;
+	m_ReplacementFragmentSize = m_Host->FRAGSIZE;
+	m_ReplacementFragmentCount = m_Host->FRAGCOUNT;
+	m_ReplacementRate = m_Host->SAMPLERATE;
+	m_ReplacementFrames = m_Host->BUFSIZE;
+	Transport()->Stream()->BeginPatchReplacement();
+}
+
+void AudioTransportHub::EndPatchReplacement()
+{
+	if (!m_Replacing)
+		return;
+
+	m_Replacing = false;
+	if (m_Members.empty())
+		ReleaseTransport();
+	else
+	{
+		m_Timeline.Reset();
+		Transport()->Stream()->EndPatchReplacement();
 	}
 }
 
@@ -112,6 +148,14 @@ void AudioTransportHub::Close()
 
 void AudioTransportHub::Reconfigure()
 {
+	if (m_Replacing && m_Host && m_ReplacementDriver == m_Host->AUDIOCLIENT &&
+	    m_ReplacementFragmentSize == m_Host->FRAGSIZE && m_ReplacementFragmentCount == m_Host->FRAGCOUNT &&
+	    Transport()->Destination() == (m_Host->OUTPUTFILE.empty() ? "default" : m_Host->OUTPUTFILE) &&
+	    m_ReplacementRate == m_Host->SAMPLERATE && m_ReplacementFrames == m_Host->BUFSIZE &&
+	    Streaming() && !Transport()->Stream()->Failed())
+		return;
+
+	m_Replacing = false;
 	const Mode previous=m_Mode;
 	m_Configured=m_Host && OUTPUTCLIENT::Get()->Configure(
 		m_Host->AUDIOCLIENT,
