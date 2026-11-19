@@ -305,6 +305,18 @@ SynthModular::~SynthModular()
 
 //////////////////////////////////////////////////////////
 
+void SynthModular::StopAudioForExit()
+{
+	// Stop the native consumer while the graph can still supply periods.
+	// Teardown of the roll and its voices can outlast the queued audio.
+	pthread_mutex_lock(&m_CycleLock);
+	AudioTransportHub *hub = AudioTransportHub::Get();
+	if (hub->GetMode() != AudioTransportHub::NO_MODE && hub->GetMode() != AudioTransportHub::CLOSED)
+		hub->Close();
+	pthread_mutex_unlock(&m_CycleLock);
+	FreezeAll();
+}
+
 void SynthModular::ClearUp(bool synchronize)
 {
 	if (synchronize)

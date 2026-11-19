@@ -294,7 +294,7 @@ int main(int argc, char **argv)
 	{
 		Fl::check();
 		synth->SavePatch(cmd_saveAs.c_str());
-		synth->FreezeAll();
+		synth->StopAudioForExit();
 		pthread_mutex_lock(&audioStopMutex);
 		audioStopRequested = true;
 		pthread_mutex_unlock(&audioStopMutex);
@@ -330,7 +330,7 @@ int main(int argc, char **argv)
 		pthread_join(watchdogthread, NULL);
 	}
 
-	synth->FreezeAll();
+	synth->StopAudioForExit();
 	pthread_mutex_lock(&audioStopMutex);
 	audioStopRequested = true;
 	pthread_mutex_unlock(&audioStopMutex);

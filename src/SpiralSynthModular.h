@@ -146,6 +146,8 @@ public:
 	static SpiralPlugin *cb_FindDevice(int id, void *host);
 	void SavePatch(const char *fn);
 
+	void StopAudioForExit();
+
 	void FreezeAll()
 	{
 		m_CH.Set("Frozen",true);
