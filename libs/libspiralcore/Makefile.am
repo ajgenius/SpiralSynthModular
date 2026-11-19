@@ -39,8 +39,7 @@ EXTRA_DIST = \
     include/EventQueue.h \
     include/EventVoices.h \
     src/AsyncSampleLoader.cpp \
-    src/Event.cpp \
-    src/EventQueue.cpp
+    src/Event.cpp
 
 EXTRA_DIST += Audio/AUDIO-TRANSPORT.md
 

@@ -14,45 +14,61 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
+#ifndef SSM_CORE_EVENT_QUEUE_H
+#define SSM_CORE_EVENT_QUEUE_H
 #include "Event.h"
-
-#ifndef SPIRALCORE_EVENT_QUEUE
-#define SPIRALCORE_EVENT_QUEUE
-
-static const int EVENT_QUEUE_SIZE = 256;
 
 namespace Spiral
 {
 namespace Core
 {
-
-// no mallocs, so a bit of diy memory allocation
-
-class EventQueue
-{
-public:
-	EventQueue();
-	~EventQueue();
-	
-	bool Add(const Event &e);
-	
-	// you should keep calling this function for the specified
-	// time slice until it returns false
-	bool Get(Time from, Time till, Event &e);
-	
-private:
-
-	struct QueueItem
+	// Single-owner, bounded ordered ring. Cross-thread publication belongs to
+	// the existing mailboxes, not this container. Equal-frame order is stable.
+	class EventQueue
 	{
-		QueueItem() : m_IsEmpty(true) {}
-		bool m_IsEmpty;
-		Event m_Event;
+	public:
+		enum { Capacity = 256 };
+		EventQueue(): head(0), count(0) {}
+		void Clear() { head = count = 0; }
+		bool Add(const Event &event)
+		{
+			if (count == Capacity)
+				return false;
+			if (count)
+			{
+				const AudioStamp &last = events[(head + count - 1) % Capacity].TimeStamp;
+				if (last.Generation != event.TimeStamp.Generation || last.Frame > event.TimeStamp.Frame)
+					return false;
+			}
+			events[(head + count++) % Capacity] = event;
+			return true;
+		}
+		// Half-open [from, till): boundary events are delivered exactly once.
+		// Passed events and earlier generations are discarded on forward seeks.
+		bool Get(const AudioStamp &from, const AudioStamp &till, Event &event)
+		{
+			if (from.Generation != till.Generation || till.Frame <= from.Frame)
+				return false;
+			while (count)
+			{
+				const Event &next = events[head];
+				if (next.TimeStamp.Generation > from.Generation ||
+					(next.TimeStamp.Generation == from.Generation && next.TimeStamp.Frame >= till.Frame))
+					return false;
+				const bool due = next.TimeStamp.Generation == from.Generation && next.TimeStamp.Frame >= from.Frame;
+				event = next;
+				head = (head + 1) % Capacity;
+				--count;
+				if (due)
+					return true;
+			}
+			return false;
+		}
+
+	private:
+		Event events[Capacity];
+		unsigned head, count;
 	};
-
-	QueueItem m_Queue[EVENT_QUEUE_SIZE]; 
-};
-
 }
 }
-
 #endif
