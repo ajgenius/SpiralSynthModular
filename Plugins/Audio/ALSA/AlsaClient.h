@@ -49,7 +49,8 @@ private:
 	int m_Channels;
 	unsigned m_Frames;
 	uint64_t m_Written, m_Read;
-	bool m_WriteUnderrun;
+	enum WriteState { Ready, Underrun, Restarting };
+	WriteState m_WriteState;
 	double m_Latency;
 	AudioCycleTiming m_Timing;
 	bool Timestamp(snd_pcm_t *stream, bool input, double &time);

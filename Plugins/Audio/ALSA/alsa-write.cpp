@@ -74,6 +74,13 @@ int main()
 	assert(!client.Write(samples, Period) && !client.RecoverPlaybackWrite());
 	WaitAt(client, 3 * Period + Period / 2);
 
+	result = -EPIPE;
+	assert(!client.Write(samples, Period) && client.RecoverPlaybackWrite());
+	WaitAt(client, 3 * Period + Period / 2);
+	assert(!client.Write(samples, Period) && !client.RecoverPlaybackWrite());
+
+	assert(client.Attach("null", options));
+	WaitAt(client, 0);
 	invalidateParams = true;
 	result = -EPIPE;
 	assert(!client.Write(samples, Period) && !client.RecoverPlaybackWrite());

@@ -30,7 +30,7 @@ AlsaClient::AlsaClient() :
 	m_Playback(NULL),
 	m_Capture(NULL),
 	m_Channels(2),
-	m_Frames(512), m_Written(0), m_Read(0), m_WriteUnderrun(false), m_Latency(0),
+	m_Frames(512), m_Written(0), m_Read(0), m_WriteState(Ready), m_Latency(0),
 	m_Samplerate(44100),
 	m_Device("default")
 {
@@ -141,7 +141,7 @@ bool AlsaClient::Attach(const string &device, const AudioClientOptions &opt)
 
 void AlsaClient::Detach()
 {
-	m_WriteUnderrun = false;
+	m_WriteState = Ready;
 	if (m_Playback) { snd_pcm_close(m_Playback); m_Playback = NULL; }
 	if (m_Capture)  { snd_pcm_close(m_Capture);  m_Capture = NULL; }
 }
@@ -248,21 +248,28 @@ int AlsaClient::WaitForCycle(unsigned milliseconds)
 
 bool AlsaClient::Write(const float *interleaved, unsigned int frames)
 {
-	m_WriteUnderrun = false;
 	if (!m_Playback || !interleaved) return false;
 
 	const snd_pcm_sframes_t written = snd_pcm_writei(m_Playback, interleaved, frames);
-	m_WriteUnderrun = written == -EPIPE;
 	if (written > 0) m_Written += written;
 
-	return written == snd_pcm_sframes_t(frames);
+	if (written == snd_pcm_sframes_t(frames))
+	{
+		m_WriteState = Ready;
+		return true;
+	}
+
+	// A second rejected write on a freshly prepared PCM made no progress.
+	if (m_WriteState != Restarting)
+		m_WriteState = written == -EPIPE ? Underrun : Ready;
+	return false;
 }
 
 bool AlsaClient::RecoverPlaybackWrite()
 {
-	if (!m_WriteUnderrun) return false;
+	if (m_WriteState != Underrun) return false;
 
-	m_WriteUnderrun = false;
+	m_WriteState = Restarting;
 	m_Timing.Valid = false;
 	return snd_pcm_prepare(m_Playback) == 0;
 }
