@@ -27,7 +27,8 @@ public:
 	bool Transfer(unsigned frames);
 	bool Playback(const float *samples, unsigned frames, const AudioStamp &stamp);
 	void Capture(float *samples, unsigned frames, const AudioStamp &stamp);
-	void SetGeneration(unsigned value) { __sync_lock_test_and_set(&m_Generation, value); }
+	// The first block of a generation sets its physical presentation time.
+	void SetGeneration(unsigned value, double firstOutputTime = 0);
 	bool Timing(AudioCycleTiming &timing);
 	AudioClient *Client() const { return m_Client; }
 	unsigned Capacity() const { return m_Capacity; }
@@ -55,6 +56,9 @@ private:
 	mutable int m_Failed;
 	unsigned m_Generation;
 	AudioTimingMailbox m_Mailbox;
+	bool m_CallbackOutput;
+	AudioTimingMailbox m_GraphStarts;
+	AudioCycleTiming m_GraphStart;
 	AudioCycleTiming m_LastTiming, m_PreviousTiming;
 	AudioRateEstimator m_InputRate, m_OutputRate;
 	AudioStream(const AudioStream &);

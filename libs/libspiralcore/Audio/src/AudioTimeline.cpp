@@ -81,7 +81,7 @@ bool AudioTimeline::Prepare(unsigned frames, double rate, double now, AudioStrea
 	m_CaptureStamp = m_PlaybackStamp;
 	m_CaptureStamp.Time -= ahead + inputLatency + 2 * nativePeriod + lookahead;
 	for (unsigned n = 0; n < m_Streams.size(); ++n)
-		m_Streams[n]->SetGeneration(m_PlaybackStamp.Generation);
+		m_Streams[n]->SetGeneration(m_PlaybackStamp.Generation, m_PlaybackStamp.Time);
 
 	return true;
 }

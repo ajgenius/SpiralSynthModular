@@ -8,7 +8,7 @@
 using namespace Spiral::Core;
 
 AudioStream::AudioStream() : m_OutputState(Playing), m_Running(false), m_Stop(0), m_Client(NULL), m_Capacity(0), m_EngineFrames(0), m_InvalidTiming(0), m_NativeEpoch(1),
-	m_EngineRate(0), m_NativeRate(0), m_Errors(0), m_Failed(0), m_Generation(0)
+	m_EngineRate(0), m_NativeRate(0), m_Errors(0), m_Failed(0), m_Generation(0), m_CallbackOutput(false)
 {
 }
 
@@ -37,6 +37,10 @@ void AudioStream::Clear()
 	++m_NativeEpoch;
 	AudioCycleTiming unused;
 	m_Mailbox.Read(unused);
+	m_GraphStarts.Read(unused);
+	m_GraphStart = AudioCycleTiming();
+	m_Generation = 0;
+	m_CallbackOutput = false;
 	m_InputRate.Reset();
 	m_OutputRate.Reset();
 }
@@ -54,6 +58,7 @@ bool AudioStream::Configure(AudioClient *client, unsigned inputs, unsigned outpu
 	if (!nativeFrames || nativeFrames > 65536 || nativeRate < 8000 || nativeRate > 384000) return false;
 
 	m_Client = client;
+	m_CallbackOutput = outputs && client->IsCallbackDriven();
 	m_EngineFrames = engineFrames;
 	m_EngineRate = engineRate;
 	m_NativeRate = nativeRate;
@@ -100,6 +105,21 @@ bool AudioStream::Configure(AudioClient *client, unsigned inputs, unsigned outpu
 	__sync_lock_test_and_set(&m_Errors, 0);
 	__sync_lock_test_and_set(&m_Failed, 0);
 	return true;
+}
+
+void AudioStream::SetGeneration(unsigned value, double firstOutputTime)
+{
+	if (__sync_fetch_and_add(&m_Generation, 0) == value)
+		return;
+
+	if (m_CallbackOutput)
+	{
+		AudioCycleTiming start;
+		start.Epoch = value;
+		start.OutputTime = firstOutputTime;
+		m_GraphStarts.Publish(start);
+	}
+	__sync_lock_test_and_set(&m_Generation, value);
 }
 
 void AudioStream::Callback(void *context, unsigned frames)
@@ -203,8 +223,18 @@ bool AudioStream::Transfer(unsigned frames, double &startTime)
 	// The new graph resets presentation time and publishes all channels before
 	// GraphReady. Preserve a silent prefix up to its first scheduled sample.
 	const int outputState = __sync_fetch_and_add(&m_OutputState, 0);
-	stamp.Generation = __sync_fetch_and_add(&m_Generation, 0);
-	bool silence = outputState != Playing;
+	if (m_CallbackOutput)
+	{
+		// JACK can call before the graph has a clock, and routing can change
+		// that clock's latency. Take the epoch and its first DAC time together.
+		m_GraphStarts.Read(m_GraphStart);
+		stamp.Generation = m_GraphStart.Epoch;
+		startTime = m_GraphStart.OutputTime;
+	}
+	else
+		stamp.Generation = __sync_fetch_and_add(&m_Generation, 0);
+
+	bool silence = outputState != Playing || (m_CallbackOutput && !stamp.Generation);
 	if (outputState == WaitingForGraph || outputState == GraphReady)
 	{
 		double first;

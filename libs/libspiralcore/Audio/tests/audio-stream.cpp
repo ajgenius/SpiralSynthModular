@@ -291,6 +291,63 @@ private:
 	mutable unsigned Writes, Queries;
 };
 
+class CallbackDevice : public PreparedDevice
+{
+public:
+	bool IsCallbackDriven() const { return true; }
+};
+
+static void ColdCallbackPlayback()
+{
+	CallbackDevice device;
+	assert(device.Stream.Configure(&device, 0, 2, 64, 48000));
+	assert(device.Stream.Start());
+	device.Tick();
+	assert(device.Stream.Errors() == 0);
+
+	AudioStamp stamp;
+	stamp.Generation = 1;
+	stamp.Step = 1.0 / 48000;
+	stamp.Time = device.Next + 64 * stamp.Step;
+	float samples[128];
+	std::fill_n(samples, 128, 0.75f);
+	device.Stream.SetGeneration(stamp.Generation, stamp.Time);
+	assert(device.Stream.Playback(samples, 64, stamp));
+	device.Tick();
+
+	// A latency change supersedes the queued block before it reaches the DAC.
+	++stamp.Generation;
+	stamp.Time = device.Next + 17 * stamp.Step;
+	device.Stream.SetGeneration(stamp.Generation, stamp.Time);
+	for (unsigned n = 0; n < 64; ++n)
+	{
+		samples[2*n] = 0.25f;
+		samples[2*n+1] = -0.5f;
+	}
+	assert(device.Stream.Playback(samples, 64, stamp));
+	device.Tick();
+	assert(device.Stream.Errors() == 0);
+	device.Stream.SetGeneration(stamp.Generation, device.Next + 1);
+	device.Tick();
+
+	// Withhold the next block. Its deadline still counts even when part of
+	// that period was supplied by the first block.
+	assert(device.Written() == 4 && device.Stream.Errors() == 1);
+	for (unsigned frame = 0; frame < 256; ++frame)
+	{
+		const bool scheduled = frame >= 145 && frame < 209;
+		assert(std::fabs(device.Output[2*frame] - (scheduled ? 0.25f : 0)) < 1e-5);
+		assert(std::fabs(device.Output[2*frame+1] - (scheduled ? -0.5f : 0)) < 1e-5);
+	}
+
+	CallbackDevice late;
+	assert(late.Stream.Configure(&late, 0, 2, 64, 48000));
+	assert(late.Stream.Start());
+	late.Stream.SetGeneration(1, late.Next);
+	late.Tick();
+	assert(late.Written() == 1 && late.Stream.Errors() == 1);
+}
+
 static void PatchReplacement()
 {
 	PreparedDevice device;
@@ -418,6 +475,7 @@ int main()
 	Run(48000, 128, 44100, -200);
 	Run(48000, 384, 48000, 0);
 	ClockTransitions();
+	ColdCallbackPlayback();
 	ColdPlayback(false);
 	ColdPlayback(true);
 	WorkerShutdown();
