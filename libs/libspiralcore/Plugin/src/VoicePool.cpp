@@ -6,6 +6,15 @@
 
 #include <sstream>
 
+static std::string ReadVoiceKey(const VoiceStateKey &source)
+{
+	Spiral::Core::Description key;
+	source.DescribeVoiceKey(key);
+	std::ostringstream text;
+	key.Write(text);
+	return text.str();
+}
+
 VoicePool::VoicePool(): m_Find(0), m_Host(0)
 {
 }
@@ -44,6 +53,8 @@ void VoicePool::Add(int id, SpiralPlugin *device, const Spiral::Core::DeviceClas
 	std::ostringstream text;
 	state.Write(text);
 	m_Members[id].State = text.str();
+	if (const VoiceStateKey *source = dynamic_cast<const VoiceStateKey *>(device))
+		m_Members[id].Key = ReadVoiceKey(*source);
 }
 
 void VoicePool::SumOut(const Wire &wire, int size)
@@ -127,6 +138,14 @@ bool VoicePool::Follow()
 		SpiralPlugin *device = Find(m->first);
 		if (!device)
 			continue;
+		if (const VoiceStateKey *source = dynamic_cast<const VoiceStateKey *>(device))
+		{
+			std::string key = ReadVoiceKey(*source);
+			if (key == m->second.Key)
+				continue;
+			m->second.Key.swap(key);
+		}
+
 		Spiral::Core::Description state;
 		device->Describe(state);
 		std::ostringstream text;

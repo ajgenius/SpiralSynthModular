@@ -3,13 +3,14 @@
 #define PIANO_ROLL_PLUGIN_H
 
 #include "Device.h"
+#include "VoicePool.h"
 #include "ClipTempo.h"
 #include "Event.h"
 #include "EventClip.h"
 #include <stdint.h>
 #include <vector>
 
-class PianoRollPlugin: public Spiral::Core::Device
+class PianoRollPlugin: public Spiral::Core::Device, public VoiceStateKey
 {
 public:
 	PianoRollPlugin();
@@ -19,6 +20,8 @@ public:
 	virtual void Execute();
 	virtual void ExecuteCommands();
 	virtual void Describe(Spiral::Core::Description &d);
+	virtual void DescribeVoiceKey(Spiral::Core::Description &d) const;
+	virtual bool UpdateProperty(std::string name);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
 
 	enum Commands
@@ -99,10 +102,12 @@ private:
 	void InputEvent(const Spiral::Core::Event &event, unsigned frame, bool record);
 	bool MergeRecording();
 	void Published();
+	void DescribeSettings(Spiral::Core::Description &d) const;
 	uint64_t Frames(double seconds) const;
 
 	Spiral::Core::EventClip m_Clip, m_Take;
 	Spiral::Core::StringProperty m_Saved;
+	uint64_t m_ClipRevision;
 	char m_RecordStatus[80];
 	Spiral::Core::ToggleProperty m_Loop, m_Thru, m_PlayingState, m_RecordingState;
 	Spiral::Core::FloatProperty m_Length, m_Position;

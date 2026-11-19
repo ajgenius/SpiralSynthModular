@@ -40,7 +40,8 @@ extern "C"
 }
 
 PianoRollPlugin::PianoRollPlugin():
-	m_Saved(Property::WriteOnly, ""),
+	m_Saved(Property::WriteOnly | Property::ForceUpdate, ""),
+	m_ClipRevision(0),
 	m_Loop(Property::WriteOnly, false),
 	m_Thru(Property::WriteOnly, true),
 	m_PlayingState(Property::ReadOnly, false),
@@ -508,6 +509,7 @@ void PianoRollPlugin::Published()
 	std::string text = m_Clip.Save();
 	std::replace(text.begin(), text.end(), '\n', ' ');
 	m_Saved.Value.swap(text);
+	++m_ClipRevision;
 }
 
 void PianoRollPlugin::Execute()
@@ -690,6 +692,24 @@ void PianoRollPlugin::Describe(Description &d)
 	d.Value(DeviceVersion);
 	d.Separator(" ");
 	m_Saved.Describe(d);
+	DescribeSettings(d);
+}
+
+bool PianoRollPlugin::UpdateProperty(std::string name)
+{
+	if (name == m_Saved.GetKey())
+		++m_ClipRevision;
+	return Device::UpdateProperty(name);
+}
+
+void PianoRollPlugin::DescribeVoiceKey(Description &d) const
+{
+	d.Value(m_ClipRevision);
+	DescribeSettings(d);
+}
+
+void PianoRollPlugin::DescribeSettings(Description &d) const
+{
 	d.Separator(" ");
 	m_Loop.Describe(d);
 	d.Separator(" ");

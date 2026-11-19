@@ -8,6 +8,16 @@
 
 #include "SpiralPlugin.h"
 
+// Optional for devices with large saved state. Equal keys must describe the
+// same settings for voice copies. The host still applies a full description
+// when the key changes.
+class VoiceStateKey
+{
+public:
+	virtual ~VoiceStateKey() {}
+	virtual void DescribeVoiceKey(Spiral::Core::Description &key) const = 0;
+};
+
 class VoicePool
 {
 public:
@@ -38,7 +48,7 @@ private:
 	struct Member
 	{
 		std::vector<SpiralPlugin *> Copies;
-		std::string State;
+		std::string State, Key;
 	};
 	struct Sum
 	{

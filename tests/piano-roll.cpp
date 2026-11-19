@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "PianoRollPlugin.h"
 #include "EventBuffer.h"
+#include "DeviceClassRegistry.h"
 #include "EventVoices.h"
 #include "EventClip.h"
 #include "PatchFile.h"
@@ -671,11 +672,62 @@ static void FullTakeRetainsEveryAcceptedEvent()
 	std::puts("Full take retains all accepted events and publishes its capacity status");
 }
 
+class CountedRoll : public PianoRollPlugin
+{
+public:
+	CountedRoll() : Descriptions(0) {}
+	unsigned Descriptions;
+	void Describe(Description &saved)
+	{
+		++Descriptions;
+		PianoRollPlugin::Describe(saved);
+	}
+};
+
+static PianoRollPlugin *voiceCopy;
+static SpiralPlugin *NewVoiceCopy() { return voiceCopy = new PianoRollPlugin; }
+static SpiralPlugin *OriginalRoll(int, void *roll) { return static_cast<PianoRollPlugin *>(roll); }
+
+static void FollowVoiceSettings()
+{
+	CountedRoll roll;
+	roll.Initialise(&s_Host);
+	AddNote(roll, .01, .02, 67, .75f);
+
+	DeviceClass kind;
+	kind.Create = NewVoiceCopy;
+	VoicePool pool;
+	pool.SetLookup(OriginalRoll, &roll);
+	pool.Add(0, &roll, kind, 2, &s_Host, "");
+	assert(roll.Descriptions == 1 && voiceCopy->Clip().Count() == 2);
+	Command(roll, PianoRollPlugin::PLAY);
+	Run(roll);
+	assert(pool.Follow() && roll.Descriptions == 1);
+
+	AddNote(roll, .08, .12, 69, .75f);
+	assert(pool.Follow() && roll.Descriptions == 2 && voiceCopy->Clip().Count() == 4);
+	roll.GetChannelHandler()->Set("Loop", true);
+	roll.GetChannelHandler()->Set("Thru", false);
+	roll.GetChannelHandler()->Set("Length", .5f);
+	roll.UpdateChannelHandler();
+	assert(pool.Follow() && roll.Descriptions == 3);
+
+	Sample tempo(s_Host.BUFSIZE);
+	for (int i = 0; i < s_Host.BUFSIZE; ++i)
+		tempo.Set(i, 80);
+	assert(roll.SetInput(3, &tempo));
+	Run(roll);
+	assert(pool.Follow() && roll.Descriptions == 4);
+	assert(pool.Follow() && roll.Descriptions == 4);
+	pool.Clear();
+}
+
 int main(int argc, char **argv)
 {
 	s_Host.BUFSIZE = 64;
 	s_Host.ROLLING = true;
 	s_Host.SAMPLERATE = 1000;
+	FollowVoiceSettings();
 	LiveKeyRelease(67);
 	LiveKeyRelease(60);
 	FullMergedBlock();
