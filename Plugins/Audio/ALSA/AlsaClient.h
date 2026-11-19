@@ -13,7 +13,7 @@ namespace Spiral
 namespace Core
 {
 
-class AlsaClient : public AudioClient, public PreparedPlayback
+class AlsaClient : public AudioClient, public PreparedPlayback, public PlaybackRecovery
 {
 public:
 	static AlsaClient *Get();
@@ -30,6 +30,7 @@ public:
 	double GetInputLatency() const { return m_Latency; }
 	double GetOutputLatency() const { return m_Latency; }
 	bool Write(const float *interleaved, unsigned int nframes);
+	bool RecoverPlaybackWrite();
 	bool Read(float *interleaved, unsigned int nframes);
 
 public:
@@ -48,6 +49,7 @@ private:
 	int m_Channels;
 	unsigned m_Frames;
 	uint64_t m_Written, m_Read;
+	bool m_WriteUnderrun;
 	double m_Latency;
 	AudioCycleTiming m_Timing;
 	bool Timestamp(snd_pcm_t *stream, bool input, double &time);

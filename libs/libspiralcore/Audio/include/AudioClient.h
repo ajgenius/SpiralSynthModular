@@ -40,6 +40,15 @@ public:
 	virtual bool PreparedTiming(AudioCycleTiming &timing) const = 0;
 };
 
+// Optional for worker-driven playback. After a failed write, discard that
+// period and prepare the endpoint for fresh timing on the next worker cycle.
+class PlaybackRecovery
+{
+public:
+	virtual ~PlaybackRecovery() {}
+	virtual bool RecoverPlaybackWrite() = 0;
+};
+
 class AudioClient
 {
 public:

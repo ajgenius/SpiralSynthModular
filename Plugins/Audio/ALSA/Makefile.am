@@ -25,3 +25,8 @@ check_PROGRAMS += alsa-clock-test
 alsa_clock_test_SOURCES = $(top_srcdir)/libs/libspiralcore/Audio/tests/atomic-clock.cpp AlsaAtomicClock.cpp
 alsa_clock_test_CPPFLAGS = $(AM_CPPFLAGS)
 alsa_clock_test_LDADD = $(ALSA_LIBS)
+
+check_PROGRAMS += alsa-write-test
+alsa_write_test_SOURCES = alsa-write.cpp AlsaClient.cpp
+alsa_write_test_CPPFLAGS = $(AM_CPPFLAGS) -Dsnd_pcm_writei=scripted_write
+alsa_write_test_LDADD = $(alsa_client_test_LDADD)

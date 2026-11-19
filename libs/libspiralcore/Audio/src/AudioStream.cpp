@@ -212,14 +212,26 @@ bool AudioStream::Transfer(unsigned frames, double &startTime)
 	if (pastStart)
 		startTime = -1;
 
-	if (!complete) __sync_fetch_and_add(&m_Errors, 1);
-
 	if (!m_Output.empty() && !m_Client->Write(&m_Native[0], frames))
 	{
-		__sync_lock_test_and_set(&m_Failed, 1);
-		return false;
+		PlaybackRecovery *recovery = dynamic_cast<PlaybackRecovery *>(m_Client);
+		if (!recovery || !recovery->RecoverPlaybackWrite())
+		{
+			if (!complete) __sync_fetch_and_add(&m_Errors, 1);
+			__sync_lock_test_and_set(&m_Failed, 1);
+			return false;
+		}
+
+		// The PCM accepted none of this period. Fetch a new timestamp and
+		// consume fresh audio before writing to the restarted device.
+		++m_NativeEpoch;
+		m_PreviousTiming.Valid = false;
+		m_InputRate.Reset();
+		m_OutputRate.Reset();
+		complete = false;
 	}
 
+	if (!complete) __sync_fetch_and_add(&m_Errors, 1);
 	return true;
 }
 
