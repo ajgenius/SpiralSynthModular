@@ -34,7 +34,7 @@ namespace Core
 		void Clear(unsigned rate);
 		bool Append(uint64_t frame, const Event &event);
 		const Event &At(unsigned index) const { return m_Events[index]; }
-		uint64_t FrameAt(unsigned index) const { return m_Frames[index]; }
+		uint64_t FrameAt(unsigned index) const { return m_Events[index].TimeStamp.Frame; }
 		unsigned Count() const { return m_Count; }
 		unsigned Rate() const { return m_Rate; }
 		uint64_t Length() const { return m_Length; }
@@ -63,7 +63,6 @@ namespace Core
 				uint64_t endFrame);
 
 		Event *m_Events;
-		uint64_t *m_Frames;
 		unsigned m_Count, m_Rate;
 		uint64_t m_Length;
 	};
