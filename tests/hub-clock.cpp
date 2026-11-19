@@ -21,14 +21,31 @@ static void DestroyTestClient(void *client)
 	++destroyed;
 }
 
-static void ReplacementLifetime()
+static const Spiral::Core::BackendDescriptor *RegisteredJack()
 {
-	static const Spiral::Core::BackendDescriptor backend = {
+	return Spiral::Core::AudioBackendRegistry::Get()->Find("jack");
+}
+
+static void RegisterTestBackends()
+{
+	static const Spiral::Core::BackendDescriptor alsa = {
 		SPIRAL_AUDIO_PLUGIN_ABI, "audio", "alsa", CreateTestClient, DestroyTestClient
 	};
-	Spiral::Core::AudioBackendRegistry::Get()->Register(&backend);
+	static const Spiral::Core::BackendDescriptor jack = {
+		SPIRAL_AUDIO_PLUGIN_ABI, "audio", "jack", CreateTestClient, DestroyTestClient
+	};
+	Spiral::Core::AudioBackendRegistry *registry = Spiral::Core::AudioBackendRegistry::Get();
+	if (RegisteredJack())
+		registry->Release(reinterpret_cast<void *>(&RegisteredJack), "");
+	registry->Register(&alsa);
+	registry->Register(&jack);
+}
+
+static void ReplacementLifetime(const char *driver)
+{
 	HostInfo host = HostInfo();
-	host.AUDIOCLIENT = "alsa";
+	host.AUDIOCLIENT = driver;
+	created = destroyed = 0;
 	host.OUTPUTFILE = "first";
 	host.BUFSIZE = 64;
 	host.SAMPLERATE = 48000;
@@ -66,7 +83,9 @@ static void ReplacementLifetime()
 
 int main()
 {
-	ReplacementLifetime();
+	RegisterTestBackends();
+	ReplacementLifetime("alsa");
+	ReplacementLifetime("jack");
 	HostInfo host = HostInfo();
 	host.BUFSIZE = 960;
 	host.SAMPLERATE = 48000;

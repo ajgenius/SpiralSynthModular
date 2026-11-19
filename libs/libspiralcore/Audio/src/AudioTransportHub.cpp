@@ -86,8 +86,11 @@ void AudioTransportHub::ReleaseTransport()
 
 void AudioTransportHub::BeginPatchReplacement()
 {
-	if (!m_Configured || !m_Host || !Streaming() || Transport()->ClientName() != "alsa" ||
-	    Transport()->Stream()->Failed())
+	if (!m_Configured || !m_Host || !Streaming() || Transport()->Stream()->Failed())
+		return;
+
+	const std::string &driver = Transport()->ClientName();
+	if (driver != "alsa" && driver != "jack")
 		return;
 
 	m_Replacing = true;
