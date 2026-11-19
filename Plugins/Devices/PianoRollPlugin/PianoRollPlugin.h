@@ -36,7 +36,7 @@ public:
 
 	enum
 	{
-		MAX_HELD = 128
+		MAX_HELD = 1024
 	};
 
 	// A note is a row of the table handed to the panel: its start and end
@@ -61,19 +61,19 @@ private:
 
 	struct Held
 	{
-		int Channel, InputID, OutputID, NoteNum;
-		float Frequency;
+		int InputID;
+		bool KeyDown;
+		Spiral::Core::Event Off;
 	};
+
+	// A shared output can briefly receive a full input block and a transport
+	// cleanup together. Carry the excess to the next writable block.
+	enum { MAX_PEDAL_TAILS = 256, QUEUED_EVENTS = MAX_HELD * 6 };
 
 	struct Outgoing
 	{
-		unsigned Frame, Order;
+		uint64_t Frame;
 		Spiral::Core::Event Value;
-
-		bool operator<(const Outgoing &other) const
-		{
-			return Frame != other.Frame ? Frame < other.Frame : Order < other.Order;
-		}
 	};
 
 	struct Args
@@ -85,11 +85,17 @@ private:
 
 	uint64_t ClipLength() const;
 	void Start(bool record);
-	void Stop(Spiral::Core::EventBuffer *out, unsigned frame);
+	void Stop(unsigned frame);
 	void Queue(unsigned frame, const Spiral::Core::Event &value);
 	void Emit(Source source, unsigned frame, const Spiral::Core::Event &event);
 	int NextID();
 	void ReleaseAll(Source source, unsigned frame);
+	void QueuePedal(unsigned frame, int channel, float value);
+	void QueueRelease(unsigned frame, const Spiral::Core::Event &off);
+	void ReleaseTail(Source source, unsigned frame);
+	void ReleaseNotes(Source source, unsigned frame, int channel, bool keysToo);
+	void Pedal(Source source, unsigned frame, const Spiral::Core::Event &event);
+	float OutputPedal(int channel) const;
 	void InputEvent(const Spiral::Core::Event &event, unsigned frame, bool record);
 	bool MergeRecording();
 	void Published();
@@ -103,8 +109,13 @@ private:
 	Spiral::Core::UnsignedProperty m_NoteCount;
 	Args m_Args;
 	std::vector<Held> m_Held[2];
-	Outgoing *m_Scratch;
-	unsigned m_ScratchCount;
+	unsigned m_Tails[2];
+	float m_Pedal[2][16];
+	bool m_LiveConnected;
+	Outgoing *m_OutputQueue;
+	unsigned m_Queued, m_QueueHead;
+	uint64_t m_BlockFrame;
+	bool m_Overflow;
 	bool m_Playing, m_Recording, m_LaunchHigh, m_StopHigh;
 	// Where the roll is. Play starts again from the top; Record starts
 	// here and overwrites as it goes, from m_RecordStart on.

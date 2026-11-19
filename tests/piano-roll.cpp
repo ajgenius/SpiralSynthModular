@@ -69,7 +69,7 @@ static bool Sounding(const EventVoices &voices, int key)
 	return false;
 }
 
-static void LiveKeyRelease()
+static void LiveKeyRelease(int liveKey)
 {
 	PianoRollPlugin roll;
 	roll.Initialise(&s_Host);
@@ -77,10 +77,10 @@ static void LiveKeyRelease()
 	EventBuffer input;
 	input.Clear(s_Host.BUFSIZE);
 	assert(roll.SetEventInput(0, &input));
-	assert(input.Append(3, Key(67, 1)));
-	assert(input.Append(4, Key(67, 1)));
-	assert(input.Append(7, Key(67, 1, Event::NoteOff)));
-	assert(input.Append(9, Key(67, 1, Event::NoteOff)));
+	assert(input.Append(3, Key(liveKey, 1)));
+	assert(input.Append(4, Key(liveKey, 1)));
+	assert(input.Append(7, Key(liveKey, 1, Event::NoteOff)));
+	assert(input.Append(9, Key(liveKey, 1, Event::NoteOff)));
 	assert(input.Append(10, Key(60, 1, Event::NoteOff))); // Orphaned live release.
 	Command(roll, PianoRollPlugin::PLAY);
 	const std::vector<Played> out = Run(roll);
@@ -91,8 +91,195 @@ static void LiveKeyRelease()
 	voices.Configure(4);
 	for (unsigned i = 0; i < out.size(); ++i)
 		voices.Apply(out[i].Value);
+	assert(voices.Get(0).ID == out[0].Value.ID && voices.Gate(0) == .75f);
+	assert(voices.Gate(1) == 0 && voices.Gate(2) == 0);
+	std::printf("Live key %d leaves the sequenced C sounding, including reused and orphan releases\n", liveKey);
+}
+
+static Event Damper(float value)
+{
+	Event event;
+	event.Type = Event::Controller;
+	event.Parameter = 64;
+	event.Value = value;
+	return event;
+}
+
+static void PlayInto(EventVoices &voices, const std::vector<Played> &events)
+{
+	for (unsigned i = 0; i < events.size(); ++i)
+	{
+		assert(events[i].Value.Type != Event::Reset);
+		voices.Apply(events[i].Value);
+	}
+}
+
+enum Boundary { StopRoll, SeekRoll, WrapRoll };
+
+static void TransportWithPedals(Boundary boundary)
+{
+	HostInfo host = s_Host;
+	host.SAMPLERATE = 48000;
+	PianoRollPlugin recording;
+	recording.Initialise(&host);
+	EventBuffer in;
+	in.Clear(64);
+	assert(recording.SetEventInput(0, &in));
+
+	// Record a real pedal gesture. C is sustained, D remains physically
+	// held, and a truncated loop ends before the recorded pedal comes up.
+	Command(recording, PianoRollPlugin::RECORD);
+	assert(in.Append(8, Damper(.8f)));
+	assert(in.Append(9, Key(60, 1)));
+	assert(in.Append(10, Key(62, 2)));
+	assert(in.Append(14, Key(60, 1, Event::NoteOff)));
+	Run(recording);
+	in.Clear(64);
+	Run(recording);
+	Run(recording);
+	assert(in.Append(6, Damper(0)));
+	assert(in.Append(8, Key(62, 2, Event::NoteOff)));
+	Run(recording);
+	Command(recording, PianoRollPlugin::STOP);
+	assert(recording.Clip().Count() == 6 && recording.Clip().FrameAt(3) == 14);
+	assert(recording.Clip().At(3).Type == Event::NoteOff && recording.Clip().FrameAt(4) == 198);
+
+	Description saved;
+	recording.Describe(saved);
+	PianoRollPlugin roll;
+	roll.Initialise(&host);
+	Description::Reader state(saved);
+	roll.Apply(state);
+	assert(!state.Failed() && roll.Clip().Save() == recording.Clip().Save());
+	assert(roll.SetEventInput(0, &in));
+	EventVoices voices;
+	voices.Configure(8);
+	in.Clear(64);
+	assert(in.Append(0, Damper(1)));
+	assert(in.Append(1, Key(65, 2)));
+	assert(in.Append(2, Key(69, 3)));
+	assert(in.Append(3, Key(69, 3, Event::NoteOff)));
+	PlayInto(voices, Run(roll));
+	assert(Sounding(voices, 65) && Sounding(voices, 69));
+
+	if (boundary == WrapRoll)
+	{
+		roll.GetChannelHandler()->Set("Loop", true);
+		roll.GetChannelHandler()->Set("Length", float(128.0 / host.SAMPLERATE));
+		roll.UpdateChannelHandler();
+	}
+	in.Clear(64);
+	Command(roll, PianoRollPlugin::PLAY);
+	PlayInto(voices, Run(roll));
+	assert(Sounding(voices, 60) && Sounding(voices, 62));
+	assert(Sounding(voices, 65) && Sounding(voices, 69));
+	if (boundary == StopRoll)
+		Command(roll, PianoRollPlugin::STOP);
+	else if (boundary == SeekRoll)
+	{
+		roll.GetChannelHandler()->Set("Start", 150.0 / host.SAMPLERATE);
+		Command(roll, PianoRollPlugin::SET_POSITION);
+	}
+	else
+		PlayInto(voices, Run(roll));
+
+	const std::vector<Played> events = Run(roll);
+	unsigned n = 0;
+	for (; n < events.size() && events[n].Frame == 0; ++n)
+	{
+		assert(events[n].Value.Type != Event::Reset);
+		voices.Apply(events[n].Value);
+	}
+	assert(!Sounding(voices, 60) && !Sounding(voices, 62));
+	assert(Sounding(voices, 65) && Sounding(voices, 69));
+	for (; n < events.size(); ++n)
+	{
+		assert(events[n].Value.Type != Event::Reset);
+		voices.Apply(events[n].Value);
+	}
+	assert(Sounding(voices, 60) == (boundary == WrapRoll));
+	assert(Sounding(voices, 62) == (boundary == WrapRoll));
+
+	// Release the live pedal while F is still physically held. A stops
+	// and F continues. On a loop the newly sustained C must also survive.
+	in.Clear(64);
+	assert(in.Append(1, Damper(0)));
+	const std::vector<Played> pedalUp = Run(roll);
+	n = 0;
+	for (; n < pedalUp.size() && pedalUp[n].Frame <= 1; ++n)
+		voices.Apply(pedalUp[n].Value);
+	assert(Sounding(voices, 65) && !Sounding(voices, 69));
+	assert(Sounding(voices, 60) == (boundary == WrapRoll));
+	for (; n < pedalUp.size(); ++n)
+		voices.Apply(pedalUp[n].Value);
+	in.Clear(64);
+	assert(in.Append(2, Key(65, 2, Event::NoteOff)));
+	PlayInto(voices, Run(roll));
+	assert(!Sounding(voices, 65));
+	in.Clear(64);
+	Command(roll, PianoRollPlugin::STOP);
+	PlayInto(voices, Run(roll));
+	for (unsigned lane = 0; lane < voices.Count(); ++lane)
+		assert(voices.Get(lane).Level == 0);
+}
+
+static void FullMergedBlock()
+{
+	PianoRollPlugin roll;
+	roll.Initialise(&s_Host);
+	AddNote(roll, 0, .40, 60, 1);
+	EventBuffer in;
+	in.Clear(64);
+	assert(roll.SetEventInput(0, &in));
+	Event cc;
+	cc.Type = Event::Controller;
+	cc.Parameter = 11;
+	assert(in.Append(0, Key(67, 1)));
+	for (unsigned i = 2; i < EventBuffer::Capacity; ++i)
+		assert(in.Append(1, cc));
+	assert(in.Append(63, Key(67, 1, Event::NoteOff)));
+	Command(roll, PianoRollPlugin::PLAY);
+	EventVoices voices;
+	voices.Configure(4);
+	const std::vector<Played> full = Run(roll);
+	assert(full.size() == EventBuffer::Capacity);
+	PlayInto(voices, full);
+	in.Clear(64);
+	const std::vector<Played> rest = Run(roll);
+	assert(rest.size() == 1 && rest[0].Frame == 0 && rest[0].Value.Type == Event::NoteOff);
+	PlayInto(voices, rest);
 	assert(Sounding(voices, 60) && !Sounding(voices, 67));
-	std::puts("Live releases pair in arrival order and leave the sequenced note sounding");
+}
+
+static void LongPedalGesture()
+{
+	PianoRollPlugin roll;
+	roll.Initialise(&s_Host);
+	EventBuffer in;
+	assert(roll.SetEventInput(0, &in));
+	unsigned attacks = 0;
+	unsigned releases = 0;
+	for (unsigned i = 0; i <= 2048; ++i)
+	{
+		in.Clear(64);
+		if (i == 0)
+			assert(in.Append(0, Damper(1)));
+		if (i < 2048)
+		{
+			assert(in.Append(2, Key(60, i)));
+			assert(in.Append(3, Key(60, i, Event::NoteOff)));
+		}
+		else
+			assert(in.Append(4, Damper(0)));
+		const std::vector<Played> events = Run(roll);
+		for (unsigned n = 0; n < events.size(); ++n)
+		{
+			assert(events[n].Value.Type != Event::Reset);
+			attacks += events[n].Value.Type == Event::NoteOn;
+			releases += events[n].Value.Type == Event::NoteOff;
+		}
+	}
+	assert(attacks == 2048 && releases == attacks);
 }
 
 static void ClipEditsAndPlayback()
@@ -489,7 +676,14 @@ int main(int argc, char **argv)
 	s_Host.BUFSIZE = 64;
 	s_Host.ROLLING = true;
 	s_Host.SAMPLERATE = 1000;
-	LiveKeyRelease();
+	LiveKeyRelease(67);
+	LiveKeyRelease(60);
+	FullMergedBlock();
+	LongPedalGesture();
+	TransportWithPedals(StopRoll);
+	TransportWithPedals(SeekRoll);
+	TransportWithPedals(WrapRoll);
+	std::puts("Stop, seek and loop release clip keys and sustain while preserving live keys and pedal tails");
 	FollowsTempoAndLaunchSample();
 	RecordsInMusicalTime();
 	SavedCueUsesTheClipRate();

@@ -48,8 +48,12 @@ PianoRollPlugin::PianoRollPlugin():
 	m_Length(DefaultLinearFlags, 0, 0, 3600, 0.01f, 1),
 	m_Position(Property::ReadOnly, 0, 0, 86400, 0.01f, 1),
 	m_NoteCount(Property::ReadOnly, 0, 0, EventClip::MaxEvents, 1, 1),
-	m_Scratch(new Outgoing[EventBuffer::Capacity]),
-	m_ScratchCount(0),
+	m_LiveConnected(false),
+	m_OutputQueue(new Outgoing[QUEUED_EVENTS]),
+	m_Queued(0),
+	m_QueueHead(0),
+	m_BlockFrame(0),
+	m_Overflow(false),
 	m_Playing(false),
 	m_Recording(false),
 	m_LaunchHigh(false),
@@ -63,8 +67,10 @@ PianoRollPlugin::PianoRollPlugin():
 	m_IDWrapped(false),
 	m_Rate(48000)
 {
+	std::memset(m_Pedal, 0, sizeof(m_Pedal));
+	m_Tails[Live] = m_Tails[Playback] = 0;
 	m_Held[Playback].reserve(MAX_HELD);
-	m_Held[Live].reserve(EventBuffer::Capacity);
+	m_Held[Live].reserve(MAX_HELD);
 	std::memset(&m_Args, 0, sizeof(m_Args));
 	RegisterSharedProperty(m_Saved, "Clip", "The recorded and edited notes");
 	RegisterSharedProperty(m_Loop, "Loop", "Repeat the clip");
@@ -117,7 +123,7 @@ PianoRollPlugin::PianoRollPlugin():
 
 PianoRollPlugin::~PianoRollPlugin()
 {
-	delete[] m_Scratch;
+	delete[] m_OutputQueue;
 }
 
 PluginInfo &PianoRollPlugin::Initialise(const HostInfo *Host)
@@ -150,9 +156,15 @@ uint64_t PianoRollPlugin::ClipLength() const
 
 void PianoRollPlugin::Queue(unsigned frame, const Event &value)
 {
-	Outgoing &out = m_Scratch[m_ScratchCount];
-	out.Frame = frame;
-	out.Order = m_ScratchCount++;
+	if (m_Queued == QUEUED_EVENTS)
+	{
+		m_Overflow = true;
+		return;
+	}
+
+	Outgoing &out = m_OutputQueue[(m_QueueHead + m_Queued) % QUEUED_EVENTS];
+	out.Frame = m_BlockFrame + frame;
+	++m_Queued;
 	out.Value = value;
 }
 
@@ -169,15 +181,102 @@ int PianoRollPlugin::NextID()
 		bool used = false;
 		for (unsigned s = 0; s < 2; ++s)
 			for (unsigned i = 0; i < m_Held[s].size(); ++i)
-				used = used || m_Held[s][i].OutputID == m_NextID;
+				used = used || m_Held[s][i].Off.ID == m_NextID;
 		if (!used)
 			return m_NextID;
 	}
 }
 
+float PianoRollPlugin::OutputPedal(int channel) const
+{
+	return std::max(m_Pedal[Playback][channel], m_Pedal[Live][channel]);
+}
+
+void PianoRollPlugin::QueuePedal(unsigned frame, int channel, float value)
+{
+	Event event;
+	event.Type = Event::Controller;
+	event.Channel = channel;
+	event.Parameter = 64;
+	event.Value = value;
+	Queue(frame, event);
+}
+
+void PianoRollPlugin::QueueRelease(unsigned frame, const Event &off)
+{
+	const float pedal = OutputPedal(off.Channel);
+	if (pedal >= .5f)
+		QueuePedal(frame, off.Channel, 0);
+	Queue(frame, off);
+	if (pedal >= .5f)
+		QueuePedal(frame, off.Channel, pedal);
+}
+
+// The native event receiver has at most 256 sounding lanes. Retire the
+// oldest pedal-held release when a long pedal gesture fills those lanes.
+// Physically held keys keep their mappings until their own releases arrive.
+void PianoRollPlugin::ReleaseTail(Source source, unsigned frame)
+{
+	std::vector<Held> &notes = m_Held[source];
+	for (unsigned i = 0; i < notes.size(); ++i)
+	{
+		if (notes[i].KeyDown)
+			continue;
+		QueueRelease(frame, notes[i].Off);
+		notes.erase(notes.begin() + i);
+		--m_Tails[source];
+		return;
+	}
+}
+
+// MIDI has a single damper per channel. Keep each source's pedal-held keys
+// down on the merged wire. This lets one source release without lifting the
+// other's notes, including notes whose physical keys are already up.
+void PianoRollPlugin::ReleaseNotes(Source source, unsigned frame, int channel, bool keysToo)
+{
+	std::vector<Held> &notes = m_Held[source];
+	const float pedal = OutputPedal(channel);
+	bool releasing = false;
+	unsigned keep = 0;
+	for (unsigned i = 0; i < notes.size(); ++i)
+	{
+		if (notes[i].Off.Channel == channel && (keysToo || !notes[i].KeyDown))
+		{
+			if (!releasing && pedal >= .5f)
+				QueuePedal(frame, channel, 0);
+			releasing = true;
+			Queue(frame, notes[i].Off);
+			if (!notes[i].KeyDown)
+				--m_Tails[source];
+		}
+		else
+		{
+			if (keep != i)
+				notes[keep] = notes[i];
+			++keep;
+		}
+	}
+	notes.resize(keep);
+	if (releasing && pedal >= .5f)
+		QueuePedal(frame, channel, pedal);
+}
+
+void PianoRollPlugin::Pedal(Source source, unsigned frame, const Event &event)
+{
+	const int channel = event.Channel;
+	const float previous = OutputPedal(channel);
+	m_Pedal[source][channel] = event.Value;
+	Event cc = event;
+	cc.Value = OutputPedal(channel);
+	if (cc.Value != previous || cc.Value == event.Value)
+		Queue(frame, cc);
+	if (event.Value < .5f)
+		ReleaseNotes(source, frame, channel, false);
+}
+
 void PianoRollPlugin::Emit(Source source, unsigned frame, const Event &event)
 {
-	if (m_ScratchCount == EventBuffer::Capacity)
+	if (m_Overflow)
 		return;
 
 	std::vector<Held> &notes = m_Held[source];
@@ -185,26 +284,85 @@ void PianoRollPlugin::Emit(Source source, unsigned frame, const Event &event)
 	if (event.Type == Event::NoteOn)
 	{
 		if (notes.size() == notes.capacity())
-			return;
+		{
+			if (!m_Tails[source])
+				return;
+			ReleaseTail(source, frame);
+		}
 		value.ID = NextID();
-		Held note = {event.Channel, event.ID, value.ID, event.NoteNum, event.Frequency};
+		Held note;
+		note.InputID = event.ID;
+		note.KeyDown = true;
+		note.Off = value;
+		note.Off.Type = Event::NoteOff;
 		notes.push_back(note);
 	}
 	else if (event.Type == Event::NoteOff)
 	{
 		// Clip pairing and live MIDI both release reused identities in arrival order.
 		unsigned i = 0;
-		while (i < notes.size() && !(notes[i].Channel == event.Channel && notes[i].InputID == event.ID))
+		while (i < notes.size() && !(notes[i].KeyDown && notes[i].Off.Channel == event.Channel &&
+					     notes[i].InputID == event.ID))
 			++i;
 		if (i == notes.size())
 			return;
-		value.ID = notes[i].OutputID;
-		value.NoteNum = notes[i].NoteNum;
-		value.Frequency = notes[i].Frequency;
+		value.ID = notes[i].Off.ID;
+		if (m_Pedal[source][event.Channel] >= .5f)
+		{
+			notes[i].KeyDown = false;
+			notes[i].Off = value;
+			if (++m_Tails[source] > MAX_PEDAL_TAILS)
+				ReleaseTail(source, frame);
+			return;
+		}
+		QueueRelease(frame, value);
 		notes.erase(notes.begin() + i);
+		return;
+	}
+	else if (event.Type == Event::Controller && event.Parameter == 64)
+	{
+		Pedal(source, frame, event);
+		return;
+	}
+	else if (event.Type == Event::Controller && (event.Parameter == 120 || event.Parameter == 123))
+	{
+		if (event.Parameter == 123 && m_Pedal[source][event.Channel] >= .5f)
+		{
+			for (unsigned i = 0; i < notes.size(); ++i)
+				if (notes[i].Off.Channel == event.Channel && notes[i].KeyDown)
+				{
+					notes[i].KeyDown = false;
+					++m_Tails[source];
+				}
+			while (m_Tails[source] > MAX_PEDAL_TAILS)
+				ReleaseTail(source, frame);
+		}
+		else
+			ReleaseNotes(source, frame, event.Channel, true);
+		return;
+	}
+	else if (event.Type == Event::Controller && event.Parameter == 121)
+	{
+		Queue(frame, event);
+		m_Pedal[source][event.Channel] = 0;
+		const float pedal = OutputPedal(event.Channel);
+		if (pedal != 0)
+			QueuePedal(frame, event.Channel, pedal);
+		ReleaseNotes(source, frame, event.Channel, false);
+		return;
 	}
 	else if (event.Type == Event::Reset)
 	{
+		// An upstream reset can clear the whole receiver during solo thru.
+		// During playback only the originating stream owns its releases.
+		if (source == Live && (!m_Playing || m_Recording))
+		{
+			notes.clear();
+			m_Tails[source] = 0;
+			std::memset(m_Pedal[source], 0, sizeof(m_Pedal[source]));
+			Queue(frame, event);
+			return;
+		}
 		ReleaseAll(source, frame);
 		return;
 	}
@@ -213,18 +371,18 @@ void PianoRollPlugin::Emit(Source source, unsigned frame, const Event &event)
 
 void PianoRollPlugin::ReleaseAll(Source source, unsigned frame)
 {
-	std::vector<Held> &notes = m_Held[source];
-	while (!notes.empty() && m_ScratchCount < EventBuffer::Capacity)
+	for (int channel = 0; channel < 16; ++channel)
 	{
-		const Held &note = notes.back();
-		Event off;
-		off.Type = Event::NoteOff;
-		off.ID = note.OutputID;
-		off.Channel = note.Channel;
-		off.NoteNum = note.NoteNum;
-		off.Frequency = note.Frequency;
-		Queue(frame, off);
-		notes.pop_back();
+		if (m_Pedal[source][channel] != 0)
+		{
+			const float previous = OutputPedal(channel);
+			m_Pedal[source][channel] = 0;
+			const float pedal = OutputPedal(channel);
+			if (pedal != previous)
+				QueuePedal(frame, channel, pedal);
+		}
+		if (!m_Held[source].empty())
+			ReleaseNotes(source, frame, channel, true);
 	}
 }
 
@@ -252,7 +410,7 @@ void PianoRollPlugin::Start(bool record)
 	}
 }
 
-void PianoRollPlugin::Stop(EventBuffer *out, unsigned frame)
+void PianoRollPlugin::Stop(unsigned frame)
 {
 	ReleaseAll(Playback, frame);
 
@@ -268,7 +426,7 @@ void PianoRollPlugin::InputEvent(const Event &event, unsigned frame, bool record
 	if (record && event.Type != Event::Reset && !m_Take.Append(m_Phase, event))
 	{
 		std::snprintf(m_RecordStatus, sizeof(m_RecordStatus), "Recording stopped at clip capacity");
-		Stop(NULL, frame);
+		Stop(frame);
 	}
 
 	if (ValueAsBoolean(m_Thru))
@@ -358,6 +516,11 @@ void PianoRollPlugin::Execute()
 	const EventBuffer *in = GetEventInput(0);
 	const unsigned frames = (unsigned)m_HostInfo->BUFSIZE;
 
+	const bool liveConnected = in && ValueAsBoolean(m_Thru);
+	if (m_LiveConnected && !liveConnected)
+		ReleaseAll(Live, 0);
+	m_LiveConnected = liveConnected;
+
 	const double bpm = frames && InputExists(3) ? GetInput(3, 0) : 0;
 	const bool follows = ClipTempo::Valid(bpm);
 	if (follows && !m_OriginalTempo)
@@ -376,11 +539,11 @@ void PianoRollPlugin::Execute()
 		const bool launch = InputExists(1) && GetInput(1, n) > 0.1f;
 		const bool stop = InputExists(2) && GetInput(2, n) > 0.1f;
 		if (stop && !m_StopHigh && m_Playing)
-			Stop(out, n);
+			Stop(n);
 		else if (launch && !m_LaunchHigh)
 		{
 			if (m_Playing)
-				Stop(out, n);
+				Stop(n);
 			Start(false);
 		}
 		m_LaunchHigh = launch;
@@ -410,17 +573,38 @@ void PianoRollPlugin::Execute()
 		m_Phase += m_Clock.Advance(advance);
 	}
 
-	std::stable_sort(m_Scratch, m_Scratch + m_ScratchCount);
+	// Match the event port's overflow contract. A partial group of pedal and
+	// release messages could otherwise leave notes sounding indefinitely.
+	if (m_Overflow)
+	{
+		m_Queued = 0;
+		Event reset;
+		reset.Type = Event::Reset;
+		Queue(0, reset);
+		m_Held[Live].clear();
+		m_Held[Playback].clear();
+		m_Tails[Live] = m_Tails[Playback] = 0;
+		std::memset(m_Pedal, 0, sizeof(m_Pedal));
+		m_Overflow = false;
+	}
 
 	if (out)
 	{
 		out->Clear(frames);
-
-		for (unsigned i = 0; i < m_ScratchCount; ++i)
-			out->Append(std::min(m_Scratch[i].Frame, frames - 1), m_Scratch[i].Value);
+		const unsigned count = frames ? std::min<unsigned>(m_Queued, EventBuffer::Capacity) : 0;
+		for (unsigned i = 0; i < count; ++i)
+		{
+			const Outgoing &event = m_OutputQueue[m_QueueHead];
+			const unsigned offset = event.Frame > m_BlockFrame ? unsigned(event.Frame - m_BlockFrame) : 0;
+			out->Append(offset, event.Value);
+			m_QueueHead = (m_QueueHead + 1) % QUEUED_EVENTS;
+		}
+		m_Queued -= count;
 	}
+	else
+		m_Queued = 0;
 
-	m_ScratchCount = 0;
+	m_BlockFrame += frames;
 	ValueSetBoolean(m_PlayingState, m_Playing);
 	ValueSetBoolean(m_RecordingState, m_Recording);
 	SetFloat(m_Position, (float)((double)m_Phase / m_Clip.Rate()));
@@ -443,7 +627,7 @@ void PianoRollPlugin::ExecuteCommands()
 			break;
 		case STOP:
 			if (m_Playing)
-				Stop(NULL, 0);
+				Stop(0);
 
 			break;
 		case RECORD:
