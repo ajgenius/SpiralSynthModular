@@ -57,10 +57,11 @@ int main()
 	WaitAt(client, Period);
 	result = Period;
 	assert(stream.Transfer(Period) && stream.Timing(after));
-	assert(after.Epoch == before.Epoch + 1 && after.Frame == before.Frame);
+	assert(!before.PlaybackRestart && after.PlaybackRestart);
+	assert(after.Epoch == before.Epoch + 1 && after.Frame == before.Frame + Period);
 	WaitAt(client, 2 * Period);
 	assert(stream.Transfer(Period) && stream.Timing(before));
-	assert(before.Epoch == after.Epoch && writes == 4);
+	assert(before.PlaybackRestart && before.Epoch == after.Epoch && writes == 4);
 
 	// Preserve the accepted prefix of a short write. Retrying it would
 	// duplicate frames. An unrelated device error must also remain fatal.

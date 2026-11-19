@@ -22,9 +22,11 @@ struct AudioCycleTiming
 	unsigned Epoch;
 	bool Valid;
 	bool Estimated;
+	// This epoch follows a recovered write on the same playback device.
+	bool PlaybackRestart;
 
 	AudioCycleTiming() : Frame(0), CallbackTime(0), InputTime(0), OutputTime(0),
-		SampleRate(0), Step(0), Frames(0), Epoch(0), Valid(false), Estimated(false) {}
+		SampleRate(0), Step(0), Frames(0), Epoch(0), Valid(false), Estimated(false), PlaybackRestart(false) {}
 };
 
 struct AudioStamp

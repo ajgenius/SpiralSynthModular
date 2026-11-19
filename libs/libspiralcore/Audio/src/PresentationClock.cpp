@@ -24,6 +24,16 @@ bool PresentationClock::Prepare(double now, unsigned frames, double rate,
 		master->SampleRate > 0 && now - master->CallbackTime < 0.25;
 	const double nativeRate = native ? master->SampleRate : rate;
 	const double step = native ? master->Step * nativeRate / rate : 1 / rate;
+
+	// After a short write underrun, queued samples still carry valid DAC
+	// times. Re-anchor the accepted-frame counter to the next render time.
+	if (m_Ready && m_Native && native && master->PlaybackRestart &&
+		master->Epoch == m_MasterEpoch + 1 && m_NextTime >= now)
+	{
+		m_TargetFrame = double(master->Frame) + (m_NextTime - master->OutputTime) / master->Step;
+		m_MasterEpoch = master->Epoch;
+	}
+
 	if ((native && master->Epoch != m_MasterEpoch) || m_Native != native || m_Rate != rate || m_MasterRate != nativeRate ||
 		ahead > m_Ahead + 0.5 / rate || (m_Ready && now > m_NextTime + 0.05)) m_Ready = false;
 

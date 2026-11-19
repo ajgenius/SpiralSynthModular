@@ -32,7 +32,7 @@ void AudioStream::Clear()
 	m_Capacity = m_EngineFrames = 0;
 	m_Client = NULL;
 	m_LastTiming.Valid = false;
-	m_PreviousTiming.Valid = false;
+	m_PreviousTiming = AudioCycleTiming();
 	++m_NativeEpoch;
 	AudioCycleTiming unused;
 	m_Mailbox.Read(unused);
@@ -142,6 +142,8 @@ bool AudioStream::Transfer(unsigned frames, double &startTime)
 
 	if (m_Output.empty()) timing.OutputTime = timing.InputTime;
 
+	timing.Epoch = m_NativeEpoch;
+	timing.PlaybackRestart = m_PreviousTiming.PlaybackRestart;
 	if (m_PreviousTiming.Valid)
 	{
 		const double elapsed = timing.OutputTime - m_PreviousTiming.OutputTime;
@@ -149,22 +151,20 @@ bool AudioStream::Transfer(unsigned frames, double &startTime)
 		if (timing.Frame <= m_PreviousTiming.Frame ||
 			std::fabs(elapsed - predicted) > std::max(0.002, timing.Frames / timing.SampleRate * 0.5))
 		{
-			++m_NativeEpoch;
+			timing.PlaybackRestart = false;
+			++timing.Epoch;
 			m_InputRate.Reset();
 			m_OutputRate.Reset();
 		}
 
 	}
 
-	timing.Epoch = m_NativeEpoch;
-	m_PreviousTiming = timing;
 	double inputStep = m_InputRate.Observe(timing.Frame, timing.InputTime, timing.SampleRate);
 	double outputStep = m_OutputRate.Observe(timing.Frame, timing.OutputTime, timing.SampleRate);
 	if (timing.Step > 0 && std::fabs(timing.Step * timing.SampleRate - 1) < 0.01)
 		inputStep = outputStep = timing.Step;
 
 	timing.Step = m_Output.empty() ? inputStep : outputStep;
-	m_Mailbox.Publish(timing);
 	AudioStamp stamp;
 	stamp.Frame = timing.Frame;
 	stamp.Generation = __sync_fetch_and_add(&m_Generation, 0);
@@ -226,11 +226,17 @@ bool AudioStream::Transfer(unsigned frames, double &startTime)
 		// consume fresh audio before writing to the restarted device.
 		++m_NativeEpoch;
 		m_PreviousTiming.Valid = false;
+		m_PreviousTiming.PlaybackRestart = true;
 		m_InputRate.Reset();
 		m_OutputRate.Reset();
-		complete = false;
+		__sync_fetch_and_add(&m_Errors, 1);
+		return true;
 	}
 
+	// Only completed transfers establish the native presentation clock.
+	m_NativeEpoch = timing.Epoch;
+	m_PreviousTiming = timing;
+	m_Mailbox.Publish(timing);
 	if (!complete) __sync_fetch_and_add(&m_Errors, 1);
 	return true;
 }
@@ -293,6 +299,7 @@ bool AudioStream::PublishPreparedTiming()
 	if (!prepared || !prepared->PreparedTiming(timing))
 		return false;
 
+	timing.PlaybackRestart = false;
 	timing.Epoch = m_NativeEpoch;
 	m_Mailbox.Publish(timing);
 	return true;

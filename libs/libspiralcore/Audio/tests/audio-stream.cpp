@@ -183,6 +183,23 @@ static void ClockTransitions()
 		assert(clock.Prepare(106.0201, 480, 48000, &native, 0.04, stamp));
 
 	assert(stamp.Generation != generation && stamp.Frame == 1920);
+
+	const unsigned queuedGeneration = stamp.Generation;
+	const double queuedEnd = stamp.Time + 480 * stamp.Step;
+	clock.Commit(480);
+	native.PlaybackRestart = true;
+	++native.Epoch;
+	native.CallbackTime = native.OutputTime = 106.03;
+	assert(clock.Prepare(106.0301, 480, 48000, &native, 0.04, stamp));
+	assert(stamp.Generation == queuedGeneration && stamp.Frame == 2400);
+	assert(std::fabs(stamp.Time - queuedEnd) < 1e-9);
+
+	clock.Commit(480);
+	++native.Epoch;
+	native.CallbackTime = native.OutputTime = 107;
+	if (!clock.Prepare(107, 480, 48000, &native, 0.04, stamp))
+		assert(clock.Prepare(107.0001, 480, 48000, &native, 0.04, stamp));
+	assert(stamp.Generation != queuedGeneration && stamp.Frame == 2880);
 }
 static void StallRecovery()
 {
