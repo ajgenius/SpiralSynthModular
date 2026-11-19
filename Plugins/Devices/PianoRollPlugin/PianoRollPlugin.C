@@ -48,7 +48,6 @@ PianoRollPlugin::PianoRollPlugin():
 	m_Length(DefaultLinearFlags, 0, 0, 3600, 0.01f, 1),
 	m_Position(Property::ReadOnly, 0, 0, 86400, 0.01f, 1),
 	m_NoteCount(Property::ReadOnly, 0, 0, EventClip::MaxEvents, 1, 1),
-	m_HeldCount(0),
 	m_Scratch(new Outgoing[EventBuffer::Capacity]),
 	m_ScratchCount(0),
 	m_Playing(false),
@@ -61,8 +60,11 @@ PianoRollPlugin::PianoRollPlugin():
 	m_TempoPaused(false),
 	m_Next(0),
 	m_NextID(0),
+	m_IDWrapped(false),
 	m_Rate(48000)
 {
+	m_Held[Playback].reserve(MAX_HELD);
+	m_Held[Live].reserve(EventBuffer::Capacity);
 	std::memset(&m_Args, 0, sizeof(m_Args));
 	RegisterSharedProperty(m_Saved, "Clip", "The recorded and edited notes");
 	RegisterSharedProperty(m_Loop, "Loop", "Repeat the clip");
@@ -146,65 +148,84 @@ uint64_t PianoRollPlugin::ClipLength() const
 	return set ? set : m_Clip.Length();
 }
 
-void PianoRollPlugin::Emit(EventBuffer *, unsigned frame, const Event &event)
+void PianoRollPlugin::Queue(unsigned frame, const Event &value)
 {
-	if (m_ScratchCount == EventBuffer::Capacity)
-		return;
-
-	Event value = event;
-
-	if (event.Type == Event::NoteOn)
-	{
-		if (m_HeldCount == MAX_HELD || m_NextID == INT_MAX)
-			return;
-
-		Held &held = m_Held[m_HeldCount++];
-		held.Channel = event.Channel;
-		held.ClipID = event.ID;
-		held.OutputID = ++m_NextID;
-		held.NoteNum = event.NoteNum;
-		held.Frequency = event.Frequency;
-		value.ID = held.OutputID;
-	}
-	else if (event.Type == Event::NoteOff)
-	{
-		unsigned i = 0;
-
-		while (i < m_HeldCount && !(m_Held[i].Channel == event.Channel && m_Held[i].ClipID == event.ID))
-			++i;
-
-		if (i == m_HeldCount)
-			return;
-
-		value.ID = m_Held[i].OutputID;
-		m_Held[i] = m_Held[--m_HeldCount];
-	}
-	else if (event.Type == Event::Reset)
-		return;
-
 	Outgoing &out = m_Scratch[m_ScratchCount];
 	out.Frame = frame;
 	out.Order = m_ScratchCount++;
 	out.Value = value;
 }
 
-void PianoRollPlugin::ReleaseAll(EventBuffer *, unsigned frame)
+int PianoRollPlugin::NextID()
 {
-	for (unsigned i = 0; i < m_HeldCount && m_ScratchCount < EventBuffer::Capacity; ++i)
+	// Only a counter that has wrapped can encounter an ID still in use.
+	if (m_NextID < INT_MAX && !m_IDWrapped)
+		return ++m_NextID;
+
+	m_IDWrapped = true;
+	for (;;)
 	{
+		m_NextID = m_NextID == INT_MAX ? 1 : m_NextID + 1;
+		bool used = false;
+		for (unsigned s = 0; s < 2; ++s)
+			for (unsigned i = 0; i < m_Held[s].size(); ++i)
+				used = used || m_Held[s][i].OutputID == m_NextID;
+		if (!used)
+			return m_NextID;
+	}
+}
+
+void PianoRollPlugin::Emit(Source source, unsigned frame, const Event &event)
+{
+	if (m_ScratchCount == EventBuffer::Capacity)
+		return;
+
+	std::vector<Held> &notes = m_Held[source];
+	Event value = event;
+	if (event.Type == Event::NoteOn)
+	{
+		if (notes.size() == notes.capacity())
+			return;
+		value.ID = NextID();
+		Held note = {event.Channel, event.ID, value.ID, event.NoteNum, event.Frequency};
+		notes.push_back(note);
+	}
+	else if (event.Type == Event::NoteOff)
+	{
+		// Clip pairing and live MIDI both release reused identities in arrival order.
+		unsigned i = 0;
+		while (i < notes.size() && !(notes[i].Channel == event.Channel && notes[i].InputID == event.ID))
+			++i;
+		if (i == notes.size())
+			return;
+		value.ID = notes[i].OutputID;
+		value.NoteNum = notes[i].NoteNum;
+		value.Frequency = notes[i].Frequency;
+		notes.erase(notes.begin() + i);
+	}
+	else if (event.Type == Event::Reset)
+	{
+		ReleaseAll(source, frame);
+		return;
+	}
+	Queue(frame, value);
+}
+
+void PianoRollPlugin::ReleaseAll(Source source, unsigned frame)
+{
+	std::vector<Held> &notes = m_Held[source];
+	while (!notes.empty() && m_ScratchCount < EventBuffer::Capacity)
+	{
+		const Held &note = notes.back();
 		Event off;
 		off.Type = Event::NoteOff;
-		off.ID = m_Held[i].OutputID;
-		off.Channel = m_Held[i].Channel;
-		off.NoteNum = m_Held[i].NoteNum;
-		off.Frequency = m_Held[i].Frequency;
-		Outgoing &out = m_Scratch[m_ScratchCount];
-		out.Frame = frame;
-		out.Order = m_ScratchCount++;
-		out.Value = off;
+		off.ID = note.OutputID;
+		off.Channel = note.Channel;
+		off.NoteNum = note.NoteNum;
+		off.Frequency = note.Frequency;
+		Queue(frame, off);
+		notes.pop_back();
 	}
-
-	m_HeldCount = 0;
 }
 
 void PianoRollPlugin::Start(bool record)
@@ -223,7 +244,7 @@ void PianoRollPlugin::Start(bool record)
 	if (record && !m_Recording)
 	{
 		// The roll under a take is not heard; what was sounding stops.
-		ReleaseAll(NULL, 0);
+		ReleaseAll(Playback, 0);
 		m_Recording = true;
 		m_RecordStart = m_Phase;
 		m_Take.Clear(m_Clip.Rate());
@@ -233,7 +254,7 @@ void PianoRollPlugin::Start(bool record)
 
 void PianoRollPlugin::Stop(EventBuffer *out, unsigned frame)
 {
-	ReleaseAll(out, frame);
+	ReleaseAll(Playback, frame);
 
 	if (m_Recording && !MergeRecording())
 		std::snprintf(m_RecordStatus, sizeof(m_RecordStatus), "Take exceeds capacity. Original clip retained.");
@@ -250,13 +271,8 @@ void PianoRollPlugin::InputEvent(const Event &event, unsigned frame, bool record
 		Stop(NULL, frame);
 	}
 
-	if (ValueAsBoolean(m_Thru) && m_ScratchCount < EventBuffer::Capacity)
-	{
-		Outgoing &out = m_Scratch[m_ScratchCount];
-		out.Frame = frame;
-		out.Order = m_ScratchCount++;
-		out.Value = event;
-	}
+	if (ValueAsBoolean(m_Thru))
+		Emit(Live, frame, event);
 }
 
 // The take replaces what it ran over, from where Record began to where it
@@ -348,7 +364,7 @@ void PianoRollPlugin::Execute()
 		m_OriginalTempo = bpm;
 	const bool paused = follows && !m_HostInfo->ROLLING;
 	if (paused && !m_TempoPaused && m_Playing)
-		ReleaseAll(out, 0);
+		ReleaseAll(Playback, 0);
 	m_TempoPaused = paused;
 
 	const double advance = double(m_Clip.Rate()) / m_Rate * (follows ? bpm / m_OriginalTempo : 1.0);
@@ -378,8 +394,8 @@ void PianoRollPlugin::Execute()
 		if (!m_Recording && length && m_Phase >= length)
 		{
 			while (m_Next < m_Clip.Count() && m_Clip.FrameAt(m_Next) <= length)
-				Emit(out, n, m_Clip.At(m_Next++));
-			ReleaseAll(out, n);
+				Emit(Playback, n, m_Clip.At(m_Next++));
+			ReleaseAll(Playback, n);
 			SetOutput(1, n, 1);
 			if (!ValueAsBoolean(m_Loop))
 			{
@@ -390,7 +406,7 @@ void PianoRollPlugin::Execute()
 			m_Next = 0;
 		}
 		while (!m_Recording && m_Next < m_Clip.Count() && m_Clip.FrameAt(m_Next) <= m_Phase)
-			Emit(out, n, m_Clip.At(m_Next++));
+			Emit(Playback, n, m_Clip.At(m_Next++));
 		m_Phase += m_Clock.Advance(advance);
 	}
 
@@ -435,7 +451,7 @@ void PianoRollPlugin::ExecuteCommands()
 
 			break;
 		case CLEAR:
-			ReleaseAll(NULL, 0);
+			ReleaseAll(Playback, 0);
 			m_Playing = m_Recording = false;
 			m_RecordStatus[0] = 0;
 			m_Clip.Clear(m_Rate);
@@ -464,7 +480,7 @@ void PianoRollPlugin::ExecuteCommands()
 			// what was sounding is let go. A take is not moved.
 			if (!m_Recording && m_Args.Start >= 0)
 			{
-				ReleaseAll(NULL, 0);
+				ReleaseAll(Playback, 0);
 				m_Clock.Reset();
 				m_Phase = std::min(start, ClipLength());
 				moved = true;

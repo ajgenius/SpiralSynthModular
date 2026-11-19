@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "PianoRollPlugin.h"
 #include "EventBuffer.h"
+#include "EventVoices.h"
 #include "EventClip.h"
 #include "PatchFile.h"
 #include "PatchProject.h"
@@ -49,6 +50,49 @@ static std::vector<Played> Run(PianoRollPlugin &roll)
 	}
 
 	return out;
+}
+
+static Event Key(int key, int id, Event::Kind kind = Event::NoteOn)
+{
+	Event event;
+	event.Type = kind;
+	event.ID = id;
+	event.NoteNum = key;
+	return event;
+}
+
+static bool Sounding(const EventVoices &voices, int key)
+{
+	for (unsigned i = 0; i < voices.Count(); ++i)
+		if (voices.Get(i).Key == key && voices.Get(i).Level > 0)
+			return true;
+	return false;
+}
+
+static void LiveKeyRelease()
+{
+	PianoRollPlugin roll;
+	roll.Initialise(&s_Host);
+	AddNote(roll, 0, .2, 60, .75f);
+	EventBuffer input;
+	input.Clear(s_Host.BUFSIZE);
+	assert(roll.SetEventInput(0, &input));
+	assert(input.Append(3, Key(67, 1)));
+	assert(input.Append(4, Key(67, 1)));
+	assert(input.Append(7, Key(67, 1, Event::NoteOff)));
+	assert(input.Append(9, Key(67, 1, Event::NoteOff)));
+	assert(input.Append(10, Key(60, 1, Event::NoteOff))); // Orphaned live release.
+	Command(roll, PianoRollPlugin::PLAY);
+	const std::vector<Played> out = Run(roll);
+	assert(out.size() == 5);
+	assert(out[0].Value.ID != out[1].Value.ID && out[1].Value.ID != out[2].Value.ID);
+	assert(out[3].Value.ID == out[1].Value.ID && out[4].Value.ID == out[2].Value.ID);
+	EventVoices voices;
+	voices.Configure(4);
+	for (unsigned i = 0; i < out.size(); ++i)
+		voices.Apply(out[i].Value);
+	assert(Sounding(voices, 60) && !Sounding(voices, 67));
+	std::puts("Live releases pair in arrival order and leave the sequenced note sounding");
 }
 
 static void ClipEditsAndPlayback()
@@ -445,6 +489,7 @@ int main(int argc, char **argv)
 	s_Host.BUFSIZE = 64;
 	s_Host.ROLLING = true;
 	s_Host.SAMPLERATE = 1000;
+	LiveKeyRelease();
 	FollowsTempoAndLaunchSample();
 	RecordsInMusicalTime();
 	SavedCueUsesTheClipRate();

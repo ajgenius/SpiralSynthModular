@@ -57,9 +57,11 @@ public:
 	bool Recording() const { return m_Recording; }
 
 private:
+	enum Source { Playback, Live };
+
 	struct Held
 	{
-		int Channel, ClipID, OutputID, NoteNum;
+		int Channel, InputID, OutputID, NoteNum;
 		float Frequency;
 	};
 
@@ -84,8 +86,10 @@ private:
 	uint64_t ClipLength() const;
 	void Start(bool record);
 	void Stop(Spiral::Core::EventBuffer *out, unsigned frame);
-	void Emit(Spiral::Core::EventBuffer *out, unsigned frame, const Spiral::Core::Event &event);
-	void ReleaseAll(Spiral::Core::EventBuffer *out, unsigned frame);
+	void Queue(unsigned frame, const Spiral::Core::Event &value);
+	void Emit(Source source, unsigned frame, const Spiral::Core::Event &event);
+	int NextID();
+	void ReleaseAll(Source source, unsigned frame);
 	void InputEvent(const Spiral::Core::Event &event, unsigned frame, bool record);
 	bool MergeRecording();
 	void Published();
@@ -98,8 +102,7 @@ private:
 	Spiral::Core::FloatProperty m_Length, m_Position;
 	Spiral::Core::UnsignedProperty m_NoteCount;
 	Args m_Args;
-	Held m_Held[MAX_HELD];
-	unsigned m_HeldCount;
+	std::vector<Held> m_Held[2];
 	Outgoing *m_Scratch;
 	unsigned m_ScratchCount;
 	bool m_Playing, m_Recording, m_LaunchHigh, m_StopHigh;
@@ -111,6 +114,7 @@ private:
 	bool m_TempoPaused;
 	unsigned m_Next;
 	int m_NextID;
+	bool m_IDWrapped;
 	unsigned m_Rate;
 };
 
