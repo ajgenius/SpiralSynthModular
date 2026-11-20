@@ -72,6 +72,10 @@ sampler_voices_test_SOURCES = tests/sampler-voices.cpp Plugins/Devices/PoshSampl
 sampler_voices_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/Devices/PoshSamplerPlugin
 sampler_voices_test_LDADD = libs/libspiralcore/libspiralcore.la
 
+check_PROGRAMS += event-voices-test
+event_voices_test_SOURCES = tests/event-voices.cpp
+event_voices_test_LDADD = libs/libspiralcore/libspiralcore.la
+
 check_PROGRAMS += piano-roll-test
 piano_roll_test_SOURCES = tests/piano-roll.cpp Plugins/Devices/PianoRollPlugin/PianoRollPlugin.C
 piano_roll_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/Devices/PianoRollPlugin

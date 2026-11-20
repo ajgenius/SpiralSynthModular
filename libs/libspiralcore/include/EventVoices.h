@@ -135,10 +135,7 @@ namespace Core
 					if (event.Parameter == 120 || event.Parameter == 123)
 						voice.Held = false;
 					if (event.Parameter == 120 || (!sustain[channel] && !voice.Held))
-					{
-						voice.Released = voice.Released || voice.Level != 0;
-						voice.Level = 0;
-					}
+						Silence(voice);
 				}
 			}
 			if (event.Type == Event::NoteOff)
@@ -147,26 +144,24 @@ namespace Core
 					{
 						lanes[i].Held = false;
 						if (!sustain[channel])
-						{
-							lanes[i].Released = lanes[i].Released || lanes[i].Level != 0;
-							lanes[i].Level = 0;
-						}
+							Silence(lanes[i]);
 					}
 			if (event.Type != Event::NoteOn)
 				return;
+			// Prefer the longest-idle lane so recent release tails can ring out.
+			// When all lanes sound, steal the oldest note.
 			unsigned selected = 0;
-			for (unsigned i = 0; i < count && lane < 0; ++i)
+			for (unsigned i = 1; lane < 0 && i < count; ++i)
 			{
-				if (lanes[i].Level == 0)
-				{
-					selected = i;
-					break;
-				}
-				if (lanes[i].Age < lanes[selected].Age)
+				const bool free = lanes[i].Level == 0;
+				const bool chosen = lanes[selected].Level == 0;
+
+				if ((free && !chosen) || (free == chosen && lanes[i].Age < lanes[selected].Age))
 					selected = i;
 			}
 			if (lane >= 0 && unsigned(lane) < count)
 				selected = unsigned(lane);
+
 			Voice &voice = lanes[selected];
 			voice.Retrigger = voice.Level != 0 || voice.Released;
 			voice.ID = event.ID;
@@ -179,6 +174,18 @@ namespace Core
 		}
 
 	private:
+		// A lane's age is when its note started, or when it fell silent.
+		void Silence(Voice &voice)
+		{
+			if (voice.Level == 0)
+				return;
+
+			voice.Age = ++serial;
+			voice.Level = 0;
+			// A new attack before Gate() renders this release still needs a low sample.
+			voice.Released = true;
+		}
+
 		Voice lanes[256];
 		bool sustain[16];
 		float bend[16];
