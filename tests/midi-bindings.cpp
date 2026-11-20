@@ -2,6 +2,8 @@
 #include "SpiralSynthModular.h"
 #include "SpiralInfo.h"
 #include "Midi.h"
+#include "EventBuffer.h"
+#include <cmath>
 #include "FltkView.h"
 #include "PatchFile.h"
 #include "Plugins/Devices/PianoRollPlugin/PianoRollPlugin.h"
@@ -103,6 +105,108 @@ static Fl_Widget *Widget(SynthModular &synth, const std::string &device, const c
 	return Spiral::Panels::FltkView::WidgetOf(*target);
 }
 
+// Keep references to the actual filter instances so the test can read the CV
+// buffers connected by the host, including the two hidden voices.
+static std::vector<SpiralPlugin *> filters;
+static SpiralPlugin *CreateFilter()
+{
+	SpiralPlugin *filter = DeviceClassRegistry::Get()->Find(11)->CreateInstance();
+	filters.push_back(filter);
+	return filter;
+}
+
+static void Chords(SynthModular &synth)
+{
+	synth.ClearUp();
+	DeviceClass probe = *DeviceClassRegistry::Get()->Find(11);
+	probe.ID = 10011;
+	probe.Name = "Chord test filter";
+	probe.Create = CreateFilter;
+	probe.Build = NULL;
+	probe.Panel.clear();
+	probe.PanelGenerated = false;
+	assert(DeviceClassRegistry::Get()->Register(probe));
+	synth.AddDevice(2, 50, 50);
+	synth.AddDevice(probe.ID, 150, 50);
+	PatchDescription patch;
+	Describe(patch, synth, "");
+	patch.Voices = 3;
+	for (int port = 0; port < 3; ++port)
+	{
+		WireDescription &wire = patch.AddWire();
+		wire.FromDevice = "0";
+		wire.ToDevice = "1";
+		wire.FromPort = wire.ToPort = std::string(1, '0' + port);
+	}
+	synth.ClearUp();
+	filters.clear();
+	synth.Apply(patch, "");
+	synth.FreezeAll();
+	assert(filters.size() == 3);
+	SpiralPlugin *midi = synth.cb_FindDevice(0, &synth);
+	assert(midi);
+	const unsigned keys[] = {60, 64, 67};
+	const unsigned velocities[] = {127, 80, 40};
+	for (unsigned i = 0; i < 3; ++i)
+		Hear(0x90, keys[i], velocities[i]);
+	midi->Execute();
+	const EventBuffer *events = midi->GetEventOutput(midi->GetPluginInfo().NumOutputs - 1);
+	assert(events && events->Count() == 3);
+	for (unsigned i = 0; i < 3; ++i)
+	{
+		const Sample *pitch = filters[i]->GetInput(0), *gate = filters[i]->GetInput(1);
+		assert(pitch && gate && events->At(i).NoteNum == int(keys[i]));
+		assert(std::fabs((*pitch)[1] - (events->At(i).Frequency / MAX_FREQ * 2 - 1)) < 1e-6f);
+		assert((*gate)[1] == velocities[i] / 127.f);
+		assert(filters[i]->GetInput(2) && filters[i]->GetInput(2) == filters[0]->GetInput(2));
+	}
+	Hear(0x80, 64, 0);
+	midi->Execute();
+	assert((*filters[0]->GetInput(1))[1] == 1 && (*filters[1]->GetInput(1))[1] == 0);
+	assert((*filters[2]->GetInput(1))[1] == 40 / 127.f);
+
+	Hear(0x90, 60, 70); // A second C occupies the free voice.
+	midi->Execute();
+	assert((*filters[1]->GetInput(1))[1] == 70 / 127.f);
+	Hear(0x80, 60, 0);
+	midi->Execute();
+	assert((*filters[0]->GetInput(1))[1] == 0 && (*filters[1]->GetInput(1))[1] == 70 / 127.f);
+	Hear(0xb0, 64, 127);
+	Hear(0xb0, 123, 0);
+	midi->Execute();
+	assert((*filters[1]->GetInput(1))[1] == 70 / 127.f && (*filters[2]->GetInput(1))[1] > 0);
+	Hear(0xb0, 64, 0);
+	midi->Execute();
+	for (unsigned i = 0; i < 3; ++i)
+		assert((*filters[i]->GetInput(1))[1] == 0);
+
+	Hear(0x90, 72, 100);
+	midi->Execute();
+	Device *device = dynamic_cast<Device *>(midi);
+	assert(device);
+	SignedProperty channel(DefaultLinearFlags, 1, 0, 15, 1, 1);
+	device->SynchronizeProperty("DEVICENUM", &channel);
+	midi->Execute();
+	assert(events->Count() == 1 && events->At(0).Type == Event::Reset);
+	for (unsigned i = 0; i < 3; ++i)
+		assert((*filters[i]->GetInput(1))[1] == 0);
+	synth.ThawAll();
+
+	synth.ClearUp();
+	filters.clear();
+	patch.Voices = 1;
+	synth.Apply(patch, "");
+	synth.FreezeAll();
+	assert(filters.size() == 1);
+	Hear(0x90, 60, 127);
+	Hear(0x90, 67, 40);
+	midi = synth.cb_FindDevice(0, &synth);
+	midi->Execute();
+	assert((*filters[0]->GetInput(1))[0] == 0 && (*filters[0]->GetInput(1))[1] == 40 / 127.f);
+	synth.ThawAll();
+	puts("MIDI pitch and trigger on real patch wires: three voices, overlapping keys, sustain and mono PASS");
+}
+
 int main(int argc, char **argv)
 {
 	alarm(30);
@@ -118,6 +222,9 @@ int main(int argc, char **argv)
 	assert(!pthread_create(&thread, NULL, Host::Run, &host));
 	assert(MidiDevice::Get() && MidiDevice::Get()->GetBackendName() == "script");
 
+	Chords(synth);
+	Pass(synth);
+	synth.ClearUp();
 	synth.AddDevice(11, 50, 50);
 	synth.AddDevice(288, 100, 100);
 	Fl_Valuator *knob = dynamic_cast<Fl_Valuator *>(Widget(synth, "0", "resonance-knob"));

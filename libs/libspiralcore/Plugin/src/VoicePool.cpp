@@ -33,6 +33,12 @@ void VoicePool::SetLookup(Lookup find, void *host)
 void VoicePool::Add(int id, SpiralPlugin *device, const Spiral::Core::DeviceClass &kind, unsigned voices,
 	const HostInfo *info, const std::string &sidecars)
 {
+	if (dynamic_cast<VoiceOutputSource *>(device))
+	{
+		m_Members[id];
+		device->SetVoice(device, 0, voices);
+		return;
+	}
 	Spiral::Core::Description state;
 	device->Describe(state);
 	std::vector<SpiralPlugin *> &copies = m_Members[id].Copies;
@@ -61,6 +67,9 @@ void VoicePool::Add(int id, SpiralPlugin *device, const Spiral::Core::DeviceClas
 
 void VoicePool::SumOut(const Wire &wire, int size)
 {
+	// Crossing into another pool keeps the visible CV and the shared event stream.
+	if (dynamic_cast<VoiceOutputSource *>(Find(wire.OutputID)))
+		return;
 	std::vector<Sum> &sums = m_Sums[wire.OutputID];
 	Sample *sum = 0;
 	for (size_t s = 0; s < sums.size() && !sum; ++s)
@@ -94,11 +103,15 @@ void VoicePool::Feed(const Wire &wire, bool sourceHere)
 				: visible->GetEventInput(wire.InputPort));
 		return;
 	}
+	VoiceOutputSource *outputs = from == m_Members.end() ? NULL
+		: dynamic_cast<VoiceOutputSource *>(Find(wire.OutputID));
 	for (size_t v = 0; v < copies.size(); ++v)
 	{
 		const Sample *in = visible->GetInput(wire.InputPort);
 		Sample *out = 0;
-		if (sources && v < sources->size() && (*sources)[v]->GetOutput(wire.OutputPort, &out))
+		if (outputs && (out = outputs->VoiceOutput(wire.OutputPort, v + 1)))
+			in = out;
+		else if (sources && v < sources->size() && (*sources)[v]->GetOutput(wire.OutputPort, &out))
 			in = out;
 		copies[v]->SetInput(wire.InputPort, in);
 	}
@@ -138,7 +151,7 @@ bool VoicePool::Follow()
 	for (std::map<int, Member>::iterator m = m_Members.begin(); m != m_Members.end(); ++m)
 	{
 		SpiralPlugin *device = Find(m->first);
-		if (!device)
+		if (!device || m->second.Copies.empty())
 			continue;
 		if (const VoiceStateKey *source = dynamic_cast<const VoiceStateKey *>(device))
 		{

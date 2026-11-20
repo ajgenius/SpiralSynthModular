@@ -70,7 +70,9 @@ m_PitchBendLevel(0),
 m_ChannelPressureLevel(0),
 m_AfterTouchLevel(0),
 m_CurrentNote(0),
-m_NextID(0)
+m_NextID(0),
+m_LastChannel(-1),
+m_ResetEvents(false)
 {
 	for (int n=0; n<1024; n++) m_Held[n].ID=-1;
 
@@ -148,6 +150,69 @@ PluginInfo &MidiPlugin::Initialise(const HostInfo *Host)
 	return Info;
 }
 
+void MidiPlugin::SetVoice(SpiralPlugin *, unsigned, unsigned voices)
+{
+	m_Voices.Configure(voices);
+	m_ExtraVoices.resize(m_Voices.Count() - 1);
+	ClearVoiceOutputs();
+}
+
+Sample *MidiPlugin::VoiceOutput(unsigned port, unsigned voice)
+{
+	if (port > 1 || voice >= m_Voices.Count())
+		return NULL;
+	if (!voice)
+		return GetOutputBuf(port);
+	return port == 0 ? &m_ExtraVoices[voice - 1].Pitch : &m_ExtraVoices[voice - 1].Gate;
+}
+
+void MidiPlugin::Reset()
+{
+	SpiralPlugin::Reset();
+	m_ResetEvents = m_LastChannel >= 0;
+	ClearVoiceOutputs();
+}
+
+void MidiPlugin::ClearVoiceOutputs()
+{
+	m_Voices.Reset();
+	m_TriggerLevel = m_NoteLevel = 0;
+	for (size_t i = 0; i < m_ExtraVoices.size(); ++i)
+	{
+		VoiceCV &cv = m_ExtraVoices[i];
+		if (cv.Pitch.GetLength() != m_HostInfo->BUFSIZE)
+		{
+			cv.Pitch.Allocate(m_HostInfo->BUFSIZE);
+			cv.Gate.Allocate(m_HostInfo->BUFSIZE);
+		}
+		cv.Pitch.Set(-1);
+		cv.Gate.Zero();
+	}
+}
+
+void MidiPlugin::RenderVoices(const EventBuffer &events)
+{
+	// Backend packets enter at frame zero. The Events jack and the CV lanes
+	// consume the same note identities, including overlapping strikes.
+	for (unsigned i = 0; i < events.Count(); ++i)
+		m_Voices.Apply(events.At(i));
+	for (unsigned v = 0; v < m_Voices.Count(); ++v)
+	{
+		const EventVoices::Voice &note = m_Voices.Get(v);
+		const float hz = note.ID < 0 || (AsBoolean(m_NoteCut) && note.Level == 0)
+			? 0 : note.Frequency;
+		Sample *pitch = VoiceOutput(0, v);
+		Sample *gate = VoiceOutput(1, v);
+		pitch->Set(hz / MAX_FREQ * 2 - 1);
+		gate->Set(note.Level);
+		const float edge = m_Voices.Gate(v);
+		if (!AsBoolean(m_ContinuousNotes) && edge != note.Level)
+			gate->Set(0, edge);
+		pitch->Stamp(m_HostInfo->FRAME);
+		gate->Stamp(m_HostInfo->FRAME);
+	}
+}
+
 void MidiPlugin::TellStatus()
 {
 	const std::string status = MidiDevice::Get()->GetStatus();
@@ -198,6 +263,19 @@ void MidiPlugin::Execute()
 	SendEvents();
 	Spiral::Core::EventBuffer *Events=GetEventOutput(m_PluginInfo.NumOutputs-1);
 	if (Events) Events->Clear(m_HostInfo->BUFSIZE);
+	const int channel = AsSigned(m_DeviceNum);
+	if (m_ResetEvents || (m_LastChannel >= 0 && channel != m_LastChannel))
+	{
+		m_Voices.Reset();
+		m_TriggerLevel = m_NoteLevel = 0;
+		for (unsigned i = 0; i < 1024; ++i)
+			m_Held[i].ID = -1;
+		Spiral::Core::Event reset;
+		reset.Type = Spiral::Core::Event::Reset;
+		if (Events) Events->Append(0, reset);
+		m_ResetEvents = false;
+	}
+	m_LastChannel = channel;
 
 	// midi output	
 	if (InputExists(0) && InputExists(1))
@@ -299,8 +377,6 @@ void MidiPlugin::Execute()
 
 	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
 	{
-		SetOutputPitch(0,n,m_NoteLevel);
-		SetOutput(1,n,m_TriggerLevel);
 		SetOutput(2,n,m_PitchBendLevel);
 		SetOutput(3,n,m_ChannelPressureLevel);
 		SetOutput(4,n,m_AfterTouchLevel);						
@@ -312,9 +388,15 @@ void MidiPlugin::Execute()
 		GetOutputBuf(c+5)->Set(m_ControlLevel[AsSigned(Control(c))]);	
 	}
 	
-	// make sure the trigger is registered if it's 
-	// note is pressed before releasing the previous one.
-	if (Triggered && !AsBoolean(m_ContinuousNotes)) SetOutput(1,0,0);
+	if (m_Voices.Count() > 1 && Events)
+		RenderVoices(*Events);
+	else
+	{
+		GetOutputBuf(0)->Set(m_NoteLevel / MAX_FREQ * 2 - 1);
+		GetOutputBuf(1)->Set(m_TriggerLevel);
+		if (Triggered && !AsBoolean(m_ContinuousNotes))
+			SetOutput(1, 0, 0);
+	}
 }
 
 void  MidiPlugin::ExecuteCommands()

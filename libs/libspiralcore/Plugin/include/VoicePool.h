@@ -18,6 +18,15 @@ public:
 	virtual void DescribeVoiceKey(Spiral::Core::Description &key) const = 0;
 };
 
+// A single device can supply per-voice CV without duplicating its external I/O.
+// Other outputs, including the event stream, are shared by all consumers.
+class VoiceOutputSource
+{
+public:
+	virtual ~VoiceOutputSource() {}
+	virtual Sample *VoiceOutput(unsigned port, unsigned voice) = 0;
+};
+
 class VoicePool
 {
 public:

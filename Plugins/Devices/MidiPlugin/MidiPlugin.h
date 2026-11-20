@@ -17,6 +17,8 @@
 */ 
 
 #include "Device.h"
+#include "VoicePool.h"
+#include "EventVoices.h"
 
 namespace Spiral
 {
@@ -29,7 +31,7 @@ namespace Core
 #ifndef OscillatorPLUGIN
 #define OscillatorPLUGIN
 
-class MidiPlugin : public Spiral::Core::Device
+class MidiPlugin : public Spiral::Core::Device, public VoiceOutputSource
 {
 public:
  	MidiPlugin();
@@ -37,6 +39,9 @@ public:
 
 	virtual PluginInfo& Initialise(const HostInfo *Host);
 	virtual void 		Execute();
+	virtual void SetVoice(SpiralPlugin *first, unsigned voice, unsigned voices);
+	virtual Sample *VoiceOutput(unsigned port, unsigned voice);
+	virtual void Reset();
 	virtual void        ExecuteCommands();
 	virtual void	    Describe(Spiral::Core::Description &d);
 	virtual void	    Apply(Spiral::Core::Description::Reader &r);
@@ -68,6 +73,11 @@ private:
 	void AddControl(int s,const std::string &Name);
 	void DeleteControl();
 	void PlaceEvents();
+	void RenderVoices(const Spiral::Core::EventBuffer &events);
+	Spiral::Core::EventVoices m_Voices;
+	struct VoiceCV { Sample Pitch, Gate; };
+	std::vector<VoiceCV> m_ExtraVoices;
+	void ClearVoiceOutputs();
 	void SendEvents();
 	void ReceiveEvent(const Spiral::Core::MidiEvent &In);
 	
@@ -88,6 +98,8 @@ private:
 		int Key;
 	} m_Held[1024];
 	int m_NextID;
+	int m_LastChannel;
+	bool m_ResetEvents;
 	
 	static int m_RefCount;
 	static bool m_OpenedDevice;
