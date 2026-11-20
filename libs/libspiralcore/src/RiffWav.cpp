@@ -21,7 +21,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <math.h>
+#include <algorithm>
 #include "RiffWav.h"
+#include "Compatibility.h"
 //#include "SpiralInfo.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -60,7 +63,15 @@ static void swap_be_to_le_float(float *a)
 
 static void write_float_as_16bit_short(float v, FILE *file)
 {
-	short value=(short)(v*SHRT_MAX);
+	// PCM16 decodes in units of 1/32768. Round on that same scale and saturate +1.
+	short value = 0;
+	if (v >= 1.f)
+		value = SHRT_MAX;
+	else if (v <= -1.f)
+		value = SHRT_MIN;
+	else if (SSMCompat::IsFinite(v))
+		value = static_cast<short>(std::min<long>(SHRT_MAX, lrintf(v * 32768.f)));
+
 	SWAPSHORT(value);
 	fwrite(((char*) &value),2,1,file);
 }
@@ -130,13 +141,18 @@ int WavFile::Open(string FileName, Mode mode, Channels channels)
 	
 	m_FileHandle = sf_open (FileName.c_str(), (mode==WRITE)?SFM_WRITE:SFM_READ, &m_FileInfo);
 
-	if (mode==WRITE)//auto-update header on write so everything written before is valid even in case of unexpected crash/close
-		sf_command (m_FileHandle, SFC_SET_UPDATE_HEADER_AUTO, NULL, SF_TRUE) ;
-
 	if (m_FileHandle == NULL)
 	{
 		cerr<<"WavFile: File ["<<FileName<<"] does not exist"<<endl;
 		return 0;
+	}
+
+	if (mode == WRITE)
+	{
+		sf_command(m_FileHandle, SFC_SET_UPDATE_HEADER_AUTO, NULL, SF_TRUE);
+		// Use the read scale on write so a decoded PCM16 value encodes to its original code.
+		if ((m_FileInfo.format & SF_FORMAT_SUBMASK) == SF_FORMAT_PCM_16)
+			sf_command(m_FileHandle, SFC_SET_CLIPPING, NULL, SF_TRUE);
 	}
 
 	return 1;
@@ -165,7 +181,8 @@ int WavFile::Open(string FileName, Mode mode, Channels channels)
 		m_Header.RiffName[2]='F';
 		m_Header.RiffName[3]='F';
 
-		m_Header.RiffFileLength= 4 + 24 + (8 + m_Header.FmtChannels*m_Header.FmtBitsPerSample/8 * 1 + 1); // bzzt - wrong "1" should be total number of samples
+		m_DataStart = -1; // Writers finalize both chunk lengths at close.
+		m_Header.RiffFileLength = 36;
 
 		m_Header.RiffTypeName[0]='W';
 		m_Header.RiffTypeName[1]='A';
@@ -266,6 +283,8 @@ int WavFile::Open(string FileName, Mode mode, Channels channels)
 			// if we need to to try and get to the data header
 			if (feof(m_Stream) || fseek(m_Stream,-(sizeof(DataHeader)-1),SEEK_CUR)==-1)
 			{
+				fclose(m_Stream);
+				m_Stream = NULL;
 				cerr<<"WavFile: File open error, wrong format ["<<FileName<<"]"<<endl;
 				return 0;
 			}
@@ -273,7 +292,14 @@ int WavFile::Open(string FileName, Mode mode, Channels channels)
 			fread(&m_DataHeader,sizeof(DataHeader),1,m_Stream);
 		}
 
-		fgetpos(m_Stream,(fpos_t*)&m_DataStart);
+		m_DataStart = ftell(m_Stream);
+		if (m_DataStart < 0)
+		{
+			fclose(m_Stream);
+			m_Stream = NULL;
+			return 0;
+		}
+
 		m_CurSeekPos=m_DataStart;
 
 		struct stat info;
@@ -303,6 +329,7 @@ int WavFile::Open(string FileName, Mode mode, Channels channels)
 		}
 
 		fclose(m_Stream);
+		m_Stream = NULL;
 		cerr<<"WavFile: File open error, wrong format ["<<FileName<<"]"<<endl;
 		return 0;
 	}
@@ -328,13 +355,24 @@ int WavFile::Close()
 		return 0;
 	}
 
-	// write the total length in
-	fseek(m_Stream, 40, SEEK_SET);
-	fwrite(&m_DataHeader.DataLengthBytes,4,1,m_Stream);
-	fclose(m_Stream);
+	bool ok = true;
+	if (m_DataStart == -1)
+	{
+		unsigned dataBytes = m_DataHeader.DataLengthBytes;
+		const unsigned padding = dataBytes & 1;
+		unsigned riffBytes = 36u + dataBytes + padding;
+		SWAPINT(dataBytes);
+		SWAPINT(riffBytes);
+		ok = (!padding || fputc(0, m_Stream) != EOF)
+			&& fseek(m_Stream, 4, SEEK_SET) == 0
+			&& fwrite(&riffBytes, 4, 1, m_Stream) == 1
+			&& fseek(m_Stream, 40, SEEK_SET) == 0
+			&& fwrite(&dataBytes, 4, 1, m_Stream) == 1;
+	}
 
-	m_Stream=NULL;
-	return 1;
+	const int closed = fclose(m_Stream);
+	m_Stream = NULL;
+	return ok && closed == 0;
 #endif
 }
 
@@ -582,7 +620,7 @@ int WavFile::Load(Sample &data)
 			}
 			value/=m_Header.FmtChannels;
 
-			data.Set(n,value/(float)SHRT_MAX);
+			data.Set(n,value/32768.f);
 		}
 
 		m_DataHeader.DataLengthBytes /= m_Header.FmtChannels;
@@ -604,7 +642,7 @@ int WavFile::Load(Sample &data)
 		{
 			short s = TempBuf[n];
 			SWAPSHORT(s);
-			data.Set(n,s/(float)SHRT_MAX);
+			data.Set(n,s/32768.f);
 		}
 		
 		delete[] TempBuf;
@@ -783,15 +821,15 @@ int WavFile::LoadChunk(int NumSamples, Sample &ldata, Sample &rdata)
 		if (m_Header.FmtChannels==1) {
 			for (int n=0; n<NumSamples; n++)
 			{
-				ldata.Set(n,TempBuf[n]/(float)SHRT_MAX);
+				ldata.Set(n,TempBuf[n]/32768.f);
 				// rdata allocated and set to zero when stream opened
 			}
 		} else {
 			for (int n=0; n<NumSamples; n++)
 			{
 			// Only copy first two channels
-				ldata.Set(n,TempBuf[n*c]/(float)SHRT_MAX);
-				rdata.Set(n,TempBuf[n*c+1]/(float)SHRT_MAX);
+				ldata.Set(n,TempBuf[n*c]/32768.f);
+				rdata.Set(n,TempBuf[n*c+1]/32768.f);
 			}
 		}
 	}

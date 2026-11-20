@@ -4,6 +4,7 @@
 #include "RiffWav.h"
 #include <cassert>
 #include <cstdlib>
+#include <fstream>
 #include <unistd.h>
 
 using namespace Spiral::Core;
@@ -50,6 +51,34 @@ static void CheckReload(const Description &saved, const HostInfo &host, const st
 	assert(!restored.GetReTrig(0));
 	restored.Execute();
 	CheckOutput(restored, 117, .5f);
+}
+
+static void CheckPCM16(PoshSamplerPlugin &sampler, const std::string &file)
+{
+	Sample &source = *sampler.GetSample(0);
+	source.Allocate(65536);
+	for (int i = 0; i < 65536; ++i)
+		source.Set(i, (i - 32768) / 32768.f);
+
+	sampler.m_SampleDescVec[0]->SampleRate = 32000;
+	sampler.SaveSample(0, file);
+
+	// An independent RIFF reader must be able to reach every audio frame.
+	std::ifstream bytes(file.c_str(), std::ios::binary | std::ios::ate);
+	const std::streamoff size = bytes.tellg();
+	bytes.seekg(4);
+	unsigned char length[4];
+	assert(bytes.read(reinterpret_cast<char *>(length), sizeof(length)));
+	const unsigned riffBytes = length[0] | unsigned(length[1]) << 8
+		| unsigned(length[2]) << 16 | unsigned(length[3]) << 24;
+	assert(size == 8 + std::streamoff(riffBytes));
+
+	sampler.LoadSample(1, file);
+	assert(sampler.m_SampleDescVec[1]->SampleRate == 32000);
+	const Sample &saved = *sampler.GetSample(1);
+	assert(saved.GetLength() == 65536);
+	for (int i = 0; i < 65536; ++i)
+		assert(saved[i] == source[i]);
 }
 
 int main()
@@ -147,6 +176,7 @@ int main()
 	pool.Run(17, &first, true, false, 192);
 	CheckOutput(*second, 0, .5f);
 
+	CheckPCM16(first, sidecar);
 	assert(unlink(sidecar.c_str()) == 0);
 	assert(rmdir(temp) == 0);
 }

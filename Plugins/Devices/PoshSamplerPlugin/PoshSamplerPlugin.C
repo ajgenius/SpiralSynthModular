@@ -506,6 +506,7 @@ void PoshSamplerPlugin::SaveSample(int n, const string &Name)
 	if (m_SampleVec[n]->GetLength()==0) return;
 
 	WavFile Wav;
+	Wav.SetSamplerate(m_SampleDescVec[n]->SampleRate);
 	Wav.Open(Name,WavFile::WRITE,WavFile::MONO);
 	Wav.Save(*m_SampleVec[n]);
 }
