@@ -152,6 +152,8 @@ PluginInfo &MidiPlugin::Initialise(const HostInfo *Host)
 
 void MidiPlugin::SetVoice(SpiralPlugin *, unsigned, unsigned voices)
 {
+	if (m_Voices.Count() == voices)
+		return;
 	m_Voices.Configure(voices);
 	m_ExtraVoices.resize(m_Voices.Count() - 1);
 	ClearVoiceOutputs();

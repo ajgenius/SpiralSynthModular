@@ -185,6 +185,11 @@ bool VoicePool::Follow()
 
 void VoicePool::Clear()
 {
+	Clear(false);
+}
+
+void VoicePool::Clear(bool keepVoiceOutputs)
+{
 	for (size_t w = 0; w < m_Restore.size(); ++w)
 	{
 		SpiralPlugin *source = Find(m_Restore[w].OutputID);
@@ -196,7 +201,8 @@ void VoicePool::Clear()
 	m_Restore.clear();
 	for (std::map<int, Member>::iterator m = m_Members.begin(); m != m_Members.end(); ++m)
 	{
-		if (SpiralPlugin *device = Find(m->first))
+		SpiralPlugin *device = Find(m->first);
+		if (device && !(keepVoiceOutputs && dynamic_cast<VoiceOutputSource *>(device)))
 			device->SetVoice(device, 0, 1);
 		for (size_t v = 0; v < m->second.Copies.size(); ++v)
 			delete m->second.Copies[v];

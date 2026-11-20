@@ -1835,7 +1835,7 @@ SpiralPlugin *SynthModular::cb_FindDevice(int id, void *)
 	return i == m_DeviceWinMap.end() ? NULL : i->second->m_Device;
 }
 
-void SynthModular::ClearVoices()
+void SynthModular::ClearVoices(bool keepVoiceOutputs)
 {
 	std::set<VoicePool *> pools;
 
@@ -1843,7 +1843,7 @@ void SynthModular::ClearVoices()
 		pools.insert(p->second);
 
 	for (std::set<VoicePool *>::iterator p = pools.begin(); p != pools.end(); ++p)
-		(*p)->Clear();
+		(*p)->Clear(keepVoiceOutputs);
 
 	m_VoicePools.clear();
 }
@@ -1883,13 +1883,19 @@ void SynthModular::RebuildVoices()
 	}
 
 	FreezeAll();
-	ClearVoices();
+	ClearVoices(true);
 
 	for (map<int,DeviceWin*>::iterator i = m_DeviceWinMap.begin(); i != m_DeviceWinMap.end(); ++i)
 	{
 		VoicePool *pool = PoolFor(i->first, voices);
-		const Spiral::Core::DeviceClass *Plugin = pool == NULL ? NULL
-			: Spiral::Core::DeviceClassRegistry::Get()->Find(i->second->m_PluginID);
+		if (!pool)
+		{
+			SpiralPlugin *device = i->second->m_Device;
+			if (dynamic_cast<VoiceOutputSource *>(device))
+				device->SetVoice(device, 0, 1);
+			continue;
+		}
+		const Spiral::Core::DeviceClass *Plugin = Spiral::Core::DeviceClassRegistry::Get()->Find(i->second->m_PluginID);
 
 		if (!Plugin)
 			continue;

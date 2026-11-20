@@ -171,6 +171,16 @@ static void Chords(SynthModular &synth)
 		assert((*gate)[1] == velocities[i] / 127.f);
 		assert(filters[i]->GetInput(2) && filters[i]->GetInput(2) == filters[0]->GetInput(2));
 	}
+	// Rebuilding the same-width patch while the notes are held recreates
+	// the downstream filters. Their new wires must still carry the chord.
+	synth.ThawAll();
+	filters.resize(1);
+	synth.RebuildVoices();
+	synth.FreezeAll();
+	midi->Execute();
+	assert(filters.size() == 3);
+	for (unsigned i = 0; i < 3; ++i)
+		assert((*filters[i]->GetInput(1))[1] == velocities[i] / 127.f);
 	Hear(0xb0, 11, 96);
 	midi->Execute();
 	Sample *clock = NULL;

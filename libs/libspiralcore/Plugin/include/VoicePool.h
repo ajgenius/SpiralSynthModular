@@ -52,6 +52,7 @@ public:
 	bool Follow();
 
 	void Clear();
+	void Clear(bool keepVoiceOutputs);
 
 private:
 	struct Member

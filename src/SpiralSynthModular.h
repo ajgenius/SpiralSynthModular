@@ -139,7 +139,7 @@ public:
 	void PasteCopied(bool grouped);
 	void AddEventInput();
 	void RebuildVoices();
-	void ClearVoices();
+	void ClearVoices(bool keepVoiceOutputs = false);
 	void SyncVoices();
 	void SyncSubPatches();
 	VoicePool *PoolFor(int id, long &voices);
