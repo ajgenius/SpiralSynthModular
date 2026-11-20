@@ -81,7 +81,7 @@ int main(int argc, char **argv)
 		patch << "Device " << n << " Plugin 3\n20 20 4 Idle 0 0 0\n5 1\n4 Zero -1 1 0\n";
 
 	patch << "-1 0 2\n0 0 0 0 1 0 0 0\n0 0 0 0 1 0 1 0\n";
-	host.Synth.StreamPatchIn(patch,false,false);
+	host.Synth.StreamPatchIn(patch, false);
 	usleep(300000);
 	observer.ConnectInput(0,std::string(name)+":Out0");
 	observer.ConnectInput(1,std::string(name)+":Out1");

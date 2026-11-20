@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 		"Device 0 Plugin 3\n20 20 10 Controller 0 0 0\n5 1\n4 Zero -1 1 0\n"
 		"Device 1 Plugin 0\n200 20 6 Output 0 0 0\n\n"
 		"-1 0 2\n0 0 0 0 1 0 0 0\n0 0 0 0 1 0 1 0\n";
-	host.Synth.StreamPatchIn(patch,false,false);
+	host.Synth.StreamPatchIn(patch, false);
 	usleep(200000);
 	const char *buttons[]={"Write","Dplx","Read","Write","Write"};
 
