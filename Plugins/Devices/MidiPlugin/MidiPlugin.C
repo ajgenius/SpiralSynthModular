@@ -255,7 +255,7 @@ void MidiPlugin::Execute()
 
 	for (unsigned int c=0; c<m_Controls.size(); c++)
 	{
-		GetOutputBuf(c+5)->Zero();	
+		GetOutputBuf(c+6)->Zero();
 	}
 
 	bool Triggered=false;
@@ -385,7 +385,7 @@ void MidiPlugin::Execute()
 	
 	for (unsigned int c=0; c<m_Controls.size(); c++)
 	{
-		GetOutputBuf(c+5)->Set(m_ControlLevel[AsSigned(Control(c))]);	
+		GetOutputBuf(c+6)->Set(m_ControlLevel[AsSigned(Control(c))]);
 	}
 	
 	if (m_Voices.Count() > 1 && Events)

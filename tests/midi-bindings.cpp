@@ -7,6 +7,7 @@
 #include "FltkView.h"
 #include "PatchFile.h"
 #include "Plugins/Devices/PianoRollPlugin/PianoRollPlugin.h"
+#include "Plugins/Devices/MidiPlugin/MidiPlugin.h"
 #include "PanelControl.h"
 #include <FL/Fl_Valuator.H>
 #include <cassert>
@@ -128,6 +129,15 @@ static void Chords(SynthModular &synth)
 	assert(DeviceClassRegistry::Get()->Register(probe));
 	synth.AddDevice(2, 50, 50);
 	synth.AddDevice(probe.ID, 150, 50);
+	synth.FreezeAll();
+	SpiralPlugin *source = synth.cb_FindDevice(0, &synth);
+	char label[256] = "Expression";
+	source->GetChannelHandler()->Set("CC", 11);
+	source->GetChannelHandler()->SetData("Name", label);
+	source->GetChannelHandler()->SetCommand(MidiPlugin::ADDCONTROL);
+	source->UpdateChannelHandler();
+	source->ExecuteCommands();
+	synth.ThawAll();
 	PatchDescription patch;
 	Describe(patch, synth, "");
 	patch.Voices = 3;
@@ -136,7 +146,8 @@ static void Chords(SynthModular &synth)
 		WireDescription &wire = patch.AddWire();
 		wire.FromDevice = "0";
 		wire.ToDevice = "1";
-		wire.FromPort = wire.ToPort = std::string(1, '0' + port);
+		wire.ToPort = std::string(1, '0' + port);
+		wire.FromPort = port == 2 ? "6" : wire.ToPort;
 	}
 	synth.ClearUp();
 	filters.clear();
@@ -160,6 +171,12 @@ static void Chords(SynthModular &synth)
 		assert((*gate)[1] == velocities[i] / 127.f);
 		assert(filters[i]->GetInput(2) && filters[i]->GetInput(2) == filters[0]->GetInput(2));
 	}
+	Hear(0xb0, 11, 96);
+	midi->Execute();
+	Sample *clock = NULL;
+	assert(midi->GetOutput(5, &clock) && (*clock)[1] == MidiDevice::Get()->GetClock());
+	for (unsigned i = 0; i < 3; ++i)
+		assert((*filters[i]->GetInput(2))[1] == 96 / 127.f);
 	Hear(0x80, 64, 0);
 	midi->Execute();
 	assert((*filters[0]->GetInput(1))[1] == 1 && (*filters[1]->GetInput(1))[1] == 0);
