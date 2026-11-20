@@ -32,9 +32,7 @@ using namespace Spiral::Core;
 
 static const int NOTETRIG = NUM_SAMPLES * 2 + 1;
 static const int REC_INPUT = 16;
-static const int S1_INPUT = 18;
-static const int S2_INPUT = 19;
-static const int S3_INPUT = 20;
+static const int FIRST_START_INPUT = 18;
 
 #include <config.h>
 
@@ -63,6 +61,7 @@ int SpiralPlugin_GetType()
 ///////////////////////////////////////////////////////
 
 PoshSamplerPlugin::PoshSamplerPlugin() :
+m_Settings(&m_Samples),
 m_Recording(false),
 m_LastRecording(false)
 {
@@ -194,9 +193,28 @@ void PoshSamplerPlugin::Reset() {
      for (int s=0; s<NUM_SAMPLES; s++) {
          m_SampleDescVec[s]->Pitch = m_InitialPitch[s] * m_SampleDescVec[s]->SampleRate / (float)m_HostInfo->SAMPLERATE;
          const long length = m_SampleVec[s]->GetLength();
-         if (length > 0 && (SampleSigned (s, SLOT_LOOPEND) <= 0 || SampleSigned (s, SLOT_LOOPEND) >= length))
+         if (m_Settings == &m_Samples && length > 0 && (SampleSigned (s, SLOT_LOOPEND) <= 0 || SampleSigned (s, SLOT_LOOPEND) >= length))
             SampleSigned (s, SLOT_LOOPEND) = length - 1;
      }
+}
+
+long PoshSamplerPlugin::TriggerStart(int slot, int frame)
+{
+	// The start CV belongs to this attack. The panel marker is shared by all voices.
+	long start = SampleSigned(slot, SLOT_PLAYSTART);
+	if (slot < 3 && InputExists(FIRST_START_INPUT + slot))
+	{
+		const float cv = GetInput(FIRST_START_INPUT + slot, frame);
+		if (Spiral::Core::IsFinite(cv))
+		{
+			const double fraction = .5 * (1.0 + std::max(-1.f, std::min(1.f, cv)));
+			const long begin = SampleSigned(slot, SLOT_LOOPSTART);
+			const long end = SampleSigned(slot, SLOT_LOOPEND);
+			start = static_cast<long>(begin + fraction * (static_cast<double>(end) - begin));
+		}
+	}
+
+	return std::max(0L, start);
 }
 
 void PoshSamplerPlugin::Execute() {
@@ -213,14 +231,7 @@ void PoshSamplerPlugin::Execute() {
                    const int note = SampleSigned (s, SLOT_NOTE);
                    if (GetInput (s*2 + 1, n) > 0 || (note >= 0 && note < 132 && feq (Freq, NoteTable[note], 0.01f))) {
                       if (S->TriggerUp) {
-                         if (s==0 && InputExists (S1_INPUT))
-                            SampleSigned (s, SLOT_PLAYSTART) = (long int)((GetInput (S1_INPUT, n) * 0.5 + 0.5f) * (SampleSigned (s, SLOT_LOOPEND)-SampleSigned (s, SLOT_LOOPSTART))) + SampleSigned (s, SLOT_LOOPSTART);
-                         if (s==1 && InputExists (S2_INPUT))
-                            SampleSigned (s, SLOT_PLAYSTART) = (long int)((GetInput (S2_INPUT, n) * 0.5 + 0.5f) * (SampleSigned (s, SLOT_LOOPEND)-SampleSigned (s, SLOT_LOOPSTART))) + SampleSigned (s, SLOT_LOOPSTART);
-                         if (s==2 && InputExists (S3_INPUT))
-                            SampleSigned (s, SLOT_PLAYSTART) = (long int)((GetInput (S3_INPUT, n) * 0.5 + 0.5f) * (SampleSigned (s, SLOT_LOOPEND)-SampleSigned (s, SLOT_LOOPSTART))) + SampleSigned (s, SLOT_LOOPSTART);
-                         if (SampleSigned (s, SLOT_PLAYSTART) < 0) SampleSigned (s, SLOT_PLAYSTART) = 0;
-                         SampleFloat (s, SLOT_SAMPLEPOS) = SampleSigned (s, SLOT_PLAYSTART);
+                         SampleFloat (s, SLOT_SAMPLEPOS) = TriggerStart(s, n);
                          S->TriggerUp = false;
                          S->Velocity = GetInput (s * 2 + 1, n);
                       }
@@ -376,6 +387,19 @@ void PoshSamplerPlugin::InitializeSampleDescription (SampleDesc* NewDesc, int nu
           NewDesc->SampleRate = 44100;
           NewDesc->Stereo = false;
        }
+}
+
+void PoshSamplerPlugin::SetVoice(SpiralPlugin *first, unsigned voice, unsigned)
+{
+	VectorProperty *settings = &static_cast<PoshSamplerPlugin *>(first)->m_Samples;
+	if (voice && m_Settings != settings)
+	{
+		// Initial patch loading restores the visible cursor. New lanes wait for a trigger.
+		for (int slot = 0; slot < NUM_SAMPLES; ++slot)
+			SampleFloat(slot, SLOT_SAMPLEPOS) = -1;
+	}
+
+	m_Settings = settings;
 }
 
 void PoshSamplerPlugin::Describe(Spiral::Core::Description &d) {

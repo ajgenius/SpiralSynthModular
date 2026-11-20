@@ -20,6 +20,7 @@
 #define PoshSamplerPLUGIN
 
 #include "Device.h"
+#include "VoicePool.h"
 
 static const int NUM_SAMPLES = 8;
 static const int TRANSBUF_SIZE = 0x10000;
@@ -31,7 +32,7 @@ struct SampleDesc {
        bool Stereo;
 };
 
-class PoshSamplerPlugin : public Spiral::Core::Device {
+class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceStateKey {
    public:
       PoshSamplerPlugin();
       virtual ~PoshSamplerPlugin();
@@ -39,6 +40,9 @@ class PoshSamplerPlugin : public Spiral::Core::Device {
       virtual void Execute();
       virtual void Reset();
       virtual void ExecuteCommands();
+      virtual void SetVoice(SpiralPlugin *first, unsigned voice, unsigned voices);
+      // SetVoice binds the shared controls directly. A panel refresh has no state to copy.
+      virtual void DescribeVoiceKey(Spiral::Core::Description &) const {}
       virtual void Describe(Spiral::Core::Description &d);
       virtual void Apply(Spiral::Core::Description::Reader &r);
       virtual void Migrate(Spiral::Core::Description &d);
@@ -91,7 +95,10 @@ class PoshSamplerPlugin : public Spiral::Core::Device {
       Spiral::Core::VectorProperty *NewSampleSettings (int Note);
 
       Spiral::Core::Property *Slot (int n, SampleSlot s)
-      { return (*(Spiral::Core::VectorProperty *)m_Samples[n])[s]; }
+      {
+         Spiral::Core::VectorProperty &slots = s == SLOT_SAMPLEPOS ? m_Samples : *m_Settings;
+         return (*static_cast<Spiral::Core::VectorProperty *>(slots[n]))[s];
+      }
 
       Spiral::Core::FloatType &SampleFloat (int n, SampleSlot s)
       { return ((Spiral::Core::FloatProperty *)Slot (n, s))->Value.AsFloat; }
@@ -111,6 +118,8 @@ class PoshSamplerPlugin : public Spiral::Core::Device {
       Spiral::Core::ToggleProperty &SlotBool (int n, SampleSlot s)
       { return *(Spiral::Core::ToggleProperty *)Slot (n, s); }
    private:
+      Spiral::Core::VectorProperty *m_Settings;
+      long TriggerStart(int slot, int frame);
       void InitializeSampleDescription (SampleDesc* NewDesc, int num, int Note);
       void Cut (int n, long s, long e);
       void Copy (int n, long s, long e);
