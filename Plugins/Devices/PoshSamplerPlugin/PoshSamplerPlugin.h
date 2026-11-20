@@ -41,7 +41,7 @@ class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceStateKey {
       virtual void Reset();
       virtual void ExecuteCommands();
       virtual void SetVoice(SpiralPlugin *first, unsigned voice, unsigned voices);
-      // SetVoice binds the shared controls directly. A panel refresh has no state to copy.
+      // SetVoice binds the device's sample bank and controls directly. A panel refresh has no state to copy.
       virtual void DescribeVoiceKey(Spiral::Core::Description &) const {}
       virtual void Describe(Spiral::Core::Description &d);
       virtual void Apply(Spiral::Core::Description::Reader &r);
@@ -60,7 +60,7 @@ class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceStateKey {
       Spiral::Core::ToggleProperty m_RecordingProp;
       void LoadSample (int n, const std::string &Name);
       void SaveSample (int n, const std::string &Name);
-      Sample* GetSample (int n) { return m_SampleVec[n]; }
+      Sample* GetSample (int n) { return m_Owner->m_SampleVec[n]; }
       float GetVolume (int n) { return SampleFloat (n, SLOT_VOLUME); }
       float GetPitch (int n) { return SampleFloat (n, SLOT_PITCHMOD); }
       bool GetReTrig (int n) { return SampleBool (n, SLOT_RETRIG); }
@@ -96,7 +96,7 @@ class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceStateKey {
 
       Spiral::Core::Property *Slot (int n, SampleSlot s)
       {
-         Spiral::Core::VectorProperty &slots = s == SLOT_SAMPLEPOS ? m_Samples : *m_Settings;
+         Spiral::Core::VectorProperty &slots = s == SLOT_SAMPLEPOS ? m_Samples : m_Owner->m_Samples;
          return (*static_cast<Spiral::Core::VectorProperty *>(slots[n]))[s];
       }
 
@@ -118,7 +118,7 @@ class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceStateKey {
       Spiral::Core::ToggleProperty &SlotBool (int n, SampleSlot s)
       { return *(Spiral::Core::ToggleProperty *)Slot (n, s); }
    private:
-      Spiral::Core::VectorProperty *m_Settings;
+      PoshSamplerPlugin *m_Owner;
       long TriggerStart(int slot, int frame);
       void InitializeSampleDescription (SampleDesc* NewDesc, int num, int Note);
       void Cut (int n, long s, long e);

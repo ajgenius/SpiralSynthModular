@@ -44,12 +44,14 @@ void VoicePool::Add(int id, SpiralPlugin *device, const Spiral::Core::DeviceClas
 		copy->Initialise(info);
 		Spiral::Core::Description::Reader values(state);
 		copy->Apply(values);
-		copy->LoadExternalFiles(sidecars, id);
 		copies.push_back(copy);
 	}
 	device->SetVoice(device, 0, copies.size() + 1);
 	for (size_t v = 0; v < copies.size(); ++v)
+	{
 		copies[v]->SetVoice(device, v + 1, copies.size() + 1);
+		copies[v]->LoadExternalFiles(sidecars, id);
+	}
 	std::ostringstream text;
 	state.Write(text);
 	m_Members[id].State = text.str();

@@ -110,6 +110,8 @@ int main()
 	pool.Add(17, &first, kind, 2, &host, dir);
 	first.Reset();
 	second->Reset();
+	for (int slot = 0; slot < NUM_SAMPLES; ++slot)
+		assert(first.GetSample(slot) == second->GetSample(slot));
 
 	Sample a(64), b(64);
 	a.Zero();
@@ -175,6 +177,30 @@ int main()
 	b.Set(0, 1);
 	pool.Run(17, &first, true, false, 192);
 	CheckOutput(*second, 0, .5f);
+
+	// Replace an empty slot while both lanes exist. Both must read the new
+	// waveform at its native rate, including subsequent in-place edits.
+	wav.SetSamplerate(24000);
+	assert(wav.Open(sidecar, WavFile::WRITE));
+	wav.Save(ramp);
+	wav.Close();
+	first.LoadSample(1, sidecar);
+	first.GetSample(1)->Set(10, -.5f);
+	Sample gate(64);
+	gate.Zero();
+	gate.Set(0, 1);
+	assert(first.SetInput(3, &gate) && second->SetInput(3, &gate));
+	first.Execute();
+	pool.Run(17, &first, true, false, 256);
+	Sample *left = 0, *right = 0;
+	assert(first.GetOutput(2, &left) && second->GetOutput(2, &right));
+	for (int n = 0; n < 64; n += 2)
+	{
+		float expected = n == 20 ? -.5f : ramp[n / 2];
+		assert((*left)[n] == expected && (*right)[n] == expected);
+	}
+	assert(first.SampleFloat(1, PoshSamplerPlugin::SLOT_SAMPLEPOS) == 32);
+	assert(second->SampleFloat(1, PoshSamplerPlugin::SLOT_SAMPLEPOS) == 32);
 
 	CheckPCM16(first, sidecar);
 	assert(unlink(sidecar.c_str()) == 0);

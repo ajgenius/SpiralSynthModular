@@ -61,7 +61,7 @@ int SpiralPlugin_GetType()
 ///////////////////////////////////////////////////////
 
 PoshSamplerPlugin::PoshSamplerPlugin() :
-m_Settings(&m_Samples),
+m_Owner(this),
 m_Recording(false),
 m_LastRecording(false)
 {
@@ -191,9 +191,9 @@ void PoshSamplerPlugin::Reset() {
      ResetPorts();
      m_Current = 0;
      for (int s=0; s<NUM_SAMPLES; s++) {
-         m_SampleDescVec[s]->Pitch = m_InitialPitch[s] * m_SampleDescVec[s]->SampleRate / (float)m_HostInfo->SAMPLERATE;
-         const long length = m_SampleVec[s]->GetLength();
-         if (m_Settings == &m_Samples && length > 0 && (SampleSigned (s, SLOT_LOOPEND) <= 0 || SampleSigned (s, SLOT_LOOPEND) >= length))
+         m_SampleDescVec[s]->Pitch = m_Owner->m_InitialPitch[s];
+         const long length = GetSample(s)->GetLength();
+         if (m_Owner == this && length > 0 && (SampleSigned (s, SLOT_LOOPEND) <= 0 || SampleSigned (s, SLOT_LOOPEND) >= length))
             SampleSigned (s, SLOT_LOOPEND) = length - 1;
      }
 }
@@ -219,13 +219,17 @@ long PoshSamplerPlugin::TriggerStart(int slot, int frame)
 
 void PoshSamplerPlugin::Execute() {
      for (int s=0; s<NUM_SAMPLES+1; s++) GetOutputBuf (s)->Zero();
+     float rateScale[NUM_SAMPLES];
+     for (int s=0; s<NUM_SAMPLES; ++s)
+         rateScale[s] = m_Owner->m_SampleDescVec[s]->SampleRate / (float)m_HostInfo->SAMPLERATE;
      float Freq = 0;
      for (int n=0; n<m_HostInfo->BUFSIZE; n++) {
          Freq = GetInputPitch (NOTETRIG, n);
          for (int s=0; s<NUM_SAMPLES; s++) {
              SampleDesc *S = m_SampleDescVec[s];
+             const Sample &pcm = *GetSample(s);
              // if we have a sample here
-             if (m_SampleVec[s]->GetLength()) {
+             if (pcm.GetLength()) {
                 // Convert the CV input into a useable trigger
                 if (SampleBool (s, SLOT_RETRIG) || (SampleFloat (s, SLOT_SAMPLEPOS) == -1)) {
                    const int note = SampleSigned (s, SLOT_NOTE);
@@ -243,7 +247,7 @@ void PoshSamplerPlugin::Execute() {
                    }
                 }
                 // if the sample has ended
-                if (SampleFloat (s, SLOT_SAMPLEPOS) >= SampleSigned (s, SLOT_LOOPEND) || SampleFloat (s, SLOT_SAMPLEPOS) >= m_SampleVec[s]->GetLength()) {
+                if (SampleFloat (s, SLOT_SAMPLEPOS) >= SampleSigned (s, SLOT_LOOPEND) || SampleFloat (s, SLOT_SAMPLEPOS) >= pcm.GetLength()) {
                    if (SampleBool (s, SLOT_LOOP)) {
                       if (SampleBool (s, SLOT_PINGPONG)) S->Pong = true;
                       else SampleFloat (s, SLOT_SAMPLEPOS) = SampleSigned (s, SLOT_LOOPSTART);
@@ -259,7 +263,7 @@ void PoshSamplerPlugin::Execute() {
                 if (position != -1) {
                    if (!Spiral::Core::IsFinite (position)) position = -1;
                    else if (position < 0) position = 0;
-                   else if (position > m_SampleVec[s]->GetLength() - 1) position = m_SampleVec[s]->GetLength() - 1;
+                   else if (position > pcm.GetLength() - 1) position = pcm.GetLength() - 1;
                 }
                 if (SampleFloat (s, SLOT_SAMPLEPOS) != -1) {
                    if (InputExists (s * 2)) {
@@ -267,13 +271,12 @@ void PoshSamplerPlugin::Execute() {
                       float PlayFreq = GetInputPitch (s * 2, n);
                       // assumtion: base frequency = 440 (middle A)
                       S->Pitch = PlayFreq / 440;
-                      S->Pitch *= S->SampleRate / (float)m_HostInfo->SAMPLERATE;
                    }
                    // mix the sample to the output.
-                   MixOutput (0, n, (*m_SampleVec[s])[SampleFloat (s, SLOT_SAMPLEPOS)] * SampleFloat (s, SLOT_VOLUME) * S->Velocity);
+                   MixOutput (0, n, pcm[SampleFloat (s, SLOT_SAMPLEPOS)] * SampleFloat (s, SLOT_VOLUME) * S->Velocity);
                    // copy the sample to it's individual output.
-                   SetOutput (s + 1, n, ((*m_SampleVec[s])[SampleFloat (s, SLOT_SAMPLEPOS)] * SampleFloat (s, SLOT_VOLUME)));
-                   float Freq = S->Pitch;
+                   SetOutput (s + 1, n, (pcm[SampleFloat (s, SLOT_SAMPLEPOS)] * SampleFloat (s, SLOT_VOLUME)));
+                   float Freq = S->Pitch * rateScale[s];
                    Freq = ldexpf (Freq, SampleSigned (s, SLOT_OCTAVE));
                    if (S->Pong) SampleFloat (s, SLOT_SAMPLEPOS) -= Freq * SampleFloat (s, SLOT_PITCHMOD);
                    else SampleFloat (s, SLOT_SAMPLEPOS) += Freq * SampleFloat (s, SLOT_PITCHMOD);
@@ -290,7 +293,7 @@ void PoshSamplerPlugin::Execute() {
            *m_SampleVec[s] =* GetInput (REC_INPUT);
            m_SampleDescVec[s]->SampleRate = m_HostInfo->SAMPLERATE;
            m_SampleDescVec[s]->Stereo = false;
-           m_SampleDescVec[s]->Pitch *= 1.0f;
+           m_SampleDescVec[s]->Pitch *= rateScale[s];
            m_InitialPitch[s] = m_SampleDescVec[s]->Pitch;
            SampleSigned (s, SLOT_LOOPEND) = m_SampleVec[s]->GetLength();
         }
@@ -391,15 +394,15 @@ void PoshSamplerPlugin::InitializeSampleDescription (SampleDesc* NewDesc, int nu
 
 void PoshSamplerPlugin::SetVoice(SpiralPlugin *first, unsigned voice, unsigned)
 {
-	VectorProperty *settings = &static_cast<PoshSamplerPlugin *>(first)->m_Samples;
-	if (voice && m_Settings != settings)
+	PoshSamplerPlugin *owner = static_cast<PoshSamplerPlugin *>(first);
+	if (voice && m_Owner != owner)
 	{
 		// Initial patch loading restores the visible cursor. New lanes wait for a trigger.
 		for (int slot = 0; slot < NUM_SAMPLES; ++slot)
 			SampleFloat(slot, SLOT_SAMPLEPOS) = -1;
 	}
 
-	m_Settings = settings;
+	m_Owner = owner;
 }
 
 void PoshSamplerPlugin::Describe(Spiral::Core::Description &d) {
@@ -496,7 +499,7 @@ void PoshSamplerPlugin::LoadSample (int n, const string &Name) {
         m_SampleDescVec[n]->SampleRate = Wav.GetSamplerate();
         m_SampleDescVec[n]->Stereo = Wav.IsStereo();
         m_InitialPitch[n] = 1.0f;
-        m_SampleDescVec[n]->Pitch = m_InitialPitch[n] * m_SampleDescVec[n]->SampleRate / (float)m_HostInfo->SAMPLERATE;
+        m_SampleDescVec[n]->Pitch = m_InitialPitch[n];
         SampleSigned (n, SLOT_LOOPEND) = m_SampleVec[n]->GetLength()-1;
      }
 }
@@ -590,6 +593,7 @@ bool PoshSamplerPlugin::SaveExternalFiles (const string &Dir) {
 }
 
 void PoshSamplerPlugin::LoadExternalFiles(const string &Dir, int withID) {
+     if (m_Owner != this) return;
      int UseID = (withID==-1) ? GetID() : withID;
      for (int n=0; n<NUM_SAMPLES;  n++) {
          ostringstream temp;
