@@ -18,9 +18,7 @@ libspiralcore_la_SOURCES = \
     src/RiffWav.cpp \
     include/GraphSort.h \
     src/GraphSort.cpp \
-    include/Event.h \
-    include/SpiralTime.h \
-    src/Time.cpp
+    include/Event.h
 libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 3:0:0
 libspiralcore_la_LIBADD = $(SFLIBS) $(JACK_LIBS) -lm \
 	$(top_builddir)/libs/libSpiralPanels/libSpiralPanels.la \
@@ -39,8 +37,7 @@ EXTRA_DIST = \
     include/EventQueue.h \
     include/EventVoices.h \
     src/AsyncSampleLoader.cpp \
-    src/Event.cpp \
-    src/EventQueue.cpp
+    src/Event.cpp
 
 EXTRA_DIST += Audio/AUDIO-TRANSPORT.md
 

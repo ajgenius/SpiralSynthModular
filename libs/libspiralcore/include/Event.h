@@ -15,7 +15,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "Types.h"
-#include "SpiralTime.h"
+#include "AudioTiming.h"
 #include "Compatibility.h"
 
 #ifndef NE_EVENT
@@ -26,6 +26,11 @@ namespace Spiral
 namespace Core
 {
 
+// Event / EventQueue lineage and timing decision:
+// https://github.com/ajgenius/SpiralSynthModular/issues/81
+// The time stamp is the audio layer's. Frame is exact; Time and Step describe
+// its clock mapping, and Generation identifies a timeline. A stored clip
+// leaves Time unset until it is scheduled against a presentation clock.
 class Event
 {
 public:
@@ -58,7 +63,7 @@ public:
 			SSMCompat::IsFinite(SlideFrequency) && SSMCompat::IsFinite(Pan) && SSMCompat::IsFinite(Position);
 	}
 	
-	int ID;            // the currently playing sample, or voice
+	int ID;            // source identity; a note need not have an allocated synth voice
 	float32 Frequency; // freq
 	float32 SlideFrequency; // slide dest freq
 	float32 Volume;    // or velocity
@@ -67,7 +72,7 @@ public:
 	int Channel;       // output channel for this event
 	int NoteNum;
 	char Message;      // used for charscore message passing
-	Time TimeStamp;    // when to do this event
+	AudioStamp TimeStamp; // when to do this event
 };
 
 }

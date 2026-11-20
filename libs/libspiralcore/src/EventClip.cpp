@@ -16,7 +16,6 @@ namespace Core
 
 	EventClip::EventClip():
 		m_Events(new Event[MaxEvents]),
-		m_Frames(new uint64_t[MaxEvents]),
 		m_Count(0),
 		m_Rate(48000),
 		m_Length(0)
@@ -26,7 +25,6 @@ namespace Core
 	EventClip::~EventClip()
 	{
 		delete[] m_Events;
-		delete[] m_Frames;
 	}
 
 	void EventClip::Clear(unsigned rate)
@@ -39,11 +37,13 @@ namespace Core
 	bool EventClip::Append(uint64_t frame, const Event &event)
 	{
 		if (!event.Valid() || m_Count == MaxEvents || frame >= uint64_t(m_Rate) * MaxSeconds
-				|| (m_Count && m_Frames[m_Count - 1] > frame))
+				|| (m_Count && m_Events[m_Count - 1].TimeStamp.Frame > frame))
 			return false;
 
+		// An event's frame is kept in its own time stamp, as the private
+		// tree's clip keeps it.
 		m_Events[m_Count] = event;
-		m_Frames[m_Count++] = frame;
+		m_Events[m_Count++].TimeStamp.Frame = frame;
 		m_Length = std::max(m_Length, frame + 1);
 
 		return true;
@@ -56,14 +56,13 @@ namespace Core
 
 	void EventClip::SetLength(uint64_t frames)
 	{
-		const uint64_t last = m_Count ? m_Frames[m_Count - 1] + 1 : 0;
+		const uint64_t last = m_Count ? m_Events[m_Count - 1].TimeStamp.Frame + 1 : 0;
 		m_Length = std::max(last, std::min(frames, uint64_t(m_Rate) * MaxSeconds));
 	}
 
 	void EventClip::Swap(EventClip &other)
 	{
 		std::swap(m_Events, other.m_Events);
-		std::swap(m_Frames, other.m_Frames);
 		std::swap(m_Count, other.m_Count);
 		std::swap(m_Rate, other.m_Rate);
 		std::swap(m_Length, other.m_Length);
@@ -98,7 +97,7 @@ namespace Core
 			{
 				NoteSpan note;
 				note.Note = event;
-				note.Start = m_Frames[i];
+				note.Start = m_Events[i].TimeStamp.Frame;
 				note.OnEvent = i;
 				note.End = m_Length;
 				held.insert(SoundingNote(identity, (unsigned)notes.size()));
@@ -110,7 +109,7 @@ namespace Core
 				if (oldest == held.end() || oldest->first != identity)
 					continue;
 				NoteSpan &note = notes[oldest->second];
-				note.End = m_Frames[i];
+				note.End = m_Events[i].TimeStamp.Frame;
 				note.OffEvent = i;
 				held.erase(oldest);
 			}
@@ -124,8 +123,8 @@ namespace Core
 		source.Notes(notes);
 		Clear(source.m_Rate);
 
-		for (unsigned i = 0; i < source.m_Count && source.m_Frames[i] < frame; ++i)
-			if (!Append(source.m_Frames[i], source.m_Events[i]))
+		for (unsigned i = 0; i < source.m_Count && source.m_Events[i].TimeStamp.Frame < frame; ++i)
+			if (!Append(source.m_Events[i].TimeStamp.Frame, source.m_Events[i]))
 				return false;
 
 		const unsigned kept = m_Count;
@@ -173,7 +172,7 @@ namespace Core
 
 		unsigned first = 0;
 
-		while (first < source.m_Count && source.m_Frames[first] < frame)
+		while (first < source.m_Count && source.m_Events[first].TimeStamp.Frame < frame)
 			++first;
 
 		// The release of a note that ends exactly where the take does has no
@@ -201,7 +200,7 @@ namespace Core
 		}
 
 		for (unsigned i = first; i < source.m_Count; ++i)
-			if (!spent[i] && !Append(source.m_Frames[i], source.m_Events[i]))
+			if (!spent[i] && !Append(source.m_Events[i].TimeStamp.Frame, source.m_Events[i]))
 				return false;
 
 		Extend(source.m_Length);
@@ -242,7 +241,7 @@ namespace Core
 		for (unsigned i = 0; i < m_Count; ++i)
 		{
 			if (i != on && i != off)
-				ordered.push_back(OrderedEvent(m_Events[i], m_Frames[i], i));
+				ordered.push_back(OrderedEvent(m_Events[i], m_Events[i].TimeStamp.Frame, i));
 			else if (start)
 				ordered.push_back(i == on ? OrderedEvent(*start, startFrame, i) : OrderedEvent(*end, endFrame, i));
 		}
@@ -371,7 +370,7 @@ namespace Core
 		for (unsigned i = 0; i < m_Count; ++i)
 		{
 			const Event &e = m_Events[i];
-			out << m_Frames[i] << ' ' << int(e.Type) << ' ' << e.ID << ' ' << e.Channel << ' ' << e.NoteNum << ' '
+			out << m_Events[i].TimeStamp.Frame << ' ' << int(e.Type) << ' ' << e.ID << ' ' << e.Channel << ' ' << e.NoteNum << ' '
 				<< e.Frequency << ' ' << e.Volume << ' ' << e.Parameter << ' ' << e.Value << ' ' << e.SlideFrequency
 				<< ' ' << e.Pan << ' ' << e.Position << ' ' << int(e.Message) << '\n';
 		}
