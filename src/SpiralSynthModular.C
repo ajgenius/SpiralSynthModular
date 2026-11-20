@@ -675,13 +675,24 @@ void SynthModular::LearnMidi(void (*learned)(int, int, void *), void *data)
 	m_MidiLearnData = data;
 }
 
+namespace
+{
+	struct MidiPanelMove
+	{
+		Spiral::Core::MidiMap::Target Target;
+		int Value;
+	};
+}
+
 void SynthModular::ServiceMidiInput()
 {
 	Spiral::Core::MidiDevice *midi = Spiral::Core::MidiDevice::Get();
 	if (!midi)
 		return;
 
-	map<pair<int,int>, int> latest;
+	vector<MidiPanelMove> moves;
+	vector<Spiral::Core::MidiMap::Target> targets;
+	map<pair<string, string>, size_t> continuous;
 	Spiral::Core::MidiPacket packet;
 	int channel, controller, value;
 
@@ -699,19 +710,41 @@ void SynthModular::ServiceMidiInput()
 			continue;
 		}
 
-		latest[make_pair(channel, controller)] = value;
+		targets.clear();
+		m_MidiMap.Match(channel, controller, targets);
+		for (size_t t = 0; t < targets.size(); ++t)
+		{
+			const Spiral::Core::MidiMap::Target &target = targets[t];
+			Spiral::Panels::PanelControl *control = MidiControl(target.Device, target.Control);
+			if (!control)
+				continue;
+
+			if (dynamic_cast<Fl_Button *>(Spiral::Panels::FltkView::WidgetOf(*control)))
+			{
+				// Keep edges in order, including the knob positions at each press.
+				continuous.clear();
+			}
+			else
+			{
+				const pair<string, string> key(target.Device, target.Control);
+				map<pair<string, string>, size_t>::iterator previous = continuous.find(key);
+				if (previous != continuous.end())
+					moves[previous->second].Value = -1;
+				continuous[key] = moves.size();
+			}
+
+			MidiPanelMove move = {target, value};
+			moves.push_back(move);
+		}
 	}
 
-	vector<Spiral::Core::MidiMap::Target> moved;
-
-	for (map<pair<int,int>, int>::iterator i = latest.begin(); i != latest.end(); ++i)
+	for (size_t i = 0; i < moves.size(); ++i)
 	{
-		moved.clear();
-		m_MidiMap.Match(i->first.first, i->first.second, moved);
-
-		for (size_t t = 0; t < moved.size(); ++t)
-			if (Spiral::Panels::PanelControl *control = MidiControl(moved[t].Device, moved[t].Control))
-				control->Drive(i->second / 127.0);
+		const MidiPanelMove &move = moves[i];
+		if (move.Value < 0)
+			continue;
+		if (Spiral::Panels::PanelControl *control = MidiControl(move.Target.Device, move.Target.Control))
+			control->Drive(move.Value / 127.0);
 	}
 }
 

@@ -122,6 +122,19 @@ coreaudio_output_test_SOURCES = tests/coreaudio-output.cpp
 coreaudio_output_test_LDADD = libs/libspiralcore/libspiralcore.la
 endif
 
+check_PROGRAMS += midi-bindings-test
+midi_bindings_test_SOURCES = tests/midi-bindings.cpp src/SpiralSynthModular.C src/UnavailablePlugin.C src/SpiralInfo.C src/SettingsWindow.C
+midi_bindings_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
+midi_bindings_test_LDADD = $(HOST_LDADD) $(MIDI_LIBS)
+midi_bindings_test_LDFLAGS = -export-dynamic
+
+surface_modules = tests/surface-modules/dsp/FilterPlugin tests/surface-modules/dsp/PianoRollPlugin
+EXTRA_midi_bindings_test_DEPENDENCIES = $(surface_modules)
+$(surface_modules):
+	$(MKDIR_P) tests/surface-modules/dsp
+	ln -s "$(abs_builddir)/Plugins/Devices/$(@F)/.libs" "$@"
+CLEANFILES = $(surface_modules)
+
 check_PROGRAMS += midi-plugin-test
 midi_plugin_test_SOURCES = tests/midi-plugin.cpp src/SpiralSynthModular.C src/UnavailablePlugin.C src/SpiralInfo.C src/SettingsWindow.C
 midi_plugin_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
