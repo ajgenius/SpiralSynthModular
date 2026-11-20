@@ -233,11 +233,13 @@ void PoshSamplerPlugin::Execute() {
                 // Convert the CV input into a useable trigger
                 if (SampleBool (s, SLOT_RETRIG) || (SampleFloat (s, SLOT_SAMPLEPOS) == -1)) {
                    const int note = SampleSigned (s, SLOT_NOTE);
-                   if (GetInput (s*2 + 1, n) > 0 || (note >= 0 && note < 132 && feq (Freq, NoteTable[note], 0.01f))) {
+                   const float gate = GetInput(s * 2 + 1, n);
+                   const bool triggered = gate > 0 && Spiral::Core::IsFinite(gate);
+                   if (triggered || (note >= 0 && note < 128 && feq(Freq, NoteTable[note], 0.01f))) {
                       if (S->TriggerUp) {
                          SampleFloat (s, SLOT_SAMPLEPOS) = TriggerStart(s, n);
                          S->TriggerUp = false;
-                         S->Velocity = GetInput (s * 2 + 1, n);
+                         S->Velocity = triggered ? gate : 1.f;
                       }
                    }
                    else {

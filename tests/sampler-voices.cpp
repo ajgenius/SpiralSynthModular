@@ -53,6 +53,33 @@ static void CheckReload(const Description &saved, const HostInfo &host, const st
 	CheckOutput(restored, 117, .5f);
 }
 
+static void CheckNoteTrigger(const HostInfo &host, const std::string &dir)
+{
+	PoshSamplerPlugin sampler;
+	sampler.Initialise(&host);
+	sampler.LoadExternalFiles(dir, 17);
+	sampler.Reset();
+
+	Sample pitch(64), gate(64);
+	pitch.Zero();
+	gate.Zero();
+	sampler.SampleSigned(0, PoshSamplerPlugin::SLOT_NOTE) = 131;
+	sampler.Execute();
+	assert(Cursor(sampler) == -1);
+	sampler.SampleSigned(0, PoshSamplerPlugin::SLOT_NOTE) = 69;
+	pitch.Set(4, 2 * 440.f / MAX_FREQ - 1);
+	assert(sampler.SetInput(17, &pitch));
+	sampler.Execute();
+	Sample *mixed = 0, *slot = 0;
+	assert(sampler.GetOutput(0, &mixed) && sampler.GetOutput(1, &slot));
+	assert((*slot)[5] == (*sampler.GetSample(0))[1] && (*mixed)[5] == (*slot)[5]);
+
+	gate.Set(4, .25f);
+	assert(sampler.SetInput(1, &gate));
+	sampler.Execute();
+	assert((*slot)[5] > 0 && (*mixed)[5] == .25f * (*slot)[5]);
+}
+
 static void CheckPCM16(PoshSamplerPlugin &sampler, const std::string &file)
 {
 	Sample &source = *sampler.GetSample(0);
@@ -100,6 +127,7 @@ int main()
 	HostInfo host = HostInfo();
 	host.BUFSIZE = 64;
 	host.SAMPLERATE = 48000;
+	CheckNoteTrigger(host, dir);
 	PoshSamplerPlugin first;
 	first.Initialise(&host);
 	first.LoadExternalFiles(dir, 17);
