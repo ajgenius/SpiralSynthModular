@@ -8,7 +8,8 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT([SpiralSynthModular], [0.3.2])
 AC_CONFIG_SRCDIR([src/SpiralSynthModular.C])
 
-AC_DEFINE([SSM_HOST_ABI], ["ssm-fltk-audio-9"], [SSM plugin host ABI])
+dnl Device modules exchange ChannelHandler and timestamped Event objects with the host.
+AC_DEFINE([SSM_HOST_ABI], ["ssm-fltk-audio-10"], [SSM plugin host ABI])
 
 AM_INIT_AUTOMAKE
 

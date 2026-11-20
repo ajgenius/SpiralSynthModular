@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include <config.h>
 #include "Gzip.h"
 #include "JSON.h"
 #include "PanelDocument.h"
@@ -140,6 +141,14 @@ int main(int argc, char **argv)
 
 	if (!Text(*root, "name") || !Text(*root, "category") || !Text(*root, "registration"))
 		return Fail(input, "name, category and registration are required");
+
+	// A built device should report the host it was actually compiled for.
+	Spumoni::JSON *host = root->Get("host");
+	if (host && host->GetType() == Spumoni::JSON::Object)
+	{
+		host->SetOwned("abi", Spumoni::JSON::MakeString(SSM_HOST_ABI));
+		host->SetOwned("version", Spumoni::JSON::MakeString(PACKAGE_VERSION));
+	}
 
 	const Spumoni::JSON *ui = root->Get("ui");
 

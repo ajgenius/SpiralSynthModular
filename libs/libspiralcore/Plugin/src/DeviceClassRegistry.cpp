@@ -192,7 +192,9 @@ bool DeviceClassRegistry::Accept(void *entry, const string &path)
 
 	if (!abi || strcmp(abi, SSM_HOST_ABI) != 0)
 	{
-		cerr << "Missing or incompatible plugin ABI: " << path << endl;
+		cerr << "Incompatible device module " << path << " (module ABI "
+		     << (abi ? abi : "unspecified") << ", host ABI " << SSM_HOST_ABI
+		     << "). Rebuild the module for this host." << endl;
 		return false;
 	}
 

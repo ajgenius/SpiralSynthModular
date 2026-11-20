@@ -19,7 +19,7 @@ libspiralcore_la_SOURCES = \
     include/GraphSort.h \
     src/GraphSort.cpp \
     include/Event.h
-libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 3:0:0
+libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 4:0:0
 libspiralcore_la_LIBADD = $(SFLIBS) $(JACK_LIBS) -lm \
 	$(top_builddir)/libs/libSpiralPanels/libSpiralPanels.la \
 	$(top_builddir)/libs/libSpumoni/libSpumoni.la \

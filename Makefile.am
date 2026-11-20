@@ -128,7 +128,7 @@ midi_bindings_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
 midi_bindings_test_LDADD = $(HOST_LDADD) $(MIDI_LIBS)
 midi_bindings_test_LDFLAGS = -export-dynamic
 
-surface_modules = tests/surface-modules/dsp/FilterPlugin tests/surface-modules/dsp/PianoRollPlugin
+surface_modules = tests/surface-modules/dsp/FilterPlugin tests/surface-modules/dsp/PianoRollPlugin tests/surface-modules/dsp/MidiPlugin
 EXTRA_midi_bindings_test_DEPENDENCIES = $(surface_modules)
 $(surface_modules):
 	$(MKDIR_P) tests/surface-modules/dsp
@@ -250,6 +250,12 @@ schema_deployment_test_LDADD = $(HOST_LDADD)
 schema_deployment_test_LDFLAGS = -export-dynamic
 plugin_abi_test_SOURCES = tests/plugin-abi.cpp
 plugin_abi_test_LDADD = libs/libspiralcore/libspiralcore.la
+abi9_module = tests/abi9-modules/dsp/OldDevice_DSP$(plugin_module_ext)
+EXTRA_plugin_abi_test_DEPENDENCIES = $(abi9_module) $(surface_modules)
+$(abi9_module): tests/old-device.la
+	$(MKDIR_P) tests/abi9-modules/dsp
+	ln -sf "$(abs_builddir)/tests/.libs/old-device$(plugin_module_ext)" "$@"
+CLEANFILES += $(abi9_module)
 check_LTLIBRARIES += tests/old-device.la
 tests_old_device_la_SOURCES = tests/old-device.cpp
 tests_old_device_la_LDFLAGS = -module -avoid-version -rpath /unused
