@@ -210,9 +210,13 @@ void PoshSamplerPlugin::SizeVoices()
 
 	m_MixedVoices.resize(OutVoices() - 1);
 
+	// They start silent each time: what a voice held before the patch was
+	// wired afresh is not for whoever reads it next.
 	for (size_t v = 0; v < m_MixedVoices.size(); ++v)
 		if (m_MixedVoices[v].GetLength() != m_HostInfo->BUFSIZE)
 			m_MixedVoices[v].Allocate(m_HostInfo->BUFSIZE);
+		else
+			m_MixedVoices[v].Zero();
 
 	if (m_Silence.GetLength() != m_HostInfo->BUFSIZE)
 		m_Silence.Allocate(m_HostInfo->BUFSIZE);
