@@ -18,10 +18,10 @@
 
 #include "LADSPAPlugin.h"
 #include "JSON.h"
+#include "PanelFiles.h"
 #include <cmath>
 #include <cstdio>
 #include <cstring>
-#include <dirent.h>
 #include <sstream>
 #include <unistd.h>
 
@@ -275,38 +275,10 @@ unsigned LADSPAPlugin::PanelGeneration()
 	return (unsigned)generation;
 }
 
+// The panel a file in the panels folders has for the loaded effect.
 static JSON *FindPanel(const string &directory, unsigned uniqueID)
 {
-	DIR *dir = opendir(directory.c_str());
-
-	if (!dir)
-		return NULL;
-
-	JSON *found = NULL;
-
-	while (struct dirent *entry = readdir(dir))
-	{
-		if (found || entry->d_name[0] == '.')
-			continue;
-
-		const string path = directory + "/" + entry->d_name + "/info.json";
-
-		if (access(path.c_str(), R_OK) != 0)
-			continue;
-
-		Spumoni::JSONOwner info(Spumoni::ParseJSON(path.c_str()));
-		const JSON *target = info.get() ? info->Get("for") : NULL;
-		const JSON *ladspa = target ? target->Get("ladspa") : NULL;
-		const JSON *ui = info.get() ? info->Get("ui") : NULL;
-		long id = 0;
-
-		if (ladspa && ladspa->Integer(id) && id == (long)uniqueID && ui && ui->GetType() == JSON::Object)
-			found = ui->Duplicate();
-	}
-
-	closedir(dir);
-
-	return found;
+	return Spiral::Core::PanelFiles(Spiral::Core::PanelFiles::Folders(directory)).Read("ladspa", uniqueID);
 }
 
 bool LADSPAPlugin::GeneratePanel(const string &Directory, string &Document)
