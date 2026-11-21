@@ -207,7 +207,7 @@ void PoshSamplerPlugin::SizeVoices()
 	if (!m_HostInfo)
 		return;
 
-	m_MixedVoices.resize(m_Voices - 1);
+	m_MixedVoices.resize(OutVoices() - 1);
 
 	for (size_t v = 0; v < m_MixedVoices.size(); ++v)
 		if (m_MixedVoices[v].GetLength() != m_HostInfo->BUFSIZE)
@@ -238,19 +238,19 @@ unsigned PoshSamplerPlugin::TakeVoice(int slot) const
 {
 	PoshSamplerPlugin *self = const_cast<PoshSamplerPlugin *>(this);
 
-	if (m_Voices < 2)
+	if (OutVoices() < 2)
 		return 0;
 
-	if (self->SampleFloat(slot, SLOT_SAMPLEPOS) != -1 && m_OutVoice[slot] < m_Voices)
+	if (self->SampleFloat(slot, SLOT_SAMPLEPOS) != -1 && m_OutVoice[slot] < OutVoices())
 		return m_OutVoice[slot];
 
-	unsigned sharing[256] = {0}, best = 0;
+	unsigned sharing[NUM_SAMPLES] = {0}, best = 0;
 
 	for (int s = 0; s < NUM_SAMPLES; ++s)
 		if (s != slot && self->SampleFloat(s, SLOT_SAMPLEPOS) != -1)
-			++sharing[std::min(m_OutVoice[s], std::min(m_Voices, 256u) - 1)];
+			++sharing[std::min(m_OutVoice[s], OutVoices() - 1)];
 
-	for (unsigned v = 1; v < m_Voices && v < 256; ++v)
+	for (unsigned v = 1; v < OutVoices(); ++v)
 		if (sharing[v] < sharing[best])
 			best = v;
 
@@ -357,7 +357,7 @@ void PoshSamplerPlugin::Execute() {
                    }
                    // mix the sample to the output, on the voice it has;
                    // more samples playing than there are voices share.
-                   const unsigned voice = std::min(m_OutVoice[s], m_Voices - 1);
+                   const unsigned voice = std::min(m_OutVoice[s], OutVoices() - 1);
                    const float mixed = pcm[SampleFloat (s, SLOT_SAMPLEPOS)] * SampleFloat (s, SLOT_VOLUME) * S->Velocity;
                    if (!voice) MixOutput (0, n, mixed);
                    else m_MixedVoices[voice - 1].Set(n, mixed + m_MixedVoices[voice - 1][n]);
@@ -496,7 +496,9 @@ Sample *PoshSamplerPlugin::VoiceOutput(unsigned port, unsigned voice)
 	if (!voice)
 		return GetOutputBuf(port);
 
-	return port == 0 ? &m_MixedVoices[voice - 1] : &m_Silence;
+	// A voice past the mixed output's last is there, and silent: a copy of
+	// what follows that found none would be handed the first voice again.
+	return port == 0 && voice < OutVoices() ? &m_MixedVoices[voice - 1] : &m_Silence;
 }
 
 void PoshSamplerPlugin::SetVoiceInput(unsigned port, unsigned voice, const Sample *in)

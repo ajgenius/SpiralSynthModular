@@ -129,6 +129,9 @@ class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceOutputSource,
       // silence on the rest. Of what is wired in, the first voice is the
       // port's input and the rest are handed over, by port then voice.
       unsigned m_Voices;
+      // The voices of the mixed output: one for each sample at most, more
+      // than that none could take.
+      unsigned OutVoices() const { return std::min(m_Voices, unsigned(NUM_SAMPLES)); }
       std::vector<Sample> m_MixedVoices;
       Sample m_Silence;
       std::vector<const Sample *> m_VoiceInputs;

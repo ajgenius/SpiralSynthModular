@@ -108,6 +108,45 @@ static void CheckPCM16(PoshSamplerPlugin &sampler, const std::string &file)
 		assert(saved[i] == source[i]);
 }
 
+// In a patch of more voices than the sampler has samples the mixed output has
+// a voice for each sample and no more. All eight started together take one
+// each, and the voices past them are there and silent.
+static void CheckWidePatch(const HostInfo &host, const std::string &dir)
+{
+	PoshSamplerPlugin sampler;
+	sampler.Initialise(&host);
+	DeviceClass kind;
+	kind.Create = MakeCopy;
+	VoicePool pool;
+	pool.SetLookup(Lookup, &sampler);
+	pool.Add(17, &sampler, kind, 12, &host, dir);
+	sampler.Reset();
+
+	Sample gate(64);
+	gate.Zero();
+	gate.Set(0, 1);
+	for (int s = 0; s < NUM_SAMPLES; ++s)
+	{
+		Sample &pcm = *sampler.GetSample(s);
+		pcm.Allocate(256);
+		for (int n = 0; n < 256; ++n)
+			pcm.Set(n, (s + 1) / 16.f);
+
+		sampler.m_SampleDescVec[s]->SampleRate = 48000;
+		sampler.SampleSigned(s, PoshSamplerPlugin::SLOT_LOOPEND) = 255;
+		assert(sampler.SetInput(2 * s + 1, &gate));
+	}
+
+	sampler.Execute();
+	for (int s = 0; s < NUM_SAMPLES; ++s)
+		assert((*sampler.VoiceOutput(0, s))[5] == (s + 1) / 16.f);
+
+	for (unsigned v = NUM_SAMPLES; v < 12; ++v)
+		assert(sampler.VoiceOutput(0, v) && (*sampler.VoiceOutput(0, v))[5] == 0);
+
+	assert(!sampler.VoiceOutput(0, 12));
+}
+
 // The sampler's voices, as ajgenius set them on 10 November 2026: a trigger
 // for each sample, as it always had; one playhead for each sample; and the
 // voices on the mixed output only, where each sample that is playing has one
@@ -132,6 +171,7 @@ int main()
 	host.BUFSIZE = 64;
 	host.SAMPLERATE = 48000;
 	CheckNoteTrigger(host, dir);
+	CheckWidePatch(host, dir);
 	PoshSamplerPlugin first;
 	first.Initialise(&host);
 	first.LoadExternalFiles(dir, 17);
