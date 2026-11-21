@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <iostream>
 #include "PanelRegistry.h"
+#include "PanelFiles.h"
 
 using namespace std;
 using namespace Spiral::Core;
@@ -74,10 +75,23 @@ void PanelRegistry::ProvidePanels(const string &toolkit, SpiralGUIType *(*create
 	provider.Create = create;
 	m_Providers.push_back(provider);
 	const vector<DeviceClass*> &devices = DeviceClassRegistry::Get()->Classes();
+	// A device with no panel of its own has one if a panels folder does.
+	const PanelFiles files(PanelFiles::Folders(PanelFolder()));
 
 	for (size_t i = 0; i < devices.size(); ++i)
-		if (!devices[i]->Panel.empty() || devices[i]->PanelGenerated)
+		if (!devices[i]->Panel.empty() || devices[i]->PanelGenerated || !files.Path("device", devices[i]->ID).empty())
 			Offer(*devices[i]);
+}
+
+// The installed panels folder, beside the device modules.
+string PanelRegistry::PanelFolder()
+{
+	string folder = DeviceClassRegistry::Get()->Root();
+
+	if (!folder.empty() && folder[folder.size() - 1] != '/')
+		folder += '/';
+
+	return folder + "panels";
 }
 
 void PanelRegistry::Offer(const DeviceClass &device)

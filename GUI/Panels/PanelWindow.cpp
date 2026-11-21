@@ -23,6 +23,8 @@
 #include "PatchDescription.h"
 #include "JSON.h"
 #include "PanelDocument.h"
+#include "PanelFiles.h"
+#include "JSON.h"
 #include "DeviceClassRegistry.h"
 #include "PanelRegistry.h"
 #include <FL/Fl_Button.H>
@@ -50,8 +52,11 @@ namespace Spiral
 		{
 		}
 
+		// A panel from a file is taken whole or not at all: one that asks for a
+		// control this host has not got is not built, so that the device's
+		// own panel can be shown in its place.
 		FltkPanel *PanelWindow::Build(SpiralPlugin *plugin, const std::string &panel, const std::string &directory,
-				const std::string &documentPath, bool &generated)
+				const std::string &documentPath, bool &generated, bool whole)
 		{
 			std::string error, text;
 			generated = plugin->GeneratePanel(directory, text);
@@ -77,6 +82,14 @@ namespace Spiral
 			for (size_t i = 0; i < model->Unsupported().size(); ++i)
 				std::cerr << "PanelWindow: " << documentPath << ": no control registered for \""
 					  << model->Unsupported()[i] << "\"" << std::endl;
+
+			if (whole && !generated && !model->Unsupported().empty())
+			{
+				delete host;
+
+				return NULL;
+			}
+
 			for (size_t i = 0; i < model->Unbound().size(); ++i)
 				std::cerr << "PanelWindow: " << documentPath << ": unbound " << model->Unbound()[i] << std::endl;
 
@@ -94,7 +107,33 @@ namespace Spiral
 				directory += '/';
 			directory += "panels";
 			bool generated = false;
-			FltkPanel *host = Build(plugin, device.Panel, directory, device.Name, generated);
+			FltkPanel *host = NULL;
+			std::string document = device.Panel, path = device.Name;
+
+			// A panel file for this device is shown in place of the panel the
+			// device has built in; if it cannot be, the built-in one is.
+			{
+				const Spiral::Core::PanelFiles files(Spiral::Core::PanelFiles::Folders(directory));
+				std::string file;
+				Spumoni::JSONOwner ui(files.Read("device", device.ID, &file));
+
+				if (ui.get())
+				{
+					host = Build(plugin, ui->Stringify(false), directory, file, generated, true);
+
+					if (host && !generated)
+					{
+						document = ui->Stringify(false);
+						path = file;
+					}
+					else if (!host)
+						std::cerr << "PanelWindow: " << file << ": not used; " << device.Name
+							  << (device.Panel.empty() ? " has no panel of its own" : " shows its own panel") << std::endl;
+				}
+			}
+
+			if (!host)
+				host = Build(plugin, device.Panel, directory, device.Name, generated);
 
 			if (!host)
 				return NULL;
@@ -103,9 +142,9 @@ namespace Spiral
 			PanelWindow *window = new PanelWindow(host->w() + 2 * Margin, host->h() + TitleHeight + Margin, plugin);
 			window->m_Host = host;
 			window->m_Panel = panel;
-			window->m_Document = device.Panel;
+			window->m_Document = document;
 			window->m_Directory = directory;
-			window->m_DocumentPath = device.Name;
+			window->m_DocumentPath = path;
 			window->m_Generated = generated;
 			window->m_Generation = plugin->PanelGeneration();
 			window->add(host);

@@ -73,7 +73,7 @@ namespace Spiral
 
 			void Fit();
 			static FltkPanel *Build(SpiralPlugin *plugin, const std::string &panel, const std::string &directory,
-					const std::string &documentPath, bool &generated);
+					const std::string &documentPath, bool &generated, bool whole = false);
 			void Rebuild();
 			FltkPanel *m_Host;
 			Panel *m_Panel;
