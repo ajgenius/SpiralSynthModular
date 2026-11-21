@@ -40,6 +40,52 @@ static void Receive(const MIDIPacketList *list, void *, void *)
 	}
 }
 
+// The same surface may come back with a new CoreMIDI endpoint reference.
+static void CheckSurface(MidiBackend &backend, MIDIClientRef client)
+{
+	char name[80];
+	snprintf(name, sizeof(name), "SSM binding test %d", int(getpid()));
+	CFStringRef label = CFStringCreateWithCString(NULL, name, kCFStringEncodingUTF8);
+	backend.Select(name, "");
+	for (int i = 0; i < 200 && backend.Status().find(" -> SpiralSynth") != std::string::npos; ++i)
+		usleep(10000);
+
+	for (unsigned attachment = 0; attachment < 2; ++attachment)
+	{
+		MIDIEndpointRef surface = 0;
+		assert(!MIDISourceCreate(client, label, &surface));
+		const std::string connected = std::string(" <- ") + name;
+		for (int i = 0; i < 300 && backend.Status().find(connected) == std::string::npos; ++i)
+			usleep(10000);
+		assert(backend.Status().find(connected) != std::string::npos);
+
+		MidiPacket got;
+		while (backend.Poll(got)) {}
+		Byte buffer[64];
+		MIDIPacketList *list = (MIDIPacketList *)buffer;
+		MIDIPacket *first = MIDIPacketListInit(list);
+		const unsigned char cc[] = {0xb1, 71, (unsigned char)(80 + attachment)};
+		assert(MIDIPacketListAdd(list, sizeof(buffer), first, 0, sizeof(cc), cc));
+		assert(!MIDIReceived(surface, list));
+		bool heard = false;
+		for (int i = 0; i < 200 && !heard; ++i)
+		{
+			while (backend.Poll(got))
+				heard = heard || (got.Status == cc[0] && got.Data1 == cc[1] && got.Data2 == cc[2]);
+			if (!heard)
+				usleep(10000);
+		}
+		assert(heard);
+
+		assert(!MIDIEndpointDispose(surface));
+		for (int i = 0; i < 300 && backend.Status().find(connected) != std::string::npos; ++i)
+			usleep(10000);
+		assert(backend.Status().find(connected) == std::string::npos);
+	}
+	CFRelease(label);
+	puts("Selected surface receives CC after late attachment and reconnection PASS");
+}
+
 int main(int argc, char **argv)
 {
 	if (argc != 2 || std::string(argv[1]) != "--live") return 77;
@@ -101,6 +147,7 @@ int main(int argc, char **argv)
 	assert(received == 1 && last[0] == 0x91 && last[1] == 67 && last[2] == 77);
 
 	MIDIPortDisconnectSource(in, source);
+	CheckSurface(*backend, client);
 	MIDIClientDispose(client);
 	d->Destroy(backend);
 	puts("CoreMIDI backend receives on its destination and sends on its source PASS");

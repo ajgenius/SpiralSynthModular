@@ -63,7 +63,7 @@ public:
 	bool Alive() const { return mMIDIClient != 0; }
 	std::vector<std::string> Ports(bool output);
 	bool Connect(const std::string &source, const std::string &destination);
-	bool Connected() { return Alive(); }
+	bool Connected();
 	bool Read(MidiPacket &packet);
 	bool Write(const MidiPacket &packet);
 	std::string Status() const;
@@ -147,7 +147,12 @@ MIDIEndpointRef CoreMidiTransport::Find(const std::string &name, bool output) co
 	{
 		MIDIEndpointRef endpoint = output ? MIDIGetDestination(n) : MIDIGetSource(n);
 		if (endpoint == mMIDISource || endpoint == mMIDIDestination) continue;
-		if (Name(endpoint) == name) return endpoint;
+		if (Name(endpoint) == name)
+		{
+			SInt32 offline = 0;
+			if (MIDIObjectGetIntegerProperty(endpoint, kMIDIPropertyOffline, &offline) || !offline)
+				return endpoint;
+		}
 	}
 	return 0;
 }
@@ -155,13 +160,27 @@ MIDIEndpointRef CoreMidiTransport::Find(const std::string &name, bool output) co
 bool CoreMidiTransport::Connect(const std::string &source, const std::string &destination)
 {
 	if (!Alive()) return false;
-	if (mConnectedSource) MIDIPortDisconnectSource(mInputPort, mConnectedSource);
+	if (mConnectedSource)
+		MIDIPortDisconnectSource(mInputPort, mConnectedSource);
+
+	// Running status and incomplete messages belong to the previous source.
+	m_ReadReadIndex = m_ReadFillIndex;
+	m_Bytes = MidiByteStream();
+	m_Source = source;
+	m_Destination = destination;
 	mConnectedSource = Find(source, false);
-	if (mConnectedSource) MIDIPortConnectSource(mInputPort, mConnectedSource, NULL);
+	if (mConnectedSource && MIDIPortConnectSource(mInputPort, mConnectedSource, NULL))
+		mConnectedSource = 0;
 	mConnectedDestination = Find(destination, true);
-	m_Source = mConnectedSource ? source : "";
-	m_Destination = mConnectedDestination || destination == "SpiralSynth" ? destination : "";
 	return true;
+}
+
+bool CoreMidiTransport::Connected()
+{
+	// The client and virtual ports survive a USB unplug. Compare the selected
+	// endpoints on the worker's port scan, including a name that appears later.
+	return Alive() && Find(m_Source, false) == mConnectedSource
+		&& Find(m_Destination, true) == mConnectedDestination;
 }
 
 bool CoreMidiTransport::Read(MidiPacket &packet)
@@ -196,8 +215,9 @@ std::string CoreMidiTransport::Status() const
 	if (!Alive()) return "CoreMIDI: no client";
 	std::ostringstream status;
 	status << "CoreMIDI: SpiralSynth";
-	if (!m_Source.empty()) status << " <- " << m_Source;
-	if (!m_Destination.empty()) status << " -> " << m_Destination;
+	if (mConnectedSource) status << " <- " << m_Source;
+	else if (!m_Source.empty()) status << " (waiting for input " << m_Source << ")";
+	if (mConnectedDestination || m_Destination == "SpiralSynth") status << " -> " << m_Destination;
 	return status.str();
 }
 
