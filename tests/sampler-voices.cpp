@@ -108,6 +108,10 @@ static void CheckPCM16(PoshSamplerPlugin &sampler, const std::string &file)
 		assert(saved[i] == source[i]);
 }
 
+// The sampler's voices, as ajgenius set them on 10 November 2026: a trigger
+// for each sample, as it always had; one playhead for each sample; and the
+// voices on the mixed output only, where each sample that is playing has one
+// while there are enough. The sampler runs once and is not copied.
 int main()
 {
 	char temp[] = "/tmp/ssm-sampler-voices-XXXXXX";
@@ -137,38 +141,44 @@ int main()
 	pool.SetLookup(Lookup, &first);
 	pool.Add(17, &first, kind, 2, &host, dir);
 	first.Reset();
-	second->Reset();
-	for (int slot = 0; slot < NUM_SAMPLES; ++slot)
-		assert(first.GetSample(slot) == second->GetSample(slot));
 
+	// The one device has both voices of its mixed output.
+	assert(!second && pool.Holds(17));
+	assert(first.VoiceOutput(0, 0) && first.VoiceOutput(0, 1) && !first.VoiceOutput(0, 2));
+
+	// A gate on either voice of what is wired to a sample's trigger starts
+	// it. The first voice's input is the port's own; the pool hands over
+	// the second's.
 	Sample a(64), b(64);
 	a.Zero();
 	b.Zero();
-	assert(first.SetInput(1, &a) && second->SetInput(1, &b));
+	assert(first.SetInput(1, &a));
+	first.SetVoiceInput(1, 1, &b);
 	b.Set(3, 1);
 	first.Execute();
-	pool.Run(17, &first, true, false, 0);
+	assert(Cursor(first) == 61);
+
+	// A sample has one playhead: a gate on the other voice while it plays
+	// starts the same sample again, and it does not play beside itself.
 	b.Zero();
 	a.Set(11, 1);
 	first.Execute();
-	pool.Run(17, &first, true, false, 64);
-
-	assert(Cursor(first) == 53 && Cursor(*second) == 125);
+	assert(Cursor(first) == 53);
 	assert(pool.Follow());
-	assert(Cursor(first) == 53 && Cursor(*second) == 125);
 	FloatProperty volume(DefaultLinearFlags, .5f, 0, 2, .001f, .1f);
 	first.SynchronizeProperty("VOLUME0", &volume);
 	assert(pool.Follow());
-	assert(first.GetVolume(0) == .5f && second->GetVolume(0) == .5f);
-	assert(Cursor(first) == 53 && Cursor(*second) == 125);
+	assert(first.GetVolume(0) == .5f && Cursor(first) == 53);
 
 	a.Zero();
 	first.Execute();
-	pool.Run(17, &first, true, false, 128);
 	CheckOutput(first, 53, .5f);
-	CheckOutput(*second, 125, .5f);
 
-	// A saved version 4 patch still stores the visible cursor in its original slot.
+	// It is on the first voice of the mixed output, and the second is silent.
+	for (int n = 0; n < 64; ++n)
+		assert((*first.VoiceOutput(0, 0))[n] == ramp[53 + n] * .5f && (*first.VoiceOutput(0, 1))[n] == 0);
+
+	// A saved version 4 patch still stores the cursor in its original slot.
 	ToggleProperty retrigger(Property::WriteOnly, false);
 	first.SynchronizeProperty("RETRIG0", &retrigger);
 	Description saved;
@@ -186,28 +196,26 @@ int main()
 
 	CheckReload(legacy, host, dir);
 
-	// Expanding a sounding device should not start the new lane.
+	// Wired afresh, the sampler keeps where it is: there is no new copy to start.
 	pool.Clear();
 	pool.Add(17, &first, kind, 2, &host, dir);
-	assert(Cursor(first) == 117 && Cursor(*second) == -1);
-	second->Reset();
-	assert(second->SetInput(1, &b));
+	assert(!second && Cursor(first) == 117);
+	first.SetVoiceInput(1, 1, &b);
 	retrigger.Value.AsBoolean = true;
 	first.SynchronizeProperty("RETRIG0", &retrigger);
+
+	// A start CV sets where this attack begins and leaves the panel's marker.
 	Sample startCV(64);
 	startCV.Zero(); // Middle of the sample.
 	assert(first.SetInput(18, &startCV));
 	a.Set(0, 1);
 	first.Execute();
-	assert(Cursor(first) == 255 + 64);
-	assert(pool.Follow());
-	assert(first.GetPlayStart(0) == 0 && second->GetPlayStart(0) == 0);
-	b.Set(0, 1);
-	pool.Run(17, &first, true, false, 192);
-	CheckOutput(*second, 0, .5f);
+	assert(Cursor(first) == 255 + 64 && first.GetPlayStart(0) == 0);
+	a.Zero();
 
-	// Replace an empty slot while both lanes exist. Both must read the new
-	// waveform at its native rate, including subsequent in-place edits.
+	// Each sample that is playing has a voice of the mixed output. A second
+	// sample, loaded at half the rate and edited in place, takes the other
+	// voice while the first goes on on its own.
 	wav.SetSamplerate(24000);
 	assert(wav.Open(sidecar, WavFile::WRITE));
 	wav.Save(ramp);
@@ -217,18 +225,27 @@ int main()
 	Sample gate(64);
 	gate.Zero();
 	gate.Set(0, 1);
-	assert(first.SetInput(3, &gate) && second->SetInput(3, &gate));
+	assert(first.SetInput(3, &gate));
+
+	// Where a wire leaves the pool the voices are added together.
+	const VoicePool::Wire out = {17, 0, 99, 16};
+	pool.SumOut(out, 64);
 	first.Execute();
-	pool.Run(17, &first, true, false, 256);
-	Sample *left = 0, *right = 0;
-	assert(first.GetOutput(2, &left) && second->GetOutput(2, &right));
-	for (int n = 0; n < 64; n += 2)
+	pool.Run(17, &first, false, false, 256);
+	Sample *one = 0, *two = 0;
+	assert(first.GetOutput(1, &one) && first.GetOutput(2, &two));
+	for (int n = 0; n < 64; ++n)
 	{
-		float expected = n == 20 ? -.5f : ramp[n / 2];
-		assert((*left)[n] == expected && (*right)[n] == expected);
+		if (n % 2 == 0)
+			assert((*two)[n] == (n == 20 ? -.5f : ramp[n / 2]));
+
+		assert((*first.VoiceOutput(0, 0))[n] == (*one)[n] && (*one)[n] > 0);
+		assert((*first.VoiceOutput(0, 1))[n] == (*two)[n]);
+		assert((*first.GetInput(16))[n] == (*one)[n] + (*two)[n]);
+		// A sample's own output is one voice: the other has silence.
+		assert((*first.VoiceOutput(2, 1))[n] == 0);
 	}
 	assert(first.SampleFloat(1, PoshSamplerPlugin::SLOT_SAMPLEPOS) == 32);
-	assert(second->SampleFloat(1, PoshSamplerPlugin::SLOT_SAMPLEPOS) == 32);
 
 	CheckPCM16(first, sidecar);
 	assert(unlink(sidecar.c_str()) == 0);

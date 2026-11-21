@@ -32,7 +32,11 @@ struct SampleDesc {
        bool Stereo;
 };
 
-class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceStateKey {
+// The sampler runs once, whatever voices its patch has, as ajgenius set on
+// 10 November 2026. Each sample has its one trigger and its one playhead; the
+// voices are on the mixed output, where each sample that is playing has one
+// while there are enough. An output of one sample is one voice.
+class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceStateKey, public VoiceOutputSource, public VoiceInputSink {
    public:
       PoshSamplerPlugin();
       virtual ~PoshSamplerPlugin();
@@ -41,6 +45,9 @@ class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceStateKey {
       virtual void Reset();
       virtual void ExecuteCommands();
       virtual void SetVoice(SpiralPlugin *first, unsigned voice, unsigned voices);
+      virtual Sample *VoiceOutput(unsigned port, unsigned voice);
+      virtual bool SumsVoices(unsigned port) const { return port == 0; }
+      virtual void SetVoiceInput(unsigned port, unsigned voice, const Sample *in);
       // SetVoice binds the device's sample bank and controls directly. A panel refresh has no state to copy.
       virtual void DescribeVoiceKey(Spiral::Core::Description &) const {}
       virtual void Describe(Spiral::Core::Description &d);
@@ -119,7 +126,22 @@ class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceStateKey {
       { return *(Spiral::Core::ToggleProperty *)Slot (n, s); }
    private:
       PoshSamplerPlugin *m_Owner;
-      long TriggerStart(int slot, int frame);
+      long TriggerStart(int slot, int frame, unsigned lane);
+
+      // The patch's voices. The mixed output's first is the port's own
+      // buffer and the rest are kept here; a sample's own output has only
+      // silence on the rest. Of what is wired in, the first voice is the
+      // port's input and the rest are handed over, by port then voice.
+      unsigned m_Voices;
+      std::vector<Sample> m_MixedVoices;
+      Sample m_Silence;
+      std::vector<const Sample *> m_VoiceInputs;
+      // For each sample, the voice of the mixed output it plays on, and the
+      // voice of its inputs that triggered it, whose pitch and start it takes.
+      unsigned m_OutVoice[NUM_SAMPLES], m_Lane[NUM_SAMPLES];
+      void SizeVoices();
+      float VoiceInput(int port, unsigned voice, int frame) const;
+      unsigned TakeVoice(int slot) const;
       void InitializeSampleDescription (SampleDesc* NewDesc, int num, int Note);
       void Cut (int n, long s, long e);
       void Copy (int n, long s, long e);
