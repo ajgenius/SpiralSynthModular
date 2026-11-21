@@ -25,6 +25,19 @@ class VoiceOutputSource
 public:
 	virtual ~VoiceOutputSource() {}
 	virtual Sample *VoiceOutput(unsigned port, unsigned voice) = 0;
+
+	// Whether a port's voices are added together where a wire leaves the
+	// pool, as audio is. A pitch or a gate is not: the first voice's leaves.
+	virtual bool SumsVoices(unsigned) const { return false; }
+};
+
+// A single device can read the voices of what feeds it too: it is handed
+// the input of each voice after the first, where a copy would have had it.
+class VoiceInputSink
+{
+public:
+	virtual ~VoiceInputSink() {}
+	virtual void SetVoiceInput(unsigned port, unsigned voice, const Sample *in) = 0;
 };
 
 class VoicePool

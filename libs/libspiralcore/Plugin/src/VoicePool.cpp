@@ -67,8 +67,11 @@ void VoicePool::Add(int id, SpiralPlugin *device, const Spiral::Core::DeviceClas
 
 void VoicePool::SumOut(const Wire &wire, int size)
 {
-	// Crossing into another pool keeps the visible CV and the shared event stream.
-	if (dynamic_cast<VoiceOutputSource *>(Find(wire.OutputID)))
+	// Crossing into another pool keeps the visible CV and the shared event
+	// stream; audio a single device has on several voices is summed.
+	VoiceOutputSource *single = dynamic_cast<VoiceOutputSource *>(Find(wire.OutputID));
+
+	if (single && !single->SumsVoices(wire.OutputPort))
 		return;
 	std::vector<Sum> &sums = m_Sums[wire.OutputID];
 	Sample *sum = 0;
@@ -105,6 +108,25 @@ void VoicePool::Feed(const Wire &wire, bool sourceHere)
 	}
 	VoiceOutputSource *outputs = from == m_Members.end() ? NULL
 		: dynamic_cast<VoiceOutputSource *>(Find(wire.OutputID));
+
+	// A single device that reads voices has no copies to feed: it is handed
+	// each voice's input itself.
+	if (VoiceInputSink *sink = dynamic_cast<VoiceInputSink *>(visible))
+		for (unsigned v = 1;; ++v)
+		{
+			Sample *out = 0;
+
+			if (outputs)
+				out = outputs->VoiceOutput(wire.OutputPort, v);
+			else if (!sources || v - 1 >= sources->size() || !(*sources)[v - 1]->GetOutput(wire.OutputPort, &out))
+				out = 0;
+
+			if (!out)
+				break;
+
+			sink->SetVoiceInput(wire.InputPort, v, out);
+		}
+
 	for (size_t v = 0; v < copies.size(); ++v)
 	{
 		const Sample *in = visible->GetInput(wire.InputPort);
@@ -141,6 +163,12 @@ void VoicePool::Run(int id, SpiralPlugin *device, bool copies, bool reset, unsig
 		*sum = *out;
 		for (size_t v = 0; voices && v < voices->size(); ++v)
 			if ((*voices)[v]->GetOutput(sums->second[s].Port, &out) && out)
+				for (int n = 0; n < sum->GetLength() && n < out->GetLength(); ++n)
+					sum->Set(n, (*sum)[n] + (*out)[n]);
+
+		// A single device keeps its other voices itself.
+		if (VoiceOutputSource *single = dynamic_cast<VoiceOutputSource *>(device))
+			for (unsigned v = 1; (out = single->VoiceOutput(sums->second[s].Port, v)); ++v)
 				for (int n = 0; n < sum->GetLength() && n < out->GetLength(); ++n)
 					sum->Set(n, (*sum)[n] + (*out)[n]);
 	}
