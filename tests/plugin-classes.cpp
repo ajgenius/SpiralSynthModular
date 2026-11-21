@@ -51,7 +51,9 @@ static void OpenRecordedRoll(const char *path, HostInfo &host)
 	assert(rows->GetAt(17999, rows->FindField("key"), key));
 	assert(rows->GetAt(17999, rows->FindField("end"), end));
 	assert(key.number == 71 && end.number > 899 && end.number < 900);
-	assert(panel.FindProperty("RECORD STATUS") && panel.FindControl("record-status"));
+	// The device says how a take went; the roll's panel has no status line,
+	// so nothing on it shows that, as in the private tree.
+	assert(panel.FindProperty("RECORD STATUS") && !panel.FindControl("record-status"));
 	const unsigned long seen = rows->TableRevision();
 	panel.Refresh();
 	assert(rows->TableRevision() == seen);

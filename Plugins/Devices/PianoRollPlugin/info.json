@@ -478,19 +478,6 @@
           },
           "text": "Delete note",
           "type": "Button"
-        },
-        {
-          "bounds": [
-            4,
-            24,
-            348,
-            12
-          ],
-          "name": "record-status",
-          "property": "RECORD STATUS",
-          "size": 10,
-          "type": "Meters::LCD",
-          "placeholder": ""
         }
       ],
       "height": 276,
@@ -634,12 +621,6 @@
               570,
               60,
               22
-            ],
-            "record-status": [
-              4,
-              29,
-              380,
-              13
             ]
           },
           "height": 598,
