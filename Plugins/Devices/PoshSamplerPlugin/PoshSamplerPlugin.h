@@ -36,7 +36,7 @@ struct SampleDesc {
 // 10 November 2026. Each sample has its one trigger and its one playhead; the
 // voices are on the mixed output, where each sample that is playing has one
 // while there are enough. An output of one sample is one voice.
-class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceStateKey, public VoiceOutputSource, public VoiceInputSink {
+class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceOutputSource, public VoiceInputSink {
    public:
       PoshSamplerPlugin();
       virtual ~PoshSamplerPlugin();
@@ -48,8 +48,6 @@ class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceStateKey, pub
       virtual Sample *VoiceOutput(unsigned port, unsigned voice);
       virtual bool SumsVoices(unsigned port) const { return port == 0; }
       virtual void SetVoiceInput(unsigned port, unsigned voice, const Sample *in);
-      // SetVoice binds the device's sample bank and controls directly. A panel refresh has no state to copy.
-      virtual void DescribeVoiceKey(Spiral::Core::Description &) const {}
       virtual void Describe(Spiral::Core::Description &d);
       virtual void Apply(Spiral::Core::Description::Reader &r);
       virtual void Migrate(Spiral::Core::Description &d);
@@ -67,7 +65,7 @@ class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceStateKey, pub
       Spiral::Core::ToggleProperty m_RecordingProp;
       void LoadSample (int n, const std::string &Name);
       void SaveSample (int n, const std::string &Name);
-      Sample* GetSample (int n) { return m_Owner->m_SampleVec[n]; }
+      Sample* GetSample (int n) { return m_SampleVec[n]; }
       float GetVolume (int n) { return SampleFloat (n, SLOT_VOLUME); }
       float GetPitch (int n) { return SampleFloat (n, SLOT_PITCHMOD); }
       bool GetReTrig (int n) { return SampleBool (n, SLOT_RETRIG); }
@@ -103,8 +101,7 @@ class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceStateKey, pub
 
       Spiral::Core::Property *Slot (int n, SampleSlot s)
       {
-         Spiral::Core::VectorProperty &slots = s == SLOT_SAMPLEPOS ? m_Samples : m_Owner->m_Samples;
-         return (*static_cast<Spiral::Core::VectorProperty *>(slots[n]))[s];
+         return (*static_cast<Spiral::Core::VectorProperty *>(m_Samples[n]))[s];
       }
 
       Spiral::Core::FloatType &SampleFloat (int n, SampleSlot s)
@@ -125,7 +122,6 @@ class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceStateKey, pub
       Spiral::Core::ToggleProperty &SlotBool (int n, SampleSlot s)
       { return *(Spiral::Core::ToggleProperty *)Slot (n, s); }
    private:
-      PoshSamplerPlugin *m_Owner;
       long TriggerStart(int slot, int frame, unsigned lane);
 
       // The patch's voices. The mixed output's first is the port's own
