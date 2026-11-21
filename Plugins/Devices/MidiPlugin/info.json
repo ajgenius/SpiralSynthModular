@@ -339,7 +339,7 @@
           "name": "voice-lanes",
           "property": "VOICE LANES",
           "size": 12,
-          "text": "Voice lanes (instrument pool)",
+          "text": "Use allocator at one voice",
           "type": "CheckBox"
         },
         {
