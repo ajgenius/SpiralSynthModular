@@ -1804,6 +1804,7 @@ VoicePool *SynthModular::PoolFor(int id, long &voices)
 	map<int,DeviceWin*>::iterator i = m_DeviceWinMap.find(id);
 
 	if (i == m_DeviceWinMap.end() || !i->second->m_Device || i->second->m_Device->IsAudioDriver()
+	    || dynamic_cast<VoiceSumInput *>(i->second->m_Device)
 	    || (HostIO(i->second->m_PluginID) && !dynamic_cast<VoiceOutputSource *>(i->second->m_Device))
 	    || m_Canvas->IsBox(id))
 		return NULL;

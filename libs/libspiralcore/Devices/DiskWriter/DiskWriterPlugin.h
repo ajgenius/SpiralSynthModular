@@ -22,8 +22,10 @@
 #include "Device.h"
 #include "DeviceClassRegistry.h"
 #include "RiffWav.h"
+#include "VoicePool.h"
 
-class DiskWriterPlugin : public Spiral::Core::Device
+// The recorder records what the output plays: the voices added together.
+class DiskWriterPlugin : public Spiral::Core::Device, public VoiceSumInput
 {
 public:
 	static const Spiral::Core::DeviceClass &Class();
