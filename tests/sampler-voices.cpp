@@ -108,6 +108,90 @@ static void CheckPCM16(PoshSamplerPlugin &sampler, const std::string &file)
 		assert(saved[i] == source[i]);
 }
 
+class AudioTap : public SpiralPlugin
+{
+public:
+	AudioTap() { m_PluginInfo.NumInputs = 2; m_PluginInfo.NumOutputs = 1; }
+	void Execute() { *GetOutputBuf(0) = *GetInput(0); }
+	void Describe(Description &) {}
+	void Apply(Description::Reader &) {}
+};
+
+static SpiralPlugin *MakeTap() { return new AudioTap; }
+
+struct SamplerPatch
+{
+	PoshSamplerPlugin Sampler;
+	AudioTap Effect, Sink;
+};
+
+static SpiralPlugin *PatchLookup(int id, void *patch)
+{
+	SamplerPatch &p = *static_cast<SamplerPatch *>(patch);
+	if (id == 17)
+		return &p.Sampler;
+	return id == 18 ? &p.Sink : &p.Effect;
+}
+
+// The sampler's mixed output through an ordinary effect in the same pool,
+// which is copied for each voice, sums to the same sample for sample as the
+// mixed output wired straight out of the pool: each copy is handed its voice.
+static void CheckPooledEffect(const HostInfo &host)
+{
+	SamplerPatch patch;
+	PoshSamplerPlugin &sampler = patch.Sampler;
+	sampler.Initialise(&host);
+	patch.Sink.Initialise(&host);
+	patch.Effect.Initialise(&host);
+	DeviceClass kind;
+	kind.Create = MakeCopy;
+	VoicePool pool;
+	pool.SetLookup(PatchLookup, &patch);
+	pool.Add(17, &sampler, kind, 3, &host, "");
+	sampler.Reset();
+	const VoicePool::Wire wire = {17, 0, 18, 0};
+	pool.SumOut(wire, 64);
+
+	kind.Create = MakeTap;
+	pool.Add(19, &patch.Effect, kind, 3, &host, "");
+	assert(patch.Effect.SetInput(0, sampler.VoiceOutput(0, 0)));
+	const VoicePool::Wire intoEffect = {17, 0, 19, 0};
+	pool.Feed(intoEffect, true);
+	const VoicePool::Wire effectsMix = {19, 0, 18, 1};
+	pool.SumOut(effectsMix, 64);
+
+	Sample gate(64);
+	gate.Zero();
+	gate.Set(0, 1);
+	for (int s = 0; s < 3; ++s)
+	{
+		Sample &pcm = *sampler.GetSample(s);
+		pcm.Allocate(256);
+		for (int n = 0; n < 256; ++n)
+			pcm.Set(n, (s + 1) / 16.f);
+
+		sampler.m_SampleDescVec[s]->SampleRate = 48000;
+		sampler.SampleSigned(s, PoshSamplerPlugin::SLOT_LOOPEND) = 256;
+		assert(sampler.SetInput(2 * s + 1, &gate));
+	}
+
+	sampler.Execute();
+	pool.Run(17, &sampler, true, false, 0);
+	patch.Effect.Execute();
+	pool.Run(19, &patch.Effect, true, false, 0);
+	for (int n = 1; n < 64; ++n)
+	{
+		float sum = 0;
+		for (unsigned v = 0; v < 3; ++v)
+		{
+			assert((*sampler.VoiceOutput(0, v))[n] == (v + 1) / 16.f);
+			sum += (*sampler.VoiceOutput(0, v))[n];
+		}
+		assert((*patch.Sink.GetInput(0))[n] == sum);
+		assert((*patch.Sink.GetInput(1))[n] == sum);
+	}
+}
+
 static void CheckOneFrame(const HostInfo &host, const std::string &file)
 {
 	Sample hit(1), trigger(64);
@@ -202,6 +286,7 @@ int main()
 	host.SAMPLERATE = 48000;
 	CheckNoteTrigger(host, dir);
 	CheckWidePatch(host, dir);
+	CheckPooledEffect(host);
 	PoshSamplerPlugin first;
 	first.Initialise(&host);
 	first.LoadExternalFiles(dir, 17);
