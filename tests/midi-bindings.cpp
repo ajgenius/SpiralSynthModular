@@ -18,6 +18,9 @@
 #include <deque>
 #include <pthread.h>
 #include <unistd.h>
+#ifdef __APPLE__
+#include <CoreMIDI/MIDIServices.h>
+#endif
 
 using namespace Spiral::Core;
 
@@ -388,10 +391,101 @@ static void HeldEventInput()
 	assert((*gate)[6] == .75f && (*gate)[7] == 0);
 	delete decoder;
 }
+#ifdef __APPLE__
+static void SurfaceCC(MIDIEndpointRef source, unsigned char value)
+{
+	Byte buffer[64];
+	MIDIPacketList *list = (MIDIPacketList *)buffer;
+	MIDIPacket *first = MIDIPacketListInit(list);
+	const Byte cc[] = {0xb1, 71, value};
+	assert(MIDIPacketListAdd(list, sizeof(buffer), first, 0, sizeof(cc), cc));
+	assert(!MIDIReceived(source, list));
+}
+
+static void CoreMidiSurface(const char *modules)
+{
+	char name[80];
+	snprintf(name, sizeof(name), "SSM Play surface %d", int(getpid()));
+	MIDIClientRef client = 0;
+	assert(!MIDIClientCreate(CFSTR("SSM surface binding test"), NULL, NULL, &client));
+	CFStringRef label = CFStringCreateWithCString(NULL, name, kCFStringEncodingUTF8);
+	const std::string connected = std::string(" <- ") + name;
+	SpiralInfo::AUDIOCLIENT = "dummy";
+	SpiralInfo::MIDIBACKEND = "coremidi";
+	SpiralInfo::MIDIFILE = name;
+	Host host;
+	SynthModular &synth = host.Synth;
+	synth.LoadPlugins(modules);
+	pthread_t thread;
+	assert(!pthread_create(&thread, NULL, Host::Run, &host));
+	synth.AddDevice(288, 20, 20);
+	synth.FreezeAll();
+	SpiralPlugin *player = synth.cb_FindDevice(0, &synth);
+	assert(player && synth.MidiControl("0", "play"));
+	MidiDevice *midi = MidiDevice::Get();
+	assert(midi && midi->GetBackendName() == "coremidi");
+	for (int attachment = 0; attachment < 2; ++attachment)
+	{
+		MIDIEndpointRef source = 0;
+		assert(!MIDISourceCreate(client, label, &source));
+		for (int i = 0; i < 400 && midi->GetStatus().find(connected) == std::string::npos; ++i)
+			usleep(10000);
+		assert(midi->GetStatus().find(connected) != std::string::npos);
+
+		if (!attachment)
+		{
+			synth.LearnMidi(Learned, NULL);
+			SurfaceCC(source, 0);
+			for (int i = 0; i < 200 && learnedController < 0; ++i)
+			{
+				Pass(synth);
+				usleep(10000);
+			}
+			assert(learnedChannel == 2 && learnedController == 71);
+			synth.MidiMap().Bind("0", MidiBindingDescription("play", learnedChannel, learnedController));
+		}
+		// Remove the first surface while held. On reconnect the first press
+		// must reach the real Piano Roll command queue without a release.
+		SurfaceCC(source, 127);
+		bool played = false;
+		for (int i = 0; i < 200; ++i)
+		{
+			Pass(synth);
+			player->UpdateChannelHandler();
+			if (player->GetChannelHandler()->GetCommand() == PianoRollPlugin::PLAY)
+			{
+				player->ExecuteCommands();
+				played = true;
+				break;
+			}
+			usleep(10000);
+		}
+		assert(played);
+		assert(!player->GetChannelHandler()->CommandsQueued());
+		assert(!MIDIEndpointDispose(source));
+		for (int i = 0; i < 400 && midi->GetStatus().find(connected) != std::string::npos; ++i)
+			usleep(10000);
+		assert(midi->GetStatus().find(connected) == std::string::npos);
+	}
+	synth.ThawAll();
+	__sync_lock_test_and_set(&host.Stop, 1);
+	pthread_join(thread, NULL);
+	MIDIClientDispose(client);
+	CFRelease(label);
+	puts("CoreMIDI surface learned Play and fired it on the first press after reconnect PASS");
+}
+#endif
 
 int main(int argc, char **argv)
 {
 	alarm(30);
+#ifdef __APPLE__
+	if (argc == 3 && std::string(argv[2]) == "--coremidi-surface")
+	{
+		CoreMidiSurface(argv[1]);
+		return 0;
+	}
+#endif
 	const BackendDescriptor backend = { SPIRAL_MIDI_PLUGIN_ABI, "midi", "script", Create, Destroy };
 	MidiBackendRegistry::Get()->Register(&backend);
 	SpiralInfo::AUDIOCLIENT = "dummy";
