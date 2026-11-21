@@ -62,6 +62,7 @@ int SpiralPlugin_GetType()
 
 PoshSamplerPlugin::PoshSamplerPlugin() :
 m_Voices(1),
+m_OlderSave(false),
 m_Recording(false),
 m_LastRecording(false)
 {
@@ -133,8 +134,8 @@ m_LastRecording(false)
             InitializeSampleDescription (NewDesc, n, n);
             m_SampleDescVec.push_back (NewDesc);
         }
-        m_Version = 4;
-        SetUnsigned(DeviceVersion, 4);
+        m_Version = 5;
+        SetUnsigned(DeviceVersion, 5);
         m_Current = 0;
         m_AudioCH->Register ("Num", &m_GUIArgs.Num);
         m_AudioCH->Register ("Bool", &m_GUIArgs.Boole);
@@ -197,7 +198,7 @@ void PoshSamplerPlugin::Reset() {
          m_SampleDescVec[s]->Pitch = m_InitialPitch[s];
          const long length = GetSample(s)->GetLength();
          if (length > 0 && (SampleSigned (s, SLOT_LOOPEND) <= 0 || SampleSigned (s, SLOT_LOOPEND) >= length))
-            SampleSigned (s, SLOT_LOOPEND) = length - 1;
+            SampleSigned (s, SLOT_LOOPEND) = length;
      }
 }
 
@@ -345,7 +346,7 @@ void PoshSamplerPlugin::Execute() {
                 if (position != -1) {
                    if (!Spiral::Core::IsFinite (position)) position = -1;
                    else if (position < 0) position = 0;
-                   else if (position > pcm.GetLength() - 1) position = pcm.GetLength() - 1;
+                   else if (position >= pcm.GetLength()) position = pcm.GetLength() - 1;
                 }
                 if (SampleFloat (s, SLOT_SAMPLEPOS) != -1) {
                    if (InputExists (s * 2)) {
@@ -558,8 +559,9 @@ void PoshSamplerPlugin::Migrate(Spiral::Core::Description &d) {
 }
 
 void PoshSamplerPlugin::Apply(Spiral::Core::Description::Reader &r) {
-     int version;
+     int version = 0;
      r.Value(version);
+     m_OlderSave = version < 5;
      for (int n=0; n<NUM_SAMPLES; n++) {
          r.Value(SlotFloat (n, SLOT_VOLUME))
               .Value(SlotFloat (n, SLOT_PITCHMOD))
@@ -579,10 +581,7 @@ void PoshSamplerPlugin::Apply(Spiral::Core::Description::Reader &r) {
             r.Value(size);
             r.Value(Buf);
             if (size > 0 && Buf.size() == (size_t)size) {
-               long loopEnd = SampleSigned (n, SLOT_LOOPEND);
-               LoadSample (n, Buf);
-               if (loopEnd > 0 && loopEnd < m_SampleVec[n]->GetLength())
-                  SampleSigned (n, SLOT_LOOPEND) = loopEnd;
+               RestoreSample(n, Buf);
             }
          }
          if (version > 3) r.Value(SlotBool (n, SLOT_RETRIG));
@@ -602,7 +601,7 @@ void PoshSamplerPlugin::LoadSample (int n, const string &Name) {
         m_SampleDescVec[n]->Stereo = Wav.IsStereo();
         m_InitialPitch[n] = 1.0f;
         m_SampleDescVec[n]->Pitch = m_InitialPitch[n];
-        SampleSigned (n, SLOT_LOOPEND) = m_SampleVec[n]->GetLength()-1;
+        SampleSigned (n, SLOT_LOOPEND) = m_SampleVec[n]->GetLength();
      }
 }
 
@@ -694,14 +693,24 @@ bool PoshSamplerPlugin::SaveExternalFiles (const string &Dir) {
      return true;
 }
 
+// Version 4 and earlier used length - 1 for an untrimmed sample.
+void PoshSamplerPlugin::RestoreSample(int slot, const string &file)
+{
+	const long end = GetLoopEnd(slot);
+	LoadSample(slot, file);
+	const long length = GetSample(slot)->GetLength();
+	if (length > 0 && end > 0 && end < length && !(m_OlderSave && end == length - 1))
+		SampleSigned(slot, SLOT_LOOPEND) = end;
+	else if (length > 0)
+		SampleSigned(slot, SLOT_LOOPEND) = length;
+}
+
 void PoshSamplerPlugin::LoadExternalFiles(const string &Dir, int withID) {
      int UseID = (withID==-1) ? GetID() : withID;
-     for (int n=0; n<NUM_SAMPLES;  n++) {
+     for (int n=0; n<NUM_SAMPLES; n++) {
          ostringstream temp;
          temp << Dir << "PoshSampler" << UseID << "_" << n << ".wav";
-         const long loopEnd = SampleSigned (n, SLOT_LOOPEND);
-         LoadSample (n, temp.str());
-         if (loopEnd > 0 && loopEnd < m_SampleVec[n]->GetLength())
-            SampleSigned (n, SLOT_LOOPEND) = loopEnd;
+         RestoreSample(n, temp.str());
      }
+     m_OlderSave = false;
 }

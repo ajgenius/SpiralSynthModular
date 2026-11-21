@@ -108,6 +108,36 @@ static void CheckPCM16(PoshSamplerPlugin &sampler, const std::string &file)
 		assert(saved[i] == source[i]);
 }
 
+static void CheckOneFrame(const HostInfo &host, const std::string &file)
+{
+	Sample hit(1), trigger(64);
+	hit.Set(0, .5f);
+	WavFile wav;
+	wav.SetSamplerate(host.SAMPLERATE);
+	assert(wav.Open(file, WavFile::WRITE));
+	wav.Save(hit);
+	wav.Close();
+
+	PoshSamplerPlugin sampler;
+	sampler.Initialise(&host);
+	sampler.LoadSample(0, file);
+	sampler.Reset();
+	trigger.Zero();
+	trigger.Set(63, 1.f);
+	assert(sampler.SetInput(1, &trigger));
+	sampler.Execute();
+	const float value = (*sampler.GetSample(0))[0];
+	assert(value > .49f && (*sampler.VoiceOutput(0, 0))[63] == value);
+	trigger.Zero();
+	sampler.Execute();
+	assert((*sampler.VoiceOutput(0, 0))[0] == 0);
+	sampler.SampleFloat(0, PoshSamplerPlugin::SLOT_PITCHMOD) = .5f;
+	trigger.Set(1, 1.f);
+	sampler.Execute();
+	const Sample &mix = *sampler.VoiceOutput(0, 0);
+	assert(mix[1] == value && mix[2] == value && mix[3] == 0);
+}
+
 // In a patch of more voices than the sampler has samples the mixed output has
 // a voice for each sample and no more. All eight started together take one
 // each, and the voices past them are there and silent.
@@ -218,12 +248,12 @@ int main()
 	for (int n = 0; n < 64; ++n)
 		assert((*first.VoiceOutput(0, 0))[n] == ramp[53 + n] * .5f && (*first.VoiceOutput(0, 1))[n] == 0);
 
-	// A saved version 4 patch still stores the cursor in its original slot.
+	// The saved patch keeps the cursor in its original slot.
 	ToggleProperty retrigger(Property::WriteOnly, false);
 	first.SynchronizeProperty("RETRIG0", &retrigger);
 	Description saved;
 	first.Describe(saved);
-	assert(saved.Version() == 4 && saved.Values().size() == 1 + 12 * NUM_SAMPLES);
+	assert(saved.Version() == 5 && saved.Values().size() == 1 + 12 * NUM_SAMPLES);
 	assert(saved.Values()[7] == "117");
 	Description fromFile;
 	std::string error;
@@ -235,6 +265,23 @@ int main()
 		legacy.Value(saved.Values()[i]);
 
 	CheckReload(legacy, host, dir);
+
+	// Version 4 used frame 511 as the whole 512-frame sample. Version 5
+	// can save that exact value as an intentional trim.
+	for (int version = 4; version <= 5; ++version)
+	{
+		Description trimmed;
+		trimmed.Value(version);
+		for (size_t i = 1; i < saved.Values().size(); ++i)
+			trimmed.Value(i == 10 ? "511" : saved.Values()[i]);
+		PoshSamplerPlugin loaded;
+		loaded.Initialise(&host);
+		Description::Reader reader(trimmed);
+		loaded.Apply(reader);
+		loaded.LoadExternalFiles(dir, 17);
+		loaded.Reset();
+		assert(loaded.GetLoopEnd(0) == (version == 4 ? 512 : 511));
+	}
 
 	// Wired afresh, the sampler keeps where it is: there is no new copy to start.
 	pool.Clear();
@@ -250,7 +297,7 @@ int main()
 	assert(first.SetInput(18, &startCV));
 	a.Set(0, 1);
 	first.Execute();
-	assert(Cursor(first) == 255 + 64 && first.GetPlayStart(0) == 0);
+	assert(Cursor(first) == 256 + 64 && first.GetPlayStart(0) == 0);
 	a.Zero();
 
 	// Each sample that is playing has a voice of the mixed output. A second
@@ -287,6 +334,7 @@ int main()
 	}
 	assert(first.SampleFloat(1, PoshSamplerPlugin::SLOT_SAMPLEPOS) == 32);
 
+	CheckOneFrame(host, sidecar);
 	CheckPCM16(first, sidecar);
 	assert(unlink(sidecar.c_str()) == 0);
 	assert(rmdir(temp) == 0);

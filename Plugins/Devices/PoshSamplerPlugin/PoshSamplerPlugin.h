@@ -141,6 +141,9 @@ class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceOutputSource,
       void SizeVoices();
       float VoiceInput(int port, unsigned voice, int frame) const;
       unsigned TakeVoice(int slot) const;
+      // An older save had a whole sample's end one frame short.
+      bool m_OlderSave;
+      void RestoreSample(int slot, const std::string &file);
       void InitializeSampleDescription (SampleDesc* NewDesc, int num, int Note);
       void Cut (int n, long s, long e);
       void Copy (int n, long s, long e);
