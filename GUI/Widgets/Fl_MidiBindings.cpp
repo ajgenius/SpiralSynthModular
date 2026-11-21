@@ -285,25 +285,28 @@ void Fl_MidiBindings::ListSources()
 	Spiral::Core::MidiDevice *midi = Spiral::Core::MidiDevice::Get();
 	const std::vector<std::string> sources = midi ? midi->Sources() : std::vector<std::string>();
 	const std::string chosen = Spiral::Core::MidiDevice::GetDeviceName();
-	const bool there = std::find(sources.begin(), sources.end(), chosen) != sources.end();
-	if (sources == m_Sources && m_Source->size() > 0 && (m_Source->value() > 0) == there)
-		return;
-	m_Sources = sources;
-
-	m_Source->clear();
-	m_Source->add("Default");
-	m_Source->copy_tooltip(chosen.empty() || there
-		? "Where the patch's MIDI input listens: one of the backend's inputs, or its default"
-		: ("The setting asks for " + chosen + ", which this backend does not have").c_str());
-	int active = 0;
-	for (size_t s = 0; s < m_Sources.size(); ++s)
+	if (sources != m_Sources || !m_Source->size())
 	{
-		m_Source->add("-");
-		m_Source->replace((int)s + 1, m_Sources[s].c_str());
-		if (m_Sources[s] == chosen)
-			active = (int)s + 1;
+		m_Sources = sources;
+		m_Source->clear();
+		m_Source->add("Default");
+		for (size_t s = 0; s < m_Sources.size(); ++s)
+		{
+			m_Source->add("-");
+			m_Source->replace((int)s + 1, m_Sources[s].c_str());
+		}
 	}
-	m_Source->value(active);
+
+	const std::vector<std::string>::const_iterator found = std::find(sources.begin(), sources.end(), chosen);
+	const int active = found == sources.end() ? 0 : int(found - sources.begin()) + 1;
+	if (m_Source->value() != active)
+		m_Source->value(active);
+
+	const std::string tip = chosen.empty() || active
+		? "Where the patch's MIDI input listens: one of the backend's inputs, or its default"
+		: "The setting asks for " + chosen + ", which this backend does not have";
+	if (!m_Source->tooltip() || tip != m_Source->tooltip())
+		m_Source->copy_tooltip(tip.c_str());
 }
 
 void Fl_MidiBindings::ShowStatus()

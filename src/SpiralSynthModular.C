@@ -700,9 +700,20 @@ namespace
 {
 	struct MidiPanelMove
 	{
+		enum { InputReset = -2, Superseded = -1 };
 		Spiral::Core::MidiMap::Target Target;
 		int Value;
 	};
+
+	void ResetMidiControls(SynthModular &synth)
+	{
+		const vector<Spiral::Core::MidiDeviceDescription> &devices = synth.MidiMap().Devices;
+		for (size_t d = 0; d < devices.size(); ++d)
+			for (size_t b = 0; b < devices[d].Bindings.size(); ++b)
+				if (Spiral::Panels::PanelControl *control =
+				    synth.MidiControl(devices[d].Device, devices[d].Bindings[b].Control))
+					control->ResetDrive();
+	}
 }
 
 void SynthModular::ServiceMidiInput()
@@ -719,6 +730,13 @@ void SynthModular::ServiceMidiInput()
 
 	while (midi->ReadPatchInput(packet))
 	{
+		if (packet.Status == 0xff)
+		{
+			MidiPanelMove reset = {Spiral::Core::MidiMap::Target(), MidiPanelMove::InputReset};
+			moves.push_back(reset);
+			continuous.clear();
+			continue;
+		}
 		if (!Spiral::Core::ControlChange(packet, channel, controller, value))
 			continue;
 
@@ -750,7 +768,7 @@ void SynthModular::ServiceMidiInput()
 				const pair<string, string> key(target.Device, target.Control);
 				map<pair<string, string>, size_t>::iterator previous = continuous.find(key);
 				if (previous != continuous.end())
-					moves[previous->second].Value = -1;
+					moves[previous->second].Value = MidiPanelMove::Superseded;
 				continuous[key] = moves.size();
 			}
 
@@ -762,6 +780,8 @@ void SynthModular::ServiceMidiInput()
 	for (size_t i = 0; i < moves.size(); ++i)
 	{
 		const MidiPanelMove &move = moves[i];
+		if (move.Value == MidiPanelMove::InputReset)
+			ResetMidiControls(*this);
 		if (move.Value < 0)
 			continue;
 		if (Spiral::Panels::PanelControl *control = MidiControl(move.Target.Device, move.Target.Control))

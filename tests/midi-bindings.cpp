@@ -10,6 +10,7 @@
 #include "Plugins/Devices/MidiPlugin/MidiPlugin.h"
 #include "PanelControl.h"
 #include <FL/Fl_Valuator.H>
+#include <FL/Fl_Choice.H>
 #include <cassert>
 #include <vector>
 #include <cstdio>
@@ -30,7 +31,12 @@ struct Script : public MidiBackend
 	Script() { pthread_mutex_init(&lock, NULL); }
 	~Script() { pthread_mutex_destroy(&lock); }
 	void Hear(const MidiPacket &p) { pthread_mutex_lock(&lock); in.push_back(p); pthread_mutex_unlock(&lock); }
-	std::vector<std::string> Ports(bool) { return std::vector<std::string>(1, "surface"); }
+	std::vector<std::string> Ports(bool)
+	{
+		std::vector<std::string> ports(1, "surface");
+		ports.push_back("second surface");
+		return ports;
+	}
 	void Select(const std::string &, const std::string &) {}
 	bool Poll(MidiPacket &p)
 	{
@@ -73,6 +79,30 @@ static void Pass(SynthModular &synth)
 {
 	MidiDevice::Get()->Collect();
 	synth.ServiceMidiInput();
+}
+
+static void CheckSourceMenu()
+{
+	const std::string original = MidiDevice::GetDeviceName();
+	Fl_MidiBindings page(0, 0, 320, 240);
+	Fl_Choice *source = NULL;
+	for (int i = 0; i < page.children(); ++i)
+		if (Fl_Choice *choice = dynamic_cast<Fl_Choice *>(page.child(i)))
+			source = choice;
+	assert(source);
+
+	MidiDevice::SetDeviceName("surface");
+	page.Refresh();
+	assert(std::string(source->text()) == "surface");
+	MidiDevice::SetDeviceName("second surface");
+	page.Refresh();
+	assert(std::string(source->text()) == "second surface");
+	MidiDevice::SetDeviceName("offline A");
+	page.Refresh();
+	MidiDevice::SetDeviceName("offline B");
+	page.Refresh();
+	assert(source->value() == 0 && std::string(source->tooltip()).find("offline B") != std::string::npos);
+	MidiDevice::SetDeviceName(original);
 }
 
 static int learnedChannel = 0, learnedController = -1;
@@ -377,6 +407,7 @@ int main(int argc, char **argv)
 	HeldEventInput();
 	HeldEnvelope(5);
 	HeldEnvelope(33);
+	CheckSourceMenu();
 	Chords(synth);
 	Pass(synth);
 	synth.ClearUp();
@@ -424,6 +455,29 @@ int main(int argc, char **argv)
 	Hear(0xb1, 71, 0);
 	Pass(synth);
 	assert(taps.Values.size() == 3);
+
+	// Disconnect while Play is held. The first press after the transport
+	// reset is a new strike even when both arrive within one GUI poll.
+	Hear(0xb1, 71, 127);
+	Hear(0xff, 0, 0);
+	Hear(0xb1, 71, 127);
+	Hear(0xb1, 71, 0);
+	Pass(synth);
+	assert(taps.Values.size() == 5);
+
+	// A lost release during a full GUI queue also rearms the next tap.
+	Hear(0xb1, 71, 127);
+	Pass(synth);
+	synth.FreezeAll();
+	for (int i = 0; i < 1023; ++i)
+		Hear(0xb1, 79, 0);
+	Hear(0xb1, 71, 0);
+	Pass(synth);
+	Hear(0xb1, 71, 127);
+	Hear(0xb1, 71, 0);
+	Pass(synth);
+	synth.ThawAll();
+	assert(taps.Values.size() == 7);
 
 	PatchDescription patch, restored;
 	Describe(patch, synth, "");

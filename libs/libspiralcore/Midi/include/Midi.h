@@ -39,7 +39,7 @@ namespace Spiral
 namespace Core
 {
 
-class MidiQueue;
+class PatchMidiInput;
 
 class MidiEvent
 {
@@ -79,7 +79,7 @@ public:
 	string GetBackendName() { return m_BackendName; }
 	string GetStatus();
 	vector<string> Sources();
-	static string GetDeviceName() { return m_DeviceName; }
+	static string GetDeviceName();
 
 	void Collect();
 	bool ReadPatchInput(MidiPacket &packet);
@@ -95,7 +95,7 @@ private:
 	float m_Clock;
 	int   m_ClockCount;
 	queue<MidiEvent> m_EventVec[16];
-	MidiQueue *m_PatchInput;
+	PatchMidiInput *m_PatchInput;
 	static MidiDevice *m_Singleton;
 	pthread_mutex_t* m_Mutex;
 	static string m_AppName;

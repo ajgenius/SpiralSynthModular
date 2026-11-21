@@ -82,6 +82,7 @@ namespace Spiral
 			bool DependsOn(const PanelProperty &property) const;
 			void Reload();
 			virtual bool Drivable() const;
+			void ResetDrive() { m_DrivenOn = false; }
 			bool Drive(double amount);
 
 			static std::string TextOf(const Spumoni::JSON *node);

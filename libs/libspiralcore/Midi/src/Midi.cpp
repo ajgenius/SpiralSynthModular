@@ -25,6 +25,35 @@
 
 using namespace Spiral::Core;
 
+namespace Spiral
+{
+namespace Core
+{
+	// Collection is serialized by MidiDevice. The GUI drains the queue.
+	class PatchMidiInput : public MidiQueue
+	{
+	public:
+		PatchMidiInput(): resetPending(false) {}
+
+		void Collect(const MidiPacket &packet)
+		{
+			FlushReset();
+			if (!resetPending && !Push(packet))
+				resetPending = true;
+		}
+
+		void FlushReset()
+		{
+			if (resetPending && Push(MidiPacket(0xff)))
+				resetPending = false;
+		}
+
+	private:
+		bool resetPending;
+	};
+}
+}
+
 static const int MIDI_SCANBUFSIZE=256;
 static const size_t MIDI_CHANNEL_QUEUE=1024;
 static const int MIDI_KEYOFFSET=0;
@@ -73,16 +102,38 @@ void MidiDevice::SetBackendName(const string &name)
 
 void MidiDevice::SetDeviceName(string s)
 {
-	m_DeviceName=s;
-	if (m_Singleton && m_Singleton->m_Backend)
-		m_Singleton->m_Backend->Select(s,s);
+	if (!m_Singleton)
+	{
+		m_DeviceName = s;
+		return;
+	}
+
+	pthread_mutex_lock(m_Singleton->m_Mutex);
+	if (m_DeviceName != s)
+	{
+		m_DeviceName = s;
+		m_Singleton->m_PatchInput->Collect(MidiPacket(0xff));
+		if (m_Singleton->m_Backend)
+			m_Singleton->m_Backend->Select(s, s);
+	}
+	pthread_mutex_unlock(m_Singleton->m_Mutex);
+}
+
+string MidiDevice::GetDeviceName()
+{
+	if (!m_Singleton)
+		return m_DeviceName;
+	pthread_mutex_lock(m_Singleton->m_Mutex);
+	const string name = m_DeviceName;
+	pthread_mutex_unlock(m_Singleton->m_Mutex);
+	return name;
 }
 
 MidiDevice::MidiDevice(Type t) :
 m_Poly (1),
 m_Clock (1.0f),
 m_ClockCount (0),
-m_PatchInput (new MidiQueue),
+m_PatchInput (new PatchMidiInput),
 m_Backend (NULL)
 {
      m_Mutex = new pthread_mutex_t;
@@ -120,7 +171,11 @@ void MidiDevice::OpenBackend()
 
 void MidiDevice::CloseBackend()
 {
-	if (m_Backend) MidiBackendRegistry::Get()->Destroy(m_BackendName,m_Backend);
+	if (m_Backend)
+	{
+		MidiBackendRegistry::Get()->Destroy(m_BackendName,m_Backend);
+		m_PatchInput->Collect(MidiPacket(0xff));
+	}
 	m_Backend=NULL;
 	for (int n=0; n<16; n++)
 		while (!m_EventVec[n].empty()) m_EventVec[n].pop();
@@ -205,6 +260,7 @@ void MidiDevice::SendEvent (int Device, const MidiEvent &Event) {
 
 void MidiDevice::CollectEvents()
 {
+	m_PatchInput->FlushReset();
 	if (!m_Backend) return;
 	MidiPacket packet;
 	for (int n=0; n<1024 && m_Backend->Poll(packet); n++)
@@ -218,9 +274,11 @@ void MidiDevice::CollectEvents()
 				m_ClockCount=0;
 			}
 		}
+		else if (packet.Status == 0xff)
+			m_PatchInput->Collect(packet);
 		else if (packet.Status>=STATUS_START && packet.Status<STATUS_END)
 		{
-			m_PatchInput->Push(packet);
+			m_PatchInput->Collect(packet);
 			AddEvent(packet);
 		}
 	}
