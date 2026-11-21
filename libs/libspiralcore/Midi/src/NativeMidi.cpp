@@ -103,6 +103,14 @@ void NativeMidiBackend::Run()
 					if (active != desired || !connected || lost)
 					{
 						ready.store(false);
+						// A replacement port may have the same selected name.
+						// Retire packets still queued from its previous connection.
+						if (active == desired)
+						{
+							SSMCompat::Lock lock(mutex);
+							if (epoch.load() == desired)
+								desired = epoch.fetch_add(1) + 1;
+						}
 						MidiPacket stale;
 						for (unsigned i = 0; i < 1024 && outgoing.Pop(stale); ++i)
 						{
@@ -110,7 +118,8 @@ void NativeMidiBackend::Run()
 						Panic();
 						connected = transport->Connect(src, dst);
 						active = desired;
-						reset.store(true);
+						if (!incoming.PushReset(active))
+							reset.store(true);
 						ready.store(connected && !dst.empty());
 					}
 					SSMCompat::Lock lock(mutex);
@@ -156,7 +165,8 @@ void NativeMidiBackend::Run()
 		transport->Close();
 		std::memset(notes, 0, sizeof(notes));
 		std::memset(sustain, 0, sizeof(sustain));
-		reset.store(true);
+		if (!incoming.PushReset(epoch.fetch_add(1) + 1))
+			reset.store(true);
 		{
 			SSMCompat::Lock lock(mutex);
 			inputs.clear();

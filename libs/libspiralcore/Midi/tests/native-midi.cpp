@@ -20,14 +20,15 @@ struct State
 {
 	MidiQueue input;
 	SSMCompat::Atomic<bool> service, link, closed;
-	SSMCompat::Atomic<unsigned> opens, connects;
+	SSMCompat::Atomic<unsigned> opens, connects, reads;
 
 	State():
 	    service(false),
 	    link(true),
 	    closed(false),
 	    opens(0),
-	    connects(0)
+	    connects(0),
+	    reads(0)
 	{
 	}
 
@@ -101,7 +102,10 @@ public:
 
 	bool Read(MidiPacket &p)
 	{
-		return state->input.Pop(p);
+		if (!state->input.Pop(p))
+			return false;
+		state->reads.fetch_add(1);
+		return true;
 	}
 
 	bool Write(const MidiPacket &p)
@@ -180,14 +184,24 @@ int main()
 		WaitUntil(backend.Send(MidiPacket(0x90, 65, 100)));
 		WaitUntil(state->Has("two", 0x90, 65));
 		assert(!state->Has("two", 0x90, 60));
+		// This movement from the old link is still waiting for the consumer.
+		const unsigned beforeLoss = state->reads.load();
+		assert(state->input.Push(MidiPacket(0xb1, 71, 12)));
+		assert(state->input.Push(MidiPacket(0xf8)));
+		WaitUntil(state->reads.load() == beforeLoss + 2);
 		state->link.store(false);
 		WaitUntil(backend.Status() == "disconnected");
 		assert(!backend.Send(MidiPacket(0x90, 67, 100)));
-		while (backend.Poll(p))
-		{
-		}
 		state->link.store(true);
 		WaitUntil(backend.Status() == "ready");
+		// The surface moves before the consumer polls the reconnect reset.
+		// Seeing the following clock at the transport proves the CC was queued.
+		const unsigned reads = state->reads.load();
+		assert(state->input.Push(MidiPacket(0xb1, 71, 127)));
+		assert(state->input.Push(MidiPacket(0xf8)));
+		WaitUntil(state->reads.load() == reads + 2);
+		assert(backend.Poll(p) && p.Status == 0xff);
+		assert(backend.Poll(p) && p.Status == 0xb1 && p.Data1 == 71 && p.Data2 == 127);
 		WaitUntil(backend.Send(MidiPacket(0x90, 69, 100)));
 		WaitUntil(state->Has("two", 0x90, 69));
 		assert(backend.Send(MidiPacket(0xb0, 64, 127)));

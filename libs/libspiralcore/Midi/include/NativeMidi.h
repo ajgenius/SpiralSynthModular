@@ -31,6 +31,13 @@ public:
 		write.store(next, SSMCompat::Release);
 		return true;
 	}
+	// Put a connection change before the first message from the new link.
+	bool PushReset(unsigned epoch)
+	{
+		MidiPacket reset(0xff);
+		reset.Epoch = epoch;
+		return Push(reset);
+	}
 	bool Peek(MidiPacket &packet)
 	{
 		unsigned r= read.load(SSMCompat::Relaxed);
