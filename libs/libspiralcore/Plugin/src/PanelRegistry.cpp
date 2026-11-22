@@ -75,12 +75,19 @@ void PanelRegistry::ProvidePanels(const string &toolkit, SpiralGUIType *(*create
 	provider.Create = create;
 	m_Providers.push_back(provider);
 	const vector<DeviceClass*> &devices = DeviceClassRegistry::Get()->Classes();
-	// A device with no panel of its own has one if a panels folder does.
-	const PanelFiles files(PanelFiles::Folders(PanelFolder()));
 
 	for (size_t i = 0; i < devices.size(); ++i)
-		if (!devices[i]->Panel.empty() || devices[i]->PanelGenerated || !files.Path("device", devices[i]->ID).empty())
+		if (!devices[i]->Panel.empty() || devices[i]->PanelGenerated || HasPanelFile(devices[i]->ID))
 			Offer(*devices[i]);
+}
+
+// A device with no panel of its own has one if a panels folder does. The
+// folders are read once for this: a panel is read afresh when it is opened.
+bool PanelRegistry::HasPanelFile(int device)
+{
+	static const PanelFiles files(PanelFiles::Folders(PanelFolder()));
+
+	return !files.Path("device", device).empty();
 }
 
 // The installed panels folder, beside the device modules.

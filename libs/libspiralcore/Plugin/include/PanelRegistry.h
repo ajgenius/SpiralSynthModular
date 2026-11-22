@@ -56,6 +56,7 @@ public:
 	void                ProvidePanels(const std::string &toolkit, SpiralGUIType *(*create)(SpiralPlugin *, const DeviceClass &));
 	void                Offer(const DeviceClass &device);
 	static std::string  PanelFolder();
+	static bool         HasPanelFile(int device);
 	void                Forget(int ForDevice);
 	const PanelClass*  Find(int ForDevice, const std::string &Toolkit = "fltk") const;
 	const std::vector<PanelClass*> &Classes() const { return m_PluginVec; }

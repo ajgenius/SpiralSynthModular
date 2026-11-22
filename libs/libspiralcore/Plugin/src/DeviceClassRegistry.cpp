@@ -256,7 +256,7 @@ bool DeviceClassRegistry::Register(const DeviceClass &device)
 {
 	if (device.ID < 0 || Find(device.ID)) return false;
 	m_PluginVec.push_back(new DeviceClass(device));
-	if (!device.Panel.empty() || device.PanelGenerated)
+	if (!device.Panel.empty() || device.PanelGenerated || (!m_Root.empty() && PanelRegistry::HasPanelFile(device.ID)))
 		PanelRegistry::Get()->Offer(device);
 	return true;
 }
