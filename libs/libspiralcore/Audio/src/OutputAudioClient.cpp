@@ -11,6 +11,9 @@
 #include <sys/time.h>
 
 #include "AudioBackend.h"
+#ifdef HAVE_JACK_CLIENT
+#include "JackClient.h"
+#endif
 
 using namespace std;
 using namespace Spiral::Core;
@@ -188,6 +191,13 @@ bool OutputAudioClient::AttachMode(unsigned int inChans, unsigned int outChans)
 	AllocateBuffer();
 	if (m_Out.empty()) return false;
 	m_IsDead = false;
+#ifdef HAVE_JACK_CLIENT
+	if (m_ClientName == "jack")
+	{
+		JackClient *jack = dynamic_cast<JackClient *>(m_Client);
+		if (jack) jack->SetPortGroup(AudioTransportHub::Get(), "");
+	}
+#endif
 	if (!m_Client->Attach(m_ClientName == "jack" && m_Destination == "default" ? "SSM-Output" : m_Destination,
 		MakeOptions(inChans, outChans))) return false;
 

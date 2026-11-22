@@ -33,6 +33,24 @@ using namespace std;
 using namespace Spiral::Core;
 
 int JackPlugin::JackInstanceCount = 0;
+static std::map<long, JackPlugin *> liveGroups;
+
+void JackPlugin::ClaimGroup(long desired)
+{
+	for (std::map<long, JackPlugin *>::iterator i = liveGroups.begin(); i != liveGroups.end(); ++i)
+		if (i->second == this)
+		{
+			liveGroups.erase(i);
+			break;
+		}
+	if (desired < 1 || liveGroups.count(desired))
+	{
+		desired = 1;
+		while (liveGroups.count(desired)) ++desired;
+	}
+	liveGroups[desired] = this;
+	AsSigned(m_Group) = desired;
+}
 
 
 const unsigned char *JackManifest(size_t *size);
@@ -129,6 +147,12 @@ m_OutputCount(4)
 	m_NumInputs = SignedProperty(PortFlags, 4, MIN_PORTS, MAX_PORTS, 1, 1);
 	m_NumOutputs = SignedProperty(PortFlags, 4, MIN_PORTS, MAX_PORTS, 1, 1);
 
+	m_Group = SignedProperty(Property::WriteOnly, 1, 1, 0x7fffffff, 1, 1);
+	m_LegacyClient = StringProperty(Property::WriteOnly, "");
+	RegisterSharedProperty(m_Group, "JACK GROUP", "Persistent JACK port group");
+	RegisterSharedProperty(m_LegacyClient, "JACK CLIENT", "Dedicated name for legacy connections");
+	ClaimGroup(m_JackInstanceID + 1);
+
 	RegisterSharedProperty(m_NumInputs, "Inputs", "Number of Input Channels");
 	RegisterSharedProperty(m_NumOutputs, "Outputs", "Number of Output Channels");
 	m_AudioCH->RegisterData("Port",ChannelHandler::INPUT,&m_GUIArgs.Port,sizeof(m_GUIArgs.Port));
@@ -164,6 +188,7 @@ m_OutputCount(4)
 
 JackPlugin::~JackPlugin()
 {
+	liveGroups.erase(AsSigned(m_Group));
 	if (m_JackClient)
 	{
 		Detach();
@@ -187,12 +212,24 @@ PluginInfo &JackPlugin::Initialise(const HostInfo *Host)
 
 void JackPlugin::Attach()
 {
-	char name[32];
-	sprintf(name, "SSM%d", m_JackInstanceID);
+	std::string name = m_LegacyClient.Value;
+	if (name.empty())
+	{
+		char prefix[40];
+		snprintf(prefix, sizeof(prefix), "Jack%ld_", long(AsSigned(m_Group)));
+		m_JackClient->SetPortGroup(AudioTransportHub::Get(), prefix);
+		name = m_HostInfo && m_HostInfo->AUDIOCLIENT == "jack" ? m_HostInfo->OUTPUTFILE : "default";
+		if (name.empty() || name == "default") name = "SSM-Output";
+	}
+	else
+		m_JackClient->SetPortGroup(NULL, "");
 	Spiral::Core::AudioClientOptions options;
 	options.InChannels = m_InputCount;
 	options.OutChannels = m_OutputCount;
-	if (m_JackClient->Attach(name, options))
+	const bool opened = m_JackClient->HasPortGroup() && m_JackClient->IsAttached()
+		? m_JackClient->ResizePortGroup(options.InChannels, options.OutChannels)
+		: m_JackClient->Attach(name, options);
+	if (opened)
 	{
 		BuildRings();
 		if (!m_Stream.Configure(m_JackClient, m_InputCount, m_OutputCount,
@@ -325,6 +362,11 @@ void JackPlugin::Reset()
 	if (!m_HostInfo) return;
 
 	const bool reconnect = m_JackClient->IsAttached();
+	if (reconnect && m_JackClient->HasPortGroup())
+	{
+		Attach();
+		return;
+	}
 	if (reconnect) Detach();
 	BuildRings();
 	if (reconnect) Attach();
@@ -359,7 +401,17 @@ void  JackPlugin::SetNumberPorts (int nInputs, int nOutputs) {
      nInputs = std::max(MIN_PORTS, std::min(MAX_PORTS, nInputs));
      nOutputs = std::max(MIN_PORTS, std::min(MAX_PORTS, nOutputs));
      const bool reconnect = m_JackClient->IsAttached();
-     Detach();
+     const bool shared = reconnect && m_JackClient->HasPortGroup();
+     // Register the new native ports before changing the graph. JACK can
+     // refuse growth while the existing ports and their cables are still usable.
+     if (shared && !m_JackClient->ResizePortGroup(nOutputs, nInputs))
+     {
+         AsSigned(m_NumInputs) = m_OutputCount;
+         AsSigned(m_NumOutputs) = m_InputCount;
+         m_JackClient->Start();
+         return;
+     }
+     if (!shared) Detach();
      const int oldInputs = m_PluginInfo.NumInputs;
      const int oldOutputs = m_PluginInfo.NumOutputs;
      CreatePorts (nInputs, nOutputs, false);
@@ -368,8 +420,16 @@ void  JackPlugin::SetNumberPorts (int nInputs, int nOutputs) {
      for (int n = nOutputs; n < oldOutputs; ++n) RemoveOutput();
      for (int n = oldInputs; n < nInputs; ++n) AddInput();
      for (int n = oldOutputs; n < nOutputs; ++n) AddOutput();
-     Reset();
-     if (reconnect) Attach();
+     if (shared)
+     {
+         ResetPorts();
+         Attach();
+     }
+     else
+     {
+         Reset();
+         if (reconnect) Attach();
+     }
 
 }
 
@@ -407,7 +467,8 @@ void  JackPlugin::CreatePorts (int nInputs, int nOutputs, bool AddPorts) {
 
 void JackPlugin::Describe(Spiral::Core::Description &d) 
 {
-	d.Value(DeviceVersion).Separator(" ").Value(m_NumInputs).Separator(" ").Value(m_NumOutputs).Separator(" ");
+	d.Value(DeviceVersion).Separator(" ").Value(m_NumInputs).Separator(" ").Value(m_NumOutputs).Separator(" ")
+		.Value(m_Group).Separator(" ").Value(m_LegacyClient).Separator(" ");
 }
 
 void JackPlugin::Apply(Spiral::Core::Description::Reader &r) 
@@ -424,6 +485,25 @@ void JackPlugin::Apply(Spiral::Core::Description::Reader &r)
 		Version = 1;
 	}
 	
+	const long previousGroup = AsSigned(m_Group);
+	const std::string previousClient = m_LegacyClient.Value;
+	if (r.Find("JACK GROUP") >= 0)
+	{
+		r.Value(m_Group).Value(m_LegacyClient);
+		ClaimGroup(AsSigned(m_Group));
+	}
+	else
+	{
+		char name[32];
+		snprintf(name, sizeof(name), "SSM%d", m_JackInstanceID);
+		m_LegacyClient.Value = name;
+	}
+
+	const bool changeEndpoint = m_JackClient->IsAttached()
+		&& (previousClient != m_LegacyClient.Value
+			|| (m_LegacyClient.Value.empty() && previousGroup != AsSigned(m_Group)));
+	if (changeEndpoint) Detach();
+
 	switch (Version)
 	{
 		case 2:
@@ -446,4 +526,6 @@ void JackPlugin::Apply(Spiral::Core::Description::Reader &r)
 		}
 		break;
 	}	
+
+	if (changeEndpoint) Attach();
 }

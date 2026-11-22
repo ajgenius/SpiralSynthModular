@@ -24,6 +24,7 @@
 #include <iostream>
 #include <algorithm>
 #include <pthread.h>
+#include <sched.h>
 
 using namespace Spiral::Core;
 using namespace std;
@@ -78,6 +79,205 @@ static void ReleasePortList(const char **names)
 #endif
 }
 
+// Each group owns its stream and ports. JACK calls one physical client. A control
+// edit withdraws only the affected group and waits out its last callback.
+namespace Spiral
+{
+namespace Core
+{
+struct JackSession
+{
+	enum { MaxGroups = 256 };
+	const void *owner;
+	JackClient clock;
+	JackClient *members[MaxGroups];
+	JackClient *running[MaxGroups];
+	unsigned readers, limit;
+
+	explicit JackSession(const void *engine): owner(engine), readers(0), limit(0)
+	{
+		memset(members, 0, sizeof(members));
+		memset(running, 0, sizeof(running));
+	}
+
+	static void Run(void *context, unsigned frames)
+	{
+		JackSession &s = *static_cast<JackSession *>(context);
+		if (!frames) return;
+
+		__atomic_add_fetch(&s.readers, 1, __ATOMIC_SEQ_CST);
+		const unsigned limit = __atomic_load_n(&s.limit, __ATOMIC_ACQUIRE);
+		for (unsigned i = 0; i < limit; ++i)
+		{
+			JackClient *group = __atomic_load_n(&s.running[i], __ATOMIC_SEQ_CST);
+			if (!group) continue;
+
+			group->ClearBuffers(frames);
+			group->m_CycleTime = s.clock.m_CycleTime;
+			group->m_Timing = s.clock.m_Timing;
+			group->m_Timing.InputTime -= group->GetInputLatency();
+			group->m_Timing.OutputTime += group->GetOutputLatency();
+			group->m_ProcessFrames = frames;
+			if (group->m_Run) group->m_Run(group->m_Context, frames);
+			group->m_ProcessFrames = 0;
+		}
+		__atomic_sub_fetch(&s.readers, 1, __ATOMIC_SEQ_CST);
+	}
+};
+}
+}
+
+namespace
+{
+	pthread_mutex_t SessionMutex = PTHREAD_MUTEX_INITIALIZER;
+	vector<JackSession *> Sessions;
+
+	struct SessionLock
+	{
+		SessionLock() { pthread_mutex_lock(&SessionMutex); }
+		~SessionLock() { pthread_mutex_unlock(&SessionMutex); }
+	};
+}
+
+void JackClient::SetPortGroup(const void *owner, const string &prefix)
+{
+	m_Owner = owner;
+	m_Prefix = prefix;
+}
+
+jack_client_t *JackClient::Handle() const
+{
+	return m_Session ? m_Session->clock.m_Client : m_Client;
+}
+
+bool JackClient::IsAttached() const
+{
+	return m_Session ? m_Session->clock.IsAttached() : __sync_fetch_and_add(&m_Attached, 0) != 0;
+}
+
+unsigned long JackClient::GetBufferSize() const
+{
+	return m_Session ? m_Session->clock.GetBufferSize() : __sync_fetch_and_add(&m_BufferSize, 0);
+}
+
+unsigned long JackClient::GetSampleRate() const
+{
+	return m_Session ? m_Session->clock.GetSampleRate() : __sync_fetch_and_add(&m_SampleRate, 0);
+}
+
+void JackClient::SuspendPortGroup()
+{
+	if (!m_Session) return;
+	__atomic_store_n(&m_Session->running[m_Slot], static_cast<JackClient *>(NULL), __ATOMIC_SEQ_CST);
+	while (__atomic_load_n(&m_Session->readers, __ATOMIC_SEQ_CST))
+		sched_yield();
+}
+
+bool JackClient::ResizePortGroup(unsigned inputs, unsigned outputs)
+{
+	if (!m_Session || !IsAttached() || inputs > MAX_INPUTPORTS || outputs > MAX_OUTPUTPORTS)
+		return false;
+
+	SuspendPortGroup();
+	PortMap *maps[] = {&m_InputPortMap, &m_OutputPortMap};
+	const unsigned old[] = {unsigned(m_InputPortMap.size()), unsigned(m_OutputPortMap.size())};
+	const unsigned sizes[] = {inputs, outputs};
+	bool ok = true;
+	for (unsigned dir = 0; ok && dir < 2; ++dir)
+	{
+		for (unsigned n = old[dir]; n < sizes[dir]; ++n)
+		{
+			char suffix[32];
+			snprintf(suffix, sizeof(suffix), "%s%u", dir ? "Out" : "In", n);
+			JackPort port;
+			port.Name = m_Prefix + suffix;
+			port.Port = jack_port_register(Handle(), port.Name.c_str(), JACK_DEFAULT_AUDIO_TYPE,
+				dir ? JackPortIsOutput : JackPortIsInput, 0);
+			if (!port.Port)
+			{
+				ok = false;
+				break;
+			}
+			(*maps[dir])[int(n)] = port;
+		}
+	}
+
+	// Remove trailing ports only. Failed growth rolls back both directions.
+	for (unsigned dir = 0; dir < 2; ++dir)
+	{
+		PortMap &ports = *maps[dir];
+		while (ports.size() > (ok ? sizes[dir] : old[dir]))
+		{
+			PortMap::iterator last = --ports.end();
+			jack_port_unregister(Handle(), last->second.Port);
+			ports.erase(last);
+		}
+	}
+	return ok;
+}
+
+bool JackClient::AttachGroup(const string &name, unsigned inputs, unsigned outputs)
+{
+	{
+		SessionLock lock;
+		for (size_t n = 0; n < Sessions.size(); ++n)
+			if (Sessions[n]->owner == m_Owner && Sessions[n]->clock.IsAttached())
+			{
+				m_Session = Sessions[n];
+				break;
+			}
+
+		if (!m_Session)
+		{
+			JackSession *s = new JackSession(m_Owner);
+			s->clock.m_AutoActivate = false;
+			if (!s->clock.Attach(name))
+			{
+				delete s;
+				return false;
+			}
+			s->clock.SetCallback(JackSession::Run, s);
+			Sessions.push_back(s);
+			m_Session = s;
+		}
+
+		m_Slot = 0;
+		while (m_Slot < JackSession::MaxGroups && m_Session->members[m_Slot]) ++m_Slot;
+		if (m_Slot == JackSession::MaxGroups)
+		{
+			m_Session = NULL;
+			return false;
+		}
+		m_Session->members[m_Slot] = this;
+		if (m_Slot >= m_Session->limit)
+			__atomic_store_n(&m_Session->limit, m_Slot + 1, __ATOMIC_RELEASE);
+	}
+
+	m_InputPortMap.clear();
+	m_OutputPortMap.clear();
+	if (ResizePortGroup(inputs, outputs)) return true;
+	DetachGroup();
+	return false;
+}
+
+void JackClient::DetachGroup()
+{
+	SessionLock lock;
+	SuspendPortGroup();
+	if (IsAttached())
+		ResizePortGroup(0, 0);
+	m_InputPortMap.clear();
+	m_OutputPortMap.clear();
+	JackSession *s = m_Session;
+	m_Session = NULL;
+	s->members[m_Slot] = NULL;
+	for (unsigned n = 0; n < s->limit; ++n)
+		if (s->members[n]) return;
+
+	Sessions.erase(remove(Sessions.begin(), Sessions.end(), s), Sessions.end());
+	delete s;
+}
+
 JackClient *JackClient::Get()
 {
 	if (!m_Singleton) m_Singleton = new JackClient;
@@ -92,7 +292,7 @@ void JackClient::PackUpAndGoHome()
 }
 
 JackClient::JackClient() :
-	m_Client(NULL), m_BufferSize(0), m_SampleRate(0), m_Attached(false),
+	m_Owner(NULL), m_Session(NULL), m_Slot(0), m_Client(NULL), m_BufferSize(0), m_SampleRate(0), m_Attached(false),
 	m_AutoActivate(true), m_Active(false), m_ProcessFrames(0),
 	m_NativeFrame(0), m_LastFrame(0), m_HaveFrame(false), m_CycleTime(0),
 	m_NextInputID(0), m_NextOutputID(0), m_Run(NULL), m_Context(NULL)
@@ -103,6 +303,7 @@ JackClient::JackClient() :
 
 JackClient::~JackClient()
 {
+	if (m_Session) DetachGroup();
 	ClientLifecycleLock lock;
 	DetachClient();
 	Clients.erase(remove(Clients.begin(), Clients.end(), this), Clients.end());
@@ -170,6 +371,12 @@ bool JackClient::Attach(const string &clientName)
 
 void JackClient::Detach()
 {
+	if (m_Session)
+	{
+		DetachGroup();
+		return;
+	}
+
 	ClientLifecycleLock lock;
 	DetachClient();
 }
@@ -202,10 +409,9 @@ void JackClient::DetachClient()
 
 }
 
-int JackClient::Process(jack_nframes_t frames, void *context)
+void JackClient::ClearBuffers(unsigned frames)
 {
-	JackClient *client = static_cast<JackClient *>(context);
-	for (PortMap::iterator i = client->m_InputPortMap.begin(); i != client->m_InputPortMap.end(); ++i)
+	for (PortMap::iterator i = m_InputPortMap.begin(); i != m_InputPortMap.end(); ++i)
 	{
 		JackPort &port = i->second;
 		if (!port.Buffer || !port.Port) continue;
@@ -217,7 +423,7 @@ int JackClient::Process(jack_nframes_t frames, void *context)
 			memset(port.Buffer, 0, sizeof(float) * port.Frames);
 	}
 
-	for (PortMap::iterator i = client->m_OutputPortMap.begin(); i != client->m_OutputPortMap.end(); ++i)
+	for (PortMap::iterator i = m_OutputPortMap.begin(); i != m_OutputPortMap.end(); ++i)
 	{
 		JackPort &port = i->second;
 		if (!port.Port) continue;
@@ -229,6 +435,12 @@ int JackClient::Process(jack_nframes_t frames, void *context)
 		else
 			memset(output, 0, sizeof(float) * frames);
 	}
+}
+
+int JackClient::Process(jack_nframes_t frames, void *context)
+{
+	JackClient *client = static_cast<JackClient *>(context);
+	client->ClearBuffers(frames);
 
 	__sync_lock_test_and_set(&client->m_BufferSize, frames);
 	jack_nframes_t frame;
@@ -372,7 +584,7 @@ void JackClient::GetPortNames(vector<string> &inputs, vector<string> &outputs)
 	outputs.clear();
 	if (!IsAttached()) return;
 
-	const char **names = jack_get_ports(m_Client, NULL, NULL, JackPortIsInput);
+	const char **names = jack_get_ports(Handle(), NULL, NULL, JackPortIsInput);
 	if (names)
 	{
 		for (int i = 0; names[i]; ++i) inputs.push_back(names[i]);
@@ -380,7 +592,7 @@ void JackClient::GetPortNames(vector<string> &inputs, vector<string> &outputs)
 		ReleasePortList(names);
 	}
 
-	names = jack_get_ports(m_Client, NULL, NULL, JackPortIsOutput);
+	names = jack_get_ports(Handle(), NULL, NULL, JackPortIsOutput);
 	if (names)
 	{
 		for (int i = 0; names[i]; ++i) outputs.push_back(names[i]);
@@ -407,7 +619,7 @@ string JackClient::Connection(const PortMap &ports, int id) const
 	PortMap::const_iterator i = ports.find(id);
 	if (!IsAttached() || i == ports.end() || !i->second.Port) return string();
 
-	const char **names = jack_port_get_all_connections(m_Client, i->second.Port);
+	const char **names = jack_port_get_all_connections(Handle(), i->second.Port);
 	string name = names && names[0] ? names[0] : "";
 	ReleasePortList(names);
 	return name;
@@ -421,7 +633,7 @@ void JackClient::Disconnect(PortMap &ports, int id)
 {
 	PortMap::iterator i = ports.find(id);
 	if (IsAttached() && i != ports.end() && i->second.Port)
-		jack_port_disconnect(m_Client, i->second.Port);
+		jack_port_disconnect(Handle(), i->second.Port);
 
 }
 
@@ -432,8 +644,8 @@ void JackClient::Connect(PortMap &ports, int id, const string &name, bool input)
 
 	Disconnect(ports, id);
 	const char *local = jack_port_name(i->second.Port);
-	int error = input ? jack_connect(m_Client, name.c_str(), local)
-		: jack_connect(m_Client, local, name.c_str());
+	int error = input ? jack_connect(Handle(), name.c_str(), local)
+		: jack_connect(Handle(), local, name.c_str());
 	if (error) cerr << "JACK: cannot connect " << local << " to " << name << endl;
 
 }
@@ -467,10 +679,10 @@ void JackClient::SetOutputBuf(int id, float *buffer, unsigned int frames)
 
 bool JackClient::QueryTransport(jack_transport_state_t &state, jack_position_t &position) const
 {
-	if (!IsAttached() || !m_Client)
+	if (!IsAttached() || !Handle())
 		return false;
 
-	state = jack_transport_query(m_Client, &position);
+	state = jack_transport_query(Handle(), &position);
 	return true;
 }
 
@@ -487,25 +699,25 @@ bool JackClient::GetTransport(unsigned long &frame, bool &rolling) const
 
 bool JackClient::StartTransport()
 {
-	if (!IsAttached() || !m_Client)
+	if (!IsAttached() || !Handle())
 		return false;
 
-	jack_transport_start(m_Client);
+	jack_transport_start(Handle());
 	return true;
 }
 
 bool JackClient::StopTransport()
 {
-	if (!IsAttached() || !m_Client)
+	if (!IsAttached() || !Handle())
 		return false;
 
-	jack_transport_stop(m_Client);
+	jack_transport_stop(Handle());
 	return true;
 }
 
 bool JackClient::LocateTransport(unsigned long frame)
 {
-	return IsAttached() && m_Client && jack_transport_locate(m_Client, (jack_nframes_t)frame) == 0;
+	return IsAttached() && Handle() && jack_transport_locate(Handle(), (jack_nframes_t)frame) == 0;
 }
 
 
@@ -515,6 +727,9 @@ bool JackClient::Attach(const string &clientName, const AudioClientOptions &opti
 	if (options.InChannels > MAX_INPUTPORTS || options.OutChannels > MAX_OUTPUTPORTS ||
 		(!options.InChannels && !options.OutChannels))
 		return false;
+
+	if (m_Owner)
+		return AttachGroup(clientName, options.InChannels, options.OutChannels);
 
 	m_InputPortMap.clear();
 	m_OutputPortMap.clear();
@@ -533,6 +748,14 @@ bool JackClient::Attach(const string &clientName, const AudioClientOptions &opti
 
 bool JackClient::Start()
 {
+	if (m_Session)
+	{
+		if (!IsAttached() || !m_Session->clock.Start())
+			return false;
+		__atomic_store_n(&m_Session->running[m_Slot], this, __ATOMIC_SEQ_CST);
+		return true;
+	}
+
 	ClientLifecycleLock lock;
 	return StartClient();
 }
@@ -611,7 +834,7 @@ double JackClient::PortLatency(const JackPort &port, bool input) const
 	jack_port_get_latency_range(port.Port, input ? JackCaptureLatency : JackPlaybackLatency, &range);
 	return double(range.max) / GetSampleRate();
 #else
-	return double(jack_port_get_total_latency(m_Client, port.Port)) / GetSampleRate();
+	return double(jack_port_get_total_latency(Handle(), port.Port)) / GetSampleRate();
 #endif
 }
 

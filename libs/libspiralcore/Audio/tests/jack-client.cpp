@@ -47,6 +47,7 @@ static jack_nframes_t transportFrame = 0;
 static jack_nframes_t cycleFrame = 48000;
 static double cycleTimeOffset = 0;
 static bool preciseCycle = false;
+static unsigned deactivations = 0;
 static bool failOpen = false;
 static bool failActivate = false;
 static bool failRegister = false;
@@ -151,11 +152,12 @@ void jack_on_shutdown(jack_client_t *c, JackShutdownCallback f, void *p)
 
 int jack_activate(jack_client_t *c) { c->Active = !failActivate; return failActivate ? 1 : 0; }
 
-int jack_deactivate(jack_client_t *c) { c->Active = false; return 0; }
+int jack_deactivate(jack_client_t *c) { ++deactivations; c->Active = false; return 0; }
 
 jack_port_t *jack_port_register(jack_client_t *c, const char *name, const char *, unsigned long, unsigned long)
 {
-	assert(!c->Active);
+	for (size_t i = 0; i < c->Ports.size(); ++i)
+		if (c->Ports[i]->Name == c->Name + ":" + name) return NULL;
 	if (failRegister) return NULL;
 
 	jack_port_t *port = new jack_port_t;
@@ -166,7 +168,6 @@ jack_port_t *jack_port_register(jack_client_t *c, const char *name, const char *
 
 int jack_port_unregister(jack_client_t *c, jack_port_t *port)
 {
-	assert(!c->Active);
 	for (std::vector<jack_port_t *>::iterator i = c->Ports.begin(); i != c->Ports.end(); ++i)
 	{
 		if (*i == port) { c->Ports.erase(i); break; }
@@ -257,6 +258,49 @@ struct AudioCycle
 	}
 
 };
+
+static void SharedPortGroups()
+{
+	using namespace Spiral::Core;
+	JackClient stereo, first, second;
+	stereo.SetPortGroup(&stereo, "");
+	first.SetPortGroup(&stereo, "Jack1_");
+	second.SetPortGroup(&stereo, "Jack2_");
+	AudioClientOptions options;
+	options.InChannels = options.OutChannels = 2;
+	assert(stereo.Attach("SSM-Output", options) && stereo.Start());
+	jack_client_t *server = clients["SSM-Output"];
+	const unsigned before = deactivations;
+	assert(first.Attach("SSM-Output", options));
+	assert(second.Attach("SSM-Output", options));
+	assert(clients.size() == 1 && server->Ports.size() == 12);
+	AudioCycle one = {&first}, two = {&second};
+	first.SetCallback(AudioCycle::Run, &one);
+	second.SetCallback(AudioCycle::Run, &two);
+	assert(first.Start() && second.Start());
+	for (unsigned n = 0; n < 4; ++n)
+	{
+		server->Ports[4]->Buffer[n] = .25f;
+		server->Ports[8]->Buffer[n] = -.75f;
+	}
+	server->Process(4, server->ProcessContext);
+	assert(server->Ports[6]->Buffer[2] == .25f && server->Ports[10]->Buffer[2] == -.75f);
+	assert(server->Ports[2]->Buffer[2] == 0 && one.Timing.Frame == two.Timing.Frame);
+	first.ConnectOutput(0, "system:playback_1");
+	jack_port_t *original = server->Ports[6];
+	assert(first.ResizePortGroup(3, 4) && first.Start());
+	assert(server->Ports[6] == original && first.GetOutputConnection(0) == "system:playback_1");
+	failRegister = true;
+	assert(!first.ResizePortGroup(4, 4));
+	failRegister = false;
+	assert(first.GetInputName(3).empty() && first.Start());
+	stereo.Detach();
+	second.Detach();
+	assert(server->Active && clients.size() == 1 && server->Ports.size() == 7);
+	assert(first.GetOutputConnection(0) == "system:playback_1" && deactivations == before);
+	first.Detach();
+	assert(clients.empty());
+}
 
 int main()
 {
@@ -407,6 +451,7 @@ int main()
 	failOpen=false;
 	assert(a.Attach("restart-a") && b.Attach("restart-b"));
 	a.Detach(); b.Detach();
+	SharedPortGroups();
 	assert(JackClient::Get() == JackClient::Get());
 	JackClient::PackUpAndGoHome();
 	return 0;

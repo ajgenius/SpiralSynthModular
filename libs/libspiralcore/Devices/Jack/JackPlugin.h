@@ -82,7 +82,9 @@ public:
 private:
 	GUIArgs m_GUIArgs;	
 
-	Spiral::Core::SignedProperty m_NumInputs, m_NumOutputs;
+	Spiral::Core::SignedProperty m_NumInputs, m_NumOutputs, m_Group;
+	Spiral::Core::StringProperty m_LegacyClient;
+	void ClaimGroup(long desired);
 	
 	int m_Version;
 	

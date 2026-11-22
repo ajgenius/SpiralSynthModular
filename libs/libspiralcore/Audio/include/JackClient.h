@@ -31,6 +31,8 @@ namespace Core
 const int MAX_INPUTPORTS = 256;
 const int MAX_OUTPUTPORTS = 256;
 
+struct JackSession;
+
 class JackClient : public AudioClient
 {
 public:
@@ -47,12 +49,17 @@ public:
 	virtual bool Read(float *interleaved, unsigned int frames);
 	virtual bool Write(const float *interleaved, unsigned int frames);
 	void Detach();
-	bool IsAttached() const { return __sync_fetch_and_add(&m_Attached, 0) != 0; }
+	bool IsAttached() const;
+	// One physical client per engine. An empty prefix reserves Output's stereo names.
+	void SetPortGroup(const void *owner, const std::string &prefix);
+	bool HasPortGroup() const { return m_Session != NULL; }
+	void SuspendPortGroup();
+	bool ResizePortGroup(unsigned inputs, unsigned outputs);
 
 	void SetCallback(void (*run)(void *, unsigned int), void *context);
-	unsigned long GetBufferSize() const { return __sync_fetch_and_add(&m_BufferSize, 0); }
+	unsigned long GetBufferSize() const;
 
-	unsigned long GetSampleRate() const { return __sync_fetch_and_add(&m_SampleRate, 0); }
+	unsigned long GetSampleRate() const;
 
 	bool GetCycleTiming(AudioCycleTiming &timing) const;
 	double GetChannelTime(bool input, unsigned channel) const;
@@ -93,6 +100,16 @@ public:
 	void SetOutputBuf(int id, float *buffer, unsigned int frames = 0);
 
 private:
+	friend struct JackSession;
+	const void *m_Owner;
+	std::string m_Prefix;
+	JackSession *m_Session;
+	unsigned m_Slot;
+
+	jack_client_t *Handle() const;
+	bool AttachGroup(const std::string &name, unsigned inputs, unsigned outputs);
+	void DetachGroup();
+	void ClearBuffers(unsigned frames);
 	struct JackPort
 	{
 		JackPort() : Buffer(NULL), Frames(0), Port(NULL) {}
