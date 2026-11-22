@@ -11,6 +11,11 @@ one: one folder per panel, installed to `<plugins>/panels/<Folder>/info.json`.
   in place of the one the device has built in, and is the panel of a device
   that has none.
 
+A device with no code of its own (Scope, Meter: `"registration": "builtin"`)
+has no module for its panel to be built into. Its `info.json`, panel and all,
+is installed beside the device modules and read from there, and a panel file
+here is shown in its place as for any device.
+
 ## Where panel files are looked for
 
 First to last, and the first folder with a file for something wins:
