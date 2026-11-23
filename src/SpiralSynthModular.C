@@ -2052,10 +2052,21 @@ void SynthModular::ApplyEngineSettings()
 	m_SavedRate = SpiralInfo::SAMPLERATE >= 8000 && SpiralInfo::SAMPLERATE <= 384000 ? SpiralInfo::SAMPLERATE : 44100;
 	m_FollowFormat = SpiralInfo::FOLLOW_AUDIO_FORMAT;
 	m_FollowTransport = SpiralInfo::JACK_TRANSPORT;
+	m_AppliedMidiBackend = SpiralInfo::MIDIBACKEND;
 }
 
 void SynthModular::UpdateHostInfo()
 {
+	// A clock/transport choice by itself does not reopen devices or reset held
+	// notes. Update() will resize the graph if its effective format changes.
+	pthread_mutex_lock(&m_CycleLock);
+	const bool sameDevices = m_Info.AUDIOCLIENT == SpiralInfo::AUDIOCLIENT && m_Info.OUTPUTFILE == SpiralInfo::OUTPUTFILE &&
+		m_Info.FRAGSIZE == SpiralInfo::FRAGSIZE && m_Info.FRAGCOUNT == SpiralInfo::FRAGCOUNT &&
+		m_Info.MIDIFILE == SpiralInfo::MIDIFILE && m_AppliedMidiBackend == SpiralInfo::MIDIBACKEND && m_Info.POLY == SpiralInfo::POLY;
+	if (sameDevices) ApplyEngineSettings();
+	pthread_mutex_unlock(&m_CycleLock);
+	if (sameDevices) return;
+
 	/* Pause Audio */
 	FreezeAll();
 
@@ -2076,8 +2087,9 @@ void SynthModular::UpdateHostInfo()
 	Spiral::Core::MidiDevice::SetDeviceName(SpiralInfo::MIDIFILE);
 	Spiral::Core::MidiDevice::SetBackendName(SpiralInfo::MIDIBACKEND);
 
-	/* Reset all plugin ports/buffers befure Resuming */
-	ResetAudio();
+	/* Devices and their buffers are updated together on the next graph cycle. */
+	m_ResetingAudioThread = true;
+	ThawAll();
 }
 
 //////////////////////////////////////////////////////////

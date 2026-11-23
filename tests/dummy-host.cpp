@@ -32,6 +32,10 @@ int main(int argc, char **argv)
 	SpiralInfo::AUDIOCLIENT="dummy";
 	SpiralInfo::OUTPUTFILE="default";
 	Host host;
+	// No worker is running yet. Applying only transport selection must not
+	// wait for a graph reset or clear the devices' performance state.
+	SpiralInfo::JACK_TRANSPORT = true;
+	host.Synth.UpdateHostInfo();
 	host.Synth.LoadPlugins(argv[1]);
 	pthread_t thread;
 	assert(!pthread_create(&thread,NULL,Host::Run,&host));
