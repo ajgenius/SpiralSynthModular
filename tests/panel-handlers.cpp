@@ -214,6 +214,28 @@ static void CheckMonitor(const std::string &plugin)
 	first.PublishFeeds();
 	std::vector<float> mono;
 	assert(feed->Take(mono) && mono[0] == .375f);
+	choice->value(2);
+	choice->do_callback();
+	first.UpdateChannelHandler();
+	Spiral::Core::Description saved;
+	first.Describe(saved);
+	PassthroughPlugin restored(manifest);
+	Spiral::Core::Description::Reader reader(saved);
+	restored.Apply(reader);
+	Spiral::Core::Description reopened;
+	restored.Describe(reopened);
+	const int field = reopened.Find("MONITOR VOICE");
+	assert(!reader.Failed() && field >= 0 && reopened.Values()[field] == "2");
+
+	first.SetVoice(&first, 0, 1);
+	first.UpdateChannelHandler();
+	panel.Refresh();
+	assert(choice->value() == 1);
+	first.SetVoice(&first, 0, 2);
+	second.SetVoice(&first, 1, 2);
+	first.UpdateChannelHandler();
+	panel.Refresh();
+	assert(choice->value() == 2);
 	first.ReleaseFeed(feed);
 }
 

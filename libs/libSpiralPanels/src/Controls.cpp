@@ -450,7 +450,8 @@ namespace Spiral
 		ChoiceControl::ChoiceControl(Panel &panel, const Spumoni::JSON &node):
 			PanelControl(panel, node),
 			m_Choice(MakeView<ChoiceView>("Choice", *this, node)),
-			m_ItemsProperty(panel.FindProperty(TextOf(node.Get("items_property"))))
+			m_ItemsProperty(panel.FindProperty(TextOf(node.Get("items_property")))),
+			m_FallbackIndex((int)NumberOf(node.Get("fallback_index"), -1))
 		{
 			if (!m_Choice)
 				return;
@@ -516,7 +517,9 @@ namespace Spiral
 				}
 				else
 				{
-					const int selected = (int)Physical();
+					int selected = (int)Physical();
+					if (selected < 0 || (size_t)selected >= m_Items.size())
+						selected = m_FallbackIndex;
 					m_Choice->Select(selected >= 0 && (size_t)selected < m_Items.size() ? selected : -1);
 				}
 				return;

@@ -33,6 +33,7 @@
       "attributes": {
         "items": ["array"],
         "items_property": ["string"],
+        "fallback_index": ["integer"],
         "property": ["string"],
         "size": ["integer"]
       }

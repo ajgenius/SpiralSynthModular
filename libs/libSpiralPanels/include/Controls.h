@@ -233,6 +233,7 @@ namespace Spiral
 
 			ChoiceView *m_Choice;
 			const PanelProperty *m_ItemsProperty;
+			int m_FallbackIndex;
 			std::string m_ItemText;
 			std::vector<std::string> m_Items;
 			std::vector<double> m_Values;

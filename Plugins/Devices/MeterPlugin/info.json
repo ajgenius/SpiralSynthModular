@@ -188,6 +188,7 @@
           "name": "monitor-voice",
           "property": "MONITOR VOICE",
           "items_property": "MONITOR VOICES",
+          "fallback_index": 1,
           "type": "Choice",
           "tooltip": "Show one voice or the sum of all voices"
         }
