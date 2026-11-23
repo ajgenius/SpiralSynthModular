@@ -96,6 +96,9 @@ public:
 
 	std::string GetOutputName(int id) const;
 
+	// Native input ports receive from peers. Native outputs send to peers.
+	std::vector<std::string> Peers(bool input, int id) const;
+	bool SetPeerConnected(bool input, int id, const std::string &peer, bool connected);
 	std::string GetInputConnection(int id) const;
 
 	std::string GetOutputConnection(int id) const;

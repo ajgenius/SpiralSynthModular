@@ -646,7 +646,7 @@ void JackClient::GetPortNames(vector<string> &inputs, vector<string> &outputs)
 	outputs.clear();
 	if (!IsAttached()) return;
 
-	const char **names = jack_get_ports(Handle(), NULL, NULL, JackPortIsInput);
+	const char **names = jack_get_ports(Handle(), NULL, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput);
 	if (names)
 	{
 		for (int i = 0; names[i]; ++i) inputs.push_back(names[i]);
@@ -654,7 +654,7 @@ void JackClient::GetPortNames(vector<string> &inputs, vector<string> &outputs)
 		ReleasePortList(names);
 	}
 
-	names = jack_get_ports(Handle(), NULL, NULL, JackPortIsOutput);
+	names = jack_get_ports(Handle(), NULL, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput);
 	if (names)
 	{
 		for (int i = 0; names[i]; ++i) outputs.push_back(names[i]);
@@ -674,6 +674,38 @@ string JackClient::GetOutputName(int id) const
 {
 	PortMap::const_iterator i = m_OutputPortMap.find(id);
 	return i == m_OutputPortMap.end() ? string() : i->second.Name;
+}
+
+vector<string> JackClient::Peers(bool input, int id) const
+{
+	vector<string> peers;
+	const PortMap &ports = input ? m_InputPortMap : m_OutputPortMap;
+	PortMap::const_iterator port = ports.find(id);
+	if (!IsAttached() || port == ports.end() || !port->second.Port) return peers;
+
+	const char **names = jack_port_get_all_connections(Handle(), port->second.Port);
+	if (names)
+	{
+		for (size_t i = 0; names[i]; ++i) peers.push_back(names[i]);
+		ReleasePortList(names);
+	}
+	return peers;
+}
+
+bool JackClient::SetPeerConnected(bool input, int id, const string &peer, bool connected)
+{
+	const PortMap &ports = input ? m_InputPortMap : m_OutputPortMap;
+	PortMap::const_iterator port = ports.find(id);
+	if (!IsAttached() || peer.empty() || port == ports.end() || !port->second.Port) return false;
+
+	const char *local = jack_port_name(port->second.Port);
+	const char *from = input ? peer.c_str() : local;
+	const char *to = input ? local : peer.c_str();
+	const int result = connected ? jack_connect(Handle(), from, to) : jack_disconnect(Handle(), from, to);
+	if (result == 0) return true;
+
+	const vector<string> peers = Peers(input, id);
+	return (find(peers.begin(), peers.end(), peer) != peers.end()) == connected;
 }
 
 string JackClient::Connection(const PortMap &ports, int id) const

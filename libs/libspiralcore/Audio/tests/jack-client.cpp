@@ -1,3 +1,4 @@
+#include <algorithm>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -15,6 +16,7 @@ struct _jack_port
 	std::string Name;
 
 	std::string Connection;
+	std::vector<std::string> Peers;
 
 	float Buffer[32];
 	_jack_port() { memset(Buffer, 0, sizeof(Buffer)); }
@@ -193,30 +195,35 @@ const char **jack_get_ports(jack_client_t *, const char *, const char *, unsigne
 
 const char **jack_port_get_all_connections(const jack_client_t *, const jack_port_t *port)
 {
-	if (port->Connection.empty()) return NULL;
+	if (port->Peers.empty()) return NULL;
 
-	const char **names = static_cast<const char **>(malloc(2 * sizeof(char *)));
-	names[0] = port->Connection.c_str(); names[1] = NULL;
+	const char **names = static_cast<const char **>(malloc((1 + port->Peers.size()) * sizeof(char *)));
+	for (size_t n = 0; n < port->Peers.size(); ++n) names[n] = port->Peers[n].c_str();
+	names[port->Peers.size()] = NULL;
 	return names;
 }
 
 void jack_free(void *data) { free(data); }
 
-int jack_port_disconnect(jack_client_t *, jack_port_t *port) { port->Connection.clear(); return 0; }
+int jack_port_disconnect(jack_client_t *, jack_port_t *port) { port->Peers.clear(); port->Connection.clear(); return 0; }
 
-int jack_connect(jack_client_t *c, const char *source, const char *destination)
+static int SetCable(jack_client_t *client, const char *source, const char *destination, bool connect)
 {
-	for (size_t n = 0; n < c->Ports.size(); ++n)
+	for (size_t n = 0; n < client->Ports.size(); ++n)
 	{
-		jack_port_t *port = c->Ports[n];
-		if (port->Name == source) port->Connection = destination;
-
-		if (port->Name == destination) port->Connection = source;
-
+		jack_port_t *port = client->Ports[n];
+		if (port->Name != source && port->Name != destination) continue;
+		const std::string peer = port->Name == source ? destination : source;
+		std::vector<std::string>::iterator existing = std::find(port->Peers.begin(), port->Peers.end(), peer);
+		if (connect && existing == port->Peers.end()) port->Peers.push_back(peer);
+		if (!connect && existing != port->Peers.end()) port->Peers.erase(existing);
+		port->Connection = port->Peers.empty() ? std::string() : port->Peers.front();
 	}
-
 	return 0;
 }
+
+int jack_connect(jack_client_t *c, const char *from, const char *to) { return SetCable(c, from, to, true); }
+int jack_disconnect(jack_client_t *c, const char *from, const char *to) { return SetCable(c, from, to, false); }
 
 }
 
@@ -299,6 +306,11 @@ static void SharedPortGroups()
 	second.Detach();
 	assert(server->Active && clients.size() == 1 && server->Ports.size() == 7);
 	assert(first.GetOutputConnection(0) == "system:playback_1" && deactivations == before);
+	assert(first.SetPeerConnected(false, 0, "monitor:stem", true));
+	assert(first.Peers(false, 0).size() == 2);
+	assert(first.SetPeerConnected(false, 0, "system:playback_1", false));
+	assert(first.GetOutputConnection(0) == "monitor:stem");
+	assert(!first.SetPeerConnected(true, 63, "missing", true));
 	first.Detach();
 	assert(clients.empty());
 }
