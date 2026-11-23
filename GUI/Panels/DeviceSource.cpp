@@ -355,6 +355,7 @@ namespace Spiral
 			const std::string channel = name.empty() ? std::string() : ChannelNamed(name);
 			if (!ch || channel.empty())
 				return false;
+			if (ch->ChannelKind(channel) == 'B') return ch->ReadByteSnapshot(channel, bytes);
 			const int size = ch->ChannelSize(channel);
 			if (size <= 0)
 				return false;

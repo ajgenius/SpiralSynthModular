@@ -43,20 +43,20 @@
             25,
             25
           ],
-          "name": "remove",
+          "name": "remove_send",
           "on": {
             "pressed": [
               {
                 "amount": -1,
                 "delta": [
-                  "NUMINPUTS",
-                  "NUMOUTPUTS"
+                  "INPUTS"
                 ]
               }
             ]
           },
           "text": "-",
-          "type": "Button"
+          "type": "Button",
+          "tooltip": "Remove a send"
         },
         {
           "bounds": [
@@ -65,20 +65,20 @@
             25,
             25
           ],
-          "name": "add",
+          "name": "add_send",
           "on": {
             "pressed": [
               {
                 "amount": 1,
                 "delta": [
-                  "NUMINPUTS",
-                  "NUMOUTPUTS"
+                  "INPUTS"
                 ]
               }
             ]
           },
           "text": "+",
-          "type": "Button"
+          "type": "Button",
+          "tooltip": "Add a send"
         },
         {
           "bounds": [
@@ -96,8 +96,16 @@
               }
             ]
           },
-          "text": "Attach",
-          "type": "Button"
+          "text": {
+            "property": "REQUESTED",
+            "on": "Connection requested",
+            "off": "Connect"
+          },
+          "type": "Button",
+          "enabled": {
+            "property": "REQUESTED",
+            "equals": 0
+          }
         },
         {
           "bounds": [
@@ -115,8 +123,15 @@
               }
             ]
           },
-          "text": "Detach",
-          "type": "Button"
+          "text": {
+            "property": "CONNECTED",
+            "on": "Disconnect",
+            "off": "Cancel connection"
+          },
+          "type": "Button",
+          "enabled": {
+            "property": "REQUESTED"
+          }
         },
         {
           "bounds": [
@@ -129,9 +144,9 @@
           "inputs": {
             "connect": "CONNECT_INPUT",
             "connections": "INPUTCONNECTIONS",
-            "count": "NUMINPUTS",
+            "count": "OUTPUTS",
             "disconnect": "DISCONNECT_INPUT",
-            "label": "Input %d",
+            "label": "Return %d",
             "names": "OUTPUTPORTNAMES",
             "names_count": "NUMOUTPUTPORTNAMES"
           },
@@ -140,18 +155,66 @@
           "outputs": {
             "connect": "CONNECT_OUTPUT",
             "connections": "OUTPUTCONNECTIONS",
-            "count": "NUMOUTPUTS",
+            "count": "INPUTS",
             "disconnect": "DISCONNECT_OUTPUT",
-            "label": "Output %d",
+            "label": "Send %d",
             "names": "INPUTPORTNAMES",
             "names_count": "NUMINPUTPORTNAMES"
           },
           "refresh": "CHECK_PORT_CHANGES",
-          "type": "Patch::PortList"
+          "type": "Patch::PortList",
+          "routes": "RouteChoices",
+          "query": "LIST_ROUTES",
+          "add_route": "ADD_ROUTE",
+          "remove_route": "REMOVE_ROUTE"
+        },
+        {
+          "bounds": [
+            165,
+            1,
+            25,
+            25
+          ],
+          "name": "remove_return",
+          "on": {
+            "pressed": [
+              {
+                "amount": -1,
+                "delta": [
+                  "OUTPUTS"
+                ]
+              }
+            ]
+          },
+          "text": "-",
+          "type": "Button",
+          "tooltip": "Remove a return"
+        },
+        {
+          "bounds": [
+            190,
+            1,
+            25,
+            25
+          ],
+          "name": "add_return",
+          "on": {
+            "pressed": [
+              {
+                "amount": 1,
+                "delta": [
+                  "OUTPUTS"
+                ]
+              }
+            ]
+          },
+          "text": "+",
+          "type": "Button",
+          "tooltip": "Add a return"
         }
       ],
       "height": 214,
-      "help": "The number of JACK ports each way (2 to 64), applied when changed, and attaching to or detaching from the JACK server. Connecting ports stays in the editor.",
+      "help": "Change send and return counts independently. Connect to JACK, then click a port to add or remove one cable.",
       "schema_version": 1,
       "width": 221
     },
@@ -225,7 +288,7 @@
         "max": 64,
         "min": 2,
         "page": 1,
-        "property": "NUMINPUTS",
+        "property": "INPUTS",
         "read_only": false,
         "step": 1,
         "type": "integer"
@@ -250,7 +313,7 @@
         "max": 64,
         "min": 2,
         "page": 1,
-        "property": "NUMOUTPUTS",
+        "property": "OUTPUTS",
         "read_only": false,
         "step": 1,
         "type": "integer"
@@ -274,6 +337,16 @@
         "property": "PORTINDEX",
         "read_only": false,
         "type": "integer"
+      },
+      {
+        "class": "ToggleProperty",
+        "default": false,
+        "display_name": "Requested",
+        "hint": "JACK connection requested",
+        "internal": false,
+        "property": "REQUESTED",
+        "read_only": true,
+        "type": "boolean"
       }
     ],
     "schema_version": 1

@@ -4,6 +4,11 @@
 #include "DeviceSource.h"
 #include "FltkView.h"
 #include "MixerPlugin.h"
+#include <config.h>
+#ifdef HAVE_JACK_CLIENT
+#include "libs/libspiralcore/Devices/Jack/JackPlugin.h"
+#include "libs/libSpiralPanels/include/Patch.h"
+#endif
 #include "JSON.h"
 #include <FL/Fl_Button.H>
 #include <cassert>
@@ -70,8 +75,89 @@ static Spumoni::JSON *UI(const std::string &path, std::string &error)
 	return ui ? ui->Duplicate() : NULL;
 }
 
+#ifdef HAVE_JACK_CLIENT
+class JackPanelFixture : public JackPlugin
+{
+public:
+	void Publish()
+	{
+		static_cast<Spiral::Core::ToggleProperty *>(m_State.Properties["CONNECTED"])->Value.AsBoolean = true;
+		static_cast<Spiral::Core::SignedProperty *>(m_State.Properties["INPUTS"])->Value.AsSigned = 3;
+		static_cast<Spiral::Core::SignedProperty *>(m_State.Properties["OUTPUTS"])->Value.AsSigned = 7;
+		GetChannelHandler()->FlushChannels();
+	}
+};
+
+class RouteSource : public DeviceSource
+{
+public:
+	explicit RouteSource(JackPlugin *device) : DeviceSource(device) {}
+	std::string last;
+	std::vector<std::string> arguments;
+	bool Command(const std::string &name, const std::vector<std::string> &args)
+	{
+		last = name;
+		arguments = args;
+		return true;
+	}
+};
+
+class RouteDialog : public Dialogs
+{
+public:
+	int selection;
+	int ChooseFrom(const std::vector<std::string> &labels)
+	{
+		assert(labels.size() == 2 && labels[0] == "Remove capture:mic" && labels[1] == "Add capture:line");
+		return selection;
+	}
+	void ChooseFile(bool, const std::string &, const std::string &, Completed, void *) {}
+};
+
+static void CheckJackPanel()
+{
+	JackPanelFixture device;
+	device.Publish();
+	RouteSource *source = new RouteSource(&device);
+	FltkPanel host(0, 0, source);
+	Panel &panel = host.Model();
+	std::string error;
+	Spumoni::JSONOwner document(UI(Root() + "/libs/libspiralcore/Devices/Jack/info.json", error));
+	assert(document.get() && panel.Build(*document, &error));
+	panel.Refresh();
+	PortListControl *ports = dynamic_cast<PortListControl *>(panel.FindControl("ports"));
+	PortsView *view = ports ? dynamic_cast<PortsView *>(ports->View()) : NULL;
+	assert(view && view->PortCount(0) == 3 && view->PortCount(1) == 7);
+	Dialogs *original = Dialogs::Get();
+	RouteDialog dialog;
+	Dialogs::Set(&dialog);
+	for (int choice = -1; choice <= 1; ++choice)
+	{
+		dialog.selection = choice;
+		ports->Clicked(1, 6, false);
+		assert(source->last == "LIST_ROUTES" && source->arguments[0] == "-7");
+		std::string bytes = "-7 " + source->arguments[1];
+		const char options[] = "\0-capture:mic\0+capture:line\0";
+		bytes.append(options, sizeof(options) - 1);
+		device.GetChannelHandler()->PublishBytes("RouteChoices", bytes);
+		device.UpdateChannelHandler();
+		panel.Refresh();
+		if (choice < 0) assert(source->last == "LIST_ROUTES");
+		else
+		{
+			assert(source->last == (choice ? "ADD_ROUTE" : "REMOVE_ROUTE"));
+			assert(source->arguments[0] == "-7" && source->arguments[2] == (choice ? "capture:line" : "capture:mic"));
+		}
+	}
+	Dialogs::Set(original);
+}
+#endif
+
 int main()
 {
+#ifdef HAVE_JACK_CLIENT
+	CheckJackPanel();
+#endif
 	int failures = 0;
 
 	const std::vector<std::string> files = PanelFiles();

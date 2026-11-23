@@ -86,6 +86,7 @@ namespace Spiral
 			virtual void Load();
 			virtual void Refresh();
 			void Clicked(int column, int index, bool pressed);
+			int PortNumber(int index) const { return m_Query.empty() ? index : index + 1; }
 
 		protected:
 			struct Column
@@ -105,6 +106,11 @@ namespace Spiral
 			Column m_Columns[2];
 			const PanelProperty *m_Connected;
 			std::string m_NamesCommand, m_RefreshCommand;
+			std::string m_Routes, m_Query, m_Add, m_Remove;
+			int m_PendingPort;
+			unsigned m_Ticket;
+			bool m_Choosing;
+			void ReceiveRoutes();
 		};
 
 		class PianoKeysControl: public PanelControl

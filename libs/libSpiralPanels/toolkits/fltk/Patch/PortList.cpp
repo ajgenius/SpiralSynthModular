@@ -48,7 +48,7 @@ namespace Spiral
 					{
 						const int n = (int)buttons.size();
 						char text[64];
-						std::snprintf(text, sizeof(text), labelFormat.c_str(), n);
+						std::snprintf(text, sizeof(text), labelFormat.c_str(), m_Control.PortNumber(n));
 						Fl_Box *label = new Fl_Box(x, n * 30, 90, 10);
 						label->copy_label(text);
 						m_LabelLook.Apply(label);
