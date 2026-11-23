@@ -179,6 +179,23 @@ void MidiPlugin::ClearVoiceOutputs()
 {
 	m_Voices.Reset();
 	m_TriggerLevel = m_NoteLevel = 0;
+	ResizeVoiceOutputs();
+	for (size_t i = 0; i < m_ExtraVoices.size(); ++i)
+	{
+		VoiceCV &cv = m_ExtraVoices[i];
+		cv.Pitch.Set(-1);
+		cv.Gate.Zero();
+	}
+}
+
+void MidiPlugin::ChangeAudioFormat()
+{
+	SpiralPlugin::Reset();
+	ResizeVoiceOutputs();
+}
+
+void MidiPlugin::ResizeVoiceOutputs()
+{
 	for (size_t i = 0; i < m_ExtraVoices.size(); ++i)
 	{
 		VoiceCV &cv = m_ExtraVoices[i];
@@ -187,8 +204,6 @@ void MidiPlugin::ClearVoiceOutputs()
 			cv.Pitch.Allocate(m_HostInfo->BUFSIZE);
 			cv.Gate.Allocate(m_HostInfo->BUFSIZE);
 		}
-		cv.Pitch.Set(-1);
-		cv.Gate.Zero();
 	}
 }
 

@@ -23,7 +23,7 @@
 
 static const int NUM_CHANNELS = 4;
 
-class EnvelopePlugin : public Spiral::Core::Device
+class EnvelopePlugin : public Spiral::Core::Device, public LiveAudioFormat
 {
 public:
  	EnvelopePlugin();
@@ -32,6 +32,7 @@ public:
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void Execute();
 	virtual void Reset();
+	virtual void ChangeAudioFormat();
 
 		
 	float GetAttack()           { return AsFloat(m_Attack);     }

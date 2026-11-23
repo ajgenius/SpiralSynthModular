@@ -438,7 +438,8 @@ void SynthModular::Update()
 	{
 		m_Info.BUFSIZE = frames;
 		m_Info.SAMPLERATE = rate;
-		m_ResetingAudioThread = true;
+		if (!m_ResetingAudioThread)
+			ChangeAudioFormat();
 	}
 
 	const bool render = hub->PreparePeriod();
@@ -457,6 +458,23 @@ void SynthModular::Update()
 
 	if (delay)
 		usleep(delay);
+}
+
+void SynthModular::ChangeAudioFormat()
+{
+	// Members of inline subpatches are in the same map. Visit each DSP once,
+	// including disconnected devices that may be wired in at the new size.
+	for (map<int, DeviceWin *>::iterator i = m_DeviceWinMap.begin(); i != m_DeviceWinMap.end(); ++i)
+	{
+		SpiralPlugin *device = i->second->m_Device;
+		if (!device || device->IsDead() || dynamic_cast<SubPatchDevice *>(device))
+			continue;
+
+		LiveAudioFormat::Apply(*device);
+		map<int, VoicePool *>::iterator pool = m_VoicePools.find(i->first);
+		if (pool != m_VoicePools.end())
+			pool->second->ChangeAudioFormat(i->first, m_Info.BUFSIZE);
+	}
 }
 
 void SynthModular::RenderAudio()

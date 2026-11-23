@@ -56,6 +56,16 @@ bool SpiralPlugin::Kill()
 	return true;
 }
 
+void LiveAudioFormat::Apply(SpiralPlugin &device)
+{
+	LiveAudioFormat *live = dynamic_cast<LiveAudioFormat *>(&device);
+
+	if (live)
+		live->ChangeAudioFormat();
+	else
+		device.Reset();
+}
+
 StablePortLayout::~StablePortLayout() {}
 
 void SpiralPlugin::ResetPorts() 

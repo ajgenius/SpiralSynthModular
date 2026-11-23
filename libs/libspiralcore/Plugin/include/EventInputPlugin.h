@@ -23,7 +23,7 @@
 #include "SpiralPlugin.h"
 #include "EventVoices.h"
 
-class EventInputPlugin : public SpiralPlugin
+class EventInputPlugin : public SpiralPlugin, public LiveAudioFormat
 {
 public:
 	static const Spiral::Core::DeviceClass &Class();
@@ -33,6 +33,7 @@ public:
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void Execute();
 	virtual void Reset();
+	virtual void ChangeAudioFormat() { SpiralPlugin::Reset(); }
 	virtual void SetVoice(SpiralPlugin *first, unsigned voice, unsigned voices);
 
 	virtual void Describe(Spiral::Core::Description &d) {}

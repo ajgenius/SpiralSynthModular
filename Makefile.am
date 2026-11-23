@@ -128,7 +128,8 @@ midi_bindings_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
 midi_bindings_test_LDADD = $(HOST_LDADD) $(MIDI_LIBS)
 midi_bindings_test_LDFLAGS = -export-dynamic
 
-surface_modules = tests/surface-modules/dsp/FilterPlugin tests/surface-modules/dsp/PianoRollPlugin tests/surface-modules/dsp/MidiPlugin
+surface_modules = tests/surface-modules/dsp/FilterPlugin tests/surface-modules/dsp/PianoRollPlugin tests/surface-modules/dsp/MidiPlugin \
+	tests/surface-modules/dsp/EnvelopePlugin tests/surface-modules/dsp/ComplexEnvelopePlugin
 EXTRA_midi_bindings_test_DEPENDENCIES = $(surface_modules)
 $(surface_modules):
 	$(MKDIR_P) tests/surface-modules/dsp

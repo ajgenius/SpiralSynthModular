@@ -21,7 +21,7 @@
 #ifndef OscillatorPLUGIN
 #define OscillatorPLUGIN
 
-class OscillatorPlugin : public Spiral::Core::Device
+class OscillatorPlugin : public Spiral::Core::Device, public LiveAudioFormat
 {
 public:
  	OscillatorPlugin();
@@ -30,6 +30,7 @@ public:
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void 		Execute();
 	virtual void		Reset();
+	virtual void ChangeAudioFormat() { ResetPorts(); }
 
 	virtual void	    Describe(Spiral::Core::Description &d);
 	virtual void	    Apply(Spiral::Core::Description::Reader &r);

@@ -200,6 +200,7 @@ private:
 	DeviceWin* NewDeviceWin(int n, int x, int y);
 	DeviceWin* NewComment(int n, int x, int y);
 
+	void ChangeAudioFormat();
 	void RenderAudio();
 	void RunDevice(int id);
 	static void cb_RunDevice(int id, void *host);

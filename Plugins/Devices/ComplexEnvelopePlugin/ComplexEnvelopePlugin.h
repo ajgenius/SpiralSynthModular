@@ -22,7 +22,7 @@
 #include "BreakpointCurve.h"
 #include <vector>
 
-class ComplexEnvelopePlugin: public Spiral::Core::Device
+class ComplexEnvelopePlugin: public Spiral::Core::Device, public LiveAudioFormat
 {
 public:
 	static const unsigned MaxPoints = 16;
@@ -34,6 +34,7 @@ public:
 	virtual PluginInfo &Initialise(const HostInfo *Host);
 	virtual void Execute();
 	virtual void Reset();
+	virtual void ChangeAudioFormat();
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
 

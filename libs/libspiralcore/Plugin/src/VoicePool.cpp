@@ -174,6 +174,23 @@ void VoicePool::Run(int id, SpiralPlugin *device, bool copies, bool reset, unsig
 	}
 }
 
+void VoicePool::ChangeAudioFormat(int id, int frames)
+{
+	std::map<int, Member>::iterator member = m_Members.find(id);
+
+	if (member == m_Members.end())
+		return;
+
+	for (size_t i = 0; i < member->second.Copies.size(); ++i)
+		LiveAudioFormat::Apply(*member->second.Copies[i]);
+
+	std::map<int, std::vector<Sum> >::iterator sums = m_Sums.find(id);
+	if (sums != m_Sums.end())
+		for (size_t i = 0; i < sums->second.size(); ++i)
+			if (sums->second[i].Buffer->GetLength() != frames)
+				sums->second[i].Buffer->Allocate(frames);
+}
+
 bool VoicePool::Follow()
 {
 	for (std::map<int, Member>::iterator m = m_Members.begin(); m != m_Members.end(); ++m)

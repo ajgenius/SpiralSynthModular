@@ -110,10 +110,15 @@ PluginInfo &EnvelopePlugin::Initialise(const HostInfo *Host)
 	return Info;
 }
 
-void EnvelopePlugin::Reset()
+void EnvelopePlugin::ChangeAudioFormat()
 {
 	ResetPorts();
-	m_SampleTime=1.0/(float)(m_HostInfo->SAMPLERATE);
+	m_SampleTime = 1.0f / m_HostInfo->SAMPLERATE;
+}
+
+void EnvelopePlugin::Reset()
+{
+	ChangeAudioFormat();
 	m_Trigger = false;
 	m_t = -1.0f;
 }

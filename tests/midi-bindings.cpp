@@ -116,6 +116,27 @@ static SpiralPlugin *CreateFilter()
 	return filter;
 }
 
+// Called with the worker frozen. Wait until a device has seen the new
+// format through the host's settings path, then inspect the graph at rest.
+static void SetFormat(SynthModular &synth, SpiralPlugin &midi, int rate, int frames)
+{
+	SpiralInfo::FOLLOW_AUDIO_FORMAT = false;
+	SpiralInfo::SAMPLERATE = rate;
+	SpiralInfo::BUFSIZE = frames;
+	synth.UpdateHostInfo();
+
+	for (unsigned tries = 0; tries < 100; ++tries)
+	{
+		synth.ThawAll();
+		usleep(2000);
+		synth.FreezeAll();
+
+		if (midi.GetHostInfo()->SAMPLERATE == rate && midi.GetHostInfo()->BUFSIZE == frames)
+			return;
+	}
+	assert(false);
+}
+
 static void Chords(SynthModular &synth)
 {
 	synth.ClearUp();
@@ -202,6 +223,29 @@ static void Chords(SynthModular &synth)
 	Hear(0xb0, 123, 0);
 	midi->Execute();
 	assert((*filters[1]->GetInput(1))[1] == 70 / 127.f && (*filters[2]->GetInput(1))[1] > 0);
+	float pitches[3];
+	for (unsigned v = 0; v < 3; ++v)
+		pitches[v] = (*filters[v]->GetInput(0))[1];
+	const int rates[] = {48000, 48000, 44100};
+	const int sizes[] = {midi->GetHostInfo()->BUFSIZE, 128, 512};
+	for (unsigned change = 0; change < 3; ++change)
+	{
+		SetFormat(synth, *midi, rates[change], sizes[change]);
+		midi->Execute();
+		assert(events->Count() == 0);
+		const float expected[] = {0, 70 / 127.f, 40 / 127.f};
+		for (unsigned v = 0; v < 3; ++v)
+		{
+			const Sample *gate = filters[v]->GetInput(1);
+			assert(gate->GetLength() == sizes[change]);
+			for (int frame = 0; frame < gate->GetLength(); ++frame)
+			{
+				assert((*gate)[frame] == expected[v]);
+				assert((*filters[v]->GetInput(0))[frame] == pitches[v]);
+			}
+		}
+	}
+
 	Hear(0xb0, 64, 0);
 	midi->Execute();
 	for (unsigned i = 0; i < 3; ++i)
@@ -230,8 +274,89 @@ static void Chords(SynthModular &synth)
 	midi = synth.cb_FindDevice(0, &synth);
 	midi->Execute();
 	assert((*filters[0]->GetInput(1))[0] == 0 && (*filters[0]->GetInput(1))[1] == 40 / 127.f);
+	SetFormat(synth, *midi, 48000, 64);
+	midi->Execute();
+	assert((*filters[0]->GetInput(1))[0] == 40 / 127.f && (*filters[0]->GetInput(1))[63] == 40 / 127.f);
+	Hear(0x80, 67, 0);
+	midi->Execute();
+	assert((*filters[0]->GetInput(1))[0] == 0);
+	Hear(0x90, 67, 100);
+	midi->Execute();
+	midi->Reset();
+	midi->Execute();
+	assert((*filters[0]->GetInput(1))[1] == 0);
 	synth.ThawAll();
 	puts("MIDI pitch and trigger on real patch wires: three voices, overlapping keys, sustain and mono PASS");
+}
+
+// Compare the last sample in the old format with the first in the new one
+// while a constant-amplitude square wave passes through an unfinished attack.
+static void HeldEnvelope(unsigned id)
+{
+	HostInfo host = HostInfo();
+	host.SAMPLERATE = 48000;
+	host.BUFSIZE = 64;
+	const DeviceClass *kind = DeviceClassRegistry::Get()->Find(id);
+	assert(kind);
+	SpiralPlugin *envelope = kind->CreateInstance();
+	envelope->Initialise(&host);
+	envelope->Reset();
+	if (id == 5)
+	{
+		FloatProperty attack(DefaultLinearFlags, .2f, 0, 1, .001f, .001f);
+		dynamic_cast<Device *>(envelope)->SynchronizeProperty("Attack", &attack);
+	}
+
+	Sample gate(128), tone(128);
+	gate.Set(1);
+	for (int frame = 0; frame < 128; ++frame)
+		tone.Set(frame, frame % 32 < 16 ? .5f : -.5f);
+	assert(envelope->SetInput(0, &gate) && envelope->SetInput(1, &tone));
+	for (unsigned block = 0; block < 48; ++block)
+		envelope->Execute();
+	Sample *output = NULL;
+	assert(envelope->GetOutput(1, &output));
+	const float before = std::fabs((*output)[63]);
+	assert(before > .01f);
+
+	host.SAMPLERATE = 44100;
+	host.BUFSIZE = 128;
+	LiveAudioFormat::Apply(*envelope);
+	envelope->Execute();
+	assert(output->GetLength() == 128 && std::fabs(std::fabs((*output)[0]) - before) < .001f);
+	delete envelope;
+}
+
+static void HeldEventInput()
+{
+	HostInfo host = HostInfo();
+	host.BUFSIZE = 64;
+	host.SAMPLERATE = 48000;
+	SpiralPlugin *decoder = DeviceClassRegistry::Get()->Find(289)->CreateInstance();
+	decoder->Initialise(&host);
+	EventBuffer events;
+	events.Clear(64);
+	Event note;
+	note.Type = Event::NoteOn;
+	note.ID = 37;
+	note.Volume = .75f;
+	assert(events.Append(0, note));
+	decoder->SetEventInput(0, &events);
+	decoder->Execute();
+
+	host.BUFSIZE = 128;
+	host.SAMPLERATE = 44100;
+	LiveAudioFormat::Apply(*decoder);
+	events.Clear(128);
+	decoder->Execute();
+	Sample *gate = NULL;
+	assert(decoder->GetOutput(2, &gate) && gate->GetLength() == 128);
+	assert(decoder->GetEventOutput(0)->Count() == 0 && (*gate)[0] == .75f && (*gate)[127] == .75f);
+	note.Type = Event::NoteOff;
+	assert(events.Append(7, note));
+	decoder->Execute();
+	assert((*gate)[6] == .75f && (*gate)[7] == 0);
+	delete decoder;
 }
 
 int main(int argc, char **argv)
@@ -249,6 +374,9 @@ int main(int argc, char **argv)
 	assert(!pthread_create(&thread, NULL, Host::Run, &host));
 	assert(MidiDevice::Get() && MidiDevice::Get()->GetBackendName() == "script");
 
+	HeldEventInput();
+	HeldEnvelope(5);
+	HeldEnvelope(33);
 	Chords(synth);
 	Pass(synth);
 	synth.ClearUp();

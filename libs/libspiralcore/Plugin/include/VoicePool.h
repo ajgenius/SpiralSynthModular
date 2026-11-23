@@ -71,6 +71,7 @@ public:
 
 	void Run(int id, SpiralPlugin *device, bool copies, bool reset, unsigned long frame);
 
+	void ChangeAudioFormat(int id, int frames);
 	bool Follow();
 
 	void Clear();

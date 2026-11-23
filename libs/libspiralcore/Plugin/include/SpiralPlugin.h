@@ -88,6 +88,17 @@ struct HostInfo
 
 /////////////////////////////////////////////////////////////////////
 
+class SpiralPlugin;
+
+// Optional for DSP with a held performance to preserve across rate or block changes.
+class LiveAudioFormat
+{
+public:
+	virtual ~LiveAudioFormat() {}
+	virtual void ChangeAudioFormat() = 0;
+	static void Apply(SpiralPlugin &device);
+};
+
 class StablePortLayout
 {
 public:

@@ -166,6 +166,21 @@ void ComplexEnvelopePlugin::BuildEnvelope()
 	m_Stale = false;
 }
 
+void ComplexEnvelopePlugin::ChangeAudioFormat()
+{
+	const unsigned previousRate = m_ReservedRate;
+	ResetPorts();
+	Reserve();
+	if (m_Stale)
+		BuildEnvelope();
+
+	if (previousRate && previousRate != m_ReservedRate)
+	{
+		if (m_Position >= 0)
+			m_Position = static_cast<long>(double(m_Position) * m_ReservedRate / previousRate);
+	}
+}
+
 void ComplexEnvelopePlugin::Reset()
 {
 	ResetPorts();

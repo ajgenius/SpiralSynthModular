@@ -31,7 +31,7 @@ namespace Core
 #ifndef OscillatorPLUGIN
 #define OscillatorPLUGIN
 
-class MidiPlugin : public Spiral::Core::Device, public VoiceOutputSource
+class MidiPlugin : public Spiral::Core::Device, public VoiceOutputSource, public LiveAudioFormat
 {
 public:
  	MidiPlugin();
@@ -42,6 +42,7 @@ public:
 	virtual void SetVoice(SpiralPlugin *first, unsigned voice, unsigned voices);
 	virtual Sample *VoiceOutput(unsigned port, unsigned voice);
 	virtual void Reset();
+	virtual void ChangeAudioFormat();
 	virtual void        ExecuteCommands();
 	virtual void	    Describe(Spiral::Core::Description &d);
 	virtual void	    Apply(Spiral::Core::Description::Reader &r);
@@ -78,6 +79,7 @@ private:
 	struct VoiceCV { Sample Pitch, Gate; };
 	std::vector<VoiceCV> m_ExtraVoices;
 	void ClearVoiceOutputs();
+	void ResizeVoiceOutputs();
 	void SendEvents();
 	void ReceiveEvent(const Spiral::Core::MidiEvent &In);
 	
