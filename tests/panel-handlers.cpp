@@ -4,6 +4,7 @@
 #include "DeviceSource.h"
 #include "FltkView.h"
 #include "MixerPlugin.h"
+#include "libs/libspiralcore/Devices/DiskWriter/DiskWriterPlugin.h"
 #include "PassthroughPlugin.h"
 #include <FL/Fl_Choice.H>
 #include <config.h>
@@ -17,6 +18,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <dirent.h>
+#include <unistd.h>
 #include <string>
 #include <vector>
 
@@ -213,8 +215,75 @@ static void CheckMonitor(const std::string &plugin)
 	first.ReleaseFeed(feed);
 }
 
+static void RefreshRecorder(DiskWriterPlugin &device, Panel &panel)
+{
+	device.UpdateChannelHandler();
+	device.ExecuteCommands();
+	device.UpdateChannelHandler();
+	panel.Refresh();
+}
+
+static void CheckRecorder()
+{
+	HostInfo format = HostInfo();
+	format.BUFSIZE = 64;
+	format.SAMPLERATE = 48000;
+	DiskWriterPlugin device;
+	device.Initialise(&format);
+	Sample input(64);
+	input.Zero();
+	device.SetInput(0, &input);
+	device.SetInput(1, &input);
+	device.GetChannelHandler()->FlushChannels();
+	DeviceSource *source = new DeviceSource(&device);
+	FltkPanel host(0, 0, source);
+	Panel &panel = host.Model();
+	std::string error;
+	Spumoni::JSONOwner doc(UI(Root() + "/libs/libspiralcore/Devices/DiskWriter/info.json", error));
+	assert(doc.get() && panel.Build(*doc.get(), &error));
+	panel.Load();
+	PanelControl *record = panel.FindControl("record");
+	Fl_Button *button = dynamic_cast<Fl_Button *>(FltkView::WidgetOf(*record));
+	FileChoosingButtonControl *open = dynamic_cast<FileChoosingButtonControl *>(panel.FindControl("open"));
+	Fl_Widget *close = FltkView::WidgetOf(*panel.FindControl("close"));
+	assert(open && button && !close->visible() && !button->active());
+
+	assert(source->Command("RECORD", std::vector<std::string>()));
+	RefreshRecorder(device, panel);
+	assert(!button->value());
+	open->Finish("/dev/null/unwritable.wav");
+	RefreshRecorder(device, panel);
+	assert(!button->active() && !close->visible());
+
+	char name[] = "/tmp/ssm-panel-record-XXXXXX.wav";
+	int fd = mkstemps(name, 4);
+	assert(fd >= 0);
+	::close(fd);
+	open->Finish(name);
+	RefreshRecorder(device, panel);
+	assert(button->active() && close->visible());
+	for (int press = 0; press < 3; ++press)
+	{
+		button->value(press != 1);
+		button->do_callback();
+		RefreshRecorder(device, panel);
+		assert(panel.Read(*panel.FindProperty("RECORDING")) == (press != 1));
+		assert(close->active() == (press == 1));
+		device.Execute();
+	}
+	assert(source->Command("CLOSEWAV", std::vector<std::string>()));
+	RefreshRecorder(device, panel);
+	assert(!button->active() && !close->visible() && !button->value());
+	WavFile saved;
+	assert(saved.Open(name, WavFile::READ, WavFile::STEREO));
+	assert(saved.GetSamplerate() == 48000 && saved.GetSize() == 128);
+	saved.Close();
+	unlink(name);
+}
+
 int main()
 {
+	CheckRecorder();
 	CheckMonitor("ScopePlugin");
 	CheckMonitor("MeterPlugin");
 #ifdef HAVE_JACK_CLIENT

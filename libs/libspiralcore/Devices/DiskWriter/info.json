@@ -42,7 +42,7 @@
               "choice": "{choice}",
               "enabled": {
                 "equals": 0,
-                "property": "RECORDING"
+                "property": "OPEN"
               },
               "name": "bits-{choice}",
               "property": "BITS PER SAMPLE",
@@ -87,7 +87,7 @@
           ],
           "enabled": {
             "equals": 0,
-            "property": "RECORDING"
+            "property": "OPEN"
           },
           "name": "stereo",
           "property": "STEREO",
@@ -117,17 +117,39 @@
             "title": "Pick a Wav file to save to"
           },
           "name": "open",
+          "text": "Open",
+          "type": "Button",
+          "visible": {
+            "property": "OPEN",
+            "equals": 0
+          }
+        },
+        {
+          "bounds": [
+            -2,
+            71,
+            75,
+            20
+          ],
+          "name": "close",
+          "text": "Close",
+          "type": "Button",
+          "enabled": {
+            "property": "RECORDING",
+            "equals": 0
+          },
+          "visible": {
+            "property": "OPEN",
+            "equals": 1
+          },
           "on": {
-            "off": [
+            "pressed": [
               {
                 "value": "CLOSEWAV",
                 "write": "COMMAND"
               }
             ]
-          },
-          "text": "Open",
-          "toggle": true,
-          "type": "Button"
+          }
         },
         {
           "bounds": [
@@ -152,9 +174,17 @@
             ]
           },
           "property": "RECORDING",
-          "text": "Record",
+          "text": {
+            "property": "RECORDING",
+            "on": "Stop",
+            "off": "Record"
+          },
           "toggle": true,
-          "type": "Button"
+          "type": "Button",
+          "enabled": {
+            "property": "OPEN",
+            "equals": 1
+          }
         }
       ],
       "height": 99,
@@ -216,6 +246,16 @@
         "read_only": true,
         "step": 0,
         "type": "integer"
+      },
+      {
+        "class": "ToggleProperty",
+        "default": false,
+        "display_name": "Open",
+        "hint": "A WAV file is open",
+        "internal": false,
+        "property": "OPEN",
+        "read_only": true,
+        "type": "boolean"
       },
       {
         "class": "ToggleProperty",
