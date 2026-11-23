@@ -50,7 +50,7 @@ private:
 	Fl_Int_Input *m_FragmentSize;
 	Fl_Int_Input *m_FragmentCount;
 	Fl_Int_Input *m_Samplerate;
-	Fl_Choice    *m_AudioClient;
+	Fl_Choice    *m_AudioClient, *m_EngineFormat, *m_TransportSource;
 	Fl_Input     *m_OutputDevice;
 	Fl_Choice    *m_MidiBackend;
 	Fl_Input     *m_MidiDevice;

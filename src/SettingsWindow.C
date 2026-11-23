@@ -31,7 +31,7 @@ static const int OPTION_ROW = 20;
 
 static int OptionRows()
 {
-	return 10;
+	return 12;
 }
 
 static int OptionsHeight()
@@ -148,6 +148,34 @@ m_ShowMenuBar(NULL)
 	m_Samplerate = new Fl_Int_Input(0,0,80,20,"");
 	m_Samplerate->value(Samplerate);
 	Line->add(m_Samplerate);
+	Line->end();
+	m_Options->add(Line);
+
+	Line = new Fl_Pack(0,0,100,20,"");
+	Line->type(FL_HORIZONTAL);
+	Name = new Fl_Box(0,0,95,20,"Engine format");
+	Name->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+	Name->labelsize(10);
+	Line->add(Name);
+	m_EngineFormat = new Fl_Choice(0,0,135,20,"");
+	m_EngineFormat->textsize(11);
+	m_EngineFormat->add("Saved|Follow default backend");
+	m_EngineFormat->value(SpiralInfo::FOLLOW_AUDIO_FORMAT ? 1 : 0);
+	Line->add(m_EngineFormat);
+	Line->end();
+	m_Options->add(Line);
+
+	Line = new Fl_Pack(0,0,100,20,"");
+	Line->type(FL_HORIZONTAL);
+	Name = new Fl_Box(0,0,95,20,"Transport source");
+	Name->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+	Name->labelsize(10);
+	Line->add(Name);
+	m_TransportSource = new Fl_Choice(0,0,135,20,"");
+	m_TransportSource->textsize(11);
+	m_TransportSource->add("Audio clock|JACK");
+	m_TransportSource->value(SpiralInfo::JACK_TRANSPORT ? 1 : 0);
+	Line->add(m_TransportSource);
 	Line->end();
 	m_Options->add(Line);
 
@@ -310,6 +338,8 @@ SettingsWindow::~SettingsWindow()
 
 inline void SettingsWindow::cb_Apply_i(Fl_Button* o, void* v)
 {
+	SpiralInfo::FOLLOW_AUDIO_FORMAT = m_EngineFormat->value() == 1;
+	SpiralInfo::JACK_TRANSPORT = m_TransportSource->value() == 1;
 	SpiralInfo::BUFSIZE=(int)atof(m_BufferSize->value());
 	SpiralInfo::FRAGSIZE=(int)atof(m_FragmentSize->value());
 	SpiralInfo::FRAGCOUNT=(int)atof(m_FragmentCount->value());
@@ -342,6 +372,8 @@ void SettingsWindow::cb_Apply(Fl_Button* o, void* v)
 
 inline void SettingsWindow::cb_Save_i(Fl_Button* o, void* v)
 {
+	SpiralInfo::FOLLOW_AUDIO_FORMAT = m_EngineFormat->value() == 1;
+	SpiralInfo::JACK_TRANSPORT = m_TransportSource->value() == 1;
 	SpiralInfo::BUFSIZE=(int)atof(m_BufferSize->value());
 	SpiralInfo::FRAGSIZE=(int)atof(m_FragmentSize->value());
 	SpiralInfo::FRAGCOUNT=(int)atof(m_FragmentCount->value());
