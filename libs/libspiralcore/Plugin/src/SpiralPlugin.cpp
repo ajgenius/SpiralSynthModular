@@ -24,6 +24,7 @@ using namespace std;
 
 SpiralPlugin::SpiralPlugin()
 {
+	m_HostInfo=NULL;
 	m_Version=1;
 	m_PluginInfo.Name="BasePlugin";
 	m_PluginInfo.Width=100;
@@ -291,7 +292,11 @@ void SpiralPlugin::PublishHeldFeeds()
 		{
 			if (slot.Port<(int)m_Output.size()) block=m_Output[slot.Port];
 		}
-		else if (slot.Port<(int)m_Input.size()) block=m_Input[slot.Port];
+		else if (slot.Port<(int)m_Input.size())
+		{
+			Spiral::Core::DisplayInputSource *monitor = dynamic_cast<Spiral::Core::DisplayInputSource *>(this);
+			block = monitor ? monitor->DisplayInput(slot.Port) : m_Input[slot.Port];
+		}
 		if (block) slot.Feed->Publish(block->GetBuffer(), block->GetLength());
 	}
 }

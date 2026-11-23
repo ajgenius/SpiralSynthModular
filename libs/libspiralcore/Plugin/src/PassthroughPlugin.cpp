@@ -21,6 +21,8 @@
 #include <fstream>
 #include <iostream>
 #include <list>
+#include <sstream>
+#include <cstdio>
 
 using namespace std;
 using namespace Spiral::Core;
@@ -36,7 +38,10 @@ struct Pixmap
 PassthroughPlugin::PassthroughPlugin(const PluginManifest &manifest) :
 m_Pairs(static_cast<int>(manifest.ports.size())),
 m_StateVersion(manifest.stateVersion),
-m_Held(manifest.properties.size())
+m_Held(manifest.properties.size()),
+m_Voices(1, this),
+m_MonitorVoice(DefaultLinearFlags, 1, 0, 256, 1, 1),
+m_MonitorVoices(Property::ReadOnly, "All\nVoice 1")
 {
 	m_PluginInfo.Name = manifest.name;
 	m_PluginInfo.Width = manifest.width;
@@ -50,6 +55,10 @@ m_Held(manifest.properties.size())
 
 	SetString(DeviceName, manifest.name);
 	SetUnsigned(DeviceVersion, m_StateVersion);
+	RegisterSharedProperty(m_MonitorVoice, "Monitor Voice", "Voice shown by the monitor");
+	RegisterSharedProperty(m_MonitorVoices, "Monitor Voices", "Available monitor voices");
+	std::snprintf(m_VoiceItems, sizeof(m_VoiceItems), "%s", m_MonitorVoices.Value.c_str());
+	m_AudioCH->RegisterData("Monitor Voices", ChannelHandler::OUTPUT, m_VoiceItems, sizeof(m_VoiceItems), 's');
 	for (size_t i = 0; i < m_Held.size(); ++i)
 	{
 		Held &held = m_Held[i];
@@ -83,6 +92,68 @@ void PassthroughPlugin::Execute()
 	}
 }
 
+void PassthroughPlugin::SetVoice(SpiralPlugin *first, unsigned voice, unsigned voices)
+{
+	PassthroughPlugin *owner = static_cast<PassthroughPlugin *>(first);
+	if (voice)
+	{
+		owner->m_Voices[voice] = this;
+		return;
+	}
+
+	m_Voices.assign(voices, NULL);
+	m_Voices[0] = this;
+	std::ostringstream items;
+	items << "All";
+	for (unsigned v = 1; v <= voices; ++v)
+		items << "\nVoice " << v;
+	m_MonitorVoices.Value = items.str();
+	std::snprintf(m_VoiceItems, sizeof(m_VoiceItems), "%s", m_MonitorVoices.Value.c_str());
+
+	if (voices > 1 && m_Mix.GetLength() != m_HostInfo->BUFSIZE)
+		m_Mix.Allocate(m_HostInfo->BUFSIZE);
+}
+
+void PassthroughPlugin::Reset()
+{
+	SpiralPlugin::Reset();
+	if (m_Voices.size() > 1 && m_Mix.GetLength() != m_HostInfo->BUFSIZE)
+		m_Mix.Allocate(m_HostInfo->BUFSIZE);
+}
+
+const Sample *PassthroughPlugin::DisplayInput(unsigned port)
+{
+	const Sample *first = GetInput(port);
+	const Sample *mono = first ? first : GetOutputBuf(port);
+	if (m_Voices.size() == 1)
+		return mono;
+
+	const unsigned selected = m_MonitorVoice.Value.AsUnsigned;
+	if (selected)
+	{
+		if (selected <= m_Voices.size() && m_Voices[selected - 1])
+		{
+			const Sample *lane = m_Voices[selected - 1]->GetInput(port);
+			return lane ? lane : mono;
+		}
+		return mono;
+	}
+
+	m_Mix.Zero();
+	for (size_t v = 0; v < m_Voices.size(); ++v)
+	{
+		const Sample *lane = m_Voices[v] ? m_Voices[v]->GetInput(port) : NULL;
+		// A mono cable is handed to every copy of the device.
+		if (!lane || (v && lane == first))
+			continue;
+
+		const int frames = std::min(m_Mix.GetLength(), lane->GetLength());
+		for (int frame = 0; frame < frames; ++frame)
+			m_Mix.Set(frame, m_Mix[frame] + (*lane)[frame]);
+	}
+	return &m_Mix;
+}
+
 void PassthroughPlugin::Describe(Description &d)
 {
 	if (m_StateVersion)
@@ -98,6 +169,7 @@ void PassthroughPlugin::Describe(Description &d)
 			d.Value(*(FloatProperty *)held.Property);
 		d.Separator(" ");
 	}
+	d.Value(m_MonitorVoice);
 }
 
 void PassthroughPlugin::Apply(Description::Reader &r)
@@ -118,6 +190,8 @@ void PassthroughPlugin::Apply(Description::Reader &r)
 		else
 			r.Value(*(FloatProperty *)held.Property);
 	}
+	if (r.More())
+		r.Value(m_MonitorVoice);
 }
 
 bool PassthroughPlugin::ReadClass(const string &manifest, DeviceClass &device)

@@ -26,6 +26,16 @@ namespace Spiral
 {
 namespace Core
 {
+	class Sample;
+
+	// A monitor can publish a selected input without changing its signal output.
+	class DisplayInputSource
+	{
+	public:
+		virtual ~DisplayInputSource() {}
+		virtual const Sample *DisplayInput(unsigned port) = 0;
+	};
+
 	class SampleFeed
 	{
 	public:

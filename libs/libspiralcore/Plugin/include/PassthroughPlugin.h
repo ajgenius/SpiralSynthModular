@@ -21,17 +21,21 @@
 #define PASSTHROUGHPLUGIN
 
 #include "Device.h"
+#include "SampleFeed.h"
 #include "PluginManifest.h"
 #include "DeviceClassRegistry.h"
 #include <string>
 #include <vector>
 
-class PassthroughPlugin : public Spiral::Core::Device
+class PassthroughPlugin : public Spiral::Core::Device, public Spiral::Core::DisplayInputSource
 {
 public:
 	explicit PassthroughPlugin(const PluginManifest &manifest);
 	virtual ~PassthroughPlugin();
 	virtual void Execute();
+	virtual void Reset();
+	virtual void SetVoice(SpiralPlugin *first, unsigned voice, unsigned voices);
+	virtual const Sample *DisplayInput(unsigned port);
 	virtual void Describe(Spiral::Core::Description &d);
 	virtual void Apply(Spiral::Core::Description::Reader &r);
 
@@ -50,6 +54,11 @@ protected:
 	int m_Pairs;
 	int m_StateVersion;
 	std::vector<Held> m_Held;
+	std::vector<PassthroughPlugin *> m_Voices;
+	Spiral::Core::UnsignedProperty m_MonitorVoice;
+	Spiral::Core::StringProperty m_MonitorVoices;
+	char m_VoiceItems[2560];
+	Sample m_Mix;
 };
 
 #endif
