@@ -129,6 +129,7 @@ void AudioTransportHub::OpenMode(Mode mode)
 
 	bool opened=false;
 	m_NextRetry=time(NULL)+1;
+	const Mode previous = m_Mode;
 	m_Mode=CLOSED;
 	if (m_Configured && !m_Members.empty()) {
 		if (mode==INPUT) opened=OUTPUTCLIENT::Get()->OpenRead();
@@ -137,6 +138,8 @@ void AudioTransportHub::OpenMode(Mode mode)
 		if (mode==DUPLEX) opened=OUTPUTCLIENT::Get()->OpenReadWrite();
 	}
 	if (opened) m_Mode=mode;
+	else if (OUTPUTCLIENT::Get()->IsAttached())
+		m_RequestedMode = m_Mode = previous;
 	ReportMode();
 }
 

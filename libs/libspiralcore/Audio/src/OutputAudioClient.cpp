@@ -187,23 +187,36 @@ void OutputAudioClient::CommitPeriod(const AudioStamp &playback)
 bool OutputAudioClient::AttachMode(unsigned int inChans, unsigned int outChans)
 {
 	if (!m_Client) return false;
-	DeallocateBuffer();
-	AllocateBuffer();
-	if (m_Out.empty()) return false;
-	m_IsDead = false;
+	bool resized = false;
 #ifdef HAVE_JACK_CLIENT
 	if (m_ClientName == "jack")
 	{
 		JackClient *jack = dynamic_cast<JackClient *>(m_Client);
-		if (jack) jack->SetPortGroup(AudioTransportHub::Get(), "");
+		if (jack)
+		{
+			jack->SetPortGroup(AudioTransportHub::Get(), "");
+			if (jack->HasPortGroup() && jack->IsAttached())
+			{
+				if (!jack->ResizePortGroup(inChans, outChans))
+				{
+					jack->Start();
+					return false;
+				}
+				resized = true;
+			}
+		}
 	}
 #endif
-	if (!m_Client->Attach(m_ClientName == "jack" && m_Destination == "default" ? "SSM-Output" : m_Destination,
+	if (!resized) Close();
+	AllocateBuffer();
+	if (m_Out.empty()) { Close(); return false; }
+	m_IsDead = false;
+	if (!resized && !m_Client->Attach(m_ClientName == "jack" && m_Destination == "default" ? "SSM-Output" : m_Destination,
 		MakeOptions(inChans, outChans))) return false;
 
 	if (!m_Stream.Configure(m_Client, inChans, outChans, m_Frames, host->SAMPLERATE))
 	{
-		m_Client->Detach();
+		Close();
 		return false;
 	}
 
@@ -214,9 +227,9 @@ bool OutputAudioClient::AttachMode(unsigned int inChans, unsigned int outChans)
 	return true;
 }
 
-bool OutputAudioClient::OpenWrite()     { Close(); return AttachMode(0, (unsigned int)m_Channels); }
-bool OutputAudioClient::OpenRead()      { Close(); return AttachMode((unsigned int)m_Channels, 0); }
-bool OutputAudioClient::OpenReadWrite() { Close(); return AttachMode((unsigned int)m_Channels, (unsigned int)m_Channels); }
+bool OutputAudioClient::OpenWrite()     { return AttachMode(0, (unsigned int)m_Channels); }
+bool OutputAudioClient::OpenRead()      { return AttachMode((unsigned int)m_Channels, 0); }
+bool OutputAudioClient::OpenReadWrite() { return AttachMode((unsigned int)m_Channels, (unsigned int)m_Channels); }
 
 bool OutputAudioClient::Close()
 {

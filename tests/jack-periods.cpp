@@ -1,6 +1,8 @@
 #define JACK_CLIENT_TEST_FIXTURE
 #include "../libs/libspiralcore/Audio/tests/jack-client.cpp"
 #include "JackPlugin.h"
+#include "OutputPlugin.h"
+#include "AudioBackend.h"
 #include "PatchFile.h"
 #include "AudioTransportHub.h"
 #include <cmath>
@@ -131,8 +133,67 @@ static void CheckSavedEndpoint(bool legacy)
 	AudioTransportHub::Get()->SetHost(NULL);
 }
 
+static void *FixtureJack(void *) { return static_cast<Spiral::Core::AudioClient *>(new JackClient); }
+static void DropFixtureJack(void *client) { delete static_cast<Spiral::Core::AudioClient *>(client); }
+
+static const Spiral::Core::BackendDescriptor *RegisteredJack()
+{
+	return Spiral::Core::AudioBackendRegistry::Get()->Find("jack");
+}
+
+static jack_port_t *NamedPort(jack_client_t *client, const char *name)
+{
+	for (size_t n = 0; n < client->Ports.size(); ++n)
+		if (client->Ports[n]->Name == client->Name + ":" + name)
+			return client->Ports[n];
+	return NULL;
+}
+
+static void CheckStereoMode()
+{
+	using namespace Spiral::Core;
+	AudioBackendRegistry *registry = AudioBackendRegistry::Get();
+	if (registry->Find("jack")) registry->Release(reinterpret_cast<void *>(&RegisteredJack), "");
+	static const BackendDescriptor backend = {SPIRAL_AUDIO_PLUGIN_ABI, "audio", "jack", FixtureJack, DropFixtureJack};
+	registry->Register(&backend);
+
+	HostInfo host = HostInfo();
+	host.AUDIOCLIENT = "jack";
+	host.OUTPUTFILE = "default";
+	host.SAMPLERATE = 48000;
+	host.BUFSIZE = 64;
+	OutputPlugin stereo;
+	JackPlugin stem;
+	stereo.Initialise(&host);
+	stereo.ServiceAudio();
+	stem.Initialise(&host);
+	stem.Attach();
+	assert(clients.size() == 1);
+
+	jack_client_t *server = clients.begin()->second;
+	jack_port_t *left = NamedPort(server, "Out0");
+	assert(left);
+	jack_connect(server, left->Name.c_str(), "monitor:left");
+	AudioTransportHub *hub = AudioTransportHub::Get();
+	failRegister = true;
+	hub->OpenMode(AudioTransportHub::DUPLEX);
+	failRegister = false;
+	assert(hub->GetMode() == AudioTransportHub::OUTPUT && left == NamedPort(server, "Out0"));
+	hub->OpenMode(AudioTransportHub::DUPLEX);
+	assert(hub->GetMode() == AudioTransportHub::DUPLEX && left == NamedPort(server, "Out0"));
+	assert(left->Connection == "monitor:left");
+	assert(NamedPort(server, "In1"));
+	hub->OpenMode(AudioTransportHub::OUTPUT);
+	assert(!NamedPort(server, "In1") && left == NamedPort(server, "Out0"));
+	assert(stem.GetJackClient()->IsAttached());
+	stem.Detach();
+	stereo.Kill();
+	hub->SetHost(NULL);
+}
+
 int main()
 {
+	CheckStereoMode();
 	for (unsigned legacy = 0; legacy < 2; ++legacy)
 	{
 		CheckSavedEndpoint(legacy);

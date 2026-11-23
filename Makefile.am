@@ -174,6 +174,8 @@ if HAVE_JACK_CLIENT
 check_PROGRAMS += jack-periods-test
 TESTS += jack-periods-test
 jack_periods_test_SOURCES = tests/jack-periods.cpp libs/libspiralcore/Devices/Jack/JackPlugin.cpp libs/libspiralcore/Audio/src/JackClient.cpp
+jack_periods_test_SOURCES += libs/libspiralcore/Audio/src/OutputAudioClient.cpp \
+	libs/libspiralcore/Audio/src/AudioTransportHub.cpp libs/libspiralcore/Plugin/src/OutputPlugin.cpp
 jack_periods_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/libs/libspiralcore/Devices/Jack
 jack_periods_test_LDADD = libs/libspiralcore/libspiralcore.la
 endif
