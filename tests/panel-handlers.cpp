@@ -29,6 +29,8 @@ namespace
 	std::string Root()
 	{
 		const char *src = getenv("SRCDIR");
+		if (!src)
+			src = getenv("srcdir");
 		return src ? src : ".";
 	}
 
