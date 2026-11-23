@@ -395,6 +395,7 @@ void SynthModular::Update()
 		return;
 	}
 
+	hub->FollowExternalTransport(SpiralInfo::JACK_TRANSPORT);
 	m_DriverFrames = m_DriverRate = 0;
 	if (Spiral::Core::MidiDevice *midi = Spiral::Core::MidiDevice::Get())
 		midi->Collect();

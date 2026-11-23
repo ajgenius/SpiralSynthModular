@@ -1,4 +1,5 @@
 #include "AudioStream.h"
+#include "AudioTimeline.h"
 #include "PresentationClock.h"
 #include <cassert>
 #include <cmath>
@@ -94,6 +95,51 @@ public:
 		Next += Period / ActualRate;
 	}
 };
+
+class TransportDevice : public Device
+{
+public:
+	TransportDevice() : Device(64, 44100, 0, 0, 0), position(44100), rolling(false) {}
+	unsigned long position;
+	bool rolling;
+	bool GetTransport(unsigned long &frame, bool &playing) const { frame = position; playing = rolling; return true; }
+	bool StartTransport() { return rolling = true; }
+	bool StopTransport() { rolling = false; return true; }
+	bool LocateTransport(unsigned long frame) { position = frame; return true; }
+};
+
+static void ExternalTransport()
+{
+	Device clock(64, 48000, 0, 0, 0);
+	TransportDevice jack;
+	assert(clock.Stream.Configure(&clock, 0, 2, 64, 48000));
+	assert(jack.Stream.Configure(&jack, 0, 2, 64, 48000));
+	AudioTimeline timeline;
+	timeline.Register(&clock.Stream);
+	timeline.Register(&jack.Stream);
+	clock.Tick();
+	jack.Tick();
+		bool ready = false;
+	for (unsigned n = 0; n < 100 && !ready; ++n)
+		ready = timeline.Prepare(64, 48000, 10 + n * 0.001, &clock.Stream);
+	assert(ready);
+	timeline.Begin();
+	assert(timeline.Rolling() && timeline.Frame() == 0);
+	timeline.FollowExternalTransport(true);
+	timeline.Begin();
+	assert(!timeline.Rolling() && timeline.Frame() == 48000);
+	timeline.Start();
+	assert(jack.rolling);
+	timeline.Locate(96000);
+	assert(jack.position == 88200);
+	timeline.Unregister(&clock.Stream);
+	timeline.Begin();
+	assert(timeline.Rolling() && timeline.Frame() == 96000);
+	timeline.Stop();
+	timeline.Begin();
+	assert(!timeline.Rolling() && !jack.rolling);
+	timeline.Unregister(&jack.Stream);
+}
 
 static void Run(double engineRate, unsigned enginePeriod, double slaveRate, double ppm)
 {
@@ -471,6 +517,7 @@ static void WorkerShutdown()
 }
 int main()
 {
+	ExternalTransport();
 	Run(44100, 512, 48000, 200);
 	Run(48000, 128, 44100, -200);
 	Run(48000, 384, 48000, 0);

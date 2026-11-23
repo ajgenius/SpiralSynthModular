@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "AudioTimeline.h"
 #include <algorithm>
+#include <limits>
 using namespace std;
 using namespace Spiral::Core;
 
-AudioTimeline::AudioTimeline() : m_Master(NULL), m_Frame(0), m_Rolling(true) {}
+AudioTimeline::AudioTimeline() : m_ExternalTransport(false), m_Master(NULL), m_Frame(0), m_Rolling(true), m_Rate(0) {}
 
 void AudioTimeline::Reset()
 {
@@ -30,15 +31,40 @@ void AudioTimeline::Unregister(AudioStream *stream)
 	m_Presentation.Reset();
 }
 
-AudioClient *AudioTimeline::MasterClient() const
+static unsigned long TransportFrames(unsigned long frame, double from, double to)
 {
-	return m_Master ? m_Master->Client() : NULL;
+	if (from <= 0 || to <= 0 || from == to) return frame;
+	const long double scaled = static_cast<long double>(frame) * to / from + 0.5L;
+	const unsigned long limit = std::numeric_limits<unsigned long>::max();
+	return scaled >= limit ? limit : static_cast<unsigned long>(scaled);
+}
+
+AudioClient *AudioTimeline::TransportClient(unsigned long &frame, bool &rolling) const
+{
+	if (!m_ExternalTransport)
+	{
+		AudioClient *client = m_Master ? m_Master->Client() : NULL;
+		return client && client->GetTransport(frame, rolling) ? client : NULL;
+	}
+	// JACK implements the optional transport API. A separate audio clock may still pace the graph.
+	for (size_t i = 0; i < m_Streams.size(); ++i)
+	{
+		AudioClient *client = m_Streams[i]->Client();
+		if (!client || !client->IsAttached() || m_Streams[i]->Failed()) continue;
+		if (client->GetTransport(frame, rolling))
+		{
+			frame = TransportFrames(frame, client->GetSampleRate(), m_Rate);
+			return client;
+		}
+	}
+	return NULL;
 }
 
 bool AudioTimeline::Prepare(unsigned frames, double rate, double now, AudioStream *preferred)
 {
 	if (!frames || !(rate >= 8000 && rate <= 384000)) return false;
 
+	m_Rate = rate;
 	const double period = double(frames) / rate;
 	double nativePeriod = period, outputLatency = 0, inputLatency = 0, lookahead = 0;
 	AudioStream *master = NULL;
@@ -95,8 +121,7 @@ void AudioTimeline::Begin()
 {
 	unsigned long frame;
 	bool rolling;
-	AudioClient *client = MasterClient();
-	if (client && client->GetTransport(frame, rolling))
+	if (TransportClient(frame, rolling))
 	{
 		m_Frame = frame;
 		m_Rolling = rolling;
@@ -112,17 +137,27 @@ void AudioTimeline::Commit(unsigned frames)
 
 void AudioTimeline::Start()
 {
-	if (!(MasterClient() && MasterClient()->StartTransport())) m_Rolling=true;
+	unsigned long position;
+	bool rolling;
+	AudioClient *client = m_ExternalTransport ? TransportClient(position, rolling) : (m_Master ? m_Master->Client() : NULL);
+	if (!client || !client->StartTransport()) m_Rolling=true;
 }
 
 void AudioTimeline::Stop()
 {
-	if (!(MasterClient() && MasterClient()->StopTransport())) m_Rolling=false;
+	unsigned long position;
+	bool rolling;
+	AudioClient *client = m_ExternalTransport ? TransportClient(position, rolling) : (m_Master ? m_Master->Client() : NULL);
+	if (!client || !client->StopTransport()) m_Rolling=false;
 }
 
 void AudioTimeline::Locate(unsigned long frame)
 {
 	m_Presentation.Reset();
-	if (!(MasterClient() && MasterClient()->LocateTransport(frame))) m_Frame=frame;
+	unsigned long position;
+	bool rolling;
+	AudioClient *client = m_ExternalTransport ? TransportClient(position, rolling) : (m_Master ? m_Master->Client() : NULL);
+	if (!client || !client->LocateTransport(m_ExternalTransport ? TransportFrames(frame, m_Rate, client->GetSampleRate()) : frame))
+		m_Frame = frame;
 }
 

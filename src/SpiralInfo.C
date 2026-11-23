@@ -34,6 +34,7 @@ float RandFloat (float s, float e)
 
 string SpiralInfo::LOCALE      = "EN";
 bool   SpiralInfo::FOLLOW_AUDIO_FORMAT = true;
+bool   SpiralInfo::JACK_TRANSPORT = false;
 int    SpiralInfo::BUFSIZE     = 512;
 int    SpiralInfo::FRAGSIZE    = 256;
 int    SpiralInfo::FRAGCOUNT   = 8;
@@ -227,6 +228,7 @@ void SpiralInfo::StreamOutAudioSettingsPrefs (ostream &s)
 {
 	s << "[AUDIO SETTINGS]" << endl;
 
+	s << "JackTransport = " << JACK_TRANSPORT << endl;
 	s << "FollowAudioFormat = " << FOLLOW_AUDIO_FORMAT << endl;
 	s << "BufferSize        = " << BUFSIZE << endl;
 	s << "FragmentSize      = " << FRAGSIZE << endl;
@@ -252,7 +254,9 @@ bool SpiralInfo::StreamInAudioSettingsPrefs (istream &s, string &section, string
 	/* just ignore if this isn't calling us */
 	if (section == "AUDIO SETTINGS")
 	{
-		if (ident == "FollowAudioFormat")
+		if (ident == "JackTransport")
+			s >> JACK_TRANSPORT;
+		else if (ident == "FollowAudioFormat")
 			s >> FOLLOW_AUDIO_FORMAT;
 		else if (ident == "BufferSize")
 			s >> BUFSIZE;

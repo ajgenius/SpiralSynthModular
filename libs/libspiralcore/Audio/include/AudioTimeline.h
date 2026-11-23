@@ -24,18 +24,21 @@ public:
 	const AudioStamp &CaptureStamp() const { return m_CaptureStamp; }
 	unsigned long Frame() const { return m_Frame; }
 	bool Rolling() const { return m_Rolling; }
+	void FollowExternalTransport(bool follow) { m_ExternalTransport = follow; }
 	void Start();
 	void Stop();
 	void Locate(unsigned long frame);
 
 private:
-	AudioClient *MasterClient() const;
+	AudioClient *TransportClient(unsigned long &frame, bool &rolling) const;
+	bool m_ExternalTransport;
 	std::vector<AudioStream *> m_Streams;
 	AudioStream *m_Master;
 	PresentationClock m_Presentation;
 	AudioStamp m_PlaybackStamp, m_CaptureStamp;
 	unsigned long m_Frame;
 	bool m_Rolling;
+	double m_Rate;
 	AudioTimeline(const AudioTimeline &);
 	AudioTimeline &operator=(const AudioTimeline &);
 };

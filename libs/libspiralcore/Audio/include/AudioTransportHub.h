@@ -79,6 +79,7 @@ public:
 
 	unsigned long Frame() const { return m_Timeline.Frame(); }
 	bool Rolling() const { return m_Timeline.Rolling(); }
+	void FollowExternalTransport(bool follow) { m_Timeline.FollowExternalTransport(follow); }
 	void Start();
 	void Stop();
 	void Locate(unsigned long frame);
