@@ -614,6 +614,18 @@ bool ChannelHandler::Peek(const string &ID, int offset, void *dest, int size)
 	return true;
 }
 
+// Return a refused edit to the GUI without overwriting a newer request.
+// A busy GUI leaves the original request for the next device service cycle.
+void ChannelHandler::RejectIntEdit(const string &ID, int requested, int actual)
+{
+	map<string,Channel*>::iterator it = m_ChannelMap.find(ID);
+	if (it == m_ChannelMap.end() || it->second->type != INPUT || it->second->size != sizeof(int)) return;
+	if (pthread_mutex_trylock(m_Mutex)) return;
+	if (!memcmp(it->second->data_buf, &requested, sizeof(int)))
+		memcpy(it->second->data_buf, &actual, sizeof(int));
+	pthread_mutex_unlock(m_Mutex);
+}
+
 bool ChannelHandler::SetDataAt(const string &ID, int offset, const void *src, int size)
 {
 	map<string,Channel*>::iterator i=m_ChannelMap.find(ID);

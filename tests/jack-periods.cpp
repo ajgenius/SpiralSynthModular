@@ -248,6 +248,16 @@ static void CheckStereoMode()
 	std::string routes(bytes.begin(), bytes.end());
 	assert(routes.compare(0, 3, "1 7") == 0 && routes.find("-monitor:stem") != std::string::npos);
 	showRoutePeers = false;
+	failRegister = true;
+	channel->Set("Inputs", 6);
+	stem.UpdateChannelHandler();
+	stem.ExecuteCommands();
+	int width = 0;
+	assert(channel->Peek("Inputs", 0, &width, sizeof(width)) && width == 4);
+	failRegister = false;
+	stem.UpdateChannelHandler();
+	stem.ExecuteCommands();
+	assert(stem.GetOutputCount() == 4);
 	jack_connect(server, left->Name.c_str(), "monitor:left");
 	AudioTransportHub *hub = AudioTransportHub::Get();
 	int frames = 512, rate = 44100;

@@ -469,6 +469,8 @@ void  JackPlugin::SetNumberPorts (int nInputs, int nOutputs) {
      // refuse growth while the existing ports and their cables are still usable.
      if (shared && !m_JackClient->ResizePortGroup(nOutputs, nInputs))
      {
+         m_AudioCH->RejectIntEdit("Inputs", nInputs, m_OutputCount);
+         m_AudioCH->RejectIntEdit("Outputs", nOutputs, m_InputCount);
          AsSigned(m_NumInputs) = m_OutputCount;
          AsSigned(m_NumOutputs) = m_InputCount;
          m_JackClient->Start();

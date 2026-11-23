@@ -143,6 +143,7 @@ public:
 	char          ChannelKind(const std::string &ID);
 	void          ChannelNames(std::vector<std::string> &names) const;
 	bool          Peek(const std::string &ID, int offset, void *dest, int size);
+	void RejectIntEdit(const std::string &ID, int requested, int actual);
 	bool          SetDataAt(const std::string &ID, int offset, const void *src, int size);
 	unsigned long Changes() const { return m_Changes; }
 	
