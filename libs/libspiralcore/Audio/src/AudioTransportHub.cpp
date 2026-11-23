@@ -25,6 +25,10 @@
 #include <config.h>
 #endif
 
+#ifdef HAVE_JACK_CLIENT
+#include "JackClient.h"
+#endif
+
 using namespace std;
 using namespace Spiral::Core;
 
@@ -230,6 +234,13 @@ void AudioTransportHub::Start() { m_Timeline.Start(); }
 void AudioTransportHub::Stop() { m_Timeline.Stop(); }
 void AudioTransportHub::Locate(unsigned long frame) { m_Timeline.Locate(frame); }
 
+void AudioTransportHub::ServiceConnections()
+{
+#ifdef HAVE_JACK_CLIENT
+	JackClient::ServiceSessions();
+#endif
+}
+
 void AudioTransportHub::Service()
 {
 	if (m_Members.empty()) return;
@@ -245,7 +256,7 @@ void AudioTransportHub::Service()
 			ReportMode();
 		}
 
-		if (time(NULL)>=m_NextRetry) OpenMode(m_RequestedMode);
+		if (OUTPUTCLIENT::Get()->JackReady() || time(NULL)>=m_NextRetry) OpenMode(m_RequestedMode);
 
 	}
 

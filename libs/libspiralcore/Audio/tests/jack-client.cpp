@@ -111,6 +111,7 @@ jack_client_t *jack_client_new(const char *name)
 jack_client_t *jack_client_open(const char *name, jack_options_t options, jack_status_t *, ...)
 {
 	assert(options & JackNoStartServer);
+	if ((options & JackUseExactName) && clients.count(name)) return NULL;
 	return jack_client_new(name);
 }
 

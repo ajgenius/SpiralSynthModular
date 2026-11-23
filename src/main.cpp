@@ -31,6 +31,7 @@
 #include <sys/resource.h>
 
 #include "SpiralSynthModular.h"
+#include "AudioTransportHub.h"
 #include "SpiralInfo.h"
 #include "MacBundle.h"
 #ifdef __APPLE__
@@ -310,7 +311,10 @@ int main(int argc, char **argv)
 		Fl::check();
 
 		for (;;)
-			sleep(1);
+		{
+			AudioTransportHub::ServiceConnections();
+			usleep(20000);
+		}
 	}
 
 	for (;;)

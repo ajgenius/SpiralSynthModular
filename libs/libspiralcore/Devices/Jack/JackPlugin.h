@@ -85,6 +85,10 @@ private:
 	Spiral::Core::SignedProperty m_NumInputs, m_NumOutputs, m_Group;
 	Spiral::Core::StringProperty m_LegacyClient;
 	void ClaimGroup(long desired);
+	void OpenClient(bool deferOpen);
+	void CloseClient();
+	Spiral::Core::ToggleProperty m_Attached;
+	double m_NextAttach;
 	
 	int m_Version;
 	

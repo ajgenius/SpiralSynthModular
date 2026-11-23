@@ -7,6 +7,7 @@
 #include "AudioTransportHub.h"
 #include <cmath>
 #include <cstdio>
+#include <unistd.h>
 
 static void Check(unsigned frames, bool legacy)
 {
@@ -113,9 +114,11 @@ static void CheckSavedEndpoint(bool legacy)
 	Spiral::File::PatchFile::Describe(*device, saved);
 	JackPlugin restored;
 	restored.Initialise(&host);
-	restored.Attach();
 	Description::Reader state(saved);
 	restored.Apply(state);
+	restored.ServiceAudio();
+	AudioTransportHub::ServiceConnections();
+	restored.ServiceAudio();
 	assert(!state.Failed());
 	assert(clients.size() == 1 && clients.begin()->second->Ports.front()->Name == firstPort);
 	assert(restored.GetInputCount() == (legacy ? 2 : 4));
@@ -128,6 +131,17 @@ static void CheckSavedEndpoint(bool legacy)
 		failRegister = false;
 		assert(restored.GetInputCount() == 4 && restored.GetOutputCount() == 4);
 		assert(clients.begin()->second->Ports.front() == existing);
+	}
+	if (legacy)
+	{
+		JackPlugin copy;
+		copy.Initialise(&host);
+		Description::Reader pasted(saved);
+		copy.Apply(pasted);
+		copy.ServiceAudio();
+		AudioTransportHub::ServiceConnections();
+		copy.ServiceAudio();
+		assert(clients.size() == 2 && copy.GetJackClient()->IsAttached());
 	}
 	restored.Detach();
 	AudioTransportHub::Get()->SetHost(NULL);
@@ -166,6 +180,8 @@ static void CheckStereoMode()
 	JackPlugin stem;
 	stereo.Initialise(&host);
 	stereo.ServiceAudio();
+	AudioTransportHub::ServiceConnections();
+	stereo.ServiceAudio();
 	stem.Initialise(&host);
 	stem.Attach();
 	assert(clients.size() == 1);
@@ -186,6 +202,16 @@ static void CheckStereoMode()
 	hub->OpenMode(AudioTransportHub::OUTPUT);
 	assert(!NamedPort(server, "In1") && left == NamedPort(server, "Out0"));
 	assert(stem.GetJackClient()->IsAttached());
+	server->Shutdown(server->ShutdownContext);
+	stem.ServiceAudio();
+	stereo.ServiceAudio();
+	usleep(1100000);
+	stem.ServiceAudio();
+	stereo.ServiceAudio();
+	AudioTransportHub::ServiceConnections();
+	stem.ServiceAudio();
+	stereo.ServiceAudio();
+	assert(stem.GetJackClient()->IsAttached() && hub->GetMode() == AudioTransportHub::OUTPUT);
 	stem.Detach();
 	stereo.Kill();
 	hub->SetHost(NULL);

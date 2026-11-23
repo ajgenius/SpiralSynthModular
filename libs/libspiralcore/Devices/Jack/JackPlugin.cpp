@@ -26,6 +26,7 @@
 #include "JackPlugin.h"
 #include "AudioTransportHub.h"
 #include "JackIcon.xpm"
+#include "AudioTiming.h"
 #include "DeviceClassRegistry.h"
 #include <iostream>
 
@@ -85,6 +86,7 @@ static const BuiltinDevice Registration(JackPlugin::Class);
 ///////////////////////////////////////////////////////
 
 JackPlugin::JackPlugin() :
+m_NextAttach(0),
 m_UpdateNames(false),
 m_RingFrames(0),
 m_NativeRate(0),
@@ -158,6 +160,8 @@ m_OutputCount(4)
 	m_AudioCH->RegisterData("Port",ChannelHandler::INPUT,&m_GUIArgs.Port,sizeof(m_GUIArgs.Port));
 	m_NumInputPortNames = SignedProperty(Property::ReadOnly, 0, 0, MAX_PORTS, 1, 1);
 	m_NumOutputPortNames = SignedProperty(Property::ReadOnly, 0, 0, MAX_PORTS, 1, 1);
+	m_Attached = ToggleProperty(Property::WriteOnly, false);
+	RegisterSharedProperty(m_Attached, "ATTACHED", "Requested JACK connection");
 	m_Connected = ToggleProperty(Property::ReadOnly, false);
 	RegisterSharedProperty(m_NumInputPortNames, "NumInputPortNames", "Jack input ports found");
 	RegisterSharedProperty(m_NumOutputPortNames, "NumOutputPortNames", "Jack output ports found");
@@ -212,17 +216,24 @@ PluginInfo &JackPlugin::Initialise(const HostInfo *Host)
 
 void JackPlugin::Attach()
 {
+	AsBoolean(m_Attached) = true;
+	OpenClient(false);
+}
+
+void JackPlugin::OpenClient(bool deferOpen)
+{
+	m_NextAttach = AudioMonotonicTime() + 1;
 	std::string name = m_LegacyClient.Value;
 	if (name.empty())
 	{
 		char prefix[40];
 		snprintf(prefix, sizeof(prefix), "Jack%ld_", long(AsSigned(m_Group)));
-		m_JackClient->SetPortGroup(AudioTransportHub::Get(), prefix);
+		m_JackClient->SetPortGroup(AudioTransportHub::Get(), prefix, deferOpen);
 		name = m_HostInfo && m_HostInfo->AUDIOCLIENT == "jack" ? m_HostInfo->OUTPUTFILE : "default";
 		if (name.empty() || name == "default") name = "SSM-Output";
 	}
 	else
-		m_JackClient->SetPortGroup(NULL, "");
+		m_JackClient->SetPortGroup(this, "", deferOpen, true);
 	Spiral::Core::AudioClientOptions options;
 	options.InChannels = m_InputCount;
 	options.OutChannels = m_OutputCount;
@@ -233,16 +244,22 @@ void JackPlugin::Attach()
 	{
 		BuildRings();
 		if (!m_Stream.Configure(m_JackClient, m_InputCount, m_OutputCount,
-			m_HostInfo->BUFSIZE, m_HostInfo->SAMPLERATE)) { Detach(); return; }
+			m_HostInfo->BUFSIZE, m_HostInfo->SAMPLERATE)) { CloseClient(); return; }
 
 		m_JackClient->SetCallback(Spiral::Core::AudioStream::Callback, &m_Stream);
 		AudioTransportHub::Get()->RegisterStream(&m_Stream);
-		if (!m_JackClient->Start()) Detach();
+		if (!m_JackClient->Start()) CloseClient();
 	}
 
 }
 
 void JackPlugin::Detach()
+{
+	AsBoolean(m_Attached) = false;
+	CloseClient();
+}
+
+void JackPlugin::CloseClient()
 {
 	AudioTransportHub::Get()->UnregisterStream(&m_Stream);
 	m_JackClient->Detach();
@@ -292,7 +309,7 @@ void JackPlugin::ExecuteCommands()
 	if (m_AudioCH->IsCommandWaiting())
 	{
 		switch (m_AudioCH->GetCommand()) {
-			case ATTACH: Attach(); RefreshConnectionEcho(); break;
+			case ATTACH: AsBoolean(m_Attached) = true; m_NextAttach = 0; break;
 			case DETACH: Detach(); RefreshConnectionEcho(); break;
 			case CONNECT_INPUT: ConnectInput(m_GUIArgs.PortIndex, m_GUIArgs.Port); RefreshConnectionEcho(); break;
 			case CONNECT_OUTPUT: ConnectOutput(m_GUIArgs.PortIndex, m_GUIArgs.Port); RefreshConnectionEcho(); break;
@@ -367,14 +384,20 @@ void JackPlugin::Reset()
 		Attach();
 		return;
 	}
-	if (reconnect) Detach();
+	if (reconnect) CloseClient();
 	BuildRings();
 	if (reconnect) Attach();
 }
 
 void JackPlugin::ServiceAudio()
 {
-	if (m_IsDead || !m_JackClient->IsAttached()) return;
+	if (m_IsDead) return;
+	if (!m_JackClient->IsAttached())
+	{
+		if (AsBoolean(m_Attached) && (m_JackClient->SessionReady() || AudioMonotonicTime() >= m_NextAttach))
+			OpenClient(true);
+		return;
+	}
 
 	if (m_JackClient->GetBufferSize() != m_RingFrames ||
 		m_JackClient->GetSampleRate() != m_NativeRate || m_Stream.Failed()) Reset();
@@ -411,7 +434,7 @@ void  JackPlugin::SetNumberPorts (int nInputs, int nOutputs) {
          m_JackClient->Start();
          return;
      }
-     if (!shared) Detach();
+     if (!shared) CloseClient();
      const int oldInputs = m_PluginInfo.NumInputs;
      const int oldOutputs = m_PluginInfo.NumOutputs;
      CreatePorts (nInputs, nOutputs, false);
@@ -468,7 +491,7 @@ void  JackPlugin::CreatePorts (int nInputs, int nOutputs, bool AddPorts) {
 void JackPlugin::Describe(Spiral::Core::Description &d) 
 {
 	d.Value(DeviceVersion).Separator(" ").Value(m_NumInputs).Separator(" ").Value(m_NumOutputs).Separator(" ")
-		.Value(m_Group).Separator(" ").Value(m_LegacyClient).Separator(" ");
+		.Value(m_Group).Separator(" ").Value(m_LegacyClient).Separator(" ").Value(m_Attached).Separator(" ");
 }
 
 void JackPlugin::Apply(Spiral::Core::Description::Reader &r) 
@@ -499,10 +522,23 @@ void JackPlugin::Apply(Spiral::Core::Description::Reader &r)
 		m_LegacyClient.Value = name;
 	}
 
+	// A pasted copy must not claim its original's external JACK identity.
+	if (!m_LegacyClient.Value.empty())
+	{
+		for (std::map<long, JackPlugin *>::const_iterator i = liveGroups.begin(); i != liveGroups.end(); ++i)
+			if (i->second != this && i->second->m_LegacyClient.Value == m_LegacyClient.Value)
+			{
+				m_LegacyClient.Value.clear();
+				break;
+			}
+	}
+
+	if (r.Find("ATTACHED") >= 0) r.Value(m_Attached);
+	const bool wanted = AsBoolean(m_Attached);
 	const bool changeEndpoint = m_JackClient->IsAttached()
 		&& (previousClient != m_LegacyClient.Value
 			|| (m_LegacyClient.Value.empty() && previousGroup != AsSigned(m_Group)));
-	if (changeEndpoint) Detach();
+	if (changeEndpoint || !wanted) CloseClient();
 
 	switch (Version)
 	{
@@ -527,5 +563,6 @@ void JackPlugin::Apply(Spiral::Core::Description::Reader &r)
 		break;
 	}	
 
-	if (changeEndpoint) Attach();
+	AsBoolean(m_Attached) = wanted;
+	m_NextAttach = 0;
 }

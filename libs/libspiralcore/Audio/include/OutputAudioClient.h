@@ -47,6 +47,7 @@ public:
 	bool OpenWrite();
 	bool OpenRead();
 	bool Close();
+	bool JackReady() const;
 	void Kill();
 
 	bool IsAttached() const { return m_Client && m_Client->IsAttached(); }

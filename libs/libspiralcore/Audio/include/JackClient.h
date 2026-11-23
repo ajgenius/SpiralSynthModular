@@ -51,9 +51,12 @@ public:
 	void Detach();
 	bool IsAttached() const;
 	// One physical client per engine. An empty prefix reserves Output's stereo names.
-	void SetPortGroup(const void *owner, const std::string &prefix);
+	void SetPortGroup(const void *owner, const std::string &prefix, bool deferOpen = false, bool exactName = false);
 	bool HasPortGroup() const { return m_Session != NULL; }
 	void SuspendPortGroup();
+	bool WaitingForSession() const;
+	bool SessionReady() const;
+	static void ServiceSessions();
 	bool ResizePortGroup(unsigned inputs, unsigned outputs);
 
 	void SetCallback(void (*run)(void *, unsigned int), void *context);
@@ -105,6 +108,7 @@ private:
 	std::string m_Prefix;
 	JackSession *m_Session;
 	unsigned m_Slot;
+	bool m_DeferOpen, m_PortsReady, m_ExactName;
 
 	jack_client_t *Handle() const;
 	bool AttachGroup(const std::string &name, unsigned inputs, unsigned outputs);

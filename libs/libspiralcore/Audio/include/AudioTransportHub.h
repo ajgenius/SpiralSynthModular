@@ -62,6 +62,8 @@ public:
 	void Reconfigure();
 
 	void Service();
+	// Control-thread maintenance. Opening JACK can block while the server is down.
+	static void ServiceConnections();
 
 	void RegisterStream(Spiral::Core::AudioStream *stream);
 	void UnregisterStream(Spiral::Core::AudioStream *stream);

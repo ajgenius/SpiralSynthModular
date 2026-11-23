@@ -184,17 +184,30 @@ void OutputAudioClient::CommitPeriod(const AudioStamp &playback)
 
 }
 
+bool OutputAudioClient::JackReady() const
+{
+#ifdef HAVE_JACK_CLIENT
+	JackClient *jack = dynamic_cast<JackClient *>(m_Client);
+	return jack && jack->SessionReady();
+#else
+	return false;
+#endif
+}
+
 bool OutputAudioClient::AttachMode(unsigned int inChans, unsigned int outChans)
 {
 	if (!m_Client) return false;
 	bool resized = false;
+	bool reserved = false;
 #ifdef HAVE_JACK_CLIENT
 	if (m_ClientName == "jack")
 	{
 		JackClient *jack = dynamic_cast<JackClient *>(m_Client);
 		if (jack)
 		{
-			jack->SetPortGroup(AudioTransportHub::Get(), "");
+			jack->SetPortGroup(AudioTransportHub::Get(), "", true);
+			reserved = jack->WaitingForSession();
+			if (reserved && !jack->SessionReady()) return false;
 			if (jack->HasPortGroup() && jack->IsAttached())
 			{
 				if (!jack->ResizePortGroup(inChans, outChans))
@@ -207,7 +220,7 @@ bool OutputAudioClient::AttachMode(unsigned int inChans, unsigned int outChans)
 		}
 	}
 #endif
-	if (!resized) Close();
+	if (!resized && !reserved) Close();
 	AllocateBuffer();
 	if (m_Out.empty()) { Close(); return false; }
 	m_IsDead = false;

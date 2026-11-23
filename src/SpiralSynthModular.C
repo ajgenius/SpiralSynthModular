@@ -537,6 +537,7 @@ void SynthModular::RunDevice(int id)
 
 void SynthModular::UpdatePluginGUIs()
 {
+	AudioTransportHub::ServiceConnections();
 	ServiceMidiInput();
 
 	if (m_Breadcrumb)

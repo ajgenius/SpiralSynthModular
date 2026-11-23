@@ -93,8 +93,17 @@ struct JackSession
 	JackClient *members[MaxGroups];
 	JackClient *running[MaxGroups];
 	unsigned readers, limit;
+	string name;
+	bool pumping;
+	int prepared;
+	double nextTry;
+	bool NativeReady() const
+	{
+		return __atomic_load_n(&prepared, __ATOMIC_ACQUIRE) && clock.IsAttached();
+	}
 
-	explicit JackSession(const void *engine): owner(engine), readers(0), limit(0)
+	JackSession(const void *engine, const string &destination):
+	    owner(engine), readers(0), limit(0), name(destination), pumping(false), prepared(0), nextTry(0)
 	{
 		memset(members, 0, sizeof(members));
 		memset(running, 0, sizeof(running));
@@ -139,10 +148,63 @@ namespace
 	};
 }
 
-void JackClient::SetPortGroup(const void *owner, const string &prefix)
+// SessionMutex protects the reservation list. A slow native open owns a pin and
+// runs with neither this mutex nor the synth graph gate held.
+static void ReleaseEmptySession(JackSession *s)
+{
+	if (s->pumping) return;
+	for (unsigned n = 0; n < s->limit; ++n)
+		if (s->members[n]) return;
+	Sessions.erase(remove(Sessions.begin(), Sessions.end(), s), Sessions.end());
+	delete s;
+}
+
+void JackClient::ServiceSessions()
+{
+	for (;;)
+	{
+		JackSession *s = NULL;
+		{
+			SessionLock lock;
+			const double now = AudioMonotonicTime();
+			for (size_t n = 0; n < Sessions.size(); ++n)
+			{
+				JackSession *candidate = Sessions[n];
+				if (!candidate->prepared && !candidate->pumping && candidate->nextTry <= now)
+				{
+					candidate->pumping = true;
+					s = candidate;
+					break;
+				}
+			}
+		}
+		if (!s) return;
+
+		const bool opened = s->clock.Attach(s->name);
+		SessionLock lock;
+		s->nextTry = AudioMonotonicTime() + 1;
+		s->pumping = false;
+		__atomic_store_n(&s->prepared, opened ? 1 : 0, __ATOMIC_RELEASE);
+		ReleaseEmptySession(s);
+	}
+}
+
+bool JackClient::WaitingForSession() const
+{
+	return m_Session && m_DeferOpen && !m_PortsReady;
+}
+
+bool JackClient::SessionReady() const
+{
+	return WaitingForSession() && __atomic_load_n(&m_Session->prepared, __ATOMIC_ACQUIRE);
+}
+
+void JackClient::SetPortGroup(const void *owner, const string &prefix, bool deferOpen, bool exactName)
 {
 	m_Owner = owner;
 	m_Prefix = prefix;
+	m_DeferOpen = deferOpen;
+	m_ExactName = exactName;
 }
 
 jack_client_t *JackClient::Handle() const
@@ -152,7 +214,7 @@ jack_client_t *JackClient::Handle() const
 
 bool JackClient::IsAttached() const
 {
-	return m_Session ? m_Session->clock.IsAttached() : __sync_fetch_and_add(&m_Attached, 0) != 0;
+	return m_Session ? m_PortsReady && m_Session->NativeReady() : __sync_fetch_and_add(&m_Attached, 0) != 0;
 }
 
 unsigned long JackClient::GetBufferSize() const
@@ -175,7 +237,7 @@ void JackClient::SuspendPortGroup()
 
 bool JackClient::ResizePortGroup(unsigned inputs, unsigned outputs)
 {
-	if (!m_Session || !IsAttached() || inputs > MAX_INPUTPORTS || outputs > MAX_OUTPUTPORTS)
+	if (!m_Session || !m_Session->NativeReady() || inputs > MAX_INPUTPORTS || outputs > MAX_OUTPUTPORTS)
 		return false;
 
 	SuspendPortGroup();
@@ -221,7 +283,7 @@ bool JackClient::AttachGroup(const string &name, unsigned inputs, unsigned outpu
 	{
 		SessionLock lock;
 		for (size_t n = 0; n < Sessions.size(); ++n)
-			if (Sessions[n]->owner == m_Owner && Sessions[n]->clock.IsAttached())
+			if (Sessions[n]->owner == m_Owner && (!Sessions[n]->prepared || Sessions[n]->NativeReady()))
 			{
 				m_Session = Sessions[n];
 				break;
@@ -229,13 +291,15 @@ bool JackClient::AttachGroup(const string &name, unsigned inputs, unsigned outpu
 
 		if (!m_Session)
 		{
-			JackSession *s = new JackSession(m_Owner);
+			JackSession *s = new JackSession(m_Owner, name);
 			s->clock.m_AutoActivate = false;
-			if (!s->clock.Attach(name))
+			s->clock.m_ExactName = m_ExactName;
+			if (!m_DeferOpen && !s->clock.Attach(name))
 			{
 				delete s;
 				return false;
 			}
+			s->prepared = m_DeferOpen ? 0 : 1;
 			s->clock.SetCallback(JackSession::Run, s);
 			Sessions.push_back(s);
 			m_Session = s;
@@ -255,7 +319,8 @@ bool JackClient::AttachGroup(const string &name, unsigned inputs, unsigned outpu
 
 	m_InputPortMap.clear();
 	m_OutputPortMap.clear();
-	if (ResizePortGroup(inputs, outputs)) return true;
+	if (!m_Session->NativeReady()) return false;
+	if (ResizePortGroup(inputs, outputs)) return m_PortsReady = true;
 	DetachGroup();
 	return false;
 }
@@ -270,12 +335,9 @@ void JackClient::DetachGroup()
 	m_OutputPortMap.clear();
 	JackSession *s = m_Session;
 	m_Session = NULL;
+	m_PortsReady = false;
 	s->members[m_Slot] = NULL;
-	for (unsigned n = 0; n < s->limit; ++n)
-		if (s->members[n]) return;
-
-	Sessions.erase(remove(Sessions.begin(), Sessions.end(), s), Sessions.end());
-	delete s;
+	ReleaseEmptySession(s);
 }
 
 JackClient *JackClient::Get()
@@ -292,7 +354,7 @@ void JackClient::PackUpAndGoHome()
 }
 
 JackClient::JackClient() :
-	m_Owner(NULL), m_Session(NULL), m_Slot(0), m_Client(NULL), m_BufferSize(0), m_SampleRate(0), m_Attached(false),
+	m_Owner(NULL), m_Session(NULL), m_Slot(0), m_DeferOpen(false), m_PortsReady(false), m_ExactName(true), m_Client(NULL), m_BufferSize(0), m_SampleRate(0), m_Attached(false),
 	m_AutoActivate(true), m_Active(false), m_ProcessFrames(0),
 	m_NativeFrame(0), m_LastFrame(0), m_HaveFrame(false), m_CycleTime(0),
 	m_NextInputID(0), m_NextOutputID(0), m_Run(NULL), m_Context(NULL)
@@ -340,7 +402,7 @@ bool JackClient::Attach(const string &clientName)
 
 #ifdef HAVE_JACK_CLIENT_OPEN
 	m_Client = jack_client_open(clientName.c_str(),
-		static_cast<jack_options_t>(JackNoStartServer | JackUseExactName), NULL);
+		static_cast<jack_options_t>(JackNoStartServer | (m_ExactName ? JackUseExactName : 0)), NULL);
 #else
 	m_Client = jack_client_new(clientName.c_str());
 #endif
@@ -723,6 +785,15 @@ bool JackClient::LocateTransport(unsigned long frame)
 
 bool JackClient::Attach(const string &clientName, const AudioClientOptions &options)
 {
+	if (WaitingForSession())
+	{
+		if (!m_Session->NativeReady())
+		{
+			if (!__atomic_load_n(&m_Session->prepared, __ATOMIC_ACQUIRE)) return false;
+		}
+		else if (ResizePortGroup(options.InChannels, options.OutChannels))
+			return m_PortsReady = true;
+	}
 	Detach();
 	if (options.InChannels > MAX_INPUTPORTS || options.OutChannels > MAX_OUTPUTPORTS ||
 		(!options.InChannels && !options.OutChannels))
