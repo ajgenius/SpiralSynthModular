@@ -254,8 +254,9 @@ m_PickOpened(false)
 	pthread_mutex_init(&m_CycleLock, &recursive);
 	pthread_mutexattr_destroy(&recursive);
 	/* Shared Audio State Information  */
-	m_Info.BUFSIZE = SpiralInfo::BUFSIZE;
-	m_Info.SAMPLERATE = SpiralInfo::SAMPLERATE;
+	ApplyEngineSettings();
+	m_Info.BUFSIZE = m_SavedFrames;
+	m_Info.SAMPLERATE = m_SavedRate;
 	m_Info.PAUSED = false;
 	m_Info.FRAME = 0;
 	m_Info.ROLLING = true;
@@ -395,7 +396,7 @@ void SynthModular::Update()
 		return;
 	}
 
-	hub->FollowExternalTransport(SpiralInfo::JACK_TRANSPORT);
+	hub->FollowExternalTransport(m_FollowTransport);
 	m_DriverFrames = m_DriverRate = 0;
 	if (Spiral::Core::MidiDevice *midi = Spiral::Core::MidiDevice::Get())
 		midi->Collect();
@@ -425,14 +426,14 @@ void SynthModular::Update()
 		++i;
 	}
 
-	int frames = SpiralInfo::BUFSIZE;
-	int rate = SpiralInfo::SAMPLERATE;
-	if (SpiralInfo::FOLLOW_AUDIO_FORMAT && m_DriverFrames > 0)
+	int frames = m_SavedFrames;
+	int rate = m_SavedRate;
+	if (m_FollowFormat && m_DriverFrames > 0)
 	{
 		frames = m_DriverFrames;
 		rate = m_DriverRate;
 	}
-	hub->EngineFormat(SpiralInfo::FOLLOW_AUDIO_FORMAT, frames, rate);
+	hub->EngineFormat(m_FollowFormat, frames, rate);
 	if (frames != m_Info.BUFSIZE || rate != m_Info.SAMPLERATE)
 	{
 		m_Info.BUFSIZE = frames;
@@ -2043,15 +2044,27 @@ void SynthModular::cb_ChangeBufferAndSampleRate_i(long int NewBufferSize, long i
 	}
 }
 
+// Apply snapshots preferences while the graph is frozen. Saving preferences alone
+// must not change the running graph or the selected musical transport.
+void SynthModular::ApplyEngineSettings()
+{
+	m_SavedFrames = SpiralInfo::BUFSIZE > 0 && SpiralInfo::BUFSIZE <= 65536 ? SpiralInfo::BUFSIZE : 512;
+	m_SavedRate = SpiralInfo::SAMPLERATE >= 8000 && SpiralInfo::SAMPLERATE <= 384000 ? SpiralInfo::SAMPLERATE : 44100;
+	m_FollowFormat = SpiralInfo::FOLLOW_AUDIO_FORMAT;
+	m_FollowTransport = SpiralInfo::JACK_TRANSPORT;
+}
+
 void SynthModular::UpdateHostInfo()
 {
 	/* Pause Audio */
 	FreezeAll();
 
 	/* update the settings */
-	m_Info.BUFSIZE    = SpiralInfo::BUFSIZE;
-	m_Info.SAMPLERATE = SpiralInfo::SAMPLERATE;
-	AudioTransportHub::Get()->EngineFormat(SpiralInfo::FOLLOW_AUDIO_FORMAT, m_Info.BUFSIZE, m_Info.SAMPLERATE);
+	ApplyEngineSettings();
+	m_Info.BUFSIZE = m_SavedFrames;
+	m_Info.SAMPLERATE = m_SavedRate;
+	if (m_Info.AUDIOCLIENT == SpiralInfo::AUDIOCLIENT && m_Info.OUTPUTFILE == SpiralInfo::OUTPUTFILE)
+		AudioTransportHub::Get()->EngineFormat(m_FollowFormat, m_Info.BUFSIZE, m_Info.SAMPLERATE);
 
 	/* obsolete - REMOVE SOON  */
 	m_Info.FRAGSIZE   = SpiralInfo::FRAGSIZE;

@@ -207,7 +207,9 @@ private:
 	pthread_mutex_t m_CycleLock;
 	HostInfo m_Info;
 	bool m_ResetingAudioThread, m_Frozen;
-	int m_DriverFrames, m_DriverRate;
+	int m_DriverFrames, m_DriverRate, m_SavedFrames, m_SavedRate;
+	bool m_FollowFormat, m_FollowTransport;
+	void ApplyEngineSettings();
 
 	static DeviceGUIInfo BuildDeviceGUIInfo(PluginInfo &PInfo);
 
