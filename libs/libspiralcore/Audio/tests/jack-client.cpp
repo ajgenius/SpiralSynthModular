@@ -52,6 +52,7 @@ static bool preciseCycle = false;
 static unsigned deactivations = 0;
 static bool failOpen = false;
 static bool failActivate = false;
+static bool showRoutePeers = false;
 static bool failRegister = false;
 static bool failCallback = false;
 
@@ -191,7 +192,15 @@ int jack_port_connected(const jack_port_t *port) { return !port->Connection.empt
 
 const char *jack_port_name(const jack_port_t *port) { return port->Name.c_str(); }
 
-const char **jack_get_ports(jack_client_t *, const char *, const char *, unsigned long) { return NULL; }
+const char **jack_get_ports(jack_client_t *, const char *, const char *, unsigned long flags)
+{
+	if (!showRoutePeers) return NULL;
+	const char **names = static_cast<const char **>(malloc(3 * sizeof(char *)));
+	names[0] = (flags & JackPortIsInput) ? "monitor:stem" : "capture:mic";
+	names[1] = (flags & JackPortIsInput) ? "system:playback_1" : NULL;
+	names[2] = NULL;
+	return names;
+}
 
 const char **jack_port_get_all_connections(const jack_client_t *, const jack_port_t *port)
 {
@@ -311,6 +320,14 @@ static void SharedPortGroups()
 	assert(first.SetPeerConnected(false, 0, "system:playback_1", false));
 	assert(first.GetOutputConnection(0) == "monitor:stem");
 	assert(!first.SetPeerConnected(true, 63, "missing", true));
+	showRoutePeers = true;
+	first.RequestRoutes(1, 8, "system:playback_1", true);
+	first.ServiceSessions();
+	std::string reply;
+	assert(first.TakeRoutes(reply) && reply.find("1 8") == 0);
+	assert(reply.find("-monitor:stem") != std::string::npos);
+	assert(reply.find("-system:playback_1") != std::string::npos);
+	showRoutePeers = false;
 	first.Detach();
 	assert(clients.empty());
 }

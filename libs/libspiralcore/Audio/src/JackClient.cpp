@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <pthread.h>
 #include <sched.h>
+#include <deque>
 
 using namespace Spiral::Core;
 using namespace std;
@@ -140,6 +141,18 @@ namespace
 {
 	pthread_mutex_t SessionMutex = PTHREAD_MUTEX_INITIALIZER;
 	vector<JackSession *> Sessions;
+	struct RouteRequest
+	{
+		JackClient *client;
+		int port;
+		unsigned ticket;
+		string peer;
+		bool connect;
+	};
+	std::deque<RouteRequest> routes;
+	pthread_mutex_t routeMutex = PTHREAD_MUTEX_INITIALIZER;
+	pthread_cond_t routeIdle = PTHREAD_COND_INITIALIZER;
+	JackClient *routing = NULL;
 
 	struct SessionLock
 	{
@@ -159,8 +172,92 @@ static void ReleaseEmptySession(JackSession *s)
 	delete s;
 }
 
+void JackClient::RequestRoutes(int port, unsigned ticket, const string &peer, bool connect)
+{
+	if (!IsAttached() || port == 0 || port < -64 || port > 64) return;
+	const RouteRequest request = {this, port, ticket, peer, connect};
+	pthread_mutex_lock(&routeMutex);
+	routes.push_back(request);
+	pthread_mutex_unlock(&routeMutex);
+}
+
+bool JackClient::TakeRoutes(string &result)
+{
+	if (!__atomic_load_n(&m_HaveRouteReply, __ATOMIC_ACQUIRE)) return false;
+	pthread_mutex_lock(&routeMutex);
+	const bool ready = !m_RouteReply.empty();
+	if (ready)
+	{
+		result.swap(m_RouteReply);
+		__atomic_store_n(&m_HaveRouteReply, 0, __ATOMIC_RELEASE);
+		m_RouteReply.clear();
+	}
+	pthread_mutex_unlock(&routeMutex);
+	return ready;
+}
+
+void JackClient::WithdrawRoutes()
+{
+	pthread_mutex_lock(&routeMutex);
+	for (std::deque<RouteRequest>::iterator i = routes.begin(); i != routes.end();)
+	{
+		if (i->client == this) i = routes.erase(i);
+		else ++i;
+	}
+	while (routing == this) pthread_cond_wait(&routeIdle, &routeMutex);
+	__atomic_store_n(&m_HaveRouteReply, 0, __ATOMIC_RELEASE);
+	m_RouteReply.clear();
+	pthread_mutex_unlock(&routeMutex);
+}
+
+void JackClient::ServiceRoutes()
+{
+	for (;;)
+	{
+		pthread_mutex_lock(&routeMutex);
+		if (routing || routes.empty())
+		{
+			pthread_mutex_unlock(&routeMutex);
+			return;
+		}
+		const RouteRequest request = routes.front();
+		routes.pop_front();
+		routing = request.client;
+		pthread_mutex_unlock(&routeMutex);
+
+		const bool input = request.port < 0;
+		const int channel = (input ? -request.port : request.port) - 1;
+		JackClient *client = request.client;
+		if (!request.peer.empty())
+			client->SetPeerConnected(input, channel, request.peer, request.connect);
+
+		vector<string> inputs, outputs;
+		client->GetPortNames(inputs, outputs);
+		const vector<string> &names = input ? outputs : inputs;
+		const vector<string> peers = client->Peers(input, channel);
+		char number[32];
+		snprintf(number, sizeof(number), "%d %u", request.port, request.ticket);
+		string reply(number);
+		reply += char(0);
+		for (size_t n = 0; n < names.size(); ++n)
+		{
+			reply += find(peers.begin(), peers.end(), names[n]) == peers.end() ? '+' : '-';
+			reply += names[n];
+			reply += char(0);
+		}
+
+		pthread_mutex_lock(&routeMutex);
+		client->m_RouteReply.swap(reply);
+		__atomic_store_n(&client->m_HaveRouteReply, 1, __ATOMIC_RELEASE);
+		routing = NULL;
+		pthread_cond_broadcast(&routeIdle);
+		pthread_mutex_unlock(&routeMutex);
+	}
+}
+
 void JackClient::ServiceSessions()
 {
+	ServiceRoutes();
 	for (;;)
 	{
 		JackSession *s = NULL;
@@ -230,6 +327,7 @@ unsigned long JackClient::GetSampleRate() const
 void JackClient::SuspendPortGroup()
 {
 	if (!m_Session) return;
+	WithdrawRoutes();
 	__atomic_store_n(&m_Session->running[m_Slot], static_cast<JackClient *>(NULL), __ATOMIC_SEQ_CST);
 	while (__atomic_load_n(&m_Session->readers, __ATOMIC_SEQ_CST))
 		sched_yield();
@@ -354,7 +452,7 @@ void JackClient::PackUpAndGoHome()
 }
 
 JackClient::JackClient() :
-	m_Owner(NULL), m_Session(NULL), m_Slot(0), m_DeferOpen(false), m_PortsReady(false), m_ExactName(true), m_Client(NULL), m_BufferSize(0), m_SampleRate(0), m_Attached(false),
+	m_Owner(NULL), m_Session(NULL), m_Slot(0), m_DeferOpen(false), m_PortsReady(false), m_ExactName(true), m_HaveRouteReply(0), m_Client(NULL), m_BufferSize(0), m_SampleRate(0), m_Attached(false),
 	m_AutoActivate(true), m_Active(false), m_ProcessFrames(0),
 	m_NativeFrame(0), m_LastFrame(0), m_HaveFrame(false), m_CycleTime(0),
 	m_NextInputID(0), m_NextOutputID(0), m_Run(NULL), m_Context(NULL)
@@ -365,6 +463,7 @@ JackClient::JackClient() :
 
 JackClient::~JackClient()
 {
+	WithdrawRoutes();
 	if (m_Session) DetachGroup();
 	ClientLifecycleLock lock;
 	DetachClient();
@@ -433,6 +532,7 @@ bool JackClient::Attach(const string &clientName)
 
 void JackClient::Detach()
 {
+	WithdrawRoutes();
 	if (m_Session)
 	{
 		DetachGroup();

@@ -57,6 +57,9 @@ public:
 	bool WaitingForSession() const;
 	bool SessionReady() const;
 	static void ServiceSessions();
+	// Positive ports send, negative ports receive. Both are numbered from one.
+	void RequestRoutes(int port, unsigned ticket, const std::string &peer = "", bool connect = false);
+	bool TakeRoutes(std::string &result);
 	bool ResizePortGroup(unsigned inputs, unsigned outputs);
 
 	void SetCallback(void (*run)(void *, unsigned int), void *context);
@@ -116,6 +119,10 @@ private:
 	jack_client_t *Handle() const;
 	bool AttachGroup(const std::string &name, unsigned inputs, unsigned outputs);
 	void DetachGroup();
+	void WithdrawRoutes();
+	static void ServiceRoutes();
+	std::string m_RouteReply;
+	int m_HaveRouteReply;
 	void ClearBuffers(unsigned frames);
 	struct JackPort
 	{
