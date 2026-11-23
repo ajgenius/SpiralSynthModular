@@ -209,6 +209,7 @@ private:
 	bool m_ResetingAudioThread, m_Frozen;
 	int m_DriverFrames, m_DriverRate, m_SavedFrames, m_SavedRate;
 	bool m_FollowFormat, m_FollowTransport;
+	std::string m_AppliedMidiBackend;
 	void ApplyEngineSettings();
 
 	static DeviceGUIInfo BuildDeviceGUIInfo(PluginInfo &PInfo);
