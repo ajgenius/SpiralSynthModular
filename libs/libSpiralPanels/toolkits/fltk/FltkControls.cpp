@@ -30,6 +30,9 @@
 #include <FL/Fl_Slider.H>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Valuator.H>
+#include <FL/fl_draw.H>
+#include <algorithm>
+#include <cmath>
 
 namespace Spiral
 {
@@ -102,24 +105,37 @@ namespace Spiral
 			class FltkChoice: public FltkView, public virtual DynamicChoiceView
 			{
 			public:
-				explicit FltkChoice(Fl_Choice *choice): FltkView(choice), m_Choice(choice) {}
+				FltkChoice(Fl_Choice *choice, bool gear): FltkView(choice), m_Choice(choice), m_Gear(gear), m_Checked(-1) {}
 
 				int AddItem(const std::string &text, bool literal)
 				{
 					if (!literal)
 						return m_Choice->add(text.c_str());
 
-					const int index = m_Choice->add("x");
+					const int index = m_Choice->add("x", 0, NULL, NULL, m_Gear ? FL_MENU_RADIO : 0);
 					m_Choice->replace(index, text.c_str());
 
 					return index;
 				}
 
-				void Select(int index) { m_Choice->value(index); }
-				void ClearItems() { m_Choice->clear(); }
+				void Select(int index)
+				{
+					m_Choice->value(index);
+					if (m_Gear && m_Checked != index)
+					{
+						if (m_Checked >= 0)
+							m_Choice->mode(m_Checked, m_Choice->mode(m_Checked) & ~FL_MENU_VALUE);
+						if (index >= 0)
+							m_Choice->mode(index, m_Choice->mode(index) | FL_MENU_VALUE);
+						m_Checked = index;
+					}
+				}
+				void ClearItems() { m_Choice->clear(); m_Checked = -1; }
 
 			private:
 				Fl_Choice *m_Choice;
+				bool m_Gear;
+				int m_Checked;
 			};
 
 			class FltkTabs: public FltkView, public virtual ContainerView
@@ -402,6 +418,33 @@ namespace Spiral
 				return new FltkText(input);
 			}
 
+			class GearChoice: public Fl_Choice
+			{
+			public:
+				GearChoice(int x, int y, int w, int h): Fl_Choice(x, y, w, h) {}
+
+				void draw()
+				{
+					draw_box();
+					fl_color(active_r() ? labelcolor() : fl_inactive(labelcolor()));
+					const int cx = x() + w() / 2, cy = y() + h() / 2;
+					const int radius = std::max(1, (std::min(w(), h()) - 8) / 2);
+					fl_line_style(FL_SOLID, 2);
+					fl_circle(cx, cy, radius * .66);
+					for (int tooth = 0; tooth < 8; ++tooth)
+					{
+						const double angle = tooth * 3.141592653589793 / 4;
+						const double dx = radius * std::cos(angle), dy = radius * std::sin(angle);
+						fl_line((int)std::floor(cx + dx * .65 + .5), (int)std::floor(cy + dy * .65 + .5),
+							(int)std::floor(cx + dx + .5), (int)std::floor(cy + dy + .5));
+					}
+					fl_line_style(FL_SOLID);
+					fl_circle(cx, cy, radius * .23);
+					if (Fl::focus() == this && Fl::visible_focus())
+						draw_focus();
+				}
+			};
+
 			void ChoiceChanged(Fl_Widget *widget, void *data)
 			{
 				static_cast<ChoiceControl *>(data)->Changed(static_cast<Fl_Choice *>(widget)->value());
@@ -409,13 +452,15 @@ namespace Spiral
 
 			ControlView *MakeChoice(PanelControl &control, const Spumoni::JSON &node)
 			{
-				Fl_Choice *choice = new Fl_Choice(control.X(), control.Y(), control.W(), control.H());
-				const FltkLook look = FltkTheme::For(control, "Choice", node, "", FltkTheme::SizeLabel | FltkTheme::SizeText);
+				const bool gear = Text(node, "icon") == "gear";
+				Fl_Choice *choice = gear ? new GearChoice(control.X(), control.Y(), control.W(), control.H())
+					: new Fl_Choice(control.X(), control.Y(), control.W(), control.H());
+				const FltkLook look = FltkTheme::For(control, gear ? "Button" : "Choice", node, "", FltkTheme::SizeLabel | FltkTheme::SizeText);
 				look.Apply(choice);
 				look.ApplyText(choice);
 				choice->callback(ChoiceChanged, static_cast<ChoiceControl *>(&control));
 
-				return new FltkChoice(choice);
+				return new FltkChoice(choice, gear);
 			}
 
 			ControlView *MakeButton(PanelControl &control, const Spumoni::JSON &node)

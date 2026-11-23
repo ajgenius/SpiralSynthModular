@@ -38,7 +38,7 @@
           "bounds": [
             5,
             5,
-            242,
+            221,
             98
           ],
           "name": "scope",
@@ -120,31 +120,21 @@
         },
         {
           "bounds": [
-            5,
-            109,
-            42,
-            21
-          ],
-          "name": "voice-label",
-          "text": "Voice",
-          "type": "Label"
-        },
-        {
-          "bounds": [
-            50,
-            109,
-            114,
-            21
+            229,
+            4,
+            20,
+            20
           ],
           "name": "monitor-voice",
           "property": "MONITOR VOICE",
           "items_property": "MONITOR VOICES",
           "fallback_index": 1,
           "type": "Choice",
-          "tooltip": "Show one voice or the sum of all voices"
+          "tooltip": "Monitor voice",
+          "icon": "gear"
         }
       ],
-      "height": 133,
+      "height": 108,
       "help": "The Scope shows the data flowing through it without changing the signal. Attenuation reduces the displayed amplitude; Time Base controls samples per pixel.",
       "schema_version": 1,
       "width": 297

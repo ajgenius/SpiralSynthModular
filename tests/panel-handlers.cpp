@@ -191,6 +191,7 @@ static void CheckMonitor(const std::string &plugin)
 	assert(selector);
 	Fl_Choice *choice = dynamic_cast<Fl_Choice *>(FltkView::WidgetOf(*selector));
 	assert(choice && choice->value() == 1 && choice->size() == 4);
+	assert(choice->w() == 20 && choice->h() == 20 && choice->menu()[1].value());
 	assert(std::string(choice->text(0)) == "All" && std::string(choice->text(2)) == "Voice 2");
 	Spiral::Core::SampleFeed *feed = first.RequestFeed(false, 0);
 	const int picks[] = {1, 2, 0};
@@ -200,6 +201,9 @@ static void CheckMonitor(const std::string &plugin)
 		choice->value(picks[i]);
 		choice->do_callback();
 		first.UpdateChannelHandler();
+		panel.Refresh();
+		for (int item = 0; item < 3; ++item)
+			assert(!!choice->menu()[item].value() == (item == picks[i]));
 		first.Execute();
 		second.Execute();
 		first.PublishFeeds();

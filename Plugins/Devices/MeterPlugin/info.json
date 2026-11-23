@@ -169,31 +169,21 @@
         },
         {
           "bounds": [
-            5,
-            113,
-            42,
-            21
-          ],
-          "name": "voice-label",
-          "text": "Voice",
-          "type": "Label"
-        },
-        {
-          "bounds": [
-            50,
-            113,
-            114,
-            21
+            75,
+            4,
+            20,
+            20
           ],
           "name": "monitor-voice",
           "property": "MONITOR VOICE",
           "items_property": "MONITOR VOICES",
           "fallback_index": 1,
           "type": "Choice",
-          "tooltip": "Show one voice or the sum of all voices"
+          "tooltip": "Monitor voice",
+          "icon": "gear"
         }
       ],
-      "height": 137,
+      "height": 112,
       "help": "Shows the level of its input: VU is the peak of |x| from 0 to 1, MM the minimum and maximum from -1 to 1.",
       "schema_version": 1,
       "width": 226
