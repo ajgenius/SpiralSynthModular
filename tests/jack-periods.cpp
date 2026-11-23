@@ -209,6 +209,11 @@ static void CheckStereoMode()
 	showRoutePeers = false;
 	jack_connect(server, left->Name.c_str(), "monitor:left");
 	AudioTransportHub *hub = AudioTransportHub::Get();
+	int frames = 512, rate = 44100;
+	hub->EngineFormat(false, frames, rate);
+	assert(frames == 512 && rate == 44100);
+	hub->EngineFormat(true, frames, rate);
+	assert(frames == 4 && rate == 48000);
 	failRegister = true;
 	hub->OpenMode(AudioTransportHub::DUPLEX);
 	failRegister = false;
@@ -232,6 +237,10 @@ static void CheckStereoMode()
 	assert(stem.GetJackClient()->IsAttached() && hub->GetMode() == AudioTransportHub::OUTPUT);
 	stem.Detach();
 	stereo.Kill();
+	frames = 512;
+	rate = 44100;
+	hub->EngineFormat(true, frames, rate);
+	assert(frames == 512 && rate == 44100);
 	hub->SetHost(NULL);
 }
 

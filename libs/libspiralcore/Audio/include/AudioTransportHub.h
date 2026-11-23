@@ -61,6 +61,7 @@ public:
 	void Close();
 	void Reconfigure();
 
+	void EngineFormat(bool follow, int &frames, int &rate) const;
 	void Service();
 	// Control-thread maintenance. Opening JACK can block while the server is down.
 	static void ServiceConnections();

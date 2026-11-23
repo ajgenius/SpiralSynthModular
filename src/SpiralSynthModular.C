@@ -220,7 +220,6 @@ DeviceWin::~DeviceWin()
 
 SynthModular::SynthModular():
 m_ResetingAudioThread(false),
-m_HostNeedsUpdate(false),
 m_Frozen(false),
 m_NextID(0),
 m_RunVoices(false),
@@ -396,6 +395,7 @@ void SynthModular::Update()
 		return;
 	}
 
+	m_DriverFrames = m_DriverRate = 0;
 	if (Spiral::Core::MidiDevice *midi = Spiral::Core::MidiDevice::Get())
 		midi->Collect();
 
@@ -424,12 +424,19 @@ void SynthModular::Update()
 		++i;
 	}
 
-	if (m_HostNeedsUpdate)
+	int frames = SpiralInfo::BUFSIZE;
+	int rate = SpiralInfo::SAMPLERATE;
+	if (SpiralInfo::FOLLOW_AUDIO_FORMAT && m_DriverFrames > 0)
 	{
-		m_Info.BUFSIZE = SpiralInfo::BUFSIZE;
-		m_Info.SAMPLERATE = SpiralInfo::SAMPLERATE;
+		frames = m_DriverFrames;
+		rate = m_DriverRate;
+	}
+	hub->EngineFormat(SpiralInfo::FOLLOW_AUDIO_FORMAT, frames, rate);
+	if (frames != m_Info.BUFSIZE || rate != m_Info.SAMPLERATE)
+	{
+		m_Info.BUFSIZE = frames;
+		m_Info.SAMPLERATE = rate;
 		m_ResetingAudioThread = true;
-		m_HostNeedsUpdate = false;
 	}
 
 	const bool render = hub->PreparePeriod();
@@ -644,13 +651,6 @@ void SynthModular::UpdatePluginGUIs()
 	}
 
 	m_Canvas->Poll();
-
-	if (m_HostNeedsUpdate)
-	{
-		cout << "Updating SampleRate to: " << SpiralInfo::SAMPLERATE << " and Buffer Size to: " << SpiralInfo::BUFSIZE << " to match current Audio Driver." << endl;
-		UpdateHostInfo();
-		m_HostNeedsUpdate = false;
-	}
 }
 
 //////////////////////////////////////////////////////////
@@ -2035,17 +2035,10 @@ void SynthModular::AddComment(int n)
 
 void SynthModular::cb_ChangeBufferAndSampleRate_i(long int NewBufferSize, long int NewSamplerate)
 {
-	if (SpiralInfo::BUFSIZE != NewBufferSize)
+	if (NewBufferSize > 0 && NewBufferSize <= 65536 && NewSamplerate >= 8000 && NewSamplerate <= 384000)
 	{
-		// update the settings
-		SpiralInfo::BUFSIZE    = NewBufferSize;
-		m_HostNeedsUpdate = true;
-	}
-
-	if (SpiralInfo::SAMPLERATE != NewSamplerate)
-	{
-		SpiralInfo::SAMPLERATE = NewSamplerate;
-		m_HostNeedsUpdate = true;
+		m_DriverFrames = NewBufferSize;
+		m_DriverRate = NewSamplerate;
 	}
 }
 
@@ -2057,6 +2050,7 @@ void SynthModular::UpdateHostInfo()
 	/* update the settings */
 	m_Info.BUFSIZE    = SpiralInfo::BUFSIZE;
 	m_Info.SAMPLERATE = SpiralInfo::SAMPLERATE;
+	AudioTransportHub::Get()->EngineFormat(SpiralInfo::FOLLOW_AUDIO_FORMAT, m_Info.BUFSIZE, m_Info.SAMPLERATE);
 
 	/* obsolete - REMOVE SOON  */
 	m_Info.FRAGSIZE   = SpiralInfo::FRAGSIZE;

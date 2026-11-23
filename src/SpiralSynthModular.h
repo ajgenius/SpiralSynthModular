@@ -206,7 +206,8 @@ private:
 	bool m_RunVoices;
 	pthread_mutex_t m_CycleLock;
 	HostInfo m_Info;
-	bool m_ResetingAudioThread, m_HostNeedsUpdate, m_Frozen;
+	bool m_ResetingAudioThread, m_Frozen;
+	int m_DriverFrames, m_DriverRate;
 
 	static DeviceGUIInfo BuildDeviceGUIInfo(PluginInfo &PInfo);
 

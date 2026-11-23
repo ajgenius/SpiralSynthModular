@@ -165,8 +165,16 @@ void AudioTransportHub::Reconfigure()
 	    Streaming() && !Transport()->Stream()->Failed())
 		return;
 
+	const std::string destination = m_Host && !m_Host->OUTPUTFILE.empty() ? m_Host->OUTPUTFILE : "default";
+	if (m_Host && m_Host->AUDIOCLIENT == "jack" && Transport()->ClientName() == "jack"
+		&& Transport()->Destination() == destination && Streaming())
+	{
+		OpenMode(m_Mode);
+		return;
+	}
+
 	m_Replacing = false;
-	const Mode previous=m_Mode;
+	const Mode previous=m_RequestedMode;
 	m_Configured=m_Host && OUTPUTCLIENT::Get()->Configure(
 		m_Host->AUDIOCLIENT,
 		m_Host->OUTPUTFILE);
@@ -233,6 +241,18 @@ void AudioTransportHub::CommitPeriod()
 void AudioTransportHub::Start() { m_Timeline.Start(); }
 void AudioTransportHub::Stop() { m_Timeline.Stop(); }
 void AudioTransportHub::Locate(unsigned long frame) { m_Timeline.Locate(frame); }
+
+void AudioTransportHub::EngineFormat(bool follow, int &frames, int &rate) const
+{
+	if (!follow || m_Members.empty() || !Streaming() || !Transport()->IsCallbackDriven()) return;
+	const unsigned long nativeFrames = Transport()->BufferSize();
+	const unsigned long nativeRate = Transport()->SampleRate();
+	if (nativeFrames && nativeFrames <= 65536 && nativeRate >= 8000 && nativeRate <= 384000)
+	{
+		frames = nativeFrames;
+		rate = nativeRate;
+	}
+}
 
 void AudioTransportHub::ServiceConnections()
 {

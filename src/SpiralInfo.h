@@ -45,6 +45,7 @@ public:
 	static void Alert (string Text);
 	static void Log (string Text);
 	static int    BUFSIZE;
+	static bool   FOLLOW_AUDIO_FORMAT;
 	static int    FRAGSIZE;
 	static int    FRAGCOUNT;
 	static int    SAMPLERATE;
