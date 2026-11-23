@@ -81,6 +81,12 @@ namespace Spiral
 			virtual void Select(int index) = 0;
 		};
 
+		class DynamicChoiceView: public virtual ChoiceView
+		{
+		public:
+			virtual void ClearItems() = 0;
+		};
+
 		class ButtonView: public virtual ControlView
 		{
 		public:
@@ -219,12 +225,16 @@ namespace Spiral
 			static PanelControl *Create(Panel &panel, const Spumoni::JSON &node);
 
 			virtual void Load();
+			virtual void Tick();
 			void Changed(int index);
 
 		protected:
 			ChoiceControl(Panel &panel, const Spumoni::JSON &node);
 
 			ChoiceView *m_Choice;
+			const PanelProperty *m_ItemsProperty;
+			std::string m_ItemText;
+			std::vector<std::string> m_Items;
 			std::vector<double> m_Values;
 			std::vector<int> m_Indices;
 		};

@@ -4,6 +4,8 @@
 #include "DeviceSource.h"
 #include "FltkView.h"
 #include "MixerPlugin.h"
+#include "PassthroughPlugin.h"
+#include <FL/Fl_Choice.H>
 #include <config.h>
 #ifdef HAVE_JACK_CLIENT
 #include "libs/libspiralcore/Devices/Jack/JackPlugin.h"
@@ -153,8 +155,68 @@ static void CheckJackPanel()
 }
 #endif
 
+static void CheckMonitor(const std::string &plugin)
+{
+	const std::string path = Root() + "/Plugins/Devices/" + plugin + "/info.json";
+	PluginManifest manifest;
+	std::string error;
+	assert(manifest.Read(path, error));
+	HostInfo format = HostInfo();
+	format.BUFSIZE = 64;
+	format.SAMPLERATE = 48000;
+	PassthroughPlugin first(manifest), second(manifest);
+	first.Initialise(&format);
+	second.Initialise(&format);
+	first.SetVoice(&first, 0, 2);
+	second.SetVoice(&first, 1, 2);
+	Sample a(64), b(64);
+	for (int i = 0; i < 64; ++i)
+	{
+		a.Set(i, .375f);
+		b.Set(i, -.375f);
+	}
+	first.SetInput(0, &a);
+	second.SetInput(0, &b);
+	first.GetChannelHandler()->FlushChannels();
+	Spumoni::JSONOwner document(UI(path, error));
+	FltkPanel host(0, 0, new DeviceSource(&first));
+	Panel &panel = host.Model();
+	assert(panel.Build(*document.get(), &error));
+	panel.Load();
+	PanelControl *selector = panel.FindControl("monitor-voice");
+	assert(selector);
+	Fl_Choice *choice = dynamic_cast<Fl_Choice *>(FltkView::WidgetOf(*selector));
+	assert(choice && choice->value() == 1 && choice->size() == 4);
+	assert(std::string(choice->text(0)) == "All" && std::string(choice->text(2)) == "Voice 2");
+	Spiral::Core::SampleFeed *feed = first.RequestFeed(false, 0);
+	const int picks[] = {1, 2, 0};
+	const float values[] = {.375f, -.375f, 0};
+	for (int i = 0; i < 3; ++i)
+	{
+		choice->value(picks[i]);
+		choice->do_callback();
+		first.UpdateChannelHandler();
+		first.Execute();
+		second.Execute();
+		first.PublishFeeds();
+		std::vector<float> block;
+		assert(feed->Take(block) && block.size() == 64);
+		assert(block.front() == values[i] && block.back() == values[i]);
+		Sample *out;
+		assert(first.GetOutput(0, &out) && (*out)[0] == .375f);
+		assert(second.GetOutput(0, &out) && (*out)[0] == -.375f);
+	}
+	second.SetInput(0, &a);
+	first.PublishFeeds();
+	std::vector<float> mono;
+	assert(feed->Take(mono) && mono[0] == .375f);
+	first.ReleaseFeed(feed);
+}
+
 int main()
 {
+	CheckMonitor("ScopePlugin");
+	CheckMonitor("MeterPlugin");
 #ifdef HAVE_JACK_CLIENT
 	CheckJackPanel();
 #endif

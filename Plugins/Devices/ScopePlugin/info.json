@@ -117,9 +117,33 @@
           "size": 9,
           "text": "Time Base",
           "type": "Label"
+        },
+        {
+          "bounds": [
+            5,
+            109,
+            42,
+            21
+          ],
+          "name": "voice-label",
+          "text": "Voice",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            50,
+            109,
+            114,
+            21
+          ],
+          "name": "monitor-voice",
+          "property": "MONITOR VOICE",
+          "items_property": "MONITOR VOICES",
+          "type": "Choice",
+          "tooltip": "Show one voice or the sum of all voices"
         }
       ],
-      "height": 108,
+      "height": 133,
       "help": "The Scope shows the data flowing through it without changing the signal. Attenuation reduces the displayed amplitude; Time Base controls samples per pixel.",
       "schema_version": 1,
       "width": 297
@@ -152,6 +176,23 @@
         "read_only": true,
         "step": 0,
         "type": "integer"
+      },
+      {
+        "property": "MONITOR VOICE",
+        "display_name": "Monitor Voice",
+        "type": "integer",
+        "read_only": false,
+        "default": 1,
+        "min": 0,
+        "max": 256,
+        "step": 1
+      },
+      {
+        "property": "MONITOR VOICES",
+        "display_name": "Monitor Voices",
+        "type": "string",
+        "read_only": true,
+        "default": "All\nVoice 1"
       }
     ],
     "schema_version": 1,

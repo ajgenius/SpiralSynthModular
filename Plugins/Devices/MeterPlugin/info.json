@@ -166,9 +166,33 @@
             "attribute": "max",
             "control": "meter"
           }
+        },
+        {
+          "bounds": [
+            5,
+            113,
+            42,
+            21
+          ],
+          "name": "voice-label",
+          "text": "Voice",
+          "type": "Label"
+        },
+        {
+          "bounds": [
+            50,
+            113,
+            114,
+            21
+          ],
+          "name": "monitor-voice",
+          "property": "MONITOR VOICE",
+          "items_property": "MONITOR VOICES",
+          "type": "Choice",
+          "tooltip": "Show one voice or the sum of all voices"
         }
       ],
-      "height": 112,
+      "height": 137,
       "help": "Shows the level of its input: VU is the peak of |x| from 0 to 1, MM the minimum and maximum from -1 to 1.",
       "schema_version": 1,
       "width": 226
@@ -211,6 +235,23 @@
         "property": "VUMODE",
         "read_only": false,
         "type": "boolean"
+      },
+      {
+        "property": "MONITOR VOICE",
+        "display_name": "Monitor Voice",
+        "type": "integer",
+        "read_only": false,
+        "default": 1,
+        "min": 0,
+        "max": 256,
+        "step": 1
+      },
+      {
+        "property": "MONITOR VOICES",
+        "display_name": "Monitor Voices",
+        "type": "string",
+        "read_only": true,
+        "default": "All\nVoice 1"
       }
     ],
     "schema_version": 1

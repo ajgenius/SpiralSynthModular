@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <limits>
+#include <sstream>
 
 namespace Spiral
 {
@@ -448,7 +449,8 @@ namespace Spiral
 
 		ChoiceControl::ChoiceControl(Panel &panel, const Spumoni::JSON &node):
 			PanelControl(panel, node),
-			m_Choice(MakeView<ChoiceView>("Choice", *this, node))
+			m_Choice(MakeView<ChoiceView>("Choice", *this, node)),
+			m_ItemsProperty(panel.FindProperty(TextOf(node.Get("items_property"))))
 		{
 			if (!m_Choice)
 				return;
@@ -485,6 +487,40 @@ namespace Spiral
 			if (!Property())
 				return;
 
+			if (m_ItemsProperty)
+			{
+				DynamicChoiceView *menu = dynamic_cast<DynamicChoiceView *>(m_Choice);
+				if (!menu)
+					return;
+				const std::string items = m_Panel.ReadText(*m_ItemsProperty);
+				if (items != m_ItemText)
+				{
+					m_ItemText = items;
+					m_Items.clear();
+					menu->ClearItems();
+					std::istringstream lines(items);
+					std::string label;
+					while (std::getline(lines, label))
+					{
+						if (label.empty())
+							continue;
+						m_Items.push_back(label);
+						m_Choice->AddItem(label, true);
+					}
+				}
+
+				if (Property()->GetKind() == PanelProperty::String)
+				{
+					std::vector<std::string>::iterator item = std::find(m_Items.begin(), m_Items.end(), Text());
+					m_Choice->Select(item == m_Items.end() ? -1 : (int)(item - m_Items.begin()));
+				}
+				else
+				{
+					const int selected = (int)Physical();
+					m_Choice->Select(selected >= 0 && (size_t)selected < m_Items.size() ? selected : -1);
+				}
+				return;
+			}
 			const double value = Physical();
 
 			if (m_Values.empty())
@@ -505,8 +541,21 @@ namespace Spiral
 			}
 		}
 
+		void ChoiceControl::Tick()
+		{
+			PanelControl::Tick();
+			if (m_ItemsProperty && m_Choice)
+				Load();
+		}
+
 		void ChoiceControl::Changed(int index)
 		{
+			if (m_ItemsProperty && Property() && Property()->GetKind() == PanelProperty::String)
+			{
+				if (index >= 0 && (size_t)index < m_Items.size())
+					CommitText(m_Items[index]);
+				return;
+			}
 			Commit(m_Values.empty() || index < 0 || index >= (int)m_Values.size() ? index : m_Values[index]);
 		}
 

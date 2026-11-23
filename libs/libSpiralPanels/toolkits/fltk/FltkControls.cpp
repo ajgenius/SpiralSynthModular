@@ -99,7 +99,7 @@ namespace Spiral
 				Fl_Input *m_Input;
 			};
 
-			class FltkChoice: public FltkView, public virtual ChoiceView
+			class FltkChoice: public FltkView, public virtual DynamicChoiceView
 			{
 			public:
 				explicit FltkChoice(Fl_Choice *choice): FltkView(choice), m_Choice(choice) {}
@@ -116,6 +116,7 @@ namespace Spiral
 				}
 
 				void Select(int index) { m_Choice->value(index); }
+				void ClearItems() { m_Choice->clear(); }
 
 			private:
 				Fl_Choice *m_Choice;
