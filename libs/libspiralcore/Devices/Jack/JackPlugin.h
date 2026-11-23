@@ -64,11 +64,12 @@ public:
 
         void SetNumberPorts (int nInputs, int nOutputs);
 
-	enum GUICommands{NONE,UPDATE_NAMES,CHECK_PORT_CHANGES,ATTACH,DETACH,CONNECT_INPUT,CONNECT_OUTPUT,DISCONNECT_INPUT,DISCONNECT_OUTPUT};
+	enum GUICommands{NONE,UPDATE_NAMES,CHECK_PORT_CHANGES,ATTACH,DETACH,CONNECT_INPUT,CONNECT_OUTPUT,DISCONNECT_INPUT,DISCONNECT_OUTPUT, LIST_ROUTES, ADD_ROUTE, REMOVE_ROUTE};
 
 	struct GUIArgs
 	{
 		int PortIndex;
+		int RouteTicket;
 
 		char Port[256];
 	};
@@ -87,7 +88,7 @@ private:
 	void ClaimGroup(long desired);
 	void OpenClient(bool deferOpen);
 	void CloseClient();
-	Spiral::Core::ToggleProperty m_Attached;
+	Spiral::Core::ToggleProperty m_Attached, m_Requested;
 	double m_NextAttach;
 	
 	int m_Version;

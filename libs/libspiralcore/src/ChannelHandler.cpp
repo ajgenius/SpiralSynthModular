@@ -178,6 +178,39 @@ void ChannelHandler::UpdateDataNow(unsigned long frame)
 	#endif
 }
 
+void ChannelHandler::RegisterByteSnapshot(const string &ID)
+{
+	RegisterData(ID, TABLE, NULL, 0, 'B');
+}
+
+void ChannelHandler::PublishBytes(const string &ID, string &bytes)
+{
+	map<string,Channel*>::iterator i = m_ChannelMap.find(ID);
+	if (i == m_ChannelMap.end() || i->second->kind != 'B') return;
+	i->second->pendingBytes.swap(bytes);
+	i->second->tablePending = true;
+}
+
+bool ChannelHandler::ReadByteSnapshot(const string &ID, vector<unsigned char> &bytes)
+{
+	map<string,Channel*>::iterator i = m_ChannelMap.find(ID);
+	if (i == m_ChannelMap.end() || i->second->kind != 'B') return false;
+
+	pthread_mutex_lock(m_Mutex);
+	try
+	{
+		const string &snapshot = i->second->bytes;
+		bytes.assign(snapshot.begin(), snapshot.end());
+	}
+	catch (...)
+	{
+		pthread_mutex_unlock(m_Mutex);
+		throw;
+	}
+	pthread_mutex_unlock(m_Mutex);
+	return true;
+}
+
 void ChannelHandler::RegisterTable(const string &ID)
 {
 	RegisterData(ID, TABLE, NULL, 0, 't');

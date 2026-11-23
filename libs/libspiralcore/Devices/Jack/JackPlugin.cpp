@@ -141,6 +141,8 @@ m_OutputCount(4)
 	}
      	
 	m_AudioCH->Register("PortIndex",&m_GUIArgs.PortIndex);
+	m_AudioCH->Register("RouteTicket", &m_GUIArgs.RouteTicket);
+	m_AudioCH->RegisterByteSnapshot("RouteChoices");
 	SetString(DeviceName, Class().Name);
 	SetUnsigned(DeviceVersion, 2);
 
@@ -149,8 +151,8 @@ m_OutputCount(4)
 	m_NumInputs = SignedProperty(PortFlags, 4, MIN_PORTS, MAX_PORTS, 1, 1);
 	m_NumOutputs = SignedProperty(PortFlags, 4, MIN_PORTS, MAX_PORTS, 1, 1);
 
-	m_Group = SignedProperty(Property::WriteOnly, 1, 1, 0x7fffffff, 1, 1);
-	m_LegacyClient = StringProperty(Property::WriteOnly, "");
+	m_Group = SignedProperty(Property::WriteOnly | Property::Internal, 1, 1, 0x7fffffff, 1, 1);
+	m_LegacyClient = StringProperty(Property::WriteOnly | Property::Internal, "");
 	RegisterSharedProperty(m_Group, "JACK GROUP", "Persistent JACK port group");
 	RegisterSharedProperty(m_LegacyClient, "JACK CLIENT", "Dedicated name for legacy connections");
 	ClaimGroup(m_JackInstanceID + 1);
@@ -160,11 +162,13 @@ m_OutputCount(4)
 	m_AudioCH->RegisterData("Port",ChannelHandler::INPUT,&m_GUIArgs.Port,sizeof(m_GUIArgs.Port));
 	m_NumInputPortNames = SignedProperty(Property::ReadOnly, 0, 0, MAX_PORTS, 1, 1);
 	m_NumOutputPortNames = SignedProperty(Property::ReadOnly, 0, 0, MAX_PORTS, 1, 1);
-	m_Attached = ToggleProperty(Property::WriteOnly, false);
+	m_Attached = ToggleProperty(Property::WriteOnly | Property::Internal, false);
 	RegisterSharedProperty(m_Attached, "ATTACHED", "Requested JACK connection");
 	m_Connected = ToggleProperty(Property::ReadOnly, false);
 	RegisterSharedProperty(m_NumInputPortNames, "NumInputPortNames", "Jack input ports found");
 	RegisterSharedProperty(m_NumOutputPortNames, "NumOutputPortNames", "Jack output ports found");
+	m_Requested = ToggleProperty(Property::ReadOnly, false);
+	RegisterSharedProperty(m_Requested, "REQUESTED", "JACK connection requested");
 	RegisterSharedProperty(m_Connected, "Connected", "Attached to Jack");
 	m_AudioCH->RegisterData("InputPortNames",ChannelHandler::OUTPUT,&m_InputPortNames,sizeof(m_InputPortNames));
 	m_AudioCH->RegisterData("OutputPortNames",ChannelHandler::OUTPUT,&m_OutputPortNames,sizeof(m_OutputPortNames));
@@ -187,6 +191,13 @@ m_OutputCount(4)
 		args.clear(); args.push_back("PortIndex");
 		m_AudioCH->RegisterCommand("DISCONNECT_OUTPUT", DISCONNECT_OUTPUT, args);
 		m_AudioCH->RegisterCommand("UPDATE_NAMES", UPDATE_NAMES, none);
+		args.clear();
+		args.push_back("PortIndex");
+		args.push_back("RouteTicket");
+		m_AudioCH->RegisterCommand("LIST_ROUTES", LIST_ROUTES, args, "ii");
+		args.push_back("Port");
+		m_AudioCH->RegisterCommand("ADD_ROUTE", ADD_ROUTE, args, "iis");
+		m_AudioCH->RegisterCommand("REMOVE_ROUTE", REMOVE_ROUTE, args, "iis");
 	}
 }
 
@@ -316,6 +327,15 @@ void JackPlugin::ExecuteCommands()
 			case DISCONNECT_INPUT: m_JackClient->DisconnectInput(m_GUIArgs.PortIndex); RefreshConnectionEcho(); break;
 			case DISCONNECT_OUTPUT: m_JackClient->DisconnectOutput(m_GUIArgs.PortIndex); RefreshConnectionEcho(); break;
 
+			case LIST_ROUTES:
+				m_JackClient->RequestRoutes(m_GUIArgs.PortIndex, m_GUIArgs.RouteTicket);
+				break;
+			case ADD_ROUTE:
+			case REMOVE_ROUTE:
+				m_JackClient->RequestRoutes(m_GUIArgs.PortIndex, m_GUIArgs.RouteTicket,
+					m_GUIArgs.Port, m_AudioCH->GetCommand() == ADD_ROUTE);
+				break;
+
 			case UPDATE_NAMES :
 			{
 				int c=0;
@@ -351,6 +371,10 @@ void JackPlugin::ExecuteCommands()
 			default : break;
 		}
 	}
+	std::string routes;
+	if (m_JackClient->TakeRoutes(routes))
+		m_AudioCH->PublishBytes("RouteChoices", routes);
+	AsBoolean(m_Requested) = AsBoolean(m_Attached);
 	AsBoolean(m_Connected)=m_JackClient->IsAttached();
 }
 

@@ -67,6 +67,9 @@ public:
 	// A published table changes only when the writer has a new set of rows.
 	// UpdateDataNow swaps it into view under its usual nonblocking audio lock.
 	void RegisterTable(const std::string &ID);
+	void RegisterByteSnapshot(const std::string &ID);
+	void PublishBytes(const std::string &ID, std::string &bytes);
+	bool ReadByteSnapshot(const std::string &ID, std::vector<unsigned char> &bytes);
 	void PublishTable(const std::string &ID, std::vector<double> &cells);
 	bool ReadTable(const std::string &ID, unsigned long &revision, std::vector<double> &cells);
 	void     SetUsed(const std::string &ID, int bytes);
@@ -152,13 +155,15 @@ private:
 
         Type type;
 		std::vector<double> pendingCells, cells;
+		std::string pendingBytes, bytes;
 		unsigned long tableRevision;
 		bool tablePending;
 		void FlushTable()
 		{
 			if (tablePending)
 			{
-				cells.swap(pendingCells);
+				if (kind == 'B') bytes.swap(pendingBytes);
+				else cells.swap(pendingCells);
 				tablePending = false;
 				++tableRevision;
 			}
