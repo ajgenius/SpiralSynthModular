@@ -90,10 +90,12 @@ DiskWriterPlugin::DiskWriterPlugin()
 
 	m_BitsPerSample = SetProperty(Property::WriteOnly, 0, PropertySet(BitRates, sizeof(BitRates)/sizeof(BitRates[0])));
 	m_Stereo = ToggleProperty(Property::WriteOnly, true);
+	m_Open = ToggleProperty(Property::ReadOnly, false);
 	m_Recording = ToggleProperty(Property::ReadOnly, false);
 	m_TimeRecorded = FloatProperty(Property::ReadOnly, 0, 0, 0, 0, 0);
 	RegisterSharedProperty(m_BitsPerSample, "Bits Per Sample", "Bit depth");
 	RegisterSharedProperty(m_Stereo, "Stereo", "Stereo or mono");
+	RegisterSharedProperty(m_Open, "Open", "A WAV file is open");
 	RegisterSharedProperty(m_Recording, "Recording", "Recording now");
 	RegisterSharedProperty(m_TimeRecorded, "Time Recorded", "Seconds recorded");
 	m_PluginInfo.Name="DiskWriter";
@@ -161,6 +163,8 @@ void DiskWriterPlugin::ExecuteCommands()
 		switch(m_AudioCH->GetCommand())
 		{
 			case OPENWAV :
+				if (m_Wav.IsOpen())
+					break;
 				if (m_Wav.GetSamplerate() != GetHostInfo()->SAMPLERATE) {
 					m_Wav.SetSamplerate(GetHostInfo()->SAMPLERATE);
 				}
@@ -168,10 +172,16 @@ void DiskWriterPlugin::ExecuteCommands()
 					m_Wav.SetBitsPerSample(AsSigned(m_BitsPerSample));
 				}
 				m_Wav.Open(m_GUIArgs.Name,WavFile::WRITE, (AsBoolean(m_Stereo))?(WavFile::STEREO):(WavFile::MONO));
-				AsFloat(m_TimeRecorded) = 0;
+				AsBoolean(m_Open) = m_Wav.IsOpen();
+				if (AsBoolean(m_Open))
+					AsFloat(m_TimeRecorded) = 0;
 			break;
-			case CLOSEWAV : m_Wav.Close(); break;
-			case RECORD : AsBoolean(m_Recording)=true; break;
+			case CLOSEWAV :
+				AsBoolean(m_Recording) = false;
+				m_Wav.Close();
+				AsBoolean(m_Open) = false;
+			break;
+			case RECORD : AsBoolean(m_Recording) = m_Wav.IsOpen(); break;
 			case STOP : AsBoolean(m_Recording)=false;	break;
 			default : break;
 		}

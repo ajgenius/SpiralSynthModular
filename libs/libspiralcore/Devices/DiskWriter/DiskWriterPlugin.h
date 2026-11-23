@@ -53,6 +53,7 @@ private:
 	GUIArgs m_GUIArgs;
 	Spiral::Core::SetProperty m_BitsPerSample;
 	Spiral::Core::ToggleProperty m_Stereo;
+	Spiral::Core::ToggleProperty m_Open;
 	Spiral::Core::ToggleProperty m_Recording;
 	Spiral::Core::FloatProperty m_TimeRecorded;
 	int m_Version;
