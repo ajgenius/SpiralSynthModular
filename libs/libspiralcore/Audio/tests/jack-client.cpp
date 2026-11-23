@@ -188,7 +188,7 @@ void *jack_port_get_buffer(jack_port_t *port, jack_nframes_t frames)
 	return port->Buffer;
 }
 
-int jack_port_connected(const jack_port_t *port) { return !port->Connection.empty(); }
+int jack_port_connected(const jack_port_t *port) { return port->Peers.empty() ? int(!port->Connection.empty()) : int(port->Peers.size()); }
 
 const char *jack_port_name(const jack_port_t *port) { return port->Name.c_str(); }
 

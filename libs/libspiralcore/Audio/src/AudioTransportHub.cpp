@@ -90,6 +90,9 @@ void AudioTransportHub::ReleaseTransport()
 
 void AudioTransportHub::BeginPatchReplacement()
 {
+#ifdef HAVE_JACK_CLIENT
+	JackClient::BeginReplacement(this);
+#endif
 	if (!m_Configured || !m_Host || !Streaming() || Transport()->Stream()->Failed())
 		return;
 
@@ -108,6 +111,9 @@ void AudioTransportHub::BeginPatchReplacement()
 
 void AudioTransportHub::EndPatchReplacement()
 {
+#ifdef HAVE_JACK_CLIENT
+	JackClient::EndReplacement(this);
+#endif
 	if (!m_Replacing)
 		return;
 

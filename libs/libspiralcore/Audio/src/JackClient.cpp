@@ -154,6 +154,14 @@ namespace
 	pthread_cond_t routeIdle = PTHREAD_COND_INITIALIZER;
 	JackClient *routing = NULL;
 
+	struct RetainedGroup
+	{
+		JackClient *client;
+		void (*dispose)(JackClient *);
+	};
+	typedef map<string, RetainedGroup> RetainedGroups;
+	map<const void *, RetainedGroups> replacements;
+
 	struct SessionLock
 	{
 		SessionLock() { pthread_mutex_lock(&SessionMutex); }
@@ -322,6 +330,59 @@ unsigned long JackClient::GetBufferSize() const
 unsigned long JackClient::GetSampleRate() const
 {
 	return m_Session ? m_Session->clock.GetSampleRate() : __sync_fetch_and_add(&m_SampleRate, 0);
+}
+
+void JackClient::BeginReplacement(const void *scope)
+{
+	SessionLock lock;
+	replacements.insert(make_pair(scope, RetainedGroups()));
+}
+
+void JackClient::EndReplacement(const void *scope)
+{
+	RetainedGroups unused;
+	{
+		SessionLock lock;
+		map<const void *, RetainedGroups>::iterator it = replacements.find(scope);
+		if (it == replacements.end()) return;
+		unused.swap(it->second);
+		replacements.erase(it);
+	}
+	for (RetainedGroups::iterator it = unused.begin(); it != unused.end(); ++it)
+		it->second.dispose(it->second.client);
+}
+
+bool JackClient::Retain(const void *scope, const string &key, void (*dispose)(JackClient *))
+{
+	if (!HasPortGroup() || !IsAttached()) return false;
+	// The host serializes replacement and destruction under its graph gate.
+	{
+		SessionLock lock;
+		map<const void *, RetainedGroups>::iterator it = replacements.find(scope);
+		if (it == replacements.end() || it->second.count(key)) return false;
+		RetainedGroup entry = {this, dispose};
+		it->second[key] = entry;
+	}
+	SuspendPortGroup();
+	SetCallback(NULL, NULL);
+	for (PortMap::iterator it = m_InputPortMap.begin(); it != m_InputPortMap.end(); ++it)
+		it->second.Buffer = NULL;
+	for (PortMap::iterator it = m_OutputPortMap.begin(); it != m_OutputPortMap.end(); ++it)
+		it->second.Buffer = NULL;
+	Start(); // Supply silence while the host builds the replacement graph.
+	return true;
+}
+
+JackClient *JackClient::Reclaim(const void *scope, const string &key)
+{
+	SessionLock lock;
+	map<const void *, RetainedGroups>::iterator it = replacements.find(scope);
+	if (it == replacements.end()) return NULL;
+	RetainedGroups::iterator entry = it->second.find(key);
+	if (entry == it->second.end()) return NULL;
+	JackClient *client = entry->second.client;
+	it->second.erase(entry);
+	return client;
 }
 
 void JackClient::SuspendPortGroup()

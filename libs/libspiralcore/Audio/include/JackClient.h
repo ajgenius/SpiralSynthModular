@@ -57,6 +57,11 @@ public:
 	bool WaitingForSession() const;
 	bool SessionReady() const;
 	static void ServiceSessions();
+	// A host replacing its patch may hand a still-wired group to the new device.
+	static void BeginReplacement(const void *scope);
+	static void EndReplacement(const void *scope);
+	bool Retain(const void *scope, const std::string &key, void (*dispose)(JackClient *));
+	static JackClient *Reclaim(const void *scope, const std::string &key);
 	// Positive ports send, negative ports receive. Both are numbered from one.
 	void RequestRoutes(int port, unsigned ticket, const std::string &peer = "", bool connect = false);
 	bool TakeRoutes(std::string &result);

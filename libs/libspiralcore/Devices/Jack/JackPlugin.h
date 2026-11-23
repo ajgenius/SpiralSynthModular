@@ -85,6 +85,7 @@ private:
 
 	Spiral::Core::SignedProperty m_NumInputs, m_NumOutputs, m_Group;
 	Spiral::Core::StringProperty m_LegacyClient;
+	std::string EndpointKey() const;
 	void ClaimGroup(long desired);
 	void OpenClient(bool deferOpen);
 	void CloseClient();

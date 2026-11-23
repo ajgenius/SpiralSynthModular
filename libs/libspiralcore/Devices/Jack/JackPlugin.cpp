@@ -201,6 +201,16 @@ m_OutputCount(4)
 	}
 }
 
+std::string JackPlugin::EndpointKey() const
+{
+	if (!m_LegacyClient.Value.empty()) return "client/" + m_LegacyClient.Value;
+	char group[48];
+	snprintf(group, sizeof(group), "group/%ld/", long(m_Group.Value.AsSigned));
+	return group + (m_HostInfo && m_HostInfo->AUDIOCLIENT == "jack" ? m_HostInfo->OUTPUTFILE : std::string("default"));
+}
+
+static void ReleaseRetainedJack(JackClient *client) { delete client; }
+
 JackPlugin::~JackPlugin()
 {
 	liveGroups.erase(AsSigned(m_Group));
@@ -244,7 +254,7 @@ void JackPlugin::OpenClient(bool deferOpen)
 		if (name.empty() || name == "default") name = "SSM-Output";
 	}
 	else
-		m_JackClient->SetPortGroup(this, "", deferOpen, true);
+		m_JackClient->SetPortGroup(m_JackClient, "", deferOpen, true);
 	Spiral::Core::AudioClientOptions options;
 	options.InChannels = m_InputCount;
 	options.OutChannels = m_OutputCount;
@@ -392,7 +402,13 @@ void JackPlugin::RefreshConnectionEcho()
 bool JackPlugin::Kill()
 {
 	m_IsDead=true;
-	if (m_JackClient) Detach();
+	if (m_JackClient && AsBoolean(m_Attached) &&
+	    m_JackClient->Retain(AudioTransportHub::Get(), EndpointKey(), ReleaseRetainedJack))
+	{
+		AudioTransportHub::Get()->UnregisterStream(&m_Stream);
+		m_JackClient = NULL;
+	}
+	else if (m_JackClient) Detach();
 
 	return true;
 }
@@ -589,4 +605,13 @@ void JackPlugin::Apply(Spiral::Core::Description::Reader &r)
 
 	AsBoolean(m_Attached) = wanted;
 	m_NextAttach = 0;
+	if (wanted && r.Find("JACK GROUP") >= 0 && !m_JackClient->IsAttached())
+	{
+		if (JackClient *retained = JackClient::Reclaim(AudioTransportHub::Get(), EndpointKey()))
+		{
+			delete m_JackClient;
+			m_JackClient = retained;
+			OpenClient(true);
+		}
+	}
 }

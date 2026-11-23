@@ -147,6 +147,47 @@ static void CheckSavedEndpoint(bool legacy)
 	AudioTransportHub::Get()->SetHost(NULL);
 }
 
+static void CheckLiveReplacement(bool legacy)
+{
+	using namespace Spiral::Core;
+	HostInfo host = HostInfo();
+	host.BUFSIZE = 64;
+	host.SAMPLERATE = 48000;
+	JackPlugin *old = new JackPlugin;
+	old->Initialise(&host);
+	if (legacy)
+	{
+		Description v2;
+		v2.Value(2).Value(7).Value(3);
+		Description::Reader state(v2);
+		old->Apply(state);
+	}
+	old->Attach();
+	jack_client_t *server = clients.begin()->second;
+	jack_port_t *port = server->Ports.front();
+	assert(!jack_connect(server, "capture:mic", port->Name.c_str()));
+	assert(!jack_connect(server, "capture:line", port->Name.c_str()));
+	Description saved;
+	old->Describe(saved);
+	AudioTransportHub *hub = AudioTransportHub::Get();
+	hub->BeginPatchReplacement();
+	old->Kill();
+	delete old;
+	assert(clients.size() == 1 && server->Ports.front() == port);
+	JackPlugin restored;
+	restored.Initialise(&host);
+	Description::Reader state(saved);
+	restored.Apply(state);
+	hub->EndPatchReplacement();
+	assert(restored.GetJackClient()->IsAttached());
+	assert(server->Ports.front() == port && jack_port_connected(port) == 2);
+	hub->BeginPatchReplacement();
+	restored.Kill();
+	hub->EndPatchReplacement();
+	assert(clients.empty());
+	hub->SetHost(NULL);
+}
+
 static void *FixtureJack(void *) { return static_cast<Spiral::Core::AudioClient *>(new JackClient); }
 static void DropFixtureJack(void *client) { delete static_cast<Spiral::Core::AudioClient *>(client); }
 
@@ -250,6 +291,7 @@ int main()
 	for (unsigned legacy = 0; legacy < 2; ++legacy)
 	{
 		CheckSavedEndpoint(legacy);
+		CheckLiveReplacement(legacy);
 		Check(4, legacy);
 		Check(2, legacy);
 		Check(6, legacy);
