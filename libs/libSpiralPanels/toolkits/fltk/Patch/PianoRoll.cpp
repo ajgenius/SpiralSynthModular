@@ -85,7 +85,8 @@ namespace Spiral
 					draw_children();
 					fl_push_clip(x(), y(), RollW(), RollH());
 
-					for (int row = grid.LowRow; row < grid.LowRow + grid.Rows; ++row)
+					// Paint top to bottom so rounding a lane to whole pixels keeps its upper grid line.
+					for (int row = grid.LowRow + grid.Rows - 1; row >= grid.LowRow; --row)
 					{
 						const int ry = y() + (int)grid.RowY(row);
 						fl_color(m_Look.Colour(NoteGrid::IsAccidental(row) ? "accidental" : "natural"));
@@ -260,6 +261,8 @@ namespace Spiral
 					fl_rectf(nx, ny + 1, width, height);
 					fl_color(m_Look.Colour(marked ? "note_selected" : "note_edge"));
 					fl_rect(nx, ny + 1, width, height);
+					if (marked && width > 2 && height > 2)
+						fl_rect(nx + 1, ny + 2, width - 2, height - 2);
 				}
 
 				PianoRollControl &m_Control;

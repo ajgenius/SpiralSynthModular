@@ -250,55 +250,31 @@
     "PianoRoll": {
       "box": "flat",
       "face": [
-        20,
-        30,
-        20
+        236,
+        236,
+        236
       ],
       "natural": [
-        40,
-        60,
-        40
+        216,
+        216,
+        216
       ],
       "accidental": [
-        30,
-        45,
-        30
-      ],
-      "row_line": [
-        60,
-        80,
-        60
-      ],
-      "grid_line": [
-        70,
-        95,
-        70
-      ],
-      "text": [
         170,
-        200,
+        170,
         170
       ],
+      "row_line": "black",
+      "grid_line": "black",
+      "text": "black",
       "text_font": "helvetica",
       "row_text_size": 9,
       "header_text_size": 10,
-      "playhead": "$playhead",
-      "note_loud": [
-        255,
-        140,
-        38
-      ],
-      "note_quiet": [
-        60,
-        140,
-        60
-      ],
-      "note_edge": [
-        20,
-        30,
-        20
-      ],
-      "note_selected": "white"
+      "playhead": "white",
+      "note_loud": "white",
+      "note_quiet": "blue",
+      "note_edge": "black",
+      "note_selected": "black"
     },
     "MatrixGrid": {
       "scheme": "classic",
