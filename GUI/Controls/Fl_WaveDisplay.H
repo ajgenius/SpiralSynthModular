@@ -44,7 +44,7 @@ class Fl_WaveDisplay : public Fl_Widget {
       long GetLoopStart()       { return m_LoopStart; }
       void SetLoopEnd(long s)   { m_LoopEnd=s; }
       long GetLoopEnd()         { return m_LoopEnd; }
-      void SetPosMarker(bool s) { m_PosMarker=s; }
+      void SetPosMarker(bool s) { if (m_PosMarker != s) { m_PosMarker=s; redraw(); } }
       // The sample a right drag last set, once: its place and new value.
       bool TakeDrawn(long &pos, float &value) {
            if (!m_Drew) return false;
@@ -67,9 +67,11 @@ class Fl_WaveDisplay : public Fl_Widget {
       long m_DrawnPos;
       float m_DrawnValue;
       std::vector<float> m_Min, m_Max;
-      long m_EnvStart, m_EnvJump;
+      long m_EnvStart, m_EnvEnd;
+      int m_EnvWidth;
       bool m_EnvValid;
-      void Envelope(long jump);
+      void Envelope();
+      long SampleAt(int column) const;
       int Column(long sample) const;
       void DamageColumn(int column);
 };

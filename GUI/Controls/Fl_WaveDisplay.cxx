@@ -27,8 +27,8 @@ using namespace std;
 
 Fl_WaveDisplay::Fl_WaveDisplay(int x,int y,int w,int h, const char *Name) :
 Fl_Widget(x,y,w,h,Name),
-m_StartPos(1),
-m_EndPos(10),
+m_StartPos(0),
+m_EndPos(0),
 m_ViewStart(0),
 m_ViewEnd(INT_MAX),
 m_PlayPos(0),
@@ -40,7 +40,8 @@ m_Drew(false),
 m_DrawnPos(0),
 m_DrawnValue(0),
 m_EnvStart(0),
-m_EnvJump(0),
+m_EnvEnd(0),
+m_EnvWidth(0),
 m_EnvValid(false)
 {
 }
@@ -74,114 +75,99 @@ void Fl_WaveDisplay::SetPlayPos(long s)
 // The column draw() puts a sample in, or -1 when it is out of view.
 int Fl_WaveDisplay::Column(long sample) const
 {
-	const long length = (long)m_Sample.size();
-	if (!length || w() <= 0) return -1;
-	const long start = std::max(0L, m_ViewStart), end = std::min(m_ViewEnd, length - 1);
-	long jump = (end - start) / w();
-	if (jump == 0) jump = 1;
-	if (sample < start || sample >= end - jump) return -1;
-	return (int)((sample - start) / jump);
+	const long end = std::min(m_ViewEnd, (long)m_Sample.size() - 1);
+	if (sample < m_ViewStart || sample > end || w() <= 0) return -1;
+	return (int)((sample - m_ViewStart) * (double)w() / (end - m_ViewStart + 1));
+}
+
+long Fl_WaveDisplay::SampleAt(int column) const
+{
+	return m_ViewStart + (long)(std::max(0, std::min(w(), column)) *
+		(double)(m_ViewEnd - m_ViewStart + 1) / std::max(1, w()));
 }
 
 void Fl_WaveDisplay::DamageColumn(int column)
 {
-	if (column < 0) return;
-	Fl_DamageArea(this, x() + column - 1, y(), 3, h());
+	if (column >= 0) Fl_DamageArea(this, x() + column - 1, y(), 3, h());
 }
 
-void Fl_WaveDisplay::Envelope(long jump)
+void Fl_WaveDisplay::Envelope()
 {
-	if (m_EnvValid && m_EnvStart == m_ViewStart && m_EnvJump == jump) return;
-	const long length = (long)m_Sample.size();
-	m_Min.clear();
-	m_Max.clear();
-	for (long n = m_ViewStart; n < m_ViewEnd - jump; n += jump)
+	if (m_EnvValid && m_EnvStart == m_ViewStart && m_EnvEnd == m_ViewEnd && m_EnvWidth == w()) return;
+	m_Min.resize(w());
+	m_Max.resize(w());
+	for (int col = 0; col < w(); ++col)
 	{
-		float max = m_Sample[n], min = m_Sample[n];
-		for (long m = n; m < n + jump && m < length; m++)
+		const long start = SampleAt(col), end = SampleAt(col + 1);
+		float low = m_Sample[start], high = low;
+		for (long i = start + 1; i < end; ++i)
 		{
-			if (max < m_Sample[m]) max = m_Sample[m];
-			if (min > m_Sample[m]) min = m_Sample[m];
+			low = std::min(low, m_Sample[i]);
+			high = std::max(high, m_Sample[i]);
 		}
-		m_Min.push_back(min);
-		m_Max.push_back(max);
+		m_Min[col] = low;
+		m_Max[col] = high;
 	}
 	m_EnvStart = m_ViewStart;
-	m_EnvJump = jump;
+	m_EnvEnd = m_ViewEnd;
+	m_EnvWidth = w();
 	m_EnvValid = true;
 }
 
 void Fl_WaveDisplay::draw()
 {
-	int ho=h()/2;
-	fl_color (m_BGColour);
+	if (w() <= 0 || h() <= 0) return;
+	fl_push_clip(x(), y(), w(), h());
+	fl_color(m_BGColour);
 	fl_rectf(x(), y(), w(), h());
-	if (m_Sample.empty()) return;
-	const long length=(long)m_Sample.size();
-
-	if (m_ViewStart<0) m_ViewStart=0;
-	if (m_ViewEnd>length-1) m_ViewEnd=length-1;
-
-	if (m_PlayStart<0) m_PlayStart=0;
-	if (m_PlayStart>length-1) m_PlayStart=length-1;
-	if (m_LoopStart<0) m_LoopStart=0;
-	if (m_LoopStart>length-1) m_LoopStart=length-1;
-	if (m_LoopEnd<0) m_LoopEnd=0;
-	if (m_LoopEnd>length-1) m_LoopEnd=length-1;
-
-	int Jump=(m_ViewEnd-m_ViewStart)/w();
-	if (Jump==0) Jump=1;
-	Envelope(Jump);
-	fl_font(fl_font(),10);
-
-	// Only the columns in the clip, with room for a marker's label to their left.
+	const int mid = y() + h() / 2;
+	if (!m_Sample.empty())
+	{
+		const long last = (long)m_Sample.size() - 1;
+		m_ViewStart = std::max(0L, std::min(m_ViewStart, last));
+		m_ViewEnd = std::max(m_ViewStart, std::min(m_ViewEnd, last));
+		if (m_EndPos > m_StartPos && m_EndPos > m_ViewStart && m_StartPos <= m_ViewEnd)
+		{
+			const int left = Column(std::max(m_StartPos, m_ViewStart));
+			const int right = m_EndPos > m_ViewEnd ? w() : Column(m_EndPos);
+			fl_color(m_SelColour);
+			fl_rectf(x() + left, y(), right - left, h());
+		}
+	}
+	fl_color(m_MrkColour);
+	fl_line(x(), mid, x() + w() - 1, mid);
+	if (m_Sample.empty())
+	{
+		fl_font(FL_HELVETICA, 8);
+		fl_draw("No sample", x(), y(), w(), h(), FL_ALIGN_CENTER);
+		fl_pop_clip();
+		return;
+	}
+	Envelope();
 	int cx, cy, cw, ch;
 	fl_clip_box(x(), y(), w(), h(), cx, cy, cw, ch);
-	const int first = std::max(0, cx - x() - 16), last = cx + cw - x() + 1;
-	int pos=first;
-
-	for(long n=m_ViewStart+(long)first*Jump; n<m_ViewEnd-Jump && pos<=last && pos<(int)m_Min.size(); n+=Jump)
+	fl_color(m_FGColour);
+	for (int col = std::max(0, cx - x()); col < std::min(w(), cx + cw - x()); ++col)
+		fl_line(x() + col, mid - (int)(m_Max[col] * (h() - 1) / 2),
+		        x() + col, mid - (int)(m_Min[col] * (h() - 1) / 2));
+	const int play = Column(m_PlayPos);
+	if (m_PosMarker && play >= 0)
 	{
-		if (m_PlayPos>=n && m_PlayPos<n+Jump)
-		{
-			fl_color (m_IndColour);
-			fl_line(x()+pos, y(),
-				    x()+pos, y()+h());
-		}
-
-		if (m_PlayStart>=n && m_PlayStart<n+Jump)
-		{
-			fl_color (m_MrkColour);
-			fl_draw("S",x()+pos+2,y()+h());
-			fl_line(x()+pos, y(),
-				    x()+pos, y()+h());
-		}
-
-		if (m_LoopStart>=n && m_LoopStart<n+Jump)
-		{
-			fl_color (m_MrkColour);
-			fl_draw("LS",x()+pos+2,y()+h());
-			fl_line(x()+pos, y(),
-				    x()+pos, y()+h());
-		}
-
-		if (m_LoopEnd>=n && m_LoopEnd<n+Jump)
-		{
-			fl_color (m_MrkColour);
-			fl_draw("LE",x()+pos+2,y()+h());
-			fl_line(x()+pos, y(),
-				    x()+pos, y()+h());
-		}
-
-		if (n>m_StartPos && n<m_EndPos) fl_color (m_SelColour);
-		else fl_color (m_FGColour);
-
-		const float min=m_Min[pos]*ho, max=m_Max[pos]*ho;
-
-		fl_line(x()+pos-1, y()+ho-(int)min,
-				x()+pos-1, y()+ho-(int)max);
-		pos++;
+		fl_color(m_IndColour);
+		fl_line(x() + play, y(), x() + play, y() + h() - 1);
 	}
+	const long markers[] = {m_PlayStart, m_LoopStart, m_LoopEnd};
+	const char *labels[] = {"S", "LS", "LE"};
+	fl_font(FL_HELVETICA, 8);
+	fl_color(m_MrkColour);
+	for (int i = 0; i < 3; ++i)
+	{
+		const int col = Column(markers[i]);
+		if (col < 0) continue;
+		fl_line(x() + col, y(), x() + col, y() + h() - 1);
+		fl_draw(labels[i], x() + std::max(0, std::min(col + 2, w() - 16)), y() + h() - 10 * (i + 1), 16, 10, FL_ALIGN_CENTER);
+	}
+	fl_pop_clip();
 }
 
 int Fl_WaveDisplay::handle(int event)
@@ -205,7 +191,7 @@ int Fl_WaveDisplay::handle(int event)
 
 		if (Mousebutton==1)
 		{
-			int MousePos=(xx-x())*((m_ViewEnd-m_ViewStart)/w())+m_ViewStart;
+			long MousePos=std::min(length - 1, SampleAt(xx - x()));
 			Holding=0;
 			if (abs(MousePos-m_StartPos)<GrabDist)    Holding=1;
 			else if (abs(MousePos-m_EndPos)<GrabDist) Holding=2;
@@ -224,7 +210,7 @@ int Fl_WaveDisplay::handle(int event)
 	{
 		if (Mousebutton==1)
 		{	
-			int MousePos=(xx-x())*((m_ViewEnd-m_ViewStart)/w())+m_ViewStart;				
+			long MousePos=std::min(length - 1, SampleAt(xx - x()));				
 
 			switch (Holding)
 			{
@@ -279,7 +265,7 @@ int Fl_WaveDisplay::handle(int event)
 			// only draw wave at 1 pixel = 1 sample
 			if ((m_ViewEnd-m_ViewStart)/w()==1)
 			{
-				int MousePos=(xx-x())*((m_ViewEnd-m_ViewStart)/w())+m_ViewStart;
+				long MousePos=std::min(length - 1, SampleAt(xx - x()));
 				float Value=-(yy-y())/((float)h()/2.0f)+1.0f;
 				if (Value>1.0f) Value=1.0f;
 				if (Value<-1.0f) Value=-1.0f;
