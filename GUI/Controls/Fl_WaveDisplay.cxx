@@ -21,6 +21,7 @@
 #include <FL/fl_draw.H>
 #include <algorithm>
 #include <climits>
+#include <cmath>
 #include <cstdlib>
 
 using namespace std;
@@ -114,6 +115,13 @@ void Fl_WaveDisplay::Envelope()
 	m_EnvValid = true;
 }
 
+static int WaveY(float value, int height)
+{
+	if (!std::isfinite(value)) value = 0;
+	value = std::max(-1.f, std::min(1.f, value));
+	return (int)((1.0 - value) * (height - 1) * .5);
+}
+
 void Fl_WaveDisplay::draw()
 {
 	if (w() <= 0 || h() <= 0) return;
@@ -148,8 +156,8 @@ void Fl_WaveDisplay::draw()
 	fl_clip_box(x(), y(), w(), h(), cx, cy, cw, ch);
 	fl_color(m_FGColour);
 	for (int col = std::max(0, cx - x()); col < std::min(w(), cx + cw - x()); ++col)
-		fl_line(x() + col, mid - (int)(m_Max[col] * (h() - 1) / 2),
-		        x() + col, mid - (int)(m_Min[col] * (h() - 1) / 2));
+		fl_line(x() + col, y() + WaveY(m_Max[col], h()),
+		        x() + col, y() + WaveY(m_Min[col], h()));
 	const int play = Column(m_PlayPos);
 	if (m_PosMarker && play >= 0)
 	{
