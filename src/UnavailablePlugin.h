@@ -2,6 +2,7 @@
 #define UNAVAILABLE_PLUGIN_H
 
 #include "SpiralPlugin.h"
+#include "PatchDescription.h"
 #include <string>
 
 // Stand-in for a plugin id the host could not create. The state the host
@@ -20,11 +21,14 @@ public:
 	int InputCount() const { return m_PluginInfo.NumInputs; }
 	int OutputCount() const { return m_PluginInfo.NumOutputs; }
 	void EnsurePorts(int inputs, int outputs);
+	void SetDefinition(const Spiral::Core::DeviceDescription &device);
+	const Spiral::Core::DeviceDescription &Definition() const { return m_Definition; }
 	virtual void RestoreUnavailablePorts(int inputs, int outputs) { EnsurePorts(inputs, outputs); }
 
 private:
 	void ApplyKnownLayout();
 
+	Spiral::Core::DeviceDescription m_Definition;
 	int m_PluginId;
 	Spiral::Core::Description m_State;
 	std::string m_SavedName;

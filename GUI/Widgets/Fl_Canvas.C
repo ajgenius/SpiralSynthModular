@@ -1541,6 +1541,23 @@ string Fl_Canvas::PortName(int id, bool input, int port)
 	return at >= 0 && at < (int)info->PortTips.size() ? info->PortTips[at] : string();
 }
 
+int Fl_Canvas::SavedPort(int id, bool input, int port, const string &name)
+{
+	if (name.empty())
+		return port;
+	Fl_DeviceGUI *device = FindDevice(id);
+	if (!device)
+		return port;
+	const DeviceGUIInfo *info = device->GetInfo();
+	const int count = input ? info->NumInputs : info->NumOutputs;
+	if (port >= 0 && port < count && PortName(id, input, port) == name)
+		return port;
+	for (int i = 0; i < count; ++i)
+		if (PortName(id, input, i) == name)
+			return i;
+	return port;
+}
+
 void Fl_Canvas::WiresThrough(int box, bool input, int port, vector<CanvasWire> &out) const
 {
 	const int page = PageOf(box);
@@ -2184,7 +2201,30 @@ void Describe(Spiral::Core::PatchDescription &patch, Fl_Canvas &o, int page)
 		snprintf(text, sizeof text, "%d", i->OutputPort); wire.FromPort = text;
 		snprintf(text, sizeof text, "%d", i->InputID);    wire.ToDevice = text;
 		snprintf(text, sizeof text, "%d", i->InputPort);  wire.ToPort = text;
+		wire.FromPortName = o.PortName(i->OutputID, false, i->OutputPort);
+		wire.ToPortName = o.PortName(i->InputID, true, i->InputPort);
+		const Spiral::Core::DeviceDescription *source = patch.FindDevice(wire.FromDevice);
+		const Spiral::Core::DeviceDescription *sink = patch.FindDevice(wire.ToDevice);
+		if (source)
+		{
+			snprintf(text, sizeof text, "%d", source->FilePort(false, i->OutputPort, wire.FromPortName));
+			wire.FromPort = text;
+		}
+		if (sink)
+		{
+			snprintf(text, sizeof text, "%d", sink->FilePort(true, i->InputPort, wire.ToPortName));
+			wire.ToPort = text;
+		}
 	}
+}
+
+static string SavedSocketName(const Spiral::Core::DeviceDescription *device, bool input,
+	int port, const string &wireName)
+{
+	if (!wireName.empty() || !device || port < 0)
+		return wireName;
+	const vector<Spiral::Core::PortName> &ports = input ? device->Inputs : device->Outputs;
+	return size_t(port) < ports.size() ? ports[port].Name : string();
 }
 
 void Apply(const Spiral::Core::PatchDescription &patch, Fl_Canvas &o, const std::map<std::string, int> &ids)
@@ -2195,9 +2235,13 @@ void Apply(const Spiral::Core::PatchDescription &patch, Fl_Canvas &o, const std:
 		std::map<std::string, int>::const_iterator from = ids.find(wire.FromDevice), to = ids.find(wire.ToDevice);
 		CanvasWire NewWire;
 		NewWire.OutputID = from == ids.end() ? -1 : from->second;
-		NewWire.OutputPort = atoi(wire.FromPort.c_str());
+		const int output = atoi(wire.FromPort.c_str());
+		NewWire.OutputPort = o.SavedPort(NewWire.OutputID, false, output,
+			SavedSocketName(patch.FindDevice(wire.FromDevice), false, output, wire.FromPortName));
 		NewWire.InputID = to == ids.end() ? -1 : to->second;
-		NewWire.InputPort = atoi(wire.ToPort.c_str());
+		const int input = atoi(wire.ToPort.c_str());
+		NewWire.InputPort = o.SavedPort(NewWire.InputID, true, input,
+			SavedSocketName(patch.FindDevice(wire.ToDevice), true, input, wire.ToPortName));
 		if ((o.IsBox(NewWire.OutputID) || o.IsBox(NewWire.InputID)) && !o.ResolveWire(NewWire))
 		{
 			std::cerr << "SSM: Skipping a wire whose subpatch port leads nowhere.\n";

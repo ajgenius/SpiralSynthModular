@@ -122,6 +122,7 @@ public:
 	const vector<CanvasWire> &Wires() const { return m_WireVec; }
 	string Name(int id);
 	string PortName(int id, bool input, int port);
+	int SavedPort(int id, bool input, int port, const string &name);
 	bool IsEventPort(int id, bool input, int port);
 	void EraseWire(const CanvasWire &wire);
 	void AddBoxPort(int box, bool input, const string &name, const string &type);

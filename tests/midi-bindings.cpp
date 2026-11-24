@@ -360,6 +360,73 @@ static void HeldEnvelope(unsigned id)
 	delete envelope;
 }
 
+static void NestedEventOutput(SynthModular &synth)
+{
+	synth.ClearUp();
+	PatchDescription patch;
+	DeviceDescription &box = patch.AddObject().AddDevice();
+	box.SetValue("patch_id", "box");
+	box.SetValue("name", "SubPatch");
+	box.Config.Mode = "Inline";
+	box.Outputs.push_back(PortName("Notes", "MusicalEventPort"));
+	box.Binds.push_back(PortBind(false, 0, "Device/10/Output/0"));
+	DeviceDescription &roll = box.MakeSubPatch().AddObject().AddDevice();
+	roll.SetValue("patch_id", "10");
+	roll.SetValue("id", "288");
+	roll.SetValue("name", "PianoRoll");
+	EventClip clip;
+	clip.Clear(48000);
+	assert(clip.AddNote(0, 9600, 0, 64, .75f));
+	roll.AddProperty("CLIP", "string", "StringProperty").SetValue(clip.Save());
+	roll.AddProperty("ANNOTATION", "string", "StringProperty").SetValue("chorus");
+	roll.Outputs.push_back(PortName("Events", "MusicalEventPort"));
+	for (int i = 0; i < 2; ++i)
+	{
+		const char *id = i ? "12" : "11";
+		DeviceDescription &sink = patch.AddObject().AddDevice();
+		sink.SetValue("patch_id", id);
+		sink.SetValue("id", "289");
+		sink.SetValue("name", "Event Input");
+		WireDescription &wire = patch.AddWire();
+		wire.FromDevice = "box";
+		wire.FromPort = wire.ToPort = "0";
+		wire.ToDevice = id;
+	}
+	assert(synth.Apply(patch, ""));
+	synth.FreezeAll();
+	SpiralPlugin *source = synth.cb_FindDevice(10, &synth);
+	assert(source);
+	source->GetChannelHandler()->SetCommand(PianoRollPlugin::PLAY);
+	source->UpdateChannelHandler();
+	source->ExecuteCommands();
+	source->Execute();
+	for (int id = 11; id <= 12; ++id)
+	{
+		SpiralPlugin *sink = synth.cb_FindDevice(id, &synth);
+		assert(sink && sink->GetEventInput(0) == source->GetEventOutput(0));
+		sink->Execute();
+		Sample *gate = NULL;
+		assert(sink->GetOutput(2, &gate) && (*gate)[0] == .75f);
+	}
+	source->GetChannelHandler()->SetCommand(PianoRollPlugin::CLEAR);
+	source->UpdateChannelHandler();
+	source->ExecuteCommands();
+	synth.ThawAll();
+	PatchDescription edited;
+	Describe(edited, synth, "");
+	const DeviceDescription *savedBox = NULL;
+	for (size_t i = 0; i < edited.Objects.size(); ++i)
+		if (!edited.Objects[i].Devices.empty() && edited.Objects[i].Devices[0].IsSubPatch())
+			savedBox = &edited.Objects[i].Devices[0];
+	assert(savedBox && savedBox->Binds.size() == 1 && savedBox->Binds[0].InnerPath == "Device/10/Output/0");
+	const DeviceDescription *child = savedBox->Inner()->FindDevice("10");
+	assert(child && child->FindProperty("ANNOTATION")->Value() == "chorus");
+	EventClip cleared;
+	assert(cleared.Load(child->FindProperty("CLIP")->Value()) && !cleared.Count());
+	synth.ClearUp();
+	puts("Nested roll sends the same note and velocity through its event outlet to both instruments PASS");
+}
+
 static void HeldEventInput()
 {
 	HostInfo host = HostInfo();
@@ -498,6 +565,7 @@ int main(int argc, char **argv)
 	assert(!pthread_create(&thread, NULL, Host::Run, &host));
 	assert(MidiDevice::Get() && MidiDevice::Get()->GetBackendName() == "script");
 
+	NestedEventOutput(synth);
 	HeldEventInput();
 	HeldEnvelope(5);
 	HeldEnvelope(33);

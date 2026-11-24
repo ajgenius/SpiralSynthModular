@@ -57,17 +57,23 @@ void UnavailablePlugin::EnsurePorts(int inputs, int outputs)
 	}
 
 	m_PluginInfo.PortTips.clear();
-
-	for (int n = 0; n < m_PluginInfo.NumInputs; n++)
-		m_PluginInfo.PortTips.push_back("Unavailable input");
-
-	for (int n = 0; n < m_PluginInfo.NumOutputs; n++)
-		m_PluginInfo.PortTips.push_back("Unavailable output");
-
-	m_PluginInfo.PortTypes.clear();
-
-	for (int n = 0; n < m_PluginInfo.NumInputs + m_PluginInfo.NumOutputs; n++)
-		m_PluginInfo.PortTypes.push_back(0);
+	m_PluginInfo.PortTypes.assign(inputs + outputs, Sample::AUDIO);
+	for (int direction = 0; direction < 2; ++direction)
+	{
+		const bool input = direction == 0;
+		const std::vector<Spiral::Core::PortName> &ports = input ? m_Definition.Inputs : m_Definition.Outputs;
+		for (int i = 0; i < (input ? inputs : outputs); ++i)
+		{
+			const bool known = size_t(i) < ports.size();
+			m_PluginInfo.PortTips.push_back(known ? ports[i].Name : input ? "Unavailable input" : "Unavailable output");
+			const Sample::SampleType type = known && ports[i].Type == "MusicalEventPort" ? Sample::EVENT
+				: known && ports[i].Type == "MidiEventPort" ? Sample::MIDI : Sample::AUDIO;
+			if (input)
+				SetInPortType(m_PluginInfo, i, type);
+			else
+				SetOutPortType(m_PluginInfo, i, type);
+		}
+	}
 
 	UpdatePluginInfoWithHost();
 }
@@ -128,17 +134,18 @@ void UnavailablePlugin::Execute()
 
 void UnavailablePlugin::Describe(Spiral::Core::Description &d)
 {
-	// The state as the host found it: every value, every gap.
-	const vector<string> &values = m_State.Values();
-	const vector<string> &between = m_State.Between();
-	d.Separator(between[0].c_str());
-
-	for (size_t i = 0; i < values.size(); ++i)
-		d.Value(values[i]).Separator(between[i + 1].c_str());
+	d = m_State;
 }
 
 void UnavailablePlugin::Apply(Spiral::Core::Description::Reader &r)
 {
 	r.Rest(m_State);
 	ApplyKnownLayout();
+}
+
+void UnavailablePlugin::SetDefinition(const Spiral::Core::DeviceDescription &device)
+{
+	m_Definition = device;
+	SetSavedName(device.Value("name"));
+	EnsurePorts(device.Inputs.size(), device.Outputs.size());
 }

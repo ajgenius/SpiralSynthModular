@@ -236,6 +236,7 @@ m_TopWindow(NULL),
 m_PatchVoices(0),
 m_VoicesStale(false),
 m_SavePointCount(0),
+m_BranchDocument(false),
 m_MenuStateKnown(false),
 m_MenuSelection(false),
 m_MenuPaste(false),
@@ -1398,7 +1399,7 @@ static int OnlySamplerFiles(const string &dir, int id)
 	return *groups.begin();
 }
 
-DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
+DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y, bool unavailable)
 {
 	DeviceWin *nlw = new DeviceWin;
 	const Spiral::Core::DeviceClass* Plugin=Spiral::Core::DeviceClassRegistry::Get()->Find(n);
@@ -1406,7 +1407,7 @@ DeviceWin* SynthModular::NewDeviceWin(int n, int x, int y)
 
 	nlw->m_Device = NULL;
 
-	if (Plugin)
+	if (Plugin && !unavailable)
 		nlw->m_Device=Plugin->CreateInstance();
 
 	if (!nlw->m_Device)
@@ -1928,7 +1929,7 @@ void SynthModular::RebuildVoices()
 		}
 		const Spiral::Core::DeviceClass *Plugin = Spiral::Core::DeviceClassRegistry::Get()->Find(i->second->m_PluginID);
 
-		if (!Plugin)
+		if (!Plugin || dynamic_cast<UnavailablePlugin *>(i->second->m_Device))
 			continue;
 
 		pool->Add(i->first, i->second->m_Device, *Plugin, (unsigned)voices, &m_Info, m_Sidecars);
@@ -2563,10 +2564,78 @@ iostream &operator>>(iostream &s, SynthModular &o)
 
 //////////////////////////////////////////////////////////
 
-static string BindPath(Fl_Canvas &canvas, int id, bool input, int port)
+static void DescribeDeviceState(DeviceWin &win, Spiral::Core::DeviceDescription &device)
+{
+	Fl_DeviceGUI *view = win.m_DeviceGUI;
+	const DeviceGUIInfo *info = view->GetInfo();
+	for (int direction = 0; direction < 2; ++direction)
+	{
+		const bool input = direction == 0;
+		for (int k = 0; k < (input ? info->NumInputs : info->NumOutputs); ++k)
+		{
+			const int type = view->GetPortType(input ? k : info->NumInputs + k);
+			const size_t at = input ? k : info->NumInputs + k;
+			const string name = at < info->PortTips.size() ? info->PortTips[at] : string();
+			(input ? device.Inputs : device.Outputs).push_back(Spiral::Core::PortName(name,
+				type == Sample::EVENT ? "MusicalEventPort" : type == Sample::MIDI ? "MidiEventPort" : "AudioPort"));
+		}
+	}
+	Spiral::Core::Description described;
+	win.m_Device->Describe(described);
+	Spiral::File::PatchFile::Properties(described, device);
+}
+
+// Retain the file's spelling, version and port order for state that the local
+// device did not edit. Devices can expose different subsets of the same patch.
+static void RetainImportedState(const DeviceWin::ImportedState &imported, Spiral::Core::DeviceDescription &device)
+{
+	using namespace Spiral::Core;
+	if (device.Inputs == imported.Local.Inputs && !imported.File.Inputs.empty())
+		device.Inputs = imported.File.Inputs;
+	if (device.Outputs == imported.Local.Outputs && !imported.File.Outputs.empty())
+		device.Outputs = imported.File.Outputs;
+
+		if (imported.File.HasValue("version"))
+		device.SetValue("version", imported.File.Value("version"));
+	else
+		device.Values.erase("version");
+	if (device.Properties == imported.Local.Properties)
+	{
+		device.Properties = imported.File.Properties;
+		return;
+	}
+
+	vector<PropertyDescription> edited;
+	edited.swap(device.Properties);
+	device.Properties = imported.File.Properties;
+	std::set<string> present;
+	for (size_t i = 0; i < edited.size(); ++i)
+	{
+		present.insert(edited[i].Name);
+		const PropertyDescription *initial = imported.Local.FindProperty(edited[i].Name);
+		if (initial && *initial == edited[i])
+			continue;
+		PropertyDescription *field = device.FindProperty(edited[i].Name);
+		if (field)
+			*field = edited[i];
+		else
+			device.Properties.push_back(edited[i]);
+	}
+	for (size_t i = device.Properties.size(); i-- > 0; )
+	{
+		const string &name = device.Properties[i].Name;
+		if (!present.count(name) && imported.Local.FindProperty(name))
+			device.Properties.erase(device.Properties.begin() + i);
+	}
+}
+
+static string BindPath(const Spiral::Core::PatchDescription &inner, Fl_Canvas &canvas, int id, bool input, int port)
 {
 	char text[64];
-
+	snprintf(text, sizeof text, "%d", id);
+	const Spiral::Core::DeviceDescription *child = inner.FindDevice(text);
+	if (child)
+		port = child->FilePort(input, port, canvas.PortName(id, input, port));
 	snprintf(text, sizeof text, "%s/%d/%s/%d", canvas.IsBox(id) ? "SubPatch" : "Device", id, input ? "Input" : "Output", port);
 
 	return text;
@@ -2634,6 +2703,7 @@ void DescribePage(
 			if (const SubPatchDevice *described = o.m_Canvas->Box(i->first))
 			{
 				device.Config = described->Config();
+				device.Inner()->Document = described->Document;
 
 				for (int input = 1; input >= 0; --input)
 				{
@@ -2645,7 +2715,7 @@ void DescribePage(
 
 						if (ports[k].InnerID >= 0)
 							device.Binds.push_back(Spiral::Core::PortBind(input != 0, (unsigned)k,
-								BindPath(*o.m_Canvas, ports[k].InnerID, input != 0, ports[k].InnerPort)));
+								BindPath(*device.Inner(), *o.m_Canvas, ports[k].InnerID, input != 0, ports[k].InnerPort)));
 					}
 				}
 			}
@@ -2661,9 +2731,20 @@ void DescribePage(
 		if (Spiral::Panels::PanelWindow *window = dynamic_cast<Spiral::Panels::PanelWindow *>(i->second->m_DeviceGUI->GetPluginWindow()))
 			window->SaveState(object.State);
 
-		Spiral::Core::Description described;
-		i->second->m_Device->Describe(described);
-		Spiral::File::PatchFile::Properties(described, device);
+		if (UnavailablePlugin *missing = dynamic_cast<UnavailablePlugin *>(i->second->m_Device))
+		{
+			if (missing->Definition().HasValue("id"))
+			{
+				const string id = device.Value("patch_id");
+				device = missing->Definition();
+				device.SetValue("patch_id", id);
+				continue;
+			}
+		}
+
+		DescribeDeviceState(*i->second, device);
+		if (i->second->Imported.get())
+			RetainImportedState(*i->second->Imported, device);
 
 		// save external files
 		if (!sidecars.empty() && i->second->m_Device->SaveExternalFiles(sidecars))
@@ -2686,6 +2767,7 @@ void Describe(Spiral::Core::PatchDescription &patch, SynthModular &o, const stri
 	patch.Clear();
 	patch.Values["application"] = "SpiralSynthModular";
 	patch.Voices = o.m_PatchVoices;
+	patch.Document = o.m_Document;
 
 	// make external files dir
 	bool ExternalDirUsed=false;
@@ -2707,7 +2789,7 @@ void Describe(Spiral::Core::PatchDescription &patch, SynthModular &o, const stri
 	o.ThawAll();
 }
 
-void SynthModular::Apply(
+bool SynthModular::Apply(
 		const Spiral::Core::PatchDescription &patch,
 		const string &sidecars,
 		bool merge
@@ -2725,7 +2807,8 @@ void SynthModular::Apply(
 	if (!merge)
 		SetPatchVoices(patch.Voices);
 
-	if (ApplyPage(patch, sidecars, merge, merge ? m_Canvas->Page() : -1, ids) && !merge)
+	const bool applied = ApplyPage(patch, sidecars, merge, merge ? m_Canvas->Page() : -1, ids);
+	if (applied && !merge)
 		m_Canvas->CenterPatch();
 
 	if (!merge)
@@ -2755,6 +2838,7 @@ void SynthModular::Apply(
 	ThawAll();
 	m_Sidecars = sidecars.empty() ? m_FilePath + "_files/" : sidecars;
 	RebuildVoices();
+	return applied;
 }
 
 static bool ParseBindPath(const string &path, string &id, bool &input, int &port)
@@ -2776,12 +2860,55 @@ static bool ParseBindPath(const string &path, string &id, bool &input, int &port
 	return true;
 }
 
+// A public roll can edit the first sequence, but its device has no sequence
+// selector or note/gate CV sockets. Preserve a roll wired to those sockets
+// intact so a save cannot reinterpret the cable as Launch or End.
+static bool BankOnlyPort(const Spiral::Core::DeviceDescription &device, bool input,
+	int index, const string &savedName)
+{
+	const vector<Spiral::Core::PortName> &ports = input ? device.Inputs : device.Outputs;
+	string name = savedName;
+	if (name.empty() && index >= 0 && size_t(index) < ports.size())
+		name = ports[index].Name;
+	if (!name.empty())
+		return input ? name == "Sequence" : name == "Note CV" || name == "Gate CV";
+	if (device.FindProperty("CLIP"))
+		return false;
+	return input ? index == 1 : index == 1 || index == 2;
+}
+
+static bool NeedsBankPorts(const Spiral::Core::DeviceDescription &device,
+	const Spiral::Core::PatchDescription &patch, const vector<Spiral::Core::PortBind> *binds)
+{
+	if (!device.FindProperty("SEQUENCES") || device.Value("id") != "288")
+		return false;
+	const string id = device.Value("patch_id");
+	for (size_t w = 0; w < patch.Wires.size(); ++w)
+	{
+		const Spiral::Core::WireDescription &wire = patch.Wires[w];
+		if ((wire.FromDevice == id && BankOnlyPort(device, false, atoi(wire.FromPort.c_str()), wire.FromPortName))
+			|| (wire.ToDevice == id && BankOnlyPort(device, true, atoi(wire.ToPort.c_str()), wire.ToPortName)))
+			return true;
+	}
+	for (size_t b = 0; binds && b < binds->size(); ++b)
+	{
+		string child;
+		bool input;
+		int port;
+		if (ParseBindPath((*binds)[b].InnerPath, child, input, port) && child == id
+			&& BankOnlyPort(device, input, port, string()))
+			return true;
+	}
+	return false;
+}
+
 bool SynthModular::ApplyPage(
 		const Spiral::Core::PatchDescription &patch,
 		const string &sidecars,
 		bool merge,
 		int page,
-		std::map<std::string, int> &ids
+		std::map<std::string, int> &ids,
+		const vector<Spiral::Core::PortBind> *binds
 	)
 {
 	const bool shown = page == m_Canvas->Page();
@@ -2850,6 +2977,7 @@ bool SynthModular::ApplyPage(
 			if (device.IsSubPatch())
 			{
 				SubPatchDevice *box = new SubPatchDevice;
+				box->Document = device.Inner()->Document;
 
 				for (size_t k = 0; k < device.Inputs.size(); ++k)
 					box->Inputs.push_back(BoundaryPort(-1, -1, device.Inputs[k].Name, device.Inputs[k].Type));
@@ -2879,7 +3007,7 @@ bool SynthModular::ApplyPage(
 				m_Canvas->SetBox(ID, box);
 				std::map<std::string, int> inner;
 
-				if (device.Inner() && !ApplyPage(*device.Inner(), sidecars, merge, ID, inner))
+				if (device.Inner() && !ApplyPage(*device.Inner(), sidecars, merge, ID, inner, &device.Binds))
 					return false;
 
 				for (size_t b = 0; b < device.Binds.size(); ++b)
@@ -2899,7 +3027,10 @@ bool SynthModular::ApplyPage(
 
 					BoundaryPort &bound = (input ? box->Inputs : box->Outputs)[device.Binds[b].OuterIndex];
 					bound.InnerID = found->second;
-					bound.InnerPort = port;
+					const Spiral::Core::DeviceDescription *child = device.Inner()->FindDevice(innerId);
+					const std::vector<Spiral::Core::PortName> &ports = input ? child->Inputs : child->Outputs;
+					bound.InnerPort = m_Canvas->SavedPort(found->second, input, port,
+						port >= 0 && size_t(port) < ports.size() ? ports[port].Name : string());
 				}
 
 				m_Canvas->SetBox(ID, box);
@@ -2912,7 +3043,9 @@ bool SynthModular::ApplyPage(
 				continue;
 			}
 
-			DeviceWin *temp = NewDeviceWin(PluginID, x, y);
+			const bool needsBankPorts = NeedsBankPorts(device, patch, binds);
+			DeviceWin *temp = NewDeviceWin(PluginID, x, y, !device.Value("key").empty()
+				|| PluginID == SubPatchDevice::Class().ID || needsBankPorts);
 
 			if (!temp)
 			{
@@ -2924,18 +3057,21 @@ bool SynthModular::ApplyPage(
 			temp->m_DeviceGUI->SetID(ID);
 			temp->m_DeviceGUI->SetName(Name);
 
-			if (UnavailablePlugin *missingDevice = dynamic_cast<UnavailablePlugin*>(temp->m_Device))
-			{
-				missingDevice->SetSavedName(Name);
-				string label = Name.empty() ? string("Plugin") : Name;
-				temp->m_DeviceGUI->SetName(label + " (unavailable)");
-				cerr << "SSM: Missing plugin " << label << " (" << PluginID
-					<< "); preserving its state and wires.\n";
-			}
-
 			temp->m_Device->SetUpdateInfoCallback(ID, cb_UpdatePluginInfo);
 			m_DeviceWinMap[ID] = temp;
 			m_Canvas->SetPageOf(ID, page);
+
+			if (UnavailablePlugin *missingDevice = dynamic_cast<UnavailablePlugin*>(temp->m_Device))
+			{
+				missingDevice->SetDefinition(device);
+				string label = Name.empty() ? string("Plugin") : Name;
+				temp->m_DeviceGUI->SetName(label + " (unavailable)");
+				if (needsBankPorts)
+					cerr << "SSM: Piano Roll uses sequence or note/gate CV ports unavailable on this host; preserving its state and wires.\n";
+				else
+					cerr << "SSM: Missing plugin " << label << " (" << PluginID
+						<< "); preserving its state and wires.\n";
+			}
 
 			Spiral::Core::Description state;
 			Spiral::File::PatchFile::Describe(device, state);
@@ -2947,6 +3083,20 @@ bool SynthModular::ApplyPage(
 			temp->m_Device->LoadExternalFiles(sidecars.empty() ? m_FilePath + "_files/" : sidecars, savedID);
 
 			temp->m_Device->GetChannelHandler()->FlushChannels();
+			if ((!device.Inputs.empty() || !device.Outputs.empty()) &&
+			    !dynamic_cast<UnavailablePlugin *>(temp->m_Device))
+			{
+				std::auto_ptr<DeviceWin::ImportedState> imported(new DeviceWin::ImportedState);
+				DescribeDeviceState(*temp, imported->Local);
+				const Spiral::Core::DeviceDescription &local = imported->Local;
+				if (device.Properties != local.Properties || device.Inputs != local.Inputs ||
+				    device.Outputs != local.Outputs || device.Value("version") != local.Value("version"))
+				{
+					imported->File = device;
+					temp->Imported = imported;
+				}
+			}
+
 
 			if (temp->m_DeviceGUI->GetPluginWindow())
 			{
@@ -3012,6 +3162,9 @@ inline void SynthModular::cb_New_i (Fl_Widget *o, void *v)
 	m_FilePath.clear();
 	m_BranchID.clear();
 	m_Document = Spiral::File::DocumentSection();
+	m_ProjectMetadata.clear();
+	m_ImportedSource.clear();
+	m_BranchDocument = false;
 
 	if (m_Drawer)
 		m_Drawer->Refresh();
@@ -3265,6 +3418,8 @@ void SynthModular::MergePatch(const char *fn)
 			return;
 		}
 
+		if (project.get())
+			Spiral::File::PatchFile::ApplySchema(project->Schema().Bytes(), patch);
 		Apply(patch, sidecars, true);
 	}
 	else
@@ -4052,7 +4207,16 @@ void SynthModular::cb_UpdatePluginInfo(int ID, void *PInfo)
 
 //////////////////////////////////////////////////////////
 
-void SynthModular::LoadPatch(const char *fn, const char *branchId)
+static bool PatchFailure(const char *message, bool quiet)
+{
+	if (quiet)
+		std::cerr << "SSM: " << message << std::endl;
+	else
+		fl_message("%s", message);
+	return false;
+}
+
+bool SynthModular::LoadPatch(const char *fn, const char *branchId, bool quiet)
 {
 	iostream *stream = NULL;
 	ifstream file;
@@ -4073,16 +4237,12 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 
 		if (!opened)
 		{
-			fl_message("%s", error.empty() ? "Error opening SSM Project" : error.c_str());
-
-			return;
+			return PatchFailure(error.empty() ? "Error opening SSM Project" : error.c_str(), quiet);
 		}
 
 		if (project->Source().Empty() && !project->HasPatch())
 		{
-			fl_message("This SSM Project has no patch in it.");
-
-			return;
+			return PatchFailure("This SSM Project has no patch in it.", quiet);
 		}
 
 		packaged.str(project->Source().Bytes());
@@ -4096,7 +4256,7 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 	{
 		file.open(fn);
 		if (!file)
-			return;
+			return PatchFailure("Cannot open patch file", quiet);
 
 		inf.open(fn, std::ios::in);
 		stream = &inf;
@@ -4108,9 +4268,11 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 	std::string error;
 	if (!json.empty() && !Spiral::File::PatchFile::ReadText(json, patch, error))
 	{
-		fl_message("%s", error.c_str());
-		return;
+		return PatchFailure(error.c_str(), quiet);
 	}
+
+	if (project.get() && !json.empty())
+		Spiral::File::PatchFile::ApplySchema(project->Schema().Bytes(), patch);
 
 	AudioTransportHub *hub = AudioTransportHub::Get();
 	pthread_mutex_lock(&m_CycleLock);
@@ -4120,13 +4282,19 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 	m_FilePath=fn;
 	m_BranchID=branch;
 	ClearUp();
-	m_Document = document;
+	m_BranchDocument = !patch.Document.Empty();
+	m_Document = m_BranchDocument ? patch.Document : document;
+	m_ImportedSource = project.get() ? project->Source().Bytes() : string();
+	if (!project.get() && json.empty())
+		m_ImportedSource.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+	m_ProjectMetadata = project.get() ? project->GetIdentity().ApplicationMetadata : string();
 
 	if (m_Drawer)
 		m_Drawer->Refresh();
 
+	bool applied = true;
 	if (!json.empty())
-		Apply(patch, sidecars);
+		applied = Apply(patch, sidecars);
 	else
 		StreamPatchIn(*stream, false, sidecars);
 
@@ -4139,9 +4307,10 @@ void SynthModular::LoadPatch(const char *fn, const char *branchId)
 
 	TITLEBAR=LABEL+" "+fn;
 	m_TopWindow->label(TITLEBAR.c_str());
+	return applied || PatchFailure("Could not apply patch", quiet);
 }
 
-void SynthModular::SavePatch(const char *fn)
+bool SynthModular::SavePatch(const char *fn, bool quiet)
 {
 	if (Spiral::File::Project::PathLooksLikePackage(fn))
 	{
@@ -4152,9 +4321,7 @@ void SynthModular::SavePatch(const char *fn)
 
 		if (!project.BeginSidecars(error))
 		{
-			fl_message("%s", error.c_str());
-
-			return;
+			return PatchFailure(error.c_str(), quiet);
 		}
 
 		Spiral::Core::PatchDescription patch;
@@ -4163,32 +4330,30 @@ void SynthModular::SavePatch(const char *fn)
 
 		if (!Spiral::File::PatchFile::Text(patch, json, error))
 		{
-			fl_message("%s", error.c_str());
-
-			return;
+			return PatchFailure(error.c_str(), quiet);
 		}
 
 		project.Patch().Set(json);
-		project.SetDocument(m_Document);
+		project.Source().Set(m_ImportedSource);
+		project.GetIdentity().ApplicationMetadata = m_ProjectMetadata;
+		if (!m_BranchDocument)
+			project.SetDocument(m_Document);
 
 		if (!project.SaveAs(fn, error))
 		{
-			fl_message("%s", error.empty() ? "Error saving SSM Project" : error.c_str());
-
-			return;
+			return PatchFailure(error.empty() ? "Error saving SSM Project" : error.c_str(), quiet);
 		}
 	}
 	else
 	{
-		fl_message("Save As writes a project (.ssmp).");
-
-		return;
+		return PatchFailure("Save As writes a project (.ssmp).", quiet);
 	}
 
 	m_FilePath = fn;
 	m_BranchID.clear();
 	TITLEBAR = LABEL + " " + fn;
 	m_TopWindow->label(TITLEBAR.c_str());
+	return true;
 }
 
 static std::string MenuLabel(const std::string &name)
@@ -4281,7 +4446,9 @@ void SynthModular::SaveBranch(bool ask)
 	}
 
 	project.Patch().Set(json);
-	project.SetDocument(m_Document);
+	project.Source().Set(m_ImportedSource);
+	if (!m_BranchDocument)
+		project.SetDocument(m_Document);
 
 	if (!project.CreateSavePoint(name, replace, error))
 	{

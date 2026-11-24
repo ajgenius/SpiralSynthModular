@@ -45,6 +45,7 @@
 #include "Fl_MidiBindings.h"
 #include "SpiralPlugin.h"
 #include "PatchDescription.h"
+#include <memory>
 #include "MidiMap.h"
 #include "ChannelHandler.h"
 using Spiral::Core::ChannelHandler;
@@ -90,6 +91,12 @@ public:
 	DeviceWin() : m_DeviceGUI(NULL) {}
 	~DeviceWin();
 
+	struct ImportedState
+	{
+		Spiral::Core::DeviceDescription File, Local;
+	};
+	std::auto_ptr<ImportedState> Imported;
+
 	int 		  m_PluginID;
 	SpiralPlugin* m_Device;
 	Fl_DeviceGUI* m_DeviceGUI;
@@ -126,12 +133,12 @@ public:
 	void UpdatePluginGUIs();
 	void ApplyViewOptions();
 	void LayoutChrome();
-	void LoadPatch(const char *fn, const char *branchId = NULL);
+	bool LoadPatch(const char *fn, const char *branchId = NULL, bool quiet = false);
 	void MergePatch(const char *fn);
 	void OpenDropped(const string &path);
-	void Apply(const Spiral::Core::PatchDescription &patch, const string &sidecars, bool merge = false);
+	bool Apply(const Spiral::Core::PatchDescription &patch, const string &sidecars, bool merge = false);
 	bool ApplyPage(const Spiral::Core::PatchDescription &patch, const string &sidecars, bool merge, int page,
-		std::map<std::string, int> &ids);
+		std::map<std::string, int> &ids, const std::vector<Spiral::Core::PortBind> *binds = NULL);
 	DeviceWin* NewSubPatch(int x, int y, const string &name, SubPatchDevice *device,
 		const Spiral::Core::SubPatchConfig &config);
 	void GroupSelection(const string &title);
@@ -144,7 +151,7 @@ public:
 	void SyncSubPatches();
 	VoicePool *PoolFor(int id, long &voices);
 	static SpiralPlugin *cb_FindDevice(int id, void *host);
-	void SavePatch(const char *fn);
+	bool SavePatch(const char *fn, bool quiet = false);
 
 	void StopAudioForExit();
 
@@ -197,7 +204,7 @@ public:
 	void ServiceMidiInput();
 
 private:
-	DeviceWin* NewDeviceWin(int n, int x, int y);
+	DeviceWin* NewDeviceWin(int n, int x, int y, bool unavailable = false);
 	DeviceWin* NewComment(int n, int x, int y);
 
 	void ChangeAudioFormat();
@@ -232,6 +239,8 @@ private:
 	string m_FilePath, m_MergeFilePath, m_BranchID;
 	unsigned m_SavePointCount;
 	Spiral::File::DocumentSection m_Document;
+	string m_ProjectMetadata, m_ImportedSource;
+	bool m_BranchDocument;
 	Spiral::Core::MidiMap m_MidiMap;
 	void (*m_MidiLearn)(int, int, void *);
 	void *m_MidiLearnData;

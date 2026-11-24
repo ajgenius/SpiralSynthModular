@@ -288,13 +288,12 @@ int main(int argc, char **argv)
 	}
 
 	// do we need to load a patch on startup?
-	if (cmd_specd)
-		synth->LoadPatch(cmd_filename.c_str());
+	const bool loaded = !cmd_specd || synth->LoadPatch(cmd_filename.c_str(), NULL, !GUI);
 
-	if (!cmd_saveAs.empty())
+	if (!cmd_saveAs.empty() || (!GUI && !loaded))
 	{
 		Fl::check();
-		synth->SavePatch(cmd_saveAs.c_str());
+		const bool saved = loaded && synth->SavePatch(cmd_saveAs.c_str(), !GUI);
 		synth->StopAudioForExit();
 		pthread_mutex_lock(&audioStopMutex);
 		audioStopRequested = true;
@@ -302,7 +301,7 @@ int main(int argc, char **argv)
 		pthread_join(loopthread, NULL);
 		delete synth;
 
-		return 0;
+		return saved ? 0 : 1;
 	}
 
 	if (!GUI)
