@@ -186,7 +186,8 @@
       "height": 112,
       "help": "Shows the level of its input: VU is the peak of |x| from 0 to 1, MM the minimum and maximum from -1 to 1.",
       "schema_version": 1,
-      "width": 226
+      "width": 226,
+      "header_config": "monitor-voice"
     },
     "plugin_id": 123,
     "properties": [

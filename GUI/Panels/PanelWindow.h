@@ -66,6 +66,11 @@ namespace Spiral
 			static void NextMode(Fl_Widget *widget, void *data);
 			Fl_Button *m_Layout;
 			Fl_Button *m_Mode;
+			Fl_Button *m_Config;
+			std::string m_ConfigControl;
+			Fl_Widget *ConfigWidget() const;
+			void LayoutHeader();
+			static void OpenConfig(Fl_Widget *widget, void *data);
 
 			static SpiralGUIType *CreateForDevice(SpiralPlugin *plugin, const Spiral::Core::DeviceClass &device);
 
@@ -73,7 +78,7 @@ namespace Spiral
 
 			void Fit();
 			static FltkPanel *Build(SpiralPlugin *plugin, const std::string &panel, const std::string &directory,
-					const std::string &documentPath, bool &generated, bool whole = false);
+					const std::string &documentPath, bool &generated, std::string &config, bool whole = false);
 			void Rebuild();
 			FltkPanel *m_Host;
 			Panel *m_Panel;

@@ -40,6 +40,7 @@ class SpiralPluginGUI : public SpiralGUIType {
    protected:
       ChannelHandler *m_GUICH;
       virtual const std::string GetHelpText (const std::string &loc);
+      Fl_Button *HelpButton() const { return m_Help; }
    private:
       Fl_Button *m_Hide, *m_Help;
       static Fl_Double_Window* m_HelpWin;

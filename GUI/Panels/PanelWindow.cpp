@@ -28,6 +28,10 @@
 #include "DeviceClassRegistry.h"
 #include "PanelRegistry.h"
 #include <FL/Fl_Button.H>
+#include <FL/Fl_Choice.H>
+#include <cstring>
+#include "PanelNode.h"
+#include "PanelControl.h"
 #include <FL/Fl_Window.H>
 #include <algorithm>
 #include <iostream>
@@ -45,6 +49,7 @@ namespace Spiral
 			SpiralPluginGUI(w, h, plugin, plugin->GetChannelHandler()),
 			m_Layout(NULL),
 			m_Mode(NULL),
+			m_Config(NULL),
 			m_Host(NULL),
 			m_Panel(NULL),
 			m_Generated(false),
@@ -56,7 +61,7 @@ namespace Spiral
 		// control this host has not got is not built, so that the device's
 		// own panel can be shown in its place.
 		FltkPanel *PanelWindow::Build(SpiralPlugin *plugin, const std::string &panel, const std::string &directory,
-				const std::string &documentPath, bool &generated, bool whole)
+				const std::string &documentPath, bool &generated, std::string &config, bool whole)
 		{
 			std::string error, text;
 			generated = plugin->GeneratePanel(directory, text);
@@ -93,6 +98,7 @@ namespace Spiral
 			for (size_t i = 0; i < model->Unbound().size(); ++i)
 				std::cerr << "PanelWindow: " << documentPath << ": unbound " << model->Unbound()[i] << std::endl;
 
+			config = PanelControl::TextOf(document.Panel()->Attribute("header_config"));
 			model->Load();
 
 			return host;
@@ -107,6 +113,7 @@ namespace Spiral
 				directory += '/';
 			directory += "panels";
 			bool generated = false;
+			std::string config;
 			FltkPanel *host = NULL;
 			std::string document = device.Panel, path = device.Name;
 
@@ -119,7 +126,7 @@ namespace Spiral
 
 				if (ui.get())
 				{
-					host = Build(plugin, ui->Stringify(false), directory, file, generated, true);
+					host = Build(plugin, ui->Stringify(false), directory, file, generated, config, true);
 
 					if (host && !generated)
 					{
@@ -133,7 +140,7 @@ namespace Spiral
 			}
 
 			if (!host)
-				host = Build(plugin, device.Panel, directory, device.Name, generated);
+				host = Build(plugin, device.Panel, directory, device.Name, generated, config);
 
 			if (!host)
 				return NULL;
@@ -142,6 +149,7 @@ namespace Spiral
 			PanelWindow *window = new PanelWindow(host->w() + 2 * Margin, host->h() + TitleHeight + Margin, plugin);
 			window->m_Host = host;
 			window->m_Panel = panel;
+			window->m_ConfigControl = config;
 			window->m_Document = document;
 			window->m_Directory = directory;
 			window->m_DocumentPath = path;
@@ -161,6 +169,7 @@ namespace Spiral
 			}
 			// After the layout button: the mode button sits beside it.
 			window->OfferModes();
+			window->LayoutHeader();
 			window->end();
 			return window;
 		}
@@ -188,10 +197,64 @@ namespace Spiral
 		{
 			if (m_Host && m_Host->w() + 2 * Margin != w())
 				Resize(m_Host->w() + 2 * Margin, h());
-			if (m_Layout)
-				m_Layout->position(x() + w() - 24, y() + 2);
-			if (m_Mode)
-				m_Mode->position(x() + w() - (m_Layout ? 38 : 24), y() + 2);
+			LayoutHeader();
+		}
+
+		Fl_Widget *PanelWindow::ConfigWidget() const
+		{
+			PanelControl *control = m_ConfigControl.empty() ? NULL : m_Panel->FindControl(m_ConfigControl);
+			FltkView *view = control ? dynamic_cast<FltkView *>(control->View()) : NULL;
+			return view ? view->Widget() : NULL;
+		}
+
+		void PanelWindow::OpenConfig(Fl_Widget *button, void *data)
+		{
+			Fl_Widget *item = static_cast<PanelWindow *>(data)->ConfigWidget();
+			if (!item || !item->active()) return;
+			if (Fl_Choice *choice = dynamic_cast<Fl_Choice *>(item))
+			{
+				if (!choice->menu()) return;
+				const Fl_Menu_Item *picked = choice->menu()->pulldown(button->x(), button->y(), button->w(), button->h(),
+					choice->mvalue(), choice);
+				if (picked) choice->picked(picked);
+			}
+			else if (Fl_Button *action = dynamic_cast<Fl_Button *>(item))
+			{
+				if (action->type() == FL_TOGGLE_BUTTON) action->value(!action->value());
+				action->do_callback();
+			}
+		}
+
+		void PanelWindow::LayoutHeader()
+		{
+			Fl_Widget *control = ConfigWidget();
+			if (control && (dynamic_cast<Fl_Choice *>(control) || dynamic_cast<Fl_Button *>(control)))
+			{
+				if (!m_Config)
+				{
+					m_Config = new Fl_Button(0, 0, 12, 12, "⚙");
+					m_Config->box(FL_NO_BOX);
+					m_Config->down_box(FL_NO_BOX);
+					m_Config->labelsize(12);
+					m_Config->callback(OpenConfig, this);
+					add(m_Config);
+				}
+				const char *tip = control->tooltip() ? control->tooltip() : "Device settings";
+				if (!m_Config->tooltip() || std::strcmp(m_Config->tooltip(), tip)) m_Config->copy_tooltip(tip);
+				if (control->active()) m_Config->activate(); else m_Config->deactivate();
+				control->hide();
+				m_Config->show();
+			}
+			else if (m_Config) m_Config->hide();
+
+			Fl_Button *buttons[] = {HelpButton(), m_Config, m_Layout, m_Mode};
+			int right = x() + w() - 1;
+			for (size_t i = 0; i < sizeof(buttons) / sizeof(buttons[0]); ++i)
+			{
+				if (!buttons[i] || !buttons[i]->visible()) continue;
+				right -= 12;
+				buttons[i]->resize(right, y() + 1, 12, 12);
+			}
 		}
 
 		void PanelWindow::SaveState(std::map<std::string, Spiral::Core::StateValue> &state) const
@@ -274,9 +337,9 @@ namespace Spiral
 			Resize(m_Host->w() + 2 * Margin, m_Host->h() + TitleHeight + Margin);
 			if (m_Layout)
 			{
-				m_Layout->position(x() + w() - 24, y() + 2);
 				m_Layout->copy_tooltip(("Layout: " + m_Panel->LayoutName(index)).c_str());
 			}
+			LayoutHeader();
 			redraw();
 		}
 
@@ -337,7 +400,8 @@ namespace Spiral
 			SpiralPlugin *plugin = Plugin();
 			m_Generation = plugin->PanelGeneration();
 			bool generated = false;
-			FltkPanel *host = Build(plugin, m_Document, m_Directory, m_DocumentPath, generated);
+			std::string config;
+			FltkPanel *host = Build(plugin, m_Document, m_Directory, m_DocumentPath, generated, config);
 
 			if (!host)
 				return;
@@ -346,12 +410,12 @@ namespace Spiral
 			delete m_Host;
 			m_Host = host;
 			m_Panel = &host->Model();
+			m_ConfigControl = config;
 			host->position(x() + Margin, y() + TitleHeight);
 			add(host);
 			Resize(host->w() + 2 * Margin, host->h() + TitleHeight + Margin);
-			if (m_Layout)
-				m_Layout->position(x() + w() - 24, y() + 2);
 			OfferModes();
+			LayoutHeader();
 			redraw();
 		}
 
@@ -376,7 +440,6 @@ namespace Spiral
 				add(m_Mode);
 			}
 
-			m_Mode->position(x() + w() - (m_Layout ? 38 : 24), y() + 2);
 			m_Mode->copy_tooltip(("Panel: " + m_Panel->ModeName(m_Panel->Mode())).c_str());
 			m_Mode->show();
 		}

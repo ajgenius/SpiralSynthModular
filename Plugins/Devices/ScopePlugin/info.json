@@ -38,7 +38,7 @@
           "bounds": [
             5,
             5,
-            221,
+            242,
             98
           ],
           "name": "scope",
@@ -137,7 +137,8 @@
       "height": 108,
       "help": "The Scope shows the data flowing through it without changing the signal. Attenuation reduces the displayed amplitude; Time Base controls samples per pixel.",
       "schema_version": 1,
-      "width": 297
+      "width": 297,
+      "header_config": "monitor-voice"
     },
     "plugin_id": 1,
     "properties": [
