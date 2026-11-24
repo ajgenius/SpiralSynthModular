@@ -9,7 +9,7 @@ AC_INIT([SpiralSynthModular], [0.3.2])
 AC_CONFIG_SRCDIR([src/SpiralSynthModular.C])
 
 dnl Device modules exchange ChannelHandler and timestamped Event objects with the host.
-AC_DEFINE([SSM_HOST_ABI], ["ssm-fltk-audio-10"], [SSM plugin host ABI])
+AC_DEFINE([SSM_HOST_ABI], ["ssm-fltk-audio-11"], [SSM plugin host ABI])
 
 AM_INIT_AUTOMAKE
 

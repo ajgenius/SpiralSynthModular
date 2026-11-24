@@ -17,6 +17,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 #include "PatchFile.h"
+#include "PatchProject.h"
 #include "FileVersion.h"
 #include "JSON.h"
 #include "Compatibility.h"
@@ -25,6 +26,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <map>
+#include <set>
 #include <vector>
 
 namespace Spiral
@@ -261,6 +263,24 @@ namespace Spiral
 					}
 				}
 
+				// A bank-only roll with numeric wires uses Testing's five-input,
+				// four-output layout, including files that omit the port lists.
+				if (device.Value("id") == "288" && device.FindProperty("SEQUENCES") && !device.FindProperty("CLIP"))
+				{
+					const char *inputs[] = {"Events", "Sequence", "Launch", "Stop", "Tempo"};
+					const char *outputs[] = {"Events", "Note CV", "Gate CV", "End"};
+					for (int direction = 0; direction < 2; ++direction)
+					{
+						const bool input = direction == 0;
+						std::vector<PortName> &ports = input ? device.Inputs : device.Outputs;
+						const size_t count = input ? 5 : 4;
+						if (ports.size() < count)
+							ports.resize(count);
+						for (size_t i = 0; i < count; ++i)
+							if (ports[i].Name.empty())
+								ports[i] = PortName(input ? inputs[i] : outputs[i], i ? "ControlPort" : "MusicalEventPort");
+					}
+				}
 				ReadPlacement(gui, object);
 				if (object.Value("text").empty())
 					object.SetValue("text", name);
@@ -356,6 +376,13 @@ namespace Spiral
 					return false;
 				}
 
+				out.Document = Project::ReadDocument(body);
+				const J *keys = body.Get("device_keys");
+				if (keys && keys->GetType() != J::Object)
+				{
+					error = "JSON patch device_keys must be an object";
+					return false;
+				}
 				const J *host = body.Get("host");
 				if (host && host->GetType() != J::Object)
 				{
@@ -397,6 +424,10 @@ namespace Spiral
 							continue;
 						if (!ReadDevice(*device, gui, out, error))
 							return false;
+						DeviceDescription &added = out.Objects.back().Devices.back();
+						const J *key = keys ? keys->Get(added.Value("id")) : NULL;
+						if (LongOr(device->Get("id"), -1) >= 4096 && key && key->GetType() == J::String)
+							added.SetValue("key", key->Text());
 					}
 				}
 
@@ -423,9 +454,31 @@ namespace Spiral
 					WireDescription &added = out.AddWire();
 					added.FromDevice = from;
 					added.FromPort = Decimal(output);
+					added.FromPortName = ScalarText(wire->Get("output_name"));
+					added.ToPortName = ScalarText(wire->Get("input_name"));
 					added.ToDevice = to;
 					added.ToPort = Decimal(input);
 				}
+				// Earlier Mixer files numbered socket labels from zero. The new
+				// first label is also the old second label, so resolving the old
+				// names individually would collapse two cables onto input one.
+				for (size_t o = 0; o < out.Objects.size(); ++o)
+					for (size_t d = 0; d < out.Objects[o].Devices.size(); ++d)
+					{
+						DeviceDescription &device = out.Objects[o].Devices[d];
+						if (device.Value("id") != "7" || device.Inputs.empty() || device.Inputs[0].Name != "Input 0")
+							continue;
+						for (size_t i = 0; i < device.Inputs.size(); ++i)
+							if (device.Inputs[i].Name == "Input " + Decimal(i))
+								device.Inputs[i].Name = "Input " + Decimal(i + 1);
+						for (size_t w = 0; w < out.Wires.size(); ++w)
+						{
+							WireDescription &wire = out.Wires[w];
+							if (wire.ToDevice == device.Value("patch_id") && wire.ToPortName == "Input " + wire.ToPort)
+								wire.ToPortName = "Input " + Decimal(std::strtol(wire.ToPort.c_str(), NULL, 10) + 1);
+						}
+					}
+
 				return true;
 			}
 
@@ -529,7 +582,18 @@ namespace Spiral
 			J *BodyJSON(const PatchDescription &definition)
 			{
 				J *body = J::MakeObject();
+				Project::WriteDocument(*body, definition.Document);
 				J *objects = J::MakeArray();
+				std::set<long> reserved;
+				std::map<std::string, long> relative;
+				for (size_t o = 0; o < definition.Objects.size(); ++o)
+					for (size_t d = 0; d < definition.Objects[o].Devices.size(); ++d)
+					{
+						const DeviceDescription &device = definition.Objects[o].Devices[d];
+						if (device.Value("key").empty())
+							reserved.insert(std::strtol(device.Value("id").c_str(), NULL, 10));
+					}
+				long next = 4096;
 				for (size_t oi = 0; oi < definition.Objects.size(); ++oi)
 				{
 					const ObjectDescription &placed = definition.Objects[oi];
@@ -553,11 +617,33 @@ namespace Spiral
 					object->SetOwned("gui", gui);
 					J *list = J::MakeArray();
 					for (size_t di = 0; di < placed.Devices.size(); ++di)
-						list->AppendOwned(DeviceJSON(placed.Devices[di]));
+					{
+						const DeviceDescription &device = placed.Devices[di];
+						J *node = DeviceJSON(device);
+						const std::string key = device.Value("key");
+						if (!key.empty())
+						{
+							if (!relative.count(key))
+							{
+								while (reserved.count(next))
+									++next;
+								relative[key] = next++;
+							}
+							node->SetOwned("id", J::MakeNumber(Decimal(relative[key])));
+						}
+						list->AppendOwned(node);
+					}
 					object->SetOwned("devices", list);
 					objects->AppendOwned(object);
 				}
 				body->SetOwned("objects", objects);
+				if (!relative.empty())
+				{
+					J *names = J::MakeObject();
+					for (std::map<std::string, long>::const_iterator i = relative.begin(); i != relative.end(); ++i)
+						names->SetOwned(Decimal(i->second), J::MakeString(i->first));
+					body->SetOwned("device_keys", names);
+				}
 
 				J *wires = J::MakeArray();
 				for (size_t i = 0; i < definition.Wires.size(); ++i)
@@ -568,6 +654,10 @@ namespace Spiral
 					node->SetOwned("output", J::MakeString(wire.FromPort));
 					node->SetOwned("to", J::MakeString(wire.ToDevice));
 					node->SetOwned("input", J::MakeString(wire.ToPort));
+					if (!wire.FromPortName.empty())
+						node->SetOwned("output_name", J::MakeString(wire.FromPortName));
+					if (!wire.ToPortName.empty())
+						node->SetOwned("input_name", J::MakeString(wire.ToPortName));
 					wires->AppendOwned(node);
 				}
 				body->SetOwned("wires", wires);
@@ -763,11 +853,11 @@ namespace Spiral
 			const J *format = document.Get("format");
 			long found = 0;
 			Version::Status status = Version::Check(ScalarText(format), Version::PatchKind,
-				Version::Patch, found);
+				Version::ReadablePatch, found);
 			if (status != Version::Current && status != Version::Older)
 			{
 				error = "patch: " + Version::Reason(status, Version::PatchKind, found,
-					Version::Patch);
+					Version::ReadablePatch);
 				return false;
 			}
 			return ReadBody(document, out, error);

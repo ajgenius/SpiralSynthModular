@@ -30,6 +30,8 @@ namespace Spiral
 			const long Project = 10;
 			const long Patch = 3;
 			const long Schema = 1;
+			const long ReadableProject = 12;
+			const long ReadablePatch = 5;
 
 			extern const char ProjectKind[];
 			extern const char PatchKind[];

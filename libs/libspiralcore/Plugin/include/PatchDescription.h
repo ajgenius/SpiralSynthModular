@@ -20,6 +20,7 @@
 #define SPIRAL_PATCH_DESCRIPTION
 
 #include <map>
+#include "DocumentSection.h"
 #include <string>
 #include <vector>
 
@@ -54,6 +55,12 @@ namespace Core
 		void SetValue(const std::string &text) { Values["value"] = text; }
 		void SetValue(const std::string &key, const std::string &text) { Values[key] = text; }
 
+		bool operator==(const PropertyDescription &other) const
+		{
+			return Name == other.Name && Type == other.Type && PropertyClassName == other.PropertyClassName
+				&& Values == other.Values && Children == other.Children;
+		}
+
 		PropertyDescription &AddChild()
 		{
 			Children.push_back(PropertyDescription());
@@ -80,6 +87,8 @@ namespace Core
 	public:
 		std::string Name;
 		std::string Type;
+
+		bool operator==(const PortName &other) const { return Name == other.Name && Type == other.Type; }
 
 		PortName() {}
 		PortName(const std::string &name, const std::string &type = std::string()): Name(name), Type(type) {}
@@ -164,6 +173,17 @@ namespace Core
 		}
 
 
+		int FilePort(bool input, int index, const std::string &name) const
+		{
+			const std::vector<PortName> &ports = input ? Inputs : Outputs;
+			if (name.empty() || (index >= 0 && size_t(index) < ports.size() && ports[index].Name == name))
+				return index;
+			for (size_t i = 0; i < ports.size(); ++i)
+				if (ports[i].Name == name)
+					return int(i);
+			return index;
+		}
+
 		void ClearProperties() { Properties.clear(); }
 
 	private:
@@ -175,8 +195,10 @@ namespace Core
 	public:
 		std::string FromDevice;
 		std::string FromPort;
+		std::string FromPortName;
 		std::string ToDevice;
 		std::string ToPort;
+		std::string ToPortName;
 	};
 
 	class StateValue
@@ -242,6 +264,7 @@ namespace Core
 	public:
 		std::vector<ObjectDescription> Objects;
 		std::vector<WireDescription> Wires;
+		File::DocumentSection Document;
 
 		std::map<std::string, std::string> Values;
 
@@ -275,6 +298,7 @@ namespace Core
 
 		void Clear()
 		{
+			Document = File::DocumentSection();
 			Objects.clear();
 			Wires.clear();
 			Values.clear();
@@ -284,6 +308,7 @@ namespace Core
 
 		void Swap(PatchDescription &other)
 		{
+			std::swap(Document, other.Document);
 			Objects.swap(other.Objects);
 			Wires.swap(other.Wires);
 			Values.swap(other.Values);

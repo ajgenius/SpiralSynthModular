@@ -44,6 +44,9 @@ namespace Spiral
 			static bool WriteFile(const Core::PatchDescription &definition, const char *path,
 				std::string &error);
 
+			static std::string Schema(const Core::PatchDescription &definition);
+			static void ApplySchema(const std::string &text, Core::PatchDescription &definition);
+
 			static void Properties(const Core::Description &described, Core::DeviceDescription &out);
 			static void Describe(const Core::DeviceDescription &device, Core::Description &out);
 		private:

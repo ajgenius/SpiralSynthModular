@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "PatchProject.h"
+#include "PatchFile.h"
 #include "License.h"
 
 #include "JSON.h"
@@ -66,7 +67,7 @@ namespace Spiral
 				const Spumoni::JSON *header = main ? main->Get("format") : NULL;
 				long found = 0;
 				const Version::Status project = format && format->GetType() == Spumoni::JSON::String
-					? Version::Check(format->Text(), Version::ProjectKind, Version::Project, found)
+					? Version::Check(format->Text(), Version::ProjectKind, Version::ReadableProject, found)
 					: Version::Foreign;
 				if ((project != Version::Current && !(project == Version::Older && found >= 9))
 					|| !member || member->GetType() != Spumoni::JSON::String
@@ -78,7 +79,7 @@ namespace Spiral
 
 				long payload = 0;
 				const Version::Status patch = Version::Check(header->Text(), Version::PatchKind,
-					Version::Patch, payload);
+					Version::ReadablePatch, payload);
 				const bool positional = member->Text() == "patch.spiral.legacy.ssm"
 					&& header->Text() == "SpiralSynthModular File Ver 4";
 				const bool json = member->Text() == "patch.spiral.json"
@@ -86,12 +87,33 @@ namespace Spiral
 				if (!positional && !json)
 				{
 					error = "Unsupported main payload; this host reads positional Ver 4 and "
-						+ Version::PatchHeader() + " or older packages";
+						+ Version::Header(Version::PatchKind, Version::ReadablePatch) + " or older packages";
 					return false;
 				}
 
 				return true;
 			}
+		};
+
+		class SchemaPart : public Spumoni::SourcePart
+		{
+		public:
+			explicit SchemaPart(const Spumoni::SourcePart &patch):
+				Spumoni::SourcePart("schema.patch.spiral.json"), m_Patch(patch) {}
+
+			virtual bool Store(Spumoni::Container::Writer &writer, const std::string &branchRoot,
+				Spumoni::Store *, std::string &error)
+			{
+				if (m_Patch.Empty())
+					return true;
+				Core::PatchDescription definition;
+				if (!PatchFile::ReadText(m_Patch.Bytes(), definition, error))
+					return false;
+				return writer.AddMemory(branchRoot + Name(), PatchFile::Schema(definition), error);
+			}
+
+		private:
+			const Spumoni::SourcePart &m_Patch;
 		};
 
 		class Project::SidecarPart : public Spumoni::Part
@@ -241,11 +263,13 @@ namespace Spiral
 			: Spumoni::Project(Format())
 			, m_Source(new Spumoni::SourcePart("patch.spiral.legacy.ssm"))
 			, m_Patch(new Spumoni::SourcePart("patch.spiral.json"))
+			, m_Schema(new SchemaPart(*m_Patch))
 			, m_Sidecars(new SidecarPart)
 			, m_License(new LicensePart(*this))
 		{
 			AddPart(*m_Source);
 			AddPart(*m_Patch);
+			AddPart(*m_Schema);
 			AddPart(*m_Sidecars);
 			AddPart(*m_License);
 			m_SourcePath = path;
@@ -255,6 +279,7 @@ namespace Spiral
 		{
 			delete m_Source;
 			delete m_Patch;
+			delete m_Schema;
 			delete m_Sidecars;
 			delete m_License;
 		}
@@ -263,6 +288,7 @@ namespace Spiral
 		{
 			m_Source->Clear();
 			m_Patch->Clear();
+			m_Schema->Clear();
 			m_Sidecars->Clear();
 		}
 
@@ -304,13 +330,19 @@ namespace Spiral
 			if (!root.get() || root->GetType() != Spumoni::JSON::Object)
 				return document;
 
-			document.Title = TextOf(root.get(), "Title");
-			document.Description = TextOf(root.get(), "Description");
-			document.SavedBy = TextOf(root.get(), "SavedBy");
-			document.CreatedAt = TextOf(root.get(), "CreatedAt");
-			document.SavedAt = TextOf(root.get(), "SavedAt");
+			return ReadDocument(*root.get());
+		}
 
-			if (const Spumoni::JSON *rights = root->Get("Rights"))
+		DocumentSection Project::ReadDocument(const Spumoni::JSON &root)
+		{
+			DocumentSection document;
+			document.Title = TextOf(&root, "Title");
+			document.Description = TextOf(&root, "Description");
+			document.SavedBy = TextOf(&root, "SavedBy");
+			document.CreatedAt = TextOf(&root, "CreatedAt");
+			document.SavedAt = TextOf(&root, "SavedAt");
+
+			if (const Spumoni::JSON *rights = root.Get("Rights"))
 			{
 				document.Rights.Copyright = TextOf(rights, "Copyright");
 				document.Rights.License = TextOf(rights, "License");
@@ -320,7 +352,7 @@ namespace Spiral
 				document.Rights.LicenseFile = TextOf(rights, "LicenseFile");
 			}
 
-			const Spumoni::JSON *credits = root->Get("Credits");
+			const Spumoni::JSON *credits = root.Get("Credits");
 			if (credits && credits->GetType() == Spumoni::JSON::Array)
 			{
 				for (size_t i = 0; i < credits->Size(); ++i)
@@ -365,16 +397,29 @@ namespace Spiral
 				}
 			}
 
+			DocumentSection packaged = document;
+			RightsSection &rights = packaged.Rights;
+			rights.LicenseFile = LicensePart::Text(document).empty()
+				? std::string() : LicensePart::FileName();
+			rights.BundleText = !rights.LicenseFile.empty();
+			WriteDocument(*root, packaged);
+
+			text = root->Keys().empty() ? std::string() : root->Stringify(true);
+			delete root;
+		}
+		void Project::WriteDocument(Spumoni::JSON &root, const DocumentSection &document)
+		{
+			typedef Spumoni::JSON J;
 			if (!document.Title.empty())
-				root->SetOwned("Title", J::MakeString(document.Title));
+				root.SetOwned("Title", J::MakeString(document.Title));
 			if (!document.Description.empty())
-				root->SetOwned("Description", J::MakeString(document.Description));
+				root.SetOwned("Description", J::MakeString(document.Description));
 			if (!document.SavedBy.empty())
-				root->SetOwned("SavedBy", J::MakeString(document.SavedBy));
+				root.SetOwned("SavedBy", J::MakeString(document.SavedBy));
 			if (!document.CreatedAt.empty())
-				root->SetOwned("CreatedAt", J::MakeString(document.CreatedAt));
+				root.SetOwned("CreatedAt", J::MakeString(document.CreatedAt));
 			if (!document.SavedAt.empty())
-				root->SetOwned("SavedAt", J::MakeString(document.SavedAt));
+				root.SetOwned("SavedAt", J::MakeString(document.SavedAt));
 
 			if (!document.Credits.empty())
 			{
@@ -389,13 +434,10 @@ namespace Spiral
 						credit->SetOwned("Role", J::MakeString(document.Credits[i].Role));
 					credits->AppendOwned(credit);
 				}
-				root->SetOwned("Credits", credits);
+				root.SetOwned("Credits", credits);
 			}
 
-			RightsSection rights = document.Rights;
-			rights.LicenseFile = LicensePart::Text(document).empty()
-				? std::string() : LicensePart::FileName();
-			rights.BundleText = !rights.LicenseFile.empty();
+			const RightsSection &rights = document.Rights;
 			if (!rights.Empty())
 			{
 				J *section = J::MakeObject();
@@ -407,11 +449,10 @@ namespace Spiral
 					section->SetOwned("BundleText", J::MakeBoolean(true));
 				if (!rights.LicenseFile.empty())
 					section->SetOwned("LicenseFile", J::MakeString(rights.LicenseFile));
-				root->SetOwned("Rights", section);
+				root.SetOwned("Rights", section);
 			}
 
-			text = root->Keys().empty() ? std::string() : root->Stringify(true);
-			delete root;
 		}
+
 	}
 }

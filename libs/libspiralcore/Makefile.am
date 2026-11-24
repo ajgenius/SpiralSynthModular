@@ -19,7 +19,7 @@ libspiralcore_la_SOURCES = \
     include/GraphSort.h \
     src/GraphSort.cpp \
     include/Event.h
-libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 4:0:0
+libspiralcore_la_LDFLAGS = -shared -no-undefined -version-info 5:0:0
 libspiralcore_la_LIBADD = $(SFLIBS) $(JACK_LIBS) -lm \
 	$(top_builddir)/libs/libSpiralPanels/libSpiralPanels.la \
 	$(top_builddir)/libs/libSpumoni/libSpumoni.la \
@@ -116,14 +116,16 @@ ring_buffer_test_LDADD = libspiralcore.la
 
 libspiralcore_la_SOURCES += File/include/Description.h File/src/Description.cpp
 libspiralcore_la_SOURCES += Data/include/PropertySource.h Data/src/PropertySource.cpp
-libspiralcore_la_SOURCES += File/include/PatchProject.h File/src/PatchProject.cpp
+libspiralcore_la_SOURCES += File/include/DocumentSection.h File/include/PatchProject.h File/src/PatchProject.cpp
 libspiralcore_la_SOURCES += File/include/License.h File/src/License.cpp File/src/LicenseTexts.inc
 check_PROGRAMS += description-test description-reader-test
 description_test_SOURCES = File/tests/description.cpp
 description_test_LDADD = libspiralcore.la
 description_reader_test_SOURCES = File/tests/description-reader.cpp
 description_reader_test_LDADD = libspiralcore.la
-check_PROGRAMS += project-document-test
+check_PROGRAMS += project-document-test patch-exchange-test
+patch_exchange_test_SOURCES = File/tests/patch-exchange.cpp
+patch_exchange_test_LDADD = libspiralcore.la
 project_document_test_SOURCES = File/tests/project-document.cpp
 project_document_test_LDADD = libspiralcore.la
 
@@ -137,7 +139,7 @@ libspiralcore_la_SOURCES += File/include/PositionalReader.h \
 	File/include/FileVersion.h \
 	File/include/PatchFile.h File/src/PositionalReader.cpp \
 	File/src/FileVersion.cpp \
-	File/src/PatchFile.cpp
+	File/src/PatchFile.cpp File/src/PatchSchema.cpp
 libspiralcore_la_SOURCES += File/src/DescriptionJSON.cpp
 check_PROGRAMS += positional-reader-test description-json-test
 positional_reader_test_SOURCES = File/tests/positional-reader.cpp

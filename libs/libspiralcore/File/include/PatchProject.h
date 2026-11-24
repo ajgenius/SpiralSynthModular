@@ -5,6 +5,7 @@
 #define SPIRAL_FILE_PROJECT_H
 
 #include "Project.h"
+#include "DocumentSection.h"
 #include "SourcePart.h"
 
 #include <string>
@@ -14,45 +15,6 @@ namespace Spiral
 {
 	namespace File
 	{
-		struct Credit
-		{
-			std::string Name;
-			std::string Role;
-		};
-
-		struct RightsSection
-		{
-			std::string Copyright;
-			std::string License;
-			bool BundleText;
-			std::string LicenseFile;
-			RightsSection() : BundleText(false) {}
-			bool Empty() const
-			{
-				return Copyright.empty() && License.empty()
-					&& !BundleText && LicenseFile.empty();
-			}
-		};
-
-		struct DocumentSection
-		{
-			std::string Title;
-			std::string Description;
-			std::string SavedBy;
-			std::string CreatedAt;
-			std::string SavedAt;
-			std::vector<Credit> Credits;
-			RightsSection Rights;
-
-			bool Empty() const
-			{
-				return Title.empty() && Description.empty()
-					&& SavedBy.empty() && CreatedAt.empty()
-					&& SavedAt.empty() && Credits.empty()
-					&& Rights.Empty();
-			}
-		};
-
 		class Project : public Spumoni::Project
 		{
 		public:
@@ -64,9 +26,12 @@ namespace Spiral
 
 			const Spumoni::SourcePart &Patch() const { return *m_Patch; }
 			Spumoni::SourcePart &Patch() { return *m_Patch; }
+			const Spumoni::SourcePart &Schema() const { return *m_Schema; }
 			bool HasPatch() const { return m_Patch && !m_Patch->Empty(); }
 
 			DocumentSection GetDocument() const;
+			static DocumentSection ReadDocument(const Spumoni::JSON &root);
+			static void WriteDocument(Spumoni::JSON &root, const DocumentSection &document);
 
 			void SetDocument(const DocumentSection &document);
 
@@ -85,6 +50,7 @@ namespace Spiral
 			class LicensePart;
 			Spumoni::SourcePart *m_Source;
 			Spumoni::SourcePart *m_Patch;
+			Spumoni::SourcePart *m_Schema;
 			SidecarPart *m_Sidecars;
 			LicensePart *m_License;
 		};

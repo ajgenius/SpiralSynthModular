@@ -38,6 +38,7 @@ public:
 	void SetConfig(const Spiral::Core::SubPatchConfig &config);
 	bool TakeSettings();
 
+	Spiral::File::DocumentSection Document;
 	std::vector<BoundaryPort> Inputs, Outputs;
 	void PortsChanged();
 
