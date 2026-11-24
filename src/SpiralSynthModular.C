@@ -4480,37 +4480,7 @@ inline void SynthModular::cb_ImportBranch_i (Fl_Widget *o, void *v)
 	if (!fn || *fn=='\0')
 		return;
 
-	std::string imported;
-
-	if (Spiral::File::Project::PathLooksLikePackage(fn))
-	{
-		Spiral::File::Project source(fn);
-
-		if (!source.OpenPackage("", error) || (source.Source().Empty() && !source.HasPatch()))
-		{
-			fl_message("%s", error.empty() ? "Error opening SSM Project" : error.c_str());
-
-			return;
-		}
-
-		imported = source.HasPatch() ? source.Patch().Bytes() : source.Source().Bytes();
-	}
-	else
-	{
-		ifstream in(fn);
-
-		if (!in)
-		{
-			fl_message("Cannot read %s", fn);
-
-			return;
-		}
-
-		std::ostringstream bytes;
-		bytes << in.rdbuf();
-		imported = bytes.str();
-	}
-
+	const std::string sourcePath(fn);
 	Spiral::File::Project project(m_FilePath);
 
 	if (!project.OpenPackage("", error))
@@ -4520,7 +4490,7 @@ inline void SynthModular::cb_ImportBranch_i (Fl_Widget *o, void *v)
 		return;
 	}
 
-	std::string name = project.BranchNameFromPath(fn);
+	std::string name = project.BranchNameFromPath(sourcePath);
 	const char *entered = fl_input("Name for the imported branch:", name.c_str());
 
 	if (!entered)
@@ -4534,14 +4504,8 @@ inline void SynthModular::cb_ImportBranch_i (Fl_Widget *o, void *v)
 		return;
 	}
 
-	std::istringstream importedStream(imported);
-
-	if (!JSONDocument(importedStream).empty())
-		project.Patch().Set(imported);
-	else
-		project.Source().Set(imported);
-
-	if (!project.CreateSavePoint(name, false, error, true))
+	if (!project.ReadBranchContents(sourcePath, error)
+		|| !project.CreateSavePoint(name, false, error, true))
 	{
 		fl_message("%s", error.empty() ? "Error importing branch" : error.c_str());
 
