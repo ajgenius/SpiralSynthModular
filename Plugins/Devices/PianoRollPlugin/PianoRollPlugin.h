@@ -86,6 +86,19 @@ private:
 		double Start, End;
 	};
 
+	struct SavedSequence
+	{
+		std::string Clip;
+		uint64_t ManualEnd;
+		bool Automatic;
+		double Tempo;
+	};
+	std::vector<SavedSequence> m_Sequences;
+	std::string m_SequenceMode;
+	uint64_t m_ContentEnd;
+	float m_ImportedLength;
+	bool RestoreSequences(const std::string &text);
+	std::string SaveSequences() const;
 	uint64_t ClipLength() const;
 	void Start(bool record);
 	void Stop(unsigned frame);

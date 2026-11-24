@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "PianoRollPlugin.h"
+#include <sstream>
+#include <iomanip>
+#include <locale>
 #include "EventBuffer.h"
 #include "SpiralIcon.xpm"
 #include <algorithm>
@@ -40,6 +43,7 @@ extern "C"
 }
 
 PianoRollPlugin::PianoRollPlugin():
+	m_ContentEnd(0), m_ImportedLength(0),
 	m_Saved(Property::WriteOnly | Property::ForceUpdate, ""),
 	m_ClipRevision(0),
 	m_Loop(Property::WriteOnly, false),
@@ -114,11 +118,11 @@ PianoRollPlugin::PianoRollPlugin():
 	m_PluginInfo.NumInputs = 4;
 	m_PluginInfo.NumOutputs = 2;
 	m_PluginInfo.PortTips.push_back("Events");
-	m_PluginInfo.PortTips.push_back("Launch CV");
-	m_PluginInfo.PortTips.push_back("Stop CV");
+	m_PluginInfo.PortTips.push_back("Launch");
+	m_PluginInfo.PortTips.push_back("Stop");
 	m_PluginInfo.PortTips.push_back("Tempo");
 	m_PluginInfo.PortTips.push_back("Events");
-	m_PluginInfo.PortTips.push_back("End CV");
+	m_PluginInfo.PortTips.push_back("End");
 	m_Clip.Clear(m_Rate);
 }
 
@@ -152,6 +156,13 @@ uint64_t PianoRollPlugin::ClipLength() const
 {
 	const uint64_t set = Frames(AsFloat(m_Length));
 
+	if (!m_Sequences.empty())
+	{
+		if (AsFloat(m_Length) == m_ImportedLength && !m_Sequences[0].Automatic)
+			return m_Sequences[0].ManualEnd;
+		if (!set)
+			return m_ContentEnd;
+	}
 	return set ? set : m_Clip.Length();
 }
 
@@ -492,6 +503,17 @@ void PianoRollPlugin::Published()
 {
 	std::vector<NoteSpan> notes;
 	m_Clip.Notes(notes);
+	if (!m_Sequences.empty())
+	{
+		const unsigned count = m_Clip.Count();
+		m_ContentEnd = count ? std::max(uint64_t(1), m_Clip.FrameAt(count - 1)) : 0;
+		for (unsigned i = count; i && m_Clip.FrameAt(i - 1) == m_Clip.FrameAt(count - 1); --i)
+			if (m_Clip.At(i - 1).Type != Event::NoteOff)
+				m_ContentEnd = m_Clip.FrameAt(i - 1) + 1;
+		for (size_t i = 0; i < notes.size(); ++i)
+			if (!notes[i].Closed())
+				m_ContentEnd = std::max(m_ContentEnd, m_Clip.Length());
+	}
 	std::vector<double> cells(notes.size() * NOTE_CELLS);
 	for (size_t i = 0; i < notes.size(); ++i)
 	{
@@ -687,12 +709,82 @@ void PianoRollPlugin::ExecuteCommands()
 		Published();
 }
 
+// Public edits the first sequence. Keep the other clips and their independent
+// loop ends and tempos in the package when it travels through this host.
+bool PianoRollPlugin::RestoreSequences(const std::string &text)
+{
+	if (text.size() > 16u * 1024 * 1024)
+		return false;
+	std::istringstream in(text);
+	in.imbue(std::locale::classic());
+	std::string format;
+	unsigned count;
+	if (!(in >> format >> count) || (format != "ROLLBANK1" && format != "ROLLBANK2") ||
+	    !count || count > 16 || in.get() != '\n')
+		return false;
+	std::vector<SavedSequence> saved(count);
+	unsigned total = 0;
+	EventClip clip, first;
+	for (unsigned i = 0; i < count; ++i)
+	{
+		SavedSequence &seq = saved[i];
+		size_t size;
+		seq.Tempo = 0;
+		if (format == "ROLLBANK2" && (!(in >> seq.Tempo) || (seq.Tempo && !ClipTempo::Valid(seq.Tempo))))
+			return false;
+		if (!(in >> seq.Automatic >> seq.ManualEnd >> size) || !size || size > text.size() || in.get() != '\n')
+			return false;
+		seq.Clip.resize(size);
+		if (!in.read(&seq.Clip[0], size) || !clip.Load(seq.Clip) || (!seq.Automatic && !seq.ManualEnd) ||
+		    seq.ManualEnd > uint64_t(clip.Rate()) * 86400 || clip.Count() > EventClip::MaxEvents - total)
+			return false;
+		total += clip.Count();
+		if (!i)
+			clip.Swap(first);
+	}
+	if (in.peek() != std::char_traits<char>::eof())
+		return false;
+	m_Sequences.swap(saved);
+	m_Clip.Swap(first);
+	const SavedSequence &seq = m_Sequences[0];
+	m_ImportedLength = seq.Automatic ? 0 : float(double(seq.ManualEnd) / m_Clip.Rate());
+	SetFloat(m_Length, m_ImportedLength);
+	m_OriginalTempo = seq.Tempo;
+	return true;
+}
+
+std::string PianoRollPlugin::SaveSequences() const
+{
+	std::ostringstream out;
+	out.imbue(std::locale::classic());
+	bool tempos = m_OriginalTempo != 0;
+	for (size_t i = 1; i < m_Sequences.size(); ++i)
+		tempos |= m_Sequences[i].Tempo != 0;
+	out << (tempos ? "ROLLBANK2 " : "ROLLBANK1 ") << m_Sequences.size() << '\n';
+	for (size_t i = 0; i < m_Sequences.size(); ++i)
+	{
+		const SavedSequence &seq = m_Sequences[i];
+		const bool editedEnd = !i && AsFloat(m_Length) != m_ImportedLength;
+		const uint64_t manual = editedEnd ? Frames(AsFloat(m_Length)) : seq.ManualEnd;
+		const std::string clip = i ? seq.Clip : m_Clip.Save();
+		if (tempos)
+			out << std::setprecision(9) << (i ? seq.Tempo : m_OriginalTempo) << ' ';
+		out << (editedEnd ? !manual : seq.Automatic) << ' ' << manual << ' ' << clip.size() << '\n' << clip;
+	}
+	return out.str();
+}
+
 void PianoRollPlugin::Describe(Description &d)
 {
 	d.Value(DeviceVersion);
 	d.Separator(" ");
 	m_Saved.Describe(d);
 	DescribeSettings(d);
+	if (!m_Sequences.empty())
+	{
+		d.Separator(" ").Value(SaveSequences()).Key("SEQUENCES", "StringProperty");
+		d.Separator(" ").Value(m_SequenceMode).Key("SEQUENCE MODE", "ToggleProperty");
+	}
 }
 
 bool PianoRollPlugin::UpdateProperty(std::string name)
@@ -749,6 +841,19 @@ void PianoRollPlugin::Apply(Description::Reader &r)
 	if (!m_Saved.Value.empty() && !m_Clip.Load(m_Saved.Value))
 		m_Clip.Clear(m_Rate);
 
+	m_Sequences.clear();
+	m_SequenceMode = "0";
+	if (r.Named())
+	{
+		std::string bank;
+		const int index = r.Find("SEQUENCES");
+		if (index >= 0 && r.At(index, bank) && RestoreSequences(bank))
+		{
+			const int mode = r.Find("SEQUENCE MODE");
+			if (mode >= 0)
+				r.At(mode, m_SequenceMode);
+		}
+	}
 	m_Next = 0;
 	Published();
 }

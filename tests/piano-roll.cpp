@@ -722,11 +722,49 @@ static void FollowVoiceSettings()
 	pool.Clear();
 }
 
+static void EditExchangedBank()
+{
+	EventClip first, second;
+	first.Clear(1000);
+	second.Clear(1000);
+	assert(first.AddNote(0, 8, 0, 60, 1));
+	assert(second.AddNote(10, 20, 1, 72, .5f));
+	const std::string tail = second.Save();
+	std::ostringstream bank;
+	bank << "ROLLBANK2 2\n80 0 64 " << first.Save().size() << '\n' << first.Save()
+		<< "120 1 0 " << tail.size() << '\n' << tail;
+	Description saved;
+	saved.Value(bank.str()).Key("SEQUENCES", "StringProperty");
+	saved.Value(1).Key("SEQUENCE MODE", "ToggleProperty");
+	Description::Reader read(saved);
+	PianoRollPlugin player;
+	player.Initialise(&s_Host);
+	player.Apply(read);
+	player.GetChannelHandler()->FlushChannels();
+	assert(player.Clip().Count() == 2 && player.Clip().At(0).NoteNum == 60);
+	Command(player, PianoRollPlugin::PLAY);
+	std::vector<Played> events = Run(player);
+	assert(events.size() >= 2 && events.front().Frame == 0 && events.front().Value.NoteNum == 60);
+	Command(player, PianoRollPlugin::STOP);
+	AddNote(player, .012, .018, 67, .5f);
+	Description edited;
+	player.Describe(edited);
+	const std::string &text = edited.Values().at(edited.Find("SEQUENCES"));
+	assert(text.find("ROLLBANK2 2\n80 0 64 ") == 0);
+	assert(text.substr(text.size() - tail.size()) == tail);
+	PianoRollPlugin reopened;
+	reopened.Initialise(&s_Host);
+	Description::Reader readAgain(edited);
+	reopened.Apply(readAgain);
+	assert(reopened.Clip().Count() == 4 && reopened.Clip().At(2).NoteNum == 67);
+}
+
 int main(int argc, char **argv)
 {
 	s_Host.BUFSIZE = 64;
 	s_Host.ROLLING = true;
 	s_Host.SAMPLERATE = 1000;
+	EditExchangedBank();
 	FollowVoiceSettings();
 	LiveKeyRelease(67);
 	LiveKeyRelease(60);
