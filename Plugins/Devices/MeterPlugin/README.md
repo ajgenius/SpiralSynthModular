@@ -1,11 +1,9 @@
 # Meter
 
-Meter stays a module for now. In the private tree it is a data-only device:
-an `info.json` with `"registration": "builtin"` and `"builtin": "passthrough"`,
-no module, its one port pair declared with `"shadow": "ring"` so the host
-keeps a rolling buffer of the input for the meter to draw. This repo's
-passthrough devices only support `"shadow": "snapshot"`, one latest value, so
-Meter can't move until the passthrough reader and `PassthroughPlugin` learn
-the ring shadow. When they do, this folder keeps `info.json` and
-`SpiralIcon.xpm` and loses `MeterPlugin.C`, `MeterPlugin.h` and the module
-rules in `Makefile.am`.
+The device registry reads this directory's `info.json` and creates a built-in
+passthrough. The audio input feeds the output for each voice. The device writes
+the selected voice, or the sum for All, into one ring buffer. Closing the panel
+leaves the audio path connected.
+
+The panel reads samples from the ring to drive the bar, digits and range
+readouts. Scope uses the same passthrough with a snapshot shadow.
