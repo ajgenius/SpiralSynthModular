@@ -133,10 +133,21 @@ static SpiralPlugin *PatchLookup(int id, void *patch)
 	return id == 18 ? &p.Sink : &p.Effect;
 }
 
-// The sampler's mixed output through an ordinary effect in the same pool,
-// which is copied for each voice, sums to the same sample for sample as the
-// mixed output wired straight out of the pool: each copy is handed its voice.
-static void CheckPooledEffect(const HostInfo &host)
+static Sample *LaneOutput(PoshSamplerPlugin &sampler, unsigned port, unsigned lane)
+{
+	return sampler.VoiceOutput(port, lane);
+}
+
+static void CheckFrame(PoshSamplerPlugin &sampler, unsigned frame, unsigned lane,
+	int slot, unsigned age, float velocity)
+{
+	const float expected = slot < 0 ? 0.f : (*sampler.GetSample(slot))[age];
+	assert((*LaneOutput(sampler, 0, lane))[frame] == expected * velocity);
+	if (slot >= 0)
+		assert((*LaneOutput(sampler, slot + 1, 0))[frame] == expected);
+}
+
+static void CheckAllocation(const HostInfo &host)
 {
 	SamplerPatch patch;
 	PoshSamplerPlugin &sampler = patch.Sampler;
@@ -148,10 +159,12 @@ static void CheckPooledEffect(const HostInfo &host)
 	VoicePool pool;
 	pool.SetLookup(PatchLookup, &patch);
 	pool.Add(17, &sampler, kind, 3, &host, "");
-	sampler.Reset();
+	assert(!second && sampler.VoiceOutput(0, 2) && !sampler.VoiceOutput(0, 3));
 	const VoicePool::Wire wire = {17, 0, 18, 0};
 	pool.SumOut(wire, 64);
 
+	// Also send the sampler through an ordinary effect in the same pool.
+	// Its summed audio must match the sampler-to-mono wire sample for sample.
 	kind.Create = MakeTap;
 	pool.Add(19, &patch.Effect, kind, 3, &host, "");
 	assert(patch.Effect.SetInput(0, sampler.VoiceOutput(0, 0)));
@@ -159,38 +172,79 @@ static void CheckPooledEffect(const HostInfo &host)
 	pool.Feed(intoEffect, true);
 	const VoicePool::Wire effectsMix = {19, 0, 18, 1};
 	pool.SumOut(effectsMix, 64);
-
-	Sample gate(64);
-	gate.Zero();
-	gate.Set(0, 1);
-	for (int s = 0; s < 3; ++s)
+	Sample inputs[4];
+	Sample *gates[4];
+	for (unsigned s = 0; s < 4; ++s)
+	{
+		gates[s] = &inputs[s];
+		gates[s]->Allocate(64);
+		gates[s]->Zero();
+		assert(sampler.SetInput(2 * s + 1, gates[s]));
+	}
+	for (unsigned s = 0; s < 4; ++s)
 	{
 		Sample &pcm = *sampler.GetSample(s);
 		pcm.Allocate(256);
-		for (int n = 0; n < 256; ++n)
-			pcm.Set(n, (s + 1) / 16.f);
-
+		for (unsigned n = 0; n < 256; ++n)
+			pcm.Set(n, (s + 1) * .125f + n / 2048.f);
 		sampler.m_SampleDescVec[s]->SampleRate = 48000;
-		sampler.SampleSigned(s, PoshSamplerPlugin::SLOT_LOOPEND) = 256;
-		assert(sampler.SetInput(2 * s + 1, &gate));
 	}
-
+	// The second gate stays high across the steal and the block boundary.
+	gates[0]->Set(2, .5f);
+	gates[1]->Set(4, .5f);
+	gates[2]->Set(6, .5f);
+	gates[0]->Set(7, .75f);
+	gates[3]->Set(8, .5f);
+	for (unsigned n = 5; n < 64; ++n)
+		gates[1]->Set(n, .5f);
 	sampler.Execute();
 	pool.Run(17, &sampler, true, false, 0);
 	patch.Effect.Execute();
 	pool.Run(19, &patch.Effect, true, false, 0);
-	for (int n = 1; n < 64; ++n)
+	for (unsigned n = 0; n < 64; ++n)
 	{
+		CheckFrame(sampler, n, 0, n < 2 ? -1 : 0, n < 7 ? n - 2 : n - 7, n < 7 ? .5f : .75f);
+		CheckFrame(sampler, n, 1, n < 4 ? -1 : n < 8 ? 1 : 3, n < 8 ? n - 4 : n - 8, .5f);
+		CheckFrame(sampler, n, 2, n < 6 ? -1 : 2, n - 6, .5f);
 		float sum = 0;
 		for (unsigned v = 0; v < 3; ++v)
-		{
-			assert((*sampler.VoiceOutput(0, v))[n] == (v + 1) / 16.f);
-			sum += (*sampler.VoiceOutput(0, v))[n];
-		}
+			sum += (*LaneOutput(sampler, 0, v))[n];
 		assert((*patch.Sink.GetInput(0))[n] == sum);
 		assert((*patch.Sink.GetInput(1))[n] == sum);
 	}
+	for (unsigned s = 0; s < 4; ++s)
+		gates[s]->Zero();
+	gates[1]->Set(0, .5f);
+	gates[1]->Set(2, 1.f);
+	sampler.Execute();
+	pool.Run(17, &sampler, true, false, 0);
+	for (unsigned n = 0; n < 64; ++n)
+	{
+		CheckFrame(sampler, n, 0, 0, n + 57, .75f);
+		CheckFrame(sampler, n, 1, 3, n + 56, .5f);
+		CheckFrame(sampler, n, 2, n < 2 ? 2 : 1, n < 2 ? n + 58 : n - 2, n < 2 ? .5f : 1.f);
+	}
+	assert((*LaneOutput(sampler, 3, 0))[2u] == 0);
+
+	// Slot four ends exactly as slot three attacks. Reuse the freed lane,
+	// even though the new slot's trigger is visited first.
+	for (unsigned s = 0; s < 4; ++s)
+		gates[s]->Zero();
+	gates[2]->Set(0, 1.f);
+	sampler.SampleSigned(3, PoshSamplerPlugin::SLOT_LOOPEND) = 120;
+	sampler.Execute();
+	CheckFrame(sampler, 0, 0, 0, 121, .75f);
+	CheckFrame(sampler, 0, 1, 2, 0, 1.f);
+	CheckFrame(sampler, 0, 2, 1, 62, 1.f);
+
+	pool.Clear();
+	assert(!sampler.VoiceOutput(0, 1) && patch.Sink.GetInput(0) == sampler.VoiceOutput(0, 0));
+	assert(sampler.SampleFloat(2, PoshSamplerPlugin::SLOT_SAMPLEPOS) == -1);
+	sampler.SetVoice(&sampler, 0, 12);
+	assert(sampler.VoiceOutput(0, 7) && !second);
+	assert((*sampler.VoiceOutput(0, 9))[0] == 0);
 }
+
 
 static void CheckOneFrame(const HostInfo &host, const std::string &file)
 {
@@ -286,7 +340,7 @@ int main()
 	host.SAMPLERATE = 48000;
 	CheckNoteTrigger(host, dir);
 	CheckWidePatch(host, dir);
-	CheckPooledEffect(host);
+	CheckAllocation(host);
 	PoshSamplerPlugin first;
 	first.Initialise(&host);
 	first.LoadExternalFiles(dir, 17);
@@ -301,21 +355,14 @@ int main()
 	assert(!second && pool.Holds(17));
 	assert(first.VoiceOutput(0, 0) && first.VoiceOutput(0, 1) && !first.VoiceOutput(0, 2));
 
-	// A gate on either voice of what is wired to a sample's trigger starts
-	// it. The first voice's input is the port's own; the pool hands over
-	// the second's.
-	Sample a(64), b(64);
+	Sample a(64);
 	a.Zero();
-	b.Zero();
 	assert(first.SetInput(1, &a));
-	first.SetVoiceInput(1, 1, &b);
-	b.Set(3, 1);
+	a.Set(3, 1);
 	first.Execute();
 	assert(Cursor(first) == 61);
 
-	// A sample has one playhead: a gate on the other voice while it plays
-	// starts the same sample again, and it does not play beside itself.
-	b.Zero();
+	a.Zero();
 	a.Set(11, 1);
 	first.Execute();
 	assert(Cursor(first) == 53);
@@ -372,7 +419,6 @@ int main()
 	pool.Clear();
 	pool.Add(17, &first, kind, 2, &host, dir);
 	assert(!second && Cursor(first) == 117);
-	first.SetVoiceInput(1, 1, &b);
 	retrigger.Value.AsBoolean = true;
 	first.SynchronizeProperty("RETRIG0", &retrigger);
 

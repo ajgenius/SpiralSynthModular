@@ -61,13 +61,11 @@ int SpiralPlugin_GetType()
 ///////////////////////////////////////////////////////
 
 PoshSamplerPlugin::PoshSamplerPlugin() :
-m_Voices(1),
+m_PatchVoices(1),
 m_OlderSave(false),
 m_Recording(false),
 m_LastRecording(false)
 {
-        std::fill (m_OutVoice, m_OutVoice + NUM_SAMPLES, 0u);
-        std::fill (m_Lane, m_Lane + NUM_SAMPLES, 0u);
         for (int n=0; n<NUM_SAMPLES; n++) m_InitialPitch[n] = 1.0f;
         m_PluginInfo.Name = "PoshSampler";
         m_PluginInfo.Width = 400;
@@ -208,7 +206,7 @@ void PoshSamplerPlugin::SizeVoices()
 	if (!m_HostInfo)
 		return;
 
-	m_MixedVoices.resize(OutVoices() - 1);
+	m_MixedVoices.resize(m_Voices.Width() - 1);
 
 	// They start silent each time: what a voice held before the patch was
 	// wired afresh is not for whoever reads it next.
@@ -224,52 +222,13 @@ void PoshSamplerPlugin::SizeVoices()
 	m_Silence.Zero();
 }
 
-// What is wired to an input, on one of its voices: nothing where that
-// voice has nothing.
-float PoshSamplerPlugin::VoiceInput(int port, unsigned voice, int frame) const
+long PoshSamplerPlugin::TriggerStart(int slot, int frame)
 {
-	if (!voice)
-		return const_cast<PoshSamplerPlugin *>(this)->GetInput(port, frame);
-
-	const Sample *in = voice < m_Voices ? m_VoiceInputs[(voice - 1) * m_PluginInfo.NumInputs + port] : NULL;
-
-	return in ? (*in)[frame] : 0.0f;
-}
-
-// A voice of the mixed output for a sample that starts: the one it has while
-// it still plays, else the lowest no playing sample has, else the lowest of
-// those the fewest have. With one voice that is always the one.
-unsigned PoshSamplerPlugin::TakeVoice(int slot) const
-{
-	PoshSamplerPlugin *self = const_cast<PoshSamplerPlugin *>(this);
-
-	if (OutVoices() < 2)
-		return 0;
-
-	if (self->SampleFloat(slot, SLOT_SAMPLEPOS) != -1 && m_OutVoice[slot] < OutVoices())
-		return m_OutVoice[slot];
-
-	unsigned sharing[NUM_SAMPLES] = {0}, best = 0;
-
-	for (int s = 0; s < NUM_SAMPLES; ++s)
-		if (s != slot && self->SampleFloat(s, SLOT_SAMPLEPOS) != -1)
-			++sharing[std::min(m_OutVoice[s], OutVoices() - 1)];
-
-	for (unsigned v = 1; v < OutVoices(); ++v)
-		if (sharing[v] < sharing[best])
-			best = v;
-
-	return best;
-}
-
-long PoshSamplerPlugin::TriggerStart(int slot, int frame, unsigned lane)
-{
-	// The start CV belongs to this attack, on the voice that triggered it.
-	// The panel marker is the sample's.
+	// The start CV belongs to this attack. The panel marker is shared by all voices.
 	long start = SampleSigned(slot, SLOT_PLAYSTART);
 	if (slot < 3 && InputExists(FIRST_START_INPUT + slot))
 	{
-		const float cv = VoiceInput(FIRST_START_INPUT + slot, lane, frame);
+		const float cv = GetInput(FIRST_START_INPUT + slot, frame);
 		if (Spiral::Core::IsFinite(cv))
 		{
 			const double fraction = .5 * (1.0 + std::max(-1.f, std::min(1.f, cv)));
@@ -282,100 +241,94 @@ long PoshSamplerPlugin::TriggerStart(int slot, int frame, unsigned lane)
 	return std::max(0L, start);
 }
 
-void PoshSamplerPlugin::Execute() {
-     for (int s=0; s<NUM_SAMPLES+1; s++) GetOutputBuf (s)->Zero();
-     for (size_t v=0; v<m_MixedVoices.size(); v++) m_MixedVoices[v].Zero();
-     float rateScale[NUM_SAMPLES];
-     for (int s=0; s<NUM_SAMPLES; ++s)
-         rateScale[s] = m_SampleDescVec[s]->SampleRate / (float)m_HostInfo->SAMPLERATE;
-     for (int n=0; n<m_HostInfo->BUFSIZE; n++) {
-         for (int s=0; s<NUM_SAMPLES; s++) {
-             SampleDesc *S = m_SampleDescVec[s];
-             const Sample &pcm = *GetSample(s);
-             // if we have a sample here
-             if (pcm.GetLength()) {
-                // Convert the CV input into a useable trigger
-                if (SampleBool (s, SLOT_RETRIG) || (SampleFloat (s, SLOT_SAMPLEPOS) == -1)) {
-                   const int note = SampleSigned (s, SLOT_NOTE);
-                   // The sample has the one trigger: a gate on any voice of
-                   // what is wired to its input, or its note on any voice of
-                   // the trigger pitch. The strongest gate is its velocity.
-                   float gate = GetInput(s * 2 + 1, n);
-                   bool triggered = gate > 0 && Spiral::Core::IsFinite(gate);
-                   unsigned lane = 0;
-                   for (unsigned v = 1; v < m_Voices; ++v) {
-                      const float other = VoiceInput(s * 2 + 1, v, n);
-                      if (other > 0 && Spiral::Core::IsFinite(other) && (!triggered || other > gate)) {
-                         gate = other;
-                         triggered = true;
-                         lane = v;
-                      }
-                   }
-                   bool selected = note >= 0 && note < 128 && feq(GetInputPitch (NOTETRIG, n), NoteTable[note], 0.01f);
-                   for (unsigned v = 1; v < m_Voices && !selected && note >= 0 && note < 128 && InputExists (NOTETRIG); ++v)
-                      if (m_VoiceInputs[(v - 1) * m_PluginInfo.NumInputs + NOTETRIG]
-                          && feq((VoiceInput(NOTETRIG, v, n) + 1.0f) * MAX_FREQ / 2, NoteTable[note], 0.01f)) {
-                         selected = true;
-                         if (!triggered) lane = v;
-                      }
-                   if (triggered || selected) {
-                      if (S->TriggerUp) {
-                         m_OutVoice[s] = TakeVoice(s);
-                         m_Lane[s] = lane;
-                         SampleFloat (s, SLOT_SAMPLEPOS) = TriggerStart(s, n, lane);
-                         S->TriggerUp = false;
-                         S->Velocity = triggered ? gate : 1.f;
-                      }
-                   }
-                   else {
-                      S->TriggerUp = true;
-                      // end it if it's looping
-                      if (SampleBool (s, SLOT_LOOP)) SampleFloat (s, SLOT_SAMPLEPOS) = -1;
-                   }
-                }
-                // if the sample has ended
-                if (SampleFloat (s, SLOT_SAMPLEPOS) >= SampleSigned (s, SLOT_LOOPEND) || SampleFloat (s, SLOT_SAMPLEPOS) >= pcm.GetLength()) {
-                   if (SampleBool (s, SLOT_LOOP)) {
-                      if (SampleBool (s, SLOT_PINGPONG)) S->Pong = true;
-                      else SampleFloat (s, SLOT_SAMPLEPOS) = SampleSigned (s, SLOT_LOOPSTART);
-                   }
-                   else {
-                      SampleFloat (s, SLOT_SAMPLEPOS) = -1;
-                   }
-                }
-                // if the sample has ended ponging
-                if (S->Pong && SampleFloat (s, SLOT_SAMPLEPOS) <= SampleSigned (s, SLOT_LOOPSTART))
-                   S->Pong = false;
-                float &position = SampleFloat (s, SLOT_SAMPLEPOS);
-                if (position != -1) {
-                   if (!Spiral::Core::IsFinite (position)) position = -1;
-                   else if (position < 0) position = 0;
-                   else if (position >= pcm.GetLength()) position = pcm.GetLength() - 1;
-                }
-                if (SampleFloat (s, SLOT_SAMPLEPOS) != -1) {
-                   if (InputExists (s * 2)) {
-                      // Get the pitch from the CV, on the voice that triggered
-                      const bool own = m_Lane[s] && m_Lane[s] < m_Voices && m_VoiceInputs[(m_Lane[s] - 1) * m_PluginInfo.NumInputs + s * 2];
-                      float PlayFreq = own ? (VoiceInput(s * 2, m_Lane[s], n) + 1.0f) * MAX_FREQ / 2 : GetInputPitch (s * 2, n);
-                      // assumtion: base frequency = 440 (middle A)
-                      S->Pitch = PlayFreq / 440;
-                   }
-                   // mix the sample to the output, on the voice it has;
-                   // more samples playing than there are voices share.
-                   const unsigned voice = std::min(m_OutVoice[s], OutVoices() - 1);
-                   const float mixed = pcm[SampleFloat (s, SLOT_SAMPLEPOS)] * SampleFloat (s, SLOT_VOLUME) * S->Velocity;
-                   if (!voice) MixOutput (0, n, mixed);
-                   else m_MixedVoices[voice - 1].Set(n, mixed + m_MixedVoices[voice - 1][n]);
-                   // copy the sample to it's individual output.
-                   SetOutput (s + 1, n, (pcm[SampleFloat (s, SLOT_SAMPLEPOS)] * SampleFloat (s, SLOT_VOLUME)));
-                   float Freq = S->Pitch * rateScale[s];
-                   Freq = ldexpf (Freq, SampleSigned (s, SLOT_OCTAVE));
-                   if (S->Pong) SampleFloat (s, SLOT_SAMPLEPOS) -= Freq * SampleFloat (s, SLOT_PITCHMOD);
-                   else SampleFloat (s, SLOT_SAMPLEPOS) += Freq * SampleFloat (s, SLOT_PITCHMOD);
-                }
-             }
-         }
-     }
+void PoshSamplerPlugin::Execute()
+{
+	for (int port = 0; port <= NUM_SAMPLES; ++port)
+		GetOutputBuf(port)->Zero();
+	for (size_t lane = 0; lane < m_MixedVoices.size(); ++lane)
+		m_MixedVoices[lane].Zero();
+
+	float rateScale[NUM_SAMPLES];
+	for (int s = 0; s < NUM_SAMPLES; ++s)
+		rateScale[s] = m_SampleDescVec[s]->SampleRate / (float)m_HostInfo->SAMPLERATE;
+
+	for (int n = 0; n < m_HostInfo->BUFSIZE; ++n)
+	{
+		const float notePitch = GetInputPitch(NOTETRIG, n);
+		unsigned playing = 0, attacks = 0;
+		for (int s = 0; s < NUM_SAMPLES; ++s)
+		{
+			SampleDesc &slot = *m_SampleDescVec[s];
+			float &pos = SampleFloat(s, SLOT_SAMPLEPOS);
+			const long length = GetSample(s)->GetLength();
+			const int note = SampleSigned(s, SLOT_NOTE);
+			const float gate = GetInput(s * 2 + 1, n);
+			const bool direct = gate > 0 && Spiral::Core::IsFinite(gate);
+			const bool high = direct || (note >= 0 && note < 128 && feq(notePitch, NoteTable[note], .01f));
+			const bool edge = high && slot.TriggerUp;
+			slot.TriggerUp = !high;
+			if (!length)
+			{
+				pos = -1;
+				continue;
+			}
+			const bool loop = GetLoop(s);
+			const long end = GetLoopEnd(s);
+			const bool accept = GetReTrig(s) || pos == -1 || (!loop && (pos >= end || pos >= length));
+			if (edge && accept)
+			{
+				pos = TriggerStart(s, n);
+				slot.Velocity = direct ? gate : 1.f;
+				slot.Pong = false;
+				attacks |= 1u << s;
+			}
+			else if (!high && loop && accept)
+				pos = -1;
+
+			if (pos >= end || pos >= length)
+			{
+				if (!loop)
+					pos = -1;
+				else if (GetPingPong(s))
+					slot.Pong = true;
+				else
+					pos = GetLoopStart(s);
+			}
+			if (slot.Pong && pos <= GetLoopStart(s))
+				slot.Pong = false;
+			if (!Spiral::Core::IsFinite(pos))
+				pos = -1;
+			else if (pos != -1)
+			{
+				if (pos < 0)
+					pos = 0;
+				else if (pos >= length)
+					pos = length - 1;
+				playing |= 1u << s;
+			}
+		}
+
+		const unsigned stolen = m_Voices.Route(playing, attacks);
+		for (int s = 0; s < NUM_SAMPLES; ++s)
+		{
+			float &pos = SampleFloat(s, SLOT_SAMPLEPOS);
+			if (stolen & (1u << s))
+				pos = -1;
+			const int lane = m_Voices.Lane(s);
+			if (lane < 0)
+				continue;
+			SampleDesc &slot = *m_SampleDescVec[s];
+			if (InputExists(s * 2))
+				slot.Pitch = GetInputPitch(s * 2, n) / 440;
+			const float value = (*GetSample(s))[pos] * GetVolume(s);
+			VoiceOutput(0, lane)->Set(n, value * slot.Velocity);
+			SetOutput(s + 1, n, value);
+			const float step = ldexpf(slot.Pitch * rateScale[s], SampleSigned(s, SLOT_OCTAVE)) * GetPitch(s);
+			if (Spiral::Core::IsFinite(step))
+				pos += slot.Pong ? -step : step;
+		}
+	}
+
      // record
      if (m_Recording && InputExists (REC_INPUT)) {
         int s = 0; //GUI->GetCurrentSample();
@@ -484,18 +437,20 @@ void PoshSamplerPlugin::InitializeSampleDescription (SampleDesc* NewDesc, int nu
        }
 }
 
-// Told whenever the patch is wired afresh, before the voices' inputs are
-// handed over: there is the one device, so only the count matters.
 void PoshSamplerPlugin::SetVoice(SpiralPlugin *, unsigned, unsigned voices)
 {
-	m_Voices = std::max(1u, voices);
-	m_VoiceInputs.assign((m_Voices - 1) * m_PluginInfo.NumInputs, (const Sample *)NULL);
+	m_PatchVoices = std::max(1u, voices);
+	const unsigned stopped = m_Voices.Resize(m_PatchVoices);
+	for (int s = 0; s < NUM_SAMPLES; ++s)
+		if (stopped & (1u << s))
+			SampleFloat(s, SLOT_SAMPLEPOS) = -1;
+
 	SizeVoices();
 }
 
 Sample *PoshSamplerPlugin::VoiceOutput(unsigned port, unsigned voice)
 {
-	if (port > NUM_SAMPLES || voice >= m_Voices)
+	if (port > NUM_SAMPLES || voice >= m_PatchVoices)
 		return NULL;
 
 	if (!voice)
@@ -503,13 +458,7 @@ Sample *PoshSamplerPlugin::VoiceOutput(unsigned port, unsigned voice)
 
 	// A voice past the mixed output's last is there, and silent: a copy of
 	// what follows that found none would be handed the first voice again.
-	return port == 0 && voice < OutVoices() ? &m_MixedVoices[voice - 1] : &m_Silence;
-}
-
-void PoshSamplerPlugin::SetVoiceInput(unsigned port, unsigned voice, const Sample *in)
-{
-	if (voice && voice < m_Voices && port < (unsigned)m_PluginInfo.NumInputs)
-		m_VoiceInputs[(voice - 1) * m_PluginInfo.NumInputs + port] = in;
+	return port == 0 && voice <= m_MixedVoices.size() ? &m_MixedVoices[voice - 1] : &m_Silence;
 }
 
 void PoshSamplerPlugin::Describe(Spiral::Core::Description &d) {

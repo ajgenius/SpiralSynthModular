@@ -19,10 +19,12 @@
 #ifndef PoshSamplerPLUGIN
 #define PoshSamplerPLUGIN
 
+#include "SamplerVoices.h"
+
 #include "Device.h"
 #include "VoicePool.h"
 
-static const int NUM_SAMPLES = 8;
+static const int NUM_SAMPLES = SamplerVoices::Slots;
 static const int TRANSBUF_SIZE = 0x10000;
 
 struct SampleDesc {
@@ -35,8 +37,8 @@ struct SampleDesc {
 // The sampler runs once, whatever voices its patch has, as ajgenius set on
 // 10 November 2026. Each sample has its one trigger and its one playhead; the
 // voices are on the mixed output, where each sample that is playing has one
-// while there are enough. An output of one sample is one voice.
-class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceOutputSource, public VoiceInputSink {
+// while there are enough. A new attack steals the oldest voice. Individual outputs are mono.
+class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceOutputSource {
    public:
       PoshSamplerPlugin();
       virtual ~PoshSamplerPlugin();
@@ -47,7 +49,6 @@ class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceOutputSource,
       virtual void SetVoice(SpiralPlugin *first, unsigned voice, unsigned voices);
       virtual Sample *VoiceOutput(unsigned port, unsigned voice);
       virtual bool SumsVoices(unsigned port) const { return port == 0; }
-      virtual void SetVoiceInput(unsigned port, unsigned voice, const Sample *in);
       virtual void Describe(Spiral::Core::Description &d);
       virtual void Apply(Spiral::Core::Description::Reader &r);
       virtual void Migrate(Spiral::Core::Description &d);
@@ -122,25 +123,12 @@ class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceOutputSource,
       Spiral::Core::ToggleProperty &SlotBool (int n, SampleSlot s)
       { return *(Spiral::Core::ToggleProperty *)Slot (n, s); }
    private:
-      long TriggerStart(int slot, int frame, unsigned lane);
-
-      // The patch's voices. The mixed output's first is the port's own
-      // buffer and the rest are kept here; a sample's own output has only
-      // silence on the rest. Of what is wired in, the first voice is the
-      // port's input and the rest are handed over, by port then voice.
-      unsigned m_Voices;
-      // The voices of the mixed output: one for each sample at most, more
-      // than that none could take.
-      unsigned OutVoices() const { return std::min(m_Voices, unsigned(NUM_SAMPLES)); }
+      long TriggerStart(int slot, int frame);
+      unsigned m_PatchVoices;
+      SamplerVoices m_Voices;
       std::vector<Sample> m_MixedVoices;
       Sample m_Silence;
-      std::vector<const Sample *> m_VoiceInputs;
-      // For each sample, the voice of the mixed output it plays on, and the
-      // voice of its inputs that triggered it, whose pitch and start it takes.
-      unsigned m_OutVoice[NUM_SAMPLES], m_Lane[NUM_SAMPLES];
       void SizeVoices();
-      float VoiceInput(int port, unsigned voice, int frame) const;
-      unsigned TakeVoice(int slot) const;
       // An older save had a whole sample's end one frame short.
       bool m_OlderSave;
       void RestoreSample(int slot, const std::string &file);
