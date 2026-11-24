@@ -16,6 +16,14 @@ has no module for its panel to be built into. Its `info.json`, panel and all,
 is installed beside the device modules and read from there, and a panel file
 here is shown in its place as for any device.
 
+## Configuration in the device header
+
+Set `"header_config": "monitor-voice"` inside `ui.panel` to put a named
+choice or button beside the help icon. The name refers to an existing child
+control. Its items, selected value, tooltip and action still come from that
+control. Each available header action has its own fixed-size hit area. A panel
+with no configuration action can omit the field.
+
 ## Where panel files are looked for
 
 First to last, and the first folder with a file for something wins:
