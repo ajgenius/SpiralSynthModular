@@ -42,6 +42,17 @@ namespace Spiral
 {
 	namespace Panels
 	{
+		class HeaderGearButton: public Fl_Button
+		{
+		public:
+			HeaderGearButton(): Fl_Button(0, 0, 12, 12) {}
+			void draw()
+			{
+				DrawFltkGear(*this, (std::min(w(), h()) - 2) / 2);
+				if (Fl::focus() == this && Fl::visible_focus()) draw_focus();
+			}
+		};
+
 		static const int TitleHeight = 14;
 		static const int Margin = 2;
 
@@ -232,10 +243,9 @@ namespace Spiral
 			{
 				if (!m_Config)
 				{
-					m_Config = new Fl_Button(0, 0, 12, 12, "⚙");
+					m_Config = new HeaderGearButton();
 					m_Config->box(FL_NO_BOX);
 					m_Config->down_box(FL_NO_BOX);
-					m_Config->labelsize(12);
 					m_Config->callback(OpenConfig, this);
 					add(m_Config);
 				}
