@@ -133,6 +133,52 @@ static SpiralPlugin *PatchLookup(int id, void *patch)
 	return id == 18 ? &p.Sink : &p.Effect;
 }
 
+struct SamplerPair
+{
+	PoshSamplerPlugin Source, Destination;
+
+	static SpiralPlugin *Lookup(int id, void *data)
+	{
+		SamplerPair &pair = *static_cast<SamplerPair *>(data);
+		return id == 1 ? &pair.Source : &pair.Destination;
+	}
+};
+
+static void CheckPolyTrigger(const HostInfo &host, bool samePool)
+{
+	SamplerPair pair;
+	pair.Source.Initialise(&host);
+	pair.Destination.Initialise(&host);
+	DeviceClass kind;
+	kind.Create = MakeCopy;
+	VoicePool pool, other;
+	pool.SetLookup(SamplerPair::Lookup, &pair);
+	other.SetLookup(SamplerPair::Lookup, &pair);
+	pool.Add(1, &pair.Source, kind, 2, &host, "");
+	VoicePool &destination = samePool ? pool : other;
+	destination.Add(2, &pair.Destination, kind, 2, &host, "");
+	pair.Source.Reset();
+	pair.Destination.Reset();
+	Sample &pcm = *pair.Destination.GetSample(0);
+	pcm.Allocate(128);
+	for (int n = 0; n < 128; ++n)
+		pcm.Set(n, 1.f);
+	pair.Destination.m_SampleDescVec[0]->SampleRate = 48000;
+
+	const VoicePool::Wire wire = {1, 0, 2, 1};
+	assert(pair.Destination.SetInput(1, pair.Source.VoiceOutput(0, 0)));
+	if (!samePool)
+		pool.SumOut(wire, 64);
+	destination.Feed(wire, samePool);
+
+	pair.Source.VoiceOutput(0, 1)->Set(3, 1.f);
+	pair.Source.VoiceOutput(0, 0)->Set(11, .5f);
+	pool.Run(1, &pair.Source, true, false, 0);
+	pair.Destination.Execute();
+	for (int n = 0; n < 64; ++n)
+		assert((*pair.Destination.VoiceOutput(0, 0))[n] == (n < 11 ? 0.f : .5f));
+}
+
 static Sample *LaneOutput(PoshSamplerPlugin &sampler, unsigned port, unsigned lane)
 {
 	return sampler.VoiceOutput(port, lane);
@@ -341,13 +387,17 @@ int main()
 	CheckNoteTrigger(host, dir);
 	CheckWidePatch(host, dir);
 	CheckAllocation(host);
-	PoshSamplerPlugin first;
+	CheckPolyTrigger(host, true);
+	CheckPolyTrigger(host, false);
+	SamplerPatch patch;
+	PoshSamplerPlugin &first = patch.Sampler;
+	patch.Sink.Initialise(&host);
 	first.Initialise(&host);
 	first.LoadExternalFiles(dir, 17);
 	DeviceClass kind;
 	kind.Create = MakeCopy;
 	VoicePool pool;
-	pool.SetLookup(Lookup, &first);
+	pool.SetLookup(PatchLookup, &patch);
 	pool.Add(17, &first, kind, 2, &host, dir);
 	first.Reset();
 
@@ -446,7 +496,7 @@ int main()
 	assert(first.SetInput(3, &gate));
 
 	// Where a wire leaves the pool the voices are added together.
-	const VoicePool::Wire out = {17, 0, 99, 16};
+	const VoicePool::Wire out = {17, 0, 18, 0};
 	pool.SumOut(out, 64);
 	first.Execute();
 	pool.Run(17, &first, false, false, 256);
@@ -459,7 +509,7 @@ int main()
 
 		assert((*first.VoiceOutput(0, 0))[n] == (*one)[n] && (*one)[n] > 0);
 		assert((*first.VoiceOutput(0, 1))[n] == (*two)[n]);
-		assert((*first.GetInput(16))[n] == (*one)[n] + (*two)[n]);
+		assert((*patch.Sink.GetInput(0))[n] == (*one)[n] + (*two)[n]);
 		// A sample's own output is one voice: the other has silence.
 		assert((*first.VoiceOutput(2, 1))[n] == 0);
 	}

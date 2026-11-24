@@ -38,7 +38,7 @@ struct SampleDesc {
 // 10 November 2026. Each sample has its one trigger and its one playhead; the
 // voices are on the mixed output, where each sample that is playing has one
 // while there are enough. A new attack steals the oldest voice. Individual outputs are mono.
-class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceOutputSource {
+class PoshSamplerPlugin : public Spiral::Core::Device, public VoiceOutputSource, public FirstVoiceInput {
    public:
       PoshSamplerPlugin();
       virtual ~PoshSamplerPlugin();

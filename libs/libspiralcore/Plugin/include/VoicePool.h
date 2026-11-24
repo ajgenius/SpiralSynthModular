@@ -40,6 +40,13 @@ public:
 	virtual void SetVoiceInput(unsigned port, unsigned voice, const Sample *in) = 0;
 };
 
+// Device-level inputs follow the source's first voice even across a pool boundary.
+class FirstVoiceInput
+{
+public:
+	virtual ~FirstVoiceInput() {}
+};
+
 // A device that takes the sum of the voices wired to it, as the output
 // does. It is one device whatever voices its patch has: it is put in no
 // pool, so what is wired to it from one arrives summed.

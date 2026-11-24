@@ -70,8 +70,9 @@ void VoicePool::SumOut(const Wire &wire, int size)
 	// Crossing into another pool keeps the visible CV and the shared event
 	// stream; audio a single device has on several voices is summed.
 	VoiceOutputSource *single = dynamic_cast<VoiceOutputSource *>(Find(wire.OutputID));
+	SpiralPlugin *dest = Find(wire.InputID);
 
-	if (single && !single->SumsVoices(wire.OutputPort))
+	if (dynamic_cast<FirstVoiceInput *>(dest) || (single && !single->SumsVoices(wire.OutputPort)))
 		return;
 	std::vector<Sum> &sums = m_Sums[wire.OutputID];
 	Sample *sum = 0;
@@ -84,7 +85,7 @@ void VoicePool::SumOut(const Wire &wire, int size)
 		sums.push_back(added);
 		sum = added.Buffer;
 	}
-	if (SpiralPlugin *dest = Find(wire.InputID))
+	if (dest)
 		dest->SetInput(wire.InputPort, sum);
 	m_Restore.push_back(wire);
 }
