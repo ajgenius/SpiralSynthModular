@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "PatchProject.h"
+#include "FileVersion.h"
 #include "JSON.h"
 #include <cassert>
 #include <cstdio>
@@ -60,13 +61,13 @@ int main(int argc, char **argv)
 	assert(reader.Workspace()->Read("project.spiral.json", metadata, error));
 	std::auto_ptr<Spumoni::JSON> root(Spumoni::ParseJSONText(metadata.c_str(), &error));
 	assert(root.get());
-	assert(root->Get("format")->Text() == "SpiralSynthModular File Ver 9");
+	assert(root->Get("format")->Text() == Spiral::File::Version::ProjectHeader());
 	assert(root->Get("main")->Get("name")->Text() == "patch.spiral.legacy.ssm");
 	assert(root->Get("main")->Get("format")->Text() == "SpiralSynthModular File Ver 4");
 	Spumoni::Identity identity;
 	const Spumoni::Package::Application &app = *reader.GetFormat().Application;
 	assert(app.Accept(*root, identity, error));
-	root->SetOwned("format", Spumoni::JSON::MakeString("SpiralSynthModular File Ver 10"));
+	root->SetOwned("format", Spumoni::JSON::MakeString("SpiralSynthModular File Ver 13"));
 	assert(!app.Accept(*root, identity, error));
 	root->SetOwned("format", Spumoni::JSON::MakeString("SpiralSynthModular File Ver 9"));
 	root->Get("main")->SetOwned("name", Spumoni::JSON::MakeString("patch.spiral.json"));

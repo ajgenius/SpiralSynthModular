@@ -12,94 +12,105 @@ namespace Spiral
 {
 	namespace File
 	{
-		class SSMApplication : public Spumoni::Package::Application
+		void Project::Describe(Spumoni::JSON &root, const Spumoni::Identity &identity) const
 		{
-		public:
-			virtual void Describe(Spumoni::JSON &root, const Spumoni::Identity &identity) const
+			root.SetOwned("format", Spumoni::JSON::MakeString(Version::ProjectHeader()));
+
+			Spumoni::JSON *main = Spumoni::JSON::MakeObject();
+			const bool positional = !HasPatch() && !Source().Empty();
+			std::string header = positional ? "SpiralSynthModular File Ver 4" : Version::PatchHeader();
+			if (HasPatch())
 			{
-				root.SetOwned("format", Spumoni::JSON::MakeString(Version::ProjectHeader()));
+				Spumoni::JSONOwner body(Spumoni::ParseJSONText(Patch().Bytes()));
+				const Spumoni::JSON *saved = body.get() ? body->Get("format") : NULL;
+				if (saved && saved->GetType() == Spumoni::JSON::String)
+					header = saved->Text();
+			}
+			main->SetOwned("name", Spumoni::JSON::MakeString(positional ? Source().Name() : Patch().Name()));
+			main->SetOwned("format", Spumoni::JSON::MakeString(header));
+			root.SetOwned("main", main);
 
-				Spumoni::JSON *main = Spumoni::JSON::MakeObject();
-				main->SetOwned("name", Spumoni::JSON::MakeString("patch.spiral.json"));
-				main->SetOwned("format", Spumoni::JSON::MakeString(Version::PatchHeader()));
-				root.SetOwned("main", main);
+			Spumoni::JSON *application = Spumoni::JSON::MakeObject();
+			application->SetOwned("name", Spumoni::JSON::MakeString("SpiralSynthModular"));
+			root.SetOwned("application", application);
 
-				Spumoni::JSON *application = Spumoni::JSON::MakeObject();
-				application->SetOwned("name", Spumoni::JSON::MakeString("SpiralSynthModular"));
-				root.SetOwned("application", application);
-
-				if (!identity.ApplicationMetadata.empty())
+			if (!identity.ApplicationMetadata.empty())
+			{
+				Spumoni::JSON *metadata =
+					Spumoni::ParseJSONText(identity.ApplicationMetadata);
+				if (metadata && metadata->GetType() == Spumoni::JSON::Object)
 				{
-					Spumoni::JSON *metadata =
-						Spumoni::ParseJSONText(identity.ApplicationMetadata);
-					if (metadata && metadata->GetType() == Spumoni::JSON::Object)
+					const std::vector<std::string> keys = metadata->Keys();
+					for (size_t i = 0; i < keys.size(); ++i)
 					{
-						const std::vector<std::string> keys = metadata->Keys();
-						for (size_t i = 0; i < keys.size(); ++i)
-						{
-							if (keys[i] == "format" || keys[i] == "main"
-								|| keys[i] == "application")
-								continue;
-							if (const Spumoni::JSON *value = metadata->Get(keys[i]))
-								root.SetOwned(keys[i], value->Duplicate());
-						}
+						if (keys[i] == "format" || keys[i] == "main"
+							|| keys[i] == "application")
+							continue;
+						if (const Spumoni::JSON *value = metadata->Get(keys[i]))
+							root.SetOwned(keys[i], value->Duplicate());
 					}
-					delete metadata;
 				}
+				delete metadata;
 			}
+		}
 
-			virtual bool Accept(const Spumoni::JSON &root, Spumoni::Identity &, std::string &error) const
+		bool Project::Accept(const Spumoni::JSON &root, Spumoni::Identity &, std::string &error) const
+		{
+			const Spumoni::JSON *application = root.Get("application");
+			const Spumoni::JSON *name = application ? application->Get("name") : NULL;
+			if (!name || name->GetType() != Spumoni::JSON::String || name->Text() != "SpiralSynthModular")
 			{
-				const Spumoni::JSON *application = root.Get("application");
-				const Spumoni::JSON *name = application ? application->Get("name") : NULL;
-				if (!name || name->GetType() != Spumoni::JSON::String || name->Text() != "SpiralSynthModular")
-				{
-					error = "project.spiral.json has invalid application information";
-					return false;
-				}
-
-				const Spumoni::JSON *format = root.Get("format");
-				const Spumoni::JSON *main = root.Get("main");
-				if (!format && !main)
-					return true;
-
-				const Spumoni::JSON *member = main ? main->Get("name") : NULL;
-				const Spumoni::JSON *header = main ? main->Get("format") : NULL;
-				long found = 0;
-				const Version::Status project = format && format->GetType() == Spumoni::JSON::String
-					? Version::Check(format->Text(), Version::ProjectKind, Version::ReadableProject, found)
-					: Version::Foreign;
-				if ((project != Version::Current && !(project == Version::Older && found >= 9))
-					|| !member || member->GetType() != Spumoni::JSON::String
-					|| !header || header->GetType() != Spumoni::JSON::String)
-				{
-					error = "Unsupported project version or main payload";
-					return false;
-				}
-
-				long payload = 0;
-				const Version::Status patch = Version::Check(header->Text(), Version::PatchKind,
-					Version::ReadablePatch, payload);
-				const bool positional = member->Text() == "patch.spiral.legacy.ssm"
-					&& header->Text() == "SpiralSynthModular File Ver 4";
-				const bool json = member->Text() == "patch.spiral.json"
-					&& (patch == Version::Current || patch == Version::Older);
-				if (!positional && !json)
-				{
-					error = "Unsupported main payload; this host reads positional Ver 4 and "
-						+ Version::Header(Version::PatchKind, Version::ReadablePatch) + " or older packages";
-					return false;
-				}
-
-				return true;
+				error = "project.spiral.json has invalid application information";
+				return false;
 			}
-		};
+
+			const Spumoni::JSON *format = root.Get("format");
+			const Spumoni::JSON *main = root.Get("main");
+			if (!format && !main)
+				return true;
+
+			const Spumoni::JSON *member = main ? main->Get("name") : NULL;
+			const Spumoni::JSON *header = main ? main->Get("format") : NULL;
+			long found = 0;
+			const Version::Status project = format && format->GetType() == Spumoni::JSON::String
+				? Version::Check(format->Text(), Version::ProjectKind, Version::ReadableProject, found)
+				: Version::Foreign;
+			if ((project != Version::Current && !(project == Version::Older && found >= 9))
+				|| !member || member->GetType() != Spumoni::JSON::String
+				|| !header || header->GetType() != Spumoni::JSON::String)
+			{
+				error = "Unsupported project version or main payload";
+				return false;
+			}
+
+			long payload = 0;
+			const Version::Status patch = Version::Check(header->Text(), Version::PatchKind,
+				Version::ReadablePatch, payload);
+			const bool positional = member->Text() == "patch.spiral.legacy.ssm"
+				&& header->Text() == "SpiralSynthModular File Ver 4";
+			const bool json = member->Text() == "patch.spiral.json"
+				&& (patch == Version::Current || patch == Version::Older);
+			if (!positional && !json)
+			{
+				error = "Unsupported main payload; this host reads positional Ver 4 and "
+					+ Version::Header(Version::PatchKind, Version::ReadablePatch) + " or older packages";
+				return false;
+			}
+
+			return true;
+		}
 
 		class SchemaPart : public Spumoni::SourcePart
 		{
 		public:
 			explicit SchemaPart(const Spumoni::SourcePart &patch):
 				Spumoni::SourcePart("schema.patch.spiral.json"), m_Patch(patch) {}
+
+			void UseImportedSchema(const std::string &schema, const std::string &patch)
+			{
+				Set(schema);
+				m_ImportedPatch = schema.empty() ? std::string() : patch;
+			}
 
 			virtual bool Store(Spumoni::Container::Writer &writer, const std::string &branchRoot,
 				Spumoni::Store *, std::string &error)
@@ -109,11 +120,14 @@ namespace Spiral
 				Core::PatchDescription definition;
 				if (!PatchFile::ReadText(m_Patch.Bytes(), definition, error))
 					return false;
+				if (!Bytes().empty() && m_Patch.Bytes() == m_ImportedPatch)
+					PatchFile::ApplySchema(Bytes(), definition);
 				return writer.AddMemory(branchRoot + Name(), PatchFile::Schema(definition), error);
 			}
 
 		private:
 			const Spumoni::SourcePart &m_Patch;
+			std::string m_ImportedPatch;
 		};
 
 		class Project::SidecarPart : public Spumoni::Part
@@ -131,10 +145,13 @@ namespace Spiral
 				Discard();
 			}
 
-			bool Begin(std::string &error)
+			bool Begin(std::string &error, const std::string &copyFrom = std::string())
 			{
 				std::auto_ptr<Spumoni::DiskFolder> fresh(new Spumoni::DiskFolder);
 				if (!fresh->Create("ssm-sidecars-", error))
+					return false;
+
+				if (!copyFrom.empty() && !Spumoni::Directory::CopyTree(copyFrom, fresh->Root(), error))
 					return false;
 
 				delete m_Live;
@@ -234,7 +251,17 @@ namespace Spiral
 			virtual bool Store(Spumoni::Container::Writer &writer, const std::string &branchRoot,
 				Spumoni::Store *, std::string &error)
 			{
-				const std::string text = Text(m_Project.GetDocument());
+				DocumentSection document = m_Project.GetDocument();
+				if (m_Project.HasPatch())
+				{
+					Spumoni::JSONOwner body(Spumoni::ParseJSONText(m_Project.Patch().Bytes()));
+					if (body.get())
+					{
+						const DocumentSection branch = Project::ReadDocument(*body.get());
+						if (!branch.Empty()) document = branch;
+					}
+				}
+				const std::string text = Text(document);
 				return text.empty() || writer.AddMemory(branchRoot + FileName(), text, error);
 			}
 
@@ -242,25 +269,21 @@ namespace Spiral
 			const Project &m_Project;
 		};
 
-		const Spumoni::Format &Format()
+		static Spumoni::Format ProjectFormat(const Spumoni::Package::Application &application)
 		{
-			static const SSMApplication application;
-			static Spumoni::Format format;
-			if (format.Application == NULL)
-			{
-				format.ManifestName = "spumoni.json";
-				format.MetadataName = "project.spiral.json";
-				format.MetadataKey = "spiral";
-				format.LegacyManifestName = "SSM.json";
-				format.Application = &application;
-				format.Extensions.push_back(".ssmp");
-				format.WorkPrefix = "spiralsynthmodular-ssmp-";
-			}
+			Spumoni::Format format;
+			format.ManifestName = "spumoni.json";
+			format.MetadataName = "project.spiral.json";
+			format.MetadataKey = "spiral";
+			format.LegacyManifestName = "SSM.json";
+			format.Application = &application;
+			format.Extensions.push_back(".ssmp");
+			format.WorkPrefix = "spiralsynthmodular-ssmp-";
 			return format;
 		}
 
 		Project::Project(const std::string &path)
-			: Spumoni::Project(Format())
+			: Spumoni::Project(ProjectFormat(*this))
 			, m_Source(new Spumoni::SourcePart("patch.spiral.legacy.ssm"))
 			, m_Patch(new Spumoni::SourcePart("patch.spiral.json"))
 			, m_Schema(new SchemaPart(*m_Patch))
@@ -290,6 +313,58 @@ namespace Spiral
 			m_Patch->Clear();
 			m_Schema->Clear();
 			m_Sidecars->Clear();
+		}
+
+		bool Project::ReadBranchContents(const std::string &path, std::string &error)
+		{
+			Project source(path);
+			std::string patch, legacy, schema, sidecars;
+			if (PathLooksLikePackage(path))
+			{
+				if (!source.OpenPackage("", error))
+					return false;
+				patch = source.Patch().Bytes();
+				legacy = source.Source().Bytes();
+				schema = source.Schema().Bytes();
+				sidecars = source.SidecarDirectory();
+
+				// Project-wide credits travel with the imported take. Keep the
+				// destination project's manifest and any explicit take credits.
+				const DocumentSection sourceDocument = source.GetDocument();
+				if (!patch.empty() && !sourceDocument.Empty())
+				{
+					Spumoni::JSONOwner body(Spumoni::ParseJSONText(patch));
+					if (body.get() && ReadDocument(*body.get()).Empty())
+					{
+						WriteDocument(*body.get(), sourceDocument);
+						patch = body->Stringify(true);
+					}
+				}
+			}
+			else
+			{
+				if (!Spumoni::Path::ReadFile(path, legacy, error))
+					return false;
+				const size_t first = legacy.find_first_not_of(" \r\n\t");
+				if (first != std::string::npos && legacy[first] == '{')
+					patch.swap(legacy);
+				sidecars = path + "_files";
+			}
+
+			if (patch.empty() && legacy.empty())
+			{
+				error = "The imported branch contains no patch";
+				return false;
+			}
+			Core::PatchDescription checked;
+			if (!patch.empty() && !PatchFile::ReadText(patch, checked, error))
+				return false;
+			if (!m_Sidecars->Begin(error, Spumoni::Path::IsDirectory(sidecars) ? sidecars : std::string()))
+				return false;
+			m_Patch->Set(patch);
+			m_Source->Set(legacy);
+			static_cast<SchemaPart *>(m_Schema)->UseImportedSchema(schema, patch);
+			return true;
 		}
 
 		bool Project::BeginSidecars(std::string &error)

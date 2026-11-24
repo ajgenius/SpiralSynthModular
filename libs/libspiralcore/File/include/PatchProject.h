@@ -15,7 +15,7 @@ namespace Spiral
 {
 	namespace File
 	{
-		class Project : public Spumoni::Project
+		class Project : private Spumoni::Package::Application, public Spumoni::Project
 		{
 		public:
 			explicit Project(const std::string &path);
@@ -35,6 +35,7 @@ namespace Spiral
 
 			void SetDocument(const DocumentSection &document);
 
+			bool ReadBranchContents(const std::string &path, std::string &error);
 			bool BeginSidecars(std::string &error);
 			std::string SidecarDirectory() const;
 
@@ -46,6 +47,8 @@ namespace Spiral
 			virtual void OnReset();
 
 		private:
+			virtual void Describe(Spumoni::JSON &root, const Spumoni::Identity &identity) const;
+			virtual bool Accept(const Spumoni::JSON &root, Spumoni::Identity &identity, std::string &error) const;
 			class SidecarPart;
 			class LicensePart;
 			Spumoni::SourcePart *m_Source;
