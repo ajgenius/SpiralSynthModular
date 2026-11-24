@@ -11,8 +11,6 @@ namespace Spiral
 {
 	namespace Panels
 	{
-		void DrawFltkGear(const Fl_Widget &widget, int radius);
-
 		class Panel;
 		class PanelControl;
 		class PanelSource;

@@ -29,6 +29,7 @@
 #include "PanelRegistry.h"
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Choice.H>
+#include <FL/fl_draw.H>
 #include <cstring>
 #include "PanelNode.h"
 #include "PanelControl.h"
@@ -42,13 +43,18 @@ namespace Spiral
 {
 	namespace Panels
 	{
-		class HeaderGearButton: public Fl_Button
+		class HeaderConfigButton: public Fl_Button
 		{
 		public:
-			HeaderGearButton(): Fl_Button(0, 0, 12, 12) {}
+			HeaderConfigButton(): Fl_Button(0, 0, 12, 12) {}
 			void draw()
 			{
-				DrawFltkGear(*this, (std::min(w(), h()) - 2) / 2);
+				const int cx = x() + w() / 2, cy = y() + h() / 2;
+				fl_color(active_r() ? labelcolor() : fl_inactive(labelcolor()));
+				fl_line_style(FL_SOLID, 1);
+				fl_arc(cx - 3, cy - 3, 7, 7, 0, 360);
+				fl_rectf(cx, cy, 2, 2);
+				fl_line_style(FL_SOLID);
 				if (Fl::focus() == this && Fl::visible_focus()) draw_focus();
 			}
 		};
@@ -243,7 +249,7 @@ namespace Spiral
 			{
 				if (!m_Config)
 				{
-					m_Config = new HeaderGearButton();
+					m_Config = new HeaderConfigButton();
 					m_Config->box(FL_NO_BOX);
 					m_Config->down_box(FL_NO_BOX);
 					m_Config->callback(OpenConfig, this);

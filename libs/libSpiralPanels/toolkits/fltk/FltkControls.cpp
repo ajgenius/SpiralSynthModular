@@ -38,23 +38,6 @@ namespace Spiral
 {
 	namespace Panels
 	{
-		void DrawFltkGear(const Fl_Widget &widget, int radius)
-		{
-			fl_color(widget.active_r() ? widget.labelcolor() : fl_inactive(widget.labelcolor()));
-			const int cx = widget.x() + widget.w() / 2, cy = widget.y() + widget.h() / 2;
-			fl_line_style(FL_SOLID, 2);
-			fl_circle(cx, cy, radius * .66);
-			for (int tooth = 0; tooth < 8; ++tooth)
-			{
-				const double angle = tooth * 3.141592653589793 / 4;
-				const double dx = radius * std::cos(angle), dy = radius * std::sin(angle);
-				fl_line((int)std::floor(cx + dx * .65 + .5), (int)std::floor(cy + dy * .65 + .5),
-					(int)std::floor(cx + dx + .5), (int)std::floor(cy + dy + .5));
-			}
-			fl_line_style(FL_SOLID);
-			fl_circle(cx, cy, radius * .23);
-		}
-
 		namespace
 		{
 			class FltkValue: public FltkView, public virtual ValueView
@@ -443,7 +426,20 @@ namespace Spiral
 				void draw()
 				{
 					draw_box();
-					DrawFltkGear(*this, std::max(1, (std::min(w(), h()) - 8) / 2));
+					fl_color(active_r() ? labelcolor() : fl_inactive(labelcolor()));
+					const int cx = x() + w() / 2, cy = y() + h() / 2;
+					const int radius = std::max(1, (std::min(w(), h()) - 8) / 2);
+					fl_line_style(FL_SOLID, 2);
+					fl_circle(cx, cy, radius * .66);
+					for (int tooth = 0; tooth < 8; ++tooth)
+					{
+						const double angle = tooth * 3.141592653589793 / 4;
+						const double dx = radius * std::cos(angle), dy = radius * std::sin(angle);
+						fl_line((int)std::floor(cx + dx * .65 + .5), (int)std::floor(cy + dy * .65 + .5),
+							(int)std::floor(cx + dx + .5), (int)std::floor(cy + dy + .5));
+					}
+					fl_line_style(FL_SOLID);
+					fl_circle(cx, cy, radius * .23);
 					if (Fl::focus() == this && Fl::visible_focus())
 						draw_focus();
 				}
