@@ -1655,7 +1655,6 @@ void SynthModular::GroupSelection(const string &title)
 		return;
 
 	SubPatchDevice *box = new SubPatchDevice;
-	vector<CanvasWire> cut;
 	const vector<CanvasWire> &wires = m_Canvas->Wires();
 
 	for (size_t w = 0; w < wires.size(); ++w)
@@ -1665,13 +1664,6 @@ void SynthModular::GroupSelection(const string &title)
 		const bool fromInside = members.count(source) != 0, toInside = members.count(dest) != 0;
 		if (fromInside == toInside)
 			continue;
-
-		if (fromInside && m_Canvas->IsEventPort(wires[w].OutputID, false, wires[w].OutputPort))
-		{
-			cut.push_back(wires[w]);
-
-			continue;
-		}
 
 		const int holder = fromInside ? source : dest;
 		const int port = fromInside ? m_Canvas->PortThrough(source, false, wires[w].OutputID, wires[w].OutputPort)
@@ -1695,9 +1687,6 @@ void SynthModular::GroupSelection(const string &title)
 				rebound.push_back(make_pair(&edge[k], EdgePort(m_Canvas, input ? box->Inputs : box->Outputs,
 					input != 0, edge[k].InnerID, edge[k].InnerPort)));
 	}
-
-	for (size_t w = 0; w < cut.size(); ++w)
-		m_Canvas->EraseWire(cut[w]);
 
 	const int ID = m_NextID++;
 	DeviceWin *win = NewSubPatch((left + right) / 2 - 50, (top + bottom) / 2 - 20, title, box,
@@ -2012,31 +2001,6 @@ void SynthModular::cb_Group(Fl_Widget *o, void *v)
 
 	if (blocked && fl_choice("You can't group Jack, Output, MIDI or Keyboard into a SubPatch.\n"
 		"Continue without them?", "Cancel", "Continue", NULL) != 1)
-
-		return;
-
-	size_t leaving = 0;
-	const int page = synth->m_Canvas->Page();
-	std::set<int> members;
-
-	for (size_t s = 0; s < selection.m_DeviceIds.size(); ++s)
-	{
-		map<int,DeviceWin*>::iterator i = synth->m_DeviceWinMap.find(selection.m_DeviceIds[s]);
-
-		if (i != synth->m_DeviceWinMap.end() && !HostIO(i->second->m_PluginID))
-			members.insert(i->first);
-	}
-
-	const vector<CanvasWire> &wires = synth->m_Canvas->Wires();
-
-	for (size_t w = 0; w < wires.size(); ++w)
-		if (members.count(synth->m_Canvas->Holder(wires[w].OutputID, page))
-		    && !members.count(synth->m_Canvas->Holder(wires[w].InputID, page))
-		    && synth->m_Canvas->IsEventPort(wires[w].OutputID, false, wires[w].OutputPort))
-			++leaving;
-
-	if (leaving && fl_choice("Events can't leave a SubPatch.\n"
-		"Group and cut the event wires leaving it?", "Cancel", "Group", NULL) != 1)
 
 		return;
 
@@ -2892,7 +2856,7 @@ bool SynthModular::ApplyPage(
 
 				for (size_t k = 0; k < device.Outputs.size(); ++k)
 					box->Outputs.push_back(BoundaryPort(-1, -1, device.Outputs[k].Name,
-						device.Outputs[k].Type == "MusicalEventPort" ? string() : device.Outputs[k].Type));
+						device.Outputs[k].Type));
 
 				for (size_t b = 0; b < device.Binds.size(); ++b)
 				{
@@ -2929,13 +2893,6 @@ bool SynthModular::ApplyPage(
 					    || (found = inner.find(innerId)) == inner.end() || input != device.Binds[b].OuterIsInput)
 					{
 						cerr << "SSM: SubPatch bind " << device.Binds[b].InnerPath << " leads nowhere.\n";
-
-						continue;
-					}
-
-					if (!input && m_Canvas->IsEventPort(found->second, false, port))
-					{
-						cerr << "SSM: A SubPatch sends no events out; " << device.Binds[b].InnerPath << " is not bound.\n";
 
 						continue;
 					}

@@ -1604,8 +1604,6 @@ bool Fl_Canvas::BindBoxPort(int box, bool input, int port, int id, int idPort)
 		return true;
 	int device, devicePort;
 	const bool event = IsEventPort(id, input, idPort);
-	if (!input && event)
-		return false;
 	const bool reaches = Resolve(id, input, idPort, device, devicePort) && event == bound.IsEvent();
 	vector<CanvasWire> through;
 	WiresThrough(box, input, port, through);
