@@ -65,10 +65,10 @@ m_Registered(false)
 	m_PluginInfo.Height=100;
 	m_PluginInfo.NumInputs=2;
 	m_PluginInfo.NumOutputs=2;
-	m_PluginInfo.PortTips.push_back("Left Out");
-	m_PluginInfo.PortTips.push_back("Right Out");
 	m_PluginInfo.PortTips.push_back("Left In");
 	m_PluginInfo.PortTips.push_back("Right In");
+	m_PluginInfo.PortTips.push_back("Left Out");
+	m_PluginInfo.PortTips.push_back("Right Out");
 	m_AudioCH->Register ("Volume", &m_Volume);
 	m_AudioCH->Register ("OpenOut", &m_NotifyOpenOut, ChannelHandler::OUTPUT);
 	const std::vector<std::string> none;

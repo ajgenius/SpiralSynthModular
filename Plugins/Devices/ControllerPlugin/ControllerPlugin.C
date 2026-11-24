@@ -268,7 +268,7 @@ void ControllerPlugin::Apply(Spiral::Core::Description::Reader &r)
 			for (int n=0; n<GetNum(); n++)
 			{
 				char t[256];
-				sprintf(t,"CV %d",n);
+				sprintf(t,"CV %d",n + 1);
 				m_PluginInfo.PortTips.push_back(t);
 				AddOutput();
 			}
@@ -295,7 +295,7 @@ void ControllerPlugin::Apply(Spiral::Core::Description::Reader &r)
 			for (int n=0; n<GetNum(); n++)
 			{
 				char t[256];
-				sprintf(t,"CV %d",n);
+				sprintf(t,"CV %d",n + 1);
 				m_PluginInfo.PortTips.push_back(t);
 				AddOutput();
 			}
@@ -332,7 +332,7 @@ void ControllerPlugin::Apply(Spiral::Core::Description::Reader &r)
 			for (int n=0; n<GetNum(); n++)
 			{
 				char t[256];
-				sprintf(t,"CV %d",n);
+				sprintf(t,"CV %d",n + 1);
 				m_PluginInfo.PortTips.push_back(t);
 				AddOutput();
 			}
