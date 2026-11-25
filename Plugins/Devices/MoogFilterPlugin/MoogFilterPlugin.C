@@ -69,11 +69,16 @@ b2(0.0f),
 b3(0.0f),
 b4(0.0f),
 t1(0.0f),
-t2(0.0f)
+t2(0.0f),
+tpt_s1(0.0f),
+tpt_s2(0.0f),
+tpt_s3(0.0f),
+tpt_s4(0.0f),
+tpt_y4(0.0f)
 {
 	m_PluginInfo.Name="Moog Filter";
 	m_PluginInfo.Width=120;
-	m_PluginInfo.Height=110;
+	m_PluginInfo.Height=130;
 	m_PluginInfo.NumInputs=3;
 	m_PluginInfo.NumOutputs=3;
 	m_PluginInfo.PortTips.push_back("Input");	
@@ -87,9 +92,11 @@ t2(0.0f)
 
 	Cutoff = FloatProperty(DefaultLinearFlags,0.5f, 0, 1, 0.0001, 0.001);
 	Resonance = FloatProperty(DefaultLinearFlags,0.0f, 0, 1, 0.00001, 0.0001);
+	Mode = UnsignedProperty(DefaultLinearFlags, 0, 0, 1, 1, 1);
 
 	RegisterSharedProperty(Cutoff, "Cutoff", "Cutoff");
 	RegisterSharedProperty(Resonance, "Resonance", "Resonance");
+	RegisterSharedProperty(Mode, "Mode", "Mode");
 }
 
 MoogFilterPlugin::~MoogFilterPlugin()
@@ -111,6 +118,16 @@ void MoogFilterPlugin::Reset()
 }
 
 void MoogFilterPlugin::Execute()
+{
+	if (AsUnsigned(Mode) == 1)
+	{
+		ExecuteTPT();
+		return;
+	}
+	ExecuteLegacy();
+}
+
+void MoogFilterPlugin::ExecuteLegacy()
 {
 	float in, Q;
 	
@@ -174,6 +191,98 @@ void MoogFilterPlugin::Execute()
 	}			
 }
 
+void MoogFilterPlugin::ExecuteTPT()
+{
+	// Zavalishin, The Art of VA Filter Design, ch. 5:
+	// resolved zero-delay feedback around four TPT 1-poles,
+	// with tanh in the feedback path (implicit, Newton).
+	float G = 0.0f, Gall = 0.0f, k = 0.0f, tptg = 0.0f;
+	const float ny = 0.49f * fs;
+	const float minHz = 20.0f;
+	const float ratio = (ny > minHz && fs > 0.0f) ? (ny / minHz) : 1.0f;
+
+	for (int n=0; n<m_HostInfo->BUFSIZE; n++)
+	{
+		if (n%GRANULARITY==0)
+		{
+			float cut = AsFloat(Cutoff)+GetInput(1,n);
+			if (cut<0.0f) cut=0.0f;
+			if (cut>1.0f) cut=1.0f;
+			float hz = minHz * powf(ratio, cut);
+			if (fs > 0.0f)
+				tptg = tanf((float)PI * hz / fs);
+			else
+				tptg = 0.0f;
+			if (tptg<0.0f) tptg=0.0f;
+			G = tptg / (1.0f + tptg);
+			Gall = G*G*G*G;
+			float res = AsFloat(Resonance)+GetInput(2,n);
+			if (res<0.0f) res=0.0f;
+			if (res>1.0f) res=1.0f;
+			k = res * 4.05f;
+		}
+
+		float x = GetInput(0,n);
+		float inv = 1.0f / (1.0f + tptg);
+		float S1 = tpt_s1 * inv;
+		float S2 = tpt_s2 * inv;
+		float S3 = tpt_s3 * inv;
+		float S4 = tpt_s4 * inv;
+		float S = ((S1*G + S2)*G + S3)*G + S4;
+
+		float y4 = tpt_y4;
+		float denom = 1.0f + k*Gall;
+		float lin = (denom != 0.0f) ? (Gall*x + S) / denom : S;
+		if (y4 == 0.0f) y4 = lin;
+		for (int i=0; i<4; i++)
+		{
+			float th = tanhf(y4);
+			float F = y4 - Gall*(x - k*th) - S;
+			float Fp = 1.0f + Gall*k*(1.0f - th*th);
+			if (Fp != 0.0f) y4 -= F/Fp;
+		}
+
+		float x0 = x - k * tanhf(y4);
+
+		float v1 = (x0 - tpt_s1) * G;
+		float y1 = v1 + tpt_s1;
+		tpt_s1 = y1 + v1;
+
+		float v2 = (y1 - tpt_s2) * G;
+		float y2 = v2 + tpt_s2;
+		tpt_s2 = y2 + v2;
+
+		float v3 = (y2 - tpt_s3) * G;
+		float y3 = v3 + tpt_s3;
+		tpt_s3 = y3 + v3;
+
+		float v4 = (y3 - tpt_s4) * G;
+		float y4o = v4 + tpt_s4;
+		tpt_s4 = y4o + v4;
+		tpt_y4 = y4o;
+
+		if (!isfinite(tpt_s1) || !isfinite(tpt_s2) ||
+		    !isfinite(tpt_s3) || !isfinite(tpt_s4) ||
+		    !isfinite(y4o) || !isfinite(y3))
+		{
+			tpt_s1=tpt_s2=tpt_s3=tpt_s4=tpt_y4=0.0f;
+			y4o=0.0f;
+			y3=0.0f;
+		}
+		else
+		{
+			if (tpt_s1!=0.0f && fabsf(tpt_s1)<1.0e-20f) tpt_s1=0.0f;
+			if (tpt_s2!=0.0f && fabsf(tpt_s2)<1.0e-20f) tpt_s2=0.0f;
+			if (tpt_s3!=0.0f && fabsf(tpt_s3)<1.0e-20f) tpt_s3=0.0f;
+			if (tpt_s4!=0.0f && fabsf(tpt_s4)<1.0e-20f) tpt_s4=0.0f;
+		}
+
+		SetOutput(0,n,y4o);
+		SetOutput(1,n,(x-y4o));
+		SetOutput(2,n,3.0f * (y3 - y4o));
+	}
+}
+
 void MoogFilterPlugin::Clear()
 {
 	b0 = 0.0f;
@@ -183,6 +292,11 @@ void MoogFilterPlugin::Clear()
 	b4 = 0.0f;
 	t1 = 0.0f;
 	t2 = 0.0f;
+	tpt_s1 = 0.0f;
+	tpt_s2 = 0.0f;
+	tpt_s3 = 0.0f;
+	tpt_s4 = 0.0f;
+	tpt_y4 = 0.0f;
 }
 
 void MoogFilterPlugin::Randomise()

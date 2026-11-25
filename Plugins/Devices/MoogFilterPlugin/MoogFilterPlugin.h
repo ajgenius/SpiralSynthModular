@@ -33,18 +33,24 @@ public:
 
 	
 	float GetCutoff()    { return AsFloat(Cutoff); }
-	float GetResonance() { return AsFloat(Resonance); } 
+	float GetResonance() { return AsFloat(Resonance); }
+	unsigned GetMode()   { return AsUnsigned(Mode); }
 	
 	void Clear();
 	void Randomise();
 
 private:
+	void ExecuteLegacy();
+	void ExecuteTPT();
+
 	Spiral::Core::FloatProperty Cutoff, Resonance;
+	Spiral::Core::UnsignedProperty Mode;
 	
 	float fs, fc;
 	float f,p,q;
 	float b0,b1,b2,b3,b4;
 	float t1,t2;
+	float tpt_s1, tpt_s2, tpt_s3, tpt_s4, tpt_y4;
 	
 	float in1,in2,in3,in4,out1,out2,out3,out4;
 	

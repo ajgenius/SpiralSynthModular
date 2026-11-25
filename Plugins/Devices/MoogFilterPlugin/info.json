@@ -67,10 +67,25 @@
           "name": "emphasis-label",
           "text": "Emphasis",
           "type": "Label"
+        },
+        {
+          "bounds": [
+            8,
+            94,
+            100,
+            18
+          ],
+          "items": [
+            "Classic",
+            "TPT"
+          ],
+          "name": "mode-choice",
+          "property": "MODE",
+          "type": "Choice"
         }
       ],
-      "height": 94,
-      "help": "Classic moog filter. Very different sound to the other filters,\nneedless to say, very squelchy. As well as lowpass, band and high\npass are simultaneously calculated too. The emphasis can be pushed\ninto self oscillation (careful of the speakers). In this way, it\ncan be used to generate sinewave oscillations.",
+      "height": 118,
+      "help": "Classic moog filter. Very different sound to the other filters,\nneedless to say, very squelchy. As well as lowpass, band and high\npass are simultaneously calculated too. The emphasis can be pushed\ninto self oscillation (careful of the speakers). In this way, it\ncan be used to generate sinewave oscillations.\nMode Classic is the original filter (default, bit-exact with old patches). Mode TPT is a zero-delay 4-pole ladder with cutoff in real Hz; it keeps ringing when the input goes silent.",
       "schema_version": 1,
       "width": 116
     },
@@ -132,6 +147,21 @@
         "read_only": false,
         "step": 9.999999747378752e-06,
         "type": "number"
+      },
+      {
+        "class": "UnsignedProperty",
+        "default": 0,
+        "display_name": "Mode",
+        "hint": "Filter topology",
+        "internal": false,
+        "logarithmic": false,
+        "max": 1,
+        "min": 0,
+        "page": 1,
+        "property": "MODE",
+        "read_only": false,
+        "step": 1,
+        "type": "integer"
       }
     ],
     "schema_version": 1

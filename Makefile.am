@@ -58,6 +58,11 @@ check_PROGRAMS += mixer-signal-test stereo-mixer-signal-test
 mixer_signal_test_SOURCES = tests/mixer-signal.cpp Plugins/Devices/MixerPlugin/MixerPlugin.C
 mixer_signal_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/Devices/MixerPlugin
 mixer_signal_test_LDADD = libs/libspiralcore/libspiralcore.la
+
+check_PROGRAMS += moog-filter-test
+moog_filter_test_SOURCES = tests/moog-filter.cpp Plugins/Devices/MoogFilterPlugin/MoogFilterPlugin.C
+moog_filter_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/Plugins/Devices/MoogFilterPlugin
+moog_filter_test_LDADD = $(mixer_signal_test_LDADD)
 stereo_mixer_signal_test_SOURCES = tests/mixer-signal.cpp Plugins/Devices/StereoMixerPlugin/StereoMixerPlugin.C
 stereo_mixer_signal_test_CPPFLAGS = $(AM_CPPFLAGS) -DTEST_STEREO -I$(srcdir)/Plugins/Devices/StereoMixerPlugin
 stereo_mixer_signal_test_LDADD = $(mixer_signal_test_LDADD)
